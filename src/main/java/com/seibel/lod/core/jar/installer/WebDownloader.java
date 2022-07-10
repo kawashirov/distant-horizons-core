@@ -19,11 +19,9 @@ public class WebDownloader {
             final URLConnection conn = url.openConnection();
             conn.connect();
             conn.getInputStream().close();
-            return true;
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
             return false;
+        } catch (Exception e) {
+            return true;
         }
     }
 

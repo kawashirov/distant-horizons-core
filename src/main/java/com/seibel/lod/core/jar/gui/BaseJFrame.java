@@ -1,7 +1,6 @@
-package com.seibel.lod.core.jar;
+package com.seibel.lod.core.jar.gui;
 
 import com.formdev.flatlaf.FlatDarkLaf;
-import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.seibel.lod.core.JarMain;
@@ -11,11 +10,8 @@ import com.seibel.lod.core.wrapperInterfaces.config.IConfigWrapper;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -45,7 +41,12 @@ public class BaseJFrame extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 
-    public BaseJFrame addExtraButtons() { // TODO: Change everything to paint rather than using J stuff
+    /**
+     * Buttons for language and theme changing
+     *
+     * @param side  If false it would be on the bottom left and if True then it would be on the bottom right
+     */
+    public void addExtraButtons(boolean side) {
         // ========== LANGUAGE ==========
         int langBoxHeight = 25;
         int langBoxWidth = 100;
@@ -68,13 +69,16 @@ public class BaseJFrame extends JFrame {
             Locale.setDefault(Locale.forLanguageTag(languageBox.getSelectedItem().toString())); // Change lang on update
         } );
         // Set where it goes
-        languageBox.setBounds(0, getHeight()-(langBoxHeight*2), langBoxWidth, langBoxHeight);
+        if (side)
+            languageBox.setBounds(getWidth()-langBoxWidth, getHeight()-(langBoxHeight*2), langBoxWidth, langBoxHeight);
+        else
+            languageBox.setBounds(0, getHeight()-(langBoxHeight*2), langBoxWidth, langBoxHeight);
         // And finally add it
         add(languageBox);
 
 
-
         // ========== THEMING ==========
+        // TODO: Change the theme to a toggle switch rather than having 2 buttons
         int themeButtonSize = 25;
         JButton lightMode = null;
         JButton darkMode = null;
@@ -90,8 +94,14 @@ public class BaseJFrame extends JFrame {
             ));
         } catch (Exception e) {e.printStackTrace();}
         // Where do the buttons go
-        lightMode.setBounds(0, getHeight()-(themeButtonSize*2)-langBoxHeight, themeButtonSize, themeButtonSize);
-        darkMode.setBounds(themeButtonSize, getHeight()-(themeButtonSize*2)-langBoxHeight, themeButtonSize, themeButtonSize);
+        if (side) {
+            lightMode.setBounds(getWidth()-(themeButtonSize*2), getHeight() - (themeButtonSize * 2) - langBoxHeight, themeButtonSize, themeButtonSize);
+            darkMode.setBounds(getWidth()-themeButtonSize, getHeight() - (themeButtonSize * 2) - langBoxHeight, themeButtonSize, themeButtonSize);
+        }
+        else {
+            lightMode.setBounds(0, getHeight() - (themeButtonSize * 2) - langBoxHeight, themeButtonSize, themeButtonSize);
+            darkMode.setBounds(themeButtonSize, getHeight() - (themeButtonSize * 2) - langBoxHeight, themeButtonSize, themeButtonSize);
+        }
         // Tell buttons what to do
         lightMode.addActionListener(e -> {
             FlatLightLaf.setup();
@@ -104,9 +114,6 @@ public class BaseJFrame extends JFrame {
         // Finally add the buttons
         add(lightMode);
         add(darkMode);
-
-
-        return this;
     }
 
     public BaseJFrame addLogo() {

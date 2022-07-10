@@ -110,6 +110,28 @@ public class GitlabGetter {
 
         return null;
     }
+    /** Gets the update log of a release */
+    public static String getVersionDescription(String version) {
+        try {
+            if (!version.equals("1.6.0a")) { // We have to do this cus 1.6.0a stuffed up some ordering
+                // Do this hack to remove all the mcVer-1.6.0a items from the releaseNames
+                int newVer = releaseNames.indexOf(version);
+                if (releaseNames.indexOf(version) > releaseNames.size()-14)
+                    newVer += 2;
+
+                return ((JSONObject) projectRelease.get(newVer)).get("description").toString();
+            } else {
+                for (int i = 0; i < projectRelease.size(); i++) {
+                    JSONObject currentRelease = ((JSONObject) new JSONParser().parse(projectRelease.get(i).toString()));
+                    if (currentRelease.get("tag_name").toString().contains("-1.6.0a"))
+                        return currentRelease.get("description").toString();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
 
     public static JSONArray getScuffedReleaseArray(String version) {
