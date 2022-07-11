@@ -21,6 +21,7 @@ import java.util.List;
  * @author coolGi
  */
 // This will be removed later on to make a better ui
+// To get colors use https://alvinalexander.com/java/java-uimanager-color-keys-list/
 public class BaseJFrame extends JFrame {
     public BaseJFrame() {
         init();
@@ -44,9 +45,10 @@ public class BaseJFrame extends JFrame {
     /**
      * Buttons for language and theme changing
      *
-     * @param side  If false it would be on the bottom left and if True then it would be on the bottom right
+     * @param themeOnBottom  Puts the theme buttons below the language
+     * @param rootPosOnLeft  Where the start for the x is (on the left of the buttons or on the right)
      */
-    public void addExtraButtons(boolean side) {
+    public void addExtraButtons(int x, int y, boolean themeOnBottom, boolean rootPosOnLeft) {
         // ========== LANGUAGE ==========
         int langBoxHeight = 25;
         int langBoxWidth = 100;
@@ -69,10 +71,7 @@ public class BaseJFrame extends JFrame {
             Locale.setDefault(Locale.forLanguageTag(languageBox.getSelectedItem().toString())); // Change lang on update
         } );
         // Set where it goes
-        if (side)
-            languageBox.setBounds(getWidth()-langBoxWidth, getHeight()-(langBoxHeight*2), langBoxWidth, langBoxHeight);
-        else
-            languageBox.setBounds(0, getHeight()-(langBoxHeight*2), langBoxWidth, langBoxHeight);
+        languageBox.setBounds(rootPosOnLeft? x : x-langBoxWidth, themeOnBottom? y : y+langBoxHeight, langBoxWidth, langBoxHeight);
         // And finally add it
         add(languageBox);
 
@@ -94,14 +93,8 @@ public class BaseJFrame extends JFrame {
             ));
         } catch (Exception e) {e.printStackTrace();}
         // Where do the buttons go
-        if (side) {
-            lightMode.setBounds(getWidth()-(themeButtonSize*2), getHeight() - (themeButtonSize * 2) - langBoxHeight, themeButtonSize, themeButtonSize);
-            darkMode.setBounds(getWidth()-themeButtonSize, getHeight() - (themeButtonSize * 2) - langBoxHeight, themeButtonSize, themeButtonSize);
-        }
-        else {
-            lightMode.setBounds(0, getHeight() - (themeButtonSize * 2) - langBoxHeight, themeButtonSize, themeButtonSize);
-            darkMode.setBounds(themeButtonSize, getHeight() - (themeButtonSize * 2) - langBoxHeight, themeButtonSize, themeButtonSize);
-        }
+        lightMode.setBounds(rootPosOnLeft? x : x-(themeButtonSize*2), themeOnBottom? y+langBoxHeight: y, themeButtonSize, themeButtonSize);
+        darkMode.setBounds(rootPosOnLeft? x+themeButtonSize : x-themeButtonSize, themeOnBottom? y+langBoxHeight: y, themeButtonSize, themeButtonSize);
         // Tell buttons what to do
         lightMode.addActionListener(e -> {
             FlatLightLaf.setup();

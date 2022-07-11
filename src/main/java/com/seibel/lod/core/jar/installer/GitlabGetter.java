@@ -132,6 +132,22 @@ public class GitlabGetter {
         }
         return null;
     }
+    public static String formatMarkdownToHtml(String md, int width) {
+        String str = String.format("<html><div style=\"width:%dpx;\">%s</div></html>", width, md)
+                .replaceAll("\\\\\\n", "<br>") // Removes the "\" used in markdown to create new line
+                .replaceAll("\\n", "<br>"); // Fix the new line
+
+        boolean counter = false;
+        while (str.contains("**")) {
+            if (counter)
+                str = str.replaceFirst("\\*\\*", "</strong>");
+            else
+                str = str.replaceFirst("\\*\\*", "<strong>");
+            counter = !counter;
+        }
+
+        return str;
+    }
 
 
     public static JSONArray getScuffedReleaseArray(String version) {
