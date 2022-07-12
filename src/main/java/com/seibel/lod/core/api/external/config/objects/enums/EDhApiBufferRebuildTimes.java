@@ -16,24 +16,24 @@
  *    You should have received a copy of the GNU Lesser General Public License
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
- 
-package com.seibel.lod.core.api.external.apiObjects.enums;
+
+package com.seibel.lod.core.api.external.config.objects.enums;
 
 /**
- * DEFAULT,     <br>
- * DEBUG,       <br>
- * DISABLED,    <br>
+ * CONSTANT <br>
+ * FREQUENT <br>
+ * NORMAL <br>
+ * RARE <br> <br>
  *
- * @version 2022-6-2
+ * Determines how fast the buffers should be regenerated
+ * 
+ * @author Leonardo Amato
+ * @version 9-25-2021
  */
-public enum EDhApiRendererMode
+public enum EDhApiBufferRebuildTimes
 {
-    // Reminder:
-    // when adding items up the API minor version
-    // when removing items up the API major version
-    
-    DEFAULT,
-    DEBUG,
-    DISABLED;
-    
+	CONSTANT,
+	FREQUENT,
+	NORMAL,
+	RARE;
 }

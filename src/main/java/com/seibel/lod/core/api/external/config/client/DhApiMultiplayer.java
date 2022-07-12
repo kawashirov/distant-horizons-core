@@ -19,8 +19,8 @@
 
 package com.seibel.lod.core.api.external.config.client;
 
-import com.seibel.lod.core.api.external.apiObjects.enums.EDhApiServerFolderNameMode;
-import com.seibel.lod.core.api.external.apiObjects.wrapperInterfaces.IDhApiConfig;
+import com.seibel.lod.core.api.external.config.objects.enums.EDhApiServerFolderNameMode;
+import com.seibel.lod.core.api.external.config.objects.wrapperInterfaces.IDhApiConfig;
 import com.seibel.lod.core.api.implementation.objects.GenericEnumConverter;
 import com.seibel.lod.core.api.implementation.wrappers.DhApiConfig;
 import com.seibel.lod.core.config.Config.Client.Multiplayer;

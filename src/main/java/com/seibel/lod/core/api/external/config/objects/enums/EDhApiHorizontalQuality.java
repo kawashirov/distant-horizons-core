@@ -17,31 +17,42 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.apiObjects.enums;
+package com.seibel.lod.core.api.external.config.objects.enums;
 
 /**
- * AUTO <br>
- * Near_First <br>
- * Far_First <br> <br>
- * 
- * Determines which LODs should have priority when generating
- * outside the normal view distance.
- * 
+ * LOWEST <br>
+ * LOW <br>
+ * MEDIUM <br>
+ * HIGH <br> <br>
+ *
+ * this indicates the base of the quadratic function we use for the quality drop-off
+ *
  * @author Leonardo Amato
- * @version 12-1-2021
+ * @version 9-29-2021
  */
-public enum EDhApiGenerationPriority
+public enum EDhApiHorizontalQuality
 {
 	// Reminder:
 	// when adding items up the API minor version
 	// when removing items up the API major version
 	
-	/** NEAR_FIRST when connected to servers and BALANCED when on single player */
-	AUTO,
 	
-	NEAR_FIRST,
+	/** 1.0 AKA Linear */
+	LOWEST(1.0f),
 	
-	BALANCED,
+	/** exponent 1.5 */
+	LOW(1.5f),
 	
-	FAR_FIRST
+	/** exponent 2.0 */
+	MEDIUM(2.0f),
+	
+	/** exponent 2.2 */
+	HIGH(2.2f);
+	
+	public final double quadraticBase;
+	
+	EDhApiHorizontalQuality(double distanceUnit)
+	{
+		this.quadraticBase = distanceUnit;
+	}
 }

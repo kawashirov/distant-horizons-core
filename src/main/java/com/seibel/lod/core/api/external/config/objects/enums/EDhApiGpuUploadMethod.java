@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.apiObjects.enums;
+package com.seibel.lod.core.api.external.config.objects.enums;
 
 /**
  * AUTO, 					<br>

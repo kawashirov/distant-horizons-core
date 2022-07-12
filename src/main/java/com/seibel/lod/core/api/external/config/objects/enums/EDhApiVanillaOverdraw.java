@@ -17,39 +17,38 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.apiObjects.enums;
-
-import com.seibel.lod.core.util.LodUtil;
-
-import java.util.ArrayList;
-import java.util.Collections;
+package com.seibel.lod.core.api.external.config.objects.enums;
 
 /**
- * BLOCK <Br>
- * TWO_BLOCKS <Br>
- * FOUR_BLOCKS <br>
- * HALF_CHUNK <Br>
- * CHUNK <br>
+ * NEVER, 	<br>
+ * DYNAMIC, <br>
+ * ALWAYS	<br> <br>
+ *
+ * This represents how far the LODs should overlap with
+ * the vanilla Minecraft terrain.
  * 
  * @author James Seibel
- * @author Leonardo Amato
- * @version 2022-7-5
+ * @version 2022-6-30
  */
-public enum EDhApiHorizontalResolution
+public enum EDhApiVanillaOverdraw
 {
-	/** render 256 LODs for each chunk */
-	BLOCK,
+	// Reminder:
+	// when adding items up the API minor version
+	// when removing items up the API major version
 	
-	/** render 64 LODs for each chunk */
-	TWO_BLOCKS,
 	
-	/** render 16 LODs for each chunk */
-	FOUR_BLOCKS,
+	/**
+	 * Don't draw LODs where a minecraft chunk could be.
+	 * Use Overdraw Offset to tweak the border thickness.
+	 */
+	NEVER,
 	
-	/** render 4 LODs for each chunk */
-	HALF_CHUNK,
+	/**
+	 * Draw LODs over the farther minecraft chunks.
+	 * Dynamically decides the border thickness
+	 */
+	DYNAMIC,
 	
-	/** render 1 LOD for each chunk */
-	CHUNK;
-	
+	/** Draw LODs over all minecraft chunks. */
+	ALWAYS,
 }

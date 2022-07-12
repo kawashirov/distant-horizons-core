@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import com.seibel.lod.core.api.external.apiObjects.enums.DhApiEnumAssembly;
+import com.seibel.lod.core.api.external.config.objects.enums.DhApiEnumAssembly;
 import com.seibel.lod.core.enums.rendering.EFogDrawMode;
 import com.seibel.lod.core.enums.CoreEnumAssembly;
 import com.seibel.lod.core.enums.config.EVerticalQuality;

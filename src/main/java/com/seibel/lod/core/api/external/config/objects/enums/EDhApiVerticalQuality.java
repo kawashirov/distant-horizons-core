@@ -17,23 +17,26 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.apiObjects.enums;
+package com.seibel.lod.core.api.external.config.objects.enums;
 
 /**
- * CONSTANT <br>
- * FREQUENT <br>
- * NORMAL <br>
- * RARE <br> <br>
+ * LOW,		<br>
+ * MEDIUM,	<br>
+ * HIGH,	<br>
+ * ULTRA	<br>
  *
- * Determines how fast the buffers should be regenerated
- * 
  * @author Leonardo Amato
- * @version 9-25-2021
+ * @version 2022-6-9
  */
-public enum EDhApiBufferRebuildTimes
+public enum EDhApiVerticalQuality
 {
-	CONSTANT,
-	FREQUENT,
-	NORMAL,
-	RARE;
+	// Reminder:
+	// when adding items: up the API minor version
+	// when removing items: up the API major version
+	
+	LOW,
+	MEDIUM,
+	HIGH,
+	ULTRA
+	
 }

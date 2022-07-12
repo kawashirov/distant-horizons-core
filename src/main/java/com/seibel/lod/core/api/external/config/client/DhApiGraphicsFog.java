@@ -19,8 +19,9 @@
 
 package com.seibel.lod.core.api.external.config.client;
 
-import com.seibel.lod.core.api.external.apiObjects.enums.*;
-import com.seibel.lod.core.api.external.apiObjects.wrapperInterfaces.IDhApiConfig;
+import com.seibel.lod.core.api.external.config.objects.enums.*;
+import com.seibel.lod.core.api.external.config.objects.wrapperInterfaces.IDhApiConfig;
+import com.seibel.lod.core.api.external.methods.config.objects.enums.*;
 import com.seibel.lod.core.api.implementation.objects.GenericEnumConverter;
 import com.seibel.lod.core.api.implementation.wrappers.DhApiConfig;
 import com.seibel.lod.core.enums.rendering.*;

@@ -17,15 +17,34 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.apiObjects.enums;
+package com.seibel.lod.core.api.external.config.objects.enums;
 
 /**
- * Assembly classes are used to reference the package they are in.
- *
+ * BLOCK <Br>
+ * TWO_BLOCKS <Br>
+ * FOUR_BLOCKS <br>
+ * HALF_CHUNK <Br>
+ * CHUNK <br>
+ * 
  * @author James Seibel
- * @version 2022-6-9
+ * @author Leonardo Amato
+ * @version 2022-7-5
  */
-public class DhApiEnumAssembly
+public enum EDhApiHorizontalResolution
 {
-	public static final String API_ENUM_PREFIX = "EDhApi";
+	/** render 256 LODs for each chunk */
+	BLOCK,
+	
+	/** render 64 LODs for each chunk */
+	TWO_BLOCKS,
+	
+	/** render 16 LODs for each chunk */
+	FOUR_BLOCKS,
+	
+	/** render 4 LODs for each chunk */
+	HALF_CHUNK,
+	
+	/** render 1 LOD for each chunk */
+	CHUNK;
+	
 }

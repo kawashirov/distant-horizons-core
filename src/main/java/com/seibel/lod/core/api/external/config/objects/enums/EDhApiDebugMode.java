@@ -17,30 +17,51 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.apiObjects.enums;
+package com.seibel.lod.core.api.external.config.objects.enums;
 
 /**
- * USE_OPTIFINE_FOG_SETTING, <br>
- * FOG_ENABLED, <br>
- * FOG_DISABLED <br>
- * 
+ * OFF,									<br>
+ * SHOW_WIREFRAME,						<br>
+ * SHOW_DETAIL,							<br>
+ * SHOW_DETAIL_WIREFRAME,				<br>
+ * SHOW_GENMODE,						<br>
+ * SHOW_GENMODE_WIREFRAME,				<br>
+ * SHOW_OVERLAPPING_QUADS,				<br>
+ * SHOW_OVERLAPPING_QUADS_WIREFRAME,	<br>
+ *
+ * @author Leetom
  * @author James Seibel
- * @version 2022-6-2
+ * @version 2022-7-2
  */
-public enum EDhApiFogDrawMode
+public enum EDhApiDebugMode
 {
 	// Reminder:
 	// when adding items up the API minor version
 	// when removing items up the API major version
 	
 	
-	/**
-	 * Use whatever Fog setting optifine is using.
-	 * If optifine isn't installed this defaults to FOG_ENABLED.
-	 */
-	USE_OPTIFINE_SETTING,
+	/** LODs are rendered normally */
+	OFF,
+
+	/** LOD draws in wireframe. */
+	SHOW_WIREFRAME,
 	
-	FOG_ENABLED,
-	FOG_DISABLED;
+	/** LOD colors are based on their detail */
+	SHOW_DETAIL,
+	
+	/** LOD colors are based on their detail, and draws in wireframe. */
+	SHOW_DETAIL_WIREFRAME,
+	
+	/** LOD colors are based on their gen mode. */
+	SHOW_GENMODE,
+	
+	/** LOD colors are based on their gen mode, and draws in wireframe. */
+	SHOW_GENMODE_WIREFRAME,
+
+	/** Only draw overlapping LOD quads. */
+	SHOW_OVERLAPPING_QUADS,
+
+	/** Only draw overlapping LOD quads, and draws in wireframe. */
+	SHOW_OVERLAPPING_QUADS_WIREFRAME;
 	
 }

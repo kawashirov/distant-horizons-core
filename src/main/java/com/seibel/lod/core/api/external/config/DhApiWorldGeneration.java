@@ -19,8 +19,10 @@
 
 package com.seibel.lod.core.api.external.config;
 
-import com.seibel.lod.core.api.external.apiObjects.enums.*;
-import com.seibel.lod.core.api.external.apiObjects.wrapperInterfaces.IDhApiConfig;
+import com.seibel.lod.core.api.external.config.objects.enums.EDhApiDistanceGenerationMode;
+import com.seibel.lod.core.api.external.config.objects.enums.EDhApiBlocksToAvoid;
+import com.seibel.lod.core.api.external.config.objects.enums.EDhApiLightGenerationMode;
+import com.seibel.lod.core.api.external.config.objects.wrapperInterfaces.IDhApiConfig;
 import com.seibel.lod.core.api.implementation.objects.GenericEnumConverter;
 import com.seibel.lod.core.api.implementation.wrappers.DhApiConfig;
 import com.seibel.lod.core.config.Config.Client.WorldGenerator;

@@ -17,26 +17,37 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.apiObjects.enums;
+package com.seibel.lod.core.api.external.config.objects.enums;
 
 /**
- * LOW,		<br>
- * MEDIUM,	<br>
- * HIGH,	<br>
- * ULTRA	<br>
+ * NONE, <br>
+ * NON_FULL, <br>
+ * NO_COLLISION, <br>
+ * BOTH, <br>
  *
  * @author Leonardo Amato
- * @version 2022-6-9
+ * @version 2022-7-1
  */
-public enum EDhApiVerticalQuality
+public enum EDhApiBlocksToAvoid
 {
 	// Reminder:
-	// when adding items: up the API minor version
-	// when removing items: up the API major version
+	// when adding items up the API minor version
+	// when removing items up the API major version
 	
-	LOW,
-	MEDIUM,
-	HIGH,
-	ULTRA
+	NONE(false, false),
 	
+	NON_FULL(true, false),
+	
+	NO_COLLISION(false, true),
+	
+	BOTH(true, true);
+	
+	public final boolean nonFull;
+	public final boolean noCollision;
+	
+	EDhApiBlocksToAvoid(boolean nonFull, boolean noCollision)
+	{
+		this.nonFull = nonFull;
+		this.noCollision = noCollision;
+	}
 }

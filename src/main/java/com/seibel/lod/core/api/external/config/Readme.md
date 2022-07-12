@@ -1,0 +1,1 @@
+The config api package holds objects and methods for getting/setting Distant Horizons' config values.

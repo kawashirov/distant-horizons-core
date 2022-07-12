@@ -16,34 +16,32 @@
  *    You should have received a copy of the GNU Lesser General Public License
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
- 
-package com.seibel.lod.core.api.external.apiObjects.enums;
+
+package com.seibel.lod.core.api.external.config.objects.enums;
 
 /**
- * BASIC                        <br>
- * IGNORE_HEIGHT                <br>
- * ADDITION                     <br>
- * MAX                          <br>
- * MULTIPLY                     <br>
- * INVERSE_MULTIPLY             <br>
- * LIMITED_ADDITION             <br>
- * MULTIPLY_ADDITION            <br>
- * INVERSE_MULTIPLY_ADDITION    <br>
- * AVERAGE                      <br>
- *
- * @author Leetom
- * @version 2022-4-14
+ * AUTO <br>
+ * Near_First <br>
+ * Far_First <br> <br>
+ * 
+ * Determines which LODs should have priority when generating
+ * outside the normal view distance.
+ * 
+ * @author Leonardo Amato
+ * @version 12-1-2021
  */
-public enum EDhApiHeightFogMixMode
+public enum EDhApiGenerationPriority
 {
-    BASIC,
-    IGNORE_HEIGHT,
-    ADDITION,
-    MAX,
-    MULTIPLY,
-    INVERSE_MULTIPLY,
-    LIMITED_ADDITION,
-    MULTIPLY_ADDITION,
-    INVERSE_MULTIPLY_ADDITION,
-    AVERAGE,
+	// Reminder:
+	// when adding items up the API minor version
+	// when removing items up the API major version
+	
+	/** NEAR_FIRST when connected to servers and BALANCED when on single player */
+	AUTO,
+	
+	NEAR_FIRST,
+	
+	BALANCED,
+	
+	FAR_FIRST
 }

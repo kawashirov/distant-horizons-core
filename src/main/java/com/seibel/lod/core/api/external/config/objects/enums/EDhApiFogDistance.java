@@ -2,7 +2,6 @@
  *    This file is part of the Distant Horizons mod (formerly the LOD Mod),
  *    licensed under the GNU LGPL v3 License.
  *
- *    Copyright (C) 2022  Tom Lee (TomTheFurry)
  *    Copyright (C) 2020-2022  James Seibel
  *
  *    This program is free software: you can redistribute it and/or modify
@@ -17,38 +16,24 @@
  *    You should have received a copy of the GNU Lesser General Public License
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
- 
-package com.seibel.lod.core.api.external.apiObjects.enums;
+
+package com.seibel.lod.core.api.external.config.objects.enums;
 
 /**
- * AUTO <br>
- * SMOOTH_DROPOFF <br>
- * PERFORMANCE_FOCUSED <br> <br>
- *
- * Determines how lod level drop off should be done
+ * NEAR, <br>
+ * FAR, <br>
+ * NEAR_AND_FAR <br>
  * 
- * @author Tom Lee
- * @version 7-1-2022
+ * @author James Seibel
+ * @version 2022-6-2
  */
-public enum EDhApiDropoffQuality
+public enum EDhApiFogDistance
 {
 	// Reminder:
 	// when adding items up the API minor version
 	// when removing items up the API major version
 	
-	
-	/** SMOOTH_DROPOFF when <128 lod view distance, or PERFORMANCE_FOCUSED otherwise */
-	AUTO(-1),
-	
-	SMOOTH_DROPOFF(10),
-	
-	PERFORMANCE_FOCUSED(0);
-	
-	public final int fastModeSwitch;
-	
-	EDhApiDropoffQuality(int fastModeSwitch) {
-		this.fastModeSwitch = fastModeSwitch;
-	}
-	
-	
+	NEAR,
+	FAR,
+	NEAR_AND_FAR
 }

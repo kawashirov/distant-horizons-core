@@ -1,4 +1,4 @@
-package com.seibel.lod.core.api.external.apiObjects.wrapperInterfaces;
+package com.seibel.lod.core.api.external.config.objects.wrapperInterfaces;
 
 /**
  * An interface for Distant Horizon's Config.
