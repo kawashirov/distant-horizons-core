@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.config.client.graphics;
+package com.seibel.lod.core.api.external.config.client;
 
 import com.seibel.lod.core.api.external.apiObjects.enums.*;
 import com.seibel.lod.core.api.external.apiObjects.wrapperInterfaces.IDhApiConfig;
@@ -34,7 +34,7 @@ import com.seibel.lod.core.config.Config.Client.Graphics.FogQuality;
  * these settings will only affect Distant horizons' fog.
  *
  * @author James Seibel
- * @version 2022-7-5
+ * @version 2022-7-11
  */
 public class DhApiGraphicsFog
 {
@@ -68,8 +68,8 @@ public class DhApiGraphicsFog
 	//=======================//
 	
 	/**
-	 * Defines where thed fog starts as a percent of the radius
-	 * of the fake chunks render distance. <br>
+	 * Defines where the fog starts as a percent of the
+	 * fake chunks render distance radius. <br>
 	 * Can be greater than the fog end distance to invert the fog direction. <br> <br>
 	 *
 	 * 0.0 = fog starts at the camera <br>

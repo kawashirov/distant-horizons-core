@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.config.client;
+package com.seibel.lod.core.api.external.config;
 
 import com.seibel.lod.core.api.external.apiObjects.enums.*;
 import com.seibel.lod.core.api.external.apiObjects.wrapperInterfaces.IDhApiConfig;
@@ -35,7 +35,7 @@ import com.seibel.lod.core.enums.config.ELightGenerationMode;
  * Note: Fake chunks are NOT saved in Minecraft's vanilla save system.
  *
  * @author James Seibel
- * @version 2022-7-5
+ * @version 2022-7-11
  */
 public class DhApiWorldGeneration
 {
