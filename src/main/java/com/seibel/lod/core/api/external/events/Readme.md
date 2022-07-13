@@ -1,0 +1,1 @@
+The events api package holds objects and methods for listening to events fired by Distant Horizons'.
