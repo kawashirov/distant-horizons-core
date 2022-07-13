@@ -8,9 +8,9 @@ import java.awt.Color;
  * // TODO what additional data should this hold?
  *
  * @author James Seibel
- * @version 2022-7-11
+ * @version 2022-7-12
  */
-public class TerrainDataPoint
+public class DhApiTerrainDataPoint
 {
 	/**
 	 * The average color for the given data point.
@@ -21,7 +21,7 @@ public class TerrainDataPoint
 	
 	/**
 	 * TODO is this data type correct?
-	 * TODO create a enum that contains useful values (block, chunk, region, etc.)
+	 * TODO create an API enum that contains useful values (block, chunk, region, etc.)
 	 * 0 = block
 	 */
 	public short detailLevel;
