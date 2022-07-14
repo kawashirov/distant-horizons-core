@@ -1,7 +1,7 @@
 package com.seibel.lod.core.api.external.events.interfaces;
 
-import com.seibel.lod.core.objects.math.Mat4f;
-import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
+import com.seibel.lod.core.api.external.shared.interfaces.IDhApiLevelWrapper;
+import com.seibel.lod.core.api.external.shared.objects.math.DhApiMat4f;
 
 /**
  * @author James Seibel
@@ -9,13 +9,16 @@ import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
  */
 public interface IDhApiBeforeRenderEvent extends IDhApiEvent
 {
-	// TODO should we allow editing the levelWrapper MVM matrix, etc.?
-	// TODO make sure to document it either way.
-	
 	/**
 	 * Called before Distant Horizons starts rendering. <Br>
-	 * If this methods returns false, DH's rendering will be skipped for that frame.
+	 * If this method returns false; DH's rendering will be skipped for that frame. <Br> <Br>
+	 *
+	 * The Matrices received are not passed on to the renderer and can be safely
+	 * edited without modifying Minecraft or Distant Horizons' rendering.
 	 */
-	boolean beforeRender(ILevelWrapper levelWrapper, Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, float partialTicks);
+	boolean beforeRender(IDhApiLevelWrapper levelWrapper,
+			DhApiMat4f mcModelViewMatrix, DhApiMat4f mcProjectionMatrix, // the matrices received from Minecraft
+			DhApiMat4f dhModelViewMatrix, DhApiMat4f dhProjectionMatrix, // the matrices used by Distant Horizons
+			float partialTicks);
 	
 }

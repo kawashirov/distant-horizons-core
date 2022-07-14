@@ -17,19 +17,17 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.enums;
+package com.seibel.lod.core.api.external.shared.interfaces;
 
 /**
- * SERVER_LEVEL, <br>
- * CLIENT_LEVEL, <br>
- * UNKNOWN <br>
- *
  * @author James Seibel
  * @version 2022-7-13
  */
-public enum ELevelType
+public interface IDhApiDimensionTypeWrapper
 {
-	SERVER_LEVEL,
-	CLIENT_LEVEL,
-	UNKNOWN
+	String getDimensionName();
+	
+	boolean hasCeiling();
+
+	boolean hasSkyLight();
 }

@@ -17,19 +17,15 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.enums;
+package com.seibel.lod.core.api.external.config.objects.enums;
 
 /**
- * SERVER_LEVEL, <br>
- * CLIENT_LEVEL, <br>
- * UNKNOWN <br>
+ * Assembly classes are used to reference the package they are in.
  *
  * @author James Seibel
  * @version 2022-7-13
  */
-public enum ELevelType
+public class DhApiConfigEnumAssembly
 {
-	SERVER_LEVEL,
-	CLIENT_LEVEL,
-	UNKNOWN
+
 }

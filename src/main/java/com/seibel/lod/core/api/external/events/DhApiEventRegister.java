@@ -1,7 +1,7 @@
 package com.seibel.lod.core.api.external.events;
 
 import com.seibel.lod.core.api.external.events.interfaces.IDhApiEvent;
-import com.seibel.lod.core.api.external.sharedObjects.DhApiResult;
+import com.seibel.lod.core.api.external.shared.objects.DhApiResult;
 
 /**
  * Handles adding/removing event handlers.

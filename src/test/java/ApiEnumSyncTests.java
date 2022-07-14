@@ -17,7 +17,8 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import com.seibel.lod.core.api.external.config.objects.enums.DhApiEnumAssembly;
+import com.seibel.lod.core.api.external.config.objects.enums.DhApiConfigEnumAssembly;
+import com.seibel.lod.core.api.external.shared.enums.DhApiSharedEnumAssembly;
 import com.seibel.lod.core.enums.rendering.EFogDrawMode;
 import com.seibel.lod.core.enums.CoreEnumAssembly;
 import com.seibel.lod.core.enums.config.EVerticalQuality;
@@ -66,16 +67,25 @@ public class ApiEnumSyncTests
 		//================//
 		
 		// make sure the enum packages are loaded
-		new DhApiEnumAssembly();
+		new DhApiConfigEnumAssembly();
+		new DhApiSharedEnumAssembly();
 		new CoreEnumAssembly();
 		
 		// get the list of API enums
 		ArrayList<Class<? extends Enum<?>>> apiEnumClassList = new ArrayList<>();
-		ArrayList<String> apiEnumPackageNames = EnumTestHelper.findPackageNamesStartingWith(DhApiEnumAssembly.class.getPackage().getName());
-		for (String apiEnumPackageName : apiEnumPackageNames)
+		// get the config enums
+		ArrayList<String> apiConfigEnumPackageNames = EnumTestHelper.findPackageNamesStartingWith(DhApiConfigEnumAssembly.class.getPackage().getName());
+		for (String apiEnumPackageName : apiConfigEnumPackageNames)
 		{
 			apiEnumClassList.addAll(EnumTestHelper.getAllEnumsFromPackage(apiEnumPackageName));
 		}
+		// get the shared enums
+		ArrayList<String> apiSharedEnumPackageNames = EnumTestHelper.findPackageNamesStartingWith(DhApiSharedEnumAssembly.class.getPackage().getName());
+		for (String apiEnumPackageName : apiSharedEnumPackageNames)
+		{
+			apiEnumClassList.addAll(EnumTestHelper.getAllEnumsFromPackage(apiEnumPackageName));
+		}
+		
 		
 		// get the list of core enums
 		ArrayList<Class<? extends Enum<?>>> coreEnumClassList = new ArrayList<>();
@@ -93,7 +103,7 @@ public class ApiEnumSyncTests
 		// compare each API enum to its corresponding Core enum
 		for (Class<? extends Enum<?>> apiEnumClass : apiEnumClassList)
 		{
-			String coreEnumName = CoreEnumAssembly.ENUM_PREFIX + apiEnumClass.getSimpleName().substring(DhApiEnumAssembly.API_ENUM_PREFIX.length());
+			String coreEnumName = CoreEnumAssembly.ENUM_PREFIX + apiEnumClass.getSimpleName().substring(DhApiSharedEnumAssembly.API_ENUM_PREFIX.length());
 			boolean coreEnumFound = false;
 			
 			// find the core enum to compare against

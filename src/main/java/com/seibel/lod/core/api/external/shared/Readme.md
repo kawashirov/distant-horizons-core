@@ -1,0 +1,1 @@
+the shared package contains objects, interfaces, methods, etc. used by one or more api packages.

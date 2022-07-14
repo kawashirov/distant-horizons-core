@@ -1,4 +1,4 @@
-package com.seibel.lod.core.api.external.sharedObjects;
+package com.seibel.lod.core.api.external.shared.objects;
 
 /**
  * Allows for more descriptive non-critical failure states.

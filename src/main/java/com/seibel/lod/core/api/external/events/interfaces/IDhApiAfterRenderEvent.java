@@ -1,7 +1,7 @@
 package com.seibel.lod.core.api.external.events.interfaces;
 
-import com.seibel.lod.core.objects.math.Mat4f;
-import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
+import com.seibel.lod.core.api.external.shared.interfaces.IDhApiLevelWrapper;
+import com.seibel.lod.core.api.external.shared.objects.math.DhApiMat4f;
 
 /**
  * @author James Seibel
@@ -14,6 +14,9 @@ public interface IDhApiAfterRenderEvent extends IDhApiEvent
 	 *
 	 * @param renderingEnabled Passes in false if DH rendering was disabled or canceled for this frame.
 	 */
-	void afterRender(ILevelWrapper levelWrapper, Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, float partialTicks, boolean renderingEnabled);
+	void afterRender(IDhApiLevelWrapper levelWrapper,
+			DhApiMat4f mcModelViewMatrix, DhApiMat4f mcProjectionMatrix, // the matrices received from Minecraft
+			DhApiMat4f dhModelViewMatrix, DhApiMat4f dhProjectionMatrix, // the matrices used by Distant Horizons
+			float partialTicks, boolean renderingEnabled);
 	
 }

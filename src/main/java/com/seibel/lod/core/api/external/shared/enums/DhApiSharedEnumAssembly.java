@@ -17,19 +17,15 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.enums;
+package com.seibel.lod.core.api.external.shared.enums;
 
 /**
- * SERVER_LEVEL, <br>
- * CLIENT_LEVEL, <br>
- * UNKNOWN <br>
+ * Assembly classes are used to reference the package they are in.
  *
  * @author James Seibel
  * @version 2022-7-13
  */
-public enum ELevelType
+public class DhApiSharedEnumAssembly
 {
-	SERVER_LEVEL,
-	CLIENT_LEVEL,
-	UNKNOWN
+	public static final String API_ENUM_PREFIX = "EDhApi";
 }

@@ -1,1 +1,0 @@
-the sharedObjects package contains objects used by one or more different api packages.

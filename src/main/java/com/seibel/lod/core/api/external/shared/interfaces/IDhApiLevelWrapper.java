@@ -17,15 +17,33 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.config.objects.enums;
+package com.seibel.lod.core.api.external.shared.interfaces;
+
+import com.seibel.lod.core.api.external.shared.enums.EDhApiLevelType;
 
 /**
- * Assembly classes are used to reference the package they are in.
- *
+ * Can be either a Server or Client level.
+ * 
  * @author James Seibel
- * @version 2022-6-9
+ * @version 2022-7-13
  */
-public class DhApiEnumAssembly
+public interface IDhApiLevelWrapper
 {
-	public static final String API_ENUM_PREFIX = "EDhApi";
+	IDhApiDimensionTypeWrapper getDimensionType();
+	
+	EDhApiLevelType getLevelType();
+	
+	boolean hasCeiling();
+	
+	boolean hasSkyLight();
+	
+	int getHeight();
+	
+	int getSeaLevel();
+	
+	default short getMinHeight()
+	{
+		return 0;
+	}
+	
 }
