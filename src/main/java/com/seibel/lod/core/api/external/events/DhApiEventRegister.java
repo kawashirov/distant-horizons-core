@@ -5,7 +5,6 @@ import com.seibel.lod.core.api.external.sharedObjects.DhApiResult;
 
 /**
  * Handles adding/removing event handlers.
- * Based off of JQuery's event system.
  *
  * @author James Seibel
  * @version 2022-7-13
