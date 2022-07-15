@@ -62,11 +62,11 @@ import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
  * https://stackoverflow.com/questions/63509735/massive-performance-loss-with-glmapbuffer <br><br>
  * 
  * @author James Seibel
- * @version 12-9-2021
+ * @version 2022-7-15
  */
 public class GLProxy
 {
-	public static final boolean OVERWIDE_VANILLA_GL_LOGGER = ModInfo.IS_DEV_BUILD;
+	public static final boolean OVERRIDE_VANILLA_GL_LOGGER = ModInfo.IS_DEV_BUILD;
 
 	private static final IMinecraftClientWrapper MC = SingletonHandler.get(IMinecraftClientWrapper.class);
 	
@@ -237,7 +237,7 @@ public class GLProxy
 		}
 		GL_LOGGER.info("minecraftGlCapabilities:\n"+getVersionInfo(minecraftGlCapabilities));
 
-		if (OVERWIDE_VANILLA_GL_LOGGER)
+		if (OVERRIDE_VANILLA_GL_LOGGER)
 		GLUtil.setupDebugMessageCallback(new PrintStream(new GLMessageOutputStream(GLProxy::logMessage, vanillaDebugMessageBuilder), true));
 
 		GLFW.glfwMakeContextCurrent(0L);
