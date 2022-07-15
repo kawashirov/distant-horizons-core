@@ -25,9 +25,9 @@ import com.seibel.lod.core.api.external.shared.enums.EDhApiLevelType;
  * Can be either a Server or Client level.
  * 
  * @author James Seibel
- * @version 2022-7-13
+ * @version 2022-7-14
  */
-public interface IDhApiLevelWrapper
+public interface IDhApiLevelWrapper extends IDhApiUnsafeWrapper
 {
 	IDhApiDimensionTypeWrapper getDimensionType();
 	

@@ -21,9 +21,9 @@ package com.seibel.lod.core.api.external.shared.interfaces;
 
 /**
  * @author James Seibel
- * @version 2022-7-13
+ * @version 2022-7-14
  */
-public interface IDhApiDimensionTypeWrapper
+public interface IDhApiDimensionTypeWrapper extends IDhApiUnsafeWrapper
 {
 	String getDimensionName();
 	

@@ -32,5 +32,4 @@ public class DhApiEventRegister
 		throw new UnsupportedOperationException();
 	}
 	
-	
 }
