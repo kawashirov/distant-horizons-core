@@ -46,7 +46,7 @@ public interface IChunkWrapper extends IBindable
 	@Deprecated
 	IBlockDetailWrapper getBlockDetail(int x, int y, int z);
 
-	// Returns null if block doesn't exist. Note that this can cross chunk boundaries.
+	/** Returns null if block doesn't exist. Note that this can cross chunk boundaries. */
 	@Deprecated
 	IBlockDetailWrapper getBlockDetailAtFace(int x, int y, int z, ELodDirection dir);
 

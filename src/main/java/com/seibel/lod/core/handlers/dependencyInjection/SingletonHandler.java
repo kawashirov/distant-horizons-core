@@ -36,8 +36,8 @@ public class SingletonHandler
 	/**
 	 * Links the given implementation object to an interface, so it can be referenced later.
 	 * 
-	 * @param dependencyInterface The interface the implementation object should implement.
-	 * @param dependencyImplementation An object that implements the dependencyInterface interface.
+	 * @param interfaceClass The interface the implementation object should implement.
+	 * @param singletonReference An object that implements the dependencyInterface interface.
 	 * @throws IllegalStateException if the implementation object doesn't implement 
 	 *                               the interface or the interface has already been bound.
 	 */
