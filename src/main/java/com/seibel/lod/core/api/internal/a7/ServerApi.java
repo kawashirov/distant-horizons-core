@@ -43,7 +43,7 @@ public class ServerApi
 	public static final boolean ENABLE_STACK_DUMP_LOGGING = false;
 	public static final ServerApi INSTANCE = new ServerApi();
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
-	private static final IVersionConstants VERSION_CONSTANTS = SingletonHandler.get(IVersionConstants.class);
+	private static final IVersionConstants VERSION_CONSTANTS = SingletonHandler.INSTANCE.get(IVersionConstants.class);
 
 	private ServerApi()
 	{

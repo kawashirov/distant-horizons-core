@@ -23,7 +23,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class DhClientServerLevel implements IClientLevel, IServerLevel {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
-    private static final IMinecraftClientWrapper MC_CLIENT = SingletonHandler.get(IMinecraftClientWrapper.class);
+    private static final IMinecraftClientWrapper MC_CLIENT = SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class);
     public final LocalSaveStructure save;
     public final LocalDataFileHandler dataFileHandler;
     public RenderFileHandler renderFileHandler = null;

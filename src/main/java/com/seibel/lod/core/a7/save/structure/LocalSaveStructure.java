@@ -9,7 +9,7 @@ import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import java.io.File;
 
 public class LocalSaveStructure extends SaveStructure {
-    private static final IMinecraftSharedWrapper MC = SingletonHandler.get(IMinecraftSharedWrapper.class);
+    private static final IMinecraftSharedWrapper MC = SingletonHandler.INSTANCE.get(IMinecraftSharedWrapper.class);
 
     private File debugPath = new File("");
 

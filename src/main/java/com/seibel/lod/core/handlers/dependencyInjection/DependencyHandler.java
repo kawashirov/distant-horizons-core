@@ -19,19 +19,35 @@
 
 package com.seibel.lod.core.handlers.dependencyInjection;
 
+import org.apache.logging.log4j.Logger;
+
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * This class takes care of tracking objects used in dependency injection.
- * 
+ *
+ * @param <BindableType> extends IBindable and defines what interfaces this dependency handler can deal with.
  * @author James Seibel
- * @version 3-4-2022
+ * @version 2022-7-15
  */
-public class DependencyHandler
+public class DependencyHandler<BindableType extends IBindable>
 {
-	private final Map<Class<?>, Object> dependencies = new HashMap<Class<?>, Object>();
-	private boolean bindingFinished = false;
+	protected final Logger logger;
+	
+	protected final Map<Class<? extends BindableType>, Object> dependencies = new HashMap<Class<? extends BindableType>, Object>();
+	
+	/** Internal class reference to BindableType since we can't get it any other way. */
+	protected final Class<? extends BindableType> bindableInterface;
+	
+	
+	
+	public DependencyHandler(Class<BindableType> newBindableInterface, Logger newLogger)
+	{
+		this.bindableInterface = newBindableInterface;
+		this.logger = newLogger;
+	}
+	
 	
 
 	/**
@@ -42,15 +58,8 @@ public class DependencyHandler
 	 * @throws IllegalStateException if the implementation object doesn't implement 
 	 *                               the interface or the interface has already been bound.
 	 */
-	public void bind(Class<?> dependencyInterface, Object dependencyImplementation) throws IllegalStateException
+	public void bind(Class<? extends BindableType> dependencyInterface, Object dependencyImplementation) throws IllegalStateException
 	{
-		// only allow binding before the finishBinding method is called
-		if (bindingFinished)
-		{
-			throw new IllegalStateException("The dependency [" + dependencyInterface.getSimpleName() + "] cannot be bound, Binding is finished for [" + this.getClass().getSimpleName() + "]. Make sure your bindings are happening before the [bindingFinished] method is being called.");
-		}
-		
-		
 		// make sure we haven't already bound this dependency
 		if (dependencies.containsKey(dependencyInterface))
 		{
@@ -60,7 +69,7 @@ public class DependencyHandler
 		
 		// make sure the given dependency implements the necessary interfaces
 		boolean implementsInterface = checkIfClassImplements(dependencyImplementation.getClass(), dependencyInterface);
-		boolean implementsBindable = checkIfClassImplements(dependencyImplementation.getClass(), IBindable.class);
+		boolean implementsBindable = checkIfClassImplements(dependencyImplementation.getClass(), this.bindableInterface);
 		
 		// display any errors
 		if (!implementsInterface)
@@ -125,42 +134,31 @@ public class DependencyHandler
 	 *                            (this shouldn't normally happen, unless the bound object changed somehow)
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends IBindable> T get(Class<?> interfaceClass) throws ClassCastException
+	public <T extends BindableType> T get(Class<?> interfaceClass) throws ClassCastException
 	{
-		// getting dependencies should only happen after everything has been bound
-		if (!bindingFinished)
+		T dependency = (T) dependencies.get(interfaceClass);
+		if (dependency != null && !dependency.getDelayedSetupComplete())
 		{
-			throw new IllegalStateException("Binding hasn't been finished for [" + this.getClass().getSimpleName() + "]. Make sure you are calling the [bindingFinished] method before calling [get].");
+			// a warning can be used here instead if desired
+			//this.logger.warn("Got dependency of type [" + interfaceClass.getSimpleName() + "], but the dependency's delayed setup hasn't been run!");
+			throw new IllegalStateException("Got dependency of type [" + interfaceClass.getSimpleName() + "], but the dependency's delayed setup hasn't been run!");
 		}
 		
-		return (T) dependencies.get(interfaceClass);
+		return dependency;
 	}
 	
 	
-	/**
-	 * Should only be called after all Binds have been done.
-	 * Calls the delayedSetup method for each dependency. <br> <br>
-	 * 
-	 * This is done so we can have circular dependencies.
-	 */
-	public void finishBinding()
+	/** Runs delayed setup for any dependencies that require it. */
+	public void runDelayedSetup()
 	{
-		// (yes technically the binding isn't finished,
-		// but this needs to be set to "true" so we can use "get")
-		bindingFinished = true;
-	}
-	
-	/** returns whether the finishBinding method has been called */
-	public boolean getBindingFinished()
-	{
-		return bindingFinished;
-	}
-
-	public void runDelayedSetup() {
 		for (Class<?> interfaceKey : dependencies.keySet())
 		{
 			IBindable concreteObject = get(interfaceKey);
-			concreteObject.finishDelayedSetup();
+			if (!concreteObject.getDelayedSetupComplete())
+			{
+				concreteObject.finishDelayedSetup();
+			}
 		}
 	}
+	
 }

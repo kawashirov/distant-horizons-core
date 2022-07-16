@@ -32,7 +32,7 @@ public class LodRenderProgram extends ShaderProgram {
 	public static final String VERTEX_SHADER_PATH = "shaders/standard.vert";
 	public static final String VERTEX_CURVE_SHADER_PATH = "shaders/curve.vert";
 	public static final String FRAGMENT_SHADER_PATH = "shaders/flat_shaded.frag";
-	private static final IVersionConstants VERSION_CONSTANTS = SingletonHandler.get(IVersionConstants.class);
+	private static final IVersionConstants VERSION_CONSTANTS = SingletonHandler.INSTANCE.get(IVersionConstants.class);
 	
 	public final VertexAttribute vao;
 

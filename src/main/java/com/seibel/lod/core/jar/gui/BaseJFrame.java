@@ -33,7 +33,7 @@ public class BaseJFrame extends JFrame {
     }
 
     public void init() {
-        setTitle(SingletonHandler.get(IConfigWrapper.class).getLang("lod.title"));
+        setTitle(SingletonHandler.INSTANCE.get(IConfigWrapper.class).getLang("lod.title"));
         try {
             setIconImage(new FlatSVGIcon(JarMain.accessFile("icon.svg")).getImage());
         } catch (Exception e) {e.printStackTrace();}

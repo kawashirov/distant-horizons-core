@@ -68,7 +68,7 @@ public class GLProxy
 {
 	public static final boolean OVERRIDE_VANILLA_GL_LOGGER = ModInfo.IS_DEV_BUILD;
 
-	private static final IMinecraftClientWrapper MC = SingletonHandler.get(IMinecraftClientWrapper.class);
+	private static final IMinecraftClientWrapper MC = SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class);
 	
 	private ExecutorService workerThread = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(GLProxy.class.getSimpleName() + "-Worker-Thread").build());
 	

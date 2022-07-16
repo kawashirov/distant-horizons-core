@@ -36,7 +36,7 @@ import com.seibel.lod.core.enums.rendering.EFogDrawMode;
  * presence/absence of Vivecraft.
  * 
  * @author James Seibel
- * @version 12-14-2021
+ * @version 2022-7-15
  */
 public class ReflectionHandler implements IReflectionHandler
 {
@@ -49,14 +49,23 @@ public class ReflectionHandler implements IReflectionHandler
 	
 	private Boolean sodiumPresent = null;
 	private boolean optifinePresent = false;
-
+	
+	private boolean delayedSetupDone = false;
+	
+	
+	
+	
 	@Override
 	public void finishDelayedSetup()
 	{
-		mcOptionsObject = SingletonHandler.get(IMinecraftClientWrapper.class).getOptionsObject();
+		mcOptionsObject = SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class).getOptionsObject();
 		setupFogField(mcOptionsObject.getClass().getDeclaredFields());
+		
+		this.delayedSetupDone = true;
 	}
 	
+	@Override
+	public boolean getDelayedSetupComplete() { return this.delayedSetupDone; }
 	
 	private ReflectionHandler()
 	{

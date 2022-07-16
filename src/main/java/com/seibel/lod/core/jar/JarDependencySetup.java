@@ -6,7 +6,7 @@ import com.seibel.lod.core.wrapperInterfaces.config.IConfigWrapper;
 
 public class JarDependencySetup {
     public static void createInitialBindings() {
-        SingletonHandler.bind(IConfigWrapper.class, ConfigWrapper.INSTANCE);
+        SingletonHandler.INSTANCE.bind(IConfigWrapper.class, ConfigWrapper.INSTANCE);
         ConfigWrapper.init();
     }
 }

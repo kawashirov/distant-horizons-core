@@ -43,7 +43,6 @@ public class JarMain {
 
 
         JarDependencySetup.createInitialBindings();
-        SingletonHandler.finishBinding();
         GitlabGetter.init();
         System.out.println("WARNING: The standalone jar still work in progress");
 

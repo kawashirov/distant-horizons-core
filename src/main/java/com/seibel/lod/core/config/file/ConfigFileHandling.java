@@ -24,7 +24,7 @@ import java.nio.file.Path;
  * @version 2022-5-26
  */
 public class ConfigFileHandling {
-    public static final Path ConfigPath = SingletonHandler.get(IMinecraftSharedWrapper.class).getInstallationDirectory().toPath().resolve("config").resolve(ModInfo.NAME+".toml");
+    public static final Path ConfigPath = SingletonHandler.INSTANCE.get(IMinecraftSharedWrapper.class).getInstallationDirectory().toPath().resolve("config").resolve(ModInfo.NAME+".toml");
 
     /** Saves the config to the file */
     public static void saveToFile() {
@@ -170,7 +170,7 @@ public class ConfigFileHandling {
             } catch (IOException ex) {
                 System.out.println("Creating file failed");
                 ex.printStackTrace();
-                SingletonHandler.get(IMinecraftClientWrapper.class).crashMinecraft("Loading file and resetting config file failed at path ["+ConfigPath+"]. Please check the file is ok and you have the permissions", ex);
+                SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class).crashMinecraft("Loading file and resetting config file failed at path ["+ConfigPath+"]. Please check the file is ok and you have the permissions", ex);
             }
         }
     }

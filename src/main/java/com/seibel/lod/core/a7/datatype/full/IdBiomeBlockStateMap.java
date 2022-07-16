@@ -12,7 +12,7 @@ import java.util.Objects;
 
 // WARNING: This is not THREAD-SAFE!
 public class IdBiomeBlockStateMap {
-    public static final IWrapperFactory FACTORY = SingletonHandler.get(IWrapperFactory.class);
+    public static final IWrapperFactory FACTORY = SingletonHandler.INSTANCE.get(IWrapperFactory.class);
 
     public static final class Entry {
         public final IBiomeWrapper biome;

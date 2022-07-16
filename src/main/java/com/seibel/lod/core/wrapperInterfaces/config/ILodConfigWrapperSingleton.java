@@ -264,7 +264,7 @@ public interface ILodConfigWrapperSingleton extends IBindable
 			
 			default EGenerationPriority getResolvedGenerationPriority() {
 				EGenerationPriority priority = Config.Client.WorldGenerator.generationPriority.get();
-				IMinecraftClientWrapper MC = SingletonHandler.get(IMinecraftClientWrapper.class);
+				IMinecraftClientWrapper MC = SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class);
 				if (priority == EGenerationPriority.AUTO)
 					priority = MC.hasSinglePlayerServer() ? EGenerationPriority.FAR_FIRST : EGenerationPriority.BALANCED;
 				return priority;

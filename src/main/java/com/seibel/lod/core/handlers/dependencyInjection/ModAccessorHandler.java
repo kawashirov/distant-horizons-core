@@ -27,69 +27,37 @@ import java.lang.invoke.MethodHandles;
 
 /**
  * This class takes care of dependency injection for mods accessors. (for mod compatibility
- * support).
+ * support).  <Br> <Br>
  * 
- * This is basically the same as the SingletonHandler, except it can return null. 
- * Getting null either means the mod isn't loaded in the game
- * or it hasn't been implemented for the given Minecraft version.
+ * If a IModAccessor returns null either that means the mod isn't loaded in the game
+ * or an Accessor hasn't been implemented for the given Minecraft version.
  * 
  * @author James Seibel
  * @author Leetom
- * @version 3-1-2022
+ * @version 2022-7-15
  */
-public class ModAccessorHandler
+public class ModAccessorHandler extends DependencyHandler<IModAccessor>
 {
-	private static final DependencyHandler dependencyHandler = new DependencyHandler();
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 	
+	public static final ModAccessorHandler INSTANCE = new ModAccessorHandler(IModAccessor.class, LOGGER);
+	
+	
+	public ModAccessorHandler(Class<IModAccessor> newBindableInterface, Logger newLogger)
+	{
+		super(newBindableInterface, LOGGER);
+	}
+	
 	
 	/**
-	 * Links the given mod accessor to an interface, so it can be referenced later.
-	 * 
-	 * @param interfaceClass The interface the mod accessor should implement.
-	 * @param modAccessor An object that implements the interfaceClass interface.
-	 * @throws IllegalStateException if the mod accessor doesn't implement 
-	 *                               the interface or the interface has already been bound.
+	 * Go to {@link DependencyHandler#bind(Class, Object) DependencyHandler.bind()}
+	 * for this method's javadocs.
 	 */
-	public static void bind(Class<? extends IModAccessor> interfaceClass, IModAccessor modAccessor)
+	public void bind(Class<? extends IModAccessor> interfaceClass, IModAccessor modAccessor)
 			throws IllegalStateException
 	{
-		dependencyHandler.bind(interfaceClass, modAccessor);
+		super.bind(interfaceClass, modAccessor);
 		LOGGER.info("Registered mod compatibility accessor for " + modAccessor.getModName());
-	}
-	
-	/**
-	 * Returns a mod accessor of type T if one has been bound.
-	 * Returns null otherwise.
-	 * 
-	 * @param <T> class of the mod accessor
-	 *            (inferred from the objectClass parameter)
-	 * @param objectClass class of the mod accessor, must extend IModAccessor
-	 * @return the dependency of type T
-	 * @throws ClassCastException If the mod accessor isn't able to be cast to type T. 
-	 *                            (this shouldn't normally happen, unless the bound object changed somehow)
-	 */
-	public static <T extends IModAccessor> T get(Class<T> objectClass) throws ClassCastException
-	{
-		return dependencyHandler.get(objectClass);
-	}
-	
-	
-	/**
-	 * Should only be called after all Binds have been done.
-	 * Calls the delayedSetup method for each dependency. <br> <br>
-	 * 
-	 * This is done so we can have circular dependencies.
-	 */
-	public static void finishBinding()
-	{
-		dependencyHandler.finishBinding();
-	}
-	
-	/** returns whether the finishBinding method has been called */
-	public static boolean bindingFinished() 
-	{
-		return dependencyHandler.getBindingFinished();
 	}
 	
 }

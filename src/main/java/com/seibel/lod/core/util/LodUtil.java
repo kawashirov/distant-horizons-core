@@ -48,8 +48,8 @@ import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
  */
 public class LodUtil
 {
-	private static final IMinecraftClientWrapper MC_CLIENT = SingletonHandler.getOrNull(IMinecraftClientWrapper.class);
-	private static final IMinecraftRenderWrapper MC_RENDER = SingletonHandler.getOrNull(IMinecraftRenderWrapper.class);
+	private static final IMinecraftClientWrapper MC_CLIENT = SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class);
+	private static final IMinecraftRenderWrapper MC_RENDER = SingletonHandler.INSTANCE.get(IMinecraftRenderWrapper.class);
 	
 	/**
 	 * Vanilla render distances less than or equal to this will not allow partial

@@ -18,7 +18,7 @@ import java.util.stream.Stream;
 
 public class ClientOnlySaveStructure extends SaveStructure {
     final File folder;
-    private static final IMinecraftClientWrapper MC_CLIENT = SingletonHandler.get(IMinecraftClientWrapper.class);
+    private static final IMinecraftClientWrapper MC_CLIENT = SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class);
     public static final String INVALID_FILE_CHARACTERS_REGEX = "[\\\\/:*?\"<>|]";
     private static String getServerFolderName()
     {

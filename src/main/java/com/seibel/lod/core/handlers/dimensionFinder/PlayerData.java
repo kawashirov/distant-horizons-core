@@ -38,7 +38,7 @@ import java.io.File;
  */
 public class PlayerData
 {
-	public static final IWrapperFactory FACTORY = SingletonHandler.get(IWrapperFactory.class);
+	public static final IWrapperFactory FACTORY = SingletonHandler.INSTANCE.get(IWrapperFactory.class);
 	
 	private static final String playerDataFileName = "_playerData.toml";
 	

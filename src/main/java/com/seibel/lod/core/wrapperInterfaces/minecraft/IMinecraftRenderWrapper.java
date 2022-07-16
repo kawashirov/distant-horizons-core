@@ -85,7 +85,7 @@ public interface IMinecraftRenderWrapper extends IBindable
 	 */
 	default HashSet<DHChunkPos> getVanillaRenderedChunks()
 	{
-		ISodiumAccessor sodium = ModAccessorHandler.get(ISodiumAccessor.class);
+		ISodiumAccessor sodium = ModAccessorHandler.INSTANCE.get(ISodiumAccessor.class);
 		return sodium==null ? getMaximumRenderedChunks() : sodium.getNormalRenderedChunks();
 	}
 
@@ -101,10 +101,10 @@ public interface IMinecraftRenderWrapper extends IBindable
 	 */
 	default HashSet<DHChunkPos> getMaximumRenderedChunks()
 	{
-		IMinecraftClientWrapper mcWrapper = SingletonHandler.get(IMinecraftClientWrapper.class);
-		IWrapperFactory factory = SingletonHandler.get(IWrapperFactory.class);
-		IVersionConstants versionConstants = SingletonHandler.get(IVersionConstants.class);
-		IMinecraftClientWrapper minecraft = SingletonHandler.get(IMinecraftClientWrapper.class);
+		IMinecraftClientWrapper mcWrapper = SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class);
+		IWrapperFactory factory = SingletonHandler.INSTANCE.get(IWrapperFactory.class);
+		IVersionConstants versionConstants = SingletonHandler.INSTANCE.get(IVersionConstants.class);
+		IMinecraftClientWrapper minecraft = SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class);
 		ILevelWrapper clientWorld = minecraft.getWrappedClientWorld();
 
 		int chunkDist = this.getRenderDistance() + 1; // For some reason having '+1' is actually closer to real value

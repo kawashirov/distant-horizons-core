@@ -45,7 +45,7 @@ public class RenderSystemTest {
             LogManager.getLogger(RenderSystemTest.class), () -> ELoggerMode.LOG_ALL_TO_CHAT);
     public static final ConfigBasedSpamLogger spamLogger = new ConfigBasedSpamLogger(
             LogManager.getLogger(RenderSystemTest.class), () -> ELoggerMode.LOG_ALL_TO_CHAT, 1);
-    private static final IMinecraftRenderWrapper MC_RENDER = SingletonHandler.get(IMinecraftRenderWrapper.class);
+    private static final IMinecraftRenderWrapper MC_RENDER = SingletonHandler.INSTANCE.get(IMinecraftRenderWrapper.class);
 
     ShaderProgram basicShader;
     GLVertexBuffer sameContextBuffer;

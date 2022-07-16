@@ -50,7 +50,7 @@ import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
  * @version 10-10-2021
  */
 public class LodRegion {
-	private static final ILodConfigWrapperSingleton CONFIG = SingletonHandler.get(ILodConfigWrapperSingleton.class);
+	private static final ILodConfigWrapperSingleton CONFIG = SingletonHandler.INSTANCE.get(ILodConfigWrapperSingleton.class);
 	/** Number of detail level supported by a region */
 	private static final byte POSSIBLE_LOD = LodUtil.DETAIL_OPTIONS;
 
@@ -332,7 +332,7 @@ public class LodRegion {
 
 	private EGenerationPriority getResolvedGenerationPriority() {
 		EGenerationPriority priority = Config.Client.WorldGenerator.generationPriority.get();
-		IMinecraftClientWrapper MC = SingletonHandler.get(IMinecraftClientWrapper.class);
+		IMinecraftClientWrapper MC = SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class);
 		if (priority == EGenerationPriority.AUTO)
 			priority = MC.hasSinglePlayerServer() ? EGenerationPriority.FAR_FIRST : EGenerationPriority.BALANCED;
 		return priority;

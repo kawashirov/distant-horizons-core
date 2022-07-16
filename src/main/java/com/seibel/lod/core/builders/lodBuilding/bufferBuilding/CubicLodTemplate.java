@@ -38,7 +38,7 @@ import com.seibel.lod.core.wrapperInterfaces.config.ILodConfigWrapperSingleton;
  */
 public class CubicLodTemplate
 {
-	private static final ILodConfigWrapperSingleton CONFIG = SingletonHandler.get(ILodConfigWrapperSingleton.class);
+	private static final ILodConfigWrapperSingleton CONFIG = SingletonHandler.INSTANCE.get(ILodConfigWrapperSingleton.class);
 
 	public static void addLodToBuffer(long data, long topData, long botData, LodDataView[][] adjData,
                                       boolean[] adjFillBlack, byte detailLevel, int offsetPosX, int offsetOosZ, LodQuadBuilder quadBuilder, EDebugMode debugging)

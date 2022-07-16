@@ -19,80 +19,28 @@
 
 package com.seibel.lod.core.handlers.dependencyInjection;
 
+import com.seibel.lod.core.logging.DhLoggerBuilder;
+import com.seibel.lod.core.wrapperInterfaces.modAccessor.IModAccessor;
+import org.apache.logging.log4j.Logger;
+
+import java.lang.invoke.MethodHandles;
+
 /**
  * This class takes care of dependency injection
  * for singletons.
  * 
  * @author James Seibel
- * @version 3-5-2022
+ * @version 2022-7-15
  */
-public class SingletonHandler
+public class SingletonHandler extends DependencyHandler<IBindable>
 {
-	private static final DependencyHandler dependencyHandler = new DependencyHandler();
-		
-	// TODO: FIX Javadoc
-	//  This is the exact same javadoc as in DependencyHandler.java
-	//  Ths method doesnt even use dependencyInterface or dependencyImplementation
-	/**
-	 * Links the given implementation object to an interface, so it can be referenced later.
-	 * 
-	 * @param interfaceClass The interface the implementation object should implement.
-	 * @param singletonReference An object that implements the dependencyInterface interface.
-	 * @throws IllegalStateException if the implementation object doesn't implement 
-	 *                               the interface or the interface has already been bound.
-	 */
-	public static void bind(Class<?> interfaceClass, Object singletonReference) throws IllegalStateException
-	{
-		dependencyHandler.bind(interfaceClass, singletonReference);
-	}
-
-	/**
-	 * Returns a dependency of type T if one has been bound.
-	 * Returns null otherwise.
-	 * 
-	 * @param <T> class of the dependency
-	 *            (inferred from the objectClass parameter)
-	 * @param interfaceClass Interface of the dependency
-	 * @return the dependency of type T
-	 * @throws NullPointerException If no dependency was bound.
-	 * @throws ClassCastException If the dependency isn't able to be cast to type T. 
-	 *                            (this shouldn't normally happen, unless the bound object changed somehow)
-	 */
-	public static <T> T get(Class<T> interfaceClass) throws NullPointerException, ClassCastException
-	{
-		T foundObject = dependencyHandler.get(interfaceClass);
-		
-		// throw an error if the given singleton doesn't exist.
-		if (foundObject == null)
-		{
-			throw new NullPointerException("The singleton [" + interfaceClass.getSimpleName() + "] was never bound. If you are calling [bind], make sure it is happening before you call [get].");
-		}
-		
-		return foundObject;
-	}
-	public static <T> T getOrNull(Class<T> interfaceClass) throws ClassCastException
-	{
-		return dependencyHandler.get(interfaceClass);
-	}
-
-	/**
-	 * Should only be called after all Binds have been done.
-	 * Calls the delayedSetup method for each dependency. <br> <br>
-	 * 
-	 * This is done so we can have circular dependencies.
-	 */
-	public static void finishBinding()
-	{
-		dependencyHandler.finishBinding();
-	}
+	private static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 	
-	/** returns whether the finishBinding method has been called */
-	public static boolean getBindingFinished() 
+	public static final SingletonHandler INSTANCE = new SingletonHandler(IBindable.class, LOGGER);
+	
+	
+	public SingletonHandler(Class<IBindable> newBindableInterface, Logger newLogger)
 	{
-		return dependencyHandler.getBindingFinished();
-	}
-
-	public static void runDelayedSetup() {
-		dependencyHandler.runDelayedSetup();
+		super(newBindableInterface, newLogger);
 	}
 }
