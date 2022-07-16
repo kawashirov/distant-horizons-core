@@ -8,7 +8,7 @@ import com.seibel.lod.core.api.external.items.objects.DhApiResult;
  * Handles adding/removing world generator overrides.
  *
  * @author James Seibel
- * @version 2022-7-14
+ * @version 2022-7-15
  */
 public class DhApiWorldGeneratorOverrideRegister
 {
@@ -20,7 +20,7 @@ public class DhApiWorldGeneratorOverrideRegister
 	 * If another world generator has already been registered, DhApiResult will return
 	 * the name of the previously registered generator and success = false.
 	 */
-	public static DhApiResult RegisterWorldGeneratorOverride(IDhApiWorldGenerator worldGenerator)
+	public static DhApiResult registerWorldGeneratorOverride(IDhApiWorldGenerator worldGenerator)
 	{
 		throw new UnsupportedOperationException();
 	}
@@ -32,36 +32,7 @@ public class DhApiWorldGeneratorOverrideRegister
 	 * If another world generator has already been registered, DhApiResult will return
 	 * the name of the previously registered generator and success = false.
 	 */
-	public static DhApiResult RegisterWorldGeneratorOverride(IDhApiLevelWrapper levelWrapper, IDhApiWorldGenerator worldGenerator)
-	{
-		throw new UnsupportedOperationException();
-	}
-	
-	
-	
-	/**
-	 * Removes the given world generator for the given level if it has been registered. <br>
-	 * If the world generator wasn't registered, the result will return success = false.
-	 */
-	public static DhApiResult UnRegisterWorldGeneratorOverride(IDhApiLevelWrapper levelWrapper, IDhApiWorldGenerator worldGenerator)
-	{
-		throw new UnsupportedOperationException();
-	}
-	
-	/**
-	 * Removes the registered world generator for the given level if one has been registered. <br>
-	 * If no world generator was registered, the result will return success = false.
-	 */
-	public static DhApiResult UnRegisterWorldGeneratorOverride(IDhApiLevelWrapper levelWrapper)
-	{
-		throw new UnsupportedOperationException();
-	}
-	
-	/**
-	 * Removes the registered world generator for each level it was registered. <br>
-	 * If this world generator wasn't registered for any level, the result will return success = false.
-	 */
-	public static DhApiResult UnRegisterWorldGeneratorOverride(IDhApiWorldGenerator worldGenerator)
+	public static DhApiResult registerWorldGeneratorOverride(IDhApiLevelWrapper levelWrapper, IDhApiWorldGenerator worldGenerator)
 	{
 		throw new UnsupportedOperationException();
 	}
