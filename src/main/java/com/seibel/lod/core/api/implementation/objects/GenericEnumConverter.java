@@ -1,6 +1,6 @@
 package com.seibel.lod.core.api.implementation.objects;
 
-import com.seibel.lod.core.api.implementation.interfaces.IConverter;
+import com.seibel.lod.core.api.implementation.interfaces.config.IConverter;
 
 /**
  * This assumes the two enums contain the same values.
