@@ -1,27 +1,15 @@
 package com.seibel.lod.core.a7.datatype;
 
-import java.util.ConcurrentModificationException;
 import java.util.concurrent.*;
 
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.a7.datatype.transform.LodDataBuilder;
 import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.config.Config;
-import com.seibel.lod.core.enums.ELodDirection;
-import com.seibel.lod.core.enums.config.EBlocksToAvoid;
-import com.seibel.lod.core.enums.config.EDistanceGenerationMode;
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
 import com.seibel.lod.core.logging.ConfigBasedLogger;
-import com.seibel.lod.core.objects.DHBlockPos;
 import com.seibel.lod.core.objects.DHChunkPos;
-import com.seibel.lod.core.objects.lod.LodRegion;
 import com.seibel.lod.core.util.*;
-import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
-import com.seibel.lod.core.wrapperInterfaces.block.IBlockDetailWrapper;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
-import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
-import com.seibel.lod.core.wrapperInterfaces.world.IDimensionTypeWrapper;
-import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import org.apache.logging.log4j.LogManager;
 
 public class LodBuilder {

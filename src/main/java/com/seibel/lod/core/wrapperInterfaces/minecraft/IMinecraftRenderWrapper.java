@@ -23,8 +23,8 @@ import java.awt.Color;
 import java.util.HashSet;
 
 import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
-import com.seibel.lod.core.handlers.dependencyInjection.ModAccessorHandler;
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
+import com.seibel.lod.core.handlers.dependencyInjection.ModAccessorInjector;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.objects.DHBlockPos;
 import com.seibel.lod.core.objects.DHChunkPos;
 import com.seibel.lod.core.objects.math.Mat4f;
@@ -85,7 +85,7 @@ public interface IMinecraftRenderWrapper extends IBindable
 	 */
 	default HashSet<DHChunkPos> getVanillaRenderedChunks()
 	{
-		ISodiumAccessor sodium = ModAccessorHandler.INSTANCE.get(ISodiumAccessor.class);
+		ISodiumAccessor sodium = ModAccessorInjector.INSTANCE.get(ISodiumAccessor.class);
 		return sodium==null ? getMaximumRenderedChunks() : sodium.getNormalRenderedChunks();
 	}
 
@@ -101,10 +101,10 @@ public interface IMinecraftRenderWrapper extends IBindable
 	 */
 	default HashSet<DHChunkPos> getMaximumRenderedChunks()
 	{
-		IMinecraftClientWrapper mcWrapper = SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class);
-		IWrapperFactory factory = SingletonHandler.INSTANCE.get(IWrapperFactory.class);
-		IVersionConstants versionConstants = SingletonHandler.INSTANCE.get(IVersionConstants.class);
-		IMinecraftClientWrapper minecraft = SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class);
+		IMinecraftClientWrapper mcWrapper = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
+		IWrapperFactory factory = SingletonInjector.INSTANCE.get(IWrapperFactory.class);
+		IVersionConstants versionConstants = SingletonInjector.INSTANCE.get(IVersionConstants.class);
+		IMinecraftClientWrapper minecraft = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 		ILevelWrapper clientWorld = minecraft.getWrappedClientWorld();
 
 		int chunkDist = this.getRenderDistance() + 1; // For some reason having '+1' is actually closer to real value

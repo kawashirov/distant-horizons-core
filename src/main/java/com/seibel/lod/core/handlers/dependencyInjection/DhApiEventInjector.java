@@ -34,12 +34,12 @@ import java.util.ArrayList;
  * @author Leetom
  * @version 2022-7-16
  */
-public class DhApiEventHandler extends DependencyHandler<IDhApiEvent>
+public class DhApiEventInjector extends DependencyInjector<IDhApiEvent>
 {
-	public static final DhApiEventHandler INSTANCE = new DhApiEventHandler();
+	public static final DhApiEventInjector INSTANCE = new DhApiEventInjector();
 	
 	
-	public DhApiEventHandler()
+	public DhApiEventInjector()
 	{
 		super(IDhApiEvent.class, true);
 	}

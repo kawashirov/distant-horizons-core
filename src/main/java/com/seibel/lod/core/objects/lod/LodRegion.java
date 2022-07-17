@@ -28,7 +28,7 @@ import com.seibel.lod.core.enums.config.EDistanceGenerationMode;
 import com.seibel.lod.core.enums.config.EDropoffQuality;
 import com.seibel.lod.core.enums.config.EGenerationPriority;
 import com.seibel.lod.core.enums.config.EVerticalQuality;
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.objects.*;
 import com.seibel.lod.core.util.DataPointUtil;
 import com.seibel.lod.core.util.DetailDistanceUtil;
@@ -50,7 +50,7 @@ import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
  * @version 10-10-2021
  */
 public class LodRegion {
-	private static final ILodConfigWrapperSingleton CONFIG = SingletonHandler.INSTANCE.get(ILodConfigWrapperSingleton.class);
+	private static final ILodConfigWrapperSingleton CONFIG = SingletonInjector.INSTANCE.get(ILodConfigWrapperSingleton.class);
 	/** Number of detail level supported by a region */
 	private static final byte POSSIBLE_LOD = LodUtil.DETAIL_OPTIONS;
 
@@ -332,7 +332,7 @@ public class LodRegion {
 
 	private EGenerationPriority getResolvedGenerationPriority() {
 		EGenerationPriority priority = Config.Client.WorldGenerator.generationPriority.get();
-		IMinecraftClientWrapper MC = SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class);
+		IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 		if (priority == EGenerationPriority.AUTO)
 			priority = MC.hasSinglePlayerServer() ? EGenerationPriority.FAR_FIRST : EGenerationPriority.BALANCED;
 		return priority;

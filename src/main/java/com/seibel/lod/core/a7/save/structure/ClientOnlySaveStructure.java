@@ -3,7 +3,7 @@ package com.seibel.lod.core.a7.save.structure;
 import com.seibel.lod.core.a7.save.io.LevelToFileMatcher;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.enums.config.EServerFolderNameMode;
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.objects.ParsedIp;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
@@ -18,7 +18,7 @@ import java.util.stream.Stream;
 
 public class ClientOnlySaveStructure extends SaveStructure {
     final File folder;
-    private static final IMinecraftClientWrapper MC_CLIENT = SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class);
+    private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
     public static final String INVALID_FILE_CHARACTERS_REGEX = "[\\\\/:*?\"<>|]";
     private static String getServerFolderName()
     {

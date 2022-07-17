@@ -2,7 +2,7 @@ package com.seibel.lod.core.api.external.methods.events;
 
 import com.seibel.lod.core.api.implementation.interfaces.events.IDhApiEvent;
 import com.seibel.lod.core.api.external.items.objects.DhApiResult;
-import com.seibel.lod.core.handlers.dependencyInjection.DhApiEventHandler;
+import com.seibel.lod.core.handlers.dependencyInjection.DhApiEventInjector;
 
 /**
  * Handles adding/removing event handlers.
@@ -22,7 +22,7 @@ public class DhApiEventRegister
 	{
 		try
 		{
-			DhApiEventHandler.INSTANCE.bind(eventInterface, eventHandlerImplementation);
+			DhApiEventInjector.INSTANCE.bind(eventInterface, eventHandlerImplementation);
 			return new DhApiResult(true, "");
 		}
 		catch (IllegalStateException e)
@@ -38,7 +38,7 @@ public class DhApiEventRegister
 	 */
 	public static DhApiResult off(Class<? extends IDhApiEvent> eventInterface, Class<IDhApiEvent> eventHandlerClass)
 	{
-		if (DhApiEventHandler.INSTANCE.unbind(eventInterface, eventHandlerClass))
+		if (DhApiEventInjector.INSTANCE.unbind(eventInterface, eventHandlerClass))
 		{
 			return new DhApiResult(true, "");
 		}

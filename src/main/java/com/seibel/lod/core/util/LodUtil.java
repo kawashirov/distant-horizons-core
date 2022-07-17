@@ -27,7 +27,7 @@ import java.util.concurrent.Executors;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.enums.config.EServerFolderNameMode;
 import com.seibel.lod.core.enums.config.EVanillaOverdraw;
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.objects.DHChunkPos;
 import com.seibel.lod.core.objects.ParsedIp;
 import com.seibel.lod.core.objects.Pos2D;
@@ -48,8 +48,8 @@ import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
  */
 public class LodUtil
 {
-	private static final IMinecraftClientWrapper MC_CLIENT = SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class);
-	private static final IMinecraftRenderWrapper MC_RENDER = SingletonHandler.INSTANCE.get(IMinecraftRenderWrapper.class);
+	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
+	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	
 	/**
 	 * Vanilla render distances less than or equal to this will not allow partial

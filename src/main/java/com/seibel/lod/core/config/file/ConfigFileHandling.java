@@ -6,7 +6,7 @@ import com.seibel.lod.core.api.internal.a7.ClientApi;
 import com.seibel.lod.core.config.ConfigBase;
 import com.seibel.lod.core.config.types.AbstractConfigType;
 import com.seibel.lod.core.config.types.ConfigEntry;
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
 import org.json.simple.JSONObject;
@@ -24,7 +24,7 @@ import java.nio.file.Path;
  * @version 2022-5-26
  */
 public class ConfigFileHandling {
-    public static final Path ConfigPath = SingletonHandler.INSTANCE.get(IMinecraftSharedWrapper.class).getInstallationDirectory().toPath().resolve("config").resolve(ModInfo.NAME+".toml");
+    public static final Path ConfigPath = SingletonInjector.INSTANCE.get(IMinecraftSharedWrapper.class).getInstallationDirectory().toPath().resolve("config").resolve(ModInfo.NAME+".toml");
 
     /** Saves the config to the file */
     public static void saveToFile() {
@@ -170,7 +170,7 @@ public class ConfigFileHandling {
             } catch (IOException ex) {
                 System.out.println("Creating file failed");
                 ex.printStackTrace();
-                SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class).crashMinecraft("Loading file and resetting config file failed at path ["+ConfigPath+"]. Please check the file is ok and you have the permissions", ex);
+                SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class).crashMinecraft("Loading file and resetting config file failed at path ["+ConfigPath+"]. Please check the file is ok and you have the permissions", ex);
             }
         }
     }

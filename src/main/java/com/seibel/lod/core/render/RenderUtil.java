@@ -19,7 +19,7 @@
 
 package com.seibel.lod.core.render;
 
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.objects.DHBlockPos;
 import com.seibel.lod.core.objects.DHChunkPos;
 import com.seibel.lod.core.objects.math.Vec3f;
@@ -35,7 +35,7 @@ import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
  */
 public class RenderUtil
 {
-	private static final IMinecraftRenderWrapper MC_RENDER = SingletonHandler.INSTANCE.get(IMinecraftRenderWrapper.class);
+	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	
 	
 	/**

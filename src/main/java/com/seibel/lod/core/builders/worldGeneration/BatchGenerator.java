@@ -19,19 +19,17 @@
 
 package com.seibel.lod.core.builders.worldGeneration;
 
-import com.seibel.lod.core.a7.level.IClientLevel;
 import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.enums.config.EDistanceGenerationMode;
 import com.seibel.lod.core.enums.config.EGenerationPriority;
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.objects.PosToGenerateContainer;
 import com.seibel.lod.core.util.LevelPosUtil;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
-import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.worldGeneration.AbstractBatchGenerationEnvionmentWrapper;
 import com.seibel.lod.core.wrapperInterfaces.worldGeneration.AbstractBatchGenerationEnvionmentWrapper.Steps;
 import org.apache.logging.log4j.Logger;
@@ -42,8 +40,8 @@ public class BatchGenerator
 {
 	public static final boolean ENABLE_GENERATOR_STATS_LOGGING = false;
 
-	private static final IMinecraftClientWrapper MC = SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class);
-	private static final IWrapperFactory FACTORY = SingletonHandler.INSTANCE.get(IWrapperFactory.class);
+	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
+	private static final IWrapperFactory FACTORY = SingletonInjector.INSTANCE.get(IWrapperFactory.class);
 	public AbstractBatchGenerationEnvionmentWrapper generationGroup;
 	public ILevel targetLodLevel;
 	public static final int generationGroupSize = 4;

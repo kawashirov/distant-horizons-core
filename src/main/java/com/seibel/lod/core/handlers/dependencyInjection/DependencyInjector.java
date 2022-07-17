@@ -30,7 +30,7 @@ import java.util.Map;
  * @author James Seibel
  * @version 2022-7-16
  */
-public class DependencyHandler<BindableType extends IBindable>
+public class DependencyInjector<BindableType extends IBindable>
 {
 	protected final Map<Class<? extends BindableType>, ArrayList<BindableType>> dependencies = new HashMap<>();
 	
@@ -40,13 +40,13 @@ public class DependencyHandler<BindableType extends IBindable>
 	protected final boolean allowDuplicateBindings;
 	
 	
-	public DependencyHandler(Class<BindableType> newBindableInterface)
+	public DependencyInjector(Class<BindableType> newBindableInterface)
 	{
 		this.bindableInterface = newBindableInterface;
 		this.allowDuplicateBindings = false;
 	}
 	
-	public DependencyHandler(Class<BindableType> newBindableInterface, boolean newAllowDuplicateBindings)
+	public DependencyInjector(Class<BindableType> newBindableInterface, boolean newAllowDuplicateBindings)
 	{
 		this.bindableInterface = newBindableInterface;
 		this.allowDuplicateBindings = newAllowDuplicateBindings;

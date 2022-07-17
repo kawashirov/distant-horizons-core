@@ -27,7 +27,7 @@ import com.seibel.lod.core.enums.rendering.ERendererMode;
 import com.seibel.lod.core.enums.config.*;
 import com.seibel.lod.core.enums.rendering.*;
 import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.objects.FogSettings;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 
@@ -264,7 +264,7 @@ public interface ILodConfigWrapperSingleton extends IBindable
 			
 			default EGenerationPriority getResolvedGenerationPriority() {
 				EGenerationPriority priority = Config.Client.WorldGenerator.generationPriority.get();
-				IMinecraftClientWrapper MC = SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class);
+				IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 				if (priority == EGenerationPriority.AUTO)
 					priority = MC.hasSinglePlayerServer() ? EGenerationPriority.FAR_FIRST : EGenerationPriority.BALANCED;
 				return priority;

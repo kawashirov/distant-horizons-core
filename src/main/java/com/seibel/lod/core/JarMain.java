@@ -2,7 +2,6 @@ package com.seibel.lod.core;
 
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
 import com.seibel.lod.core.jar.DarkModeDetector;
 import com.seibel.lod.core.jar.gui.BaseJFrame;
 import com.seibel.lod.core.jar.gui.cusomJObject.JBox;

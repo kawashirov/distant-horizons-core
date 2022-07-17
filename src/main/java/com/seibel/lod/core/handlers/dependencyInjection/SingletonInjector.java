@@ -26,11 +26,11 @@ package com.seibel.lod.core.handlers.dependencyInjection;
  * @author James Seibel
  * @version 2022-7-16
  */
-public class SingletonHandler extends DependencyHandler<IBindable>
+public class SingletonInjector extends DependencyInjector<IBindable>
 {
-	public static final SingletonHandler INSTANCE = new SingletonHandler(IBindable.class);
+	public static final SingletonInjector INSTANCE = new SingletonInjector(IBindable.class);
 	
 	
-	public SingletonHandler(Class<IBindable> newBindableInterface) { super(newBindableInterface, false); }
+	public SingletonInjector(Class<IBindable> newBindableInterface) { super(newBindableInterface, false); }
 	
 }

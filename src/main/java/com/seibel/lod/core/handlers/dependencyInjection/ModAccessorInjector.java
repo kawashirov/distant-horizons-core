@@ -36,21 +36,21 @@ import java.lang.invoke.MethodHandles;
  * @author Leetom
  * @version 2022-7-16
  */
-public class ModAccessorHandler extends DependencyHandler<IModAccessor>
+public class ModAccessorInjector extends DependencyInjector<IModAccessor>
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 	
-	public static final ModAccessorHandler INSTANCE = new ModAccessorHandler(IModAccessor.class);
+	public static final ModAccessorInjector INSTANCE = new ModAccessorInjector(IModAccessor.class);
 	
 	
-	public ModAccessorHandler(Class<IModAccessor> newBindableInterface)
+	public ModAccessorInjector(Class<IModAccessor> newBindableInterface)
 	{
 		super(newBindableInterface, false);
 	}
 	
 	
 	/**
-	 * Go to {@link DependencyHandler#bind(Class, IBindable)} DependencyHandler.bind()}
+	 * Go to {@link DependencyInjector#bind(Class, IBindable)} DependencyHandler.bind()}
 	 * for this method's javadocs.
 	 */
 	public void bind(Class<? extends IModAccessor> interfaceClass, IModAccessor modAccessor)
