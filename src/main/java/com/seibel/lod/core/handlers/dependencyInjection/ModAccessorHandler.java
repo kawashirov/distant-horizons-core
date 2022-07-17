@@ -34,30 +34,30 @@ import java.lang.invoke.MethodHandles;
  * 
  * @author James Seibel
  * @author Leetom
- * @version 2022-7-15
+ * @version 2022-7-16
  */
 public class ModAccessorHandler extends DependencyHandler<IModAccessor>
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 	
-	public static final ModAccessorHandler INSTANCE = new ModAccessorHandler(IModAccessor.class, LOGGER);
+	public static final ModAccessorHandler INSTANCE = new ModAccessorHandler(IModAccessor.class);
 	
 	
-	public ModAccessorHandler(Class<IModAccessor> newBindableInterface, Logger newLogger)
+	public ModAccessorHandler(Class<IModAccessor> newBindableInterface)
 	{
-		super(newBindableInterface, LOGGER);
+		super(newBindableInterface, false);
 	}
 	
 	
 	/**
-	 * Go to {@link DependencyHandler#bind(Class, Object) DependencyHandler.bind()}
+	 * Go to {@link DependencyHandler#bind(Class, IBindable)} DependencyHandler.bind()}
 	 * for this method's javadocs.
 	 */
 	public void bind(Class<? extends IModAccessor> interfaceClass, IModAccessor modAccessor)
 			throws IllegalStateException
 	{
 		super.bind(interfaceClass, modAccessor);
-		LOGGER.info("Registered mod compatibility accessor for " + modAccessor.getModName());
+		LOGGER.info("Registered mod compatibility accessor for: [" + modAccessor.getModName() + "].");
 	}
 	
 }

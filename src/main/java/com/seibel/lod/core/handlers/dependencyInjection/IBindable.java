@@ -23,7 +23,7 @@ package com.seibel.lod.core.handlers.dependencyInjection;
  * Necessary for all singletons that can be dependency injected.
  * 
  * @author James Seibel
- * @version 3-4-2022
+ * @version 2022-7-16
  */
 public interface IBindable
 {

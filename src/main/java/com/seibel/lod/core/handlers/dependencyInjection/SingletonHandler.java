@@ -19,28 +19,18 @@
 
 package com.seibel.lod.core.handlers.dependencyInjection;
 
-import com.seibel.lod.core.logging.DhLoggerBuilder;
-import com.seibel.lod.core.wrapperInterfaces.modAccessor.IModAccessor;
-import org.apache.logging.log4j.Logger;
-
-import java.lang.invoke.MethodHandles;
-
 /**
  * This class takes care of dependency injection
  * for singletons.
  * 
  * @author James Seibel
- * @version 2022-7-15
+ * @version 2022-7-16
  */
 public class SingletonHandler extends DependencyHandler<IBindable>
 {
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
-	
-	public static final SingletonHandler INSTANCE = new SingletonHandler(IBindable.class, LOGGER);
+	public static final SingletonHandler INSTANCE = new SingletonHandler(IBindable.class);
 	
 	
-	public SingletonHandler(Class<IBindable> newBindableInterface, Logger newLogger)
-	{
-		super(newBindableInterface, newLogger);
-	}
+	public SingletonHandler(Class<IBindable> newBindableInterface) { super(newBindableInterface, false); }
+	
 }
