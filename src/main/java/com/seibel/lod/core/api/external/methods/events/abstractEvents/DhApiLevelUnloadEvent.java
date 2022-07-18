@@ -9,8 +9,8 @@ import com.seibel.lod.core.api.implementation.interfaces.events.IDhApiEvent;
  */
 public abstract class DhApiLevelUnloadEvent implements IDhApiEvent<DhApiLevelUnloadEvent.EventParam>
 {
-	/** Fired after Distant Horizons loads a new client level. */
-	public abstract void levelUnload();
+	/** Fired after Distant Horizons unloads a level. */
+	public abstract void levelUnload(EventParam input);
 	
 	
 	//=========================//
@@ -18,9 +18,9 @@ public abstract class DhApiLevelUnloadEvent implements IDhApiEvent<DhApiLevelUnl
 	//=========================//
 	
 	@Override
-	public final boolean onEvent(EventParam ignoredParam)
+	public final boolean onEvent(EventParam input)
 	{
-		levelUnload();
+		levelUnload(input);
 		return false;
 	}
 	
