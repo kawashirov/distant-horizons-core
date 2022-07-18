@@ -21,7 +21,7 @@ package com.seibel.lod.core.render;
 
 import java.awt.Color;
 
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.objects.math.Mat4f;
 import com.seibel.lod.core.objects.math.Vec3f;
 import com.seibel.lod.core.render.objects.*;
@@ -32,7 +32,7 @@ public class LodRenderProgram extends ShaderProgram {
 	public static final String VERTEX_SHADER_PATH = "shaders/standard.vert";
 	public static final String VERTEX_CURVE_SHADER_PATH = "shaders/curve.vert";
 	public static final String FRAGMENT_SHADER_PATH = "shaders/flat_shaded.frag";
-	private static final IVersionConstants VERSION_CONSTANTS = SingletonHandler.INSTANCE.get(IVersionConstants.class);
+	private static final IVersionConstants VERSION_CONSTANTS = SingletonInjector.INSTANCE.get(IVersionConstants.class);
 	
 	public final VertexAttribute vao;
 

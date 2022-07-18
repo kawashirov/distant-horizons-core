@@ -25,11 +25,10 @@ import com.seibel.lod.core.builders.lodBuilding.bufferBuilding.LodBufferBuilderF
 import com.seibel.lod.core.config.types.ConfigEntry;
 import com.seibel.lod.core.enums.rendering.EDebugMode;
 import com.seibel.lod.core.enums.rendering.EFogColorMode;
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.logging.ConfigBasedSpamLogger;
 import com.seibel.lod.core.objects.DHBlockPos;
-import com.seibel.lod.core.a7.level.DhClientServerLevel;
 import com.seibel.lod.core.a7.render.RenderBufferHandler;
 import com.seibel.lod.core.objects.math.Mat4f;
 import com.seibel.lod.core.objects.math.Vec3d;
@@ -79,8 +78,8 @@ public class a7LodRenderer
 
 		}
 	}
-	private static final IMinecraftClientWrapper MC = SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class);
-	private static final IMinecraftRenderWrapper MC_RENDER = SingletonHandler.INSTANCE.get(IMinecraftRenderWrapper.class);
+	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
+	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 
 	public EDebugMode previousDebugMode = null;
 	public final IClientLevel level;

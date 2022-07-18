@@ -22,7 +22,7 @@ package com.seibel.lod.core.handlers;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import org.apache.logging.log4j.Logger;
@@ -58,7 +58,7 @@ public class ReflectionHandler implements IReflectionHandler
 	@Override
 	public void finishDelayedSetup()
 	{
-		mcOptionsObject = SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class).getOptionsObject();
+		mcOptionsObject = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class).getOptionsObject();
 		setupFogField(mcOptionsObject.getClass().getDeclaredFields());
 		
 		this.delayedSetupDone = true;

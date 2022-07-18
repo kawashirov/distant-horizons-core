@@ -8,7 +8,7 @@ import com.seibel.lod.core.a7.pos.DhBlockPos2D;
 import com.seibel.lod.core.a7.render.RenderBufferHandler;
 import com.seibel.lod.core.a7.save.structure.ClientOnlySaveStructure;
 import com.seibel.lod.core.config.Config;
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.objects.math.Mat4f;
 import com.seibel.lod.core.render.a7LodRenderer;
@@ -23,7 +23,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class DhClientLevel implements IClientLevel {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
-    private static final IMinecraftClientWrapper MC_CLIENT = SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class);
+    private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
     public final ClientOnlySaveStructure save;
     public final RemoteDataFileHandler dataFileHandler;
     public final RenderFileHandler renderFileHandler;

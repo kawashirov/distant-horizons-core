@@ -21,11 +21,10 @@ package com.seibel.lod.core.handlers.dimensionFinder;
 
 
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.objects.DHBlockPos;
 import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
-import org.lwjgl.system.CallbackI;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -38,7 +37,7 @@ import java.io.File;
  */
 public class PlayerData
 {
-	public static final IWrapperFactory FACTORY = SingletonHandler.INSTANCE.get(IWrapperFactory.class);
+	public static final IWrapperFactory FACTORY = SingletonInjector.INSTANCE.get(IWrapperFactory.class);
 	
 	private static final String playerDataFileName = "_playerData.toml";
 	

@@ -21,7 +21,7 @@ package com.seibel.lod.core.render;
 
 import com.seibel.lod.core.enums.config.EGpuUploadMethod;
 import com.seibel.lod.core.enums.config.ELoggerMode;
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.ConfigBasedLogger;
 
 import com.seibel.lod.core.logging.ConfigBasedSpamLogger;
@@ -45,7 +45,7 @@ public class RenderSystemTest {
             LogManager.getLogger(RenderSystemTest.class), () -> ELoggerMode.LOG_ALL_TO_CHAT);
     public static final ConfigBasedSpamLogger spamLogger = new ConfigBasedSpamLogger(
             LogManager.getLogger(RenderSystemTest.class), () -> ELoggerMode.LOG_ALL_TO_CHAT, 1);
-    private static final IMinecraftRenderWrapper MC_RENDER = SingletonHandler.INSTANCE.get(IMinecraftRenderWrapper.class);
+    private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 
     ShaderProgram basicShader;
     GLVertexBuffer sameContextBuffer;

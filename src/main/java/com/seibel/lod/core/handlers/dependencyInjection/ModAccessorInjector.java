@@ -26,21 +26,38 @@ import org.apache.logging.log4j.Logger;
 import java.lang.invoke.MethodHandles;
 
 /**
- * This class takes care of dependency injection
- * for singletons.
+ * This class takes care of dependency injection for mods accessors. (for mod compatibility
+ * support).  <Br> <Br>
+ * 
+ * If a IModAccessor returns null either that means the mod isn't loaded in the game
+ * or an Accessor hasn't been implemented for the given Minecraft version.
  * 
  * @author James Seibel
- * @version 2022-7-15
+ * @author Leetom
+ * @version 2022-7-16
  */
-public class SingletonHandler extends DependencyHandler<IBindable>
+public class ModAccessorInjector extends DependencyInjector<IModAccessor>
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 	
-	public static final SingletonHandler INSTANCE = new SingletonHandler(IBindable.class, LOGGER);
+	public static final ModAccessorInjector INSTANCE = new ModAccessorInjector(IModAccessor.class);
 	
 	
-	public SingletonHandler(Class<IBindable> newBindableInterface, Logger newLogger)
+	public ModAccessorInjector(Class<IModAccessor> newBindableInterface)
 	{
-		super(newBindableInterface, newLogger);
+		super(newBindableInterface, false);
 	}
+	
+	
+	/**
+	 * Go to {@link DependencyInjector#bind(Class, IBindable)} DependencyHandler.bind()}
+	 * for this method's javadocs.
+	 */
+	public void bind(Class<? extends IModAccessor> interfaceClass, IModAccessor modAccessor)
+			throws IllegalStateException
+	{
+		super.bind(interfaceClass, modAccessor);
+		LOGGER.info("Registered mod compatibility accessor for: [" + modAccessor.getModName() + "].");
+	}
+	
 }

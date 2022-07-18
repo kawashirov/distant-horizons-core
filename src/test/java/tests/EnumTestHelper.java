@@ -1,4 +1,4 @@
-/*
+package tests;/*
  *    This file is part of the Distant Horizons mod (formerly the LOD Mod),
  *    licensed under the GNU LGPL v3 License.
  *

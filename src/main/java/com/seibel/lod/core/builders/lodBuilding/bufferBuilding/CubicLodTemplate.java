@@ -20,7 +20,7 @@
 package com.seibel.lod.core.builders.lodBuilding.bufferBuilding;
 
 import com.seibel.lod.core.enums.rendering.EDebugMode;
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.objects.LodDataView;
 import com.seibel.lod.core.a7.datatype.column.accessor.ColumnArrayView;
 import com.seibel.lod.core.a7.datatype.column.render.ColumnBox;
@@ -38,7 +38,7 @@ import com.seibel.lod.core.wrapperInterfaces.config.ILodConfigWrapperSingleton;
  */
 public class CubicLodTemplate
 {
-	private static final ILodConfigWrapperSingleton CONFIG = SingletonHandler.INSTANCE.get(ILodConfigWrapperSingleton.class);
+	private static final ILodConfigWrapperSingleton CONFIG = SingletonInjector.INSTANCE.get(ILodConfigWrapperSingleton.class);
 
 	public static void addLodToBuffer(long data, long topData, long botData, LodDataView[][] adjData,
                                       boolean[] adjFillBlack, byte detailLevel, int offsetPosX, int offsetOosZ, LodQuadBuilder quadBuilder, EDebugMode debugging)

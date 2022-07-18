@@ -1,6 +1,6 @@
 package com.seibel.lod.core.a7.datatype.full;
 
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
@@ -12,7 +12,7 @@ import java.util.Objects;
 
 // WARNING: This is not THREAD-SAFE!
 public class IdBiomeBlockStateMap {
-    public static final IWrapperFactory FACTORY = SingletonHandler.INSTANCE.get(IWrapperFactory.class);
+    public static final IWrapperFactory FACTORY = SingletonInjector.INSTANCE.get(IWrapperFactory.class);
 
     public static final class Entry {
         public final IBiomeWrapper biome;

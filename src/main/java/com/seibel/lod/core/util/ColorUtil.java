@@ -19,9 +19,6 @@
 
 package com.seibel.lod.core.util;
 
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
-import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
-
 /**
  * 
  * @author Cola

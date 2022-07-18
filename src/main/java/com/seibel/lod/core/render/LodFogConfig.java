@@ -24,7 +24,7 @@ import com.seibel.lod.core.enums.rendering.EFogDrawMode;
 import com.seibel.lod.core.enums.rendering.EFogDistance;
 import com.seibel.lod.core.enums.rendering.*;
 import com.seibel.lod.core.handlers.IReflectionHandler;
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.objects.FogSettings;
 import com.seibel.lod.core.render.objects.Shader;
 import com.seibel.lod.core.wrapperInterfaces.config.ILodConfigWrapperSingleton;
@@ -46,8 +46,8 @@ import static com.seibel.lod.core.render.GLProxy.GL_LOGGER;
  */
 public class LodFogConfig
 {
-	private static final IReflectionHandler REFLECTION_HANDLER = SingletonHandler.INSTANCE.get(IReflectionHandler.class);
-	private static final ILodConfigWrapperSingleton CONFIG = SingletonHandler.INSTANCE.get(ILodConfigWrapperSingleton.class);
+	private static final IReflectionHandler REFLECTION_HANDLER = SingletonInjector.INSTANCE.get(IReflectionHandler.class);
+	private static final ILodConfigWrapperSingleton CONFIG = SingletonInjector.INSTANCE.get(ILodConfigWrapperSingleton.class);
 	
 	public static final boolean DEBUG_DUMP_GENERATED_CODE = false;
 	

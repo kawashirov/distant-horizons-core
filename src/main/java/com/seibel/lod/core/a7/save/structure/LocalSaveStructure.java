@@ -1,15 +1,13 @@
 package com.seibel.lod.core.a7.save.structure;
 
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
-import com.seibel.lod.core.util.LodUtil;
-import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 
 import java.io.File;
 
 public class LocalSaveStructure extends SaveStructure {
-    private static final IMinecraftSharedWrapper MC = SingletonHandler.INSTANCE.get(IMinecraftSharedWrapper.class);
+    private static final IMinecraftSharedWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftSharedWrapper.class);
 
     private File debugPath = new File("");
 

@@ -1,4 +1,4 @@
-package com.seibel.lod.core.api.implementation.interfaces;
+package com.seibel.lod.core.api.implementation.interfaces.config;
 
 
 /**
@@ -7,7 +7,7 @@ package com.seibel.lod.core.api.implementation.interfaces;
  * @param <CoreType> The type used by DH Core (not visible to the API user)
  * @param <ApiType> The type used by DH API (not used by Core)
  * @author James Seibel
- * @version 2022-6-30
+ * @version 2022-7-16
  */
 public interface IConverter<CoreType, ApiType>
 {

@@ -42,7 +42,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.seibel.lod.core.ModInfo;
 import com.seibel.lod.core.enums.config.EGpuUploadMethod;
 import com.seibel.lod.core.enums.rendering.EGLProxyContext;
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.util.GLMessage;
 import com.seibel.lod.core.util.GLMessageOutputStream;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
@@ -68,7 +68,7 @@ public class GLProxy
 {
 	public static final boolean OVERRIDE_VANILLA_GL_LOGGER = ModInfo.IS_DEV_BUILD;
 
-	private static final IMinecraftClientWrapper MC = SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class);
+	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	
 	private ExecutorService workerThread = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(GLProxy.class.getSimpleName() + "-Worker-Thread").build());
 	

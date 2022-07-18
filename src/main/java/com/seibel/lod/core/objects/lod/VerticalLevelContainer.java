@@ -26,7 +26,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonHandler;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.objects.LodDataView;
 import com.seibel.lod.core.util.*;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
@@ -68,7 +68,7 @@ public class VerticalLevelContainer implements LevelContainer
 		size = 1 << (LodUtil.REGION_DETAIL_LEVEL - detailLevel);
 		verticalSize = DetailDistanceUtil.getMaxVerticalData(detailLevel);
 		dataContainer = new long[size * size * DetailDistanceUtil.getMaxVerticalData(detailLevel)];
-		minHeight = SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class).getWrappedClientWorld().getMinHeight();
+		minHeight = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class).getWrappedClientWorld().getMinHeight();
 	}
 	
 	@Override
@@ -319,7 +319,7 @@ public class VerticalLevelContainer implements LevelContainer
 	}
 	
 	public VerticalLevelContainer(DataInputStream inputData, int version, byte expectedDetailLevel) throws IOException {
-		minHeight = SingletonHandler.INSTANCE.get(IMinecraftClientWrapper.class).getWrappedClientWorld().getMinHeight();
+		minHeight = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class).getWrappedClientWorld().getMinHeight();
 		detailLevel = inputData.readByte();
 		if (detailLevel != expectedDetailLevel)
 			throw new IOException("Invalid Data: The expected detail level should be "+expectedDetailLevel+
