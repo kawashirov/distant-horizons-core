@@ -1,4 +1,4 @@
-package com.seibel.lod.core.api.external.methods.events.parameterObjects;
+package com.seibel.lod.core.api.external.methods.events.sharedParameterObjects;
 
 import com.seibel.lod.core.api.external.items.objects.math.DhApiMat4f;
 
@@ -8,7 +8,7 @@ import com.seibel.lod.core.api.external.items.objects.math.DhApiMat4f;
  * @author James Seibel
  * @version 7-17-2022
  */
-class DhApiRenderParam // default visibility so this class isn't visible outside the package
+public class DhApiRenderParam
 {
 	/** The projection matrix Minecraft is using to render this frame. */
 	public final DhApiMat4f MinecraftProjectionMatrix;
