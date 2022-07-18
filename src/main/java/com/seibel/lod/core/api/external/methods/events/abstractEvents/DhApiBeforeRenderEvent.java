@@ -8,14 +8,14 @@ import com.seibel.lod.core.api.implementation.interfaces.events.IDhApiEvent;
  * @author James Seibel
  * @version 2022-7-17
  */
-public abstract class DhApiBeforeRenderEvent implements IDhApiEvent<DhApiBeforeRenderEvent.Parameter>
+public abstract class DhApiBeforeRenderEvent implements IDhApiEvent<DhApiBeforeRenderEvent.EventParam>
 {
 	/**
 	 * Fired before Distant Horizons finishes rendering fake chunks.
 	 *
 	 * @return whether the event should be canceled or not.
 	 */
-	public abstract boolean beforeRender(Parameter input);
+	public abstract boolean beforeRender(EventParam input);
 	
 	
 	//=========================//
@@ -23,7 +23,7 @@ public abstract class DhApiBeforeRenderEvent implements IDhApiEvent<DhApiBeforeR
 	//=========================//
 	
 	@Override
-	public final boolean onEvent(Parameter input)
+	public final boolean onEvent(EventParam input)
 	{
 		return beforeRender(input);
 	}
@@ -36,9 +36,9 @@ public abstract class DhApiBeforeRenderEvent implements IDhApiEvent<DhApiBeforeR
 	// parameter object //
 	//==================//
 	
-	public static class Parameter extends DhApiRenderParam
+	public static class EventParam extends DhApiRenderParam
 	{
-		public Parameter(
+		public EventParam(
 				DhApiMat4f newMinecraftProjectionMatrix, DhApiMat4f newMinecraftModelViewMatrix,
 				DhApiMat4f newDistantHorizonsProjectionMatrix, DhApiMat4f newDistantHorizonsModelViewMatrix,
 				float newPartialTicks)

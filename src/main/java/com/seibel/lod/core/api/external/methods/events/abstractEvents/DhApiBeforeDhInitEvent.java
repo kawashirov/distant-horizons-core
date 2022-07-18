@@ -1,6 +1,5 @@
 package com.seibel.lod.core.api.external.methods.events.abstractEvents;
 
-import com.seibel.lod.core.api.external.methods.events.sharedParameterObjects.DhApiAfterRenderParam;
 import com.seibel.lod.core.api.implementation.interfaces.events.IDhApiEvent;
 
 /**
