@@ -15,7 +15,7 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>>
     private String comment;
     private T min;
     private T max;
-    
+
     // API control //
     /**
      * If true this config can be controlled by the API <br>
@@ -23,17 +23,21 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>>
      */
     public final boolean allowApiOverride;
     private T apiValue;
-    
-    
-    
+    private Runnable runnable; // What to run when the value gets changed
+
+    private ConfigEntryPerformance performance;
+
+
     /** Creates the entry */
-    private ConfigEntry(ConfigEntryAppearance appearance, T value, String comment, T min, T max, boolean allowApiOverride) {
+    private ConfigEntry(ConfigEntryAppearance appearance, T value, String comment, T min, T max, boolean allowApiOverride, Runnable runnable, ConfigEntryPerformance performance) {
         super(appearance, value);
         this.defaultValue = value;
         this.comment = comment;
         this.min = min;
         this.max = max;
         this.allowApiOverride = allowApiOverride;
+        this.runnable = runnable;
+        this.performance = performance;
     }
 
 
@@ -99,6 +103,10 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>>
         this.comment = newComment;
     }
 
+    /** Gets the performance impact of an option */
+    public ConfigEntryPerformance getPerformance() {
+        return this.performance;
+    }
 
     /**
      * Checks if the option is valid
@@ -151,11 +159,24 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>>
         }
     }
 
+    public Runnable getRunnable() {
+        return this.runnable;
+    }
+    public void setRunnable(Runnable runnable) {
+        this.runnable = runnable;
+    }
+    public void runRunnable() {
+        if (runnable != null)
+            runnable.run();
+    }
+
     public static class Builder<T> extends AbstractConfigType.Builder<T, Builder<T>> {
         private String tmpComment = null;
         private T tmpMin;
         private T tmpMax;
         private boolean tmpUseApiOverwrite;
+        private Runnable runnable;
+        private ConfigEntryPerformance performance = ConfigEntryPerformance.DONT_SHOW;
 
         public Builder<T> comment(String newComment) {
             this.tmpComment = newComment;
@@ -188,9 +209,20 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>>
             return this;
         }
 
+        public Builder<T> setRunnable(Runnable runnable) {
+            this.runnable = runnable;
+            return this;
+        }
+
+        public Builder<T> setPerformance(ConfigEntryPerformance performance) {
+            this.performance = performance;
+            return this;
+        }
+
+
 
         public ConfigEntry<T> build() {
-            return new ConfigEntry<T>(tmpAppearance, tmpValue, tmpComment, tmpMin, tmpMax, tmpUseApiOverwrite);
+            return new ConfigEntry<T>(tmpAppearance, tmpValue, tmpComment, tmpMin, tmpMax, tmpUseApiOverwrite, runnable, performance);
         }
     }
 }

@@ -173,10 +173,8 @@ public class Config
             {
                 public static ConfigEntry<EFogDistance> fogDistance = new ConfigEntry.Builder<EFogDistance>()
                         .set(EFogDistance.FAR)
-                        .comment(""
-                                + "At what distance should Fog be drawn on the fake chunks? \n"
-                                + "\n"
-                                + "This setting shouldn't affect performance.")
+                        .comment("At what distance should Fog be drawn on the fake chunks?")
+                        .setPerformance(ConfigEntryPerformance.NONE)
                         .build();
 
                 public static ConfigEntry<EFogDrawMode> fogDrawMode = new ConfigEntry.Builder<EFogDrawMode>()
@@ -396,9 +394,8 @@ public class Config
                                 + "    LODs will render on top of distant vanilla chunks to hide delayed loading. \n"
                                 + "    Will dynamically decide the border offset based on vanilla render distance. \n"
                                 + EVanillaOverdraw.ALWAYS + ": \n"
-                                + "    LODs will render on all vanilla chunks preventing all holes in the world. \n"
-                                + "\n"
-                                + "This setting shouldn't affect performance.")
+                                + "    LODs will render on all vanilla chunks preventing all holes in the world.")
+                        .setPerformance(ConfigEntryPerformance.NONE)
                         .build();
 
                 public static ConfigEntry<Integer> overdrawOffset = new ConfigEntry.Builder<Integer>()
@@ -417,9 +414,8 @@ public class Config
                         .set(true)
                         .comment(""
                                 + "Will prevent some overdraw issues, but may cause nearby fake chunks to render incorrectly \n"
-                                + " especially when in/near an ocean. \n"
-                                + "\n"
-                                + "This setting shouldn't affect performance.")
+                                + " especially when in/near an ocean.")
+                        .setPerformance(ConfigEntryPerformance.NONE)
                         .build();
 
                 public static ConfigEntry<Double> brightnessMultiplier = new ConfigEntry.Builder<Double>() // TODO: Make this a float (the ClassicConfigGUI dosnt support floats)
@@ -589,9 +585,8 @@ public class Config
                             + "\n"
                             + EGenerationPriority.AUTO + " \n"
                             + "Uses " + EGenerationPriority.BALANCED + " when on a single player world \n"
-                            + " and " + EGenerationPriority.NEAR_FIRST + " when connected to a server. \n"
-                            + "\n"
-                            + "This shouldn't affect performance.")
+                            + " and " + EGenerationPriority.NEAR_FIRST + " when connected to a server.")
+                    .setPerformance(ConfigEntryPerformance.NONE)
                     .build();
 
             public static ConfigEntry<EBlocksToAvoid> blocksToAvoid = new ConfigEntry.Builder<EBlocksToAvoid>()
@@ -605,9 +600,8 @@ public class Config
                             + EBlocksToAvoid.NONE + ": Use all blocks when generating fake chunks \n"
                             + EBlocksToAvoid.NON_FULL + ": Only use full blocks when generating fake chunks (ignores slabs, lanterns, torches, tall grass, etc.) \n"
                             + EBlocksToAvoid.NO_COLLISION + ": Only use solid blocks when generating fake chunks (ignores tall grass, torches, etc.) \n"
-                            + EBlocksToAvoid.BOTH + ": Only use full solid blocks when generating fake chunks \n"
-                            + "\n"
-                            + "This wont't affect performance.")
+                            + EBlocksToAvoid.BOTH + ": Only use full solid blocks when generating fake chunks")
+                    .setPerformance(ConfigEntryPerformance.NONE)
                     .build();
 
             public static ConfigEntry<Boolean> tintWithAvoidedBlocks = new ConfigEntry.Builder<Boolean>()
