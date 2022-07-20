@@ -8,11 +8,11 @@ import org.junit.Assert;
 import org.junit.Test;
 import testItems.dependencyInjection.implementations.DhTestEvent;
 import testItems.dependencyInjection.implementations.DhTestEventAlt;
-import testItems.dependencyInjection.interfaces.ITestOne;
-import testItems.dependencyInjection.interfaces.ITestTwo;
-import testItems.dependencyInjection.objects.ConcreteTestBoth;
-import testItems.dependencyInjection.objects.ConcreteTestOne;
-import testItems.dependencyInjection.objects.ConcreteTestTwo;
+import testItems.dependencyInjection.interfaces.ISingletonTestOne;
+import testItems.dependencyInjection.interfaces.ISingletonTestTwo;
+import testItems.dependencyInjection.objects.ConcreteSingletonTestBoth;
+import testItems.dependencyInjection.objects.ConcreteSingletonTestOne;
+import testItems.dependencyInjection.objects.ConcreteSingletonTestTwo;
 import testItems.dependencyInjection.objects.DhApiTestEvent;
 
 import java.util.ArrayList;
@@ -20,74 +20,71 @@ import java.util.ArrayList;
 
 /**
  * @author James Seibel
- * @version 7-16-2022
+ * @version 2022-7-19
  */
 public class DependencyInjectorTest
 {
-	public static DependencyInjector<IBindable> TEST_SINGLETON_HANDLER;
-	
-	public static DhApiEventInjector TEST_EVENT_HANDLER;
 	
 	@Test
-	public void testSingleImplementations()
+	public void testSingleImplementationSingleton()
 	{
 		// clear the previous dependencies and only allow single dependencies
-		TEST_SINGLETON_HANDLER = new DependencyInjector<>(IBindable.class, false);
+		DependencyInjector<IBindable> TEST_SINGLETON_HANDLER = new DependencyInjector<>(IBindable.class, false);
 		
 		
 		// pre-setup
-		Assert.assertNull(ITestOne.class.getSimpleName() + " should not have been bound.", TEST_SINGLETON_HANDLER.get(ITestOne.class));
+		Assert.assertNull(ISingletonTestOne.class.getSimpleName() + " should not have been bound.", TEST_SINGLETON_HANDLER.get(ISingletonTestOne.class));
 		
 		
 		// dependency setup
-		TEST_SINGLETON_HANDLER.bind(ITestOne.class, new ConcreteTestOne());
-		TEST_SINGLETON_HANDLER.bind(ITestTwo.class, new ConcreteTestTwo());
+		TEST_SINGLETON_HANDLER.bind(ISingletonTestOne.class, new ConcreteSingletonTestOne());
+		TEST_SINGLETON_HANDLER.bind(ISingletonTestTwo.class, new ConcreteSingletonTestTwo());
 		
 		TEST_SINGLETON_HANDLER.runDelayedSetup();
 		
 		
 		// basic dependencies
-		ITestOne testInterOne = TEST_SINGLETON_HANDLER.get(ITestOne.class);
-		Assert.assertNotNull(ITestOne.class.getSimpleName() + " not bound.", testInterOne);
-		Assert.assertEquals(ITestOne.class.getSimpleName() + " incorrect value.", testInterOne.getValue(), ConcreteTestOne.VALUE);
+		ISingletonTestOne testInterOne = TEST_SINGLETON_HANDLER.get(ISingletonTestOne.class);
+		Assert.assertNotNull(ISingletonTestOne.class.getSimpleName() + " not bound.", testInterOne);
+		Assert.assertEquals(ISingletonTestOne.class.getSimpleName() + " incorrect value.", testInterOne.getValue(), ConcreteSingletonTestOne.VALUE);
 		
-		ITestTwo testInterTwo = TEST_SINGLETON_HANDLER.get(ITestTwo.class);
-		Assert.assertNotNull(ITestTwo.class.getSimpleName() + " not bound.", testInterTwo);
-		Assert.assertEquals(ITestTwo.class.getSimpleName() + " incorrect value.", testInterTwo.getValue(), ConcreteTestTwo.VALUE);
+		ISingletonTestTwo testInterTwo = TEST_SINGLETON_HANDLER.get(ISingletonTestTwo.class);
+		Assert.assertNotNull(ISingletonTestTwo.class.getSimpleName() + " not bound.", testInterTwo);
+		Assert.assertEquals(ISingletonTestTwo.class.getSimpleName() + " incorrect value.", testInterTwo.getValue(), ConcreteSingletonTestTwo.VALUE);
 		
 		
 		// circular dependencies (if this throws an exception the dependency isn't set up)
-		Assert.assertEquals(ITestOne.class.getSimpleName() + " incorrect value.", testInterOne.getDependentValue(), ConcreteTestTwo.VALUE);
-		Assert.assertEquals(ITestTwo.class.getSimpleName() + " incorrect value.", testInterTwo.getDependentValue(), ConcreteTestOne.VALUE);
+		Assert.assertEquals(ISingletonTestOne.class.getSimpleName() + " incorrect value.", testInterOne.getDependentValue(), ConcreteSingletonTestTwo.VALUE);
+		Assert.assertEquals(ISingletonTestTwo.class.getSimpleName() + " incorrect value.", testInterTwo.getDependentValue(), ConcreteSingletonTestOne.VALUE);
 		
 	}
 	
 	@Test
-	public void testMultipleImplementations()
+	public void testMultipleImplementationSingleton()
 	{
 		// clear the previous dependencies and only allow single dependencies
-		TEST_SINGLETON_HANDLER = new DependencyInjector<IBindable>(IBindable.class, false);
+		DependencyInjector<IBindable> TEST_SINGLETON_HANDLER = new DependencyInjector<IBindable>(IBindable.class, false);
 		
 		
 		// pre-setup
-		Assert.assertNull(ITestOne.class.getSimpleName() + " should not have been bound.", TEST_SINGLETON_HANDLER.get(ITestOne.class));
+		Assert.assertNull(ISingletonTestOne.class.getSimpleName() + " should not have been bound.", TEST_SINGLETON_HANDLER.get(ISingletonTestOne.class));
 		
 		
 		// dependency setup
-		ConcreteTestBoth concreteInstance = new ConcreteTestBoth();
+		ConcreteSingletonTestBoth concreteInstance = new ConcreteSingletonTestBoth();
 		
-		TEST_SINGLETON_HANDLER.bind(ITestOne.class, concreteInstance);
-		TEST_SINGLETON_HANDLER.bind(ITestTwo.class, concreteInstance);
+		TEST_SINGLETON_HANDLER.bind(ISingletonTestOne.class, concreteInstance);
+		TEST_SINGLETON_HANDLER.bind(ISingletonTestTwo.class, concreteInstance);
 		
 		
 		// basic dependencies
-		ITestOne testInterOne = TEST_SINGLETON_HANDLER.get(ITestOne.class);
-		Assert.assertNotNull(ITestOne.class.getSimpleName() + " not bound.", testInterOne);
-		Assert.assertEquals(ITestOne.class.getSimpleName() + " incorrect value.", testInterOne.getValue(), ConcreteTestBoth.VALUE);
+		ISingletonTestOne testInterOne = TEST_SINGLETON_HANDLER.get(ISingletonTestOne.class);
+		Assert.assertNotNull(ISingletonTestOne.class.getSimpleName() + " not bound.", testInterOne);
+		Assert.assertEquals(ISingletonTestOne.class.getSimpleName() + " incorrect value.", testInterOne.getValue(), ConcreteSingletonTestBoth.VALUE);
 		
-		ITestTwo testInterTwo = TEST_SINGLETON_HANDLER.get(ITestTwo.class);
-		Assert.assertNotNull(ITestTwo.class.getSimpleName() + " not bound.", testInterTwo);
-		Assert.assertEquals(ITestTwo.class.getSimpleName() + " incorrect value.", testInterTwo.getValue(), ConcreteTestBoth.VALUE);
+		ISingletonTestTwo testInterTwo = TEST_SINGLETON_HANDLER.get(ISingletonTestTwo.class);
+		Assert.assertNotNull(ISingletonTestTwo.class.getSimpleName() + " not bound.", testInterTwo);
+		Assert.assertEquals(ISingletonTestTwo.class.getSimpleName() + " incorrect value.", testInterTwo.getValue(), ConcreteSingletonTestBoth.VALUE);
 		
 	}
 	
@@ -95,9 +92,9 @@ public class DependencyInjectorTest
 	public void testEventDependencies() // this also tests list dependencies since there can be more than one event handler bound per event
 	{
 		// clear the previous dependencies and only allow single dependencies
-		TEST_SINGLETON_HANDLER = new DependencyInjector<>(IBindable.class, false);
+		DependencyInjector<IBindable> TEST_SINGLETON_HANDLER = new DependencyInjector<>(IBindable.class, false);
 		// setup the list (event) dependency handler
-		TEST_EVENT_HANDLER = new DhApiEventInjector();
+		DhApiEventInjector TEST_EVENT_HANDLER = new DhApiEventInjector();
 		
 		
 		// pre-setup

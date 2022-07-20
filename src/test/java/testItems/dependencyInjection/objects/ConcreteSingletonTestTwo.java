@@ -1,8 +1,8 @@
 package testItems.dependencyInjection.objects;
 
 import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
-import testItems.dependencyInjection.interfaces.ITestOne;
-import testItems.dependencyInjection.interfaces.ITestTwo;
+import testItems.dependencyInjection.interfaces.ISingletonTestOne;
+import testItems.dependencyInjection.interfaces.ISingletonTestTwo;
 import tests.DependencyInjectorTest;
 
 /**
@@ -11,15 +11,15 @@ import tests.DependencyInjectorTest;
  * @author James Seibel
  * @version 2022-7-16
  */
-public class ConcreteTestTwo implements ITestTwo, IBindable
+public class ConcreteSingletonTestTwo implements ISingletonTestTwo, IBindable
 {
-	private ITestOne testInterOne;
+	private ISingletonTestOne testInterOne;
 	
 	public static int VALUE = 2;
 	
 	
 	@Override
-	public void finishDelayedSetup() { testInterOne = DependencyInjectorTest.TEST_SINGLETON_HANDLER.get(ITestOne.class, true); }
+	public void finishDelayedSetup() { testInterOne = DependencyInjectorTest.TEST_SINGLETON_HANDLER.get(ISingletonTestOne.class, true); }
 	@Override
 	public boolean getDelayedSetupComplete() { return testInterOne != null; }
 	

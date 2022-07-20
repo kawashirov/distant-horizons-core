@@ -8,7 +8,7 @@ import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
  * @author James Seibel
  * @version 2022-7-16
  */
-public interface ITestTwo extends IBindable
+public interface ISingletonTestTwo extends IBindable
 {
 	public int getValue();
 	

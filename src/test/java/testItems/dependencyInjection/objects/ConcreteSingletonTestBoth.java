@@ -1,8 +1,8 @@
 package testItems.dependencyInjection.objects;
 
 import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
-import testItems.dependencyInjection.interfaces.ITestOne;
-import testItems.dependencyInjection.interfaces.ITestTwo;
+import testItems.dependencyInjection.interfaces.ISingletonTestOne;
+import testItems.dependencyInjection.interfaces.ISingletonTestTwo;
 
 /**
  * Dummy test implementation object for dependency injection unit tests.
@@ -10,7 +10,7 @@ import testItems.dependencyInjection.interfaces.ITestTwo;
  * @author James Seibel
  * @version 2022-7-16
  */
-public class ConcreteTestBoth implements ITestOne, ITestTwo, IBindable
+public class ConcreteSingletonTestBoth implements ISingletonTestOne, ISingletonTestTwo, IBindable
 {
 	public static final int VALUE = 3;
 	
