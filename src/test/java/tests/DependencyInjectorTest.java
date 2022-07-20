@@ -1,5 +1,7 @@
 package tests;
 
+import com.seibel.lod.core.api.external.items.enums.override.EDhApiOverridePriority;
+import com.seibel.lod.core.enums.override.EApiOverridePriority;
 import com.seibel.lod.core.handlers.dependencyInjection.DependencyInjector;
 import com.seibel.lod.core.handlers.dependencyInjection.DhApiEventInjector;
 import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
@@ -9,6 +11,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import testItems.eventInjection.objects.DhTestEvent;
 import testItems.eventInjection.objects.DhTestEventAlt;
+import testItems.overrideInjection.objects.OverrideTestCore;
+import testItems.overrideInjection.objects.OverrideTestPrimary;
+import testItems.overrideInjection.objects.OverrideTestSecondary;
 import testItems.singletonInjection.interfaces.ISingletonTestOne;
 import testItems.singletonInjection.interfaces.ISingletonTestTwo;
 import testItems.singletonInjection.objects.ConcreteSingletonTestBoth;
@@ -23,7 +28,7 @@ import java.util.ArrayList;
 
 /**
  * @author James Seibel
- * @version 2022-7-19
+ * @version 2022-7-20
  */
 public class DependencyInjectorTest
 {
@@ -40,8 +45,8 @@ public class DependencyInjectorTest
 		
 		
 		// dependency setup
-		TEST_SINGLETON_HANDLER.bind(ISingletonTestOne.class, new ConcreteSingletonTestOne());
-		TEST_SINGLETON_HANDLER.bind(ISingletonTestTwo.class, new ConcreteSingletonTestTwo());
+		TEST_SINGLETON_HANDLER.bind(ISingletonTestOne.class, new ConcreteSingletonTestOne(TEST_SINGLETON_HANDLER));
+		TEST_SINGLETON_HANDLER.bind(ISingletonTestTwo.class, new ConcreteSingletonTestTwo(TEST_SINGLETON_HANDLER));
 		
 		TEST_SINGLETON_HANDLER.runDelayedSetup();
 		

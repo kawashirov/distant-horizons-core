@@ -1,5 +1,6 @@
 package testItems.singletonInjection.objects;
 
+import com.seibel.lod.core.handlers.dependencyInjection.DependencyInjector;
 import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
 import testItems.singletonInjection.interfaces.ISingletonTestOne;
 import testItems.singletonInjection.interfaces.ISingletonTestTwo;
@@ -13,14 +14,20 @@ import tests.DependencyInjectorTest;
  */
 public class ConcreteSingletonTestOne implements ISingletonTestOne, IBindable
 {
+	private final DependencyInjector<IBindable> dependencyInjector;
 	private ISingletonTestTwo testInterTwo;
 	
 	public static int VALUE = 1;
 	
 	
+	public ConcreteSingletonTestOne(DependencyInjector<IBindable> newDependencyInjector)
+	{
+		dependencyInjector = newDependencyInjector;
+	}
+	
 	
 	@Override
-	public void finishDelayedSetup() { testInterTwo = DependencyInjectorTest.TEST_SINGLETON_HANDLER.get(ISingletonTestTwo.class, true); }
+	public void finishDelayedSetup() { testInterTwo = dependencyInjector.get(ISingletonTestTwo.class, true); }
 	@Override
 	public boolean getDelayedSetupComplete() { return testInterTwo != null; }
 	
