@@ -36,38 +36,59 @@ public class OverrideInjector
 {
 	public static final OverrideInjector INSTANCE = new OverrideInjector();
 	
-	private static final DependencyInjector<IDhApiOverrideable> PRIMARY_INJECTOR = new DependencyInjector<>(IDhApiOverrideable.class, false);
-	private static final DependencyInjector<IDhApiOverrideable> SECONDARY_INJECTOR = new DependencyInjector<>(IDhApiOverrideable.class, false);
-	private static final DependencyInjector<IDhApiOverrideable> CORE_INJECTOR = new DependencyInjector<>(IDhApiOverrideable.class, false);
+	private final DependencyInjector<IDhApiOverrideable> primaryInjector = new DependencyInjector<>(IDhApiOverrideable.class, false);
+	private final DependencyInjector<IDhApiOverrideable> secondaryInjector = new DependencyInjector<>(IDhApiOverrideable.class, false);
+	private final DependencyInjector<IDhApiOverrideable> coreInjector = new DependencyInjector<>(IDhApiOverrideable.class, false);
 	
-	private static final GenericEnumConverter<EApiOverridePriority, EDhApiOverridePriority> enumConverter = new GenericEnumConverter<>(EApiOverridePriority.class, EDhApiOverridePriority.class);
+	private static final GenericEnumConverter<EApiOverridePriority, EDhApiOverridePriority> ENUM_CONVERTER = new GenericEnumConverter<>(EApiOverridePriority.class, EDhApiOverridePriority.class);
+	
+	/**
+	 * This is used to determine if an override is part of Distant Horizons'
+	 * Core or not.
+	 * This probably isn't the best way of going about this, but it works for now.
+	 */
+	private final String corePackagePath;
+	
+	
+	
+	public OverrideInjector()
+	{
+		String thisPackageName = this.getClass().getPackage().getName();
+		int secondPackageEndingIndex = StringUtil.nthIndexOf(thisPackageName, ".", 3);
+		
+		this.corePackagePath = thisPackageName.substring(0, secondPackageEndingIndex); // this should be "com.seibel.lod"
+	}
+	
+	/** This constructor should only be used for testing different corePackagePaths. */
+	public OverrideInjector(String newCorePackagePath)
+	{
+		this.corePackagePath = newCorePackagePath;
+	}
+	
 	
 	
 	/**
 	 * See {@link DependencyInjector#bind(Class, IBindable) bind(Class, IBindable)} for full documentation.
 	 *
+	 * @throws IllegalArgumentException if a non-Distant Horizons Override with the priority CORE is passed in
 	 * @see DependencyInjector#bind(Class, IBindable)
 	 */
 	public void bind(Class<? extends IDhApiOverrideable> dependencyInterface, IDhApiOverrideable dependencyImplementation)  throws IllegalStateException, IllegalArgumentException
 	{
 		if (getCorePriorityEnum(dependencyImplementation) == EApiOverridePriority.PRIMARY)
 		{
-			PRIMARY_INJECTOR.bind(dependencyInterface, dependencyImplementation);
+			primaryInjector.bind(dependencyInterface, dependencyImplementation);
 		}
 		else if (getCorePriorityEnum(dependencyImplementation) == EApiOverridePriority.SECONDARY)
 		{
-			SECONDARY_INJECTOR.bind(dependencyInterface, dependencyImplementation);
+			secondaryInjector.bind(dependencyInterface, dependencyImplementation);
 		}
 		else
 		{
-			// not the best way of doing this, but it should work
-			String thisPackageName = this.getClass().getPackage().getName();
-			int secondPackageEndingIndex = StringUtil.nthIndexOf(thisPackageName, ".", 3);
-			String thisPackageBeginningName = thisPackageName.substring(0, secondPackageEndingIndex); // this should be "com.seibel.lod"
-			
-			if (dependencyImplementation.getClass().getPackage().getName().startsWith(thisPackageBeginningName))
+			String packageName = dependencyImplementation.getClass().getPackage().getName();
+			if (packageName.startsWith(this.corePackagePath))
 			{
-				CORE_INJECTOR.bind(dependencyInterface, dependencyImplementation);
+				coreInjector.bind(dependencyInterface, dependencyImplementation);
 			}
 			else
 			{
@@ -84,14 +105,14 @@ public class OverrideInjector
 	 */
 	public <T extends IDhApiOverrideable> T get(Class<? extends IDhApiOverrideable> interfaceClass) throws ClassCastException
 	{
-		T value = PRIMARY_INJECTOR.get(interfaceClass);
+		T value = primaryInjector.get(interfaceClass);
 		if (value == null)
 		{
-			value = SECONDARY_INJECTOR.get(interfaceClass);
+			value = secondaryInjector.get(interfaceClass);
 		}
 		if (value == null)
 		{
-			value = CORE_INJECTOR.get(interfaceClass);
+			value = coreInjector.get(interfaceClass);
 		}
 		
 		return value;
@@ -110,15 +131,15 @@ public class OverrideInjector
 		T value;
 		if (overridePriority == EApiOverridePriority.PRIMARY)
 		{
-			value = PRIMARY_INJECTOR.get(interfaceClass);
+			value = primaryInjector.get(interfaceClass);
 		}
 		else if (overridePriority == EApiOverridePriority.SECONDARY)
 		{
-			value = SECONDARY_INJECTOR.get(interfaceClass);
+			value = secondaryInjector.get(interfaceClass);
 		}
 		else
 		{
-			value = CORE_INJECTOR.get(interfaceClass);
+			value = coreInjector.get(interfaceClass);
 		}
 		
 		return value;
@@ -128,7 +149,7 @@ public class OverrideInjector
 	/** Small helper method so we don't have to use DhApi enums. */
 	private EApiOverridePriority getCorePriorityEnum(IDhApiOverrideable override)
 	{
-		return enumConverter.convertToCoreType(override.getOverrideType());
+		return ENUM_CONVERTER.convertToCoreType(override.getOverrideType());
 	}
 	
 }
