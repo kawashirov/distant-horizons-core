@@ -1,6 +1,6 @@
-package testItems.dependencyInjection.implementations;
+package testItems.eventInjection.objects;
 
-import testItems.dependencyInjection.objects.DhApiTestEvent;
+import testItems.eventInjection.abstractObjects.DhApiTestEvent;
 
 /**
  * Dummy test event for unit tests.

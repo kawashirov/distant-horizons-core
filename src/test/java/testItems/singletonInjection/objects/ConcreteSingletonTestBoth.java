@@ -1,8 +1,8 @@
-package testItems.dependencyInjection.objects;
+package testItems.singletonInjection.objects;
 
 import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
-import testItems.dependencyInjection.interfaces.ISingletonTestOne;
-import testItems.dependencyInjection.interfaces.ISingletonTestTwo;
+import testItems.singletonInjection.interfaces.ISingletonTestOne;
+import testItems.singletonInjection.interfaces.ISingletonTestTwo;
 
 /**
  * Dummy test implementation object for dependency injection unit tests.

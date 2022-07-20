@@ -23,12 +23,12 @@ package com.seibel.lod.core.util;
  * Miscellaneous string helper functions.
  *
  * @author James Seibel
- * @version 2022-7-18
+ * @version 2022-7-19
  */
 public class StringUtil
 {
 	/**
-	 * Returns the n-th index of the given string
+	 * Returns the n-th index of the given string. <br> <br>
 	 *
 	 * Original source: https://stackoverflow.com/questions/3976616/how-to-find-nth-occurrence-of-character-in-a-string
 	 */

@@ -1,4 +1,4 @@
-package testItems.dependencyInjection.objects;
+package testItems.eventInjection.abstractObjects;
 
 import com.seibel.lod.core.api.implementation.interfaces.events.IDhApiEvent;
 

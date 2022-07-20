@@ -1,4 +1,4 @@
-package testItems.dependencyInjection.interfaces;
+package testItems.singletonInjection.interfaces;
 
 import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
 
@@ -8,7 +8,7 @@ import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
  * @author James Seibel
  * @version 2022-7-16
  */
-public interface ISingletonTestOne extends IBindable
+public interface ISingletonTestTwo extends IBindable
 {
 	public int getValue();
 	

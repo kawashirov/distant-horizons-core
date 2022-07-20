@@ -4,16 +4,19 @@ import com.seibel.lod.core.handlers.dependencyInjection.DependencyInjector;
 import com.seibel.lod.core.handlers.dependencyInjection.DhApiEventInjector;
 import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
 
+import com.seibel.lod.core.handlers.dependencyInjection.OverrideInjector;
 import org.junit.Assert;
 import org.junit.Test;
-import testItems.dependencyInjection.implementations.DhTestEvent;
-import testItems.dependencyInjection.implementations.DhTestEventAlt;
-import testItems.dependencyInjection.interfaces.ISingletonTestOne;
-import testItems.dependencyInjection.interfaces.ISingletonTestTwo;
-import testItems.dependencyInjection.objects.ConcreteSingletonTestBoth;
-import testItems.dependencyInjection.objects.ConcreteSingletonTestOne;
-import testItems.dependencyInjection.objects.ConcreteSingletonTestTwo;
-import testItems.dependencyInjection.objects.DhApiTestEvent;
+import testItems.eventInjection.objects.DhTestEvent;
+import testItems.eventInjection.objects.DhTestEventAlt;
+import testItems.singletonInjection.interfaces.ISingletonTestOne;
+import testItems.singletonInjection.interfaces.ISingletonTestTwo;
+import testItems.singletonInjection.objects.ConcreteSingletonTestBoth;
+import testItems.singletonInjection.objects.ConcreteSingletonTestOne;
+import testItems.singletonInjection.objects.ConcreteSingletonTestTwo;
+import testItems.eventInjection.abstractObjects.DhApiTestEvent;
+import testItems.overrideInjection.interfaces.IOverrideTest;
+import testItems.overrideInjection.objects.OverrideTestAssembly;
 
 import java.util.ArrayList;
 
@@ -28,11 +31,11 @@ public class DependencyInjectorTest
 	@Test
 	public void testSingleImplementationSingleton()
 	{
-		// clear the previous dependencies and only allow single dependencies
+		// Injector setup
 		DependencyInjector<IBindable> TEST_SINGLETON_HANDLER = new DependencyInjector<>(IBindable.class, false);
 		
 		
-		// pre-setup
+		// pre-dependency setup
 		Assert.assertNull(ISingletonTestOne.class.getSimpleName() + " should not have been bound.", TEST_SINGLETON_HANDLER.get(ISingletonTestOne.class));
 		
 		
@@ -62,11 +65,11 @@ public class DependencyInjectorTest
 	@Test
 	public void testMultipleImplementationSingleton()
 	{
-		// clear the previous dependencies and only allow single dependencies
+		// Injector setup
 		DependencyInjector<IBindable> TEST_SINGLETON_HANDLER = new DependencyInjector<IBindable>(IBindable.class, false);
 		
 		
-		// pre-setup
+		// pre-dependency setup
 		Assert.assertNull(ISingletonTestOne.class.getSimpleName() + " should not have been bound.", TEST_SINGLETON_HANDLER.get(ISingletonTestOne.class));
 		
 		
@@ -91,13 +94,12 @@ public class DependencyInjectorTest
 	@Test
 	public void testEventDependencies() // this also tests list dependencies since there can be more than one event handler bound per event
 	{
-		// clear the previous dependencies and only allow single dependencies
+		// Injector setup
 		DependencyInjector<IBindable> TEST_SINGLETON_HANDLER = new DependencyInjector<>(IBindable.class, false);
-		// setup the list (event) dependency handler
 		DhApiEventInjector TEST_EVENT_HANDLER = new DhApiEventInjector();
 		
 		
-		// pre-setup
+		// pre-dependency setup
 		Assert.assertNull("Nothing should have been bound.", TEST_EVENT_HANDLER.get(DhApiTestEvent.class));
 		
 		
@@ -148,6 +150,11 @@ public class DependencyInjectorTest
 		Assert.assertEquals("Event not fired for remaining object.", false, ((DhTestEventAlt) afterRenderEventList.get(0)).eventFiredValue);
 		// unbound event
 		Assert.assertEquals("Event fired for unbound object.", true, unboundEvent.getTestValue());
+		
+	}
+	
+		Assert.assertNotNull(ISingletonTestTwo.class.getSimpleName() + " not bound.", testInterTwo);
+		Assert.assertEquals(ISingletonTestTwo.class.getSimpleName() + " incorrect value.", testInterTwo.getValue(), ConcreteSingletonTestBoth.VALUE);
 		
 	}
 	
