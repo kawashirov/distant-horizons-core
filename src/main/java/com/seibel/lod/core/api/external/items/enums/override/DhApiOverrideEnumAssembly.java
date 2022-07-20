@@ -17,26 +17,15 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.enums;
-
-import com.seibel.lod.core.enums.config.CoreConfigEnumAssembly;
-import com.seibel.lod.core.enums.override.CoreOverrideEnumAssembly;
-import com.seibel.lod.core.enums.rendering.CoreRenderingEnumAssembly;
+package com.seibel.lod.core.api.external.items.enums.override;
 
 /**
  * Assembly classes are used to reference the package they are in.
  *
  * @author James Seibel
- * @version 2022-7-18
+ * @version 2022-7-16
  */
-public class CoreEnumAssembly
+public class DhApiOverrideEnumAssembly
 {
-	// These variables are added in order to load each package into the JVM's class loader.
-	// This is done so they can be found via reflection.
-	private static final CoreRenderingEnumAssembly renderingAssembly = new CoreRenderingEnumAssembly();
-	private static final CoreConfigEnumAssembly configAssembly = new CoreConfigEnumAssembly();
-	private static final CoreOverrideEnumAssembly overrideAssembly = new CoreOverrideEnumAssembly();
-	
-	/** All enums should have this prefix */
-	public static final String ENUM_PREFIX = "E";
+
 }

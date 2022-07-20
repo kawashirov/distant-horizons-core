@@ -17,26 +17,26 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.enums;
-
-import com.seibel.lod.core.enums.config.CoreConfigEnumAssembly;
-import com.seibel.lod.core.enums.override.CoreOverrideEnumAssembly;
-import com.seibel.lod.core.enums.rendering.CoreRenderingEnumAssembly;
+package com.seibel.lod.core.util;
 
 /**
- * Assembly classes are used to reference the package they are in.
+ * Miscellaneous string helper functions.
  *
  * @author James Seibel
  * @version 2022-7-18
  */
-public class CoreEnumAssembly
+public class StringUtil
 {
-	// These variables are added in order to load each package into the JVM's class loader.
-	// This is done so they can be found via reflection.
-	private static final CoreRenderingEnumAssembly renderingAssembly = new CoreRenderingEnumAssembly();
-	private static final CoreConfigEnumAssembly configAssembly = new CoreConfigEnumAssembly();
-	private static final CoreOverrideEnumAssembly overrideAssembly = new CoreOverrideEnumAssembly();
-	
-	/** All enums should have this prefix */
-	public static final String ENUM_PREFIX = "E";
+	/**
+	 * Returns the n-th index of the given string
+	 *
+	 * Original source: https://stackoverflow.com/questions/3976616/how-to-find-nth-occurrence-of-character-in-a-string
+	 */
+	public static int nthIndexOf(String str, String substr, int n)
+	{
+		int pos = str.indexOf(substr);
+		while (--n > 0 && pos != -1)
+			pos = str.indexOf(substr, pos + 1);
+		return pos;
+	}
 }

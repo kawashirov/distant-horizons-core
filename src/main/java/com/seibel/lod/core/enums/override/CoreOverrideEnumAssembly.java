@@ -17,11 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.items.enums;
-
-import com.seibel.lod.core.api.external.items.enums.override.DhApiOverrideEnumAssembly;
-import com.seibel.lod.core.api.external.items.enums.config.DhApiConfigEnumAssembly;
-import com.seibel.lod.core.api.external.items.enums.worldGeneration.DhApiWorldGenerationEnumAssembly;
+package com.seibel.lod.core.enums.override;
 
 /**
  * Assembly classes are used to reference the package they are in.
@@ -29,14 +25,7 @@ import com.seibel.lod.core.api.external.items.enums.worldGeneration.DhApiWorldGe
  * @author James Seibel
  * @version 2022-7-18
  */
-public class DhApiEnumAssembly
+public class CoreOverrideEnumAssembly
 {
-	// These variables are added in order to load each package into the JVM's class loader.
-	// This is done so they can be found via reflection.
-	private static final DhApiWorldGenerationEnumAssembly worldGenerationAssembly = new DhApiWorldGenerationEnumAssembly();
-	private static final DhApiConfigEnumAssembly configAssembly = new DhApiConfigEnumAssembly();
-	private static final DhApiOverrideEnumAssembly overrideAssembly = new DhApiOverrideEnumAssembly();
-	
-	/** All DH API enums should have this prefix */
-	public static final String API_ENUM_PREFIX = "EDhApi";
+
 }
