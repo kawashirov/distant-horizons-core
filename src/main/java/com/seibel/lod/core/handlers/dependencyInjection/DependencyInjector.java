@@ -28,7 +28,7 @@ import java.util.Map;
  *
  * @param <BindableType> extends IBindable and defines what interfaces this dependency handler can deal with.
  * @author James Seibel
- * @version 2022-7-16
+ * @version 2022-7-18
  */
 public class DependencyInjector<BindableType extends IBindable>
 {
@@ -60,10 +60,10 @@ public class DependencyInjector<BindableType extends IBindable>
 	 *
 	 * @param dependencyInterface The interface (or parent class) the implementation object should implement.
 	 * @param dependencyImplementation An object that implements the dependencyInterface interface.
-	 * @throws IllegalStateException if the implementation object doesn't implement
-	 *                               the interface or the interface has already been bound.
+	 * @throws IllegalStateException if the interface has already been bound and {@link DependencyInjector#allowDuplicateBindings} is false
+	 * @throws IllegalArgumentException if the implementation object doesn't implement the interface
 	 */
-	public void bind(Class<? extends BindableType> dependencyInterface, BindableType dependencyImplementation) throws IllegalStateException
+	public void bind(Class<? extends BindableType> dependencyInterface, BindableType dependencyImplementation) throws IllegalStateException, IllegalArgumentException
 	{
 		// duplicate check if requested
 		if (dependencies.containsKey(dependencyInterface) && !this.allowDuplicateBindings)
@@ -80,11 +80,11 @@ public class DependencyInjector<BindableType extends IBindable>
 		// display any errors
 		if (!implementsInterface)
 		{
-			throw new IllegalStateException("The dependency [" + dependencyImplementation.getClass().getSimpleName() + "] doesn't implement or extend: [" + dependencyInterface.getSimpleName() + "].");
+			throw new IllegalArgumentException("The dependency [" + dependencyImplementation.getClass().getSimpleName() + "] doesn't implement or extend: [" + dependencyInterface.getSimpleName() + "].");
 		}
 		if (!implementsBindable)
 		{
-			throw new IllegalStateException("The dependency [" + dependencyImplementation.getClass().getSimpleName() + "] doesn't implement the interface: [" + IBindable.class.getSimpleName() + "].");
+			throw new IllegalArgumentException("The dependency [" + dependencyImplementation.getClass().getSimpleName() + "] doesn't implement the interface: [" + IBindable.class.getSimpleName() + "].");
 		}
 		
 		
@@ -147,7 +147,7 @@ public class DependencyInjector<BindableType extends IBindable>
 	 * @see #get(Class, boolean)
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends BindableType> T get(Class<?> interfaceClass) throws ClassCastException
+	public <T extends BindableType> T get(Class<? extends BindableType> interfaceClass) throws ClassCastException
 	{
 		return (T) getInternalLogic(interfaceClass, false).get(0);
 	}
@@ -163,7 +163,7 @@ public class DependencyInjector<BindableType extends IBindable>
 	 * @throws ClassCastException If the dependency isn't able to be cast to type T.
 	 *                            (this shouldn't normally happen, unless the bound object changed somehow)
 	 */
-	public <T extends BindableType> ArrayList<T> getAll(Class<?> interfaceClass) throws ClassCastException
+	public <T extends BindableType> ArrayList<T> getAll(Class<? extends BindableType> interfaceClass) throws ClassCastException
 	{
 		return getInternalLogic(interfaceClass, false);
 	}
@@ -175,7 +175,7 @@ public class DependencyInjector<BindableType extends IBindable>
 	 * If the handler's {@link #allowDuplicateBindings} is true this returns the first bound dependency.
 	 *
 	 * @param <T> class of the dependency
-	 *            (inferred from the objectClass parameter)
+	 *            (inferred from the interfaceClass parameter)
 	 * @param interfaceClass Interface of the dependency
 	 * @param allowIncompleteDependencies If true this method will also return dependencies that haven't completed their delayed setup.
 	 * @return the dependency of type T
@@ -183,7 +183,7 @@ public class DependencyInjector<BindableType extends IBindable>
 	 *                            (this shouldn't normally happen, unless the bound object changed somehow)
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends BindableType> T get(Class<?> interfaceClass, boolean allowIncompleteDependencies) throws ClassCastException
+	public <T extends BindableType> T get(Class<? extends BindableType> interfaceClass, boolean allowIncompleteDependencies) throws ClassCastException
 	{
 		return (T) getInternalLogic(interfaceClass, allowIncompleteDependencies).get(0);
 	}
@@ -193,7 +193,7 @@ public class DependencyInjector<BindableType extends IBindable>
 	 * if no dependencies have been bound the list will contain null.
 	 */
 	@SuppressWarnings("unchecked")
-	private <T extends BindableType> ArrayList<T> getInternalLogic(Class<?> interfaceClass, boolean allowIncompleteDependencies) throws ClassCastException
+	private <T extends BindableType> ArrayList<T> getInternalLogic(Class<? extends BindableType> interfaceClass, boolean allowIncompleteDependencies) throws ClassCastException
 	{
 		ArrayList<BindableType> dependencyList = dependencies.get(interfaceClass);
 		if (dependencyList != null && dependencyList.size() != 0)
@@ -224,7 +224,7 @@ public class DependencyInjector<BindableType extends IBindable>
 	/** Runs delayed setup for any dependencies that require it. */
 	public void runDelayedSetup()
 	{
-		for (Class<?> interfaceKey : dependencies.keySet())
+		for (Class<? extends BindableType> interfaceKey : dependencies.keySet())
 		{
 			IBindable concreteObject = get(interfaceKey, true);
 			if (!concreteObject.getDelayedSetupComplete())

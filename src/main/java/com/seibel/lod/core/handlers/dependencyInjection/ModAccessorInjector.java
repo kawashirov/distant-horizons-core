@@ -34,7 +34,7 @@ import java.lang.invoke.MethodHandles;
  * 
  * @author James Seibel
  * @author Leetom
- * @version 2022-7-16
+ * @version 2022-7-18
  */
 public class ModAccessorInjector extends DependencyInjector<IModAccessor>
 {
@@ -53,8 +53,9 @@ public class ModAccessorInjector extends DependencyInjector<IModAccessor>
 	 * Go to {@link DependencyInjector#bind(Class, IBindable)} DependencyHandler.bind()}
 	 * for this method's javadocs.
 	 */
+	@Override
 	public void bind(Class<? extends IModAccessor> interfaceClass, IModAccessor modAccessor)
-			throws IllegalStateException
+			throws IllegalStateException, IllegalArgumentException
 	{
 		super.bind(interfaceClass, modAccessor);
 		LOGGER.info("Registered mod compatibility accessor for: [" + modAccessor.getModName() + "].");

@@ -32,7 +32,7 @@ import java.util.ArrayList;
  *
  * @author James Seibel
  * @author Leetom
- * @version 2022-7-16
+ * @version 2022-7-18
  */
 public class DhApiEventInjector extends DependencyInjector<IDhApiEvent>
 {
@@ -48,24 +48,24 @@ public class DhApiEventInjector extends DependencyInjector<IDhApiEvent>
 	/**
 	 * Unlinks the given event handler, preventing the handler from being called in the future.
 	 *
-	 * @param dependencyInterface The interface the event handler implements.
+	 * @throws IllegalArgumentException if the implementation object doesn't implement the interface
 	 * @return true if the handler was unbound, false if the handler wasn't bound.
 	 */
-	public boolean unbind(Class<? extends IDhApiEvent> dependencyInterface, Class<? extends IDhApiEvent> dependencyClassToRemove)
+	public boolean unbind(Class<? extends IDhApiEvent> dependencyInterface, Class<? extends IDhApiEvent> dependencyClassToRemove) throws IllegalArgumentException
 	{
 		// make sure the given dependency implements the necessary interfaces
 		boolean implementsInterface = checkIfClassImplements(dependencyClassToRemove, dependencyInterface)
-				|| checkIfClassExtends(dependencyClassToRemove, dependencyInterface);
+										|| checkIfClassExtends(dependencyClassToRemove, dependencyInterface);
 		boolean implementsBindable = checkIfClassImplements(dependencyClassToRemove, this.bindableInterface);
 		
 		// display any errors
 		if (!implementsInterface)
 		{
-			throw new IllegalStateException("The event handler [" + dependencyClassToRemove.getSimpleName() + "] doesn't implement or extend: [" + dependencyInterface.getSimpleName() + "].");
+			throw new IllegalArgumentException("The event handler [" + dependencyClassToRemove.getSimpleName() + "] doesn't implement or extend: [" + dependencyInterface.getSimpleName() + "].");
 		}
 		if (!implementsBindable)
 		{
-			throw new IllegalStateException("The event handler [" + dependencyClassToRemove.getSimpleName() + "] doesn't implement the interface: [" + IBindable.class.getSimpleName() + "].");
+			throw new IllegalArgumentException("The event handler [" + dependencyClassToRemove.getSimpleName() + "] doesn't implement the interface: [" + IBindable.class.getSimpleName() + "].");
 		}
 		
 		
