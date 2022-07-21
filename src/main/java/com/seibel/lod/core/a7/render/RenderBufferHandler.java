@@ -22,7 +22,7 @@ public class RenderBufferHandler {
             this.pos = pos;
         }
 
-        public void render(LodRenderProgram renderContext) {
+        public void render(a7LodRenderer renderContext) {
             RenderBuffer buff = renderBufferSlot.get();
             if (buff != null) {
                 buff.render(renderContext);
@@ -109,7 +109,7 @@ public class RenderBufferHandler {
         renderBufferNodes = new MovableGridRingList<>(referenceList.getHalfSize(), center);
     }
 
-    public void render(LodRenderProgram renderContext) {
+    public void render(a7LodRenderer renderContext) {
         //TODO: This might get locked by update() causing move() call. Is there a way to avoid this?
         // Maybe dupe the base list and use atomic swap on render? Or is this not worth it?
         //TODO: Directional culling

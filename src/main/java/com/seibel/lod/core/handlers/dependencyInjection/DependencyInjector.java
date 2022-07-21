@@ -147,7 +147,7 @@ public class DependencyInjector<BindableType extends IBindable>
 	 * @see #get(Class, boolean)
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends BindableType> T get(Class<? extends BindableType> interfaceClass) throws ClassCastException
+	public <T extends BindableType> T get(Class<T> interfaceClass) throws ClassCastException
 	{
 		return (T) getInternalLogic(interfaceClass, false).get(0);
 	}

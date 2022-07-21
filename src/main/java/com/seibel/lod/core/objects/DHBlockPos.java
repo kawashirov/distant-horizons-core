@@ -19,6 +19,8 @@
  
 package com.seibel.lod.core.objects;
 
+import com.seibel.lod.core.a7.pos.DhBlockPos2D;
+
 import java.util.Objects;
 
 public class DHBlockPos {
@@ -54,6 +56,10 @@ public class DHBlockPos {
     }
     public DHBlockPos(DHBlockPos pos) {
         this(pos.x, pos.y, pos.z);
+    }
+
+    public DHBlockPos(DhBlockPos2D pos, int y) {
+        this(pos.x, y, pos.z);
     }
 
     @Deprecated

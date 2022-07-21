@@ -5,7 +5,7 @@ import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
@@ -77,5 +77,27 @@ public class IdBiomeBlockStateMap {
         return mapper;
     }
 
-    //TODO: Serialization & Deserialization
+    void serialize(OutputStream os) {
+        try (DataOutputStream dos = new DataOutputStream(os)) {
+            dos.writeInt(entries.size());
+            for (Entry e : entries) {
+                dos.writeUTF(e.serialize());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    static IdBiomeBlockStateMap deserialize(InputStream is) {
+        try (DataInputStream dis = new DataInputStream(is)) {
+            int size = dis.readInt();
+            IdBiomeBlockStateMap map = new IdBiomeBlockStateMap();
+            for (int i = 0; i < size; i++) {
+                map.entries.add(Entry.deserialize(dis.readUTF()));
+            }
+            return map;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }

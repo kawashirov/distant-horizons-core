@@ -3,11 +3,12 @@ package com.seibel.lod.core.a7.datatype.column.render;
 import com.seibel.lod.core.a7.datatype.column.ColumnRenderSource;
 import com.seibel.lod.core.a7.datatype.column.accessor.ColumnArrayView;
 import com.seibel.lod.core.a7.level.IClientLevel;
+import com.seibel.lod.core.a7.pos.DhBlockPos2D;
+import com.seibel.lod.core.a7.render.a7LodRenderer;
 import com.seibel.lod.core.a7.util.UncheckedInterruptedException;
 import com.seibel.lod.core.a7.render.RenderBuffer;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.builders.lodBuilding.bufferBuilding.CubicLodTemplate;
-import com.seibel.lod.core.builders.lodBuilding.bufferBuilding.LodBufferBuilderFactory;
 import com.seibel.lod.core.builders.lodBuilding.bufferBuilding.LodQuadBuilder;
 import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.enums.config.EGpuUploadMethod;
@@ -15,6 +16,7 @@ import com.seibel.lod.core.enums.rendering.EDebugMode;
 import com.seibel.lod.core.enums.rendering.EGLProxyContext;
 import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
+import com.seibel.lod.core.objects.DHBlockPos;
 import com.seibel.lod.core.render.GLProxy;
 import com.seibel.lod.core.render.LodRenderProgram;
 import com.seibel.lod.core.render.objects.GLVertexBuffer;
@@ -45,8 +47,10 @@ public class ColumnRenderBuffer extends RenderBuffer {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
     private static final long MAX_BUFFER_UPLOAD_TIMEOUT_NANOSECONDS = 1_000_000;
     GLVertexBuffer[] vbos;
+    public final DHBlockPos pos;
 
-    public ColumnRenderBuffer() {
+    public ColumnRenderBuffer(DHBlockPos pos) {
+        this.pos = pos;
         vbos = new GLVertexBuffer[0];
     }
 
@@ -67,7 +71,7 @@ public class ColumnRenderBuffer extends RenderBuffer {
             int size = bb.limit() - bb.position();
             try {
                 vbo.bind();
-                vbo.uploadBuffer(bb, size/LodUtil.LOD_VERTEX_FORMAT.getByteSize(), method, LodBufferBuilderFactory.FULL_SIZED_BUFFER);
+                vbo.uploadBuffer(bb, size/LodUtil.LOD_VERTEX_FORMAT.getByteSize(), method, FULL_SIZED_BUFFER);
             } catch (Exception e) {
                 vbos[i-1] = null;
                 vbo.close();
@@ -136,22 +140,14 @@ public class ColumnRenderBuffer extends RenderBuffer {
     }
 
     @Override
-    public boolean render(LodRenderProgram shaderProgram) {
+    public boolean render(a7LodRenderer renderContext) {
         boolean hasRendered = false;
+        renderContext.setupOffset(pos);
         for (GLVertexBuffer vbo : vbos) {
             if (vbo == null) continue;
             if (vbo.getVertexCount() == 0) continue;
             hasRendered = true;
-            vbo.bind();
-            shaderProgram.bindVertexBuffer(vbo.getId());
-            //FIXME: Fix this! Need to pass this down
-            if (/*LodRenderer.ENABLE_IBO*/ true) {
-                GL32.glDrawElements(GL32.GL_TRIANGLES, (vbo.getVertexCount()/4)*6,
-                        GL32.GL_INT //FIXME: Fix this! Need to pass this as argument down the chains!
-                        , 0);
-            } else {
-                GL32.glDrawArrays(GL32.GL_TRIANGLES, 0, vbo.getVertexCount());
-            }
+            renderContext.drawVbo(vbo);
             //LodRenderer.tickLogger.info("Vertex buffer: {}", vbo);
         }
         return hasRendered;
@@ -164,7 +160,7 @@ public class ColumnRenderBuffer extends RenderBuffer {
         for (GLVertexBuffer b : vbos) {
             if (b == null) continue;
             statsMap.incStat("VBOs");
-            if (b.getSize() == LodBufferBuilderFactory.FULL_SIZED_BUFFER) {
+            if (b.getSize() == FULL_SIZED_BUFFER) {
                 statsMap.incStat("FullsizedVBOs");
             }
             if (b.getSize() == 0) GL_LOGGER.warn("VBO with size 0");
@@ -211,7 +207,10 @@ public class ColumnRenderBuffer extends RenderBuffer {
                         EGpuUploadMethod method = GLProxy.getInstance().getGpuUploadMethod();
                         EGLProxyContext oldContext = glProxy.getGlContext();
                         glProxy.setGlContext(EGLProxyContext.LOD_BUILDER);
-                        ColumnRenderBuffer buffer = usedBuffer!=null ? usedBuffer : new ColumnRenderBuffer();
+                        ColumnRenderBuffer buffer = usedBuffer!=null ? usedBuffer :
+                                new ColumnRenderBuffer(
+                                        new DHBlockPos(data.sectionPos.getCorner().getCorner(), clientLevel.getMinY())
+                                );
                         try {
                             buffer.uploadBuffer(builder, method);
                             EVENT_LOGGER.trace("RenderRegion end Upload @ {}", data.sectionPos);

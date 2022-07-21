@@ -1,6 +1,8 @@
 package com.seibel.lod.core.a7.datatype.column;
 
 import com.seibel.lod.core.a7.datatype.LodDataSource;
+import com.seibel.lod.core.a7.datatype.full.FullDataSource;
+import com.seibel.lod.core.a7.datatype.transform.FullToColumnTransformer;
 import com.seibel.lod.core.a7.level.IClientLevel;
 import com.seibel.lod.core.a7.datatype.LodRenderSource;
 import com.seibel.lod.core.a7.datatype.RenderSourceLoader;
@@ -27,7 +29,9 @@ public class ColumnRenderLoader extends RenderSourceLoader {
 
     @Override
     public LodRenderSource createRender(LodDataSource dataSource, IClientLevel level) {
-        //TODO
+        if (dataSource instanceof FullDataSource) {
+            return FullToColumnTransformer.transformFullDataToColumnData(level, (FullDataSource) dataSource);
+        }
         return null;
     }
 

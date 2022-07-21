@@ -24,7 +24,8 @@ import java.nio.file.Path;
  * @version 2022-5-26
  */
 public class ConfigFileHandling {
-    public static final Path ConfigPath = SingletonInjector.INSTANCE.get(IMinecraftSharedWrapper.class).getInstallationDirectory().toPath().resolve("config").resolve(ModInfo.NAME+".toml");
+    public static final Path ConfigPath = SingletonInjector.INSTANCE.get(IMinecraftSharedWrapper.class)
+            .getInstallationDirectory().toPath().resolve("config").resolve(ModInfo.NAME+".toml");
 
     /** Saves the config to the file */
     public static void saveToFile() {

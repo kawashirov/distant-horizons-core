@@ -1,9 +1,13 @@
 package com.seibel.lod.core.a7.level;
 
+import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
+import com.seibel.lod.core.a7.pos.DhBlockPos2D;
+import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.a7.util.FileScanner;
 import com.seibel.lod.core.a7.save.io.file.LocalDataFileHandler;
 import com.seibel.lod.core.a7.save.structure.LocalSaveStructure;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
+import com.seibel.lod.core.objects.DHChunkPos;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import org.apache.logging.log4j.Logger;
 
@@ -52,6 +56,13 @@ public class DhServerLevel implements IServerLevel {
     public void doWorldGen() {
 
     }
+
+    @Override
+    public void submitChunkData(DHChunkPos chunkPos, ChunkSizedData data) {
+        DhSectionPos sectionPos = new DhSectionPos((byte)4, chunkPos.x, chunkPos.z);
+        dataFileHandler.write(sectionPos, data);
+    }
+
     @Override
     public ILevelWrapper getLevelWrapper() {
         return level;

@@ -103,7 +103,7 @@ public class OverrideInjector
 	 *
 	 * @see DependencyInjector#get(Class, boolean)
 	 */
-	public <T extends IDhApiOverrideable> T get(Class<? extends IDhApiOverrideable> interfaceClass) throws ClassCastException
+	public <T extends IDhApiOverrideable> T get(Class<T> interfaceClass) throws ClassCastException
 	{
 		T value = primaryInjector.get(interfaceClass);
 		if (value == null)
@@ -126,7 +126,7 @@ public class OverrideInjector
 	 *
 	 * @see DependencyInjector#get(Class, boolean)
 	 */
-	public <T extends IDhApiOverrideable> T get(Class<? extends IDhApiOverrideable> interfaceClass, EApiOverridePriority overridePriority) throws ClassCastException
+	public <T extends IDhApiOverrideable> T get(Class<T> interfaceClass, EApiOverridePriority overridePriority) throws ClassCastException
 	{
 		T value;
 		if (overridePriority == EApiOverridePriority.PRIMARY)

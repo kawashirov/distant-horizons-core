@@ -318,17 +318,7 @@ public class LodRegion {
 		}
 		return (byte) Math.max(getMinDetailLevel(), renderLevel);
 	}
-	
-	public void getPosToRender(PosToRenderContainer posToRender, int playerPosX,
-			int playerPosZ)
-	{
-		// use FAR_FIRST on local worlds and NEAR_FIRST on servers
-		EGenerationPriority generationPriority = getResolvedGenerationPriority();
 
-		EDropoffQuality dropoffQuality = CONFIG.client().graphics().quality().getResolvedDropoffQuality();
-		
-		getPosToRender(posToRender, playerPosX, playerPosZ, generationPriority, dropoffQuality);
-	}
 
 	private EGenerationPriority getResolvedGenerationPriority() {
 		EGenerationPriority priority = Config.Client.WorldGenerator.generationPriority.get();
@@ -346,140 +336,7 @@ public class LodRegion {
 		return dropoffQuality;
 	}
 
-	/**
-	 * This method will fill the posToRender array with all levelPos that are
-	 * render-able.
-	 * <p>
-	 * TODO why don't we return the posToRender, it would make this easier to
-	 * understand
-	 */
-	private void getPosToRender(PosToRenderContainer posToRender, int playerPosX, int playerPosZ,
-			 EGenerationPriority priority, EDropoffQuality dropoffQuality) {
-		double minDistance = LevelPosUtil.minDistance(LodUtil.REGION_DETAIL_LEVEL, regionPosX, regionPosZ, playerPosX, playerPosZ);
-		byte targetLevel = DetailDistanceUtil.getDetailLevelFromDistance(minDistance);
-		if (targetLevel <= dropoffQuality.fastModeSwitch) {
-			getPosToRender(posToRender, LodUtil.REGION_DETAIL_LEVEL, 0, 0, playerPosX, playerPosZ,
-					priority);
-		} else {
-			// FarModeSwitchLevel or above is the level where a giant block of lod is not acceptable even if not all child data exist.
-			double centerDistance = LevelPosUtil.centerDistance(LodUtil.REGION_DETAIL_LEVEL, regionPosX, regionPosZ, playerPosX, playerPosZ);
-			targetLevel = DetailDistanceUtil.getDetailLevelFromDistance(centerDistance);
-			byte farModeSwitchLevel = (priority == EGenerationPriority.NEAR_FIRST) ? 0 :
-				calculateFarModeSwitch(targetLevel);
-			if (priority == EGenerationPriority.FAR_FIRST) farModeSwitchLevel = 8;
-			getPosToRenderFlat(posToRender, LodUtil.REGION_DETAIL_LEVEL, 0, 0, targetLevel, farModeSwitchLevel);
-		}
-	}
 
-	/**
-	 * This method will fill the posToRender array with all levelPos that are
-	 * render-able.
-	 * <p>
-	 * TODO why don't we return the posToRender, it would make this easier to
-	 * understand TODO this needs some more comments, James was only able to figure
-	 * out part of it
-	 */
-	private void getPosToRender(PosToRenderContainer posToRender, byte detailLevel, int offsetPosX, int offsetPosZ, int playerPosX,
-			int playerPosZ, EGenerationPriority priority) {
-		// equivalent to 2^(...)
-		int size = 1 << (LodUtil.REGION_DETAIL_LEVEL - detailLevel);
-
-		// calculate the LevelPos that are in range
-		double minDistance = LevelPosUtil.minDistance(detailLevel, offsetPosX + regionPosX*size, offsetPosZ + regionPosZ*size, playerPosX, playerPosZ);
-		byte minLevel = DetailDistanceUtil.getDetailLevelFromDistance(minDistance);
-		// FarModeSwitchLevel or above is the level where a giant block of lod is not acceptable even if not all child data exist.
-		byte farModeSwitchLevel = (priority == EGenerationPriority.NEAR_FIRST) ? 0 : calculateFarModeSwitch(minLevel);
-		if (priority == EGenerationPriority.FAR_FIRST) farModeSwitchLevel = 8;
-		
-		if (detailLevel <= minLevel) {
-			posToRender.addPosToRender(detailLevel, offsetPosX + regionPosX * size, offsetPosZ + regionPosZ * size);
-		} else // case where (detailLevel > desiredLevel)
-		{
-			int childPosX = (offsetPosX + regionPosX*size) * 2;
-			int childPosZ = (offsetPosZ + regionPosZ*size) * 2;
-			byte childDetailLevel = (byte) (detailLevel - 1);
-			
-			if (detailLevel > farModeSwitchLevel) {
-				// Giant block is not acceptable. So leave empty void if data doesn't exist.
-				for (int x = 0; x <= 1; x++) {
-					for (int z = 0; z <= 1; z++) {
-						if (doesDataExist(childDetailLevel, childPosX + x, childPosZ + z, EDistanceGenerationMode.NONE)) {
-							getPosToRender(posToRender, childDetailLevel, offsetPosX*2 + x, offsetPosZ*2 + z, playerPosX,
-									playerPosZ, priority);
-						}
-					}
-				}
-			} else {
-				// Giant block is acceptable. So use this level lod if not all child data exist.
-				int childrenCount = 0;
-				for (int x = 0; x <= 1; x++) {
-					for (int z = 0; z <= 1; z++) {
-						if (doesDataExist(childDetailLevel, childPosX + x, childPosZ + z, EDistanceGenerationMode.NONE)) {
-							childrenCount++;
-						}
-					}
-				}
-				// If all the four children exist go deeper
-				if (childrenCount == 4) {
-					for (int x = 0; x <= 1; x++)
-						for (int z = 0; z <= 1; z++)
-							getPosToRender(posToRender, childDetailLevel, offsetPosX*2 + x, offsetPosZ*2 + z, playerPosX,
-									playerPosZ, priority);
-				} else {
-					posToRender.addPosToRender(detailLevel, offsetPosX + regionPosX * size, offsetPosZ + regionPosZ * size);
-				}
-			}
-		}
-	}
-
-	/**
-	 * This method will fill the posToRender array with all levelPos that are render-able,
-	 * but the entire region try to use the same detail level.
-	 */
-	private void getPosToRenderFlat(PosToRenderContainer posToRender, byte detailLevel, int offsetPosX, int offsetPosZ,
-			byte targetLevel, byte farModeSwitchLevel) {
-		// equivalent to 2^(...)
-		int size = 1 << (LodUtil.REGION_DETAIL_LEVEL - detailLevel);
-		if (detailLevel == targetLevel) {
-			posToRender.addPosToRender(detailLevel, offsetPosX + regionPosX * size, offsetPosZ + regionPosZ * size);
-		} else // case where (detailLevel > desiredLevel)
-		{
-			int childPosX = (offsetPosX + regionPosX*size) * 2;
-			int childPosZ = (offsetPosZ + regionPosZ*size) * 2;
-			byte childDetailLevel = (byte) (detailLevel - 1);
-			
-			if (detailLevel > farModeSwitchLevel) {
-				// Giant block is not acceptable. So leave empty void if data doesn't exist.
-				for (int x = 0; x <= 1; x++) {
-					for (int z = 0; z <= 1; z++) {
-						if (doesDataExist(childDetailLevel, childPosX + x, childPosZ + z, EDistanceGenerationMode.NONE)) {
-							getPosToRenderFlat(posToRender, childDetailLevel, offsetPosX*2 + x, offsetPosZ*2 + z, targetLevel, farModeSwitchLevel);
-						}
-					}
-				}
-			} else {
-				// Giant block is acceptable. So use this level lod if not all child data exist.
-				int childrenCount = 0;
-				for (int x = 0; x <= 1; x++) {
-					for (int z = 0; z <= 1; z++) {
-						if (doesDataExist(childDetailLevel, childPosX + x, childPosZ + z, EDistanceGenerationMode.RENDERABLE)) {
-							childrenCount++;
-						}
-					}
-				}
-				// If all the four children exist go deeper
-				if (childrenCount == 4) {
-					for (int x = 0; x <= 1; x++)
-						for (int z = 0; z <= 1; z++)
-							getPosToRenderFlat(posToRender, childDetailLevel, offsetPosX*2 + x, offsetPosZ*2 + z, targetLevel, farModeSwitchLevel);
-				} else {
-					posToRender.addPosToRender(detailLevel, offsetPosX + regionPosX * size, offsetPosZ + regionPosZ * size);
-				}
-			}
-		}
-	}
-
-	
 	public static final class LevelPos {
 		public final byte detail;
 		public final int posX;

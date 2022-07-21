@@ -11,7 +11,7 @@ import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.objects.math.Mat4f;
-import com.seibel.lod.core.render.a7LodRenderer;
+import com.seibel.lod.core.a7.render.a7LodRenderer;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IProfilerWrapper;

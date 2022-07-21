@@ -17,11 +17,10 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.render;
+package com.seibel.lod.core.a7.render;
 
 import com.seibel.lod.core.a7.level.IClientLevel;
 import com.seibel.lod.core.config.Config;
-import com.seibel.lod.core.builders.lodBuilding.bufferBuilding.LodBufferBuilderFactory;
 import com.seibel.lod.core.config.types.ConfigEntry;
 import com.seibel.lod.core.enums.rendering.EDebugMode;
 import com.seibel.lod.core.enums.rendering.EFogColorMode;
@@ -29,11 +28,14 @@ import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.logging.ConfigBasedSpamLogger;
 import com.seibel.lod.core.objects.DHBlockPos;
-import com.seibel.lod.core.a7.render.RenderBufferHandler;
 import com.seibel.lod.core.objects.math.Mat4f;
 import com.seibel.lod.core.objects.math.Vec3d;
 import com.seibel.lod.core.objects.math.Vec3f;
+import com.seibel.lod.core.render.GLProxy;
+import com.seibel.lod.core.render.LodFogConfig;
+import com.seibel.lod.core.render.LodRenderProgram;
 import com.seibel.lod.core.render.objects.GLState;
+import com.seibel.lod.core.render.objects.GLVertexBuffer;
 import com.seibel.lod.core.render.objects.QuadElementBuffer;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
@@ -66,6 +68,18 @@ public class a7LodRenderer
 	public static final long DRAW_LAG_SPIKE_THRESHOLD_NS = TimeUnit.NANOSECONDS.convert(20, TimeUnit.MILLISECONDS);
 
 	public static final boolean ENABLE_IBO = true;
+
+	public void setupOffset(DHBlockPos pos) {
+		shaderProgram.setModelPos(new Vec3f(pos.x, pos.y, pos.z));
+	}
+
+	public void drawVbo(GLVertexBuffer vbo) {
+		vbo.bind();
+		shaderProgram.bindVertexBuffer(vbo.getId());
+		GL32.glDrawElements(GL32.GL_TRIANGLES, (vbo.getVertexCount()/4)*6,
+				quadIBO.getType(), 0);
+	}
+
 	public static class LagSpikeCatcher {
 		long timer = System.nanoTime();
 		public LagSpikeCatcher() {}
@@ -219,7 +233,7 @@ public class a7LodRenderer
 		int drawCount = 0;
 
 		//TODO: Directional culling
-		bufferHandler.render(shaderProgram);
+		bufferHandler.render(this);
 
 		//if (drawCall==0)
 		//	tickLogger.info("DrawCall Count: {}", drawCount);
@@ -267,7 +281,7 @@ public class a7LodRenderer
 		shaderProgram = new LodRenderProgram(LodFogConfig.generateFogConfig());
 		if (ENABLE_IBO) {
 			quadIBO = new QuadElementBuffer();
-			quadIBO.reserve(LodBufferBuilderFactory.MAX_QUADS_PER_BUFFER);
+			quadIBO.reserve(RenderBuffer.MAX_QUADS_PER_BUFFER);
 		}
 		EVENT_LOGGER.info("Renderer setup complete");
 	}

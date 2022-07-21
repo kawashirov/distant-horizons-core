@@ -20,6 +20,7 @@
 package com.seibel.lod.core.a7.render;
 
 import com.seibel.lod.core.render.LodRenderProgram;
+import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.StatsMap;
 
 public abstract class RenderBuffer implements AutoCloseable
@@ -31,7 +32,7 @@ public abstract class RenderBuffer implements AutoCloseable
 	// ========== Called by render thread ==========
 	/* Called on... well... rendering.
 	 * Return false if nothing rendered. (Optional) */
-	public abstract boolean render(LodRenderProgram shaderProgram);
+	public abstract boolean render(a7LodRenderer renderContext);
 
 	// ========== Called by any thread. (thread safe) ==========
 	
@@ -47,6 +48,14 @@ public abstract class RenderBuffer implements AutoCloseable
 	 * thread), or by others when the object is not being used. (not in build,
 	 * upload, or render state). */
 	public abstract void close();
-	
-	
+
+
+
+	public static final int DEFAULT_MEMORY_ALLOCATION = (LodUtil.LOD_VERTEX_FORMAT.getByteSize() * 3) * 8;
+	public static final int QUADS_BYTE_SIZE = LodUtil.LOD_VERTEX_FORMAT.getByteSize() * 4;
+	public static final int MAX_QUADS_PER_BUFFER = (1024 * 1024 * 1) / QUADS_BYTE_SIZE;
+	public static final int FULL_SIZED_BUFFER = MAX_QUADS_PER_BUFFER * QUADS_BYTE_SIZE;
+
+
+
 }
