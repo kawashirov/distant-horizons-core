@@ -28,7 +28,7 @@ import java.util.Map;
  *
  * @param <BindableType> extends IBindable and defines what interfaces this dependency handler can deal with.
  * @author James Seibel
- * @version 2022-7-18
+ * @version 2022-7-21
  */
 public class DependencyInjector<BindableType extends IBindable>
 {
@@ -163,7 +163,7 @@ public class DependencyInjector<BindableType extends IBindable>
 	 * @throws ClassCastException If the dependency isn't able to be cast to type T.
 	 *                            (this shouldn't normally happen, unless the bound object changed somehow)
 	 */
-	public <T extends BindableType> ArrayList<T> getAll(Class<? extends BindableType> interfaceClass) throws ClassCastException
+	public <T extends BindableType> ArrayList<T> getAll(Class<T> interfaceClass) throws ClassCastException
 	{
 		return getInternalLogic(interfaceClass, false);
 	}
@@ -183,7 +183,7 @@ public class DependencyInjector<BindableType extends IBindable>
 	 *                            (this shouldn't normally happen, unless the bound object changed somehow)
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends BindableType> T get(Class<? extends BindableType> interfaceClass, boolean allowIncompleteDependencies) throws ClassCastException
+	public <T extends BindableType> T get(Class<T> interfaceClass, boolean allowIncompleteDependencies) throws ClassCastException
 	{
 		return (T) getInternalLogic(interfaceClass, allowIncompleteDependencies).get(0);
 	}
@@ -193,7 +193,7 @@ public class DependencyInjector<BindableType extends IBindable>
 	 * if no dependencies have been bound the list will contain null.
 	 */
 	@SuppressWarnings("unchecked")
-	private <T extends BindableType> ArrayList<T> getInternalLogic(Class<? extends BindableType> interfaceClass, boolean allowIncompleteDependencies) throws ClassCastException
+	private <T extends BindableType> ArrayList<T> getInternalLogic(Class<T> interfaceClass, boolean allowIncompleteDependencies) throws ClassCastException
 	{
 		ArrayList<BindableType> dependencyList = dependencies.get(interfaceClass);
 		if (dependencyList != null && dependencyList.size() != 0)

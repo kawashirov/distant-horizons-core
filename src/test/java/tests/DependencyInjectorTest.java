@@ -28,7 +28,7 @@ import java.util.ArrayList;
 
 /**
  * @author James Seibel
- * @version 2022-7-20
+ * @version 2022-7-21
  */
 public class DependencyInjectorTest
 {
@@ -55,10 +55,12 @@ public class DependencyInjectorTest
 		ISingletonTestOne testInterOne = TEST_SINGLETON_HANDLER.get(ISingletonTestOne.class);
 		Assert.assertNotNull(ISingletonTestOne.class.getSimpleName() + " not bound.", testInterOne);
 		Assert.assertEquals(ISingletonTestOne.class.getSimpleName() + " incorrect value.", testInterOne.getValue(), ConcreteSingletonTestOne.VALUE);
+		Assert.assertEquals(ISingletonTestOne.class.getSimpleName() + " incorrect value.", TEST_SINGLETON_HANDLER.get(ISingletonTestOne.class).getValue(), ConcreteSingletonTestOne.VALUE);
 		
 		ISingletonTestTwo testInterTwo = TEST_SINGLETON_HANDLER.get(ISingletonTestTwo.class);
 		Assert.assertNotNull(ISingletonTestTwo.class.getSimpleName() + " not bound.", testInterTwo);
 		Assert.assertEquals(ISingletonTestTwo.class.getSimpleName() + " incorrect value.", testInterTwo.getValue(), ConcreteSingletonTestTwo.VALUE);
+		Assert.assertEquals(ISingletonTestTwo.class.getSimpleName() + " incorrect value.", TEST_SINGLETON_HANDLER.get(ISingletonTestTwo.class).getValue(), ConcreteSingletonTestTwo.VALUE);
 		
 		
 		// circular dependencies (if this throws an exception the dependency isn't set up)
