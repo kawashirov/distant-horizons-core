@@ -1,23 +1,16 @@
 package com.seibel.lod.core.a7.save.io.render;
 
 import com.google.common.collect.HashMultimap;
-import com.seibel.lod.core.a7.datatype.EmptyRenderSource;
-import com.seibel.lod.core.a7.datatype.LodDataSource;
+import com.seibel.lod.core.a7.PlaceHolderQueue;
+import com.seibel.lod.core.a7.datatype.PlaceHolderRenderSource;
 import com.seibel.lod.core.a7.datatype.LodRenderSource;
-import com.seibel.lod.core.a7.datatype.RenderSourceLoader;
-import com.seibel.lod.core.a7.datatype.column.ColumnRenderLoader;
-import com.seibel.lod.core.a7.datatype.column.ColumnRenderSource;
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
-import com.seibel.lod.core.a7.datatype.full.FullFormat;
 import com.seibel.lod.core.a7.level.IClientLevel;
-import com.seibel.lod.core.a7.save.io.file.DataMetaFile;
 import com.seibel.lod.core.a7.save.io.file.IDataSourceProvider;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
-import com.seibel.lod.core.objects.DHChunkPos;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
-import org.lwjgl.system.CallbackI;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,11 +26,13 @@ public class RenderFileHandler implements IRenderSourceProvider {
     final IClientLevel level;
     final File saveDir;
     final IDataSourceProvider dataSourceProvider;
+    final PlaceHolderQueue placeHolderQueue;
 
-    public RenderFileHandler(IDataSourceProvider sourceProvider, IClientLevel level, File saveRootDir) {
+    public RenderFileHandler(IDataSourceProvider sourceProvider, IClientLevel level, File saveRootDir, PlaceHolderQueue placeHolderQueue) {
         this.dataSourceProvider = sourceProvider;
         this.level = level;
         this.saveDir = saveRootDir;
+        this.placeHolderQueue = placeHolderQueue;
     }
 
     /*
@@ -118,7 +113,9 @@ public class RenderFileHandler implements IRenderSourceProvider {
                         LOGGER.error("Uncaught error on {}:", pos, e);
                     }
                     if (render != null) return render;
-                    return EmptyRenderSource.INSTANCE;
+                    PlaceHolderRenderSource placeHolder = new PlaceHolderRenderSource(pos);
+                    placeHolderQueue.track(placeHolder);
+                    return placeHolder;
                 }
         );
     }

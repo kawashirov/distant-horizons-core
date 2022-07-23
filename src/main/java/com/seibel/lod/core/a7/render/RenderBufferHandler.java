@@ -1,6 +1,7 @@
 package com.seibel.lod.core.a7.render;
 
 import com.seibel.lod.core.a7.datatype.LodRenderSource;
+import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.objects.Pos2D;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.render.LodRenderProgram;

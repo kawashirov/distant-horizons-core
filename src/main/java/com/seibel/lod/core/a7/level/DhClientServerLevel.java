@@ -1,5 +1,6 @@
 package com.seibel.lod.core.a7.level;
 
+import com.seibel.lod.core.a7.generation.GenerationQueue;
 import com.seibel.lod.core.a7.render.LodQuadTree;
 import com.seibel.lod.core.a7.util.FileScanner;
 import com.seibel.lod.core.a7.save.io.file.LocalDataFileHandler;
@@ -26,6 +27,7 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
     private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
     public final LocalSaveStructure save;
     public final LocalDataFileHandler dataFileHandler;
+    public GenerationQueue generationQueue = null;
     public RenderFileHandler renderFileHandler = null;
     public RenderBufferHandler renderBufferHandler = null; //TODO: Should this be owned by renderer?
     public final ILevelWrapper level;
@@ -54,7 +56,9 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
             LOGGER.warn("Tried to call startRenderer() on the clientServerLevel {} when renderer is already setup!", level);
             return;
         }
-        renderFileHandler = new RenderFileHandler(dataFileHandler, this, save.getRenderCacheFolder(level));
+
+        generationQueue = new GenerationQueue((a,b) -> renderFileHandler.write(a,b)); // FIXME: Ops. A need B and B need A... Does this work?
+        renderFileHandler = new RenderFileHandler(dataFileHandler, this, save.getRenderCacheFolder(level), generationQueue);
         tree = new LodQuadTree(this, Config.Client.Graphics.Quality.lodChunkRenderDistance.get()*16,
                 MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, renderFileHandler);
         renderBufferHandler = new RenderBufferHandler(tree);
@@ -84,6 +88,7 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
         renderFileHandler.flushAndSave(); //Ignore the completion feature so that this action is async
         renderFileHandler.close();
         renderFileHandler = null;
+        generationQueue = null;
     }
 
     @Override

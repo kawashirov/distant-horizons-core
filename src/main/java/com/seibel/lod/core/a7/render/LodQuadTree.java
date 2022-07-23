@@ -363,6 +363,8 @@ public class LodQuadTree {
                 } else {
                     if (!section.isLoaded() && !section.isLoading()) {
                         section.load(renderSourceProvider);
+                    } else if (section.isOutdated()) {
+                        section.reload(renderSourceProvider);
                     }
                     if (section.childCount == 4) section.enableRender(level, this);
                     if (section.childCount == 0) section.disableRender();

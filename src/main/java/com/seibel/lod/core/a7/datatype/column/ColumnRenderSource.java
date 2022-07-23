@@ -322,4 +322,9 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     public byte getRenderVersion() {
         return LATEST_VERSION;
     }
+
+    @Override
+    public boolean isValid() {
+        return true; // For now, this is always valid.
+    }
 }

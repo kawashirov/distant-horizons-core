@@ -47,6 +47,13 @@ public class LodRenderSection {
         if (loadFuture != null || lodRenderSource != null) throw new IllegalStateException("Reloading is not supported!");
         loadFuture = renderDataProvider.read(pos);
     }
+    public void reload(IRenderSourceProvider renderDataProvider) {
+        if (loadFuture != null) throw new IllegalStateException("This section is already loading!");
+        if (lodRenderSource == null) throw new IllegalStateException("This section is not loaded!");
+        lodRenderSource.dispose();
+        lodRenderSource = null;
+        loadFuture = renderDataProvider.read(pos);
+    }
 
     public void tick(LodQuadTree quadTree) {
         if (loadFuture != null && loadFuture.isDone()) {
@@ -76,6 +83,10 @@ public class LodRenderSection {
 
     public boolean isLoading() {
         return loadFuture != null;
+    }
+
+    public boolean isOutdated() {
+        return lodRenderSource != null && !lodRenderSource.isValid();
     }
 
     public LodRenderSource getRenderContainer() {

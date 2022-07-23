@@ -38,6 +38,10 @@ public class DHChunkPos {
         this.x = blockPos.x >> 4; // Same as div 16
         this.z = blockPos.z >> 4; // Same as div 16
     }
+    public DHChunkPos(DhBlockPos2D blockPos) {
+        this.x = blockPos.x >> 4; // Same as div 16
+        this.z = blockPos.z >> 4; // Same as div 16
+    }
 
     public DHBlockPos center() {
         return new DHBlockPos(8 + x << 4, 0, 8 + z << 4);

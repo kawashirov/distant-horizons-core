@@ -16,6 +16,8 @@ import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicReference;
 
 public interface LodRenderSource {
+    DhSectionPos getSectionPos();
+
     void enableRender(IClientLevel level, LodQuadTree quadTree);
     void disableRender();
     boolean isRenderReady();
@@ -35,4 +37,9 @@ public interface LodRenderSource {
     void update(ChunkSizedData chunkData);
 
     byte getRenderVersion();
+
+    /**
+     * Whether this object is still valid. If not, a new one should be created.
+     */
+    boolean isValid();
 }

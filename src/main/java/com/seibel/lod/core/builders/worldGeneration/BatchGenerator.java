@@ -19,24 +19,29 @@
 
 package com.seibel.lod.core.builders.worldGeneration;
 
+import com.seibel.lod.core.a7.generation.IChunkGenerator;
 import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.enums.config.EDistanceGenerationMode;
 import com.seibel.lod.core.enums.config.EGenerationPriority;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
+import com.seibel.lod.core.objects.DHChunkPos;
 import com.seibel.lod.core.objects.PosToGenerateContainer;
 import com.seibel.lod.core.util.LevelPosUtil;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.util.gridList.ArrayGridList;
 import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
+import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.worldGeneration.AbstractBatchGenerationEnvionmentWrapper;
 import com.seibel.lod.core.wrapperInterfaces.worldGeneration.AbstractBatchGenerationEnvionmentWrapper.Steps;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.invoke.MethodHandles;
+import java.util.concurrent.CompletableFuture;
 
-public class BatchGenerator
+public class BatchGenerator implements IChunkGenerator
 {
 	public static final boolean ENABLE_GENERATOR_STATS_LOGGING = false;
 
@@ -254,4 +259,60 @@ public class BatchGenerator
 		generationGroup.stop(blocking);
 	}
 
+	@Override
+	public boolean isBusy() {
+		return generationGroup.getEventCount() > previousThreadCount*1.5;
+	}
+
+	@Override
+	public CompletableFuture<ArrayGridList<IChunkWrapper>> generateChunks(DHChunkPos chunkPosMin, byte granularity) {
+		EDistanceGenerationMode mode = Config.Client.WorldGenerator.distanceGenerationMode.get();
+		Steps targetStep = null;
+		switch (mode) {
+			case NONE:
+				targetStep = Steps.Empty; // NOTE: Only load in existing chunks. No new chunk generation
+				break;
+			case BIOME_ONLY:
+				targetStep = Steps.Biomes; // NOTE: No block. Require fake height in LodBuilder
+				break;
+			case BIOME_ONLY_SIMULATE_HEIGHT:
+				targetStep = Steps.Noise; // NOTE: Stone only. Require fake surface
+				break;
+			case SURFACE:
+				targetStep = Steps.Surface; // Carvers or Surface???
+				break;
+			case FEATURES:
+			case FULL:
+				targetStep = Steps.Features;
+				break;
+		};
+
+
+		int chunkXMin = chunkPosMin.x;
+		int chunkZMin = chunkPosMin.z;
+		int genChunkSize = 1 << (granularity - 4); // minus 4 for chunk size as its equal to div by 16
+		double runTimeRatio = Config.Client.Advanced.Threading.numberOfWorldGenerationThreads.get()>1 ? 1.0
+				: Config.Client.Advanced.Threading.numberOfWorldGenerationThreads.get();
+		return generationGroup.generateChunks(chunkXMin, chunkZMin, genChunkSize, targetStep, runTimeRatio);
+	}
+
+	@Override
+	public byte getDataDetail() {
+		return 0;
+	}
+
+	@Override
+	public byte getMinGenerationGranularity() {
+		return 4;
+	}
+
+	@Override
+	public byte getMaxGenerationGranularity() {
+		return 16;
+	}
+
+	@Override
+	public void close() {
+		stop(true);
+	}
 }
