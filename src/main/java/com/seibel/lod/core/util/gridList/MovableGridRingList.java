@@ -21,6 +21,7 @@ package com.seibel.lod.core.util.gridList;
 
 import com.seibel.lod.core.objects.DHRegionPos;
 import com.seibel.lod.core.objects.Pos2D;
+import com.seibel.lod.core.util.LodUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,10 +55,18 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T> {
 				}
 			}
 			Arrays.sort(list, (a, b) -> {
-				double disSqrA = a.x* a.x+ a.y* a.y;
-				double disSqrB = b.x* b.x+ b.y* b.y;
+				long disSqrA = (long) a.x * a.x+ (long) a.y * a.y;
+				long disSqrB = (long) b.x * b.x+ (long) b.y * b.y;
 				return Double.compare(disSqrA, disSqrB);
 			});
+			for (int j=0; j<list.length; j++) {
+				list[j] = list[j].add(new Pos2D(halfSize, halfSize));
+			}
+			for (int j=0; j<list.length; j++) {
+				LodUtil.assertTrue(list[j].x >= 0 && list[j].x < size);
+				LodUtil.assertTrue(list[j].y >= 0 && list[j].y < size);
+			}
+
 		ringIteratorList = list;
 	}
 
@@ -305,6 +314,7 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T> {
 		try {
 			Pos2D min = pos.get();
 			for (Pos2D offset : ringIteratorList) {
+				LodUtil.assertTrue(_inRangeAquired(min.x + offset.x, min.y + offset.y, min));
 				T t = _getUnsafe(min.x + offset.x, min.y + offset.y);
 				d.accept(t, new Pos2D(min.x + offset.x, min.y + offset.y));
 			}

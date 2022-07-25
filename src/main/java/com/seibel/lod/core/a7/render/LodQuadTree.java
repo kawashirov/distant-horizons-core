@@ -239,7 +239,7 @@ public class LodQuadTree {
                     sectLevel == numbersOfSectionLevels - 1 ? null : ringLists[sectLevel - LAYER_BEGINNING_OFFSET + 1];
             final byte f_sectLevel = sectLevel;
             ringList.forEachPosOrdered((section, pos) -> {
-                if (f_sectLevel == 0 && section != null) {
+                if (f_sectLevel == LAYER_BEGINNING_OFFSET && section != null) {
                     section.childCount = 0;
                 }
                 if (section != null && section.childCount != 0) {
@@ -249,15 +249,18 @@ public class LodQuadTree {
                     if (parent == null) {
                         parent = parentRingList.setChained(pos.x >> 1, pos.y >> 1,
                                 new LodRenderSection(section.pos.getParent()));
+                        LodUtil.assertTrue(parent != null, "tried to set section at " + (pos.x >> 1) + "," + (pos.y >> 1) +", list is " + parentRingList);
                         parent.childCount++;
                     }
                     LodUtil.assertTrue(parent.childCount <= 4 && parent.childCount > 0);
                     for (byte i = 0; i < 4; i++) {
                         DhSectionPos childPos = section.pos.getChild(i);
+                        LodUtil.assertTrue(childRingList != null);
                         LodRenderSection child = childRingList.get(childPos.sectionX, childPos.sectionZ);
                         if (child == null) {
                             child = childRingList.setChained(childPos.sectionX, childPos.sectionZ,
                                     new LodRenderSection(childPos));
+                            LodUtil.assertTrue(child != null, "tried to set section at " + childPos.sectionX + "," + childPos.sectionZ + ", list is " + childRingList);
                             child.childCount = 0;
                         } else if (child.childCount == -1) {
                             child.childCount = 0;
@@ -266,6 +269,10 @@ public class LodQuadTree {
                     section.childCount = 4;
                 } else {
                     DhSectionPos sectPos = section != null ? section.pos : new DhSectionPos(f_sectLevel, pos.x, pos.y);
+                    LodUtil.assertTrue(sectPos.sectionDetail == f_sectLevel
+                    && sectPos.sectionX == pos.x && sectPos.sectionZ == pos.y,
+                            "sectPos: " + sectPos + ", pos: " + pos + ", sectLevel: " + f_sectLevel);
+
                     byte targetLevel = calculateExpectedDetailLevel(playerPos, sectPos);
                     if (f_sectLevel == numbersOfSectionLevels -1) {
                         // Section is in the top level.
@@ -275,13 +282,14 @@ public class LodQuadTree {
                         if (targetLevel <= getLayerDataDetail(f_sectLevel) && section == null) {
                             section = ringList.setChained(pos.x, pos.y,
                                     new LodRenderSection(sectPos));
+                            LodUtil.assertTrue(section != null, "tried to set section at " + pos.x + "," + pos.y +", list is " + ringList);
                         }
                     } else {
                         // Section is not the top level. So we also need to consider the parent.
                         if (targetLevel >= getLayerDataDetail((byte) (f_sectLevel+1)) && section != null) {
                             LodUtil.assertTrue(parentRingList != null);
                             LodRenderSection parent = parentRingList.get(pos.x >> 1, pos.y >> 1);
-                            LodUtil.assertTrue(parent != null);
+                            LodUtil.assertTrue(parent != null, "fail to get parent setion at " + (pos.x >> 1) + "," + (pos.y >> 1) +", list is " + parentRingList);
                             LodUtil.assertTrue(parent.childCount <= 4 && parent.childCount > 0);
                             parent.childCount--;
                             section.childCount = -1;
@@ -289,11 +297,13 @@ public class LodQuadTree {
                         if (targetLevel < getLayerDataDetail((byte) (f_sectLevel+1)) && section == null) {
                             section = ringList.setChained(pos.x, pos.y,
                                     new LodRenderSection(sectPos));
+                            LodUtil.assertTrue(section != null, "tried to set section at " + pos.x + "," + pos.y +", list is " + ringList);
                             LodUtil.assertTrue(parentRingList != null);
                             LodRenderSection parent = parentRingList.get(pos.x >> 1, pos.y >> 1);
                             if (parent == null) {
                                 parent = parentRingList.setChained(pos.x >> 1, pos.y >> 1,
                                         new LodRenderSection(sectPos.getParent()));
+                                LodUtil.assertTrue(parent != null, "tried to set section at " + (pos.x >> 1) + "," + (pos.y >> 1) +", list is " + parentRingList);
                             }
                             parent.childCount++;
                         }
@@ -301,9 +311,9 @@ public class LodQuadTree {
                 }
                 // Final quick assert to insure section pos is correct.
                 if (section != null) {
-                    LodUtil.assertTrue(section.pos.sectionDetail == f_sectLevel);
-                    LodUtil.assertTrue(section.pos.sectionX == pos.x);
-                    LodUtil.assertTrue(section.pos.sectionZ == pos.y);
+                    LodUtil.assertTrue(section.pos.sectionDetail == f_sectLevel, "section.pos: " + section.pos + " vs level: " + f_sectLevel);
+                    LodUtil.assertTrue(section.pos.sectionX == pos.x, "section.pos: " + section.pos + " vs pos: " + pos);
+                    LodUtil.assertTrue(section.pos.sectionZ == pos.y, "section.pos: " + section.pos + " vs pos: " + pos);
                 }
             });
         }
