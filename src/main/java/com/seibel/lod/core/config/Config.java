@@ -669,7 +669,7 @@ public class Config
 
             public static class Threading
             {
-                public static ConfigEntry<Double> numberOfWorldGenerationThreads = new ConfigEntry.Builder<Double>()
+                public static final ConfigEntry<Double> numberOfWorldGenerationThreads = new ConfigEntry.Builder<Double>()
                         .setMinDefaultMax(0.1,
                                 (double) Math.min(Runtime.getRuntime().availableProcessors()/2, 4),
                                 (double) Runtime.getRuntime().availableProcessors())
@@ -692,8 +692,17 @@ public class Config
                 /** Returns the number of threads that can be used to generate terrain */
                 public static int getWorldGenerationThreadPoolSize()
                 {
-                    return numberOfWorldGenerationThreads.get() < 1 ?
-                            1 : (int) Math.ceil(numberOfWorldGenerationThreads.get());
+                    Double objValue = numberOfWorldGenerationThreads.get();
+                    double value = objValue;
+                    //double value = numberOfWorldGenerationThreads.get();
+                    if (value < 1.0)
+                    {
+                        return 1;
+                    }
+                    else
+                    {
+                        return (int) value;
+                    }
                 }
                 /** Returns how often world generator threads should run as a number between 0.0 and 1.0 */
                 public static double getWorldGenerationPartialRunTime()

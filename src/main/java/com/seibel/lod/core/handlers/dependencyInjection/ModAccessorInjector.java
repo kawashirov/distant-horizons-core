@@ -60,5 +60,6 @@ public class ModAccessorInjector extends DependencyInjector<IModAccessor>
 		super.bind(interfaceClass, modAccessor);
 		LOGGER.info("Registered mod compatibility accessor for: [" + modAccessor.getModName() + "].");
 	}
-	
+
+
 }
