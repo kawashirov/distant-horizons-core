@@ -50,7 +50,6 @@ public class BatchGenerator implements IChunkGenerator
 	public AbstractBatchGenerationEnvionmentWrapper generationGroup;
 	public ILevel targetLodLevel;
 	public static final int generationGroupSize = 4;
-	public static int previousThreadCount = Config.Client.Advanced.Threading.getWorldGenerationThreadPoolSize();
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 	
 //	private int estimatedSampleNeeded = 128;
@@ -261,7 +260,7 @@ public class BatchGenerator implements IChunkGenerator
 
 	@Override
 	public boolean isBusy() {
-		return generationGroup.getEventCount() > previousThreadCount*1.5;
+		return generationGroup.getEventCount() > Math.max(Config.Client.Advanced.Threading.numberOfWorldGenerationThreads.get().intValue(), 1) *1.5;
 	}
 
 	@Override
