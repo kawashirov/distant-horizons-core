@@ -8,8 +8,13 @@ package com.seibel.lod.core.enums.override;
  * @author James Seibel
  * @version 2022-7-18
  */
-public enum EApiOverridePriority
+public enum EOverridePriority
 {
+	// TODO rename this to EApiOverridePriority,
+	//  this will require a option in the enum checker to have different prefixes,
+	//  since the DhApi object is named DhApiOverride...
+	
+	
 	/**
 	 * The default Override priority and the one generally suggested
 	 * for developers who want to create an override. <br>

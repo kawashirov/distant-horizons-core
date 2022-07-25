@@ -22,12 +22,13 @@ package com.seibel.lod.core.enums;
 import com.seibel.lod.core.enums.config.CoreConfigEnumAssembly;
 import com.seibel.lod.core.enums.override.CoreOverrideEnumAssembly;
 import com.seibel.lod.core.enums.rendering.CoreRenderingEnumAssembly;
+import com.seibel.lod.core.enums.worldGeneration.CoreWorldGenerationEnumAssembly;
 
 /**
  * Assembly classes are used to reference the package they are in.
  *
  * @author James Seibel
- * @version 2022-7-18
+ * @version 2022-7-25
  */
 public class CoreEnumAssembly
 {
@@ -36,6 +37,7 @@ public class CoreEnumAssembly
 	private static final CoreRenderingEnumAssembly renderingAssembly = new CoreRenderingEnumAssembly();
 	private static final CoreConfigEnumAssembly configAssembly = new CoreConfigEnumAssembly();
 	private static final CoreOverrideEnumAssembly overrideAssembly = new CoreOverrideEnumAssembly();
+	private static final CoreWorldGenerationEnumAssembly worldGenAssembly = new CoreWorldGenerationEnumAssembly();
 	
 	/** All enums should have this prefix */
 	public static final String ENUM_PREFIX = "E";

@@ -1,7 +1,7 @@
 package tests;
 
 import com.seibel.lod.core.api.external.items.enums.override.EDhApiOverridePriority;
-import com.seibel.lod.core.enums.override.EApiOverridePriority;
+import com.seibel.lod.core.enums.override.EOverridePriority;
 import com.seibel.lod.core.handlers.dependencyInjection.DependencyInjector;
 import com.seibel.lod.core.handlers.dependencyInjection.DhApiEventInjector;
 import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
@@ -194,9 +194,9 @@ public class DependencyInjectorTest
 		Assert.assertNotNull("Test injector should've bound core override.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class));
 		Assert.assertNull("Core injector should not have bound core override.", CORE_OVERRIDE_INJECTOR.get(IOverrideTest.class));
 		// priority gets
-		Assert.assertNotNull("Core override should be bound.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EApiOverridePriority.CORE));
-		Assert.assertNull("Secondary override should not be bound yet.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EApiOverridePriority.SECONDARY));
-		Assert.assertNull("Primary override should not be bound yet.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EApiOverridePriority.PRIMARY));
+		Assert.assertNotNull("Core override should be bound.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EOverridePriority.CORE));
+		Assert.assertNull("Secondary override should not be bound yet.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EOverridePriority.SECONDARY));
+		Assert.assertNull("Primary override should not be bound yet.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EOverridePriority.PRIMARY));
 		// standard get
 		override = TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class);
 		Assert.assertEquals("Override returned incorrect override type.", override.getOverrideType(), EDhApiOverridePriority.CORE);
@@ -207,9 +207,9 @@ public class DependencyInjectorTest
 		TEST_OVERRIDE_INJECTOR.bind(IOverrideTest.class, secondaryOverride);
 		// priority gets
 		Assert.assertNotNull("Test injector should've bound secondary override.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class));
-		Assert.assertNotNull("Core override should be bound.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EApiOverridePriority.CORE));
-		Assert.assertNotNull("Secondary override should be bound.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EApiOverridePriority.SECONDARY));
-		Assert.assertNull("Primary override should not be bound yet.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EApiOverridePriority.PRIMARY));
+		Assert.assertNotNull("Core override should be bound.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EOverridePriority.CORE));
+		Assert.assertNotNull("Secondary override should be bound.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EOverridePriority.SECONDARY));
+		Assert.assertNull("Primary override should not be bound yet.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EOverridePriority.PRIMARY));
 		// standard get
 		override = TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class);
 		Assert.assertEquals("Override returned incorrect override type.", override.getOverrideType(), EDhApiOverridePriority.SECONDARY);
@@ -220,9 +220,9 @@ public class DependencyInjectorTest
 		TEST_OVERRIDE_INJECTOR.bind(IOverrideTest.class, primaryOverride);
 		// priority gets
 		Assert.assertNotNull("Test injector should've bound primary override.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class));
-		Assert.assertNotNull("Core override should be bound.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EApiOverridePriority.CORE));
-		Assert.assertNotNull("Secondary override should be bound.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EApiOverridePriority.SECONDARY));
-		Assert.assertNotNull("Primary override should be bound.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EApiOverridePriority.PRIMARY));
+		Assert.assertNotNull("Core override should be bound.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EOverridePriority.CORE));
+		Assert.assertNotNull("Secondary override should be bound.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EOverridePriority.SECONDARY));
+		Assert.assertNotNull("Primary override should be bound.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EOverridePriority.PRIMARY));
 		// standard get
 		override = TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class);
 		Assert.assertEquals("Override returned incorrect override type.", override.getOverrideType(), EDhApiOverridePriority.PRIMARY);

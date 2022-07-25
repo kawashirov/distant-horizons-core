@@ -22,7 +22,7 @@ package com.seibel.lod.core.handlers.dependencyInjection;
 import com.seibel.lod.core.api.external.items.enums.override.EDhApiOverridePriority;
 import com.seibel.lod.core.api.external.items.interfaces.override.IDhApiOverrideable;
 import com.seibel.lod.core.api.implementation.objects.GenericEnumConverter;
-import com.seibel.lod.core.enums.override.EApiOverridePriority;
+import com.seibel.lod.core.enums.override.EOverridePriority;
 import com.seibel.lod.core.util.StringUtil;
 
 /**
@@ -40,7 +40,7 @@ public class OverrideInjector
 	private final DependencyInjector<IDhApiOverrideable> secondaryInjector = new DependencyInjector<>(IDhApiOverrideable.class, false);
 	private final DependencyInjector<IDhApiOverrideable> coreInjector = new DependencyInjector<>(IDhApiOverrideable.class, false);
 	
-	private static final GenericEnumConverter<EApiOverridePriority, EDhApiOverridePriority> ENUM_CONVERTER = new GenericEnumConverter<>(EApiOverridePriority.class, EDhApiOverridePriority.class);
+	private static final GenericEnumConverter<EOverridePriority, EDhApiOverridePriority> ENUM_CONVERTER = new GenericEnumConverter<>(EOverridePriority.class, EDhApiOverridePriority.class);
 	
 	/**
 	 * This is used to determine if an override is part of Distant Horizons'
@@ -75,11 +75,11 @@ public class OverrideInjector
 	 */
 	public void bind(Class<? extends IDhApiOverrideable> dependencyInterface, IDhApiOverrideable dependencyImplementation)  throws IllegalStateException, IllegalArgumentException
 	{
-		if (getCorePriorityEnum(dependencyImplementation) == EApiOverridePriority.PRIMARY)
+		if (getCorePriorityEnum(dependencyImplementation) == EOverridePriority.PRIMARY)
 		{
 			primaryInjector.bind(dependencyInterface, dependencyImplementation);
 		}
-		else if (getCorePriorityEnum(dependencyImplementation) == EApiOverridePriority.SECONDARY)
+		else if (getCorePriorityEnum(dependencyImplementation) == EOverridePriority.SECONDARY)
 		{
 			secondaryInjector.bind(dependencyInterface, dependencyImplementation);
 		}
@@ -92,7 +92,7 @@ public class OverrideInjector
 			}
 			else
 			{
-				throw new IllegalArgumentException("Only Distant Horizons internal objects can use the Override Priority [" + EApiOverridePriority.CORE + "]. Please use [" + EApiOverridePriority.PRIMARY + "] or [" + EApiOverridePriority.SECONDARY + "] instead.");
+				throw new IllegalArgumentException("Only Distant Horizons internal objects can use the Override Priority [" + EOverridePriority.CORE + "]. Please use [" + EOverridePriority.PRIMARY + "] or [" + EOverridePriority.SECONDARY + "] instead.");
 			}
 		}
 	}
@@ -126,14 +126,14 @@ public class OverrideInjector
 	 *
 	 * @see DependencyInjector#get(Class, boolean)
 	 */
-	public <T extends IDhApiOverrideable> T get(Class<T> interfaceClass, EApiOverridePriority overridePriority) throws ClassCastException
+	public <T extends IDhApiOverrideable> T get(Class<T> interfaceClass, EOverridePriority overridePriority) throws ClassCastException
 	{
 		T value;
-		if (overridePriority == EApiOverridePriority.PRIMARY)
+		if (overridePriority == EOverridePriority.PRIMARY)
 		{
 			value = primaryInjector.get(interfaceClass);
 		}
-		else if (overridePriority == EApiOverridePriority.SECONDARY)
+		else if (overridePriority == EOverridePriority.SECONDARY)
 		{
 			value = secondaryInjector.get(interfaceClass);
 		}
@@ -147,7 +147,7 @@ public class OverrideInjector
 	
 	
 	/** Small helper method so we don't have to use DhApi enums. */
-	private EApiOverridePriority getCorePriorityEnum(IDhApiOverrideable override)
+	private EOverridePriority getCorePriorityEnum(IDhApiOverrideable override)
 	{
 		return ENUM_CONVERTER.convertToCoreType(override.getOverrideType());
 	}
