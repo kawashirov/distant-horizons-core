@@ -108,12 +108,22 @@ public class a7LodRenderer
 		this.level = level;
 	}
 
+	private boolean closeCalled = false;
 	public void close() {
-		cleanup();
+		if (closeCalled) {
+			EVENT_LOGGER.warn("close() called twice!");
+			return;
+		}
+		closeCalled = true;
+		GLProxy.getInstance().recordOpenGlCall(this::cleanup);
 	}
 
 	public void drawLODs(Mat4f baseModelViewMatrix, Mat4f baseProjectionMatrix, float partialTicks, IProfilerWrapper profiler)
 	{
+		if (closeCalled) {
+			EVENT_LOGGER.error("drawLODs() called after close()!");
+			return;
+		}
 		//=================================//
 		// determine if LODs should render //
 		//=================================//

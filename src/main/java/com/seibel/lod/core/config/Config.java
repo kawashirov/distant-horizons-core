@@ -692,8 +692,8 @@ public class Config
                 /** Returns the number of threads that can be used to generate terrain */
                 public static int getWorldGenerationThreadPoolSize()
                 {
-                    Double objValue = numberOfWorldGenerationThreads.get();
-                    double value = objValue;
+                    Object v = numberOfWorldGenerationThreads.get();
+                    double value = (v instanceof Double) ? (double)((Double) v) : (int)((Integer) v);
                     //double value = numberOfWorldGenerationThreads.get();
                     if (value < 1.0)
                     {
