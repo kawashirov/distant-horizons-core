@@ -6,6 +6,7 @@ import com.seibel.lod.core.a7.pos.DhBlockPos2D;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.a7.save.io.render.IRenderSourceProvider;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
+import com.seibel.lod.core.objects.Pos2D;
 import com.seibel.lod.core.util.DetailDistanceUtil;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.gridList.MovableGridRingList;
@@ -73,7 +74,8 @@ public class LodQuadTree {
             for (byte i = LAYER_BEGINNING_OFFSET; i < numbersOfSectionLevels; i++) {
                 byte targetDataDetail = getLayerDataDetail(i);
                 int maxDist = getFurthestDistance(targetDataDetail);
-                int halfSize = LodUtil.ceilDiv(maxDist, (1 << i) + 2);
+                int halfSize = LodUtil.ceilDiv(maxDist, (1 << i)) + 1;
+                LOGGER.info("Creating ringList {} with size {}", i, halfSize*2+1);
                 ringLists[i - LAYER_BEGINNING_OFFSET] = new MovableGridRingList<>(halfSize,
                         initialPlayerX >> i, initialPlayerZ >> i);
             }
@@ -186,9 +188,18 @@ public class LodQuadTree {
      */
     public void tick(DhBlockPos2D playerPos) {
         for (int sectLevel = LAYER_BEGINNING_OFFSET; sectLevel < numbersOfSectionLevels; sectLevel++) {
-            ringLists[sectLevel - LAYER_BEGINNING_OFFSET]
-                    .move(playerPos.x >> sectLevel, playerPos.z >> sectLevel,
-                    LodRenderSection::dispose);
+            if (!ringLists[sectLevel - LAYER_BEGINNING_OFFSET].getCenter().equals(
+                    new Pos2D(playerPos.x >> sectLevel, playerPos.z >> sectLevel))) {
+                LOGGER.info("TreeTick: Moving ring list {} from {} to {}", sectLevel,
+                        ringLists[sectLevel - LAYER_BEGINNING_OFFSET].getCenter(),
+                        new Pos2D(playerPos.x >> sectLevel, playerPos.z >> sectLevel));
+
+                LOGGER.info("Tree State:\n{}", getDebugString());
+
+                ringLists[sectLevel - LAYER_BEGINNING_OFFSET]
+                        .move(playerPos.x >> sectLevel, playerPos.z >> sectLevel,
+                                LodRenderSection::dispose);
+            }
         }
 
         // First tick pass: update all sections' childCount from bottom level to top level. Step:
@@ -372,5 +383,16 @@ public class LodQuadTree {
                 }
             });
         }
+    }
+
+    public String getDebugString() {
+        StringBuilder sb = new StringBuilder();
+        for (byte i = 0; i < ringLists.length; i++) {
+            sb.append("Layer ").append(i + LAYER_BEGINNING_OFFSET).append(":\n");
+            sb.append(ringLists[i].toDetailString());
+            sb.append("\n");
+            sb.append("\n");
+        }
+        return sb.toString();
     }
 }

@@ -93,4 +93,15 @@ public class LodRenderSection {
         return lodRenderSource;
     }
 
+
+    public String toString() {
+        return "LodRenderSection{" +
+                "pos=" + pos +
+                ", childCount=" + childCount +
+                ", lodRenderSource=" + lodRenderSource +
+                ", loadFuture=" + loadFuture +
+                ", isRenderEnabled=" + isRenderEnabled +
+                ", level=" + level +
+                '}';
+    }
 }

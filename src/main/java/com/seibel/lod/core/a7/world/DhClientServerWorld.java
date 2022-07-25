@@ -10,6 +10,7 @@ import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
@@ -50,11 +51,12 @@ public class DhClientServerWorld extends DhWorld implements IClientWorld, IServe
     }
 
     private void _clientTick() {
+        //LOGGER.info("Client world tick with {} levels", levels.size());
         int newViewDistance = Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * 16;
         Iterator<DhClientServerLevel> iterator = levels.values().iterator();
         while (iterator.hasNext()) {
             DhClientServerLevel level = iterator.next();
-            if (level.tree.viewDistance != newViewDistance) {
+            if (level.tree != null && level.tree.viewDistance != newViewDistance) {
                 level.close(); //FIXME: Is this fine for current logic?
                 iterator.remove();
             }
@@ -63,6 +65,7 @@ public class DhClientServerWorld extends DhWorld implements IClientWorld, IServe
         levels.values().forEach(DhClientServerLevel::clientTick);
     }
     public void clientTick() {
+        //LOGGER.info("Client world tick");
         eventLoop.tick();
     }
 

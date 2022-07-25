@@ -21,6 +21,8 @@ package com.seibel.lod.core.objects;
 
 import com.seibel.lod.core.util.LodUtil;
 
+import java.util.Objects;
+
 public class Pos2D {
     public final int x;
     public final int y;
@@ -44,5 +46,20 @@ public class Pos2D {
     }
     public long distSquared(Pos2D other) {
         return LodUtil.pow2((long)x - other.x) + LodUtil.pow2((long)y - other.y);
+    }
+
+    public int hashCode() {
+        return Objects.hash(x, y);
+    }
+    public String toString() {
+        return "[" + x + ", " + y + "]";
+    }
+    public boolean equals(Object other) {
+        if (other == this) return true;
+        if (other instanceof Pos2D) {
+            Pos2D o = (Pos2D)other;
+            return x == o.x && y == o.y;
+        }
+        return false;
     }
 }

@@ -46,15 +46,19 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
         LOGGER.info("Started DHLevel for {} with saves at {}", level, save);
     }
 
+    @Override
     public void clientTick() {
+        //LOGGER.info("Client tick for {}", level);
         if (tree != null) tree.tick(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
         if (renderBufferHandler != null) renderBufferHandler.update();
     }
 
+    @Override
     public void serverTick() {
         //TODO Update network packet and stuff or state or etc..
     }
     public void startRenderer() {
+        LOGGER.info("Starting renderer for {}", level);
         if (renderBufferHandler != null) {
             LOGGER.warn("Tried to call startRenderer() on the clientServerLevel {} when renderer is already setup!", level);
             return;
@@ -81,6 +85,7 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
     }
 
     public void stopRenderer() {
+        LOGGER.info("Stopping renderer for {}", level);
         if (renderBufferHandler == null) {
             LOGGER.warn("Tried to call stopRenderer() on the clientServerLevel {} when renderer is already closed!", level);
             return;
@@ -140,6 +145,8 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
             worldGenerator = batchGenerator;
         } else {
             batchGenerator.update();
+            if (generationQueue != null)
+                generationQueue.doGeneration(batchGenerator);
         }
     }
 

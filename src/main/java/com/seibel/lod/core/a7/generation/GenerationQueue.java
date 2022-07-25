@@ -22,7 +22,6 @@ public class GenerationQueue implements PlaceHolderQueue {
     private final Logger logger = DhLoggerBuilder.getLogger();
     DhBlockPos2D lastPlayerPos = new DhBlockPos2D(0, 0);
     final HashMap<DhSectionPos, WeakReference<PlaceHolderRenderSource>> trackers = new HashMap<>();
-    IGenerator generator = null;
     final BiConsumer<DhSectionPos, ChunkSizedData> writeConsumer;
 
     public GenerationQueue(BiConsumer<DhSectionPos, ChunkSizedData> writeConsumer) {
@@ -30,6 +29,7 @@ public class GenerationQueue implements PlaceHolderQueue {
     }
 
     public void track(PlaceHolderRenderSource source) {
+        logger.info("Tracking source {} at {}", source, source.getSectionPos());
         trackers.put(source.getSectionPos(), new WeakReference<>(source));
     }
 
@@ -62,10 +62,6 @@ public class GenerationQueue implements PlaceHolderQueue {
         return closest;
     }
 
-    public void setGenerator(IGenerator generator) {
-        this.generator = generator;
-    }
-
     private void write(DhSectionPos pos, ChunkSizedData data) {
         writeConsumer.accept(pos, data);
         WeakReference<PlaceHolderRenderSource> ref = trackers.get(pos);
@@ -75,8 +71,9 @@ public class GenerationQueue implements PlaceHolderQueue {
         source.markInvalid(); // Mark the placeholder as invalid, so it will be refreshed on next lodTree update.
     }
 
-    public void doGeneration() {
+    public void doGeneration(IGenerator generator) {
         if (generator == null) return;
+        if (generator.isBusy()) return;
 
         DhSectionPos pos = pollClosest(lastPlayerPos);
         if (pos == null) return;
@@ -110,6 +107,7 @@ public class GenerationQueue implements PlaceHolderQueue {
         assert granularity >= minGenGranularity && granularity <= maxGenGranularity;
         assert count > 0;
         assert granularity >= 4; // Thanks compiler. Guess having a 'always true' warning means I did it right.
+        logger.info("Generating section {} of size {} with granularity {} at {}", pos, count, granularity, chunkPosMin);
 
         CompletableFuture<ArrayGridList<ChunkSizedData>> dataFuture = generator.generate(chunkPosMin, granularity);
 
