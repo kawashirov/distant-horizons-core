@@ -35,13 +35,9 @@ public abstract class AbstractBatchGenerationEnvionmentWrapper {
 
 	public abstract void resizeThreadPool(int newThreadCount);
 
-	@Deprecated
 	public abstract void updateAllFutures();
 
 	public abstract int getEventCount();
-
-	@Deprecated
-	public abstract boolean tryAddPoint(int chunkX, int chunkZ, int genSize, Steps targetStep, boolean genAllDetails, double runTimeRatio);
 
 	public abstract void stop(boolean blocking);
 

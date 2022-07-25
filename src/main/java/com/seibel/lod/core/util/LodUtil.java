@@ -443,6 +443,12 @@ public class LodUtil
 	public static void assertTrue(boolean condition, String message) {
 		if (!condition) throw new RuntimeException("Assertion failed: " + message);
 	}
+	public static void assertNotReach(String message) {
+		throw new RuntimeException("Assert Not Reach failed: " + message);
+	}
+	public static void assertNotReach() {
+		throw new RuntimeException("Assert Not Reach failed");
+	}
 	public static ExecutorService makeSingleThreadPool(String name, int relativePriority) {
 		return Executors.newSingleThreadExecutor(new LodThreadFactory(name, Thread.NORM_PRIORITY+relativePriority));
 	}

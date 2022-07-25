@@ -54,13 +54,7 @@ public class DhServerLevel implements IServerLevel {
 
     @Override
     public void doWorldGen() {
-
-    }
-
-    @Override
-    public void submitChunkData(DHChunkPos chunkPos, ChunkSizedData data) {
-        DhSectionPos sectionPos = new DhSectionPos((byte)4, chunkPos.x, chunkPos.z);
-        dataFileHandler.write(sectionPos, data);
+        // FIXME: No world gen for server side only for now
     }
 
     @Override

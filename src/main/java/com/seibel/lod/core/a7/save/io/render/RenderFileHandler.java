@@ -12,6 +12,7 @@ import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -26,9 +27,10 @@ public class RenderFileHandler implements IRenderSourceProvider {
     final IClientLevel level;
     final File saveDir;
     final IDataSourceProvider dataSourceProvider;
+    @Nullable
     final PlaceHolderQueue placeHolderQueue;
 
-    public RenderFileHandler(IDataSourceProvider sourceProvider, IClientLevel level, File saveRootDir, PlaceHolderQueue placeHolderQueue) {
+    public RenderFileHandler(IDataSourceProvider sourceProvider, IClientLevel level, File saveRootDir, @Nullable PlaceHolderQueue placeHolderQueue) {
         this.dataSourceProvider = sourceProvider;
         this.level = level;
         this.saveDir = saveRootDir;
@@ -114,7 +116,7 @@ public class RenderFileHandler implements IRenderSourceProvider {
                     }
                     if (render != null) return render;
                     PlaceHolderRenderSource placeHolder = new PlaceHolderRenderSource(pos);
-                    placeHolderQueue.track(placeHolder);
+                    if (placeHolderQueue != null) placeHolderQueue.track(placeHolder);
                     return placeHolder;
                 }
         );

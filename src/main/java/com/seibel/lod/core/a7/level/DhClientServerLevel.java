@@ -1,6 +1,7 @@
 package com.seibel.lod.core.a7.level;
 
 import com.seibel.lod.core.a7.generation.GenerationQueue;
+import com.seibel.lod.core.a7.generation.IGenerator;
 import com.seibel.lod.core.a7.render.LodQuadTree;
 import com.seibel.lod.core.a7.util.FileScanner;
 import com.seibel.lod.core.a7.save.io.file.LocalDataFileHandler;
@@ -8,6 +9,7 @@ import com.seibel.lod.core.a7.save.io.render.RenderFileHandler;
 import com.seibel.lod.core.a7.pos.DhBlockPos2D;
 import com.seibel.lod.core.a7.render.RenderBufferHandler;
 import com.seibel.lod.core.a7.save.structure.LocalSaveStructure;
+import com.seibel.lod.core.builders.worldGeneration.BatchGenerator;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
@@ -33,6 +35,7 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
     public final ILevelWrapper level;
     public a7LodRenderer renderer = null;
     public LodQuadTree tree = null;
+    public IGenerator worldGenerator = null;
 
     public DhClientServerLevel(LocalSaveStructure save, ILevelWrapper level) {
         this.level = level;
@@ -57,7 +60,7 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
             return;
         }
 
-        generationQueue = new GenerationQueue((a,b) -> renderFileHandler.write(a,b)); // FIXME: Ops. A need B and B need A... Does this work?
+        generationQueue = new GenerationQueue((a,b) -> this.renderFileHandler.write(a,b));
         renderFileHandler = new RenderFileHandler(dataFileHandler, this, save.getRenderCacheFolder(level), generationQueue);
         tree = new LodQuadTree(this, Config.Client.Graphics.Quality.lodChunkRenderDistance.get()*16,
                 MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, renderFileHandler);
@@ -117,15 +120,27 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
         //Note: saving renderFileHandler will also save the dataFileHandler.
     }
 
+    private BatchGenerator batchGenerator = null;
     @Override
     public void close() {
+        if (batchGenerator != null) batchGenerator.close();
+        if (renderer != null) renderer.close();
+        if (renderBufferHandler != null) renderBufferHandler.close();
+        if (renderFileHandler != null) renderFileHandler.close();
         dataFileHandler.close();
         LOGGER.info("Closed DHLevel for {}", level);
     }
 
+
     @Override
     public void doWorldGen() {
-        //TODO
+        if (worldGenerator == null) {
+            // TODO: Make a registry for generators for modding support.
+            batchGenerator = new BatchGenerator(this);
+            worldGenerator = batchGenerator;
+        } else {
+            batchGenerator.update();
+        }
     }
 
     @Override

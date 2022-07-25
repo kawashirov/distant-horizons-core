@@ -102,11 +102,11 @@ public class DhApiEventInjector extends DependencyInjector<IDhApiEvent>
 	 * @return if any of the events returned that this event should be canceled.
 	 * @param <T> the parameter type taken by the event handlers.
 	 */
-	public <T> boolean fireAllEvents(Class<? extends IDhApiEvent<T>> dependencyInterface, T eventParameterObject)
+	public <T, U extends IDhApiEvent<T>> boolean fireAllEvents(Class<U> dependencyInterface, T eventParameterObject)
 	{
 		boolean cancelEvent = false;
 		
-		ArrayList<IDhApiEvent<T>> eventList = this.getAll(dependencyInterface);
+		ArrayList<U> eventList = this.getAll(dependencyInterface);
 		for (IDhApiEvent<T> event : eventList)
 		{
 			if (event != null)
