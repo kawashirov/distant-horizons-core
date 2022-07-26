@@ -14,14 +14,11 @@ import com.seibel.lod.core.a7.datatype.LodDataSource;
 import com.seibel.lod.core.a7.datatype.DataSourceLoader;
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.a7.datatype.full.FullDataSource;
-import com.seibel.lod.core.a7.datatype.full.FullFormat;
 import com.seibel.lod.core.a7.pos.DhLodPos;
 import com.seibel.lod.core.a7.save.io.MetaFile;
 import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.util.LodUtil;
-import org.lwjgl.system.CallbackI;
-import org.spongepowered.asm.mixin.injection.Inject;
 
 public class DataMetaFile extends MetaFile {
 	private final ILevel level;
