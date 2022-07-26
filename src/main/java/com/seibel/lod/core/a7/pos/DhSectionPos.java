@@ -35,7 +35,7 @@ public class DhSectionPos {
         return new DhLodUnit(sectionDetail, 1 << offset);
     }
     public DhLodPos getCenter() {
-        return getCenter((byte) (sectionDetail-1));
+        return getCenter((byte)0);
     }
     public DhLodPos getCorner() {
         return getCorner((byte) (sectionDetail-1));
@@ -49,7 +49,7 @@ public class DhSectionPos {
         if (sectionDetail <= 0) throw new IllegalStateException("section detail must be greater than 0");
         return new DhSectionPos((byte) (sectionDetail - 1),
                 sectionX * 2 + (child0to3 & 1),
-                sectionZ * 2 + (child0to3 & 2) / 2);
+                sectionZ * 2 + ((child0to3 & 2) >> 1));
     }
 
     public void forEachChild(Consumer<DhSectionPos> callback){
@@ -59,7 +59,7 @@ public class DhSectionPos {
     }
 
     public DhSectionPos getParent(){
-        return new DhSectionPos((byte) (sectionDetail + 1), sectionX / 2, sectionZ / 2);
+        return new DhSectionPos((byte) (sectionDetail + 1), sectionX >> 1, sectionZ >> 1);
     }
 
     public DhSectionPos getAdjacent(ELodDirection dir) {
@@ -79,10 +79,9 @@ public class DhSectionPos {
 
     @Override
     public String toString() {
-        return "DhSectionPos{" +
-                "sectionDetail=" + sectionDetail +
-                ", sectionX=" + sectionX +
-                ", sectionZ=" + sectionZ +
+        return "{" + sectionDetail +
+                "*" + sectionX +
+                "," + sectionZ +
                 '}';
     }
 

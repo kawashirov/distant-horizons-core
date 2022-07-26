@@ -33,7 +33,7 @@ import java.util.function.Consumer;
 
 public class MovableGridRingList<T> extends ArrayList<T> implements List<T> {
 	
-	private AtomicReference<Pos2D> pos = new AtomicReference<Pos2D>();
+	private final AtomicReference<Pos2D> pos = new AtomicReference<>();
 	
 	private final int halfSize;
 	private final int size;
@@ -329,7 +329,7 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T> {
 	@Override
 	public String toString() {
 		Pos2D p = pos.get();
-		return "MovabeGridRingList[" + p.x+halfSize + "," + p.y+halfSize + "] " + size + "*" + size + "[" + size() + "]";
+		return "MovabeGridRingList[" + (p.x+halfSize) + "," + (p.y+halfSize) + "] " + size + "*" + size + "[" + size() + "]";
 	}
 
 	public String toDetailString() {

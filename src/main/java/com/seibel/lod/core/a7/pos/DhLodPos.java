@@ -16,7 +16,7 @@ public class DhLodPos {
     }
 
     public String toString() {
-        return "DhLodPos(" + detail + ", " + x + ", " + z + ")";
+        return "[" + detail + "*" + x + "," + z + "]";
     }
 
     public DhLodUnit getX() {

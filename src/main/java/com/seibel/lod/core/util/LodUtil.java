@@ -28,6 +28,7 @@ import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.enums.config.EServerFolderNameMode;
 import com.seibel.lod.core.enums.config.EVanillaOverdraw;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
+import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.objects.DHChunkPos;
 import com.seibel.lod.core.objects.ParsedIp;
 import com.seibel.lod.core.objects.Pos2D;
@@ -39,6 +40,9 @@ import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IDimensionTypeWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.message.Message;
 
 /**
  * This class holds methods and constants that may be used in multiple places.
@@ -50,6 +54,7 @@ public class LodUtil
 {
 	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
+	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
 	/**
 	 * Vanilla render distances less than or equal to this will not allow partial
@@ -419,7 +424,20 @@ public class LodUtil
 	public static void checkInterruptsUnchecked() {
 		if (Thread.interrupted()) throw new RuntimeException(new InterruptedException());
 	}
-	
+
+	/**
+	 * Format a given string with params using log4j's MessageFormat
+	 *
+	 * @apiNote <b>This 'format' SHOULD ONLY be used for logging and debugging purposes!
+	 * Do not use it for deserialization or naming of objects.</b>
+	 * @param str The string to format
+	 * @param param The parameters to use in the string
+	 * @return A message object. Call .toString() to get the string.
+	 * @author leetom
+	 */
+	public static String formatLog(String str, Object... param) {
+		return LOGGER.getMessageFactory().newMessage(str, param).getFormattedMessage();
+	}
 	
 	/**
 	 * Returns a shortened version of the given string that is no longer than maxLength. <br>
@@ -441,13 +459,19 @@ public class LodUtil
 		if (!condition) throw new RuntimeException("Assertion failed");
 	}
 	public static void assertTrue(boolean condition, String message) {
-		if (!condition) throw new RuntimeException("Assertion failed: " + message);
+		if (!condition) throw new RuntimeException("Assertion failed:\n " + message);
 	}
-	public static void assertNotReach(String message) {
-		throw new RuntimeException("Assert Not Reach failed: " + message);
+	public static void assertTrue(boolean condition, String message, Object... args) {
+		if (!condition) throw new RuntimeException("Assertion failed:\n " + formatLog(message, args));
 	}
 	public static void assertNotReach() {
 		throw new RuntimeException("Assert Not Reach failed");
+	}
+	public static void assertNotReach(String message) {
+		throw new RuntimeException("Assert Not Reach failed:\n " + message);
+	}
+	public static void assertNotReach(String message, Object... args) {
+		throw new RuntimeException("Assert Not Reach failed:\n " + formatLog(message, args));
 	}
 	public static ExecutorService makeSingleThreadPool(String name, int relativePriority) {
 		return Executors.newSingleThreadExecutor(new LodThreadFactory(name, Thread.NORM_PRIORITY+relativePriority));

@@ -17,7 +17,7 @@ public class RenderBufferHandler {
     class RenderBufferNode implements AutoCloseable {
         public final DhSectionPos pos;
         public volatile RenderBufferNode[] children = null;
-        public AtomicReference<RenderBuffer> renderBufferSlot = null;
+        public final AtomicReference<RenderBuffer> renderBufferSlot = new AtomicReference<>();
 
         public RenderBufferNode(DhSectionPos pos) {
             this.pos = pos;
@@ -63,7 +63,8 @@ public class RenderBufferHandler {
             // Update children's render buffer state
             // TODO: Improve this! (Checking section.isLoaded() as if its not loaded, it can only be because
             //  it has children. (But this logic is... really hard to read!)
-            boolean shouldHaveChildren = !section.isLoaded();
+            // FIXME: Above comment is COMPLETELY WRONG! I am an idiot!
+            boolean shouldHaveChildren = section.FIXME_BYPASS_DONT_USE_getChildCount() > 0;
             if (shouldHaveChildren) {
                 if (children == null) {
                     RenderBufferNode[] childs = new RenderBufferNode[4];

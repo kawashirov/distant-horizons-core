@@ -16,6 +16,7 @@ import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.function.BiConsumer;
 
 public class GenerationQueue implements PlaceHolderQueue {
@@ -29,7 +30,7 @@ public class GenerationQueue implements PlaceHolderQueue {
     }
 
     public void track(PlaceHolderRenderSource source) {
-        logger.info("Tracking source {} at {}", source, source.getSectionPos());
+        //logger.info("Tracking source {} at {}", source, source.getSectionPos());
         trackers.put(source.getSectionPos(), new WeakReference<>(source));
     }
 
@@ -108,25 +109,31 @@ public class GenerationQueue implements PlaceHolderQueue {
         assert count > 0;
         assert granularity >= 4; // Thanks compiler. Guess having a 'always true' warning means I did it right.
         logger.info("Generating section {} of size {} with granularity {} at {}", pos, count, granularity, chunkPosMin);
-
+//FIXME: Handle size != 1 case
         CompletableFuture<ArrayGridList<ChunkSizedData>> dataFuture = generator.generate(chunkPosMin, granularity);
 
         dataFuture.whenComplete((data, ex) -> {
             if (ex != null) {
-                logger.error("Error generating data for section " + pos + ": " + ex);
+                if (ex instanceof CompletionException) {
+                    ex = ex.getCause();
+                }
+                logger.error("Error generating data for section {}", pos, ex);
                 return;
             }
             assert data != null;
-            if (data.gridSize != count) {
-                logger.error("Generated data grid size (" + data.gridSize
-                        + ") does not match expected size (" + count + ") for section " + pos);
-                return;
-            }
+            if (data.gridSize < (1 << (granularity-4)))
+                throw new IllegalStateException("Generator returned chunks of size "
+                        + data.gridSize + " but requested granularity was " + granularity
+                        + " (equals to chunks of : " + (1 << (granularity-4)) + ") @ " + chunkPosMin);
+
             final byte sectionDetail = (byte) (dataDetail + FullDataSource.SECTION_SIZE_OFFSET);
             data.forEachPos((x,z) -> {
                 ChunkSizedData chunkData = data.get(x,z);
                 DhLodPos chunkDataPos = new DhLodPos((byte) (dataDetail + 4), x, z).convertUpwardsTo(sectionDetail);
                 DhSectionPos sectionPos = new DhSectionPos(chunkDataPos.detail, chunkDataPos.x, chunkDataPos.z);
+                logger.info("Writing chunk {} with data detail {} to section {}",
+                        new DHChunkPos(x+chunkPosMin.x,z+chunkPosMin.z),
+                        dataDetail, sectionPos);
                 write(sectionPos, chunkData);
             });
         });

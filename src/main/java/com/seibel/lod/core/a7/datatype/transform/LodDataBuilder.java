@@ -2,12 +2,15 @@ package com.seibel.lod.core.a7.datatype.transform;
 
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.a7.datatype.full.FullFormat;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
+import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 
 public class LodDataBuilder {
+    private static final IBlockStateWrapper AIR = SingletonInjector.INSTANCE.get(IWrapperFactory.class).getAirBlockStateWrapper();
     public static ChunkSizedData createChunkData(IChunkWrapper chunk) {
         if (!canGenerateLodFromChunk(chunk)) return null;
 
@@ -18,7 +21,7 @@ public class LodDataBuilder {
                 LongArrayList longs = new LongArrayList(chunk.getHeight()/4);
                 int lastY = chunk.getMaxBuildHeight();
                 IBiomeWrapper biome = chunk.getBiome(x, lastY, z);
-                IBlockStateWrapper blockState = IBlockStateWrapper.AIR;
+                IBlockStateWrapper blockState = AIR;
                 int mappedId = chunkData.getMapping().setAndGetId(biome, blockState);
                 byte light = (byte) (chunk.getBlockLight(x,lastY,z) << 4 + chunk.getSkyLight(x,lastY,z));
                 int y=chunk.getMaxY(x, z);
@@ -42,7 +45,8 @@ public class LodDataBuilder {
                     }
                 }
                 longs.add(FullFormat.encode(mappedId, lastY-y+1, y+1, light));
-                chunkData.setSingleColumn(longs.toArray((long[]) null), x, z);
+
+                chunkData.setSingleColumn(longs.toArray(new long[0]), x, z);
             }
         }
 

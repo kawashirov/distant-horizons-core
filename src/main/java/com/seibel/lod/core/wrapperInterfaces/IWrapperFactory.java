@@ -36,4 +36,5 @@ public interface IWrapperFactory extends IBindable
 	AbstractBatchGenerationEnvionmentWrapper createBatchGenerator(ILevel targetLevel);
 	IBiomeWrapper deserializeBiomeWrapper(String str);
 	IBlockStateWrapper deserializeBlockStateWrapper(String str);
+	IBlockStateWrapper getAirBlockStateWrapper();
 }

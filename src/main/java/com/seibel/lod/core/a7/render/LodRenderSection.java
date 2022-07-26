@@ -81,6 +81,11 @@ public class LodRenderSection {
         return lodRenderSource != null;
     }
 
+    //FIXME: Used by RenderBufferHandler
+    public int FIXME_BYPASS_DONT_USE_getChildCount() {
+        return childCount;
+    }
+
     public boolean isLoading() {
         return loadFuture != null;
     }

@@ -37,11 +37,13 @@ public class RenderMetaFile extends MetaFile {
     //       Not sure if it will cause issues or not.
     public void updateChunkIfNeeded(ChunkSizedData chunkData) {
         CompletableFuture<LodRenderSource> source = _readCached(data.get());
+        if (source == null) return;
         if (source.isDone()) source.join().update(chunkData);
     }
 
     public CompletableFuture<Void> flushAndSave(ExecutorService renderCacheThread) {
         CompletableFuture<LodRenderSource> source = _readCached(data.get());
+        if (source == null) return CompletableFuture.completedFuture(null);
         return source.thenAccept((a)->{});
         //TODO: Should we save the data or let user re-calculate it on new load?
     }
