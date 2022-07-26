@@ -26,7 +26,7 @@ public class FullToColumnTransformer {
         final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(data.getDataDetail());
         final ColumnRenderSource columnSource = new ColumnRenderSource(pos, vertSize, level.getMinY());
 
-        if (dataDetail == pos.sectionDetail- columnSource.getDataDetail()) {
+        if (dataDetail == pos.sectionDetail - columnSource.getDataDetail()) {
             for (int x = 0; x < pos.getWidth(dataDetail).value; x++) {
                 for (int z = 0; z < pos.getWidth(dataDetail).value; z++) {
                     ColumnArrayView columnArrayView = columnSource.getVerticalDataView(x, z);

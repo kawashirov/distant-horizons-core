@@ -175,7 +175,7 @@ public class DataMetaFile extends MetaFile {
 		} else localVer = localVersion.get();
 		data.setLocalVersion(localVer);
 		// Finally, return the data.
-		return null;
+		return data;
 	}
 
 	private LodDataSource loadFile() {
@@ -237,8 +237,10 @@ public class DataMetaFile extends MetaFile {
 		try {
 			dataLevel = data.getDataDetail();
 			loader = DataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
+			// FIXME: Uncomment this and fix id when we have FullDataSource loader!
+			//LodUtil.assertTrue(loader != null, "No loader for {} (v{})", data.getClass(), data.getDataVersion());
 			dataType = data.getClass();
-			dataTypeId = loader.datatypeId;
+			dataTypeId = loader == null ? 0 : loader.datatypeId;
 			loaderVersion = data.getDataVersion();
 			timestamp = System.currentTimeMillis(); // TODO: Do we need to use server synced time?
 			// Warn: This may become an attack vector! Be careful!

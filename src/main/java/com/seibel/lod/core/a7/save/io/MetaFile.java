@@ -13,6 +13,7 @@ import java.util.zip.Adler32;
 import java.util.zip.CheckedOutputStream;
 
 import com.seibel.lod.core.a7.pos.DhSectionPos;
+import com.seibel.lod.core.a7.util.UnclosableOutputStream;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
@@ -36,9 +37,12 @@ public class MetaFile {
     //
     //    8 bytes: timestamp
 
-    // Total size: 32 bytes
+    // Used size: 40 bytes
+    // Remaining space: 24 bytes
+    // Total size: 64 bytes
 
-    public static final int METADATA_SIZE = 32;
+    public static final int METADATA_SIZE = 64;
+    public static final int METADATA_RESERVED_SIZE = 24;
     public static final int METADATA_MAGIC_BYTES = 0x44_48_76_30;
 
     public final DhSectionPos pos;
@@ -55,8 +59,8 @@ public class MetaFile {
     // Load a metaFile in this path. It also automatically read the metadata.
     protected MetaFile(File path) throws IOException {
         validateFile();
-        try (FileInputStream fin = new FileInputStream(path)) {
-            MappedByteBuffer buffer = fin.getChannel().map(FileChannel.MapMode.READ_ONLY, 0, METADATA_SIZE);
+        try (FileChannel channel = FileChannel.open(path.toPath(), StandardOpenOption.READ)) {
+            MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, METADATA_SIZE);
             this.path = path;
 
             int magic = buffer.getInt();
@@ -73,7 +77,7 @@ public class MetaFile {
             byte unused = buffer.get();
             dataTypeId = buffer.getLong();
             timestamp = buffer.getLong();
-            LodUtil.assertTrue(buffer.remaining() == 0);
+            LodUtil.assertTrue(buffer.remaining() == METADATA_RESERVED_SIZE);
             pos = new DhSectionPos(detailLevel, x, z);
         }
     }
@@ -109,7 +113,7 @@ public class MetaFile {
             byte unused = buffer.get();
             long dataTypeId = buffer.getLong();
             long timestamp = buffer.getLong();
-            LodUtil.assertTrue(buffer.remaining() == 0);
+            LodUtil.assertTrue(buffer.remaining() == METADATA_RESERVED_SIZE);
 
             DhSectionPos newPos = new DhSectionPos(detailLevel, x, z);
             if (!newPos.equals(pos)) {
@@ -121,14 +125,14 @@ public class MetaFile {
 
     protected void writeData(Consumer<OutputStream> dataWriter) throws IOException {
         if (path.exists()) validateFile();
-        File tempFile = File.createTempFile("", "tmp", path.getParentFile());
+        File tempFile = File.createTempFile("lodDataFile", "tmp", path.getParentFile());
         tempFile.deleteOnExit();
         try (FileChannel file = FileChannel.open(tempFile.toPath(),
                 StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
             {
                 file.position(METADATA_SIZE);
                 int checksum;
-                try (OutputStream channelOut = Channels.newOutputStream(file);
+                try (OutputStream channelOut = new UnclosableOutputStream(Channels.newOutputStream(file)); // Prevent closing the channel
                      BufferedOutputStream bufferedOut = new BufferedOutputStream(channelOut); // TODO: Is default buffer size ok? Do we even need to buffer?
                      CheckedOutputStream checkedOut = new CheckedOutputStream(bufferedOut, new Adler32())) { // TODO: Is Adler32 ok?
                     dataWriter.accept(checkedOut);
@@ -148,14 +152,14 @@ public class MetaFile {
                 buff.put(Byte.MIN_VALUE); // Unused
                 buff.putLong(dataTypeId);
                 buff.putLong(timestamp);
-                LodUtil.assertTrue(buff.remaining() == 0);
+                LodUtil.assertTrue(buff.remaining() == METADATA_RESERVED_SIZE);
                 buff.flip();
                 file.write(buff);
             }
             file.close();
             // Atomic move / replace the actual file
             Files.move(tempFile.toPath(), path.toPath(), StandardCopyOption.REPLACE_EXISTING,
-                    StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.COPY_ATTRIBUTES);
+                    StandardCopyOption.ATOMIC_MOVE);
         } finally {
             try {
                 boolean i = tempFile.delete(); // Delete temp file. Ignore errors if fails.
