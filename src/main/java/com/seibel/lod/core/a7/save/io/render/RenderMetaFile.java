@@ -8,6 +8,7 @@ import com.seibel.lod.core.a7.datatype.full.FullFormat;
 import com.seibel.lod.core.a7.datatype.transform.DataRenderTransformer;
 import com.seibel.lod.core.a7.level.IClientLevel;
 import com.seibel.lod.core.a7.level.ILevel;
+import com.seibel.lod.core.a7.pos.DhLodPos;
 import com.seibel.lod.core.a7.save.io.MetaFile;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.a7.save.io.file.DataMetaFile;
@@ -36,6 +37,9 @@ public class RenderMetaFile extends MetaFile {
     //FIXME: This can cause concurrent modification of LodRenderSource.
     //       Not sure if it will cause issues or not.
     public void updateChunkIfNeeded(ChunkSizedData chunkData) {
+        DhLodPos chunkPos = new DhLodPos((byte) (chunkData.dataDetail + 4), chunkData.x, chunkData.z);
+        LodUtil.assertTrue(pos.getSectionBBoxPos().overlaps(chunkPos), "Chunk pos {} doesn't overlap with section {}", chunkPos, pos);
+
         CompletableFuture<LodRenderSource> source = _readCached(data.get());
         if (source == null) return;
         if (source.isDone()) source.join().update(chunkData);

@@ -43,7 +43,7 @@ public class DhLodPos {
 
     public DhLodPos convertUpwardsTo(byte newDetail) {
         LodUtil.assertTrue(newDetail >= detail);
-        return new DhLodPos(newDetail, x >> (newDetail - detail), z >> (newDetail - detail));
+        return new DhLodPos(newDetail, Math.floorDiv(x, 1<<(newDetail-detail)), Math.floorDiv(z, 1<<(newDetail-detail)));
     }
 
     @Override

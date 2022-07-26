@@ -126,7 +126,7 @@ public class GenerationQueue implements PlaceHolderQueue {
                         + data.gridSize + " but requested granularity was " + granularity
                         + " (equals to chunks of : " + (1 << (granularity-4)) + ") @ " + chunkPosMin);
 
-            logger.info("Writing chunk {} to {} with data detail {}",
+            logger.info("Writing chunk {} - {} with data detail {}",
                     chunkPosMin, new DHChunkPos(chunkPosMin.x + (1 << (granularity-4)), chunkPosMin.z + (1 << (granularity-4))),
                     dataDetail);
 
@@ -135,9 +135,9 @@ public class GenerationQueue implements PlaceHolderQueue {
                 ChunkSizedData chunkData = data.get(x,z);
                 DhLodPos chunkDataPos = new DhLodPos((byte) (dataDetail + 4), x, z).convertUpwardsTo(sectionDetail);
                 DhSectionPos sectionPos = new DhSectionPos(chunkDataPos.detail, chunkDataPos.x, chunkDataPos.z);
-                //logger.info("Writing chunk {} with data detail {} to section {}",
-                //        new DHChunkPos(x+chunkPosMin.x,z+chunkPosMin.z),
-                //        dataDetail, sectionPos);
+                logger.info("Writing chunk {} with data detail {} to section {}",
+                        new DHChunkPos(x+chunkPosMin.x,z+chunkPosMin.z),
+                        dataDetail, sectionPos);
                 write(sectionPos, chunkData);
             });
         });

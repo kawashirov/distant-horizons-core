@@ -10,11 +10,11 @@ public class DhLodUnit {
     }
 
     public int toBlock() {
-        return value >> detail;
+        return value << detail;
     }
 
     public static DhLodUnit fromBlock(int block, byte targetDetail) {
-        return new DhLodUnit(targetDetail, block << targetDetail);
+        return new DhLodUnit(targetDetail, Math.floorDiv(block, 1<<targetDetail));
     }
 
     public DhLodUnit convertTo(byte targetDetail) {
@@ -24,6 +24,6 @@ public class DhLodUnit {
         if (detail > targetDetail) { //TODO check if this is correct
             return new DhLodUnit(targetDetail, value << (detail - targetDetail));
         }
-        return new DhLodUnit(targetDetail, value >> (targetDetail - detail));
+        return new DhLodUnit(targetDetail,  Math.floorDiv(value, 1<<(targetDetail-detail)));
     }
 }

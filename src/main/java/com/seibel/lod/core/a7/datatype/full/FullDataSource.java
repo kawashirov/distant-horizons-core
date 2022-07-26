@@ -52,11 +52,11 @@ public class FullDataSource extends FullArrayView implements LodDataSource { // 
     @Override
     public void update(ChunkSizedData data) {
         if (getDataDetail() == 0 && data.dataDetail == 0) {
-            DhBlockPos2D chunkBlockPos = new DhBlockPos2D(data.minX * 16, data.minZ * 16);
+            DhBlockPos2D chunkBlockPos = new DhBlockPos2D(data.x * 16, data.z * 16);
             DhBlockPos2D blockOffset = chunkBlockPos.subtract(sectionPos.getCorner().getCorner());
             LodUtil.assertTrue(blockOffset.x >= 0 && blockOffset.x < SECTION_SIZE && blockOffset.z >= 0 && blockOffset.z < SECTION_SIZE,
                     "ChunkWrite of {} outside section {}. (cal offset {} larger than {})",
-                    new DHChunkPos(data.minX, data.minZ), sectionPos, blockOffset, SECTION_SIZE);
+                    new DHChunkPos(data.x, data.z), sectionPos, blockOffset, SECTION_SIZE);
             data.shadowCopyTo(this.subView(16, blockOffset.x, blockOffset.z));
         } else {
             //TODO;

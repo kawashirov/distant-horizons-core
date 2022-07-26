@@ -15,10 +15,12 @@ import com.seibel.lod.core.a7.datatype.DataSourceLoader;
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.a7.datatype.full.FullDataSource;
 import com.seibel.lod.core.a7.datatype.full.FullFormat;
+import com.seibel.lod.core.a7.pos.DhLodPos;
 import com.seibel.lod.core.a7.save.io.MetaFile;
 import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.util.LodUtil;
+import org.lwjgl.system.CallbackI;
 import org.spongepowered.asm.mixin.injection.Inject;
 
 public class DataMetaFile extends MetaFile {
@@ -43,6 +45,9 @@ public class DataMetaFile extends MetaFile {
 	GuardedMultiAppendQueue _backQueue = new GuardedMultiAppendQueue();
 
 	public void addToWriteQueue(ChunkSizedData datatype) {
+		DhLodPos chunkPos = new DhLodPos((byte) (datatype.dataDetail + 4), datatype.x, datatype.z);
+		LodUtil.assertTrue(pos.getSectionBBoxPos().overlaps(chunkPos), "Chunk pos {} doesn't overlap with section {}", chunkPos, pos);
+
 		GuardedMultiAppendQueue queue = writeQueue.get();
 		// Using read lock is OK, because the queue's underlying data structure is thread-safe.
 		// This lock is only used to insure on polling the queue, that the queue is not being
