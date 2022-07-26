@@ -136,7 +136,7 @@ public class GenerationQueue implements PlaceHolderQueue {
                 DhLodPos chunkDataPos = new DhLodPos((byte)(chunkData.dataDetail + 4), chunkData.x, chunkData.z).convertUpwardsTo(sectionDetail);
                 DhSectionPos sectionPos = new DhSectionPos(chunkDataPos.detail, chunkDataPos.x, chunkDataPos.z);
                 logger.info("Writing chunk {} with data detail {} to section {}",
-                        chunkDataPos,
+                        new DhLodPos((byte)(chunkData.dataDetail + 4), chunkData.x, chunkData.z),
                         dataDetail, sectionPos);
                 write(sectionPos, chunkData);
             });
