@@ -63,9 +63,9 @@ public class DhLodPos {
         if (equals(other)) return true;
         if (detail == other.detail) return false;
         if (detail > other.detail) {
-            return other.equals(this.convertUpwardsTo(other.detail));
-        } else {
             return this.equals(other.convertUpwardsTo(this.detail));
+        } else {
+            return other.equals(this.convertUpwardsTo(other.detail));
         }
     }
 

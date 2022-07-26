@@ -133,13 +133,16 @@ public class GenerationQueue implements PlaceHolderQueue {
             final byte sectionDetail = (byte) (dataDetail + FullDataSource.SECTION_SIZE_OFFSET);
             data.forEachPos((x,z) -> {
                 ChunkSizedData chunkData = data.get(x,z);
-                DhLodPos chunkDataPos = new DhLodPos((byte) (dataDetail + 4), x, z).convertUpwardsTo(sectionDetail);
+                DhLodPos chunkDataPos = new DhLodPos((byte)(chunkData.dataDetail + 4), chunkData.x, chunkData.z).convertUpwardsTo(sectionDetail);
                 DhSectionPos sectionPos = new DhSectionPos(chunkDataPos.detail, chunkDataPos.x, chunkDataPos.z);
                 logger.info("Writing chunk {} with data detail {} to section {}",
-                        new DHChunkPos(x+chunkPosMin.x,z+chunkPosMin.z),
+                        chunkDataPos,
                         dataDetail, sectionPos);
                 write(sectionPos, chunkData);
             });
+        }).exceptionally(ex -> {
+            logger.error("Error generating data for section {}", pos, ex);
+            return null;
         });
 
     }
