@@ -14,7 +14,7 @@ public class LodDataBuilder {
     public static ChunkSizedData createChunkData(IChunkWrapper chunk) {
         if (!canGenerateLodFromChunk(chunk)) return null;
 
-        ChunkSizedData chunkData = new ChunkSizedData();
+        ChunkSizedData chunkData = new ChunkSizedData((byte)0, chunk.getChunkPos().x, chunk.getChunkPos().z);
 
         for (int x=0; x<16; x++) {
             for (int z=0; z<16; z++) {

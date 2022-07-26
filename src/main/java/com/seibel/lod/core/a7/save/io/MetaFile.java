@@ -8,12 +8,10 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.zip.Adler32;
 import java.util.zip.CheckedOutputStream;
 
-import com.seibel.lod.core.a7.datatype.DataSourceLoader;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
@@ -56,7 +54,7 @@ public class MetaFile {
 
     // Load a metaFile in this path. It also automatically read the metadata.
     protected MetaFile(File path) throws IOException {
-        validatePath();
+        validateFile();
         try (FileInputStream fin = new FileInputStream(path)) {
             MappedByteBuffer buffer = fin.getChannel().map(FileChannel.MapMode.READ_ONLY, 0, METADATA_SIZE);
             this.path = path;
@@ -86,9 +84,7 @@ public class MetaFile {
         this.pos = pos;
     }
 
-    protected void save() {} //TODO: Implement
-
-    private void validatePath() throws IOException {
+    private void validateFile() throws IOException {
         if (!path.exists()) throw new IOException("File missing");
         if (!path.isFile()) throw new IOException("Not a file");
         if (!path.canRead()) throw new IOException("File not readable");
@@ -96,7 +92,7 @@ public class MetaFile {
     }
 
     protected void updateMetaData() throws IOException {
-        validatePath();
+        validateFile();
         try (FileChannel channel = FileChannel.open(path.toPath(), StandardOpenOption.READ)) {
             MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, METADATA_SIZE);
             int magic = buffer.getInt();
@@ -124,7 +120,7 @@ public class MetaFile {
     }
 
     protected void writeData(Consumer<OutputStream> dataWriter) throws IOException {
-        validatePath();
+        if (path.exists()) validateFile();
         File tempFile = File.createTempFile("", "tmp", path.getParentFile());
         tempFile.deleteOnExit();
         try (FileChannel file = FileChannel.open(tempFile.toPath(),

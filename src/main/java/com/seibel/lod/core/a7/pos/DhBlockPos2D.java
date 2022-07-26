@@ -4,6 +4,8 @@ import com.seibel.lod.core.objects.DHBlockPos;
 import com.seibel.lod.core.objects.Pos2D;
 import com.seibel.lod.core.util.LodUtil;
 
+import java.util.Objects;
+
 public class DhBlockPos2D {
     public final int x;
     public final int z;
@@ -36,5 +38,24 @@ public class DhBlockPos2D {
 
     public static DhBlockPos2D fromPos2D(Pos2D pos) {
         return new DhBlockPos2D(pos.x, pos.y);
+    }
+
+    @Override
+    public String toString() {
+        return "(" + x + ", " + z + ")";
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof DhBlockPos2D) {
+            DhBlockPos2D other = (DhBlockPos2D)obj;
+            return x == other.x && z == other.z;
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Integer.hashCode(x) ^ Integer.hashCode(z);
     }
 }

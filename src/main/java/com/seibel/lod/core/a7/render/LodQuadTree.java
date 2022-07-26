@@ -383,29 +383,30 @@ public class LodQuadTree {
                 if (section == null) return;
 
                 // Cascade layers
-                if (doCascade && section.childCount == 0) {
-                    LodUtil.assertTrue(childRingList != null);
-                    // Create childs to cascade the layer.
-                    for (byte i = 0; i < 4; i++) {
-                        DhSectionPos childPos = section.pos.getChild(i);
-                        LodRenderSection child = childRingList.get(childPos.sectionX, childPos.sectionZ);
-                        if (child == null) {
-                            child = childRingList.setChained(childPos.sectionX, childPos.sectionZ,
-                                    new LodRenderSection(childPos));
-                            child.childCount = 0;
-                        } else {
-                            LodUtil.assertTrue(child.childCount == -1,
-                                    "Self has child count 0 but an existing child's child count != -1!");
-                            child.childCount = 0;
-                        }
-                    }
-                    section.childCount = 4;
-                }
+//                if (doCascade && section.childCount == 0) {
+//                    LodUtil.assertTrue(childRingList != null);
+//                    // Create childs to cascade the layer.
+//                    for (byte i = 0; i < 4; i++) {
+//                        DhSectionPos childPos = section.pos.getChild(i);
+//                        LodRenderSection child = childRingList.get(childPos.sectionX, childPos.sectionZ);
+//                        if (child == null) {
+//                            child = childRingList.setChained(childPos.sectionX, childPos.sectionZ,
+//                                    new LodRenderSection(childPos));
+//                            child.childCount = 0;
+//                        } else {
+//                            LodUtil.assertTrue(child.childCount == -1,
+//                                    "Self has child count 0 but an existing child's child count != -1!");
+//                            child.childCount = 0;
+//                        }
+//                    }
+//                    section.childCount = 4;
+//                }
 
                 // Call load on new sections, and tick on existing ones, and dispose old sections
                 if (section.childCount == -1) {
                     ringList.set(pos.x, pos.y, null);
                     section.dispose();
+                    return;
                 } else {
                     if (!section.isLoaded() && !section.isLoading()) {
                         section.load(renderSourceProvider);
@@ -418,18 +419,24 @@ public class LodQuadTree {
                 }
 
                 // Assertion steps
-                LodUtil.assertTrue(section.childCount == 4 || section.childCount == 0 || section.childCount == -1);
+                LodUtil.assertTrue(section.childCount == 4 || section.childCount == 0);
                 if (section.pos.sectionDetail == LAYER_BEGINNING_OFFSET) LodUtil.assertTrue(section.childCount == 0);
                 if (section.childCount == 4) LodUtil.assertTrue(
                         getChildSection(section.pos, 0) != null &&
                                 getChildSection(section.pos, 1) != null &&
                                 getChildSection(section.pos, 2) != null &&
-                                getChildSection(section.pos, 3) != null);
+                                getChildSection(section.pos, 3) != null,
+                        "Sect {} child count 4 but childs have null: {} {} {} {}",
+                        section.pos, getChildSection(section.pos, 0), getChildSection(section.pos, 1),
+                        getChildSection(section.pos, 2), getChildSection(section.pos, 3));
                 if (section.childCount == 0 && section.pos.sectionDetail > LAYER_BEGINNING_OFFSET) LodUtil.assertTrue(
                         getChildSection(section.pos, 0) == null &&
                                 getChildSection(section.pos, 1) == null &&
                                 getChildSection(section.pos, 2) == null &&
-                                getChildSection(section.pos, 3) == null);
+                                getChildSection(section.pos, 3) == null,
+                        "Sect {} child count 0 but childs are not null: {} {} {} {}",
+                                section.pos, getChildSection(section.pos, 0), getChildSection(section.pos, 1),
+                                getChildSection(section.pos, 2), getChildSection(section.pos, 3));
                 if (section.childCount == -1 && section.pos.sectionDetail < numbersOfSectionLevels-1) LodUtil.assertTrue(
                         getParentSection(section.pos).childCount == 0);
             });

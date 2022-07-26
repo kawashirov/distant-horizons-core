@@ -109,6 +109,7 @@ public class RenderFileHandler implements IRenderSourceProvider {
                 dataSourceProvider::isCacheValid,
                 dataSourceProvider::read,
                 level, computeDefaultFilePath(p), p));
+
         return metaFile.loadOrGetCached(renderCacheThread).handle(
                 (render, e) -> {
                     if (e != null) {

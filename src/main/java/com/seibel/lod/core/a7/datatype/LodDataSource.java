@@ -17,7 +17,7 @@ public interface LodDataSource {
     void setLocalVersion(int localVer);
     byte getDataVersion();
 
-    void update(DHChunkPos chunkPos, ChunkSizedData data);
+    void update(ChunkSizedData data);
 
     // Saving related
     void saveData(ILevel level, DataMetaFile file, OutputStream dataStream) throws IOException;

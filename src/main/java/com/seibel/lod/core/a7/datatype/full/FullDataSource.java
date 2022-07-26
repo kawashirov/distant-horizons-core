@@ -9,6 +9,7 @@ import com.seibel.lod.core.a7.datatype.LodDataSource;
 import com.seibel.lod.core.a7.util.IdMappingUtil;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.objects.DHChunkPos;
+import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 
 import java.io.DataOutputStream;
@@ -49,9 +50,13 @@ public class FullDataSource extends FullArrayView implements LodDataSource { // 
     }
 
     @Override
-    public void update(DHChunkPos chunkPos, ChunkSizedData data) {
-        if (getDataDetail() == 0) {
-            DhBlockPos2D blockOffset = chunkPos.getMinBlockPos().subtract(sectionPos.getSectionBBoxPos().getCorner());
+    public void update(ChunkSizedData data) {
+        if (getDataDetail() == 0 && data.dataDetail == 0) {
+            DhBlockPos2D chunkBlockPos = new DhBlockPos2D(data.minX * 16, data.minZ * 16);
+            DhBlockPos2D blockOffset = chunkBlockPos.subtract(sectionPos.getCorner().getCorner());
+            LodUtil.assertTrue(blockOffset.x >= 0 && blockOffset.x < SECTION_SIZE && blockOffset.z >= 0 && blockOffset.z < SECTION_SIZE,
+                    "ChunkWrite of {} outside section {}. (cal offset {} larger than {})",
+                    new DHChunkPos(data.minX, data.minZ), sectionPos, blockOffset, SECTION_SIZE);
             data.shadowCopyTo(this.subView(16, blockOffset.x, blockOffset.z));
         } else {
             //TODO;
@@ -64,5 +69,9 @@ public class FullDataSource extends FullArrayView implements LodDataSource { // 
         try (DataOutputStream dos = new DataOutputStream(dataStream)) {
             dos.writeInt(size);
         }
+    }
+
+    public static FullDataSource createEmpty(DhSectionPos pos) {
+        return new FullDataSource(pos);
     }
 }

@@ -13,6 +13,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import com.seibel.lod.core.a7.datatype.LodDataSource;
 import com.seibel.lod.core.a7.datatype.DataSourceLoader;
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
+import com.seibel.lod.core.a7.datatype.full.FullDataSource;
 import com.seibel.lod.core.a7.datatype.full.FullFormat;
 import com.seibel.lod.core.a7.save.io.MetaFile;
 import com.seibel.lod.core.a7.level.ILevel;
@@ -151,7 +152,7 @@ public class DataMetaFile extends MetaFile {
 	
 	private LodDataSource loadAndUpdateDataSource() {
 		LodDataSource data = loadFile();
-		if (data == null) return null;
+		if (data == null) data = FullDataSource.createEmpty(pos);
 
 		// Poll the write queue
 		// First check if write queue is empty, then swap the write queue.
@@ -161,8 +162,11 @@ public class DataMetaFile extends MetaFile {
 		if (!isEmpty) {
 			localVer = localVersion.incrementAndGet();
 			swapWriteQueue();
-			// TODO: Use _backQueue to apply the changes into the data.
+			for (ChunkSizedData chunk : _backQueue.queue) {
+				data.update(chunk);
+			}
 			write(data);
+			LOGGER.info("Updated Data file at {} for sect {}", path, pos);
 		} else localVer = localVersion.get();
 		data.setLocalVersion(localVer);
 		// Finally, return the data.
@@ -170,6 +174,7 @@ public class DataMetaFile extends MetaFile {
 	}
 
 	private LodDataSource loadFile() {
+		if (!path.exists()) return null;
 		// Refresh the metadata.
 		try {
 			super.updateMetaData();

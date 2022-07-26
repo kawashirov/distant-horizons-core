@@ -95,6 +95,13 @@ public class DhSectionPos {
                 sectionZ == that.sectionZ;
     }
 
+    @Override
+    public int hashCode() {
+        return Integer.hashCode(sectionDetail) ^
+                Integer.hashCode(sectionX) ^
+                Integer.hashCode(sectionZ);
+    }
+
     // Serialize() is different from toString() as this requires it to NEVER be changed, and should be in a short format
     public String serialize() {
         return "[" + sectionDetail + ',' + sectionX + ',' + sectionZ + ']';

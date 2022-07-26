@@ -150,7 +150,8 @@ public class RenderMetaFile extends MetaFile {
                 }
             } catch (IOException e) {
                 LOGGER.warn("Failed to read render cache at {}:", path, e);
-                LOGGER.warn("Will ignore cache file.");
+                LOGGER.warn("Will delete cache file.");
+                path.delete();
             }
         }
         // Otherwise, re-query and make the RenderSource

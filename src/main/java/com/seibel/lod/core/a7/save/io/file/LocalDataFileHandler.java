@@ -1,8 +1,10 @@
 package com.seibel.lod.core.a7.save.io.file;
 
 import com.google.common.collect.HashMultimap;
+import com.seibel.lod.core.a7.datatype.DataSourceLoader;
 import com.seibel.lod.core.a7.datatype.LodDataSource;
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
+import com.seibel.lod.core.a7.datatype.full.FullDataSource;
 import com.seibel.lod.core.a7.datatype.full.FullFormat;
 import com.seibel.lod.core.a7.level.IServerLevel;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
@@ -117,8 +119,9 @@ public class LocalDataFileHandler implements IDataSourceProvider {
             return;
         }
         // Slow path: if there is no file for this section, create one.
-
-        DataMetaFile newMetaFile = new DataMetaFile(level, saveDir, sectionPos);
+        File file = computeDefaultFilePath(sectionPos);
+        DataMetaFile newMetaFile = new DataMetaFile(level, file, sectionPos);
+        LOGGER.info("Created new Data file at {} for sect {}", newMetaFile.path, sectionPos);
 
         // We add to the queue first so on CAS onto the map, no other thread
         // will see the new file without our write entry.
