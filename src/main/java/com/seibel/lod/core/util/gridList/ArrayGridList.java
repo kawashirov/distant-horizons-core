@@ -75,9 +75,22 @@ public class ArrayGridList<T> extends ArrayList<T> {
 		if (!inRange(x,y)) return null;
 		return get(_indexOf(x,y));
 	}
+	public T getFirst() {
+		return get(0,0);
+	}
+	public T getLast() {
+		return get(gridSize-1, gridSize-1);
+	}
+
 	public T set(int x, int y, T e) {
 		if (!inRange(x,y)) return null;
 		return set(_indexOf(x, y), e);
+	}
+	public T setFirst(T e) {
+		return set(0,0,e);
+	}
+	public T setLast(T e) {
+		return set(gridSize-1, gridSize-1, e);
 	}
 
 	public boolean inRange(int x, int y) {

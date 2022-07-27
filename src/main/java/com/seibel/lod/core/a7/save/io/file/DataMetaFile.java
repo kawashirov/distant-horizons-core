@@ -5,6 +5,7 @@ import java.lang.ref.SoftReference;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -40,6 +41,7 @@ public class DataMetaFile extends MetaFile {
 	AtomicReference<GuardedMultiAppendQueue> writeQueue =
 			new AtomicReference<>(new GuardedMultiAppendQueue());
 	GuardedMultiAppendQueue _backQueue = new GuardedMultiAppendQueue();
+	private final AtomicBoolean inCacheWriteLock = new AtomicBoolean(false);
 
 	public void addToWriteQueue(ChunkSizedData datatype) {
 		DhLodPos chunkPos = new DhLodPos((byte) (datatype.dataDetail + 4), datatype.x, datatype.z);
@@ -102,16 +104,37 @@ public class DataMetaFile extends MetaFile {
 		return isValid;
 	}
 
-
-	// Suppress casting of CompletableFuture<?> to CompletableFuture<LodDataSource>
-	@SuppressWarnings("unchecked")
+	// "unchecked": Suppress casting of CompletableFuture<?> to CompletableFuture<LodDataSource>
+	// "PointlessBooleanExpression": Suppress explicit (boolean == false) check for more understandable CAS operation code.
+	@SuppressWarnings({"unchecked", "PointlessBooleanExpression"})
 	private CompletableFuture<LodDataSource> _readCached(Object obj) {
 		// Has file cached in RAM and not freed yet.
 		if ((obj instanceof SoftReference<?>)) {
 			Object inner = ((SoftReference<?>)obj).get();
 			if (inner != null) {
 				LodUtil.assertTrue(inner instanceof LodDataSource);
-				//TODO: Apply the write if queue is not empty
+				boolean isEmpty = writeQueue.get().queue.isEmpty();
+				// If the queue is empty, and the CAS on inCacheWriteLock succeeds, then we are the thread
+				// that will be applying the changes to the cache.
+				if (!isEmpty) {
+					// Do a CAS on inCacheWriteLock to ensure that we are the only thread that is writing to the cache,
+					// or if we fail, then that means someone else is already doing it, and we can just continue.
+					// FIXME: Should we return a future that waits for the write to be done for CAS fail? Or should we just return the
+					//       cached data that doesn't have all writes done immediately?
+					//       The latter give us immediate access to the data, but we need to ensure concurrent reads and
+					//       writes doesn't cause unexpected behavior down the line.
+					//       For now, I'll go for the latter option and just hope nothing goes wrong...
+					if (inCacheWriteLock.getAndSet(true) == false) {
+						try {
+							applyWriteQueue((LodDataSource) inner);
+						} catch (Exception e) {
+							LOGGER.error("Error while applying changes to LodDataSource at {}: ", pos, e);
+						} finally {
+							inCacheWriteLock.set(false);
+						}
+					}
+				}
+				// Finally, return the cached data.
 				return CompletableFuture.completedFuture((LodDataSource)inner);
 			}
 		}
@@ -151,11 +174,9 @@ public class DataMetaFile extends MetaFile {
 		});
 		return future;
 	}
-	
-	private LodDataSource loadAndUpdateDataSource() {
-		LodDataSource data = loadFile();
-		if (data == null) data = FullDataSource.createEmpty(pos);
 
+	// Return whether any write has happened to the data
+	private void applyWriteQueue(LodDataSource data) {
 		// Poll the write queue
 		// First check if write queue is empty, then swap the write queue.
 		// Must be done in this order to ensure isValid work properly. See isValid() for details.
@@ -164,13 +185,23 @@ public class DataMetaFile extends MetaFile {
 		if (!isEmpty) {
 			localVer = localVersion.incrementAndGet();
 			swapWriteQueue();
+			int count = _backQueue.queue.size();
 			for (ChunkSizedData chunk : _backQueue.queue) {
 				data.update(chunk);
 			}
 			write(data);
-			LOGGER.info("Updated Data file at {} for sect {}", path, pos);
+			LOGGER.info("Updated Data file at {} for sect {} with {} chunk writes.", path, pos, count);
 		} else localVer = localVersion.get();
 		data.setLocalVersion(localVer);
+	}
+	
+	private LodDataSource loadAndUpdateDataSource() {
+		LodDataSource data = loadFile();
+		if (data == null) data = FullDataSource.createEmpty(pos);
+		// Apply the write queue
+		LodUtil.assertTrue(!inCacheWriteLock.get(),"No one should be writing to the cache while we are in the process of " +
+				"loading one into the cache! Is this a deadlock?");
+		applyWriteQueue(data);
 		// Finally, return the data.
 		return data;
 	}
@@ -180,7 +211,7 @@ public class DataMetaFile extends MetaFile {
 		// Refresh the metadata.
 		try {
 			super.updateMetaData();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			LOGGER.warn("Metadata for file {} changed unexpectedly and in an invalid state. Dropping file.", path, e);
 			return null;
 		}
@@ -188,7 +219,7 @@ public class DataMetaFile extends MetaFile {
 		// Load the file.
 		try (FileInputStream fio = getDataContent()){
 			return loader.loadData(this, fio, level);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			LOGGER.warn("Failed to load file {}. Dropping file.", path, e);
 			return null;
 		}

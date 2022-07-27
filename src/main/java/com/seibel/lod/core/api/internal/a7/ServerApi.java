@@ -44,6 +44,7 @@ public class ServerApi
 	public static final ServerApi INSTANCE = new ServerApi();
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 	private static final IVersionConstants VERSION_CONSTANTS = SingletonInjector.INSTANCE.get(IVersionConstants.class);
+	public static final boolean ENABLE_EVENT_LOGGING = true;
 
 	private ServerApi()
 	{
@@ -69,6 +70,7 @@ public class ServerApi
 
 	//TODO: rename to serverLoadEvent
 	public void serverWorldLoadEvent(boolean isDedicatedEnvironment) {
+		if (ENABLE_EVENT_LOGGING) LOGGER.info("Server World loading with (dedicated?:{})", isDedicatedEnvironment);
 		if (isDedicatedEnvironment) {
 			SharedApi.currentWorld = new DhServerWorld();
 		} else {
@@ -78,21 +80,25 @@ public class ServerApi
 
 	//TODO: rename to serverUnloadEvent
 	public void serverWorldUnloadEvent() {
+		if (ENABLE_EVENT_LOGGING) LOGGER.info("Server World {} unloading", SharedApi.currentWorld);
 		SharedApi.currentWorld.close();
 		SharedApi.currentWorld = null;
 	}
 
 	public void serverLevelLoadEvent(ILevelWrapper world) {
+		if (ENABLE_EVENT_LOGGING) LOGGER.info("Server Level {} loading", world);
 		if (SharedApi.currentWorld instanceof IServerWorld)
 			SharedApi.currentWorld.getOrLoadLevel(world);
 	}
 	public void serverLevelUnloadEvent(ILevelWrapper world) {
+		if (ENABLE_EVENT_LOGGING) LOGGER.info("Server Level {} unloading", world);
 		if (SharedApi.currentWorld instanceof IServerWorld)
 			SharedApi.currentWorld.unloadLevel(world);
 	}
 
 	@Deprecated
 	public void serverSaveEvent() {
+		if (ENABLE_EVENT_LOGGING) LOGGER.info("Server world {} saving", SharedApi.currentWorld);
 		if (SharedApi.currentWorld instanceof IServerWorld)
 			SharedApi.currentWorld.saveAndFlush();
 	}

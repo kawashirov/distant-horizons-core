@@ -121,7 +121,7 @@ public class DHChunkPos {
 
     @Override
     public String toString() {
-    	return "DHChunkPos[" + x + ", " + z + "]";
+    	return "C[" + x + "," + z + "]";
     }
 
 
