@@ -45,8 +45,7 @@ public class DhClientWorld extends DhWorld implements IClientWorld {
     @Override
     public void unloadLevel(ILevelWrapper wrapper) {
         if (levels.containsKey(wrapper)) {
-            LOGGER.info("Unloading level for world " + wrapper.getDimensionType().getDimensionName());
-            levels.get(wrapper).close();
+            LOGGER.info("Unloading level {} ", levels.get(wrapper));
             levels.remove(wrapper).close();
         }
     }

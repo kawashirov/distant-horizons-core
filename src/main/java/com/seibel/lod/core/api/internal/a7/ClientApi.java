@@ -57,6 +57,7 @@ public class ClientApi
 {
 	public static final Logger LOGGER = LogManager.getLogger(ClientApi.class.getSimpleName());
 	public static boolean prefLoggerEnabled = false;
+	public static final boolean ENABLE_EVENT_LOGGING = true;
 	
 	public static final ClientApi INSTANCE = new ClientApi();
 	public static RenderSystemTest testRenderer = new RenderSystemTest();
@@ -108,9 +109,11 @@ public class ClientApi
 	}
 
 	public void onClientOnlyConnected() {
+		if (ENABLE_EVENT_LOGGING) LOGGER.info("Client on ClientOnly mode connecting.");
 		SharedApi.currentWorld = new DhClientWorld();
 	}
 	public void onClientOnlyDisconnected() {
+		if (ENABLE_EVENT_LOGGING) LOGGER.info("Client on ClientOnly mode disconnecting.");
 		SharedApi.currentWorld.close();
 		SharedApi.currentWorld = null;
 	}
@@ -130,6 +133,7 @@ public class ClientApi
 
 	public void clientLevelUnloadEvent(ILevelWrapper level)
 	{
+		if (ENABLE_EVENT_LOGGING) LOGGER.info("Client level {} unloading.", level);
 		if (SharedApi.currentWorld instanceof DhClientServerWorld) {
 			((DhClientServerWorld)SharedApi.currentWorld).disableRendering(level);
 		} else if (SharedApi.getEnvironment() == WorldEnvironment.Client_Only) {
@@ -138,6 +142,7 @@ public class ClientApi
 	}
 	public void clientLevelLoadEvent(ILevelWrapper level)
 	{
+		if (ENABLE_EVENT_LOGGING) LOGGER.info("Client level {} loading.", level);
 		if (SharedApi.currentWorld instanceof DhClientServerWorld) {
 			((DhClientServerWorld)SharedApi.currentWorld).enableRendering(level);
 		} else if (SharedApi.getEnvironment() == WorldEnvironment.Client_Only) {
@@ -148,12 +153,14 @@ public class ClientApi
 	private long lastFlush = 0;
 
 	public void rendererShutdownEvent() {
+		if (ENABLE_EVENT_LOGGING) LOGGER.info("Renderer shutting down.");
 		IProfilerWrapper profiler = MC.getProfiler();
 		profiler.push("DH-RendererShutdown");
 
 		profiler.pop();
 	}
 	public void rendererStartupEvent() {
+		if (ENABLE_EVENT_LOGGING) LOGGER.info("Renderer starting up.");
 		IProfilerWrapper profiler = MC.getProfiler();
 		profiler.push("DH-RendererStartup");
 		// make sure the GLProxy is created before the LodBufferBuilder needs it

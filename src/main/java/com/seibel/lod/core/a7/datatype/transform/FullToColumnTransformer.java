@@ -26,7 +26,7 @@ public class FullToColumnTransformer {
         final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(data.getDataDetail());
         final ColumnRenderSource columnSource = new ColumnRenderSource(pos, vertSize, level.getMinY());
 
-        if (dataDetail == pos.sectionDetail - columnSource.getDataDetail()) {
+        if (dataDetail == columnSource.getDataDetail()) {
             for (int x = 0; x < pos.getWidth(dataDetail).value; x++) {
                 for (int z = 0; z < pos.getWidth(dataDetail).value; z++) {
                     ColumnArrayView columnArrayView = columnSource.getVerticalDataView(x, z);
@@ -34,6 +34,19 @@ public class FullToColumnTransformer {
                     convertColumnData(level, columnArrayView, fullArrayView);
                 }
             }
+//        } else if (dataDetail == 0 && columnSource.getDataDetail() > dataDetail) {
+//            byte deltaDetail = (byte) (columnSource.getDataDetail() - dataDetail);
+//            int perColumnWidth = 1 << deltaDetail;
+//            int columnCount = pos.getWidth(dataDetail).value / perColumnWidth;
+//
+//
+//            for (int x = 0; x < pos.getWidth(dataDetail).value; x++) {
+//                for (int z = 0; z < pos.getWidth(dataDetail).value; z++) {
+//                    ColumnArrayView columnArrayView = columnSource.getVerticalDataView(x, z);
+//                    SingleFullArrayView fullArrayView = data.get(x, z);
+//                    convertColumnData(level, columnArrayView, fullArrayView);
+//                }
+//            }
         } else {
             throw new UnsupportedOperationException("To be implemented");
             //FIXME: Implement different size creation of renderData
@@ -46,7 +59,7 @@ public class FullToColumnTransformer {
     private static void convertColumnData(IClientLevel level, ColumnArrayView columnArrayView, SingleFullArrayView fullArrayView) {
         if (!fullArrayView.doesItExist()) return;
         // TODO: Set gen mode
-        int genModeValue = 0;
+        int genModeValue = 1;
         int dataTotalLength = fullArrayView.getSingleLength();
         if (dataTotalLength == 0) return;
 
