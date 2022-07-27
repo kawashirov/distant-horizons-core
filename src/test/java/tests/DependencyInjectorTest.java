@@ -1,6 +1,7 @@
 package tests;
 
 import com.seibel.lod.core.api.external.items.enums.override.EDhApiOverridePriority;
+import com.seibel.lod.core.api.external.items.interfaces.override.IDhApiOverrideable;
 import com.seibel.lod.core.enums.override.EOverridePriority;
 import com.seibel.lod.core.handlers.dependencyInjection.DependencyInjector;
 import com.seibel.lod.core.handlers.dependencyInjection.DhApiEventInjector;
@@ -28,7 +29,7 @@ import java.util.ArrayList;
 
 /**
  * @author James Seibel
- * @version 2022-7-21
+ * @version 2022-7-26
  */
 public class DependencyInjectorTest
 {
@@ -73,7 +74,7 @@ public class DependencyInjectorTest
 	public void testMultipleImplementationSingleton()
 	{
 		// Injector setup
-		DependencyInjector<IBindable> TEST_SINGLETON_HANDLER = new DependencyInjector<IBindable>(IBindable.class, false);
+		DependencyInjector<IBindable> TEST_SINGLETON_HANDLER = new DependencyInjector<>(IBindable.class, false);
 		
 		
 		// pre-dependency setup
@@ -102,7 +103,6 @@ public class DependencyInjectorTest
 	public void testEventDependencies() // this also tests list dependencies since there can be more than one event handler bound per event
 	{
 		// Injector setup
-		DependencyInjector<IBindable> TEST_SINGLETON_HANDLER = new DependencyInjector<>(IBindable.class, false);
 		DhApiEventInjector TEST_EVENT_HANDLER = new DhApiEventInjector();
 		
 		
@@ -163,8 +163,8 @@ public class DependencyInjectorTest
 	@Test
 	public void testOverrideInjection()
 	{
-		OverrideInjector TEST_OVERRIDE_INJECTOR = new OverrideInjector(OverrideTestAssembly.getPackagePath(2));
-		OverrideInjector CORE_OVERRIDE_INJECTOR = new OverrideInjector();
+		OverrideInjector<IDhApiOverrideable> TEST_OVERRIDE_INJECTOR = new OverrideInjector<>(OverrideTestAssembly.getPackagePath(2));
+		OverrideInjector<IDhApiOverrideable> CORE_OVERRIDE_INJECTOR = new OverrideInjector<>();
 		
 		
 		// pre-dependency setup
@@ -228,6 +228,9 @@ public class DependencyInjectorTest
 		Assert.assertEquals("Override returned incorrect override type.", override.getOverrideType(), EDhApiOverridePriority.PRIMARY);
 		Assert.assertEquals("Incorrect override object returned.", override.getValue(), OverrideTestPrimary.VALUE);
 		
+		
+		// in-line get (make sure the gotten type is correct, the actual value doesn't matter)
+		Assert.assertNotEquals("Inline get incorrect value.", -1, TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class).getValue());
 		
 	}
 	

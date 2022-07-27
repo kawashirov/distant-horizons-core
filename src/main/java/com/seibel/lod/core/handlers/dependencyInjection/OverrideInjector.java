@@ -30,11 +30,11 @@ import com.seibel.lod.core.util.StringUtil;
  * This is done so other mods can override our methods to improve features down the line.
  *
  * @author James Seibel
- * @version 2022-7-19
+ * @version 2022-7-26
  */
-public class OverrideInjector
+public class OverrideInjector<BindableType extends IDhApiOverrideable>
 {
-	public static final OverrideInjector INSTANCE = new OverrideInjector();
+	public static final OverrideInjector<IDhApiOverrideable> INSTANCE = new OverrideInjector<>();
 	
 	private final DependencyInjector<IDhApiOverrideable> primaryInjector = new DependencyInjector<>(IDhApiOverrideable.class, false);
 	private final DependencyInjector<IDhApiOverrideable> secondaryInjector = new DependencyInjector<>(IDhApiOverrideable.class, false);
@@ -73,7 +73,7 @@ public class OverrideInjector
 	 * @throws IllegalArgumentException if a non-Distant Horizons Override with the priority CORE is passed in
 	 * @see DependencyInjector#bind(Class, IBindable)
 	 */
-	public void bind(Class<? extends IDhApiOverrideable> dependencyInterface, IDhApiOverrideable dependencyImplementation)  throws IllegalStateException, IllegalArgumentException
+	public void bind(Class<? extends BindableType> dependencyInterface, IDhApiOverrideable dependencyImplementation)  throws IllegalStateException, IllegalArgumentException
 	{
 		if (getCorePriorityEnum(dependencyImplementation) == EOverridePriority.PRIMARY)
 		{
@@ -103,7 +103,7 @@ public class OverrideInjector
 	 *
 	 * @see DependencyInjector#get(Class, boolean)
 	 */
-	public <T extends IDhApiOverrideable> T get(Class<T> interfaceClass) throws ClassCastException
+	public <T extends BindableType> T get(Class<T> interfaceClass) throws ClassCastException
 	{
 		T value = primaryInjector.get(interfaceClass);
 		if (value == null)
@@ -126,7 +126,7 @@ public class OverrideInjector
 	 *
 	 * @see DependencyInjector#get(Class, boolean)
 	 */
-	public <T extends IDhApiOverrideable> T get(Class<T> interfaceClass, EOverridePriority overridePriority) throws ClassCastException
+	public <T extends BindableType> T get(Class<T> interfaceClass, EOverridePriority overridePriority) throws ClassCastException
 	{
 		T value;
 		if (overridePriority == EOverridePriority.PRIMARY)
