@@ -21,6 +21,7 @@ import testItems.singletonInjection.objects.ConcreteSingletonTestTwo;
 import testItems.eventInjection.abstractObjects.DhApiTestEvent;
 import testItems.overrideInjection.interfaces.IOverrideTest;
 import testItems.overrideInjection.objects.OverrideTestAssembly;
+import testItems.worldGeneratorInjection.objects.WorldGeneratorTestAssembly;
 import testItems.worldGeneratorInjection.objects.WorldGeneratorTestCore;
 import testItems.worldGeneratorInjection.objects.WorldGeneratorTestPrimary;
 import testItems.worldGeneratorInjection.objects.WorldGeneratorTestSecondary;
@@ -30,7 +31,7 @@ import java.util.ArrayList;
 
 /**
  * @author James Seibel
- * @version 2022-7-26
+ * @version 2022-7-27
  */
 public class DependencyInjectorTest
 {
@@ -230,15 +231,16 @@ public class DependencyInjectorTest
 		Assert.assertEquals("Incorrect override object returned.", override.getValue(), OverrideTestPrimary.VALUE);
 		
 		
-		// in-line get (make sure the gotten type is correct, the actual value doesn't matter)
-		Assert.assertNotEquals("Inline get incorrect value.", -1, TEST_INJECTOR.get(IOverrideTest.class).getValue());
+		// in-line get
+		// (make sure the returned type is correct and compiles, the actual value doesn't matter)
+		TEST_INJECTOR.get(IOverrideTest.class).getValue();
 		
 	}
 	
 	@Test
 	public void testWorldGeneratorInjection()
 	{
-		WorldGeneratorInjector TEST_INJECTOR = new WorldGeneratorInjector();
+		WorldGeneratorInjector TEST_INJECTOR = new WorldGeneratorInjector(WorldGeneratorTestAssembly.getPackagePath(2));
 		WorldGeneratorInjector CORE_INJECTOR = new WorldGeneratorInjector();
 		
 		
@@ -254,58 +256,48 @@ public class DependencyInjectorTest
 		WorldGeneratorTestPrimary primaryGenerator = new WorldGeneratorTestPrimary();
 		
 		
+		
 		// TODO need core package overriding
 		
-//		// core generator binding
-//		try { TEST_GENERATOR_INJECTOR.bind(coreGenerator); } catch (IllegalArgumentException e) { Assert.fail("Core generator should be bindable for test package injector."); }
-//
-//		try
-//		{
-//			CORE_GENERATOR_INJECTOR.bind(coreGenerator);
-//			Assert.fail("Core generator should not be bindable for core package injector.");
-//		}
-//		catch (IllegalArgumentException e) { /* this exception should be thrown */ }
-//
-//
-//		// core override
-//		Assert.assertNotNull("Test injector should've bound core override.", TEST_GENERATOR_INJECTOR.get());
-//		Assert.assertNull("Core injector should not have bound core override.", CORE_GENERATOR_INJECTOR.get());
-//		// standard get
-//		generator = TEST_GENERATOR_INJECTOR.get();
-//		Assert.assertEquals("Override returned incorrect override type.", generator.getOverrideType(), EDhApiOverridePriority.CORE);
-//		Assert.assertEquals("Incorrect generator returned.", generator.getThreadingMode(), WorldGeneratorTestCore.THREAD_MODE);
+		// core generator binding
+		try { TEST_INJECTOR.bind(coreGenerator); } catch (IllegalArgumentException e) { Assert.fail("Core generator should be bindable for test package injector."); }
+
+		try
+		{
+			CORE_INJECTOR.bind(coreGenerator);
+			Assert.fail("Core generator should not be bindable for core package injector.");
+		}
+		catch (IllegalArgumentException e) { /* this exception should be thrown */ }
+
+
+		// core override
+		Assert.assertNotNull("Test injector should've bound core override.", TEST_INJECTOR.get());
+		Assert.assertNull("Core injector should not have bound core override.", CORE_INJECTOR.get());
+		// standard get
+		generator = TEST_INJECTOR.get();
+		Assert.assertEquals("Override returned incorrect override type.", generator.getOverrideType(), EDhApiOverridePriority.CORE);
+		Assert.assertEquals("Incorrect generator returned.", generator.getThreadingMode(), WorldGeneratorTestCore.THREAD_MODE);
 		
 		
-		// TODO not started
-		
-//		// secondary override
-//		TEST_OVERRIDE_INJECTOR.bind(IOverrideTest.class, secondaryOverride);
-//		// priority gets
-//		Assert.assertNotNull("Test injector should've bound secondary override.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class));
-//		Assert.assertNotNull("Core override should be bound.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EOverridePriority.CORE));
-//		Assert.assertNotNull("Secondary override should be bound.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EOverridePriority.SECONDARY));
-//		Assert.assertNull("Primary override should not be bound yet.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EOverridePriority.PRIMARY));
-//		// standard get
-//		override = TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class);
-//		Assert.assertEquals("Override returned incorrect override type.", override.getOverrideType(), EDhApiOverridePriority.SECONDARY);
-//		Assert.assertEquals("Incorrect override object returned.", override.getValue(), OverrideTestSecondary.VALUE);
-//
-//
-//		// primary override
-//		TEST_OVERRIDE_INJECTOR.bind(IOverrideTest.class, primaryOverride);
-//		// priority gets
-//		Assert.assertNotNull("Test injector should've bound primary override.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class));
-//		Assert.assertNotNull("Core override should be bound.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EOverridePriority.CORE));
-//		Assert.assertNotNull("Secondary override should be bound.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EOverridePriority.SECONDARY));
-//		Assert.assertNotNull("Primary override should be bound.", TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class, EOverridePriority.PRIMARY));
-//		// standard get
-//		override = TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class);
-//		Assert.assertEquals("Override returned incorrect override type.", override.getOverrideType(), EDhApiOverridePriority.PRIMARY);
-//		Assert.assertEquals("Incorrect override object returned.", override.getValue(), OverrideTestPrimary.VALUE);
-//
-//
-//		// in-line get (make sure the gotten type is correct, the actual value doesn't matter)
-//		Assert.assertNotEquals("Inline get incorrect value.", -1, TEST_OVERRIDE_INJECTOR.get(IOverrideTest.class).getValue());
+		// secondary override
+		TEST_INJECTOR.bind(secondaryGenerator);
+		// priority gets
+		generator = TEST_INJECTOR.get();
+		Assert.assertEquals("Override returned incorrect override type.", generator.getOverrideType(), EDhApiOverridePriority.SECONDARY);
+		Assert.assertEquals("Incorrect override object returned.", generator.getThreadingMode(), WorldGeneratorTestSecondary.THREAD_MODE);
+
+
+		// primary override
+		TEST_INJECTOR.bind(primaryGenerator);
+		// priority gets
+		generator = TEST_INJECTOR.get();
+		Assert.assertEquals("Override returned incorrect override type.", generator.getOverrideType(), EDhApiOverridePriority.PRIMARY);
+		Assert.assertEquals("Incorrect override object returned.", generator.getThreadingMode(), WorldGeneratorTestPrimary.THREAD_MODE);
+
+
+		// in-line get
+		// (make sure the returned type is correct and compiles, the actual value doesn't matter)
+		TEST_INJECTOR.get().getThreadingMode();
 		
 	}
 	

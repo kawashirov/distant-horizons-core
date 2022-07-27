@@ -21,6 +21,7 @@ package com.seibel.lod.core.handlers.dependencyInjection;
 
 import com.seibel.lod.core.api.external.items.interfaces.override.IDhApiWorldGenerator;
 import com.seibel.lod.core.api.external.items.interfaces.world.IDhApiLevelWrapper;
+import com.seibel.lod.core.util.StringUtil;
 
 import java.util.HashMap;
 
@@ -29,7 +30,7 @@ import java.util.HashMap;
  * This is done so other mods can override our world generator(s) to improve or replace them.
  *
  * @author James Seibel
- * @version 2022-7-26
+ * @version 2022-7-27
  */
 public class WorldGeneratorInjector
 {
@@ -37,7 +38,33 @@ public class WorldGeneratorInjector
 	
 	private final HashMap<IDhApiLevelWrapper, OverrideInjector<IDhApiWorldGenerator>> worldGeneratorByLevelWrapper = new HashMap<>();
 	/** World generators that aren't bound to a specific level and are used if no other world generators are bound. */
-	private final OverrideInjector<IDhApiWorldGenerator> backupUniversalWorldGenerators = new OverrideInjector<>();
+	private final OverrideInjector<IDhApiWorldGenerator> backupUniversalWorldGenerators;
+	
+	/**
+	 * This is used to determine if an override is part of Distant Horizons'
+	 * Core or not.
+	 * This probably isn't the best way of going about this, but it works for now.
+	 */
+	private final String corePackagePath;
+	
+	
+	
+	public WorldGeneratorInjector()
+	{
+		String thisPackageName = this.getClass().getPackage().getName();
+		int secondPackageEndingIndex = StringUtil.nthIndexOf(thisPackageName, ".", 3);
+		this.corePackagePath = thisPackageName.substring(0, secondPackageEndingIndex); // this should be "com.seibel.lod"
+		
+		this.backupUniversalWorldGenerators = new OverrideInjector<>(this.corePackagePath);
+	}
+	
+	/** This constructor should only be used for testing different corePackagePaths. */
+	public WorldGeneratorInjector(String newCorePackagePath)
+	{
+		this.corePackagePath = newCorePackagePath;
+		
+		this.backupUniversalWorldGenerators = new OverrideInjector<>(this.corePackagePath);
+	}
 	
 	
 	
@@ -67,7 +94,7 @@ public class WorldGeneratorInjector
 			// bind this generator to a specific level
 			if (!worldGeneratorByLevelWrapper.containsKey(levelForWorldGenerator))
 			{
-				worldGeneratorByLevelWrapper.put(levelForWorldGenerator, new OverrideInjector<>());
+				worldGeneratorByLevelWrapper.put(levelForWorldGenerator, new OverrideInjector<>(this.corePackagePath));
 			}
 			
 			worldGeneratorByLevelWrapper.get(levelForWorldGenerator).bind(IDhApiWorldGenerator.class, worldGeneratorImplementation);
