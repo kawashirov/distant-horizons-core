@@ -28,13 +28,16 @@ public class RenderFileHandler implements IRenderSourceProvider {
     final File saveDir;
     final IDataSourceProvider dataSourceProvider;
     @Nullable
-    final PlaceHolderQueue placeHolderQueue;
+    PlaceHolderQueue placeHolderQueue = null;
 
-    public RenderFileHandler(IDataSourceProvider sourceProvider, IClientLevel level, File saveRootDir, @Nullable PlaceHolderQueue placeHolderQueue) {
+    public RenderFileHandler(IDataSourceProvider sourceProvider, IClientLevel level, File saveRootDir) {
         this.dataSourceProvider = sourceProvider;
         this.level = level;
         this.saveDir = saveRootDir;
-        this.placeHolderQueue = placeHolderQueue;
+    }
+
+    public void setPlaceHolderQueue(@Nullable PlaceHolderQueue queue) {
+        this.placeHolderQueue = queue;
     }
 
     /*

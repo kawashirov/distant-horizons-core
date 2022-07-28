@@ -256,7 +256,7 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
             ColumnRenderSource[] data = new ColumnRenderSource[ELodDirection.ADJ_DIRECTIONS.length];
             for (ELodDirection direction : ELodDirection.ADJ_DIRECTIONS) {
                 LodRenderSection section = quadTree.getSection(sectionPos.getAdjacent(direction)); //FIXME: Handle traveling through different detail levels
-                if (section.getRenderContainer() != null && section.getRenderContainer() instanceof ColumnRenderBuffer) {
+                if (section != null && section.getRenderContainer() != null && section.getRenderContainer() instanceof ColumnRenderBuffer) {
                     data[direction.ordinal()-2] = ((ColumnRenderSource) section.getRenderContainer());
                 }
             }

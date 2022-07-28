@@ -44,13 +44,18 @@ public class LocalDataFileHandler implements IDataSourceProvider {
     @Override
     public void addScannedFile(Collection<File> detectedFiles) {
         HashMultimap<DhSectionPos, DataMetaFile> filesByPos = HashMultimap.create();
+        LOGGER.info("Detected {} valid files in {}", detectedFiles.size(), saveDir);
+
         { // Sort files by pos.
             for (File file : detectedFiles) {
                 try {
                     DataMetaFile metaFile = new DataMetaFile(level, file);
                     filesByPos.put(metaFile.pos, metaFile);
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    LOGGER.error("Failed to read file {}. File will be deleted.", file, e);
+                    if (!file.delete()) {
+                        LOGGER.error("Failed to delete file {}.", file);
+                    }
                 }
             }
         }
@@ -120,6 +125,8 @@ public class LocalDataFileHandler implements IDataSourceProvider {
         }
         // Slow path: if there is no file for this section, create one.
         File file = computeDefaultFilePath(sectionPos);
+        //FIXME: Handle file already exists issue. Possibly by renaming the file.
+        LodUtil.assertTrue(!file.exists(), "File {} already exist for path {}", file, sectionPos);
         DataMetaFile newMetaFile = new DataMetaFile(level, file, sectionPos);
         LOGGER.info("Created new Data file at {} for sect {}", newMetaFile.path, sectionPos);
 

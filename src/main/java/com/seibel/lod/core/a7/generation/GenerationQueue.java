@@ -180,6 +180,5 @@ public class GenerationQueue implements PlaceHolderQueue {
             if (source == null) return; // Same as above.
             source.markInvalid(); // Mark the placeholder as invalid, so it will be refreshed on next lodTree update.
         });
-
     }
 }

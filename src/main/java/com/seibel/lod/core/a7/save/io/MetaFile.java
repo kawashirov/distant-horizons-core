@@ -8,6 +8,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.zip.Adler32;
 import java.util.zip.CheckedOutputStream;
@@ -45,6 +46,9 @@ public class MetaFile {
     public static final int METADATA_RESERVED_SIZE = 24;
     public static final int METADATA_MAGIC_BYTES = 0x44_48_76_30;
 
+    // Currently set to false because for some reason Window is throwing PermissionDeniedException when trying to atomic replace a file...
+    public static final boolean USE_ATOMIC_MOVE_REPLACE = false;
+
     public final DhSectionPos pos;
 
     public File path;
@@ -56,9 +60,13 @@ public class MetaFile {
     public long dataTypeId;
     public byte loaderVersion;
 
+    private static final ReentrantReadWriteLock assertLock = new ReentrantReadWriteLock();
+
     // Load a metaFile in this path. It also automatically read the metadata.
     protected MetaFile(File path) throws IOException {
+        this.path = path;
         validateFile();
+        LodUtil.assertTrue(assertLock.readLock().tryLock());
         try (FileChannel channel = FileChannel.open(path.toPath(), StandardOpenOption.READ)) {
             MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, METADATA_SIZE);
             this.path = path;
@@ -79,6 +87,8 @@ public class MetaFile {
             timestamp = buffer.getLong();
             LodUtil.assertTrue(buffer.remaining() == METADATA_RESERVED_SIZE);
             pos = new DhSectionPos(detailLevel, x, z);
+        } finally {
+            assertLock.readLock().unlock();
         }
     }
 
@@ -97,6 +107,7 @@ public class MetaFile {
 
     protected void updateMetaData() throws IOException {
         validateFile();
+        LodUtil.assertTrue(assertLock.readLock().tryLock());
         try (FileChannel channel = FileChannel.open(path.toPath(), StandardOpenOption.READ)) {
             MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, METADATA_SIZE);
             int magic = buffer.getInt();
@@ -106,13 +117,13 @@ public class MetaFile {
             int x = buffer.getInt();
             int y = buffer.getInt(); // Unused
             int z = buffer.getInt();
-            int checksum = buffer.getInt();
+            checksum = buffer.getInt();
             byte detailLevel = buffer.get();
             dataLevel = buffer.get();
             byte loaderVersion = buffer.get();
             byte unused = buffer.get();
-            long dataTypeId = buffer.getLong();
-            long timestamp = buffer.getLong();
+            dataTypeId = buffer.getLong();
+            timestamp = buffer.getLong();
             LodUtil.assertTrue(buffer.remaining() == METADATA_RESERVED_SIZE);
 
             DhSectionPos newPos = new DhSectionPos(detailLevel, x, z);
@@ -120,14 +131,22 @@ public class MetaFile {
                 throw new IOException("Invalid file: Section position changed.");
             }
             this.loaderVersion = loaderVersion;
+        } finally {
+            assertLock.readLock().unlock();
         }
     }
 
     protected void writeData(Consumer<OutputStream> dataWriter) throws IOException {
         if (path.exists()) validateFile();
-        File tempFile = File.createTempFile("lodDataFile", "tmp", path.getParentFile());
-        tempFile.deleteOnExit();
-        try (FileChannel file = FileChannel.open(tempFile.toPath(),
+        File writerFile;
+        if (USE_ATOMIC_MOVE_REPLACE) {
+            writerFile = new File(path.getPath() + ".tmp");
+            writerFile.deleteOnExit();
+        } else {
+            writerFile = path;
+        }
+        LodUtil.assertTrue(assertLock.writeLock().tryLock());
+        try (FileChannel file = FileChannel.open(writerFile.toPath(),
                 StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
             {
                 file.position(METADATA_SIZE);
@@ -157,12 +176,16 @@ public class MetaFile {
                 file.write(buff);
             }
             file.close();
-            // Atomic move / replace the actual file
-            Files.move(tempFile.toPath(), path.toPath(), StandardCopyOption.REPLACE_EXISTING,
-                    StandardCopyOption.ATOMIC_MOVE);
+            if (USE_ATOMIC_MOVE_REPLACE) {
+                // Atomic move / replace the actual file
+                Files.move(writerFile.toPath(), path.toPath(), StandardCopyOption.ATOMIC_MOVE);
+            }
         } finally {
+            assertLock.writeLock().unlock();
             try {
-                boolean i = tempFile.delete(); // Delete temp file. Ignore errors if fails.
+                if (USE_ATOMIC_MOVE_REPLACE && writerFile.exists()) {
+                    boolean i = writerFile.delete(); // Delete temp file. Ignore errors if fails.
+                }
             } catch (Exception ignored) {}
         }
     }

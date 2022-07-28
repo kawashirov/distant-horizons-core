@@ -23,6 +23,7 @@ import com.seibel.lod.core.a7.datatype.column.accessor.ColumnArrayView;
 import com.seibel.lod.core.a7.datatype.column.accessor.IColumnDataView;
 import com.seibel.lod.core.logging.SpamReducedLogger;
 import com.seibel.lod.core.util.ColorUtil;
+import com.seibel.lod.core.util.LodUtil;
 
 import java.util.Arrays;
 
@@ -107,8 +108,9 @@ public class ColumnFormat
 				height, depth, lightSky, lightBlock, generationMode);
 	}
 
-	public static long createDataPoint(int height, int depth, int color, byte light, int generationMode)
+	public static long createDataPoint(int height, int depth, int color, int light, int generationMode)
 	{
+		LodUtil.assertTrue(light >= 0 && light <= 255, "Raw Light value must be between 0 and 255!");
 		return createDataPoint(
 				ColorUtil.getAlpha(color),
 				ColorUtil.getRed(color),
@@ -119,28 +121,17 @@ public class ColumnFormat
 	
 	public static long createDataPoint(int alpha, int red, int green, int blue, int height, int depth, int lightSky, int lightBlock, int generationMode)
 	{
-		if (generationMode == 0)
-			throw new IllegalArgumentException("Trying to create datapoint with genMode 0, which is NOT allowed in DataPoint version 10!");
-		if (height < 0 || height > 4096)
-			throw new IllegalArgumentException("Height must be between 0 and 4096!");
-		if (depth < 0 || depth > 4096)
-			throw new IllegalArgumentException("Depth must be between 0 and 4096!");
-		if (lightSky < 0 || lightSky > 15)
-			throw new IllegalArgumentException("Sky light must be between 0 and 15!");
-		if (lightBlock < 0 || lightBlock > 15)
-			throw new IllegalArgumentException("Block light must be between 0 and 15!");
-		if (alpha < 0 || alpha > 255)
-			throw new IllegalArgumentException("Alpha must be between 0 and 255!");
-		if (red < 0 || red > 255)
-			throw new IllegalArgumentException("Red must be between 0 and 255!");
-		if (green < 0 || green > 255)
-			throw new IllegalArgumentException("Green must be between 0 and 255!");
-		if (blue < 0 || blue > 255)
-			throw new IllegalArgumentException("Blue must be between 0 and 255!");
-		if (generationMode < 0 || generationMode > 7)
-			throw new IllegalArgumentException("Generation mode must be between 0 and 7!");
-		if (depth > height)
-			throw new IllegalArgumentException("Depth must be less than or equal to height!");
+		LodUtil.assertTrue(generationMode != 0, "Trying to create datapoint with genMode 0, which is NOT allowed in DataPoint version 10!");
+		LodUtil.assertTrue(height >= 0 && height < MAX_WORLD_Y_SIZE, "Trying to create datapoint with height[{}] out of range!", height);
+		LodUtil.assertTrue(depth >= 0 && depth < MAX_WORLD_Y_SIZE, "Trying to create datapoint with depth[{}] out of range!", depth);
+		LodUtil.assertTrue(lightSky >= 0 && lightSky < 16, "Trying to create datapoint with lightSky[{}] out of range!", lightSky);
+		LodUtil.assertTrue(lightBlock >= 0 && lightBlock < 16, "Trying to create datapoint with lightBlock[{}] out of range!", lightBlock);
+		LodUtil.assertTrue(alpha >= 0 && alpha < 255, "Trying to create datapoint with alpha[{}] out of range!", alpha);
+		LodUtil.assertTrue(red >= 0 && red < 255, "Trying to create datapoint with red[{}] out of range!", red);
+		LodUtil.assertTrue(green >= 0 && green < 255, "Trying to create datapoint with green[{}] out of range!", green);
+		LodUtil.assertTrue(blue >= 0 && blue < 255, "Trying to create datapoint with blue[{}] out of range!", blue);
+		LodUtil.assertTrue(generationMode >= 0 && generationMode < 8, "Trying to create datapoint with genMode[{}] out of range!", generationMode);
+		LodUtil.assertTrue(depth <= height, "Trying to create datapoint with depth[{}] greater than height[{}]!", depth, height);
 
 		return (long) (alpha >>> ALPHA_DOWNSIZE_SHIFT) << ALPHA_SHIFT
 			| (red & RED_MASK) << RED_SHIFT

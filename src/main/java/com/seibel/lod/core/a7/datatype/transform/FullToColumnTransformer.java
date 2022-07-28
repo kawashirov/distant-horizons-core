@@ -10,10 +10,14 @@ import com.seibel.lod.core.a7.datatype.full.accessor.SingleFullArrayView;
 import com.seibel.lod.core.a7.level.IClientLevel;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.config.Config;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
+import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
 
 public class FullToColumnTransformer {
+
+    private static final IBlockStateWrapper AIR = SingletonInjector.INSTANCE.get(IWrapperFactory.class).getAirBlockStateWrapper();
 
     /**
      * Creates a LodNode for a chunk in the given world.
@@ -74,18 +78,24 @@ public class FullToColumnTransformer {
 
     private static void iterateAndConvert(IClientLevel level, int genMode, ColumnArrayView column, SingleFullArrayView data) {
         IdBiomeBlockStateMap mapping = data.getMapping();
+        boolean isVoid = true;
         for (int i = 0; i < data.getSingleLength(); i++) {
             long fullData = data.getSingle(i);
             int y = FullFormat.getY(fullData);
-            int depth = FullFormat.getDepth(fullData);
+            int blockLength = FullFormat.getDepth(fullData);
             int id = FullFormat.getId(fullData);
-            byte light = FullFormat.getLight(fullData);
+            int light = FullFormat.getLight(fullData);
             IdBiomeBlockStateMap.Entry entry = mapping.get(id);
             IBiomeWrapper biome = entry.biome;
             IBlockStateWrapper block = entry.blockState;
+            if (block.equals(AIR)) continue;
+            isVoid = false;
             int color = level.computeBaseColor(biome, block);
-            long columnData = ColumnFormat.createDataPoint(y, depth, color, light, genMode);
+            long columnData = ColumnFormat.createDataPoint(y + blockLength, y, color, light, genMode);
             column.set(i, columnData);
+        }
+        if (isVoid) {
+            column.set(0, ColumnFormat.createVoidDataPoint((byte) genMode));
         }
     }
 

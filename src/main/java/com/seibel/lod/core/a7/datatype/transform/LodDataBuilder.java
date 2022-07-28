@@ -32,19 +32,19 @@ public class LodDataBuilder {
                     byte newLight = (byte) (chunk.getBlockLight(x,y,z) << 4 + chunk.getSkyLight(x,y,z));
 
                     if (!newBiome.equals(biome) || !newBlockState.equals(blockState)) {
-                        longs.add(FullFormat.encode(mappedId, lastY-y+1, y+1, light));
+                        longs.add(FullFormat.encode(mappedId, lastY-y, y+1 - chunk.getMinBuildHeight(), light));
                         biome = newBiome;
                         blockState = newBlockState;
                         mappedId = chunkData.getMapping().setAndGetId(biome, blockState);
                         light = newLight;
                         lastY = y;
                     } else if (newLight != light) {
-                        longs.add(FullFormat.encode(mappedId, lastY-y+1, y+1, light));
+                        longs.add(FullFormat.encode(mappedId, lastY-y, y+1 - chunk.getMinBuildHeight(), light));
                         light = newLight;
                         lastY = y;
                     }
                 }
-                longs.add(FullFormat.encode(mappedId, lastY-y+1, y+1, light));
+                longs.add(FullFormat.encode(mappedId, lastY-y, y+1 - chunk.getMinBuildHeight(), light));
 
                 chunkData.setSingleColumn(longs.toArray(new long[0]), x, z);
             }

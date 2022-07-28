@@ -227,9 +227,6 @@ public class LodQuadTree {
                 LOGGER.info("TreeTick: Moving ring list {} from {} to {}", sectLevel,
                         ringLists[sectLevel - LAYER_BEGINNING_OFFSET].getCenter(),
                         new Pos2D(playerPos.x >> sectLevel, playerPos.z >> sectLevel));
-
-                LOGGER.info("Tree State:\n{}", getDebugString());
-
                 ringLists[sectLevel - LAYER_BEGINNING_OFFSET]
                         .move(playerPos.x >> sectLevel, playerPos.z >> sectLevel,
                                 LodRenderSection::dispose);
@@ -404,6 +401,8 @@ public class LodQuadTree {
 
                 // Call load on new sections, and tick on existing ones, and dispose old sections
                 if (section.childCount == -1) {
+                    if (section.pos.sectionDetail < numbersOfSectionLevels-1)
+                        LodUtil.assertTrue(getParentSection(section.pos).childCount == 0);
                     ringList.set(pos.x, pos.y, null);
                     section.dispose();
                     return;
@@ -421,24 +420,27 @@ public class LodQuadTree {
                 // Assertion steps
                 LodUtil.assertTrue(section.childCount == 4 || section.childCount == 0);
                 if (section.pos.sectionDetail == LAYER_BEGINNING_OFFSET) LodUtil.assertTrue(section.childCount == 0);
-                if (section.childCount == 4) LodUtil.assertTrue(
-                        getChildSection(section.pos, 0) != null &&
-                                getChildSection(section.pos, 1) != null &&
-                                getChildSection(section.pos, 2) != null &&
-                                getChildSection(section.pos, 3) != null,
-                        "Sect {} child count 4 but childs have null: {} {} {} {}",
-                        section.pos, getChildSection(section.pos, 0), getChildSection(section.pos, 1),
-                        getChildSection(section.pos, 2), getChildSection(section.pos, 3));
-                if (section.childCount == 0 && section.pos.sectionDetail > LAYER_BEGINNING_OFFSET) LodUtil.assertTrue(
-                        getChildSection(section.pos, 0) == null &&
-                                getChildSection(section.pos, 1) == null &&
-                                getChildSection(section.pos, 2) == null &&
-                                getChildSection(section.pos, 3) == null,
-                        "Sect {} child count 0 but childs are not null: {} {} {} {}",
-                                section.pos, getChildSection(section.pos, 0), getChildSection(section.pos, 1),
-                                getChildSection(section.pos, 2), getChildSection(section.pos, 3));
-                if (section.childCount == -1 && section.pos.sectionDetail < numbersOfSectionLevels-1) LodUtil.assertTrue(
-                        getParentSection(section.pos).childCount == 0);
+                if (section.pos.sectionDetail != LAYER_BEGINNING_OFFSET) {
+                    LodRenderSection child0 = getChildSection(section.pos, 0);
+                    LodRenderSection child1 = getChildSection(section.pos, 1);
+                    LodRenderSection child2 = getChildSection(section.pos, 2);
+                    LodRenderSection child3 = getChildSection(section.pos, 3);
+                    if (section.childCount == 4) LodUtil.assertTrue(
+                            child0 != null && child0.childCount != -1 &&
+                            child1 != null && child1.childCount != -1 &&
+                            child2 != null && child2.childCount != -1 &&
+                            child3 != null && child3.childCount != -1,
+                            "Sect {} child count 4 but child has null or is being disposed: {} {} {} {}",
+                            section.pos, child0, child1, child2, child3);
+
+                    if (section.childCount == 0) LodUtil.assertTrue(
+                            (child0 == null || child0.childCount == -1) &&
+                            (child1 == null || child1.childCount == -1) &&
+                            (child2 == null || child2.childCount == -1) &&
+                            (child3 == null || child3.childCount == -1),
+                            "Sect {} child count 0 but child is neither null or being disposed: {} {} {} {}",
+                            section.pos, child0, child1, child2, child3);
+                }
             });
         }
     }

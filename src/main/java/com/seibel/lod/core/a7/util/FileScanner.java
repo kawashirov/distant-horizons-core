@@ -23,8 +23,8 @@ public class FileScanner {
                                       @Nullable IRenderSourceProvider renderSource) {
         if (dataSource != null) {
             try (Stream<Path> pathStream = Files.walk(save.getDataFolder(level).toPath(), MAX_SCAN_DEPTH)) {
-                dataSource.addScannedFile(pathStream.filter((
-                        path -> path.endsWith(LOD_FILE_POSTFIX) && path.toFile().isFile())
+                dataSource.addScannedFile(pathStream.filter(
+                        path -> path.toFile().getName().endsWith(LOD_FILE_POSTFIX) && path.toFile().isFile()
                     ).map(Path::toFile).collect(Collectors.toList())
                 );
             } catch (Exception e) {
@@ -34,7 +34,7 @@ public class FileScanner {
         if (renderSource != null) {
             try (Stream<Path> pathStream = Files.walk(save.getRenderCacheFolder(level).toPath(), MAX_SCAN_DEPTH)) {
                 renderSource.addScannedFile(pathStream.filter((
-                                path -> path.endsWith(LOD_FILE_POSTFIX) && path.toFile().isFile())
+                                path -> path.toFile().getName().endsWith(LOD_FILE_POSTFIX) && path.toFile().isFile())
                         ).map(Path::toFile).collect(Collectors.toList())
                 );
             } catch (Exception e) {

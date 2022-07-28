@@ -455,23 +455,39 @@ public class LodUtil
 		}
 	}
 
+	static class AssertFailureException extends RuntimeException {
+		public AssertFailureException(String message) {
+			super(message);
+			debugBreak();
+		}
+	}
+	private static void debugBreak() {
+		int a = 0; // Set breakpoint here for auto pause on assert failure
+	}
+
 	public static void assertTrue(boolean condition) {
-		if (!condition) throw new RuntimeException("Assertion failed");
+		if (!condition) {
+			throw new AssertFailureException("Assertion failed");
+		}
 	}
 	public static void assertTrue(boolean condition, String message) {
-		if (!condition) throw new RuntimeException("Assertion failed:\n " + message);
+		if (!condition) {
+			throw new AssertFailureException("Assertion failed:\n " + message);
+		}
 	}
 	public static void assertTrue(boolean condition, String message, Object... args) {
-		if (!condition) throw new RuntimeException("Assertion failed:\n " + formatLog(message, args));
+		if (!condition) {
+			throw new AssertFailureException("Assertion failed:\n " + formatLog(message, args));
+		}
 	}
 	public static void assertNotReach() {
-		throw new RuntimeException("Assert Not Reach failed");
+		throw new AssertFailureException("Assert Not Reach failed");
 	}
 	public static void assertNotReach(String message) {
-		throw new RuntimeException("Assert Not Reach failed:\n " + message);
+		throw new AssertFailureException("Assert Not Reach failed:\n " + message);
 	}
 	public static void assertNotReach(String message, Object... args) {
-		throw new RuntimeException("Assert Not Reach failed:\n " + formatLog(message, args));
+		throw new AssertFailureException("Assert Not Reach failed:\n " + formatLog(message, args));
 	}
 	public static ExecutorService makeSingleThreadPool(String name, int relativePriority) {
 		return Executors.newSingleThreadExecutor(new LodThreadFactory(name, Thread.NORM_PRIORITY+relativePriority));

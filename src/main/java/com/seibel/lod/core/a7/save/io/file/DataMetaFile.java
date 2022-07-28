@@ -215,6 +215,10 @@ public class DataMetaFile extends MetaFile {
 			LOGGER.warn("Metadata for file {} changed unexpectedly and in an invalid state. Dropping file.", path, e);
 			return null;
 		}
+		if (loader == null) {
+			//LOGGER.warn("No loader for file {}. Dropping file.", path); // Disable as data lod has no loader yet.
+			return null;
+		}
 
 		// Load the file.
 		try (FileInputStream fio = getDataContent()){

@@ -64,8 +64,12 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
             return;
         }
 
-        generationQueue = new GenerationQueue((a,b) -> this.renderFileHandler.write(a,b));
-        renderFileHandler = new RenderFileHandler(dataFileHandler, this, save.getRenderCacheFolder(level), generationQueue);
+        // FIXME: This A need B and B need A messes needs to be reworked!
+        renderFileHandler = new RenderFileHandler(dataFileHandler, this, save.getRenderCacheFolder(level));
+        final RenderFileHandler f_renderFileHandler = renderFileHandler;
+        generationQueue = new GenerationQueue(f_renderFileHandler::write);
+        renderFileHandler.setPlaceHolderQueue(generationQueue);
+
         tree = new LodQuadTree(this, Config.Client.Graphics.Quality.lodChunkRenderDistance.get()*16,
                 MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, renderFileHandler);
         renderBufferHandler = new RenderBufferHandler(tree);
@@ -93,10 +97,10 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
         renderBufferHandler.close();
         renderBufferHandler = null;
         tree = null; //TODO Close the tree
+        generationQueue = null;
         renderFileHandler.flushAndSave(); //Ignore the completion feature so that this action is async
         renderFileHandler.close();
         renderFileHandler = null;
-        generationQueue = null;
     }
 
     @Override
