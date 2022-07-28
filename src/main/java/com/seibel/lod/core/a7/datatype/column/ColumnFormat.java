@@ -23,6 +23,7 @@ import com.seibel.lod.core.a7.datatype.column.accessor.ColumnArrayView;
 import com.seibel.lod.core.a7.datatype.column.accessor.IColumnDataView;
 import com.seibel.lod.core.logging.SpamReducedLogger;
 import com.seibel.lod.core.util.ColorUtil;
+import com.seibel.lod.core.util.DataPointUtil;
 import com.seibel.lod.core.util.LodUtil;
 
 import java.util.Arrays;
@@ -292,6 +293,10 @@ public class ColumnFormat
 	public static int compareDatapointPriority(long dataA, long dataB) {
 		return (int) ((dataA >> COMPARE_SHIFT) - (dataB >> COMPARE_SHIFT));
 	}
+
+	private static final ThreadLocal<int[]> tLocalIndeces = new ThreadLocal<int[]>();
+	private static final ThreadLocal<boolean[]> tLocalIncreaseIndex = new ThreadLocal<boolean[]>();
+	private static final ThreadLocal<boolean[]> tLocalIndexHandled = new ThreadLocal<boolean[]>();
 	private static final ThreadLocal<short[]> tLocalHeightAndDepth = new ThreadLocal<short[]>();
 	private static final ThreadLocal<int[]> tDataIndexCache = new ThreadLocal<int[]>();
 	/**
@@ -332,6 +337,156 @@ public class ColumnFormat
 		int ii;
 		int dataIndex;
 
+		/**TODO +++ UNCOMMENT THIS WHEN WE HAVE A WORKING BUILD +++*/
+		/*
+		int[] indeces = tLocalIndeces.get();
+		if (indeces==null || indeces.length != dataCount) {
+			indeces = new int[dataCount];
+			tLocalIndeces.set(indeces);
+		}
+		Arrays.fill(indeces,0);
+
+		boolean[] increaseIndex = tLocalIncreaseIndex.get();
+		if (increaseIndex==null || increaseIndex.length != dataCount) {
+			increaseIndex = new boolean[dataCount];
+			tLocalIncreaseIndex.set(increaseIndex);
+		}
+
+		boolean[] indexHandled = tLocalIndexHandled.get();
+		if (indexHandled==null || indexHandled.length != dataCount) {
+			indexHandled = new boolean[dataCount];
+			tLocalIndexHandled.set(indexHandled);
+		}
+
+		long tempData;
+		for (int index = 0; index < dataCount; index++)
+		{
+			tempData = sourceData.get(index * inputVerticalSize);
+			allVoid = allVoid && DataPointUtil.isVoid(tempData);
+			allEmpty = allEmpty && !DataPointUtil.doesItExist(tempData);
+		}
+
+		//We check if there is any data that's not empty or void
+		if (allEmpty) {
+			return;
+		}
+		if (allVoid)
+		{
+			output.set(0,createVoidDataPoint(genMode));
+			return;
+		}
+
+		//this check is used only to see if we have checked all the values in the array
+		boolean stillHasDataToCheck = true;
+		short prevDepth;
+
+		while(stillHasDataToCheck)
+		{
+			Arrays.fill(indexHandled, false);
+			boolean connected = true;
+			int newHeight = -10000;
+			int newDepth = -10000;
+			int tempHeight;
+			int tempDepth;
+			while(connected)
+			{
+				Arrays.fill(increaseIndex, false);
+				for (int index = 0; index < dataCount; index++)
+				{
+					if(indeces[index] < inputVerticalSize)
+					{
+						tempData = sourceData.get(index * inputVerticalSize + indeces[index]);
+						if(!DataPointUtil.isVoid(tempData) && DataPointUtil.doesItExist(tempData)) {
+							tempHeight = DataPointUtil.getHeight(tempData);
+							tempDepth = DataPointUtil.getDepth(tempData);
+							if(tempDepth >= newHeight) {
+								//First case
+								//the column we are checking is higher than the current column
+								newDepth = tempDepth;
+								newHeight = tempHeight;
+								Arrays.fill(increaseIndex, false);
+								Arrays.fill(indexHandled, false);
+								increaseIndex[index] = true;
+								indexHandled[index] = true;
+							}else if((tempDepth >= newDepth) && (tempHeight <= newHeight)){
+								//the column we are checking is contained in the current column
+								//we simply increase this index
+								increaseIndex[index] = true;
+								indexHandled[index] = true;
+							}else if(tempHeight > newHeight && tempDepth <= newDepth){
+								newDepth = tempDepth;
+								newHeight = tempHeight;
+								increaseIndex[index] = true;
+								indexHandled[index] = true;
+							}else if(tempHeight > newDepth && tempHeight <= newHeight){
+								//the column we are checking touches the current column from the bottom
+								//for this reason we extend what's below
+
+								//We want to avoid to expend this column if it has already been expanded by
+								//this index
+								if(!indexHandled[index]) {
+									newDepth = tempDepth;
+									increaseIndex[index] = true;
+									indexHandled[index] = true;
+								}
+
+							}else if(tempDepth < newHeight && tempDepth > newDepth){
+								//the column we are checking touches the current column from the top
+								//for this reason we extend the top
+								newHeight = tempHeight;
+								increaseIndex[index] = true;
+							}
+						}else{
+							indexHandled[index] = true;
+						}
+					}
+				}
+				//if we added any new data there is a chance that we could add more
+				//for this reason we would continue
+				//if no data is added than the column hasn't changed.
+				//for this reason we can start working on a new column
+				connected = false;
+				for (int index = 0; index < dataCount; index++)
+				{
+					if(increaseIndex[index])
+					{
+						connected = true;
+						indeces[index]++;
+					}
+				}
+			}
+
+			//Now we add the height and depth data we extracted to the heightAndDepth array
+			if(newDepth != newHeight)
+			{
+				if(count != 0)
+				{
+					prevDepth = heightAndDepth[(count-1)*2+1];
+					if(newHeight > prevDepth) {
+						newHeight = (short) Math.min(newHeight, prevDepth);
+					}
+				}
+				heightAndDepth[count*2] = (short) newHeight;
+				heightAndDepth[count*2+1] = (short) newDepth;
+				count++;
+			}
+
+			//Here we check the condition that makes the loop continue
+			//We stop the loop only if there is no more data to check
+			stillHasDataToCheck = false;
+			for (int index = 0; index < dataCount; index++)
+			{
+				if(indeces[index] < inputVerticalSize)
+				{
+					tempData = sourceData.get(index * inputVerticalSize + indeces[index]);
+					stillHasDataToCheck |= !DataPointUtil.isVoid(tempData) && DataPointUtil.doesItExist(tempData);
+				}
+			}
+		}
+		*/
+
+
+		/**TODO When build is ready remove from here*/
 		//We collect the indexes of the data, ordered by the depth
 		for (int index = 0; index < dataCount; index++)
 		{
@@ -480,6 +635,7 @@ public class ColumnFormat
 			output.set(0,createVoidDataPoint(genMode));
 			return;
 		}
+		/**TODO To here*/
 
 		//we limit the vertical portion to maxVerticalData
 		int j = 0;
