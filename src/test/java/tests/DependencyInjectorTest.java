@@ -3,6 +3,7 @@ package tests;
 import com.seibel.lod.core.api.external.items.enums.override.EDhApiOverridePriority;
 import com.seibel.lod.core.api.external.items.interfaces.override.IDhApiOverrideable;
 import com.seibel.lod.core.api.external.items.interfaces.override.IDhApiWorldGenerator;
+import com.seibel.lod.core.api.external.items.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.lod.core.enums.override.EOverridePriority;
 import com.seibel.lod.core.handlers.dependencyInjection.*;
 
@@ -21,10 +22,7 @@ import testItems.singletonInjection.objects.ConcreteSingletonTestTwo;
 import testItems.eventInjection.abstractObjects.DhApiTestEvent;
 import testItems.overrideInjection.interfaces.IOverrideTest;
 import testItems.overrideInjection.objects.OverrideTestAssembly;
-import testItems.worldGeneratorInjection.objects.WorldGeneratorTestAssembly;
-import testItems.worldGeneratorInjection.objects.WorldGeneratorTestCore;
-import testItems.worldGeneratorInjection.objects.WorldGeneratorTestPrimary;
-import testItems.worldGeneratorInjection.objects.WorldGeneratorTestSecondary;
+import testItems.worldGeneratorInjection.objects.*;
 
 import java.util.ArrayList;
 
@@ -238,7 +236,7 @@ public class DependencyInjectorTest
 	}
 	
 	@Test
-	public void testWorldGeneratorInjection()
+	public void testBackupWorldGeneratorInjection()
 	{
 		WorldGeneratorInjector TEST_INJECTOR = new WorldGeneratorInjector(WorldGeneratorTestAssembly.getPackagePath(2));
 		WorldGeneratorInjector CORE_INJECTOR = new WorldGeneratorInjector();
@@ -255,9 +253,6 @@ public class DependencyInjectorTest
 		WorldGeneratorTestSecondary secondaryGenerator = new WorldGeneratorTestSecondary();
 		WorldGeneratorTestPrimary primaryGenerator = new WorldGeneratorTestPrimary();
 		
-		
-		
-		// TODO need core package overriding
 		
 		// core generator binding
 		try { TEST_INJECTOR.bind(coreGenerator); } catch (IllegalArgumentException e) { Assert.fail("Core generator should be bindable for test package injector."); }
@@ -294,10 +289,60 @@ public class DependencyInjectorTest
 		Assert.assertEquals("Override returned incorrect override type.", generator.getOverrideType(), EDhApiOverridePriority.PRIMARY);
 		Assert.assertEquals("Incorrect override object returned.", generator.getThreadingMode(), WorldGeneratorTestPrimary.THREAD_MODE);
 
-
+		
+		
 		// in-line get
 		// (make sure the returned type is correct and compiles, the actual value doesn't matter)
 		TEST_INJECTOR.get().getThreadingMode();
+		
+	}
+	
+	@Test
+	public void testSpecificLevelWorldGeneratorInjection()
+	{
+		WorldGeneratorInjector TEST_INJECTOR = new WorldGeneratorInjector(WorldGeneratorTestAssembly.getPackagePath(2));
+		
+		
+		// pre-dependency setup
+		Assert.assertNull("Nothing should have been bound.", TEST_INJECTOR.get());
+		
+		
+		// variables to use later
+		IDhApiWorldGenerator generator;
+		WorldGeneratorTestCore backupGenerator = new WorldGeneratorTestCore();
+		WorldGeneratorTestPrimary levelGenerator = new WorldGeneratorTestPrimary();
+		
+		IDhApiLevelWrapper boundLevel = new LevelWrapperTest();
+		IDhApiLevelWrapper unboundLevel = new LevelWrapperTest();
+		
+		
+		
+		// backup generator binding
+		try { TEST_INJECTOR.bind(backupGenerator); } catch (IllegalArgumentException e) { Assert.fail("Core generator should be bindable for test package injector."); }
+		
+		
+		// get backup generator
+		generator = TEST_INJECTOR.get();
+		Assert.assertNotNull("Backup generator not bound.", generator);
+		Assert.assertEquals("Incorrect backup generator bound.", generator.getOverrideType(), EDhApiOverridePriority.CORE);
+		Assert.assertEquals("Incorrect backup generator bound.", generator.getThreadingMode(), WorldGeneratorTestCore.THREAD_MODE);
+		
+		
+		// bind level specific
+		try { TEST_INJECTOR.bind(boundLevel, levelGenerator); } catch (IllegalArgumentException e) { Assert.fail("Core generator should be bindable for test package injector."); }
+		
+		
+		// get bound level generator
+		generator = TEST_INJECTOR.get(boundLevel);
+		Assert.assertNotNull("Level generator not bound.", generator);
+		Assert.assertEquals("Incorrect level generator bound.", generator.getOverrideType(), EDhApiOverridePriority.PRIMARY);
+		Assert.assertEquals("Incorrect level generator bound.", generator.getThreadingMode(), WorldGeneratorTestPrimary.THREAD_MODE);
+		
+		// get unbound level generator
+		generator = TEST_INJECTOR.get(unboundLevel);
+		Assert.assertNotNull("Backup level generator not bound.", generator);
+		Assert.assertEquals("Incorrect level generator bound.", generator.getOverrideType(), EDhApiOverridePriority.CORE);
+		Assert.assertEquals("Incorrect level generator bound.", generator.getThreadingMode(), WorldGeneratorTestCore.THREAD_MODE);
 		
 	}
 	
