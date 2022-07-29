@@ -38,6 +38,8 @@ public interface LodRenderSource {
 
     byte getRenderVersion();
 
+    void markInvalid();
+
     /**
      * Whether this object is still valid. If not, a new one should be created.
      */

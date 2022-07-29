@@ -23,7 +23,9 @@ import java.io.File;
 
 import com.seibel.lod.core.enums.ELevelType;
 import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
+import com.seibel.lod.core.objects.DHBlockPos;
 import com.seibel.lod.core.objects.DHChunkPos;
+import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 
 /**
@@ -36,8 +38,6 @@ public interface ILevelWrapper extends IBindable
 {
 	IDimensionTypeWrapper getDimensionType();
 	
-	ELevelType getLevelType();
-	
 	int getBlockLight(int x, int y, int z);
 	
 	int getSkyLight(int x, int y, int z);
@@ -48,17 +48,16 @@ public interface ILevelWrapper extends IBindable
 	
 	int getHeight();
 	
-	int getSeaLevel();
-	
 	default short getMinHeight()
 	{
 		return 0;
 	}
-	
-	/** @throws UnsupportedOperationException if the WorldWrapper isn't for a ServerWorld */
-	File getSaveFolder() throws UnsupportedOperationException;
 
 	default IChunkWrapper tryGetChunk(DHChunkPos pos) {return null;}
 
     boolean hasChunkLoaded(int chunkX, int chunkZ);
+
+	IBlockStateWrapper getBlockState(DHBlockPos pos);
+	IBiomeWrapper getBiome(DHBlockPos pos);
+	Object unwrapLevel();
 }

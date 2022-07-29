@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.seibel.lod.core.a7.util.UncheckedInterruptedException;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.enums.config.EServerFolderNameMode;
 import com.seibel.lod.core.enums.config.EVanillaOverdraw;
@@ -191,61 +192,7 @@ public class LodUtil
 		
 		return new DHRegionPos(relativePosX, relativePosZ);
 	}
-	
-	
-	/**
-	 * If on single player this will return the name of the user's
-	 * world, if in multiplayer it will return the server name, IP,
-	 * and game version.
-	 */
-	public static String getWorldID(ILevelWrapper world)
-	{
-		if (MC_CLIENT.hasSinglePlayerServer())
-		{
-			// chop off the dimension ID as it is not needed/wanted
-			String dimId = getDimensionIDFromWorld(world);
-			
-			// get the world name
-			int saveIndex = dimId.indexOf("saves") + 1 + "saves".length();
-			int slashIndex = dimId.indexOf(File.separatorChar, saveIndex);
-			dimId = dimId.substring(saveIndex, slashIndex);
-			return dimId;
-		}
-		else
-		{
-			return getServerFolderName();
-		}
-	}
-	
-	
-	/**
-	 * If on single player this will return the name of the user's
-	 * world and the dimensional save folder, if in multiplayer
-	 * it will return the server name, ip, game version, and dimension.<br>
-	 * <br>
-	 * This can be used to determine where to save files for a given
-	 * dimension.
-	 */
-	@Deprecated // FIXME: There are soooo many duplicated methods doing the same thing everywhere
-	public static String getDimensionIDFromWorld(ILevelWrapper world)
-	{
-		if (MC_CLIENT.hasSinglePlayerServer())
-		{
-			// this will return the world save location
-			// and the dimension folder
-			
-			ILevelWrapper serverWorld = LodUtil.getServerWorldFromDimension(world.getDimensionType());
-			if (serverWorld == null)
-				throw new NullPointerException("getDimensionIDFromWorld wasn't able to get the WorldWrapper for the dimension " + world.getDimensionType().getDimensionName());
-			
-			return serverWorld.getSaveFolder().toString();
-		}
-		else
-		{
-			return getServerFolderName() + File.separatorChar + "dim_" + world.getDimensionType().getDimensionName() + File.separatorChar;
-		}
-	}
-	
+
 	/** returns the server name, IP and game version. */
 	@Deprecated // FIXME: There are soooo many duplicated methods doing the same thing everywhere
 	// Cloned to a7 package's DHFileHandler
@@ -419,10 +366,6 @@ public class LodUtil
 	
 	public static void checkInterrupts() throws InterruptedException {
 		if (Thread.interrupted()) throw new InterruptedException();
-	}
-
-	public static void checkInterruptsUnchecked() {
-		if (Thread.interrupted()) throw new RuntimeException(new InterruptedException());
 	}
 
 	/**

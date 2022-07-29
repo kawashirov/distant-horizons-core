@@ -316,6 +316,9 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     @Override
     public void update(ChunkSizedData chunkData) {
         //TODO Update render data directly
+
+        //TEMP DEUBG
+        isValid = false;
     }
 
     @Override
@@ -323,8 +326,14 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
         return LATEST_VERSION;
     }
 
+    private boolean isValid = true;
+    @Override
+    public void markInvalid() {
+        isValid = false;
+    }
+
     @Override
     public boolean isValid() {
-        return true; // For now, this is always valid.
+        return isValid;
     }
 }

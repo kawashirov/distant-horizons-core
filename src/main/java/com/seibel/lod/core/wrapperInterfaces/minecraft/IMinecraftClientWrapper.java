@@ -51,8 +51,6 @@ public interface IMinecraftClientWrapper extends IBindable
 	 */
 	void clearFrameObjectCache();
 	
-	
-	
 	//=================//
 	// method wrappers //
 	//=================//
@@ -64,12 +62,6 @@ public interface IMinecraftClientWrapper extends IBindable
 	String getCurrentServerName();
 	String getCurrentServerIp();
 	String getCurrentServerVersion();
-	
-	/** Returns the dimension the player is currently in */
-	IDimensionTypeWrapper getCurrentDimension();
-
-	@Deprecated // This should be moved to directly calling the function in core
-	String getCurrentDimensionId();
 
 	//=============//
 	// Simple gets //
@@ -80,30 +72,16 @@ public interface IMinecraftClientWrapper extends IBindable
 	DHBlockPos getPlayerBlockPos();
 	
 	DHChunkPos getPlayerChunkPos();
-	
-	/** 
-	 * Attempts to get the ServerWorld for the dimension
-	 * the user is currently in.
-	 * @return null if no ServerWorld is available
-	 */
-	ILevelWrapper getWrappedServerWorld();
-	
+
+	@Deprecated
 	ILevelWrapper getWrappedClientWorld();
 	
 	File getGameDirectory();
 	
 	IProfilerWrapper getProfiler();
 	
-	float getSkyDarken(float partialTicks);
-	
-	boolean connectedToServer();
-
-	int getPlayerSkylight();
-	
 	/** Returns all worlds available to the server */
 	ArrayList<ILevelWrapper> getAllServerWorlds();
-	
-	
 	
 	void sendChatMessage(String string);
 	
@@ -118,6 +96,4 @@ public interface IMinecraftClientWrapper extends IBindable
 	void crashMinecraft(String errorMessage, Throwable exception);
 
     Object getOptionsObject();
-
-	File getSinglePlayerServerFolder();
 }

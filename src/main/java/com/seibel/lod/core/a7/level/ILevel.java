@@ -9,6 +9,4 @@ public interface ILevel extends AutoCloseable {
     CompletableFuture<Void> save();
 
     void dumpRamUsage();
-
-    ILevelWrapper getLevelWrapper();
 }

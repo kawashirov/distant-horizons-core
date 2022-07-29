@@ -27,6 +27,7 @@ package com.seibel.lod.core.enums;
  * @author James Seibel
  * @version 2022-7-13
  */
+@Deprecated
 public enum ELevelType
 {
 	SERVER_LEVEL,

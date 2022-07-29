@@ -10,12 +10,14 @@ import com.seibel.lod.core.a7.save.structure.ClientOnlySaveStructure;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
+import com.seibel.lod.core.objects.DHBlockPos;
 import com.seibel.lod.core.objects.math.Mat4f;
 import com.seibel.lod.core.a7.render.a7LodRenderer;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IProfilerWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
+import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import org.apache.logging.log4j.Logger;
 
@@ -28,11 +30,11 @@ public class DhClientLevel implements IClientLevel {
     public final RemoteDataFileHandler dataFileHandler;
     public final RenderFileHandler renderFileHandler;
     public final RenderBufferHandler renderBufferHandler; //TODO: Should this be owned by renderer?
-    public final ILevelWrapper level;
+    public final IClientLevelWrapper level;
     public a7LodRenderer renderer = null;
     public LodQuadTree tree;
 
-    public DhClientLevel(ClientOnlySaveStructure save, ILevelWrapper level) {
+    public DhClientLevel(ClientOnlySaveStructure save, IClientLevelWrapper level) {
         this.save = save;
         save.getDataFolder(level).mkdirs();
         save.getRenderCacheFolder(level).mkdirs();
@@ -49,11 +51,6 @@ public class DhClientLevel implements IClientLevel {
     @Override
     public void dumpRamUsage() {
         //TODO
-    }
-
-    @Override
-    public ILevelWrapper getLevelWrapper() {
-        return level;
     }
 
     @Override
@@ -76,8 +73,13 @@ public class DhClientLevel implements IClientLevel {
     }
 
     @Override
-    public int computeBaseColor(IBiomeWrapper biome, IBlockStateWrapper block) {
+    public int computeBaseColor(DHBlockPos pos, IBiomeWrapper biome, IBlockStateWrapper block) {
         return 0; //TODO
+    }
+
+    @Override
+    public IClientLevelWrapper getClientLevelWrapper() {
+        return level;
     }
 
     @Override

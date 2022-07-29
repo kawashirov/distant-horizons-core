@@ -9,6 +9,7 @@ import com.seibel.lod.core.a7.save.structure.LocalSaveStructure;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.objects.DHChunkPos;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
+import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
@@ -18,9 +19,9 @@ public class DhServerLevel implements IServerLevel {
 
     public final LocalSaveStructure save;
     public final LocalDataFileHandler dataFileHandler;
-    public final ILevelWrapper level;
+    public final IServerLevelWrapper level;
 
-    public DhServerLevel(LocalSaveStructure save, ILevelWrapper level) {
+    public DhServerLevel(LocalSaveStructure save, IServerLevelWrapper level) {
         this.save = save;
         this.level = level;
         save.getDataFolder(level).mkdirs();
@@ -58,7 +59,7 @@ public class DhServerLevel implements IServerLevel {
     }
 
     @Override
-    public ILevelWrapper getLevelWrapper() {
+    public IServerLevelWrapper getServerLevelWrapper() {
         return level;
     }
 }

@@ -190,6 +190,9 @@ public class ColumnRenderBuffer extends RenderBuffer {
                         LodQuadBuilder builder = new LodQuadBuilder(true,
                                 (short) (skyLightCullingBelow - clientLevel.getMinY()));
                         makeLodRenderData(builder, data, adjData);
+                        if (builder.getCurrentQuadsCount() > 0) {
+                            LOGGER.info("her");
+                        }
                         EVENT_LOGGER.trace("RenderRegion end QuadBuild @ {}", data.sectionPos);
                         return builder;
                     } catch (UncheckedInterruptedException e) {

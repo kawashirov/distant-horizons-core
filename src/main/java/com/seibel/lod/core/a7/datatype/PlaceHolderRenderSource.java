@@ -56,6 +56,7 @@ public class PlaceHolderRenderSource implements LodRenderSource {
         return 0;
     }
 
+    @Override
     public void markInvalid() {
         isValid = false;
     }

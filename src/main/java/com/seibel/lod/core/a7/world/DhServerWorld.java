@@ -4,13 +4,14 @@ import com.seibel.lod.core.a7.level.DhServerLevel;
 import com.seibel.lod.core.a7.save.structure.LocalSaveStructure;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
+import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 
 public class DhServerWorld extends DhWorld implements IServerWorld {
-    private final HashMap<ILevelWrapper, DhServerLevel> levels;
+    private final HashMap<IServerLevelWrapper, DhServerLevel> levels;
     public final LocalSaveStructure saveStructure;
 
     public DhServerWorld() {
@@ -22,7 +23,8 @@ public class DhServerWorld extends DhWorld implements IServerWorld {
 
     @Override
     public DhServerLevel getOrLoadLevel(ILevelWrapper wrapper) {
-        return levels.computeIfAbsent(wrapper, (w) -> {
+        if (!(wrapper instanceof IServerLevelWrapper)) return null;
+        return levels.computeIfAbsent((IServerLevelWrapper) wrapper, (w) -> {
             File levelFile = saveStructure.tryGetLevelFolder(wrapper);
             LodUtil.assertTrue(levelFile != null);
             return new DhServerLevel(saveStructure, w);
@@ -31,11 +33,13 @@ public class DhServerWorld extends DhWorld implements IServerWorld {
 
     @Override
     public DhServerLevel getLevel(ILevelWrapper wrapper) {
+        if (!(wrapper instanceof IServerLevelWrapper)) return null;
         return levels.get(wrapper);
     }
 
     @Override
     public void unloadLevel(ILevelWrapper wrapper) {
+        if (!(wrapper instanceof IServerLevelWrapper)) return;
         if (levels.containsKey(wrapper)) {
             LOGGER.info("Unloading level {} ", levels.get(wrapper));
             levels.remove(wrapper).close();
@@ -59,7 +63,7 @@ public class DhServerWorld extends DhWorld implements IServerWorld {
     @Override
     public void close() {
         for (DhServerLevel level : levels.values()) {
-            LOGGER.info("Unloading level for world " + level.level.getDimensionType().getDimensionName());
+            LOGGER.info("Unloading level " + level.level.getDimensionType().getDimensionName());
             level.close();
         }
         levels.clear();

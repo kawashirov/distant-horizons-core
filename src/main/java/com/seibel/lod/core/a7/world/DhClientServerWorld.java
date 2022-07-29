@@ -5,7 +5,9 @@ import com.seibel.lod.core.a7.save.structure.LocalSaveStructure;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.util.EventLoop;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
+import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
 
 import java.io.File;
 import java.util.HashMap;
@@ -29,11 +31,23 @@ public class DhClientServerWorld extends DhWorld implements IClientWorld, IServe
 
     @Override
     public DhClientServerLevel getOrLoadLevel(ILevelWrapper wrapper) {
-        return levels.computeIfAbsent(wrapper, (w) -> {
-            File levelFile = saveStructure.tryGetLevelFolder(w);
-            LodUtil.assertTrue(levelFile != null);
-            return new DhClientServerLevel(saveStructure, w);
-        });
+        if (wrapper instanceof IServerLevelWrapper) {
+            return levels.computeIfAbsent(wrapper, (w) -> {
+                File levelFile = saveStructure.tryGetLevelFolder(w);
+                LodUtil.assertTrue(levelFile != null);
+                return new DhClientServerLevel(saveStructure, (IServerLevelWrapper) w);
+            });
+        } else {
+            return levels.computeIfAbsent(wrapper, (w) -> {
+                IClientLevelWrapper clientSide = (IClientLevelWrapper) w;
+                IServerLevelWrapper serverSide = clientSide.tryGetServerSideWrapper();
+                LodUtil.assertTrue(serverSide != null);
+                DhClientServerLevel level = levels.get(serverSide);
+                if (level==null) return null;
+                level.startRenderer(clientSide);
+                return level;
+            });
+        }
     }
 
     @Override
@@ -44,8 +58,12 @@ public class DhClientServerWorld extends DhWorld implements IClientWorld, IServe
     @Override
     public void unloadLevel(ILevelWrapper wrapper) {
         if (levels.containsKey(wrapper)) {
-            LOGGER.info("Unloading level {} ", levels.get(wrapper));
-            levels.remove(wrapper).close();
+            if (wrapper instanceof IServerLevelWrapper) {
+                LOGGER.info("Unloading level {} ", levels.get(wrapper));
+                levels.remove(wrapper).close();
+            } else {
+                levels.remove(wrapper).stopRenderer(); // Ignore resource warning. The level obj is referenced elsewhere.
+            }
         }
     }
 
@@ -85,21 +103,11 @@ public class DhClientServerWorld extends DhWorld implements IClientWorld, IServe
     public void close() {
         saveAndFlush().join();
         for (DhClientServerLevel level : levels.values()) {
-            LOGGER.info("Unloading level for world " + level.level.getDimensionType().getDimensionName());
+            LOGGER.info("Unloading level " + level.serverLevel.getDimensionType().getDimensionName());
             level.close();
         }
         levels.clear();
         LOGGER.info("Closed DhWorld of type {}", environment);
     }
 
-    public void enableRendering(ILevelWrapper wrapper) {
-        DhClientServerLevel level = levels.get(wrapper);
-        if (level==null) return;
-        level.startRenderer();
-    }
-    public void disableRendering(ILevelWrapper wrapper) {
-        DhClientServerLevel level = levels.get(wrapper);
-        if (level==null) return;
-        level.stopRenderer();
-    }
 }

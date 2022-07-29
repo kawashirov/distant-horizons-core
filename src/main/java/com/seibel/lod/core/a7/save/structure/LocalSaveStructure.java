@@ -3,6 +3,7 @@ package com.seibel.lod.core.a7.save.structure;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
+import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
 
 import java.io.File;
 
@@ -17,20 +18,23 @@ public class LocalSaveStructure extends SaveStructure {
 
     @Override
     public File tryGetLevelFolder(ILevelWrapper wrapper) {
-        debugPath = new File(wrapper.getSaveFolder(), "Distant_Horizons");
-        return new File(wrapper.getSaveFolder(), "Distant_Horizons");
+        IServerLevelWrapper serverSide = (IServerLevelWrapper) wrapper;
+        debugPath = new File(serverSide.getSaveFolder(), "Distant_Horizons");
+        return new File(serverSide.getSaveFolder(), "Distant_Horizons");
     }
 
     @Override
     public File getRenderCacheFolder(ILevelWrapper level) {
-        debugPath = new File(level.getSaveFolder(), "Distant_Horizons");
-        return new File(new File(level.getSaveFolder(), "Distant_Horizons"), RENDER_CACHE_FOLDER);
+        IServerLevelWrapper serverSide = (IServerLevelWrapper) level;
+        debugPath = new File(serverSide.getSaveFolder(), "Distant_Horizons");
+        return new File(new File(serverSide.getSaveFolder(), "Distant_Horizons"), RENDER_CACHE_FOLDER);
     }
 
     @Override
     public File getDataFolder(ILevelWrapper level) {
-        debugPath = new File(level.getSaveFolder(), "Distant_Horizons");
-        return new File(new File(level.getSaveFolder(), "Distant_Horizons"), DATA_FOLDER);
+        IServerLevelWrapper serverSide = (IServerLevelWrapper) level;
+        debugPath = new File(serverSide.getSaveFolder(), "Distant_Horizons");
+        return new File(new File(serverSide.getSaveFolder(), "Distant_Horizons"), DATA_FOLDER);
     }
 
     @Override

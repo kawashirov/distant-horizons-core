@@ -23,10 +23,12 @@ import com.seibel.lod.core.a7.world.DhClientServerWorld;
 import com.seibel.lod.core.a7.world.DhServerWorld;
 import com.seibel.lod.core.a7.world.IServerWorld;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
+import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.wrapperInterfaces.IVersionConstants;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
+import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.invoke.MethodHandles;
@@ -42,7 +44,7 @@ public class ServerApi
 {
 	public static final boolean ENABLE_STACK_DUMP_LOGGING = false;
 	public static final ServerApi INSTANCE = new ServerApi();
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+    public static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 	private static final IVersionConstants VERSION_CONSTANTS = SingletonInjector.INSTANCE.get(IVersionConstants.class);
 	public static final boolean ENABLE_EVENT_LOGGING = true;
 
@@ -67,6 +69,9 @@ public class ServerApi
 			}
 		}
 	}
+	public void serverLevelTickEvent(IServerLevelWrapper level) {
+		//TODO
+	}
 
 	//TODO: rename to serverLoadEvent
 	public void serverWorldLoadEvent(boolean isDedicatedEnvironment) {
@@ -85,15 +90,15 @@ public class ServerApi
 		SharedApi.currentWorld = null;
 	}
 
-	public void serverLevelLoadEvent(ILevelWrapper world) {
-		if (ENABLE_EVENT_LOGGING) LOGGER.info("Server Level {} loading", world);
-		if (SharedApi.currentWorld instanceof IServerWorld)
-			SharedApi.currentWorld.getOrLoadLevel(world);
+	public void serverLevelLoadEvent(IServerLevelWrapper level) {
+		if (ENABLE_EVENT_LOGGING) LOGGER.info("Server Level {} loading", level);
+		if (SharedApi.currentWorld != null)
+			SharedApi.currentWorld.getOrLoadLevel(level);
 	}
-	public void serverLevelUnloadEvent(ILevelWrapper world) {
-		if (ENABLE_EVENT_LOGGING) LOGGER.info("Server Level {} unloading", world);
-		if (SharedApi.currentWorld instanceof IServerWorld)
-			SharedApi.currentWorld.unloadLevel(world);
+	public void serverLevelUnloadEvent(IServerLevelWrapper level) {
+		if (ENABLE_EVENT_LOGGING) LOGGER.info("Server Level {} unloading", level);
+		if (SharedApi.currentWorld != null)
+			SharedApi.currentWorld.unloadLevel(level);
 	}
 
 	@Deprecated

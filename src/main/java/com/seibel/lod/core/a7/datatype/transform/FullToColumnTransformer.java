@@ -11,6 +11,7 @@ import com.seibel.lod.core.a7.level.IClientLevel;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
+import com.seibel.lod.core.objects.DHBlockPos;
 import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
@@ -31,11 +32,13 @@ public class FullToColumnTransformer {
         final ColumnRenderSource columnSource = new ColumnRenderSource(pos, vertSize, level.getMinY());
 
         if (dataDetail == columnSource.getDataDetail()) {
+            int baseX = pos.getCorner().getCorner().x;
+            int baseZ = pos.getCorner().getCorner().z;
             for (int x = 0; x < pos.getWidth(dataDetail).value; x++) {
                 for (int z = 0; z < pos.getWidth(dataDetail).value; z++) {
                     ColumnArrayView columnArrayView = columnSource.getVerticalDataView(x, z);
                     SingleFullArrayView fullArrayView = data.get(x, z);
-                    convertColumnData(level, columnArrayView, fullArrayView);
+                    convertColumnData(level, baseX + x, baseZ + z, columnArrayView, fullArrayView);
                 }
             }
 //        } else if (dataDetail == 0 && columnSource.getDataDetail() > dataDetail) {
@@ -60,7 +63,7 @@ public class FullToColumnTransformer {
         return columnSource;
     }
 
-    private static void convertColumnData(IClientLevel level, ColumnArrayView columnArrayView, SingleFullArrayView fullArrayView) {
+    private static void convertColumnData(IClientLevel level, int blockX, int blockZ, ColumnArrayView columnArrayView, SingleFullArrayView fullArrayView) {
         if (!fullArrayView.doesItExist()) return;
         // TODO: Set gen mode
         int genModeValue = 1;
@@ -69,14 +72,14 @@ public class FullToColumnTransformer {
 
         if (dataTotalLength > columnArrayView.verticalSize()) {
             ColumnArrayView totalColumnData = new ColumnArrayView(new long[dataTotalLength], dataTotalLength, 0, dataTotalLength);
-            iterateAndConvert(level, genModeValue, totalColumnData, fullArrayView);
+            iterateAndConvert(level, blockX, blockZ, genModeValue, totalColumnData, fullArrayView);
             columnArrayView.changeVerticalSizeFrom(totalColumnData);
         } else {
-            iterateAndConvert(level, genModeValue, columnArrayView, fullArrayView); //Directly use the arrayView since it fits.
+            iterateAndConvert(level, blockX, blockZ, genModeValue, columnArrayView, fullArrayView); //Directly use the arrayView since it fits.
         }
     }
 
-    private static void iterateAndConvert(IClientLevel level, int genMode, ColumnArrayView column, SingleFullArrayView data) {
+    private static void iterateAndConvert(IClientLevel level, int blockX, int blockZ, int genMode, ColumnArrayView column, SingleFullArrayView data) {
         IdBiomeBlockStateMap mapping = data.getMapping();
         boolean isVoid = true;
         for (int i = 0; i < data.getSingleLength(); i++) {
@@ -90,7 +93,7 @@ public class FullToColumnTransformer {
             IBlockStateWrapper block = entry.blockState;
             if (block.equals(AIR)) continue;
             isVoid = false;
-            int color = level.computeBaseColor(biome, block);
+            int color = level.computeBaseColor(new DHBlockPos(blockX, y + level.getMinY(), blockZ), biome, block);
             long columnData = ColumnFormat.createDataPoint(y + blockLength, y, color, light, genMode);
             column.set(i, columnData);
         }

@@ -36,6 +36,7 @@ import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IProfilerWrapper;
+import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -118,35 +119,31 @@ public class ClientApi
 		SharedApi.currentWorld = null;
 	}
 	
-	public void clientChunkLoadEvent(IChunkWrapper chunk, ILevelWrapper level)
+	public void clientChunkLoadEvent(IChunkWrapper chunk, IClientLevelWrapper level)
 	{
 		if (SharedApi.getEnvironment() == WorldEnvironment.Client_Only) {
 			//TODO: Implement
 		}
 	}
-	public void clientChunkSaveEvent(IChunkWrapper chunk, ILevelWrapper level)
+	public void clientChunkSaveEvent(IChunkWrapper chunk, IClientLevelWrapper level)
 	{
 		if (SharedApi.getEnvironment() == WorldEnvironment.Client_Only) {
 			//TODO: Implement
 		}
 	}
 
-	public void clientLevelUnloadEvent(ILevelWrapper level)
+	public void clientLevelUnloadEvent(IClientLevelWrapper level)
 	{
 		if (ENABLE_EVENT_LOGGING) LOGGER.info("Client level {} unloading.", level);
-		if (SharedApi.currentWorld instanceof DhClientServerWorld) {
-			((DhClientServerWorld)SharedApi.currentWorld).disableRendering(level);
-		} else if (SharedApi.getEnvironment() == WorldEnvironment.Client_Only) {
+		if (SharedApi.currentWorld != null) {
 			SharedApi.currentWorld.unloadLevel(level);
 		}
 	}
-	public void clientLevelLoadEvent(ILevelWrapper level)
+	public void clientLevelLoadEvent(IClientLevelWrapper level)
 	{
 		if (ENABLE_EVENT_LOGGING) LOGGER.info("Client level {} loading.", level);
-		if (SharedApi.currentWorld instanceof DhClientServerWorld) {
-			((DhClientServerWorld)SharedApi.currentWorld).enableRendering(level);
-		} else if (SharedApi.getEnvironment() == WorldEnvironment.Client_Only) {
-			SharedApi.currentWorld.getOrLoadLevel(level); //TODO: This may need to be delayed to after player enters the level
+		if (SharedApi.currentWorld != null) {
+			SharedApi.currentWorld.getOrLoadLevel(level);
 		}
 	}
 
@@ -186,7 +183,7 @@ public class ClientApi
 		profiler.pop();
 	}
 	
-	public void renderLods(ILevelWrapper levelWrapper, Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, float partialTicks)
+	public void renderLods(IClientLevelWrapper levelWrapper, Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, float partialTicks)
 	{
 		IProfilerWrapper profiler = MC.getProfiler();
 		profiler.pop(); // get out of "terrain"

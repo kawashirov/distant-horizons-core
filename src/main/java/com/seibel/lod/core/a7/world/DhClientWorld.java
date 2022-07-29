@@ -7,6 +7,7 @@ import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.util.DetailDistanceUtil;
 import com.seibel.lod.core.util.EventLoop;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 
 import java.io.File;
@@ -16,7 +17,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
 public class DhClientWorld extends DhWorld implements IClientWorld {
-    private final HashMap<ILevelWrapper, DhClientLevel> levels;
+    private final HashMap<IClientLevelWrapper, DhClientLevel> levels;
     public final ClientOnlySaveStructure saveStructure;
     public ExecutorService dhTickerThread = LodUtil.makeSingleThreadPool("DHTickerThread", 2);
     public EventLoop eventLoop = new EventLoop(dhTickerThread, this::_clientTick);
@@ -30,7 +31,9 @@ public class DhClientWorld extends DhWorld implements IClientWorld {
 
     @Override
     public DhClientLevel getOrLoadLevel(ILevelWrapper wrapper) {
-        return levels.computeIfAbsent(wrapper, (w) -> {
+        if (!(wrapper instanceof IClientLevelWrapper)) return null;
+
+        return levels.computeIfAbsent((IClientLevelWrapper) wrapper, (w) -> {
             File level = saveStructure.tryGetLevelFolder(wrapper);
             if (level == null) return null;
             return new DhClientLevel(saveStructure, w);
@@ -39,11 +42,13 @@ public class DhClientWorld extends DhWorld implements IClientWorld {
 
     @Override
     public DhClientLevel getLevel(ILevelWrapper wrapper) {
+        if (!(wrapper instanceof IClientLevelWrapper)) return null;
         return levels.get(wrapper);
     }
 
     @Override
     public void unloadLevel(ILevelWrapper wrapper) {
+        if (!(wrapper instanceof IClientLevelWrapper)) return;
         if (levels.containsKey(wrapper)) {
             LOGGER.info("Unloading level {} ", levels.get(wrapper));
             levels.remove(wrapper).close();
@@ -77,7 +82,7 @@ public class DhClientWorld extends DhWorld implements IClientWorld {
     public void close() {
         saveAndFlush().join();
         for (DhClientLevel level : levels.values()) {
-            LOGGER.info("Unloading level for world " + level.level.getDimensionType().getDimensionName());
+            LOGGER.info("Unloading level " + level.level.getDimensionType().getDimensionName());
             level.close();
         }
         levels.clear();

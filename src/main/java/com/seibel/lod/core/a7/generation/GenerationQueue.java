@@ -7,6 +7,7 @@ import com.seibel.lod.core.a7.datatype.full.FullDataSource;
 import com.seibel.lod.core.a7.pos.DhBlockPos2D;
 import com.seibel.lod.core.a7.pos.DhLodPos;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
+import com.seibel.lod.core.a7.util.UncheckedInterruptedException;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.objects.DHChunkPos;
 import com.seibel.lod.core.util.LodUtil;
@@ -122,6 +123,8 @@ public class GenerationQueue implements PlaceHolderQueue {
                         if (ex instanceof CompletionException) {
                             ex = ex.getCause();
                         }
+                        if (ex instanceof InterruptedException) return; // Ignore interrupted exceptions.
+                        if (ex instanceof UncheckedInterruptedException) return; // Ignore unchecked interrupted exceptions.
                         logger.error("Error generating data for section {}", pos, ex);
                         return;
                     }
@@ -164,6 +167,11 @@ public class GenerationQueue implements PlaceHolderQueue {
 //                        }
 //                    }
                 }).exceptionally(ex -> {
+                    if (ex instanceof CompletionException) {
+                        ex = ex.getCause();
+                    }
+                    if (ex instanceof InterruptedException) return null; // Ignore interrupted exceptions.
+                    if (ex instanceof UncheckedInterruptedException) return null; // Ignore unchecked interrupted exceptions.
                     logger.error("Error generating data for {} by {} chunks (at {}) with data detail {}",
                             perCallChunksWidth, perCallChunksWidth, subCallChunkPosMin, dataDetail, ex);
                     return null;

@@ -27,16 +27,6 @@ import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
  */
 public interface IBiomeWrapper extends IBindable
 {
-	/** Returns a color int for the given biome. */
-	int getColorForBiome(int x, int z);
-	
 	String getName();
-	
-	int getGrassTint(int x, int z);
-	
-	int getFolliageTint();
-	
-	int getWaterTint();
-
     String serialize();
 }
