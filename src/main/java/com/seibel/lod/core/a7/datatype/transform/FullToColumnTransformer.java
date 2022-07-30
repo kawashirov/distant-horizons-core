@@ -1,6 +1,6 @@
 package com.seibel.lod.core.a7.datatype.transform;
 
-import com.seibel.lod.core.a7.datatype.column.ColumnFormat;
+import com.seibel.lod.core.a7.datatype.column.accessor.ColumnFormat;
 import com.seibel.lod.core.a7.datatype.column.ColumnRenderSource;
 import com.seibel.lod.core.a7.datatype.column.accessor.ColumnArrayView;
 import com.seibel.lod.core.a7.datatype.full.FullDataSource;
@@ -82,6 +82,7 @@ public class FullToColumnTransformer {
     private static void iterateAndConvert(IClientLevel level, int blockX, int blockZ, int genMode, ColumnArrayView column, SingleFullArrayView data) {
         IdBiomeBlockStateMap mapping = data.getMapping();
         boolean isVoid = true;
+        int offset = 0;
         for (int i = 0; i < data.getSingleLength(); i++) {
             long fullData = data.getSingle(i);
             int y = FullFormat.getY(fullData);
@@ -95,7 +96,8 @@ public class FullToColumnTransformer {
             isVoid = false;
             int color = level.computeBaseColor(new DHBlockPos(blockX, y + level.getMinY(), blockZ), biome, block);
             long columnData = ColumnFormat.createDataPoint(y + blockLength, y, color, light, genMode);
-            column.set(i, columnData);
+            column.set(offset, columnData);
+            offset++;
         }
         if (isVoid) {
             column.set(0, ColumnFormat.createVoidDataPoint((byte) genMode));

@@ -29,6 +29,5 @@ public interface IColumnDataView {
 
     IColumnDataView subView(int dataIndexStart, int dataCount);
 
-    @Deprecated //This is unsafe for quadViews. And its a mess for multi-columns!
-    void copyTo(long[] target, int offset);
+    void copyTo(long[] target, int offset, int count);
 }

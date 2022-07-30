@@ -60,7 +60,7 @@ public class MetaFile {
     public long dataTypeId;
     public byte loaderVersion;
 
-    private static final ReentrantReadWriteLock assertLock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock assertLock = new ReentrantReadWriteLock();
 
     // Load a metaFile in this path. It also automatically read the metadata.
     protected MetaFile(File path) throws IOException {

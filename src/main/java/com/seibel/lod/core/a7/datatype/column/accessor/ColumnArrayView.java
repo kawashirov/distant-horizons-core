@@ -1,15 +1,13 @@
 package com.seibel.lod.core.a7.datatype.column.accessor;
 
 
-import com.seibel.lod.core.a7.datatype.column.ColumnFormat;
-
 import java.util.Arrays;
 
 public final class ColumnArrayView implements IColumnDataView {
-    private final long[] data;
-    private final int size; // size in longs
-    private final int offset; // offset in longs
-    private final int vertSize; // vertical size in longs
+    final long[] data;
+    final int size; // size in longs
+    final int offset; // offset in longs
+    final int vertSize; // vertical size in longs
 
     public ColumnArrayView(long[] data, int size, int offset, int vertSize) {
         this.data = data;
@@ -53,12 +51,12 @@ public final class ColumnArrayView implements IColumnDataView {
         if (source.verticalSize() != vertSize) {
             for (int i = 0; i < source.dataCount(); i++) {
                 int outputOffset = offset + outputDataIndexOffset * vertSize + i * vertSize;
-                source.subView(i, 1).copyTo(data, outputOffset);
+                source.subView(i, 1).copyTo(data, outputOffset, source.verticalSize());
                 Arrays.fill(data, outputOffset + source.verticalSize(),
                         outputOffset + vertSize, 0);
             }
         } else {
-            source.copyTo(data, offset + outputDataIndexOffset * vertSize);
+            source.copyTo(data, offset + outputDataIndexOffset * vertSize, source.size());
         }
     }
     public void copyFrom(IColumnDataView source) {
@@ -66,7 +64,7 @@ public final class ColumnArrayView implements IColumnDataView {
     }
 
     @Override
-    public void copyTo(long[] target, int offset) {
+    public void copyTo(long[] target, int offset, int size) {
         System.arraycopy(data, this.offset, target, offset, size);
     }
 
@@ -112,5 +110,23 @@ public final class ColumnArrayView implements IColumnDataView {
             throw new IllegalArgumentException("output dataCount must be 1");
         }
         ColumnFormat.mergeMultiData(source, this);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("S:");
+        sb.append(size);
+        sb.append(" V:");
+        sb.append(vertSize);
+        sb.append(" O:");
+        sb.append(offset);
+        sb.append(" [");
+        for (int i=0; i<size; i++) {
+            sb.append(ColumnFormat.toString(data[offset+i]));
+            if (i < size-1) sb.append(",\n");
+        }
+        sb.append("]");
+        return sb.toString();
     }
 }

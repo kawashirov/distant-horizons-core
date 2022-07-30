@@ -54,7 +54,7 @@ public class ColumnQuadView implements IColumnDataView {
     public void set(int x, int z, IColumnDataView singleColumn) {
         if (singleColumn.verticalSize() != vertSize) throw new IllegalArgumentException("Vertical size of singleColumn must be equal to vertSize");
         if (singleColumn.dataCount() != 1) throw new IllegalArgumentException("SingleColumn must contain exactly one data point");
-        singleColumn.copyTo(data, x * perColumnOffset + z * vertSize);
+        singleColumn.copyTo(data, x * perColumnOffset + z * vertSize, singleColumn.size());
     }
 
     @Override
@@ -86,9 +86,14 @@ public class ColumnQuadView implements IColumnDataView {
     }
 
     @Override
-    public void copyTo(long[] target, int offset) {
-        for (int x = 0; x < xSize; x++) {
-            System.arraycopy(data, this.offset + x * perColumnOffset, target, offset + x * xSize * vertSize, zSize * vertSize);
+    public void copyTo(long[] target, int offset, int size) {
+        if (size != this.size() && size > zSize * vertSize) throw new UnsupportedOperationException("Not supported yet");
+        if (size <= zSize * vertSize) {
+            System.arraycopy(data, this.offset, target, offset, size);
+        } else {
+            for (int x = 0; x < xSize; x++) {
+                System.arraycopy(data, this.offset + x * perColumnOffset, target, offset + x * xSize * vertSize, zSize * vertSize);
+            }
         }
     }
 

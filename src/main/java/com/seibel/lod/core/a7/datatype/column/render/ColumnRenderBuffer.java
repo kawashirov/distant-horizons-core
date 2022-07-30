@@ -191,7 +191,7 @@ public class ColumnRenderBuffer extends RenderBuffer {
                                 (short) (skyLightCullingBelow - clientLevel.getMinY()));
                         makeLodRenderData(builder, data, adjData);
                         if (builder.getCurrentQuadsCount() > 0) {
-                            LOGGER.info("her");
+                            //LOGGER.info("her");
                         }
                         EVENT_LOGGER.trace("RenderRegion end QuadBuild @ {}", data.sectionPos);
                         return builder;
@@ -248,9 +248,8 @@ public class ColumnRenderBuffer extends RenderBuffer {
         EDebugMode debugMode = Config.Client.Advanced.Debugging.debugMode.get();
 
         byte detailLevel = region.getDataDetail();
-        int dataSize = 1 << detailLevel;
-        for (int x = 0; x < dataSize; x++) {
-            for (int z = 0; z < dataSize; z++) {
+        for (int x = 0; x < ColumnRenderSource.SECTION_SIZE; x++) {
+            for (int z = 0; z < ColumnRenderSource.SECTION_SIZE; z++) {
                 UncheckedInterruptedException.throwIfInterrupted();
 
                 ColumnArrayView posData = region.getVerticalDataView(x, z);
@@ -278,8 +277,8 @@ public class ColumnRenderBuffer extends RenderBuffer {
                     try {
                         int xAdj = x + lodDirection.getNormal().x;
                         int zAdj = z + lodDirection.getNormal().z;
-                        boolean isCrossRegionBoundary = (xAdj < 0 || xAdj >= dataSize) ||
-                                (zAdj < 0 || zAdj >= dataSize);
+                        boolean isCrossRegionBoundary = (xAdj < 0 || xAdj >= ColumnRenderSource.SECTION_SIZE) ||
+                                (zAdj < 0 || zAdj >= ColumnRenderSource.SECTION_SIZE);
                         ColumnRenderSource adjRegion;
                         byte adjDetail;
 
@@ -293,10 +292,10 @@ public class ColumnRenderBuffer extends RenderBuffer {
                             if (adjDetail != detailLevel) {
                                 //TODO: Implement this
                             } else {
-                                if (xAdj < 0) xAdj += dataSize;
-                                if (zAdj < 0) zAdj += dataSize;
-                                if (xAdj >= dataSize) xAdj -= dataSize;
-                                if (zAdj >= dataSize) zAdj -= dataSize;
+                                if (xAdj < 0) xAdj += ColumnRenderSource.SECTION_SIZE;
+                                if (zAdj < 0) zAdj += ColumnRenderSource.SECTION_SIZE;
+                                if (xAdj >= ColumnRenderSource.SECTION_SIZE) xAdj -= ColumnRenderSource.SECTION_SIZE;
+                                if (zAdj >= ColumnRenderSource.SECTION_SIZE) zAdj -= ColumnRenderSource.SECTION_SIZE;
                             }
                         } else {
                             adjRegion = region;

@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.a7.datatype.column;
+package com.seibel.lod.core.a7.datatype.column.accessor;
 
 import com.seibel.lod.core.a7.datatype.column.accessor.ColumnArrayView;
 import com.seibel.lod.core.a7.datatype.column.accessor.IColumnDataView;
@@ -111,7 +111,7 @@ public class ColumnFormat
 
 	public static long createDataPoint(int height, int depth, int color, int light, int generationMode)
 	{
-		LodUtil.assertTrue(light >= 0 && light <= 255, "Raw Light value must be between 0 and 255!");
+		LodUtil.assertTrue(light >= 0 && light < 256, "Raw Light value must be between 0 and 255!");
 		return createDataPoint(
 				ColorUtil.getAlpha(color),
 				ColorUtil.getRed(color),
@@ -127,10 +127,10 @@ public class ColumnFormat
 		LodUtil.assertTrue(depth >= 0 && depth < MAX_WORLD_Y_SIZE, "Trying to create datapoint with depth[{}] out of range!", depth);
 		LodUtil.assertTrue(lightSky >= 0 && lightSky < 16, "Trying to create datapoint with lightSky[{}] out of range!", lightSky);
 		LodUtil.assertTrue(lightBlock >= 0 && lightBlock < 16, "Trying to create datapoint with lightBlock[{}] out of range!", lightBlock);
-		LodUtil.assertTrue(alpha >= 0 && alpha < 255, "Trying to create datapoint with alpha[{}] out of range!", alpha);
-		LodUtil.assertTrue(red >= 0 && red < 255, "Trying to create datapoint with red[{}] out of range!", red);
-		LodUtil.assertTrue(green >= 0 && green < 255, "Trying to create datapoint with green[{}] out of range!", green);
-		LodUtil.assertTrue(blue >= 0 && blue < 255, "Trying to create datapoint with blue[{}] out of range!", blue);
+		LodUtil.assertTrue(alpha >= 0 && alpha < 256, "Trying to create datapoint with alpha[{}] out of range!", alpha);
+		LodUtil.assertTrue(red >= 0 && red < 256, "Trying to create datapoint with red[{}] out of range!", red);
+		LodUtil.assertTrue(green >= 0 && green < 256, "Trying to create datapoint with green[{}] out of range!", green);
+		LodUtil.assertTrue(blue >= 0 && blue < 256, "Trying to create datapoint with blue[{}] out of range!", blue);
 		LodUtil.assertTrue(generationMode >= 0 && generationMode < 8, "Trying to create datapoint with genMode[{}] out of range!", generationMode);
 		LodUtil.assertTrue(depth <= height, "Trying to create datapoint with depth[{}] greater than height[{}]!", depth, height);
 
@@ -253,17 +253,17 @@ public class ColumnFormat
 	@SuppressWarnings("unused")
 	public static String toString(long dataPoint)
 	{
-		return getHeight(dataPoint) + " " +
-				getDepth(dataPoint) + " " +
-				getAlpha(dataPoint) + " " +
+		if (!doesItExist(dataPoint)) return "null";
+		if (isVoid(dataPoint)) return "void";
+		return "H:" + getHeight(dataPoint) +
+				" D:" + getDepth(dataPoint) +
+				" argb:" + getAlpha(dataPoint) + " " +
 				getRed(dataPoint) + " " +
 				getBlue(dataPoint) + " " +
-				getGreen(dataPoint) + " " +
-				getLightBlock(dataPoint) + " " +
-				getLightSky(dataPoint) + " " +
-				getGenerationMode(dataPoint) + " " +
-				isVoid(dataPoint) + " " +
-				doesItExist(dataPoint) + '\n';
+				getGreen(dataPoint) +
+				" BL/SL:" + getLightBlock(dataPoint) + " " +
+				getLightSky(dataPoint) +
+				" G:" + getGenerationMode(dataPoint);
 	}
 
 
@@ -664,7 +664,7 @@ public class ColumnFormat
 
 		if (!limited && dataCount == 1) // This mean source vertSize < output vertSize AND both dataCount == 1
 		{
-			output.copyFrom(sourceData);
+			sourceData.copyTo(output.data, output.offset, output.vertSize);
 		}
 		else
 		{

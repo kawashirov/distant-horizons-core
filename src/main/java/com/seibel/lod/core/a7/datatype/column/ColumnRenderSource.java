@@ -1,6 +1,7 @@
 package com.seibel.lod.core.a7.datatype.column;
 
 import com.seibel.lod.core.a7.datatype.column.accessor.ColumnArrayView;
+import com.seibel.lod.core.a7.datatype.column.accessor.ColumnFormat;
 import com.seibel.lod.core.a7.datatype.column.accessor.ColumnQuadView;
 import com.seibel.lod.core.a7.datatype.column.accessor.IColumnDatatype;
 import com.seibel.lod.core.a7.datatype.column.render.ColumnRenderBuffer;

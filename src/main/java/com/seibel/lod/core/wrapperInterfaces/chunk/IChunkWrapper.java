@@ -40,15 +40,6 @@ public interface IChunkWrapper extends IBindable
 	int getMaxBuildHeight();
 	
 	int getHeightMapValue(int xRel, int zRel);
-	
-	IBiomeWrapper getBiome(int x, int y, int z);
-
-	@Deprecated
-	IBlockDetailWrapper getBlockDetail(int x, int y, int z);
-
-	/** Returns null if block doesn't exist. Note that this can cross chunk boundaries. */
-	@Deprecated
-	IBlockDetailWrapper getBlockDetailAtFace(int x, int y, int z, ELodDirection dir);
 
 	@Deprecated
 	int getChunkPosX();
@@ -85,8 +76,6 @@ public interface IChunkWrapper extends IBindable
 	boolean doesNearbyChunksExist();
 	String toString();
 	
-	
-	
 	/** This is a bad hash algorithm, but can be used for rough debugging. */
 	default int roughHashCode()
 	{
@@ -105,6 +94,7 @@ public interface IChunkWrapper extends IBindable
 	}
 
 	IBlockStateWrapper getBlockState(int x, int y, int z);
+	IBiomeWrapper getBiome(int x, int y, int z);
 
     default DHChunkPos getChunkPos() {
 		return new DHChunkPos(getChunkPosX(), getChunkPosZ());

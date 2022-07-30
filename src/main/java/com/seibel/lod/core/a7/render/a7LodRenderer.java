@@ -70,7 +70,8 @@ public class a7LodRenderer
 	public static final boolean ENABLE_IBO = true;
 
 	public void setupOffset(DHBlockPos pos) {
-		shaderProgram.setModelPos(new Vec3f(pos.x, pos.y, pos.z));
+		Vec3d cam = MC_RENDER.getCameraExactPosition();
+		shaderProgram.setModelPos(new Vec3f((float) (pos.x - cam.x), (float) (pos.y - cam.y), (float) (pos.z - cam.z)));
 	}
 
 	public void drawVbo(GLVertexBuffer vbo) {

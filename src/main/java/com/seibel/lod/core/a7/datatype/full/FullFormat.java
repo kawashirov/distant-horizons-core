@@ -16,7 +16,7 @@ package com.seibel.lod.core.a7.datatype.full;
 import com.seibel.lod.core.util.LodUtil;
 import org.jetbrains.annotations.Contract;
 
-import static com.seibel.lod.core.a7.datatype.column.ColumnFormat.MAX_WORLD_Y_SIZE;
+import static com.seibel.lod.core.a7.datatype.column.accessor.ColumnFormat.MAX_WORLD_Y_SIZE;
 
 public class FullFormat {
 
