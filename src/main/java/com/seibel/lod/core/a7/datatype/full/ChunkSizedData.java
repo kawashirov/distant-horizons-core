@@ -16,4 +16,16 @@ public class ChunkSizedData extends FullArrayView {
     public void setSingleColumn(long[] data, int x, int z) {
         dataArrays[x*16+z] = data;
     }
+
+    public long nonEmptyCount() {
+        long count = 0;
+        for (long[] data : dataArrays) {
+            if (data.length != 0)
+                count += 1;
+        }
+        return count;
+    }
+    public long emptyCount() {
+        return 16*16 - nonEmptyCount();
+    }
 }

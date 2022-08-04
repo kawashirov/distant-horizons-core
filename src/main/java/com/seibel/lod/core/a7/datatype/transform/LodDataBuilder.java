@@ -3,6 +3,7 @@ package com.seibel.lod.core.a7.datatype.transform;
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.a7.datatype.full.FullFormat;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
+import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
@@ -49,7 +50,7 @@ public class LodDataBuilder {
                 chunkData.setSingleColumn(longs.toArray(new long[0]), x, z);
             }
         }
-
+        LodUtil.assertTrue(chunkData.emptyCount() == 0);
         return chunkData;
     }
 

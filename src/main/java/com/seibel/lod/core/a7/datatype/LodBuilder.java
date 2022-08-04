@@ -12,6 +12,7 @@ import com.seibel.lod.core.util.*;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import org.apache.logging.log4j.LogManager;
 
+//FIXME: Unused class???
 public class LodBuilder {
     public static final ConfigBasedLogger LOGGER = new ConfigBasedLogger(LogManager.getLogger(),
             () -> Config.Client.Advanced.Debugging.DebugSwitch.logLodBuilderEvent.get());

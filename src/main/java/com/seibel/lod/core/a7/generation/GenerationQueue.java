@@ -21,12 +21,13 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
 public class GenerationQueue implements PlaceHolderQueue {
     private final Logger logger = DhLoggerBuilder.getLogger();
     DhBlockPos2D lastPlayerPos = new DhBlockPos2D(0, 0);
-    final HashMap<DhSectionPos, WeakReference<PlaceHolderRenderSource>> trackers = new HashMap<>();
+    final ConcurrentHashMap<DhSectionPos, WeakReference<PlaceHolderRenderSource>> trackers = new ConcurrentHashMap<>();
     final BiConsumer<DhSectionPos, ChunkSizedData> writeConsumer;
     final HashSet<DhSectionPos> inProgressSections = new HashSet<>();
 

@@ -10,6 +10,7 @@ import com.seibel.lod.core.util.LodUtil;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
+//TODO: Merge this with FullToColumnTransformer
 public class DataRenderTransformer {
     public static final ExecutorService TRANSFORMER_THREADS
             = LodUtil.makeSingleThreadPool("Data/Render Transformer");

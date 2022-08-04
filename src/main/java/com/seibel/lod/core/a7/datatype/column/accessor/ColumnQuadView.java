@@ -16,7 +16,7 @@ public class ColumnQuadView implements IColumnDataView {
         this.zSize = zSize;
         this.vertSize = dataVertSize;
         this.perColumnOffset = dataZWidth * dataVertSize;
-        this.offset = (viewXOffset * perColumnOffset + viewZOffset) * dataVertSize;
+        this.offset = viewXOffset * perColumnOffset + viewZOffset * dataVertSize;
     }
     private ColumnQuadView(long[] data, int perColumnOffset, int offset, int vertSize, int xSize, int zSize) {
         this.data = data;
@@ -48,13 +48,13 @@ public class ColumnQuadView implements IColumnDataView {
     }
 
     public ColumnArrayView getRow(int x) {
-        return new ColumnArrayView(data, vertSize, offset + x * perColumnOffset, zSize * vertSize);
+        return new ColumnArrayView(data, zSize * vertSize, offset + x * perColumnOffset, vertSize);
     }
 
     public void set(int x, int z, IColumnDataView singleColumn) {
         if (singleColumn.verticalSize() != vertSize) throw new IllegalArgumentException("Vertical size of singleColumn must be equal to vertSize");
         if (singleColumn.dataCount() != 1) throw new IllegalArgumentException("SingleColumn must contain exactly one data point");
-        singleColumn.copyTo(data, x * perColumnOffset + z * vertSize, singleColumn.size());
+        singleColumn.copyTo(data, offset + x * perColumnOffset + z * vertSize, singleColumn.size());
     }
 
     @Override
@@ -75,9 +75,9 @@ public class ColumnQuadView implements IColumnDataView {
     @Override
     public IColumnDataView subView(int dataIndexStart, int dataCount) {
         if (dataCount != 1) throw new UnsupportedOperationException("Fixme: subView for QUadView only support one data point!");
-        int x = dataIndexStart % xSize;
-        int z = dataIndexStart / xSize;
-        return new ColumnArrayView(data, vertSize, offset + x * perColumnOffset + z * vertSize, vertSize);
+        int x = dataIndexStart / xSize;
+        int z = dataIndexStart % xSize;
+        return new ColumnArrayView(data, vertSize * dataCount, offset + x * perColumnOffset + z * vertSize, vertSize);
     }
 
     public ColumnQuadView subView(int xOffset, int zOffset, int xSize, int zSize) {
@@ -88,11 +88,11 @@ public class ColumnQuadView implements IColumnDataView {
     @Override
     public void copyTo(long[] target, int offset, int size) {
         if (size != this.size() && size > zSize * vertSize) throw new UnsupportedOperationException("Not supported yet");
-        if (size <= zSize * vertSize) {
+        if (size <= xSize * vertSize) {
             System.arraycopy(data, this.offset, target, offset, size);
         } else {
             for (int x = 0; x < xSize; x++) {
-                System.arraycopy(data, this.offset + x * perColumnOffset, target, offset + x * xSize * vertSize, zSize * vertSize);
+                System.arraycopy(data, this.offset + x * perColumnOffset, target, offset + x * xSize * vertSize, xSize * vertSize);
             }
         }
     }

@@ -1,8 +1,11 @@
 package com.seibel.lod.core.a7.save.io.file;
 
 import java.io.*;
-import java.lang.ref.SoftReference;
+import java.lang.ref.*;
+import java.sql.Ref;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -43,7 +46,25 @@ public class DataMetaFile extends MetaFile {
 	GuardedMultiAppendQueue _backQueue = new GuardedMultiAppendQueue();
 	private final AtomicBoolean inCacheWriteLock = new AtomicBoolean(false);
 
+	private static final ReferenceQueue<LodDataSource> lifeCycleDebugQueue = new ReferenceQueue<>();
+	private static final Set<DataObjTracker> lifeCycleDebugSet = ConcurrentHashMap.newKeySet();
+
+	private static class DataObjTracker extends PhantomReference<LodDataSource> implements Closeable {
+		private final DhSectionPos pos;
+		DataObjTracker(LodDataSource data) {
+			super(data, lifeCycleDebugQueue);
+			LOGGER.info("Phantom created on {}! count: {}", data.getSectionPos(), lifeCycleDebugSet.size());
+			lifeCycleDebugSet.add(this);
+			pos = data.getSectionPos();
+		}
+		@Override
+		public void close() {
+			lifeCycleDebugSet.remove(this);
+		}
+	}
+
 	public void addToWriteQueue(ChunkSizedData datatype) {
+		debugCheck();
 		DhLodPos chunkPos = new DhLodPos((byte) (datatype.dataDetail + 4), datatype.x, datatype.z);
 		LodUtil.assertTrue(pos.getSectionBBoxPos().overlaps(chunkPos), "Chunk pos {} doesn't overlap with section {}", chunkPos, pos);
 
@@ -75,6 +96,7 @@ public class DataMetaFile extends MetaFile {
 	// Load a metaFile in this path. It also automatically read the metadata.
 	public DataMetaFile(ILevel level, File path) throws IOException {
 		super(path);
+		debugCheck();
 		this.level = level;
 		loader = DataSourceLoader.getLoader(dataTypeId, loaderVersion);
 		if (loader == null) {
@@ -87,10 +109,12 @@ public class DataMetaFile extends MetaFile {
 	// Make a new MetaFile. It doesn't load or write any metadata itself.
 	public DataMetaFile(ILevel level, File path, DhSectionPos pos) {
 		super(path, pos);
+		debugCheck();
 		this.level = level;
 	}
 	
 	public boolean isValid(int version) {
+		debugCheck();
 		boolean isValid;
 		// First check if write queue is empty, then check if localVersion is equal to version.
 		// Must be done in this order as writer will increment localVersion before polling in the write queue.
@@ -150,6 +174,7 @@ public class DataMetaFile extends MetaFile {
 	// Cause: Generic Type runtime casting cannot safety check it.
 	// However, the Union type ensures the 'data' should only contain the listed type.
 	public CompletableFuture<LodDataSource> loadOrGetCached(Executor fileReaderThreads) {
+		debugCheck();
 		Object obj = data.get();
 		
 		CompletableFuture<LodDataSource> cached = _readCached(obj);
@@ -170,6 +195,7 @@ public class DataMetaFile extends MetaFile {
 				future.complete(null);
 			}
 			future.complete(f);
+			new DataObjTracker(f);
 			data.set(new SoftReference<>(f));
 		});
 		return future;
@@ -246,6 +272,7 @@ public class DataMetaFile extends MetaFile {
 
 
 	public CompletableFuture<Void> flushAndSave(Executor fileWriterThreads) {
+		debugCheck();
 		boolean isEmpty = writeQueue.get().queue.isEmpty();
 		if (!isEmpty) {
 			return loadOrGetCached(fileWriterThreads).thenApply((unused) -> null); // This will flush the data to disk.
@@ -285,6 +312,16 @@ public class DataMetaFile extends MetaFile {
 			});
 		} catch (IOException e) {
 			LOGGER.error("Failed to write data for file {}", path, e);
+		}
+	}
+
+
+	public static void debugCheck() {
+		DataObjTracker phantom = (DataObjTracker) lifeCycleDebugQueue.poll();
+		while (phantom != null) {
+			LOGGER.info("Data {} is freed. {} remaining", phantom.pos, lifeCycleDebugSet.size());
+			phantom.close();
+			phantom = (DataObjTracker) lifeCycleDebugQueue.poll();
 		}
 	}
 }

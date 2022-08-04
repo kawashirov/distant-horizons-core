@@ -444,4 +444,18 @@ public class LodUtil
 	public static ExecutorService makeSingleThreadPool(Class<?> clazz) {
 		return makeSingleThreadPool(clazz.getSimpleName(), 0);
 	}
+	public static ExecutorService makeThreadPool(int poolSize, String name, int relativePriority) {
+		return Executors.newFixedThreadPool(poolSize, new LodThreadFactory(name, Thread.NORM_PRIORITY+relativePriority));
+	}
+	public static ExecutorService makeThreadPool(int poolSize, Class<?> clazz, int relativePriority) {
+		return makeThreadPool(poolSize, clazz.getSimpleName(), relativePriority);
+	}
+	public static ExecutorService makeThreadPool(int poolSize, String name) {
+		return makeThreadPool(poolSize, name, 0);
+	}
+	public static ExecutorService makeThreadPool(int poolSize, Class<?> clazz) {
+		return makeThreadPool(poolSize, clazz.getSimpleName(), 0);
+	}
+
+
 }

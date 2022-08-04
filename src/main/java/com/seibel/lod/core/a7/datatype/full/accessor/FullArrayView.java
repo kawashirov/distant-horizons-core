@@ -7,6 +7,7 @@ public class FullArrayView implements IFullDataView {
     protected final long[][] dataArrays;
     protected final int offset;
     protected final int size;
+    protected final int dataSize;
     protected final IdBiomeBlockStateMap mapping;
 
     public FullArrayView(IdBiomeBlockStateMap mapping, long[][] dataArrays, int size) {
@@ -15,6 +16,7 @@ public class FullArrayView implements IFullDataView {
                     "tried constructing dataArrayView with invalid input!");
         this.dataArrays = dataArrays;
         this.size = size;
+        this.dataSize = size;
         this.mapping = mapping;
         offset = 0;
     }
@@ -24,8 +26,9 @@ public class FullArrayView implements IFullDataView {
                     "tried constructing dataArrayView subview with invalid input!");
         dataArrays = source.dataArrays;
         this.size = size;
+        this.dataSize = source.dataSize;
         mapping = source.mapping;
-        offset = source.offset + offsetX * size + offsetZ;
+        offset = source.offset + offsetX * dataSize + offsetZ;
     }
 
     @Override
@@ -59,20 +62,20 @@ public class FullArrayView implements IFullDataView {
             throw new IllegalArgumentException("Target view must have same size as this view");
         if (target.mapping.equals(mapping)) {
             for (int x = 0; x < size; x++) {
-                System.arraycopy(dataArrays, offset + x * size,
-                        target.dataArrays, offset + x * size, size);
+                System.arraycopy(dataArrays, offset + x * dataSize,
+                        target.dataArrays, target.offset + x * target.dataSize, size);
             }
         }
         else {
             int[] map = target.mapping.computeAndMergeMapFrom(mapping);
             for (int x = 0; x < size; x++) {
-                for (int o=x*size; o<x*size+size; o++) {
-                    long[] sourceData = dataArrays[offset+o];
+                for (int o=0; o<size; o++) {
+                    long[] sourceData = dataArrays[offset + x * dataSize + o];
                     long[] newData = new long[sourceData.length];
                     for (int i = 0; i < newData.length; i++) {
                         newData[i] = FullFormat.remap(map, sourceData[i]);
                     }
-                    target.dataArrays[target.offset+o] = newData;
+                    target.dataArrays[target.offset + x * target.dataSize + o] = newData;
                 }
             }
         }

@@ -20,7 +20,7 @@ import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
 public class MetaFile {
-    public static final Logger LOGGER = DhLoggerBuilder.getLogger("FileMetadata");
+    public static final Logger LOGGER = DhLoggerBuilder.getLogger();
     //Metadata format:
     //
     //    4 bytes: magic bytes: "DHv0" (in ascii: 0x44 48 76 30) (this also signal the metadata format)

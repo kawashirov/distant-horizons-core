@@ -38,8 +38,7 @@ import static com.seibel.lod.core.render.GLProxy.GL_LOGGER;
 
 public class ColumnRenderBuffer extends RenderBuffer {
     //TODO: Make the pool use configurable number of threads
-    public static final ExecutorService BUFFER_BUILDERS =
-            Executors.newCachedThreadPool(new LodThreadFactory("ColumnBufferBuilders", 5));
+    public static final ExecutorService BUFFER_BUILDERS = LodUtil.makeThreadPool(4, "BufferBuilder");
     public static final ExecutorService BUFFER_UPLOADER = LodUtil.makeSingleThreadPool("ColumnBufferUploader");
 
     public static final ConfigBasedLogger EVENT_LOGGER = new ConfigBasedLogger(LogManager.getLogger(),

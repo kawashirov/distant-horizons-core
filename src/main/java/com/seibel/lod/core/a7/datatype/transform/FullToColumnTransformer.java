@@ -12,6 +12,7 @@ import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.objects.DHBlockPos;
+import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
@@ -39,6 +40,7 @@ public class FullToColumnTransformer {
                     ColumnArrayView columnArrayView = columnSource.getVerticalDataView(x, z);
                     SingleFullArrayView fullArrayView = data.get(x, z);
                     convertColumnData(level, baseX + x, baseZ + z, columnArrayView, fullArrayView);
+                    if (fullArrayView.doesItExist()) LodUtil.assertTrue(columnSource.doesItExist(x, z));
                 }
             }
 //        } else if (dataDetail == 0 && columnSource.getDataDetail() > dataDetail) {

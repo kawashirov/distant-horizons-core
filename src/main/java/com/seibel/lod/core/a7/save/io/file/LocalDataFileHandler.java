@@ -128,7 +128,7 @@ public class LocalDataFileHandler implements IDataSourceProvider {
         //FIXME: Handle file already exists issue. Possibly by renaming the file.
         LodUtil.assertTrue(!file.exists(), "File {} already exist for path {}", file, sectionPos);
         DataMetaFile newMetaFile = new DataMetaFile(level, file, sectionPos);
-        LOGGER.info("Created new Data file at {} for sect {}", newMetaFile.path, sectionPos);
+        //LOGGER.info("Created new Data file at {} for sect {}", newMetaFile.path, sectionPos);
 
         // We add to the queue first so on CAS onto the map, no other thread
         // will see the new file without our write entry.
@@ -166,6 +166,8 @@ public class LocalDataFileHandler implements IDataSourceProvider {
 
     @Override
     public void close() {
+        DataMetaFile.debugCheck();
+
          //TODO
     }
 }

@@ -2,6 +2,7 @@ package com.seibel.lod.core.a7.datatype.full;
 
 import com.seibel.lod.core.a7.datatype.column.ColumnRenderSource;
 import com.seibel.lod.core.a7.datatype.full.accessor.FullArrayView;
+import com.seibel.lod.core.a7.datatype.full.accessor.SingleFullArrayView;
 import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.pos.DhBlockPos2D;
 import com.seibel.lod.core.a7.save.io.file.DataMetaFile;
@@ -58,9 +59,20 @@ public class FullDataSource extends FullArrayView implements LodDataSource { // 
                     "ChunkWrite of {} outside section {}. (cal offset {} larger than {})",
                     new DHChunkPos(data.x, data.z), sectionPos, blockOffset, SECTION_SIZE);
             data.shadowCopyTo(this.subView(16, blockOffset.x, blockOffset.z));
+
+            for (int x = 0; x < 16; x++) {
+                for (int z = 0; z < 16; z++) {
+                    SingleFullArrayView column = this.get(x+ blockOffset.x, z+ blockOffset.z);
+                    LodUtil.assertTrue(column.doesItExist());
+                }
+            }
+
+
         } else {
+            LodUtil.assertNotReach();
             //TODO;
         }
+
     }
 
     @Override
