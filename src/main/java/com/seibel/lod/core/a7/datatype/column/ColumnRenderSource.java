@@ -266,7 +266,7 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     }
     private void cancelBuildBuffer() {
         if (inBuildRenderBuffer != null) {
-            inBuildRenderBuffer.cancel(false);
+            inBuildRenderBuffer.cancel(true);
             inBuildRenderBuffer = null;
         }
     }

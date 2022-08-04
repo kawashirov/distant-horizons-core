@@ -167,8 +167,11 @@ public class ColumnRenderBuffer extends RenderBuffer {
         }
     }
 
+    private boolean closed = false;
     @Override
     public void close() {
+        if (closed) return;
+        closed = true;
         GLProxy.getInstance().recordOpenGlCall(() -> {
             for (GLVertexBuffer b : vbos) {
                 if (b == null) continue;

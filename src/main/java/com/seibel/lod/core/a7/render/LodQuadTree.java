@@ -24,7 +24,7 @@ import org.apache.logging.log4j.Logger;
  *      -by loading from file
  *      -by adding data with the lodBuilder
  */
-public class LodQuadTree {
+public class LodQuadTree implements AutoCloseable {
 
     /**
      * Note: all config value should be via the class that extends this class, and
@@ -454,5 +454,15 @@ public class LodQuadTree {
             sb.append("\n");
         }
         return sb.toString();
+    }
+
+    @Override
+    public void close() {
+        for (MovableGridRingList<LodRenderSection> ringList : ringLists) {
+            ringList.forEach((section) -> {
+                if (section != null) section.dispose();
+            });
+        }
+
     }
 }

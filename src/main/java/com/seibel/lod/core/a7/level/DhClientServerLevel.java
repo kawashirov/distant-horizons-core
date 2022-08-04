@@ -100,9 +100,10 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
             LOGGER.warn("Tried to call stopRenderer() on {} when renderer is already closed!", this);
             return;
         }
+        tree.close();
+        tree = null;
         renderBufferHandler.close();
         renderBufferHandler = null;
-        tree = null; //TODO Close the tree
         generationQueue = null;
         renderFileHandler.flushAndSave(); //Ignore the completion feature so that this action is async
         renderFileHandler.close();
@@ -145,6 +146,7 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
     public void close() {
         if (batchGenerator != null) batchGenerator.close();
         if (renderer != null) renderer.close();
+        if (tree != null) tree.close();
         if (renderBufferHandler != null) renderBufferHandler.close();
         if (renderFileHandler != null) renderFileHandler.close();
         dataFileHandler.close();
