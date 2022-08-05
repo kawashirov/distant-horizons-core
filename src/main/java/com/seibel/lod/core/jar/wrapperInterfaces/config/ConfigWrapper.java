@@ -1,6 +1,6 @@
 package com.seibel.lod.core.jar.wrapperInterfaces.config;
 
-import com.seibel.lod.core.JarMain;
+import com.seibel.lod.core.jar.JarUtils;
 import com.seibel.lod.core.wrapperInterfaces.config.IConfigWrapper;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -14,7 +14,7 @@ public class ConfigWrapper implements IConfigWrapper {
 
     public static void init() {
         try {
-            jsonObject = (JSONObject) new JSONParser().parse(JarMain.convertInputStreamToString(JarMain.accessFile("assets/lod/lang/"+ Locale.getDefault().toString().toLowerCase()+".json")));
+            jsonObject = (JSONObject) new JSONParser().parse(JarUtils.convertInputStreamToString(JarUtils.accessFile("assets/lod/lang/"+ Locale.getDefault().toString().toLowerCase()+".json")));
         } catch (ParseException e) { e.printStackTrace(); }
     }
 

@@ -5,6 +5,7 @@ import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.seibel.lod.core.JarMain;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
+import com.seibel.lod.core.jar.JarUtils;
 import com.seibel.lod.core.wrapperInterfaces.config.IConfigWrapper;
 
 import javax.imageio.ImageIO;
@@ -35,7 +36,7 @@ public class BaseJFrame extends JFrame {
     public void init() {
         setTitle(SingletonInjector.INSTANCE.get(IConfigWrapper.class).getLang("lod.title"));
         try {
-            setIconImage(new FlatSVGIcon(JarMain.accessFile("icon.svg")).getImage());
+            setIconImage(new FlatSVGIcon(JarUtils.accessFile("icon.svg")).getImage());
         } catch (Exception e) {e.printStackTrace();}
         setSize(720, 480);
         setLocationRelativeTo(null); // Puts the window at the middle of the screen
@@ -56,7 +57,7 @@ public class BaseJFrame extends JFrame {
         // Creates a list with all the options in it
         List<String> langsToChoose = new ArrayList<>();
         try(
-                final InputStreamReader isr = new InputStreamReader(JarMain.accessFile("assets/lod/lang"), StandardCharsets.UTF_8);
+                final InputStreamReader isr = new InputStreamReader(JarUtils.accessFile("assets/lod/lang"), StandardCharsets.UTF_8);
                 final BufferedReader br = new BufferedReader(isr)
         ) {
             List<Object> col = Collections.unmodifiableList(new ArrayList<>(Arrays.asList(br.lines().toArray())));
@@ -84,11 +85,11 @@ public class BaseJFrame extends JFrame {
         // Try to set the icons for them
         try {
             lightMode = new JButton(new ImageIcon(
-                    new FlatSVGIcon(JarMain.accessFile("assets/lod/textures/jar/themeLight.svg")).getImage() // Get the image
+                    new FlatSVGIcon(JarUtils.accessFile("assets/lod/textures/jar/themeLight.svg")).getImage() // Get the image
                             .getScaledInstance(themeButtonSize, themeButtonSize, Image.SCALE_DEFAULT) // Scale it to the correct size
             ));
             darkMode = new JButton(new ImageIcon(
-                    new FlatSVGIcon(JarMain.accessFile("assets/lod/textures/jar/themeDark.svg")).getImage() // Get the image
+                    new FlatSVGIcon(JarUtils.accessFile("assets/lod/textures/jar/themeDark.svg")).getImage() // Get the image
                             .getScaledInstance(themeButtonSize, themeButtonSize, Image.SCALE_DEFAULT) // Scale it to the correct size
             ));
         } catch (Exception e) {e.printStackTrace();}
@@ -117,7 +118,7 @@ public class BaseJFrame extends JFrame {
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 try {
-                    BufferedImage image = ImageIO.read(JarMain.accessFile("logo.png"));
+                    BufferedImage image = ImageIO.read(JarUtils.accessFile("logo.png"));
                     int logoWidth = (int) ((double) logoHeight * ((double) image.getWidth() / (double) image.getHeight())); // Calculate the aspect ratio and set the height correctly to not stretch it
                     g.drawImage(image, (getWidth()/2)-(logoWidth/2), 0,   logoWidth, logoHeight,this); // Resize image and draw it
                 } catch (Exception e) {e.printStackTrace();}

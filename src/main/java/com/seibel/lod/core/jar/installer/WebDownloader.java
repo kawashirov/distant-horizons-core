@@ -5,9 +5,11 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
 
 /**
- * Does something simmilar to wget
+ * Does something similar to wget
  * It allows you to download a file from a link
  *
  * @author coolGi
@@ -67,5 +69,46 @@ public class WebDownloader {
         }
 
         return (stringBuilder.toString());
+    }
+
+    public static String formatMarkdownToHtml(String md, int width) {
+        String str = String.format("<html><div style=\"width:%dpx;\">%s</div></html>", width, md)
+                .replaceAll("\\\\\\n", "<br>") // Removes the "\" used in markdown to create new line
+                .replaceAll("\\n", "<br>"); // Fix the new line
+
+        boolean counter = false;
+        while (str.contains("**")) {
+            if (counter)
+                str = str.replaceFirst("\\*\\*", "</strong>");
+            else
+                str = str.replaceFirst("\\*\\*", "<strong>");
+            counter = !counter;
+        }
+
+        return str;
+    }
+
+
+
+    // Stolen from https://mkyong.com/java/how-to-generate-a-file-checksum-value-in-java/ but added some comments
+    /**
+     * @param filepath Path to the file
+     * @param md The checksum. Can be gotten by "MessageDigest.getInstance("SHA-256")" and can replace string with something like SHA, MD2, MD5, SHA-256, SHA-384...
+     * @return Returns the checksum using the previous md
+     */
+    private static String checksum(String filepath, MessageDigest md) throws IOException {
+        // file hashing with DigestInputStream
+        try (DigestInputStream dis = new DigestInputStream(new FileInputStream(filepath), md)) {
+            while (dis.read() != -1) ; //empty loop to clear the data
+            md = dis.getMessageDigest();
+        }
+
+        // bytes to hex
+        StringBuilder result = new StringBuilder();
+        for (byte b : md.digest()) {
+            result.append(String.format("%02x", b));
+        }
+        return result.toString();
+
     }
 }
