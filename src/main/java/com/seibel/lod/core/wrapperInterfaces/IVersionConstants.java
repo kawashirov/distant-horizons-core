@@ -41,4 +41,5 @@ public interface IVersionConstants extends IBindable
 	
 	boolean isVanillaRenderedChunkSquare();
 
+	String getMinecraftVersion();
 }

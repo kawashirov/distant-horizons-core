@@ -68,6 +68,8 @@ public class Config
 
         public static ConfigCategory advanced = new ConfigCategory.Builder().set(Advanced.class).build();
 
+        public static ConfigCategory autoUpdater =  new ConfigCategory.Builder().set(AutoUpdater.class).build();
+
         public static ConfigEntry<Boolean> optionsButton = new ConfigEntry.Builder<Boolean>()
                 .set(true)
                 .comment("Show the lod button in the options screen next to fov")
@@ -873,6 +875,22 @@ public class Config
                                 + "Higher settings may cause stuttering, but will prevent holes in the world")
                         .build();
             }
+        }
+
+
+        public static class AutoUpdater
+        {
+            public static ConfigEntry<Boolean> enableAutoUpdater = new ConfigEntry.Builder<Boolean>()
+                    .set(true)
+                    .comment("Automatically checks for updates on game launch")
+                    .build();
+
+            public static ConfigEntry<Boolean> promptForUpdate = new ConfigEntry.Builder<Boolean>()
+                    .set(true)
+                    .comment("When there is a new update available it would prompt the user whether they would like to update \n"
+                            + "If set to false then it would update the mod in the background without informing/annoying the user \n"
+                            + "So it is recommended to keep it off unless you are always sure you want the mod to be on the latest version")
+                    .build();
         }
     }
 }

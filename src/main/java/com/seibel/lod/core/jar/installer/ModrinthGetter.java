@@ -69,25 +69,21 @@ public class ModrinthGetter {
         }
     }
 
-    public static List<String> getReleaseIDInMcVersion(String mcVersion) {
-        List<String> releaseID = new ArrayList<>();
-
-        for (int i = 0; i < projectRelease.size(); i++) {
-            JSONObject currentRelease = (JSONObject) projectRelease.get(i);
-            if (((List<String>) currentRelease.get("game_versions")).contains(mcVersion))
-                releaseID.add(currentRelease.get("id").toString());
-        }
-
-        return releaseID;
+    public static String getLatestNameForVersion(String mcVer) {
+        return releaseNames.get(((List<String>) mcVerToReleaseID.get(mcVer)).get(0));
     }
-    public static URL getDownloadFromReleaseID(String ID) {
-        for (int i = 0; i < projectRelease.size(); i++) {
-            JSONObject currentRelease = (JSONObject) projectRelease.get(i);
-            if (currentRelease.get("id").toString().equals(ID))
-                try {
-                    return new URL(((JSONObject) ((JSONArray) currentRelease.get("files")).get(0)).get("url").toString());
-                } catch (Exception e) { e.printStackTrace(); }
-        }
-        return null;
+    public static URL getLatestDownloadForVersion(String mcVer) {
+        return downloadUrl.get(((List<String>) mcVerToReleaseID.get(mcVer)).get(0));
+    }
+    public static String getLatestShaForVersion(String mcVer) {
+        return ((JSONObject)
+                ((JSONObject)
+                        ((JSONArray)
+                                ((JSONObject) projectRelease.get(mcVersions.indexOf(mcVer)))
+                                        .get("files"))
+                                .get(0))
+                        .get("hashes"))
+                .get("sha1")
+                .toString();
     }
 }

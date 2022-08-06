@@ -283,6 +283,17 @@
   "lod.config.client.advanced.lodOnlyMode.@tooltip":
   "Due to some demand for playing without vanilla terrains, \nwe decided to add this mode for fun. \n\n§6NOTE§r: Do not report any issues when this mode is on! \n  Again, this setting is only for fun, and mod \n  compatibility is not guaranteed. \n",
 
+  "lod.config.client.autoUpdater":
+   "Auto Updater",
+  "lod.config.client.autoUpdater.enableAutoUpdater":
+   "Enable auto updater",
+  "lod.config.client.autoUpdater.enableAutoUpdater.@tooltip":
+   "Automatically updates the mod when an update is available",
+  "lod.config.client.autoUpdater.promptForUpdate":
+    "Prompt for update",
+  "lod.config.client.autoUpdater.promptForUpdate.@tooltip":
+    "If disabled then when an update is available then it would update without prompting the user",
+
   "lod.config.enum.EHorizontalResolution.BLOCK":
 	"Block",
   "lod.config.enum.EHorizontalResolution.TWO_BLOCKS":

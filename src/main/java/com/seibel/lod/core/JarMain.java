@@ -6,10 +6,9 @@ import com.seibel.lod.core.jar.DarkModeDetector;
 import com.seibel.lod.core.jar.JarUtils;
 import com.seibel.lod.core.jar.gui.BaseJFrame;
 import com.seibel.lod.core.jar.gui.cusomJObject.JBox;
-import com.seibel.lod.core.jar.installer.GitlabGetter;
-import com.seibel.lod.core.jar.JarDependencySetup;
 import com.seibel.lod.core.jar.installer.ModrinthGetter;
 import com.seibel.lod.core.jar.installer.WebDownloader;
+import com.seibel.lod.core.jar.JarDependencySetup;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author coolGi
  */
-// Once built it would be in core/build/libs/DistantHorizons-1.7.0a-dev-all.jar
+// Once built it would be in core/build/libs/DistantHorizons-<Version>-dev-all.jar
 public class JarMain {
     public static final boolean isDarkTheme = DarkModeDetector.isDarkMode();
     public static boolean isOffline = WebDownloader.netIsAvailable();
@@ -48,9 +47,13 @@ public class JarMain {
 
 //        JOptionPane.showMessageDialog(null, "The GUI for the standalone jar isn't made yet\nIf you want to use the mod then put it in your mods folder", "Distant Horizons", JOptionPane.WARNING_MESSAGE);
 
-        if (getOperatingSystem().equals(OperatingSystem.MACOS)) {
-            System.out.println("If you want the installer then please use Linux or for the time being.\nMacOS support/testing will come later on");
-        }
+//        if (getOperatingSystem().equals(OperatingSystem.MACOS)) {
+//            System.out.println("If you want the installer then please use Linux or Windows for the time being.\nMacOS support/testing will come later on");
+//        }
+
+        // Code will be changed later on to allow resizing and work better
+
+
 
         BaseJFrame frame = new BaseJFrame(false, true);
         frame.addExtraButtons(frame.getWidth(), 0, true, false);
