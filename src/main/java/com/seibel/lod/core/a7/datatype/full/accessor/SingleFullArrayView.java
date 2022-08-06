@@ -33,6 +33,9 @@ public class SingleFullArrayView implements IFullDataView {
         if (x != 0 || z != 0) throw new IllegalArgumentException("Only contains 1 column of full data!");
         return this;
     }
+    public long[] getRaw() {
+        return dataArrays[offset];
+    }
 
     public long getSingle(int yIndex) {
         return dataArrays[offset][yIndex];
