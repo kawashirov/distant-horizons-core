@@ -145,7 +145,7 @@ public class LocalDataFileHandler implements IDataSourceProvider {
      */
     @Override
     public CompletableFuture<Void> flushAndSave() {
-        ArrayList<CompletableFuture<Void>> futures = new ArrayList<CompletableFuture<Void>>();
+        ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
         for (DataMetaFile metaFile : files.values()) {
             futures.add(metaFile.flushAndSave(fileReaderThread));
         }
@@ -167,7 +167,6 @@ public class LocalDataFileHandler implements IDataSourceProvider {
     @Override
     public void close() {
         DataMetaFile.debugCheck();
-
          //TODO
     }
 }

@@ -11,11 +11,13 @@ import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.a7.render.RenderBuffer;
 import com.seibel.lod.core.a7.save.io.render.RenderMetaFile;
 import com.seibel.lod.core.enums.ELodDirection;
+import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.objects.LodDataView;
 import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.render.LodQuadTree;
 import com.seibel.lod.core.a7.render.LodRenderSection;
 import com.seibel.lod.core.a7.datatype.LodRenderSource;
+import org.apache.logging.log4j.Logger;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -27,6 +29,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
+    private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     public static final boolean DO_SAFETY_CHECKS = true;
     public static final byte SECTION_SIZE_OFFSET = 6;
     public static final int SECTION_SIZE = 1 << SECTION_SIZE_OFFSET;
@@ -253,7 +256,7 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
 
 
     private void tryBuildBuffer(IClientLevel level, LodQuadTree quadTree) {
-        if (inBuildRenderBuffer == null) {
+        if (inBuildRenderBuffer == null && !ColumnRenderBuffer.isBusy()) {
             ColumnRenderSource[] data = new ColumnRenderSource[ELodDirection.ADJ_DIRECTIONS.length];
             for (ELodDirection direction : ELodDirection.ADJ_DIRECTIONS) {
                 LodRenderSection section = quadTree.getSection(sectionPos.getAdjacent(direction)); //FIXME: Handle traveling through different detail levels
@@ -266,6 +269,7 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     }
     private void cancelBuildBuffer() {
         if (inBuildRenderBuffer != null) {
+            LOGGER.info("Cancelling build of render buffer for {}", sectionPos);
             inBuildRenderBuffer.cancel(true);
             inBuildRenderBuffer = null;
         }
@@ -275,7 +279,7 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     @Override
     public void enableRender(IClientLevel level, LodQuadTree quadTree) {
         this.level = level;
-        tryBuildBuffer(level, quadTree);
+        //tryBuildBuffer(level, quadTree);
     }
 
     @Override
@@ -285,7 +289,7 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
 
     @Override
     public boolean isRenderReady() {
-        return (inBuildRenderBuffer != null && inBuildRenderBuffer.isDone());
+        return inBuildRenderBuffer == null || inBuildRenderBuffer.isDone();
     }
 
     @Override
@@ -293,15 +297,23 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
         cancelBuildBuffer();
     }
 
+    //FIXME: Temp Hack
+    private long lastNs = -1;
+    private static final long SWAP_TIMEOUT = /* 10 sec */ 10_000_000_000L;
 
     @Override
     public boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<RenderBuffer> referenceSlot) {
+        if (lastNs != -1 && System.nanoTime() - lastNs < SWAP_TIMEOUT) {
+            return false;
+        }
         if (inBuildRenderBuffer != null && inBuildRenderBuffer.isDone()) {
+            lastNs = System.nanoTime();
+            LOGGER.info("Swapping render buffer for {}", sectionPos);
             RenderBuffer oldBuffer = referenceSlot.getAndSet(inBuildRenderBuffer.join());
             if (oldBuffer instanceof ColumnRenderBuffer) usedBuffer = (ColumnRenderBuffer) oldBuffer;
             inBuildRenderBuffer = null;
             return true;
-        } else {
+        } else if (inBuildRenderBuffer == null && !ColumnRenderBuffer.isBusy()) {
             tryBuildBuffer(level, quadTree);
         }
         return false;

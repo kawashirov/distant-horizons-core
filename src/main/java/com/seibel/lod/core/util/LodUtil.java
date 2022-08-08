@@ -433,7 +433,7 @@ public class LodUtil
 		throw new AssertFailureException("Assert Not Reach failed:\n " + formatLog(message, args));
 	}
 	public static ExecutorService makeSingleThreadPool(String name, int relativePriority) {
-		return Executors.newSingleThreadExecutor(new LodThreadFactory(name, Thread.NORM_PRIORITY+relativePriority));
+		return Executors.newFixedThreadPool(1, new LodThreadFactory(name, Thread.NORM_PRIORITY+relativePriority));
 	}
 	public static ExecutorService makeSingleThreadPool(Class<?> clazz, int relativePriority) {
 		return makeSingleThreadPool(clazz.getSimpleName(), relativePriority);

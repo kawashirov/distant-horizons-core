@@ -193,10 +193,12 @@ public class DataMetaFile extends MetaFile {
 			if (e != null) {
 				LOGGER.error("Uncaught error loading file {}: ", path, e);
 				future.complete(null);
+				data.set(null);
+			} else {
+				future.complete(f);
+				new DataObjTracker(f);
+				data.set(new SoftReference<>(f));
 			}
-			future.complete(f);
-			new DataObjTracker(f);
-			data.set(new SoftReference<>(f));
 		});
 		return future;
 	}
@@ -215,6 +217,7 @@ public class DataMetaFile extends MetaFile {
 			for (ChunkSizedData chunk : _backQueue.queue) {
 				data.update(chunk);
 			}
+			_backQueue.queue.clear();
 			write(data);
 			LOGGER.info("Updated Data file at {} for sect {} with {} chunk writes.", path, pos, count);
 		} else localVer = localVersion.get();

@@ -74,7 +74,7 @@ public class LodRenderSection {
     }
 
     public boolean canRender() {
-        return isLoaded() && lodRenderSource.isRenderReady();
+        return isLoaded() && isRenderEnabled && lodRenderSource.isRenderReady();
     }
 
     public boolean isLoaded() {

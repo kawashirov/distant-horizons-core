@@ -134,9 +134,11 @@ public class RenderMetaFile extends MetaFile {
             if (e != null) {
                 LOGGER.error("Uncaught error loading file {}: ", path, e);
                 future.complete(null);
+                data.set(null);
+            } else {
+                future.complete(renderSource);
+                data.set(new SoftReference<>(renderSource));
             }
-            future.complete(renderSource);
-            data.set(new SoftReference<>(renderSource));
         });
         return future;
     }

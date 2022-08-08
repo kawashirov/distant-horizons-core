@@ -28,10 +28,8 @@ import org.lwjgl.opengl.GL32;
 import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.seibel.lod.core.render.GLProxy.GL_LOGGER;
 
@@ -40,6 +38,7 @@ public class ColumnRenderBuffer extends RenderBuffer {
     //TODO: Make the pool use configurable number of threads
     public static final ExecutorService BUFFER_BUILDERS = LodUtil.makeThreadPool(4, "BufferBuilder");
     public static final ExecutorService BUFFER_UPLOADER = LodUtil.makeSingleThreadPool("ColumnBufferUploader");
+    public static final int MAX_CONCURRENT_CALL = 8;
 
     public static final ConfigBasedLogger EVENT_LOGGER = new ConfigBasedLogger(LogManager.getLogger(),
             () -> Config.Client.Advanced.Debugging.DebugSwitch.logRendererBufferEvent.get());
@@ -180,9 +179,19 @@ public class ColumnRenderBuffer extends RenderBuffer {
         });
     }
 
+    private static long getCurrentJobsCount() {
+        long jobs = ((ThreadPoolExecutor) BUFFER_BUILDERS).getQueue().stream().filter(t -> !((Future<?>) t).isDone()).count();
+        jobs += ((ThreadPoolExecutor) BUFFER_UPLOADER).getQueue().stream().filter(t -> !((Future<?>) t).isDone()).count();
+        return jobs;
+    }
+
+    public static boolean isBusy() {
+        return getCurrentJobsCount() > MAX_CONCURRENT_CALL;
+    }
 
     public static CompletableFuture<ColumnRenderBuffer> build(IClientLevel clientLevel, ColumnRenderBuffer usedBuffer, ColumnRenderSource data, ColumnRenderSource[] adjData) {
-        EVENT_LOGGER.trace("RenderRegion startBuild @ {}", data.sectionPos);
+        if (isBusy()) return null;
+        LOGGER.info("RenderRegion startBuild @ {}", data.sectionPos);
         return CompletableFuture.supplyAsync(() -> {
                     try {
                         EVENT_LOGGER.trace("RenderRegion start QuadBuild @ {}", data.sectionPos);
@@ -201,7 +210,7 @@ public class ColumnRenderBuffer extends RenderBuffer {
                         throw e;
                     }
                     catch (Throwable e3) {
-                        EVENT_LOGGER.error("\"LodNodeBufferBuilder\" was unable to build quads: ", e3);
+                        LOGGER.error("\"LodNodeBufferBuilder\" was unable to build quads: ", e3);
                         throw e3;
                     }
                 }, BUFFER_BUILDERS)
@@ -229,10 +238,11 @@ public class ColumnRenderBuffer extends RenderBuffer {
                     } catch (InterruptedException e) {
                         throw UncheckedInterruptedException.convert(e);
                     } catch (Throwable e3) {
-                        EVENT_LOGGER.error("\"LodNodeBufferBuilder\" was unable to upload buffer: ", e3);
+                        LOGGER.error("\"LodNodeBufferBuilder\" was unable to upload buffer: ", e3);
                         throw e3;
                     }
                 }, BUFFER_UPLOADER).handle((v, e) -> {
+                    LOGGER.info("RenderRegion endBuild @ {}", data.sectionPos);
                     if (e != null) {
                         usedBuffer.close();
                         return null;
