@@ -49,14 +49,16 @@ public class PlaceHolderRenderSource implements LodRenderSource {
         throw new UnsupportedOperationException("EmptyRenderSource should NEVER be saved!");
     }
     @Override
-    public void update(ChunkSizedData chunkData) {}
+    public void write(ChunkSizedData chunkData) {}
+
+    @Override
+    public void flushWrites(IClientLevel level) {}
 
     @Override
     public byte getRenderVersion() {
         return 0;
     }
 
-    @Override
     public void markInvalid() {
         isValid = false;
     }

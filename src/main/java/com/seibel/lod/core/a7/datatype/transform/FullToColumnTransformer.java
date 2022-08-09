@@ -3,6 +3,8 @@ package com.seibel.lod.core.a7.datatype.transform;
 import com.seibel.lod.core.a7.datatype.column.accessor.ColumnFormat;
 import com.seibel.lod.core.a7.datatype.column.ColumnRenderSource;
 import com.seibel.lod.core.a7.datatype.column.accessor.ColumnArrayView;
+import com.seibel.lod.core.a7.datatype.column.accessor.ColumnQuadView;
+import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.a7.datatype.full.FullDataSource;
 import com.seibel.lod.core.a7.datatype.full.FullFormat;
 import com.seibel.lod.core.a7.datatype.full.IdBiomeBlockStateMap;
@@ -60,9 +62,58 @@ public class FullToColumnTransformer {
             throw new UnsupportedOperationException("To be implemented");
             //FIXME: Implement different size creation of renderData
         }
-
-
         return columnSource;
+    }
+
+    public static void writeFullDataChunkToColumnData(ColumnRenderSource render, IClientLevel level, ChunkSizedData data) {
+        if (data.dataDetail != 0)
+            throw new UnsupportedOperationException("To be implemented");
+
+        final DhSectionPos pos = render.getSectionPos();
+        final int renderOffsetX = (data.x*16) - pos.getCorner().getCorner().x;
+        final int renderOffsetZ = (data.z*16) - pos.getCorner().getCorner().z;
+        final int blockX = pos.getCorner().getCorner().x;
+        final int blockZ = pos.getCorner().getCorner().z;
+        final int perRenderWidth = 1 << render.getDataDetail();
+        final int perDataWidth = 1 << data.dataDetail;
+        if (data.dataDetail == render.getDataDetail()) {
+            if (renderOffsetX < 0 || renderOffsetX+16 > render.getDataSize() || renderOffsetZ < 0 || renderOffsetZ+16 > render.getDataSize())
+                throw new IllegalArgumentException("Data offset is out of bounds");
+            for (int x = 0; x < 16; x++) {
+                for (int z = 0; z < 16; z++) {
+                    ColumnArrayView columnArrayView = render.getVerticalDataView(renderOffsetX + x, renderOffsetZ + z);
+                    SingleFullArrayView fullArrayView = data.get(x, z);
+                    convertColumnData(level, blockX + perRenderWidth * (renderOffsetX+x),
+                            blockZ + perRenderWidth * (renderOffsetZ+z),
+                            columnArrayView, fullArrayView);
+                    if (fullArrayView.doesItExist()) LodUtil.assertTrue(render.doesItExist(renderOffsetX + x, renderOffsetZ + z));
+                }
+            }
+        } else {
+            final int dataPerRender = 1 << (render.getDataDetail() - data.dataDetail);
+            final int dataSize = 16 / dataPerRender;
+            final int vertSize = render.getVerticalSize();
+            long[] tempRender = new long[dataPerRender * dataPerRender * vertSize];
+            if (renderOffsetX < 0 || renderOffsetX+dataSize > render.getDataSize() || renderOffsetZ < 0 || renderOffsetZ+dataSize > render.getDataSize())
+                throw new IllegalArgumentException("Data offset is out of bounds");
+            for (int x = 0; x < dataSize; x++) {
+                for (int z = 0; z < dataSize; z++) {
+
+                    ColumnQuadView tempQuadView = new ColumnQuadView(tempRender, dataPerRender, vertSize, 0, 0, dataPerRender, dataPerRender);
+                    for (int ox = 0; ox < dataPerRender; ox++) {
+                        for (int oz = 0; oz < dataPerRender; oz++) {
+                            ColumnArrayView columnArrayView = tempQuadView.get(ox, oz);
+                            SingleFullArrayView fullArrayView = data.get(x*dataPerRender+ox, z*dataPerRender+oz);
+                            convertColumnData(level, blockX + perRenderWidth * (renderOffsetX+x) + perDataWidth * ox,
+                                    blockZ + perRenderWidth * (renderOffsetZ+z) + perDataWidth * oz,
+                                    columnArrayView, fullArrayView);
+                        }
+                    }
+                    ColumnArrayView downSampledArrayView = render.getVerticalDataView(renderOffsetX + x, renderOffsetZ + z);
+                    downSampledArrayView.mergeMultiDataFrom(tempQuadView);
+                }
+            }
+        }
     }
 
     private static void convertColumnData(IClientLevel level, int blockX, int blockZ, ColumnArrayView columnArrayView, SingleFullArrayView fullArrayView) {

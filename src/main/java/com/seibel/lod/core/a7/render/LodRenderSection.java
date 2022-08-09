@@ -19,7 +19,6 @@ public class LodRenderSection {
     private LodRenderSource lodRenderSource;
     private CompletableFuture<LodRenderSource> loadFuture;
     private boolean isRenderEnabled = false;
-    private IClientLevel level; //FIXME: Hack to pass level into enableRender() for renderSource
 
     // Create sub region
     public LodRenderSection(DhSectionPos pos) {
@@ -31,12 +30,10 @@ public class LodRenderSection {
         if (lodRenderSource != null) {
             lodRenderSource.enableRender(level, quadTree);
         }
-        this.level = level;
         isRenderEnabled = true;
     }
     public void disableRender() {
         if (!isRenderEnabled) return;
-        level = null;
         if (lodRenderSource != null) {
             lodRenderSource.disableRender();
         }
@@ -55,13 +52,15 @@ public class LodRenderSection {
         loadFuture = renderDataProvider.read(pos);
     }
 
-    public void tick(LodQuadTree quadTree) {
+    public void tick(LodQuadTree quadTree, IClientLevel level) {
         if (loadFuture != null && loadFuture.isDone()) {
             lodRenderSource = loadFuture.join();
             loadFuture = null;
             if (isRenderEnabled) {
                 lodRenderSource.enableRender(level, quadTree);
             }
+        } else if (lodRenderSource != null) {
+            lodRenderSource.flushWrites(level);
         }
     }
 
@@ -106,7 +105,6 @@ public class LodRenderSection {
                 ", lodRenderSource=" + lodRenderSource +
                 ", loadFuture=" + loadFuture +
                 ", isRenderEnabled=" + isRenderEnabled +
-                ", level=" + level +
                 '}';
     }
 }

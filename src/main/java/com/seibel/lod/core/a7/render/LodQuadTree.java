@@ -414,7 +414,7 @@ public class LodQuadTree implements AutoCloseable {
                     }
                     if (section.childCount == 4) section.disableRender();
                     if (section.childCount == 0) section.enableRender(level, this);
-                    section.tick(this);
+                    section.tick(this, level);
                 }
 
                 // Assertion steps

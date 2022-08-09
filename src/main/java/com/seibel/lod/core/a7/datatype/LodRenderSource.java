@@ -2,14 +2,10 @@ package com.seibel.lod.core.a7.datatype;
 
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.a7.level.IClientLevel;
-import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.a7.render.LodQuadTree;
 import com.seibel.lod.core.a7.render.RenderBuffer;
-import com.seibel.lod.core.a7.save.io.file.DataMetaFile;
 import com.seibel.lod.core.a7.save.io.render.RenderMetaFile;
-import com.seibel.lod.core.objects.DHChunkPos;
-import com.seibel.lod.core.objects.DHRegionPos;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -24,6 +20,7 @@ public interface LodRenderSource {
     void dispose(); // notify the container that the parent lodSection is now disposed (can be in loaded or unloaded state)
     byte getDetailOffset();
 
+
     /**
      * Try and swap in new render buffer for this section. Note that before this call, there should be no other
      *  places storing or referencing the render buffer.
@@ -34,11 +31,10 @@ public interface LodRenderSource {
 
     void saveRender(IClientLevel level, RenderMetaFile file, OutputStream dataStream) throws IOException;
 
-    void update(ChunkSizedData chunkData);
+    void write(ChunkSizedData chunkData);
+    void flushWrites(IClientLevel level);
 
     byte getRenderVersion();
-
-    void markInvalid();
 
     /**
      * Whether this object is still valid. If not, a new one should be created.

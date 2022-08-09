@@ -20,7 +20,7 @@ public class DhClientServerWorld extends DhWorld implements IClientWorld, IServe
     private final HashMap<ILevelWrapper, DhClientServerLevel> levels;
     public final LocalSaveStructure saveStructure;
     public ExecutorService dhTickerThread = LodUtil.makeSingleThreadPool("DHTickerThread", 2);
-    public EventLoop eventLoop = new EventLoop(dhTickerThread, this::_clientTick);
+    public EventLoop eventLoop = new EventLoop(dhTickerThread, this::_clientTick); //TODO: Rate-limit the loop
 
     public DhClientServerWorld() {
         super(WorldEnvironment.Client_Server);

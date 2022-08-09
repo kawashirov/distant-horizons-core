@@ -4,23 +4,18 @@ import com.seibel.lod.core.a7.datatype.LodDataSource;
 import com.seibel.lod.core.a7.datatype.LodRenderSource;
 import com.seibel.lod.core.a7.datatype.RenderSourceLoader;
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
-import com.seibel.lod.core.a7.datatype.full.FullFormat;
 import com.seibel.lod.core.a7.datatype.transform.DataRenderTransformer;
 import com.seibel.lod.core.a7.level.IClientLevel;
-import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.pos.DhLodPos;
 import com.seibel.lod.core.a7.save.io.MetaFile;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
-import com.seibel.lod.core.a7.save.io.file.DataMetaFile;
 import com.seibel.lod.core.util.LodUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
-import java.util.Optional;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class RenderMetaFile extends MetaFile {
@@ -42,7 +37,7 @@ public class RenderMetaFile extends MetaFile {
 
         CompletableFuture<LodRenderSource> source = _readCached(data.get());
         if (source == null) return;
-        if (source.isDone()) source.join().update(chunkData);
+        if (source.isDone()) source.join().write(chunkData);
     }
 
     public CompletableFuture<Void> flushAndSave(ExecutorService renderCacheThread) {

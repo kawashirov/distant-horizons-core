@@ -24,13 +24,13 @@ public class LodDataBuilder {
                 IBiomeWrapper biome = chunk.getBiome(x, lastY, z);
                 IBlockStateWrapper blockState = AIR;
                 int mappedId = chunkData.getMapping().setAndGetId(biome, blockState);
-                byte light = (byte) (chunk.getBlockLight(x,lastY,z) << 4 + chunk.getSkyLight(x,lastY,z));
+                byte light = (byte) ((chunk.getBlockLight(x,lastY,z) << 4) + chunk.getSkyLight(x,lastY,z));
                 int y=chunk.getMaxY(x, z);
 
                 for (; y>=chunk.getMinBuildHeight(); y--) {
                     IBiomeWrapper newBiome = chunk.getBiome(x, y, z);
                     IBlockStateWrapper newBlockState = chunk.getBlockState(x, y, z);
-                    byte newLight = (byte) (chunk.getBlockLight(x,y,z) << 4 + chunk.getSkyLight(x,y,z));
+                    byte newLight = (byte) ((chunk.getBlockLight(x,y,z) << 4) + chunk.getSkyLight(x,y,z));
 
                     if (!newBiome.equals(biome) || !newBlockState.equals(blockState)) {
                         longs.add(FullFormat.encode(mappedId, lastY-y, y+1 - chunk.getMinBuildHeight(), light));

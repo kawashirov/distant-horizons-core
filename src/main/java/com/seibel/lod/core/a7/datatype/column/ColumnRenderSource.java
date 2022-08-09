@@ -6,6 +6,7 @@ import com.seibel.lod.core.a7.datatype.column.accessor.ColumnQuadView;
 import com.seibel.lod.core.a7.datatype.column.accessor.IColumnDatatype;
 import com.seibel.lod.core.a7.datatype.column.render.ColumnRenderBuffer;
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
+import com.seibel.lod.core.a7.datatype.transform.FullToColumnTransformer;
 import com.seibel.lod.core.a7.level.IClientLevel;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.a7.render.RenderBuffer;
@@ -26,6 +27,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
@@ -321,17 +323,27 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
 
     @Override
     public void saveRender(IClientLevel level, RenderMetaFile file, OutputStream dataStream) throws IOException {
+        flushWrites(level);
         try (DataOutputStream dos = new DataOutputStream(dataStream)) {
             writeData(dos);
         }
     }
 
-    @Override
-    public void update(ChunkSizedData chunkData) {
-        //TODO Update render data directly
+    private final ConcurrentLinkedQueue<ChunkSizedData> writeRequest = new ConcurrentLinkedQueue<>();
 
-        //TEMP DEUBG
-        isValid = false;
+    @Override
+    public void write(ChunkSizedData chunkData) {
+        writeRequest.add(chunkData);
+    }
+    @Override
+    public void flushWrites(IClientLevel level) {
+        boolean didSomething = false;
+        while (!writeRequest.isEmpty()) {
+            ChunkSizedData chunkData = writeRequest.poll();
+            FullToColumnTransformer.writeFullDataChunkToColumnData(this, level, chunkData);
+            didSomething = true;
+        }
+        if (didSomething) lastNs = -1; // Reset the timeout to allow rebuilding the buffer again
     }
 
     @Override
@@ -339,14 +351,8 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
         return LATEST_VERSION;
     }
 
-    private boolean isValid = true;
-    @Override
-    public void markInvalid() {
-        isValid = false;
-    }
-
     @Override
     public boolean isValid() {
-        return isValid;
+        return true;
     }
 }
