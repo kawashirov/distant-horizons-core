@@ -307,7 +307,7 @@ public class BatchGenerator implements IChunkGenerator
 
 	@Override
 	public byte getMaxGenerationGranularity() {
-		return 16;
+		return 8;
 	}
 
 	@Override

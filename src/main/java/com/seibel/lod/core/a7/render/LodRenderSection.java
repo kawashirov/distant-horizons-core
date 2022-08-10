@@ -19,6 +19,7 @@ public class LodRenderSection {
     private LodRenderSource lodRenderSource;
     private CompletableFuture<LodRenderSource> loadFuture;
     private boolean isRenderEnabled = false;
+    private IRenderSourceProvider provider = null;
 
     // Create sub region
     public LodRenderSection(DhSectionPos pos) {
@@ -27,28 +28,35 @@ public class LodRenderSection {
 
     public void enableRender(IClientLevel level, LodQuadTree quadTree) {
         if (isRenderEnabled) return;
-        if (lodRenderSource != null) {
-            lodRenderSource.enableRender(level, quadTree);
-        }
+        loadFuture = provider.read(pos);
         isRenderEnabled = true;
     }
     public void disableRender() {
         if (!isRenderEnabled) return;
         if (lodRenderSource != null) {
             lodRenderSource.disableRender();
+            lodRenderSource.dispose();
+            lodRenderSource = null;
+        }
+        if (loadFuture != null) {
+            loadFuture.cancel(true);
+            loadFuture = null;
         }
         isRenderEnabled = false;
     }
 
     public void load(IRenderSourceProvider renderDataProvider) {
-        if (loadFuture != null || lodRenderSource != null) throw new IllegalStateException("Reloading is not supported!");
-        loadFuture = renderDataProvider.read(pos);
+        provider = renderDataProvider;
     }
     public void reload(IRenderSourceProvider renderDataProvider) {
-        if (loadFuture != null) throw new IllegalStateException("This section is already loading!");
-        if (lodRenderSource == null) throw new IllegalStateException("This section is not loaded!");
-        lodRenderSource.dispose();
-        lodRenderSource = null;
+        if (loadFuture != null) {
+            loadFuture.cancel(true);
+            loadFuture = null;
+        }
+        if (lodRenderSource != null) {
+            lodRenderSource.dispose();
+            lodRenderSource = null;
+        }
         loadFuture = renderDataProvider.read(pos);
     }
 
@@ -59,7 +67,8 @@ public class LodRenderSection {
             if (isRenderEnabled) {
                 lodRenderSource.enableRender(level, quadTree);
             }
-        } else if (lodRenderSource != null) {
+        }
+        if (lodRenderSource != null) {
             lodRenderSource.flushWrites(level);
         }
     }
@@ -73,11 +82,11 @@ public class LodRenderSection {
     }
 
     public boolean canRender() {
-        return isLoaded() && isRenderEnabled && lodRenderSource.isRenderReady();
+        return isLoaded() && isRenderEnabled && lodRenderSource != null && lodRenderSource.isRenderReady();
     }
 
     public boolean isLoaded() {
-        return lodRenderSource != null;
+        return provider != null;
     }
 
     //FIXME: Used by RenderBufferHandler
@@ -86,7 +95,7 @@ public class LodRenderSection {
     }
 
     public boolean isLoading() {
-        return loadFuture != null;
+        return false;
     }
 
     public boolean isOutdated() {

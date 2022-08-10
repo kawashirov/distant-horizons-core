@@ -30,7 +30,7 @@ import com.seibel.lod.core.enums.config.EHorizontalQuality;
 public class DetailDistanceUtil
 {
 	private static byte minDetail = Config.Client.Graphics.Quality.drawResolution.get().detailLevel;
-	private static final byte maxDetail = LodUtil.DETAIL_OPTIONS;
+	private static final byte maxDetail =  Byte.MAX_VALUE;
 	private static final double minDistance = 0;
 	private static double distanceUnit = 16 * Config.Client.Graphics.Quality.horizontalScale.get();
 	private static double maxDistance = Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * 16 * 2;

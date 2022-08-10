@@ -191,7 +191,7 @@ public class ColumnRenderBuffer extends RenderBuffer {
 
     public static CompletableFuture<ColumnRenderBuffer> build(IClientLevel clientLevel, ColumnRenderBuffer usedBuffer, ColumnRenderSource data, ColumnRenderSource[] adjData) {
         if (isBusy()) return null;
-        LOGGER.info("RenderRegion startBuild @ {}", data.sectionPos);
+        //LOGGER.info("RenderRegion startBuild @ {}", data.sectionPos);
         return CompletableFuture.supplyAsync(() -> {
                     try {
                         EVENT_LOGGER.trace("RenderRegion start QuadBuild @ {}", data.sectionPos);
@@ -242,7 +242,7 @@ public class ColumnRenderBuffer extends RenderBuffer {
                         throw e3;
                     }
                 }, BUFFER_UPLOADER).handle((v, e) -> {
-                    LOGGER.info("RenderRegion endBuild @ {}", data.sectionPos);
+                    //LOGGER.info("RenderRegion endBuild @ {}", data.sectionPos);
                     if (e != null) {
                         usedBuffer.close();
                         return null;

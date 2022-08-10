@@ -1,6 +1,7 @@
 package com.seibel.lod.core.a7.datatype.full.accessor;
 
 import com.seibel.lod.core.a7.datatype.full.IdBiomeBlockStateMap;
+import com.seibel.lod.core.util.LodUtil;
 
 import java.util.Iterator;
 
@@ -13,7 +14,7 @@ public interface IFullDataView {
     default Iterator<SingleFullArrayView> iterator() {
         return new Iterator<SingleFullArrayView>() {
             private int index = 0;
-            private final int size = width();
+            private final int size = width()*width();
             @Override
             public boolean hasNext() {
                 return index < size;
@@ -21,6 +22,7 @@ public interface IFullDataView {
 
             @Override
             public SingleFullArrayView next() {
+                LodUtil.assertTrue(hasNext(), "No more data to iterate!");
                 return get(index++);
             }
         };

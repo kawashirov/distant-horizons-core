@@ -6,6 +6,7 @@ import com.seibel.lod.core.a7.datatype.column.accessor.ColumnQuadView;
 import com.seibel.lod.core.a7.datatype.column.accessor.IColumnDatatype;
 import com.seibel.lod.core.a7.datatype.column.render.ColumnRenderBuffer;
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
+import com.seibel.lod.core.a7.datatype.full.FullDataSource;
 import com.seibel.lod.core.a7.datatype.transform.FullToColumnTransformer;
 import com.seibel.lod.core.a7.level.IClientLevel;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
@@ -47,6 +48,8 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     public final long[] dataContainer;
     public final int[] airDataContainer;
 
+    public boolean isEmpty = true;
+
     /**
      * Constructor of the ColumnDataType
      * @param maxVerticalSize the maximum vertical size of the container
@@ -69,8 +72,12 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     }
     private long[] readDataV1(DataInputStream inputData, int tempMaxVerticalData) throws IOException {
         int x = SECTION_SIZE * SECTION_SIZE * tempMaxVerticalData;
-        byte[] data = new byte[x * Long.BYTES];
         short tempMinHeight = Short.reverseBytes(inputData.readShort());
+        if (tempMinHeight == Short.MAX_VALUE) { //FIXME: Temp hack flag for marking a empty section
+            return new long[x];
+        }
+        isEmpty = false;
+        byte[] data = new byte[x * Long.BYTES];
         ByteBuffer bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
         inputData.readFully(data);
         long[] result = new long[x];
@@ -82,6 +89,7 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
         }
         return result;
     }
+
     // Load from data stream with maxVerticalSize loaded from the data stream
     public ColumnRenderSource(DhSectionPos sectionPos, DataInputStream inputData, int version, ILevel level) throws IOException {
         this.sectionPos = sectionPos;
@@ -186,6 +194,11 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
         output.writeByte(getDataDetail());
         output.writeByte((byte) verticalSize);
         // FIXME: yOffset is a int, but we only are writing a short.
+        if (isEmpty) {
+            output.writeByte(Short.MAX_VALUE & 0xFF);
+            output.writeByte((Short.MAX_VALUE >> 8) & 0xFF);
+            return false;
+        }
         output.writeByte((byte) (yOffset & 0xFF));
         output.writeByte((byte) ((yOffset >> 8) & 0xFF));
         boolean allGenerated = true;
@@ -258,7 +271,7 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
 
 
     private void tryBuildBuffer(IClientLevel level, LodQuadTree quadTree) {
-        if (inBuildRenderBuffer == null && !ColumnRenderBuffer.isBusy()) {
+        if (inBuildRenderBuffer == null && !ColumnRenderBuffer.isBusy() && !isEmpty) {
             ColumnRenderSource[] data = new ColumnRenderSource[ELodDirection.ADJ_DIRECTIONS.length];
             for (ELodDirection direction : ELodDirection.ADJ_DIRECTIONS) {
                 LodRenderSection section = quadTree.getSection(sectionPos.getAdjacent(direction)); //FIXME: Handle traveling through different detail levels
@@ -271,7 +284,7 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     }
     private void cancelBuildBuffer() {
         if (inBuildRenderBuffer != null) {
-            LOGGER.info("Cancelling build of render buffer for {}", sectionPos);
+            //LOGGER.info("Cancelling build of render buffer for {}", sectionPos);
             inBuildRenderBuffer.cancel(true);
             inBuildRenderBuffer = null;
         }
@@ -302,21 +315,28 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     //FIXME: Temp Hack
     private long lastNs = -1;
     private static final long SWAP_TIMEOUT = /* 10 sec */ 10_000_000_000L;
+    private static final long SWAP_BUSY_COLLISION_TIMEOUT = /* 1 sec */ 1_000_000_000L;
 
     @Override
     public boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<RenderBuffer> referenceSlot) {
         if (lastNs != -1 && System.nanoTime() - lastNs < SWAP_TIMEOUT) {
             return false;
         }
-        if (inBuildRenderBuffer != null && inBuildRenderBuffer.isDone()) {
-            lastNs = System.nanoTime();
-            LOGGER.info("Swapping render buffer for {}", sectionPos);
-            RenderBuffer oldBuffer = referenceSlot.getAndSet(inBuildRenderBuffer.join());
-            if (oldBuffer instanceof ColumnRenderBuffer) usedBuffer = (ColumnRenderBuffer) oldBuffer;
-            inBuildRenderBuffer = null;
-            return true;
-        } else if (inBuildRenderBuffer == null && !ColumnRenderBuffer.isBusy()) {
-            tryBuildBuffer(level, quadTree);
+        if (inBuildRenderBuffer != null) {
+            if (inBuildRenderBuffer.isDone()) {
+                lastNs = System.nanoTime();
+                //LOGGER.info("Swapping render buffer for {}", sectionPos);
+                RenderBuffer oldBuffer = referenceSlot.getAndSet(inBuildRenderBuffer.join());
+                if (oldBuffer instanceof ColumnRenderBuffer) usedBuffer = (ColumnRenderBuffer) oldBuffer;
+                inBuildRenderBuffer = null;
+                return true;
+            }
+        } else {
+            if (!isEmpty) {
+                if (ColumnRenderBuffer.isBusy()) {
+                    lastNs += (long) (SWAP_BUSY_COLLISION_TIMEOUT * Math.random());
+                } else tryBuildBuffer(level, quadTree);
+            }
         }
         return false;
     }
@@ -339,11 +359,14 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     public void flushWrites(IClientLevel level) {
         boolean didSomething = false;
         while (!writeRequest.isEmpty()) {
+            isEmpty = false;
             ChunkSizedData chunkData = writeRequest.poll();
             FullToColumnTransformer.writeFullDataChunkToColumnData(this, level, chunkData);
             didSomething = true;
         }
-        if (didSomething) lastNs = -1; // Reset the timeout to allow rebuilding the buffer again
+        if (didSomething) {
+            lastNs = -1; // Reset the timeout to allow rebuilding the buffer again
+        }
     }
 
     @Override

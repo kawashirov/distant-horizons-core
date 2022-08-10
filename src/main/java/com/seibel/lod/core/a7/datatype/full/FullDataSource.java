@@ -5,6 +5,7 @@ import com.seibel.lod.core.a7.datatype.full.accessor.FullArrayView;
 import com.seibel.lod.core.a7.datatype.full.accessor.SingleFullArrayView;
 import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.pos.DhBlockPos2D;
+import com.seibel.lod.core.a7.pos.DhLodPos;
 import com.seibel.lod.core.a7.save.io.file.DataMetaFile;
 import com.seibel.lod.core.a7.datatype.LodDataSource;
 import com.seibel.lod.core.a7.util.IdMappingUtil;
@@ -27,6 +28,7 @@ public class FullDataSource extends FullArrayView implements LodDataSource { // 
     public static final long TYPE_ID = "FullDataSource".hashCode();
     private final DhSectionPos sectionPos;
     private int localVersion = 0;
+    public boolean isEmpty = true;
     protected FullDataSource(DhSectionPos sectionPos) {
         super(new IdBiomeBlockStateMap(), new long[SECTION_SIZE*SECTION_SIZE][0], SECTION_SIZE);
         this.sectionPos = sectionPos;
@@ -54,22 +56,47 @@ public class FullDataSource extends FullArrayView implements LodDataSource { // 
 
     @Override
     public void update(ChunkSizedData data) {
-        if (getDataDetail() == 0 && data.dataDetail == 0) {
+        LodUtil.assertTrue(sectionPos.getSectionBBoxPos().overlaps(data.getBBoxLodPos()));
+        if (data.dataDetail == 0 && getDataDetail() == 0) {
             DhBlockPos2D chunkBlockPos = new DhBlockPos2D(data.x * 16, data.z * 16);
             DhBlockPos2D blockOffset = chunkBlockPos.subtract(sectionPos.getCorner().getCorner());
-            LodUtil.assertTrue(blockOffset.x >= 0 && blockOffset.x < SECTION_SIZE && blockOffset.z >= 0 && blockOffset.z < SECTION_SIZE,
-                    "ChunkWrite of {} outside section {}. (cal offset {} larger than {})",
-                    new DHChunkPos(data.x, data.z), sectionPos, blockOffset, SECTION_SIZE);
+            LodUtil.assertTrue(blockOffset.x >= 0 && blockOffset.x < SECTION_SIZE && blockOffset.z >= 0 && blockOffset.z < SECTION_SIZE);
+            isEmpty = false;
             data.shadowCopyTo(this.subView(16, blockOffset.x, blockOffset.z));
-
-            for (int x = 0; x < 16; x++) {
-                for (int z = 0; z < 16; z++) {
-                    SingleFullArrayView column = this.get(x+ blockOffset.x, z+ blockOffset.z);
-                    LodUtil.assertTrue(column.doesItExist());
+            { // DEBUG ASSERTION
+                for (int x = 0; x < 16; x++) {
+                    for (int z = 0; z < 16; z++) {
+                        SingleFullArrayView column = this.get(x + blockOffset.x, z + blockOffset.z);
+                        LodUtil.assertTrue(column.doesItExist());
+                    }
                 }
             }
-
-
+        } else if (data.dataDetail == 0 && getDataDetail() < 4) {
+            int dataPerFull = 1 << getDataDetail();
+            int fullSize = 16 / dataPerFull;
+            DhLodPos dataOffset = data.getBBoxLodPos().getCorner(getDataDetail());
+            DhLodPos baseOffset = sectionPos.getCorner(getDataDetail());
+            int offsetX = dataOffset.x - baseOffset.x;
+            int offsetZ = dataOffset.z - baseOffset.z;
+            LodUtil.assertTrue(offsetX >= 0 && offsetX < SECTION_SIZE && offsetZ >= 0 && offsetZ < SECTION_SIZE);
+            isEmpty = false;
+            for (int ox = 0; ox < fullSize; ox++) {
+                for (int oz = 0; oz < fullSize; oz++) {
+                    SingleFullArrayView column = this.get(ox + offsetX, oz + offsetZ);
+                    column.downsampleFrom(data.subView(dataPerFull, ox * dataPerFull, oz * dataPerFull));
+                }
+            }
+        } else if (data.dataDetail == 0 && getDataDetail() >= 4) {
+            //FIXME: TEMPORARY
+            int chunkPerFull = 1 << (getDataDetail() - 4);
+            if (data.x % chunkPerFull != 0 || data.z % chunkPerFull != 0) return;
+            DhLodPos baseOffset = sectionPos.getCorner(getDataDetail());
+            DhLodPos dataOffset = data.getBBoxLodPos().convertUpwardsTo(getDataDetail());
+            int offsetX = dataOffset.x - baseOffset.x;
+            int offsetZ = dataOffset.z - baseOffset.z;
+            LodUtil.assertTrue(offsetX >= 0 && offsetX < SECTION_SIZE && offsetZ >= 0 && offsetZ < SECTION_SIZE);
+            isEmpty = false;
+            data.get(0,0).deepCopyTo(get(offsetX, offsetZ));
         } else {
             LodUtil.assertNotReach();
             //TODO;
@@ -83,6 +110,10 @@ public class FullDataSource extends FullArrayView implements LodDataSource { // 
             dos.writeInt(getDataDetail());
             dos.writeInt(size);
             dos.writeInt(level.getMinY());
+            if (isEmpty) {
+                dos.writeInt(0x00000001);
+                return;
+            }
             dos.writeInt(0xFFFFFFFF);
             // Data array length
             for (int x = 0; x < size; x++) {
@@ -124,6 +155,11 @@ public class FullDataSource extends FullArrayView implements LodDataSource { // 
                 LOGGER.warn("Data minY mismatch: {} != {}. Will ignore data's y level", minY, level.getMinY());
             int end = dos.readInt();
             // Data array length
+            if (end == 0x00000001) {
+                // Section is empty
+                return new FullDataSource(dataFile.pos);
+            }
+            // Non-empty section
             if (end != 0xFFFFFFFF) throw new IOException("invalid header end guard");
             long[][] data = new long[size*size][];
             for (int x = 0; x < size; x++) {
@@ -154,9 +190,32 @@ public class FullDataSource extends FullArrayView implements LodDataSource { // 
         super(mapping, data, SECTION_SIZE);
         LodUtil.assertTrue(data.length == SECTION_SIZE*SECTION_SIZE);
         this.sectionPos = pos;
+        isEmpty = false;
     }
 
     public static FullDataSource createEmpty(DhSectionPos pos) {
         return new FullDataSource(pos);
+    }
+
+
+    public static FullDataSource createFromLower(DhSectionPos pos, FullDataSource[] lower) {
+        FullDataSource newData = new FullDataSource(pos);
+        LodUtil.assertTrue(lower.length == 4, "Non direct convert from lower is not yet implemented");
+        int halfSize = SECTION_SIZE/2;
+        DhSectionPos cornerPos = pos.getChild(0);
+        for (FullDataSource lowerSection : lower) {
+            if (lowerSection==null || lowerSection.isEmpty) continue;
+            int offsetX = lowerSection.sectionPos.sectionX == cornerPos.sectionX ? 0 : halfSize;
+            int offsetZ = lowerSection.sectionPos.sectionZ == cornerPos.sectionZ ? 0 : halfSize;
+            newData.isEmpty = false;
+            for (int ox = 0; ox < halfSize; ox++) {
+                for (int oz = 0; oz < halfSize; oz++) {
+                    FullArrayView quadView = lowerSection.subView(2, ox*2, oz*2);
+                    SingleFullArrayView target = newData.get(ox+offsetX, oz+offsetZ);
+                    target.downsampleFrom(quadView);
+                }
+            }
+        }
+        return newData;
     }
 }

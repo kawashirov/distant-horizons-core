@@ -1,8 +1,11 @@
 package com.seibel.lod.core.a7.save.io.file;
 
+import java.awt.*;
 import java.io.*;
 import java.lang.ref.*;
+import java.security.Provider;
 import java.sql.Ref;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,6 +16,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.seibel.lod.core.a7.datatype.LodDataSource;
 import com.seibel.lod.core.a7.datatype.DataSourceLoader;
@@ -107,10 +112,26 @@ public class DataMetaFile extends MetaFile {
 	}
 
 	// Make a new MetaFile. It doesn't load or write any metadata itself.
-	public DataMetaFile(ILevel level, File path, DhSectionPos pos) {
+	public DataMetaFile(ILevel level, File path, DhSectionPos pos, CompletableFuture<LodDataSource> creator) {
 		super(path, pos);
 		debugCheck();
 		this.level = level;
+		CompletableFuture<LodDataSource> future = new CompletableFuture<>();
+		data.set(future);
+		creator.thenApply((f) -> {
+				applyWriteQueue(f);
+				return f;
+		}).whenComplete((f, e) -> {
+			if (e != null) {
+				LOGGER.error("Uncaught error on creation {}: ", path, e);
+				future.complete(null);
+				data.set(null);
+			} else {
+				future.complete(f);
+				new DataObjTracker(f);
+				data.set(new SoftReference<>(f));
+			}
+		});
 	}
 	
 	public boolean isValid(int version) {

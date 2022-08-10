@@ -33,6 +33,8 @@ public class FullToColumnTransformer {
         final byte dataDetail = data.getDataDetail();
         final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(data.getDataDetail());
         final ColumnRenderSource columnSource = new ColumnRenderSource(pos, vertSize, level.getMinY());
+        if (data.isEmpty) return columnSource;
+        columnSource.isEmpty = false;
 
         if (dataDetail == columnSource.getDataDetail()) {
             int baseX = pos.getCorner().getCorner().x;

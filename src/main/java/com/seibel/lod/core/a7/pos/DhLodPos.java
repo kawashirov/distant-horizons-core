@@ -41,6 +41,11 @@ public class DhLodPos {
         return new DhBlockPos2D(getX().toBlock(), getZ().toBlock());
     }
 
+    public DhLodPos getCorner(byte newDetail) {
+        LodUtil.assertTrue(newDetail <= detail);
+        return new DhLodPos(newDetail, x << (detail-newDetail), z << (detail-newDetail));
+    }
+
     public DhLodPos convertUpwardsTo(byte newDetail) {
         LodUtil.assertTrue(newDetail >= detail);
         return new DhLodPos(newDetail, Math.floorDiv(x, 1<<(newDetail-detail)), Math.floorDiv(z, 1<<(newDetail-detail)));

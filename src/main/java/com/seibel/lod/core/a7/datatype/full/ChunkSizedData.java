@@ -1,6 +1,7 @@
 package com.seibel.lod.core.a7.datatype.full;
 
 import com.seibel.lod.core.a7.datatype.full.accessor.FullArrayView;
+import com.seibel.lod.core.a7.pos.DhLodPos;
 
 public class ChunkSizedData extends FullArrayView {
     public final byte dataDetail;
@@ -27,5 +28,9 @@ public class ChunkSizedData extends FullArrayView {
     }
     public long emptyCount() {
         return 16*16 - nonEmptyCount();
+    }
+
+    public DhLodPos getBBoxLodPos() {
+        return new DhLodPos((byte) (dataDetail+4), x, z);
     }
 }

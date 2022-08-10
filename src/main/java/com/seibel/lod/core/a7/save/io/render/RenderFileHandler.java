@@ -4,8 +4,10 @@ import com.google.common.collect.HashMultimap;
 import com.seibel.lod.core.a7.PlaceHolderQueue;
 import com.seibel.lod.core.a7.datatype.PlaceHolderRenderSource;
 import com.seibel.lod.core.a7.datatype.LodRenderSource;
+import com.seibel.lod.core.a7.datatype.column.ColumnRenderSource;
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.a7.level.IClientLevel;
+import com.seibel.lod.core.a7.pos.DhLodPos;
 import com.seibel.lod.core.a7.save.io.file.IDataSourceProvider;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
@@ -132,10 +134,22 @@ public class RenderFileHandler implements IRenderSourceProvider {
     @Override
     public void write(DhSectionPos sectionPos, ChunkSizedData chunkData) {
         dataSourceProvider.write(sectionPos, chunkData);
-        RenderMetaFile metaFile = files.get(sectionPos);
+        recursive_write(sectionPos,chunkData);
+    }
+
+    private void recursive_write(DhSectionPos sectPos, ChunkSizedData chunkData) {
+        if (!sectPos.getSectionBBoxPos().overlaps(new DhLodPos((byte) (4 + chunkData.dataDetail), chunkData.x, chunkData.z))) return;
+        if (sectPos.sectionDetail > ColumnRenderSource.SECTION_SIZE_OFFSET) {
+            recursive_write(sectPos.getChild(0), chunkData);
+            recursive_write(sectPos.getChild(1), chunkData);
+            recursive_write(sectPos.getChild(2), chunkData);
+            recursive_write(sectPos.getChild(3), chunkData);
+        }
+        RenderMetaFile metaFile = files.get(sectPos);
         if (metaFile != null) { // Fast path: if there is a file for this section, just write to it.
             metaFile.updateChunkIfNeeded(chunkData);
         }
+
     }
 
     /*

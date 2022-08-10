@@ -7,6 +7,7 @@ import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.a7.datatype.full.FullDataSource;
 import com.seibel.lod.core.a7.datatype.full.FullFormat;
 import com.seibel.lod.core.a7.level.IServerLevel;
+import com.seibel.lod.core.a7.pos.DhLodPos;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.objects.DHChunkPos;
@@ -22,14 +23,17 @@ import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class LocalDataFileHandler implements IDataSourceProvider {
     // Note: Single main thread only for now. May make it multi-thread later, depending on the usage.
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
-    final ExecutorService fileReaderThread = LodUtil.makeSingleThreadPool("FileReaderThread");
+    final ExecutorService fileReaderThread = LodUtil.makeThreadPool(4, "FileReaderThread");
     final ConcurrentHashMap<DhSectionPos, DataMetaFile> files = new ConcurrentHashMap<>();
     final IServerLevel level;
     final File saveDir;
+    AtomicInteger topDetailLevel = new AtomicInteger(-1);
+    final int minDetailLevel = FullDataSource.SECTION_SIZE_OFFSET;
 
 
     public LocalDataFileHandler(IServerLevel level, File saveRootDir) {
@@ -97,6 +101,7 @@ public class LocalDataFileHandler implements IDataSourceProvider {
                 fileToUse = metaFiles.iterator().next();
             }
             // Add file to the list of files.
+            topDetailLevel.updateAndGet(v -> Math.max(v, fileToUse.pos.sectionDetail));
             files.put(pos, fileToUse);
         }
     }
@@ -106,6 +111,16 @@ public class LocalDataFileHandler implements IDataSourceProvider {
      */
     @Override
     public CompletableFuture<LodDataSource> read(DhSectionPos pos) {
+        topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetail));
+        DataMetaFile metaFile = files.get(pos);
+        if (metaFile == null) {
+            return CompletableFuture.completedFuture(null);
+        }
+        return metaFile.loadOrGetCached(fileReaderThread);
+    }
+
+    // This prevents new higher detail levels from being created by not updating the topDetailLevel.
+    private CompletableFuture<LodDataSource> readWithoutUpdate(DhSectionPos pos) {
         DataMetaFile metaFile = files.get(pos);
         if (metaFile == null) {
             return CompletableFuture.completedFuture(null);
@@ -118,25 +133,66 @@ public class LocalDataFileHandler implements IDataSourceProvider {
      */
     @Override
     public void write(DhSectionPos sectionPos, ChunkSizedData chunkData) {
+        DhLodPos chunkPos = new DhLodPos((byte) (chunkData.dataDetail+4), chunkData.x, chunkData.z);
+        LodUtil.assertTrue(chunkPos.overlaps(sectionPos.getSectionBBoxPos()), "Chunk {} does not overlap section {}", chunkPos, sectionPos);
+        chunkPos = chunkPos.convertUpwardsTo((byte) minDetailLevel); // TODO: Handle if chunkData has higher detail than lowestDetail.
+        recursiveWrite(new DhSectionPos(chunkPos.detail, chunkPos.x, chunkPos.z), chunkData);
+    }
+    private void recursiveWrite(DhSectionPos sectionPos, ChunkSizedData chunkData) {
         DataMetaFile metaFile = files.get(sectionPos);
         if (metaFile != null) { // Fast path: if there is a file for this section, just write to it.
             metaFile.addToWriteQueue(chunkData);
-            return;
+        } else if (sectionPos.sectionDetail <= minDetailLevel) {
+            File file = computeDefaultFilePath(sectionPos);
+            //FIXME: Handle file already exists issue. Possibly by renaming the file.
+            LodUtil.assertTrue(!file.exists(), "File {} already exist for path {}", file, sectionPos);
+            CompletableFuture<LodDataSource> gen = new CompletableFuture<>();
+            DataMetaFile newMetaFile = new DataMetaFile(level, file, sectionPos, gen);
+            metaFile = files.putIfAbsent(sectionPos, newMetaFile); // This is a CAS with expected null value.
+            if (metaFile == null) {
+                newMetaFile.addToWriteQueue(chunkData);
+                CompletableFuture.runAsync(() -> gen.complete(FullDataSource.createEmpty(sectionPos)), fileReaderThread)
+                        .exceptionally((e) -> {
+                            gen.completeExceptionally(e);
+                            return null;
+                        });
+            } else {
+                metaFile.addToWriteQueue(chunkData);
+                gen.cancel(true);
+            }
+        } else {
+            File file = computeDefaultFilePath(sectionPos);
+            //FIXME: Handle file already exists issue. Possibly by renaming the file.
+            LodUtil.assertTrue(!file.exists(), "File {} already exist for path {}", file, sectionPos);
+            CompletableFuture<LodDataSource> gen = new CompletableFuture<>();
+            DataMetaFile newMetaFile = new DataMetaFile(level, file, sectionPos, gen);
+            metaFile = files.putIfAbsent(sectionPos, newMetaFile); // This is a CAS with expected null value.
+            if (metaFile == null) {
+                newMetaFile.addToWriteQueue(chunkData);
+                // Create future that generate downsized file
+                CompletableFuture<LodDataSource> subChunk0 = readWithoutUpdate(sectionPos.getChild(0));
+                CompletableFuture<LodDataSource> subChunk1 = readWithoutUpdate(sectionPos.getChild(1));
+                CompletableFuture<LodDataSource> subChunk2 = readWithoutUpdate(sectionPos.getChild(2));
+                CompletableFuture<LodDataSource> subChunk3 = readWithoutUpdate(sectionPos.getChild(3));
+                CompletableFuture.allOf(subChunk0, subChunk1, subChunk2, subChunk3)
+                        .thenAccept(v ->
+                                gen.complete(FullDataSource.createFromLower(sectionPos, new FullDataSource[]{
+                                        (FullDataSource) subChunk0.join(),
+                                        (FullDataSource) subChunk1.join(),
+                                        (FullDataSource) subChunk2.join(),
+                                        (FullDataSource) subChunk3.join()
+                                }))
+                        ).exceptionally((e) -> {
+                            gen.completeExceptionally(e);
+                            return null;
+                        });
+            } else {
+                metaFile.addToWriteQueue(chunkData);
+                gen.cancel(true);
+            }
         }
-        // Slow path: if there is no file for this section, create one.
-        File file = computeDefaultFilePath(sectionPos);
-        //FIXME: Handle file already exists issue. Possibly by renaming the file.
-        LodUtil.assertTrue(!file.exists(), "File {} already exist for path {}", file, sectionPos);
-        DataMetaFile newMetaFile = new DataMetaFile(level, file, sectionPos);
-        //LOGGER.info("Created new Data file at {} for sect {}", newMetaFile.path, sectionPos);
-
-        // We add to the queue first so on CAS onto the map, no other thread
-        // will see the new file without our write entry.
-        newMetaFile.addToWriteQueue(chunkData);
-        DataMetaFile casResult = files.putIfAbsent(sectionPos, newMetaFile); // This is a CAS with expected null value.
-        if (casResult != null) { // another thread already created the file. CAS failed.
-            // Drop our version and use the cas result.
-            casResult.addToWriteQueue(chunkData);
+        if (sectionPos.sectionDetail <= topDetailLevel.get()) {
+            recursiveWrite(sectionPos.getParent(), chunkData);
         }
     }
 

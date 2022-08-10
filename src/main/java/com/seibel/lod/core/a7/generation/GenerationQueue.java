@@ -149,12 +149,13 @@ public class GenerationQueue implements PlaceHolderQueue {
 
                     data.forEachPos((x,z) -> {
                         ChunkSizedData chunkData = data.get(x,z);
-                        DhLodPos chunkDataPos = new DhLodPos((byte)(chunkData.dataDetail + 4), chunkData.x, chunkData.z).convertUpwardsTo(sectionDetail);
-                        DhSectionPos sectionPos = new DhSectionPos(chunkDataPos.detail, chunkDataPos.x, chunkDataPos.z);
+                        DhLodPos chunkDataPos = new DhLodPos((byte)(chunkData.dataDetail + 4), chunkData.x, chunkData.z);
+                        if (pos.getSectionBBoxPos().overlaps(chunkDataPos))
+                            writeConsumer.accept(pos, chunkData);
+                        //DhSectionPos sectionPos = new DhSectionPos(chunkDataPos.detail, chunkDataPos.x, chunkDataPos.z);
                         //logger.info("Writing chunk {} with data detail {} to section {}",
                         //        new DhLodPos((byte)(chunkData.dataDetail + 4), chunkData.x, chunkData.z),
                         //        dataDetail, sectionPos);
-                        writeConsumer.accept(sectionPos, chunkData);
                     });
 //
 //                    for (int dsx = 0; dsx < sectionCount; dsx++) {

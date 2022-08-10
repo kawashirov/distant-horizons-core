@@ -61,7 +61,7 @@ public class SingleFullArrayView implements IFullDataView {
         return this;
     }
 
-    //WARNING: It will potentially share the underlying array object!
+    //WARNING: It may potentially share the underlying array object!
     public void shadowCopyTo(SingleFullArrayView target) {
         if (target.mapping.equals(mapping)) {
             target.dataArrays[target.offset] = dataArrays[offset];
@@ -75,5 +75,25 @@ public class SingleFullArrayView implements IFullDataView {
             }
             target.dataArrays[target.offset] = newData;
         }
+    }
+    public void deepCopyTo(SingleFullArrayView target) {
+        if (target.mapping.equals(mapping)) {
+            target.dataArrays[target.offset] = dataArrays[offset].clone();
+        }
+        else {
+            int[] map = target.mapping.computeAndMergeMapFrom(mapping);
+            long[] sourceData = dataArrays[offset];
+            long[] newData = new long[sourceData.length];
+            for (int i = 0; i < newData.length; i++) {
+                newData[i] = FullFormat.remap(map, sourceData[i]);
+            }
+            target.dataArrays[target.offset] = newData;
+        }
+    }
+
+    public void downsampleFrom(IFullDataView source) {
+        //TODO: Temp downsample method
+        SingleFullArrayView firstColumn = source.get(0);
+        firstColumn.deepCopyTo(this);
     }
 }

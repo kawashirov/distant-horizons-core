@@ -38,7 +38,7 @@ public class FullArrayView implements IFullDataView {
 
     @Override
     public SingleFullArrayView get(int index) {
-        return new SingleFullArrayView(mapping, dataArrays, index + offset);
+        return get(index/size, index%size);
     }
 
     @Override
