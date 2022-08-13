@@ -21,10 +21,9 @@ uniform float earthRadius;
  * Vertex Shader
  * 
  * author: James Seibel
- * version: 12-8-2021
- *
- * updated: TomTheFurry
- * version: 15-2-2022
+ * author: TomTheFurry
+ * author: stduhpf
+ * version: 2022-8-13
  */
 void main()
 {
@@ -39,19 +38,22 @@ void main()
     // 0b01 = positive offset
     // 0b11 = negative offset
     // format is: 0b00zzyyxx
-    float mx = (mirco & 1u)!=0u ? mircoOffset : 0.0;
-    mx = (mirco & 2u)!=0u ? -mx : mx;
-    float my = (mirco & 4u)!=0u ? mircoOffset : 0.0;
-    my = (mirco & 8u)!=0u ? -my : my;
-    float mz = (mirco & 16u)!=0u ? mircoOffset : 0.0;
-    mz = (mirco & 32u)!=0u ? -mz : mz;
+    float mx = (mirco & 1u) != 0u ? mircoOffset : 0.0;
+    mx = (mirco & 2u) != 0u ? -mx : mx;
+    float my = (mirco & 4u) != 0u ? mircoOffset : 0.0;
+    my = (mirco & 8u) != 0u ? -my : my;
+    float mz = (mirco & 16u) != 0u ? mircoOffset : 0.0;
+    mz = (mirco & 32u) != 0u ? -mz : mz;
     vertexWorldPos.x += mx;
     vertexWorldPos.y += my;
     vertexWorldPos.z += mz;
 
+    // Old (disabled) vertex transformation logic - Leetom
+    #if 0
+
     // Calculate the vertex pos due to curvature of the earth
     // We use spherical coordinates to calculate the vertex position
-    if (vertexWorldPos.x == 0.0 && vertexWorldPos.z == 0.0)
+    if(vertexWorldPos.x == 0.0 && vertexWorldPos.z == 0.0)
     {
         // In the center. No curvature needed
     }
@@ -66,11 +68,23 @@ void main()
         vertexWorldPos.y = trueY * cos(phi) - earthRadius;
     }
 
+    #else
+    // new vertex transformation logic - stduhpf
+
+    float localRadius = earthRadius + vertexYPos;// vertexWorldPos.y + cameraPosition.y - Center_Y;
+
+    float phi = length(vertexWorldPos.xz) / localRadius;
+
+    vertexWorldPos.y += (cos(phi) - 1.) * localRadius;
+    vertexWorldPos.xz = vertexWorldPos.xz * sin(phi) / phi;
+
+    #endif
+
     uint lights = meta & 0xFFu;
 
-	float light2 = (mod(float(lights), 16.0)+0.5) / 16.0;
-	float light = (float(lights/16u)+0.5) / 16.0;
-	vertexColor = color * vec4(texture(lightMap, vec2(light, light2)).xyz, 1.0);
+    float light2 = (mod(float(lights), 16.0) + 0.5) / 16.0;
+    float light = (float(lights / 16u) + 0.5) / 16.0;
+    vertexColor = color * vec4(texture(lightMap, vec2(light, light2)).xyz, 1.0);
 
     gl_Position = combinedMatrix * vec4(vertexWorldPos, 1.0);
 }
