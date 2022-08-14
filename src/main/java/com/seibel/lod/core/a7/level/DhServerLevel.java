@@ -1,14 +1,9 @@
 package com.seibel.lod.core.a7.level;
 
-import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
-import com.seibel.lod.core.a7.pos.DhBlockPos2D;
-import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.a7.util.FileScanner;
-import com.seibel.lod.core.a7.save.io.file.LocalDataFileHandler;
+import com.seibel.lod.core.a7.save.io.file.DataFileHandler;
 import com.seibel.lod.core.a7.save.structure.LocalSaveStructure;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
-import com.seibel.lod.core.objects.DHChunkPos;
-import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
 import org.apache.logging.log4j.Logger;
 
@@ -18,14 +13,14 @@ public class DhServerLevel implements IServerLevel {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 
     public final LocalSaveStructure save;
-    public final LocalDataFileHandler dataFileHandler;
+    public final DataFileHandler dataFileHandler;
     public final IServerLevelWrapper level;
 
     public DhServerLevel(LocalSaveStructure save, IServerLevelWrapper level) {
         this.save = save;
         this.level = level;
         save.getDataFolder(level).mkdirs();
-        dataFileHandler = new LocalDataFileHandler(this, save.getDataFolder(level));
+        dataFileHandler = new DataFileHandler(this, save.getDataFolder(level));
         FileScanner.scanFile(save, level, dataFileHandler, null);
         LOGGER.info("Started DHLevel for {} with saves at {}", level, save);
     }

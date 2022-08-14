@@ -51,6 +51,9 @@ public class DhSectionPos {
                 sectionX * 2 + (child0to3 & 1),
                 sectionZ * 2 + ((child0to3 & 2) >> 1));
     }
+    public int getChildIndexOfParent() {
+        return (sectionX & 1) + ((sectionZ & 1) << 1);
+    }
 
     public void forEachChild(Consumer<DhSectionPos> callback){
         for (int i = 0; i < 4; i++) {

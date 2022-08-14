@@ -136,17 +136,44 @@ public class LazySectionPosTree<T> implements ConcurrentMap<DhLodPos, T> {
             switch (child0to3) {
                 case 0:
                     child0 = null;
+                    break;
                 case 1:
                     child1 = null;
+                    break;
                 case 2:
                     child2 = null;
+                    break;
                 case 3:
                     child3 = null;
+                    break;
+            }
+            LodUtil.assertNotReach();
+        }
+        private void setChild(int child0to3, Node child) {
+            LodUtil.assertTrue(child0to3 >= 0 && child0to3 <= 3);
+            child.parent = this;
+            switch (child0to3) {
+                case 0:
+                    child0 = child;
+                    child.child0to3 = 0;
+                    break;
+                case 1:
+                    child1 = child;
+                    child.child0to3 = 1;
+                    break;
+                case 2:
+                    child2 = child;
+                    child.child0to3 = 2;
+                    break;
+                case 3:
+                    child3 = child;
+                    child.child0to3 = 3;
+                    break;
             }
             LodUtil.assertNotReach();
         }
     }
-    private final ConcurrentSkipListMap<DhLodPos, Node> nodes = new ConcurrentSkipListMap<>();
+    private ConcurrentSkipListMap<DhLodPos, Node> nodes = new ConcurrentSkipListMap<>();
     private byte topLevel = 0;
     private AtomicInteger size = new AtomicInteger(0);
     public LazySectionPosTree() {}
@@ -201,9 +228,32 @@ public class LazySectionPosTree<T> implements ConcurrentMap<DhLodPos, T> {
         return from;
     }
 
-    private void upcastTreeBase(byte level) {
-        //TODO
+    private void upcastTreeBase() {
+
     }
+    private byte upcastSingeTreeBase() {
+        byte nextLevel = (byte) (topLevel + 1);
+        ConcurrentSkipListMap<DhLodPos, Node> newBase = new ConcurrentSkipListMap<>();
+        nodes.forEach((pos, node) ->
+            newBase.compute(pos.convertUpwardsTo(nextLevel), (key, old) -> {
+                if (old == null) {
+                    old = new Node(null, 0, pos.convertUpwardsTo(nextLevel));
+                }
+                old.setChild(pos.getChildIndexOfParent(), node);
+                return old;
+            })
+        );
+        nodes = newBase; // todo: cas operation to here. (Will be block free but not wait free)
+        topLevel = nextLevel; //todo: atomic???
+        return nextLevel;
+    }
+    private void downcastTreeBase() {
+        byte prevLevel = (byte) (topLevel - 1);
+        ConcurrentSkipListMap<DhLodPos, Node> newBase = new ConcurrentSkipListMap<>();
+
+
+    }
+
 
 
     @Override
@@ -247,7 +297,7 @@ public class LazySectionPosTree<T> implements ConcurrentMap<DhLodPos, T> {
         }
         // key.detail > topLevel:
         // Rebase the tree
-        upcastTreeBase(key.detail);
+        //upcastTreeBase(key.detail);
         return nodes.computeIfAbsent(key, k -> new Node(null, 0, key, value)).setValue(value);
     }
 
@@ -348,7 +398,7 @@ public class LazySectionPosTree<T> implements ConcurrentMap<DhLodPos, T> {
         }
         // key.detail > topLevel:
         // Rebase the tree
-        upcastTreeBase(key.detail);
+        //upcastTreeBase(key.detail);
         return nodes.computeIfAbsent(key, k -> new Node(null, 0, key, null)).setIfAbsent(value);
 
     }
@@ -364,7 +414,7 @@ public class LazySectionPosTree<T> implements ConcurrentMap<DhLodPos, T> {
         }
         // key.detail > topLevel:
         // Rebase the tree
-        upcastTreeBase(key.detail);
+        //upcastTreeBase(key.detail);
         return nodes.computeIfAbsent(key, k -> new Node(null, 0, key, null)).computeIfAbsent(mappingFunction);
 
     }

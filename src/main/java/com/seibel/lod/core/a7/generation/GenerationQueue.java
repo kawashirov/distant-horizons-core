@@ -1,12 +1,13 @@
 package com.seibel.lod.core.a7.generation;
 
-import com.seibel.lod.core.a7.PlaceHolderQueue;
+import com.seibel.lod.core.a7.datatype.LodDataSource;
 import com.seibel.lod.core.a7.datatype.PlaceHolderRenderSource;
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.a7.datatype.full.FullDataSource;
 import com.seibel.lod.core.a7.pos.DhBlockPos2D;
 import com.seibel.lod.core.a7.pos.DhLodPos;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
+import com.seibel.lod.core.a7.save.io.file.IDataSourceProvider;
 import com.seibel.lod.core.a7.util.UncheckedInterruptedException;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.objects.DHChunkPos;
@@ -16,20 +17,59 @@ import org.apache.logging.log4j.Logger;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 import java.util.function.BiConsumer;
 
-public class GenerationQueue implements PlaceHolderQueue {
+public class GenerationQueue {
+    static class Request implements Comparable<Request> {
+        long cachedDist;
+        final DhSectionPos sectionPos;
+        Request(DhSectionPos sectionPos) {
+            this.sectionPos = sectionPos;
+        }
+        @Override
+        public int compareTo(Request o) {
+            return Long.compare(cachedDist, o.cachedDist);
+        }
+        @Override
+        public int hashCode() {
+            return sectionPos.hashCode();
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof Request) {
+                return sectionPos.equals(((Request) obj).sectionPos);
+            }
+            return false;
+        }
+    }
+
+    
+
+
+
+
+
+    public CompletableFuture<LodDataSource> generate(DhSectionPos sectionPos) {
+
+
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return generate0(sectionPos);
+            } catch (Exception e) {
+                throw new CompletionException(e);
+            }
+        });
+    }
+
+
     private final Logger logger = DhLoggerBuilder.getLogger();
     DhBlockPos2D lastPlayerPos = new DhBlockPos2D(0, 0);
     final ConcurrentHashMap<DhSectionPos, WeakReference<PlaceHolderRenderSource>> trackers = new ConcurrentHashMap<>();
     final BiConsumer<DhSectionPos, ChunkSizedData> writeConsumer;
-    final HashSet<DhSectionPos> inProgressSections = new HashSet<>();
+    final HashSet<Request, CompletableFuture<?>> inProgressSections = new HashSet<>();
 
     public GenerationQueue(BiConsumer<DhSectionPos, ChunkSizedData> writeConsumer) {
         this.writeConsumer = writeConsumer;

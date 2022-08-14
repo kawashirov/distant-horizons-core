@@ -1,10 +1,11 @@
 package com.seibel.lod.core.a7.pos;
 
 import com.seibel.lod.core.util.LodUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class DhLodPos {
+public class DhLodPos implements Comparable<DhLodPos> {
     public final byte detail;
     public final int x;
     public final int z;
@@ -50,6 +51,16 @@ public class DhLodPos {
         LodUtil.assertTrue(newDetail >= detail);
         return new DhLodPos(newDetail, Math.floorDiv(x, 1<<(newDetail-detail)), Math.floorDiv(z, 1<<(newDetail-detail)));
     }
+    public DhLodPos getChild(int child0to3) {
+        if (child0to3 < 0 || child0to3 > 3) throw new IllegalArgumentException("child0to3 must be between 0 and 3");
+        if (detail <= 0) throw new IllegalStateException("detail must be greater than 0");
+        return new DhLodPos((byte) (detail - 1),
+                x * 2 + (child0to3 & 1),
+                z * 2 + ((child0to3 & 2) >> 1));
+    }
+    public int getChildIndexOfParent() {
+        return (x & 1) + ((z & 1) << 1);
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -77,5 +88,10 @@ public class DhLodPos {
     public DhLodPos add(DhLodUnit width) {
         if (width.detail < detail) throw new IllegalArgumentException("add called with width.detail < pos detail");
         return new DhLodPos(detail, x + width.convertTo(detail).value, z + width.convertTo(detail).value);
+    }
+
+    @Override
+    public int compareTo(@NotNull DhLodPos o) {
+        return detail != o.detail ? Integer.compare(detail, o.detail) : x != o.x ? Integer.compare(x, o.x) : Integer.compare(z, o.z);
     }
 }

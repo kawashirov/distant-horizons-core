@@ -4,7 +4,7 @@ import com.seibel.lod.core.a7.generation.GenerationQueue;
 import com.seibel.lod.core.a7.generation.IGenerator;
 import com.seibel.lod.core.a7.render.LodQuadTree;
 import com.seibel.lod.core.a7.util.FileScanner;
-import com.seibel.lod.core.a7.save.io.file.LocalDataFileHandler;
+import com.seibel.lod.core.a7.save.io.file.DataFileHandler;
 import com.seibel.lod.core.a7.save.io.render.RenderFileHandler;
 import com.seibel.lod.core.a7.pos.DhBlockPos2D;
 import com.seibel.lod.core.a7.render.RenderBufferHandler;
@@ -21,7 +21,6 @@ import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IProfilerWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
-import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
 import org.apache.logging.log4j.Logger;
 
@@ -31,7 +30,7 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
     public final LocalSaveStructure save;
-    public final LocalDataFileHandler dataFileHandler;
+    public final DataFileHandler dataFileHandler;
     public GenerationQueue generationQueue = null;
     public RenderFileHandler renderFileHandler = null;
     public RenderBufferHandler renderBufferHandler = null; //TODO: Should this be owned by renderer?
@@ -46,7 +45,7 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
         this.save = save;
         save.getDataFolder(level).mkdirs();
         save.getRenderCacheFolder(level).mkdirs();
-        dataFileHandler = new LocalDataFileHandler(this, save.getDataFolder(level));
+        dataFileHandler = new DataFileHandler(this, save.getDataFolder(level));
         FileScanner.scanFile(save, serverLevel, dataFileHandler, null);
         LOGGER.info("Started DHLevel for {} with saves at {}", level, save);
     }

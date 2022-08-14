@@ -1,16 +1,13 @@
 package com.seibel.lod.core.a7.save.io.file;
 
 import com.google.common.collect.HashMultimap;
-import com.seibel.lod.core.a7.datatype.DataSourceLoader;
 import com.seibel.lod.core.a7.datatype.LodDataSource;
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.a7.datatype.full.FullDataSource;
-import com.seibel.lod.core.a7.datatype.full.FullFormat;
 import com.seibel.lod.core.a7.level.IServerLevel;
 import com.seibel.lod.core.a7.pos.DhLodPos;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
-import com.seibel.lod.core.objects.DHChunkPos;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
@@ -24,8 +21,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
-public class LocalDataFileHandler implements IDataSourceProvider {
+public class DataFileHandler implements IDataSourceProvider {
     // Note: Single main thread only for now. May make it multi-thread later, depending on the usage.
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     final ExecutorService fileReaderThread = LodUtil.makeThreadPool(4, "FileReaderThread");
@@ -34,11 +32,14 @@ public class LocalDataFileHandler implements IDataSourceProvider {
     final File saveDir;
     AtomicInteger topDetailLevel = new AtomicInteger(-1);
     final int minDetailLevel = FullDataSource.SECTION_SIZE_OFFSET;
+    final Function<DhSectionPos, CompletableFuture<LodDataSource>> dataSourceCreator;
 
 
-    public LocalDataFileHandler(IServerLevel level, File saveRootDir) {
+    public DataFileHandler(IServerLevel level, File saveRootDir,
+                           Function<DhSectionPos, CompletableFuture<LodDataSource>> dataSourceCreator) {
         this.saveDir = saveRootDir;
         this.level = level;
+        this.dataSourceCreator = dataSourceCreator;
     }
 
     /*
@@ -114,7 +115,26 @@ public class LocalDataFileHandler implements IDataSourceProvider {
         topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetail));
         DataMetaFile metaFile = files.get(pos);
         if (metaFile == null) {
-            return CompletableFuture.completedFuture(null);
+            File file = computeDefaultFilePath(pos);
+            //FIXME: Handle file already exists issue. Possibly by renaming the file.
+            LodUtil.assertTrue(!file.exists(), "File {} already exist for path {}", file, pos);
+            CompletableFuture<LodDataSource> gen = new CompletableFuture<>();
+            DataMetaFile newMetaFile = new DataMetaFile(level, file, pos, gen);
+            metaFile = files.putIfAbsent(pos, newMetaFile); // This is a CAS with expected null value.
+            if (metaFile == null) {
+                dataSourceCreator.apply(pos).handle((source, ex) -> {
+                    if (ex != null) {
+                        LOGGER.error("Failed to create data source for {}", pos, ex);
+                        gen.completeExceptionally(ex);
+                    } else {
+                        gen.complete(source);
+                    }
+                    return null;
+                });
+                metaFile = newMetaFile;
+            } else {
+                gen.cancel(true);
+            }
         }
         return metaFile.loadOrGetCached(fileReaderThread);
     }
@@ -142,7 +162,8 @@ public class LocalDataFileHandler implements IDataSourceProvider {
         DataMetaFile metaFile = files.get(sectionPos);
         if (metaFile != null) { // Fast path: if there is a file for this section, just write to it.
             metaFile.addToWriteQueue(chunkData);
-        } else if (sectionPos.sectionDetail <= minDetailLevel) {
+        }
+/*        else if (sectionPos.sectionDetail <= minDetailLevel) {
             File file = computeDefaultFilePath(sectionPos);
             //FIXME: Handle file already exists issue. Possibly by renaming the file.
             LodUtil.assertTrue(!file.exists(), "File {} already exist for path {}", file, sectionPos);
@@ -190,7 +211,7 @@ public class LocalDataFileHandler implements IDataSourceProvider {
                 metaFile.addToWriteQueue(chunkData);
                 gen.cancel(true);
             }
-        }
+        }*/
         if (sectionPos.sectionDetail <= topDetailLevel.get()) {
             recursiveWrite(sectionPos.getParent(), chunkData);
         }
