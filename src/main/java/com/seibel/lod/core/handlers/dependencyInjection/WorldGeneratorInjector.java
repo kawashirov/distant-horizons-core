@@ -30,7 +30,7 @@ import java.util.HashMap;
  * This is done so other mods can override our world generator(s) to improve or replace them.
  *
  * @author James Seibel
- * @version 2022-7-27
+ * @version 2022-8-15
  */
 public class WorldGeneratorInjector
 {
@@ -139,5 +139,13 @@ public class WorldGeneratorInjector
 		return worldGeneratorByLevelWrapper.get(levelForWorldGenerator).get(IDhApiWorldGenerator.class);
 	}
 	
+	
+	
+	/** Removes all bound world generators. */
+	public void clearBoundDependencies() // TODO this should be done when leaving from the current world/server
+	{
+		this.worldGeneratorByLevelWrapper.clear();
+		this.backupUniversalWorldGenerators.clear();
+	}
 	
 }

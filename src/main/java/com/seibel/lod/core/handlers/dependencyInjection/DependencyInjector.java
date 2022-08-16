@@ -28,7 +28,7 @@ import java.util.Map;
  *
  * @param <BindableType> extends IBindable and defines what interfaces this dependency handler can deal with.
  * @author James Seibel
- * @version 2022-7-21
+ * @version 2022-8-15
  */
 public class DependencyInjector<BindableType extends IBindable>
 {
@@ -217,6 +217,14 @@ public class DependencyInjector<BindableType extends IBindable>
 		ArrayList<T> emptyList = new ArrayList<T>();
 		emptyList.add(null);
 		return emptyList;
+	}
+	
+	
+	
+	/** Removes all bound dependencies. */
+	public void clear()
+	{
+		this.dependencies.clear();
 	}
 	
 	

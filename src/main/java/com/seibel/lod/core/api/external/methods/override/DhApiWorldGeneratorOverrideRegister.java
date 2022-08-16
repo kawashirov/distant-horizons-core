@@ -3,12 +3,13 @@ package com.seibel.lod.core.api.external.methods.override;
 import com.seibel.lod.core.api.external.items.interfaces.override.IDhApiWorldGenerator;
 import com.seibel.lod.core.api.external.items.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.lod.core.api.external.items.objects.DhApiResult;
+import com.seibel.lod.core.handlers.dependencyInjection.WorldGeneratorInjector;
 
 /**
- * Handles adding/removing world generator overrides.
+ * Handles adding world generator overrides.
  *
  * @author James Seibel
- * @version 2022-7-15
+ * @version 2022-8-15
  */
 public class DhApiWorldGeneratorOverrideRegister
 {
@@ -22,7 +23,15 @@ public class DhApiWorldGeneratorOverrideRegister
 	 */
 	public static DhApiResult registerWorldGeneratorOverride(IDhApiWorldGenerator worldGenerator)
 	{
-		throw new UnsupportedOperationException();
+		try
+		{
+			WorldGeneratorInjector.INSTANCE.bind(worldGenerator);
+			return DhApiResult.createSuccess();
+		}
+		catch (Exception e)
+		{
+			return DhApiResult.createFail(e.getMessage());
+		}
 	}
 	
 	/**
@@ -34,7 +43,15 @@ public class DhApiWorldGeneratorOverrideRegister
 	 */
 	public static DhApiResult registerWorldGeneratorOverride(IDhApiLevelWrapper levelWrapper, IDhApiWorldGenerator worldGenerator)
 	{
-		throw new UnsupportedOperationException();
+		try
+		{
+			WorldGeneratorInjector.INSTANCE.bind(levelWrapper, worldGenerator);
+			return DhApiResult.createSuccess();
+		}
+		catch (Exception e)
+		{
+			return DhApiResult.createFail(e.getMessage());
+		}
 	}
 	
 	

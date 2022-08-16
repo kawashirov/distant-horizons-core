@@ -4,7 +4,7 @@ package com.seibel.lod.core.api.external.items.objects;
  * Allows for more descriptive non-critical failure states.
  *
  * @author James Seibel
- * @version 2022-7-11
+ * @version 2022-8-15
  */
 public class DhApiResult
 {
@@ -15,9 +15,18 @@ public class DhApiResult
 	public final String errorMessage;
 	
 	
-	public DhApiResult(boolean newSuccess, String newErrorMessage)
+	private DhApiResult(boolean newSuccess, String newErrorMessage)
 	{
 		this.success = newSuccess;
 		this.errorMessage = newErrorMessage;
 	}
+	
+	
+	
+	public static DhApiResult createSuccess() { return new DhApiResult(true, ""); }
+	public static DhApiResult createSuccess(String message) { return new DhApiResult(true, message); }
+	
+	public static DhApiResult createFail() { return new DhApiResult(false, ""); }
+	public static DhApiResult createFail(String message) { return new DhApiResult(false, message); }
+	
 }

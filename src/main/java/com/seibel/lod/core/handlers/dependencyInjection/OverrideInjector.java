@@ -30,7 +30,7 @@ import com.seibel.lod.core.util.StringUtil;
  * This is done so other mods can override our methods to improve features down the line.
  *
  * @author James Seibel
- * @version 2022-7-26
+ * @version 2022-8-15
  */
 public class OverrideInjector<BindableType extends IDhApiOverrideable>
 {
@@ -144,6 +144,20 @@ public class OverrideInjector<BindableType extends IDhApiOverrideable>
 		
 		return value;
 	}
+	
+	
+	
+	/** Removes all bound overrides. */
+	public void clear()
+	{
+		this.primaryInjector.clear();
+		this.secondaryInjector.clear();
+		this.coreInjector.clear();
+	}
+	
+	
+	
+	
 	
 	
 	/** Small helper method so we don't have to use DhApi enums. */
