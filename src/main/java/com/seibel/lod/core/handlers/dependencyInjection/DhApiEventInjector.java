@@ -20,6 +20,9 @@
 package com.seibel.lod.core.handlers.dependencyInjection;
 
 import com.seibel.lod.core.api.implementation.interfaces.events.IDhApiEvent;
+import com.seibel.lod.core.api.internal.a7.ClientApi;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 
@@ -32,11 +35,12 @@ import java.util.ArrayList;
  *
  * @author James Seibel
  * @author Leetom
- * @version 2022-7-18
+ * @version 2022-8-15
  */
-public class DhApiEventInjector extends DependencyInjector<IDhApiEvent>
+public class DhApiEventInjector extends DependencyInjector<IDhApiEvent> // Note to self: Don't try adding a generic type to IDhApiEvent, the consturctor won't accept it
 {
 	public static final DhApiEventInjector INSTANCE = new DhApiEventInjector();
+	public static final Logger LOGGER = LogManager.getLogger(DhApiEventInjector.class.getSimpleName());
 	
 	
 	public DhApiEventInjector()
@@ -120,7 +124,7 @@ public class DhApiEventInjector extends DependencyInjector<IDhApiEvent>
 				catch (Exception e)
 				{
 					// TODO log the failed event handler
-					System.out.println("Exception thrown by event handler :" + e.getMessage());
+					LOGGER.error("Exception thrown by event handler :" + e.getMessage(), e);
 				}
 			}
 		}
