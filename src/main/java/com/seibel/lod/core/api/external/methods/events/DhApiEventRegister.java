@@ -23,11 +23,11 @@ public class DhApiEventRegister
 		try
 		{
 			DhApiEventInjector.INSTANCE.bind(eventInterface, eventHandlerImplementation);
-			return new DhApiResult(true, "");
+			return DhApiResult.createSuccess();
 		}
 		catch (IllegalStateException e)
 		{
-			return new DhApiResult(false, e.getMessage());
+			return DhApiResult.createFail(e.getMessage());
 		}
 	}
 	
@@ -40,11 +40,11 @@ public class DhApiEventRegister
 	{
 		if (DhApiEventInjector.INSTANCE.unbind(eventInterface, eventHandlerClass))
 		{
-			return new DhApiResult(true, "");
+			return DhApiResult.createSuccess();
 		}
 		else
 		{
-			return new DhApiResult(false, "No event handler [" + eventHandlerClass.getSimpleName() + "] was bound for the event [" + eventInterface.getSimpleName() + "].");
+			return DhApiResult.createFail("No event handler [" + eventHandlerClass.getSimpleName() + "] was bound for the event [" + eventInterface.getSimpleName() + "].");
 		}
 	}
 	
