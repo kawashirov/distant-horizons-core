@@ -11,14 +11,21 @@ public abstract class AbstractConfigType<T, S> { // The S is the class that is e
     public String category = "";    // This should only be set once in the init
     public String name;            // This should only be set once in the init
     protected T value;
+    protected final Listener listener;
 
     public Object guiValue; // This is a storage variable something like the gui can use
 
     protected ConfigEntryAppearance appearance;
 
-    public AbstractConfigType(ConfigEntryAppearance appearance, T value) {
+    public AbstractConfigType(ConfigEntryAppearance appearance, T value, Listener listener) {
         this.appearance = appearance;
         this.value = value;
+        this.listener = listener;
+    }
+
+    public interface Listener {
+        void onModify();
+//        void onUiModify(); // TODO
     }
 
     
@@ -29,6 +36,8 @@ public abstract class AbstractConfigType<T, S> { // The S is the class that is e
     /** Sets the value */
     public void set(T newValue) {
         this.value = newValue;
+        if (this.listener != null)
+            this.listener.onModify();
     }
     
     public ConfigEntryAppearance getAppearance() {
@@ -61,6 +70,7 @@ public abstract class AbstractConfigType<T, S> { // The S is the class that is e
     protected static abstract class Builder<T, S> {
         protected ConfigEntryAppearance tmpAppearance = ConfigEntryAppearance.ALL;
         protected T tmpValue;
+        protected Listener tmpListener;
 
 
         // Put this into your own builder
@@ -70,6 +80,10 @@ public abstract class AbstractConfigType<T, S> { // The S is the class that is e
         }
         public S set(T newValue) {
             this.tmpValue = newValue;
+            return (S) this;
+        }
+        public S setListener(Listener newListener) {
+            this.tmpListener = newListener;
             return (S) this;
         }
     }

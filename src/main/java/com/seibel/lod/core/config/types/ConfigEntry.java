@@ -25,12 +25,12 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>>
     private T apiValue;
     private Runnable runnable; // What to run when the value gets changed
 
-    private ConfigEntryPerformance performance;
+    private final ConfigEntryPerformance performance;
 
 
     /** Creates the entry */
-    private ConfigEntry(ConfigEntryAppearance appearance, T value, String comment, T min, T max, boolean allowApiOverride, Runnable runnable, ConfigEntryPerformance performance) {
-        super(appearance, value);
+    private ConfigEntry(ConfigEntryAppearance appearance, T value, String comment, T min, T max, boolean allowApiOverride, Runnable runnable, ConfigEntryPerformance performance, Listener listener) {
+        super(appearance, value, listener);
         this.defaultValue = value;
         this.comment = comment;
         this.min = min;
@@ -175,8 +175,8 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>>
         private T tmpMin;
         private T tmpMax;
         private boolean tmpUseApiOverwrite;
-        private Runnable runnable;
-        private ConfigEntryPerformance performance = ConfigEntryPerformance.DONT_SHOW;
+        private Runnable tmpRunnable;
+        private ConfigEntryPerformance tmpPerformance = ConfigEntryPerformance.DONT_SHOW;
 
         public Builder<T> comment(String newComment) {
             this.tmpComment = newComment;
@@ -209,20 +209,20 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>>
             return this;
         }
 
-        public Builder<T> setRunnable(Runnable runnable) {
-            this.runnable = runnable;
+        public Builder<T> setRunnable(Runnable newRunnable) {
+            this.tmpRunnable = newRunnable;
             return this;
         }
 
-        public Builder<T> setPerformance(ConfigEntryPerformance performance) {
-            this.performance = performance;
+        public Builder<T> setPerformance(ConfigEntryPerformance newPerformance) {
+            this.tmpPerformance = newPerformance;
             return this;
         }
 
 
 
         public ConfigEntry<T> build() {
-            return new ConfigEntry<T>(tmpAppearance, tmpValue, tmpComment, tmpMin, tmpMax, tmpUseApiOverwrite, runnable, performance);
+            return new ConfigEntry<T>(tmpAppearance, tmpValue, tmpComment, tmpMin, tmpMax, tmpUseApiOverwrite, tmpRunnable, tmpPerformance, tmpListener);
         }
     }
 }
