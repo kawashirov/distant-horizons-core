@@ -27,4 +27,15 @@ public interface IOptifineAccessor extends IModAccessor
 {
 	/** Can be null */
 	HashSet<DHChunkPos> getNormalRenderedChunks();
+	
+	/**
+	 * Returns the percentage multiplier of the screen's current resolution. <br>
+	 * 1.0 = 100% <br>
+	 * 1.5 = 150% <br>
+	 */
+	default double getRenderResolutionMultiplier()
+	{
+		return 1.0;
+	}
+	
 }
