@@ -4,14 +4,12 @@ import com.seibel.lod.core.a7.pos.DhLodPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.Atomics;
 import com.seibel.lod.core.util.LodUtil;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -295,34 +293,35 @@ public class ConcurrentQuadCombinableProviderTree<R extends CombinableResult<R>>
 
     private RootMap<R> rebaseUpward(int targetLevel) {
         rootMapGlobalLock.writeLock().lock();
-        RootMap<R> map = rootMap.get();
-        if (map.topLevel >= targetLevel) {
-            rootMapGlobalLock.writeLock().unlock();
-            return map;
-        }
-        // At this point, we have exclusive access to the rootMap.
-        map.clean(); // Clean the map. (Could actually be done with just readLock.)
-        RootMap<R> newMap = new RootMap<>(map.topLevel + 1);
-        if (map.roots.isEmpty()) return newMap; // If there are no roots, just return the new map.
-        map.roots.forEach((pos, nodeRef) -> {
-            Node<R> node = nodeRef.get();
-            if (node == null) return; // If null, ignore that node.
-            LodUtil.assertTrue(pos.detail+1 == newMap.topLevel);
-            LodUtil.assertTrue(node.parent.get() == null);
-            LodUtil.assertTrue(node.pos.equals(pos));
-            DhLodPos newPos = pos.convertUpwardsTo((byte) (pos.detail+1));
+        try {
+            RootMap<R> map = rootMap.get();
+            if (map.topLevel >= targetLevel) {
+                return map;
+            }
+            // At this point, we have exclusive access to the rootMap.
+            map.clean(); // Clean the map. (Could actually be done with just readLock.)
+            RootMap<R> newMap = new RootMap<>(map.topLevel + 1);
+            map.roots.forEach((pos, nodeRef) -> {
+                Node<R> node = nodeRef.get();
+                if (node == null) return; // If null, ignore that node.
+                LodUtil.assertTrue(pos.detail+1 == newMap.topLevel);
+                LodUtil.assertTrue(node.parent.get() == null);
+                LodUtil.assertTrue(node.pos.equals(pos));
+                DhLodPos newPos = pos.convertUpwardsTo((byte) (pos.detail+1));
 
-            // Create the parent node, or if it already exists, use it to set the child node's parent.
-            // NOTE: While this section is protected by the rootMapGlobalLock, we still need to use the normal
-            //  CAS methods to setAndGet the parent node, as the parent node may be GC'd concurrently by other threads
-            //  who have just completed the node's future, and caused the GC parent chain up to the new map.
-            Node<R> newParentNode = newMap.setIfNullAndGet(newPos, new Node<R>(newPos, null));
-            node.parent.set(newParentNode);
-        });
-        boolean casWorked = rootMap.compareAndSet(map, newMap);
-        LodUtil.assertTrue(casWorked);
-        rootMapGlobalLock.writeLock().unlock();
-        return newMap;
+                // Create the parent node, or if it already exists, use it to set the child node's parent.
+                // NOTE: While this section is protected by the rootMapGlobalLock, we still need to use the normal
+                //  CAS methods to setAndGet the parent node, as the parent node may be GC'd concurrently by other threads
+                //  who have just completed the node's future, and caused the GC parent chain up to the new map.
+                Node<R> newParentNode = newMap.setIfNullAndGet(newPos, new Node<R>(newPos, null));
+                node.parent.set(newParentNode);
+            });
+            boolean casWorked = rootMap.compareAndSet(map, newMap);
+            LodUtil.assertTrue(casWorked);
+            return newMap;
+        } finally {
+            rootMapGlobalLock.writeLock().unlock();
+        }
     }
 
     public void cleanIfNeeded() {
