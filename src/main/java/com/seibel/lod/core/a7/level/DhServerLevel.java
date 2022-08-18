@@ -20,7 +20,7 @@ public class DhServerLevel implements IServerLevel {
         this.save = save;
         this.level = level;
         save.getDataFolder(level).mkdirs();
-        dataFileHandler = new DataFileHandler(this, save.getDataFolder(level));
+        dataFileHandler = new DataFileHandler(this, save.getDataFolder(level), null); //FIXME: GenerationQueue
         FileScanner.scanFile(save, level, dataFileHandler, null);
         LOGGER.info("Started DHLevel for {} with saves at {}", level, save);
     }

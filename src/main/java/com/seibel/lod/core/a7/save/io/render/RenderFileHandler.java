@@ -1,7 +1,6 @@
 package com.seibel.lod.core.a7.save.io.render;
 
 import com.google.common.collect.HashMultimap;
-import com.seibel.lod.core.a7.PlaceHolderQueue;
 import com.seibel.lod.core.a7.datatype.PlaceHolderRenderSource;
 import com.seibel.lod.core.a7.datatype.LodRenderSource;
 import com.seibel.lod.core.a7.datatype.column.ColumnRenderSource;
@@ -29,17 +28,11 @@ public class RenderFileHandler implements IRenderSourceProvider {
     final IClientLevel level;
     final File saveDir;
     final IDataSourceProvider dataSourceProvider;
-    @Nullable
-    PlaceHolderQueue placeHolderQueue = null;
 
     public RenderFileHandler(IDataSourceProvider sourceProvider, IClientLevel level, File saveRootDir) {
         this.dataSourceProvider = sourceProvider;
         this.level = level;
         this.saveDir = saveRootDir;
-    }
-
-    public void setPlaceHolderQueue(@Nullable PlaceHolderQueue queue) {
-        this.placeHolderQueue = queue;
     }
 
     /*
@@ -122,7 +115,6 @@ public class RenderFileHandler implements IRenderSourceProvider {
                     }
                     if (render != null) return render;
                     PlaceHolderRenderSource placeHolder = new PlaceHolderRenderSource(pos);
-                    if (placeHolderQueue != null) placeHolderQueue.track(placeHolder);
                     return placeHolder;
                 }
         );

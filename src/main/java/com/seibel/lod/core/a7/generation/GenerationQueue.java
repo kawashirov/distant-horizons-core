@@ -1,13 +1,12 @@
 package com.seibel.lod.core.a7.generation;
 
 import com.seibel.lod.core.a7.datatype.LodDataSource;
-import com.seibel.lod.core.a7.datatype.PlaceHolderRenderSource;
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.a7.datatype.full.FullDataSource;
 import com.seibel.lod.core.a7.pos.DhBlockPos2D;
 import com.seibel.lod.core.a7.pos.DhLodPos;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
-import com.seibel.lod.core.a7.save.io.file.IDataSourceProvider;
+import com.seibel.lod.core.a7.util.ConcurrentQuadCombinableProviderTree;
 import com.seibel.lod.core.a7.util.UncheckedInterruptedException;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.objects.DHChunkPos;
@@ -15,112 +14,55 @@ import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.gridList.ArrayGridList;
 import org.apache.logging.log4j.Logger;
 
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.concurrent.*;
-import java.util.function.BiConsumer;
 
-public class GenerationQueue {
-    static class Request implements Comparable<Request> {
-        long cachedDist;
-        final DhSectionPos sectionPos;
-        Request(DhSectionPos sectionPos) {
-            this.sectionPos = sectionPos;
-        }
-        @Override
-        public int compareTo(Request o) {
-            return Long.compare(cachedDist, o.cachedDist);
-        }
-        @Override
-        public int hashCode() {
-            return sectionPos.hashCode();
-        }
-        @Override
-        public boolean equals(Object obj) {
-            if (obj instanceof Request) {
-                return sectionPos.equals(((Request) obj).sectionPos);
-            }
-            return false;
-        }
-    }
-
-    
-
-
-
-
-
-    public CompletableFuture<LodDataSource> generate(DhSectionPos sectionPos) {
-
-
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                return generate0(sectionPos);
-            } catch (Exception e) {
-                throw new CompletionException(e);
-            }
-        });
-    }
-
-
+public class GenerationQueue implements AutoCloseable {
+    final ConcurrentQuadCombinableProviderTree<GenerationResult> cqcpTree = new ConcurrentQuadCombinableProviderTree<>();
+    IGenerator generator = null;
     private final Logger logger = DhLoggerBuilder.getLogger();
-    DhBlockPos2D lastPlayerPos = new DhBlockPos2D(0, 0);
-    final ConcurrentHashMap<DhSectionPos, WeakReference<PlaceHolderRenderSource>> trackers = new ConcurrentHashMap<>();
-    final BiConsumer<DhSectionPos, ChunkSizedData> writeConsumer;
-    final HashSet<Request, CompletableFuture<?>> inProgressSections = new HashSet<>();
+    private final ConcurrentHashMap<DhLodPos, CompletableFuture<GenerationResult>> taskMap = new ConcurrentHashMap<>();
+    private final LinkedList<CompletableFuture<GenerationResult>> inProgress = new LinkedList<>();
 
-    public GenerationQueue(BiConsumer<DhSectionPos, ChunkSizedData> writeConsumer) {
-        this.writeConsumer = writeConsumer;
-    }
-
-    public void track(PlaceHolderRenderSource source) {
-        //logger.info("Tracking source {} at {}", source, source.getSectionPos());
-        trackers.put(source.getSectionPos(), new WeakReference<>(source));
-    }
-
-    private void update() {
-        LinkedList<DhSectionPos> toRemove = new LinkedList<>();
-        for (DhSectionPos pos : trackers.keySet()) {
-            WeakReference<PlaceHolderRenderSource> ref = trackers.get(pos);
-            if (ref.get() == null) {
-                toRemove.add(pos);
-            }
-        }
-        for (DhSectionPos pos : toRemove) {
-            trackers.remove(pos);
-        }
-    }
-
-    //FIXME: Do optimizations on polling closest to player. (Currently its a O(n) search!)
-    //FIXME: Do not return sections that is already being generated.
-    //FIXME: Optimize the checks for inProgressSections.
-    private DhSectionPos pollClosest(DhBlockPos2D playerPos) {
-        update();
-        DhSectionPos closest = null;
-        long closestDist = Long.MAX_VALUE;
-        for (DhSectionPos pos : trackers.keySet()) {
-            if (inProgressSections.contains(pos)) {
-                continue;
-            }
-            long distSqr = pos.getCenter().getCenter().distSquared(playerPos);
-            if (distSqr < closestDist) {
-                closest = pos;
-                closestDist = distSqr;
-            }
-        }
-        if (closest != null) inProgressSections.add(closest);
-        return closest;
-    }
-
-    public void doGeneration(IGenerator generator) {
-        if (generator == null) return;
+    public GenerationQueue() {}
+    public void pollAndStartClosest(DhBlockPos2D targetPos) {
+        if (generator == null) throw new IllegalStateException("generator is null");
         if (generator.isBusy()) return;
+        DhLodPos closest = null;
+        long closestDist = Long.MAX_VALUE;
+        for (DhLodPos key : taskMap.keySet()) {
+            long dist = key.getCenter().distSquared(targetPos);
+            if (dist < closestDist) {
+                closest = key;
+                closestDist = dist;
+            }
+        }
+        if (closest != null) {
+            CompletableFuture<GenerationResult> future = taskMap.remove(closest);
+            startFuture(closest, future);
+        }
+    }
 
-        DhSectionPos pos = pollClosest(lastPlayerPos);
-        if (pos == null) return;
+    public void setGenerator(IGenerator generator) {
+        LodUtil.assertTrue(generator != null);
+        LodUtil.assertTrue(this.generator == null);
+        this.generator = generator;
+    }
+    public void removeGenerator() {
+        LodUtil.assertTrue(generator != null);
+        this.generator = null;
+        inProgress.forEach(f -> f.cancel(true));
+        inProgress.clear();
+    }
 
+    private CompletableFuture<GenerationResult> createFuture(DhLodPos pos) {
+        CompletableFuture<GenerationResult> future = new CompletableFuture<>();
+        CompletableFuture<GenerationResult> swapped = taskMap.put(pos, future);
+        LodUtil.assertTrue(swapped == null);
+        return future;
+    }
+
+    private void startFuture(DhLodPos pos, CompletableFuture<GenerationResult> resultFuture) {
         byte dataDetail = generator.getDataDetail();
         byte minGenGranularity = generator.getMinGenerationGranularity();
         byte maxGenGranularity = generator.getMaxGenerationGranularity();
@@ -134,18 +76,18 @@ public class GenerationQueue {
         byte granularity;
         int count;
         DHChunkPos chunkPosMin;
-        if (pos.sectionDetail < minUnitDetail) {
+        if (pos.detail < minUnitDetail) {
             granularity = minGenGranularity;
             count = 1;
-            chunkPosMin = new DHChunkPos(pos.getSectionBBoxPos().convertUpwardsTo(minUnitDetail).getCorner());
-        } else if (pos.sectionDetail > maxUnitDetail) {
+            chunkPosMin = new DHChunkPos(pos.convertUpwardsTo(minUnitDetail).getCorner());
+        } else if (pos.detail > maxUnitDetail) {
             granularity = maxGenGranularity;
-            count = 1 << (pos.sectionDetail - maxUnitDetail);
-            chunkPosMin = new DHChunkPos(pos.getCorner().getCorner());
+            count = 1 << (pos.detail - maxUnitDetail);
+            chunkPosMin = new DHChunkPos(pos.getCorner());
         } else {
-            granularity = (byte) (pos.sectionDetail - dataDetail);
+            granularity = (byte) (pos.detail - dataDetail);
             count = 1;
-            chunkPosMin = new DHChunkPos(pos.getCorner().getCorner());
+            chunkPosMin = new DHChunkPos(pos.getCorner());
         }
         assert granularity >= minGenGranularity && granularity <= maxGenGranularity;
         assert count > 0;
@@ -154,27 +96,27 @@ public class GenerationQueue {
         int perCallChunksWidth = 1 << (granularity - 4);
         final byte sectionDetail = (byte) (dataDetail + FullDataSource.SECTION_SIZE_OFFSET);
 
-        ArrayList<CompletableFuture<Void>> futures = new ArrayList<>(count*count);
+        ArrayList<CompletableFuture<Collection<ChunkSizedData>>> futures = new ArrayList<>(count*count);
         for (int dx = 0; dx < count; dx++) {
             for (int dz = 0; dz < count; dz++) { // TODO: Unroll this loop to yield when generator is busy.
                 DHChunkPos subCallChunkPosMin = new DHChunkPos(chunkPosMin.x + dx * perCallChunksWidth, chunkPosMin.z + dz * perCallChunksWidth);
                 CompletableFuture<ArrayGridList<ChunkSizedData>> dataFuture = generator.generate(subCallChunkPosMin, granularity);
-                futures.add(dataFuture.whenComplete((data, ex) -> {
+                futures.add(dataFuture.handle((data, ex) -> {
                     if (ex != null) {
                         if (ex instanceof CompletionException) {
                             ex = ex.getCause();
                         }
-                        if (ex instanceof InterruptedException) return; // Ignore interrupted exceptions.
-                        if (ex instanceof UncheckedInterruptedException) return; // Ignore unchecked interrupted exceptions.
+                        if (ex instanceof InterruptedException) return null; // Ignore interrupted exceptions.
+                        if (ex instanceof UncheckedInterruptedException) return null; // Ignore unchecked interrupted exceptions.
                         logger.error("Error generating data for section {}", pos, ex);
-                        return;
+                        return null;
                     }
-                    assert data != null;
+                    LodUtil.assertTrue(data != null);
                     if (data.gridSize < (1 << (granularity-4))) {
                         logger.error(
                                 "Generator at {} returned {} by {} chunks but requested granularity was {}, which expect at least {} by {} chunks! ",
                                 pos, data.gridSize, data.gridSize, granularity, perCallChunksWidth, perCallChunksWidth);
-                        return;
+                        return null;
                     }
 
                     DhLodPos minSectPos = new DhLodPos((byte)(dataDetail+4), data.getFirst().x, data.getFirst().z).convertUpwardsTo(sectionDetail);
@@ -186,49 +128,88 @@ public class GenerationQueue {
                     logger.info("Writing {} by {} chunks (at {}) with data detail {} to {} by {} sections (at {})",
                             data.gridSize, data.gridSize, subCallChunkPosMin, dataDetail,
                             sectionCount, sectionCount, minSectPos);
-
-                    data.forEachPos((x,z) -> {
-                        ChunkSizedData chunkData = data.get(x,z);
-                        DhLodPos chunkDataPos = new DhLodPos((byte)(chunkData.dataDetail + 4), chunkData.x, chunkData.z);
-                        if (pos.getSectionBBoxPos().overlaps(chunkDataPos))
-                            writeConsumer.accept(pos, chunkData);
-                        //DhSectionPos sectionPos = new DhSectionPos(chunkDataPos.detail, chunkDataPos.x, chunkDataPos.z);
-                        //logger.info("Writing chunk {} with data detail {} to section {}",
-                        //        new DhLodPos((byte)(chunkData.dataDetail + 4), chunkData.x, chunkData.z),
-                        //        dataDetail, sectionPos);
-                    });
-//
-//                    for (int dsx = 0; dsx < sectionCount; dsx++) {
-//                        for (int dsz = 0; dsz < sectionCount; dsz++) {
-//                            WeakReference<PlaceHolderRenderSource> ref = trackers.remove(new DhSectionPos(
-//                                    sectionDetail, minSectPos.x + dsx, minSectPos.z + dsz));
-//                            if (ref == null) return; // No placeholder there, so no need to trigger a refresh on it.
-//                            PlaceHolderRenderSource source = ref.get();
-//                            if (source == null) return; // Same as above.
-//                            source.markInvalid(); // Mark the placeholder as invalid, so it will be refreshed on next lodTree update.
-//                        }
-//                    }
-                }).exceptionally(ex -> {
-                    if (ex instanceof CompletionException) {
-                        ex = ex.getCause();
-                    }
-                    if (ex instanceof InterruptedException) return null; // Ignore interrupted exceptions.
-                    if (ex instanceof UncheckedInterruptedException) return null; // Ignore unchecked interrupted exceptions.
-                    logger.error("Error generating data for {} by {} chunks (at {}) with data detail {}",
-                            perCallChunksWidth, perCallChunksWidth, subCallChunkPosMin, dataDetail, ex);
-                    return null;
-                }).thenRun(()->{})); // Convert to a CompletableFuture<Void>.
+                    return data;
+                }));
             }
         }
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenRun(() -> {
-            //try {
-                //Thread.sleep(10000); // FIXME: Only for current debug testing. REMOVE THIS!
-            //} catch (InterruptedException ignored) {}
-            WeakReference<PlaceHolderRenderSource> ref = trackers.remove(pos);
-            if (ref == null) return; // No placeholder there, so no need to trigger a refresh on it.
-            PlaceHolderRenderSource source = ref.get();
-            if (source == null) return; // Same as above.
-            source.markInvalid(); // Mark the placeholder as invalid, so it will be refreshed on next lodTree update.
-        });
+        inProgress.add(
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenApply((v) -> {
+                GenerationResult result = new GenerationResult();
+                for (CompletableFuture<Collection<ChunkSizedData>> future : futures) {
+                    Collection<ChunkSizedData> data = future.join();
+                    if (data == null) continue;
+                    result.dataList.addAll(data);
+                }
+                return result;
+            }).handle((r, e) -> {
+                if (e!=null) resultFuture.completeExceptionally(e); else resultFuture.complete(r);
+                return null;
+            })
+        );
     }
+
+    public CompletableFuture<LodDataSource> generate(DhSectionPos sectionPos) {
+        DhLodPos lodPos = sectionPos.getSectionBBoxPos();
+        return cqcpTree.createOrUseExisting(lodPos, this::createFuture).thenApply(
+                (result) -> {
+                    if (result == null || result.dataList.isEmpty()) return FullDataSource.createEmpty(sectionPos);
+                    FullDataSource newSource = FullDataSource.createEmpty(sectionPos);
+                    for (ChunkSizedData data : result.dataList) {
+                        newSource.update(data);
+                    }
+                    return newSource;
+                });
+    }
+
+    @Override
+    public void close() {
+        //TODO
+
+    }
+
+//
+//    DhBlockPos2D lastPlayerPos = new DhBlockPos2D(0, 0);
+//    final ConcurrentHashMap<DhSectionPos, WeakReference<PlaceHolderRenderSource>> trackers = new ConcurrentHashMap<>();
+//    final BiConsumer<DhSectionPos, ChunkSizedData> writeConsumer;
+//    final HashSet<Request, CompletableFuture<?>> inProgressSections = new HashSet<>();
+
+//
+//    public void track(PlaceHolderRenderSource source) {
+//        //logger.info("Tracking source {} at {}", source, source.getSectionPos());
+//        trackers.put(source.getSectionPos(), new WeakReference<>(source));
+//    }
+//
+//    private void update() {
+//        LinkedList<DhSectionPos> toRemove = new LinkedList<>();
+//        for (DhSectionPos pos : trackers.keySet()) {
+//            WeakReference<PlaceHolderRenderSource> ref = trackers.get(pos);
+//            if (ref.get() == null) {
+//                toRemove.add(pos);
+//            }
+//        }
+//        for (DhSectionPos pos : toRemove) {
+//            trackers.remove(pos);
+//        }
+//    }
+
+//    //FIXME: Do optimizations on polling closest to player. (Currently its a O(n) search!)
+//    //FIXME: Do not return sections that is already being generated.
+//    //FIXME: Optimize the checks for inProgressSections.
+//    private DhSectionPos pollClosest(DhBlockPos2D playerPos) {
+//        update();
+//        DhSectionPos closest = null;
+//        long closestDist = Long.MAX_VALUE;
+//        for (DhSectionPos pos : trackers.keySet()) {
+//            if (inProgressSections.contains(pos)) {
+//                continue;
+//            }
+//            long distSqr = pos.getCenter().getCenter().distSquared(playerPos);
+//            if (distSqr < closestDist) {
+//                closest = pos;
+//                closestDist = distSqr;
+//            }
+//        }
+//        if (closest != null) inProgressSections.add(closest);
+//        return closest;
+//    }
 }

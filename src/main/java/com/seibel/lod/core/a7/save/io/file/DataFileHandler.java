@@ -4,6 +4,7 @@ import com.google.common.collect.HashMultimap;
 import com.seibel.lod.core.a7.datatype.LodDataSource;
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.a7.datatype.full.FullDataSource;
+import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.level.IServerLevel;
 import com.seibel.lod.core.a7.pos.DhLodPos;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
@@ -28,14 +29,14 @@ public class DataFileHandler implements IDataSourceProvider {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     final ExecutorService fileReaderThread = LodUtil.makeThreadPool(4, "FileReaderThread");
     final ConcurrentHashMap<DhSectionPos, DataMetaFile> files = new ConcurrentHashMap<>();
-    final IServerLevel level;
+    final ILevel level;
     final File saveDir;
     AtomicInteger topDetailLevel = new AtomicInteger(-1);
     final int minDetailLevel = FullDataSource.SECTION_SIZE_OFFSET;
     final Function<DhSectionPos, CompletableFuture<LodDataSource>> dataSourceCreator;
 
 
-    public DataFileHandler(IServerLevel level, File saveRootDir,
+    public DataFileHandler(ILevel level, File saveRootDir,
                            Function<DhSectionPos, CompletableFuture<LodDataSource>> dataSourceCreator) {
         this.saveDir = saveRootDir;
         this.level = level;
@@ -139,15 +140,6 @@ public class DataFileHandler implements IDataSourceProvider {
         return metaFile.loadOrGetCached(fileReaderThread);
     }
 
-    // This prevents new higher detail levels from being created by not updating the topDetailLevel.
-    private CompletableFuture<LodDataSource> readWithoutUpdate(DhSectionPos pos) {
-        DataMetaFile metaFile = files.get(pos);
-        if (metaFile == null) {
-            return CompletableFuture.completedFuture(null);
-        }
-        return metaFile.loadOrGetCached(fileReaderThread);
-    }
-
     /*
     * This call is concurrent. I.e. it supports multiple threads calling this method at the same time.
      */
@@ -163,55 +155,6 @@ public class DataFileHandler implements IDataSourceProvider {
         if (metaFile != null) { // Fast path: if there is a file for this section, just write to it.
             metaFile.addToWriteQueue(chunkData);
         }
-/*        else if (sectionPos.sectionDetail <= minDetailLevel) {
-            File file = computeDefaultFilePath(sectionPos);
-            //FIXME: Handle file already exists issue. Possibly by renaming the file.
-            LodUtil.assertTrue(!file.exists(), "File {} already exist for path {}", file, sectionPos);
-            CompletableFuture<LodDataSource> gen = new CompletableFuture<>();
-            DataMetaFile newMetaFile = new DataMetaFile(level, file, sectionPos, gen);
-            metaFile = files.putIfAbsent(sectionPos, newMetaFile); // This is a CAS with expected null value.
-            if (metaFile == null) {
-                newMetaFile.addToWriteQueue(chunkData);
-                CompletableFuture.runAsync(() -> gen.complete(FullDataSource.createEmpty(sectionPos)), fileReaderThread)
-                        .exceptionally((e) -> {
-                            gen.completeExceptionally(e);
-                            return null;
-                        });
-            } else {
-                metaFile.addToWriteQueue(chunkData);
-                gen.cancel(true);
-            }
-        } else {
-            File file = computeDefaultFilePath(sectionPos);
-            //FIXME: Handle file already exists issue. Possibly by renaming the file.
-            LodUtil.assertTrue(!file.exists(), "File {} already exist for path {}", file, sectionPos);
-            CompletableFuture<LodDataSource> gen = new CompletableFuture<>();
-            DataMetaFile newMetaFile = new DataMetaFile(level, file, sectionPos, gen);
-            metaFile = files.putIfAbsent(sectionPos, newMetaFile); // This is a CAS with expected null value.
-            if (metaFile == null) {
-                newMetaFile.addToWriteQueue(chunkData);
-                // Create future that generate downsized file
-                CompletableFuture<LodDataSource> subChunk0 = readWithoutUpdate(sectionPos.getChild(0));
-                CompletableFuture<LodDataSource> subChunk1 = readWithoutUpdate(sectionPos.getChild(1));
-                CompletableFuture<LodDataSource> subChunk2 = readWithoutUpdate(sectionPos.getChild(2));
-                CompletableFuture<LodDataSource> subChunk3 = readWithoutUpdate(sectionPos.getChild(3));
-                CompletableFuture.allOf(subChunk0, subChunk1, subChunk2, subChunk3)
-                        .thenAccept(v ->
-                                gen.complete(FullDataSource.createFromLower(sectionPos, new FullDataSource[]{
-                                        (FullDataSource) subChunk0.join(),
-                                        (FullDataSource) subChunk1.join(),
-                                        (FullDataSource) subChunk2.join(),
-                                        (FullDataSource) subChunk3.join()
-                                }))
-                        ).exceptionally((e) -> {
-                            gen.completeExceptionally(e);
-                            return null;
-                        });
-            } else {
-                metaFile.addToWriteQueue(chunkData);
-                gen.cancel(true);
-            }
-        }*/
         if (sectionPos.sectionDetail <= topDetailLevel.get()) {
             recursiveWrite(sectionPos.getParent(), chunkData);
         }

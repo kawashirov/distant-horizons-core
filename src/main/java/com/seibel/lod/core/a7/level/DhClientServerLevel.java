@@ -3,6 +3,7 @@ package com.seibel.lod.core.a7.level;
 import com.seibel.lod.core.a7.generation.GenerationQueue;
 import com.seibel.lod.core.a7.generation.IGenerator;
 import com.seibel.lod.core.a7.render.LodQuadTree;
+import com.seibel.lod.core.a7.save.io.file.GeneratedDataFileHandler;
 import com.seibel.lod.core.a7.util.FileScanner;
 import com.seibel.lod.core.a7.save.io.file.DataFileHandler;
 import com.seibel.lod.core.a7.save.io.render.RenderFileHandler;
@@ -38,14 +39,15 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
     public IClientLevelWrapper clientLevel;
     public a7LodRenderer renderer = null;
     public LodQuadTree tree = null;
-    public IGenerator worldGenerator = null;
+    public BatchGenerator worldGenerator = null;
 
     public DhClientServerLevel(LocalSaveStructure save, IServerLevelWrapper level) {
         this.serverLevel = level;
         this.save = save;
         save.getDataFolder(level).mkdirs();
         save.getRenderCacheFolder(level).mkdirs();
-        dataFileHandler = new DataFileHandler(this, save.getDataFolder(level));
+        generationQueue = new GenerationQueue();
+        dataFileHandler = new GeneratedDataFileHandler(this, save.getDataFolder(level), generationQueue);
         FileScanner.scanFile(save, serverLevel, dataFileHandler, null);
         LOGGER.info("Started DHLevel for {} with saves at {}", level, save);
     }
@@ -61,6 +63,7 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
     public void serverTick() {
         //TODO Update network packet and stuff or state or etc..
     }
+
     public void startRenderer(IClientLevelWrapper clientLevel) {
         LOGGER.info("Starting renderer for {}", this);
         if (renderBufferHandler != null || this.clientLevel != null) {
@@ -68,13 +71,10 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
             return;
         }
         this.clientLevel = clientLevel;
-
-        // FIXME: This A need B and B need A messes needs to be reworked!
+        // TODO: Make a registry for generators for modding support.
+        worldGenerator = new BatchGenerator(this);
+        generationQueue.setGenerator(worldGenerator);
         renderFileHandler = new RenderFileHandler(dataFileHandler, this, save.getRenderCacheFolder(serverLevel));
-        final RenderFileHandler f_renderFileHandler = renderFileHandler;
-        generationQueue = new GenerationQueue(f_renderFileHandler::write);
-        renderFileHandler.setPlaceHolderQueue(generationQueue);
-
         tree = new LodQuadTree(this, Config.Client.Graphics.Quality.lodChunkRenderDistance.get()*16,
                 MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, renderFileHandler);
         renderBufferHandler = new RenderBufferHandler(tree);
@@ -103,10 +103,16 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
         tree = null;
         renderBufferHandler.close();
         renderBufferHandler = null;
-        generationQueue = null;
         renderFileHandler.flushAndSave(); //Ignore the completion feature so that this action is async
         renderFileHandler.close();
         renderFileHandler = null;
+        generationQueue.removeGenerator();
+        try {
+            worldGenerator.close();
+        } catch (Exception e) {
+            LOGGER.error("Error closing world generator", e);
+        }
+        worldGenerator = null;
     }
 
     @Override
@@ -139,11 +145,9 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
         return renderFileHandler == null ? dataFileHandler.flushAndSave() : renderFileHandler.flushAndSave();
         //Note: saving renderFileHandler will also save the dataFileHandler.
     }
-
-    private BatchGenerator batchGenerator = null;
     @Override
     public void close() {
-        if (batchGenerator != null) batchGenerator.close();
+        if (worldGenerator != null) worldGenerator.close();
         if (renderer != null) renderer.close();
         if (tree != null) tree.close();
         if (renderBufferHandler != null) renderBufferHandler.close();
@@ -155,14 +159,10 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
 
     @Override
     public void doWorldGen() {
-        if (worldGenerator == null) {
-            // TODO: Make a registry for generators for modding support.
-            batchGenerator = new BatchGenerator(this);
-            worldGenerator = batchGenerator;
-        } else {
-            batchGenerator.update();
+        if (worldGenerator != null) {
+            worldGenerator.update();
             if (generationQueue != null)
-                generationQueue.doGeneration(batchGenerator);
+                generationQueue.pollAndStartClosest(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
         }
     }
 
