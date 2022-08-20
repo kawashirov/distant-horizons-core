@@ -185,6 +185,16 @@ public class ClientApi
 	
 	public void renderLods(IClientLevelWrapper levelWrapper, Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, float partialTicks)
 	{
+		if (ModInfo.IS_DEV_BUILD && !configOverrideReminderPrinted && MC.playerExists())
+		{
+			// remind the user that this is a development build
+			MC.sendChatMessage(ModInfo.READABLE_NAME + " experimental build " + ModInfo.VERSION);
+			MC.sendChatMessage("You are running an unsupported version of Distant Horizons!");
+			MC.sendChatMessage("Here be dragons!");
+			configOverrideReminderPrinted = true;
+		}
+		
+		
 		IProfilerWrapper profiler = MC.getProfiler();
 		profiler.pop(); // get out of "terrain"
 		profiler.push("DH-RenderLevel");
@@ -254,19 +264,6 @@ public class ClientApi
 		}
 	}
 	
-	/** used in a development environment to change settings on the fly */
-	private void applyDeveloperConfigOverrides()
-	{
-		// remind the user that the config override is active
-		if (!configOverrideReminderPrinted && MC.playerExists())
-		{
-			MC.sendChatMessage(ModInfo.READABLE_NAME + " experimental build " + ModInfo.VERSION);
-			MC.sendChatMessage("You are running an unsupported version of the mod!");
-			MC.sendChatMessage("Here be dragons!");
-			configOverrideReminderPrinted = true;
-		}
-	}
-
 	//=================//
 	//    DEBUG USE    //
 	//=================//
