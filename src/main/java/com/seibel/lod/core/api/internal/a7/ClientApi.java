@@ -52,7 +52,7 @@ import java.util.concurrent.TimeUnit;
  * Specifically for the client.
  * 
  * @author James Seibel
- * @version 2022-4-27
+ * @version 2022-8-20
  */
 public class ClientApi
 {
@@ -64,124 +64,188 @@ public class ClientApi
 	public static RenderSystemTest testRenderer = new RenderSystemTest();
 	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
-
+	
 	public static final boolean ENABLE_LAG_SPIKE_LOGGING = false;
 	public static final long LAG_SPIKE_THRESHOLD_NS = TimeUnit.NANOSECONDS.convert(16, TimeUnit.MILLISECONDS);
 	
 	public static final long SPAM_LOGGER_FLUSH_NS = TimeUnit.NANOSECONDS.convert(1, TimeUnit.SECONDS);
-
-    public static class LagSpikeCatcher {
+	
+	private boolean configOverrideReminderPrinted = false;
+	public boolean rendererDisabledBecauseOfExceptions = false;
+	
+	private long lastFlush = 0;
+	
+	
+	
+	
+	public static class LagSpikeCatcher
+	{
 		long timer = System.nanoTime();
-		public LagSpikeCatcher() {}
-		public void end(String source) {
-			if (!ENABLE_LAG_SPIKE_LOGGING) return;
+		
+		public LagSpikeCatcher()
+		{
+		}
+		
+		public void end(String source)
+		{
+			if (!ENABLE_LAG_SPIKE_LOGGING)
+				return;
 			timer = System.nanoTime() - timer;
-			if (timer > LAG_SPIKE_THRESHOLD_NS) {
-				LOGGER.info("LagSpikeCatcher: "+source+" took "+Duration.ofNanos(timer)+"!");
+			if (timer > LAG_SPIKE_THRESHOLD_NS)
+			{
+				LOGGER.info("LagSpikeCatcher: " + source + " took " + Duration.ofNanos(timer) + "!");
 			}
 		}
 	}
-	private boolean configOverrideReminderPrinted = false;
-	public boolean rendererDisabledBecauseOfExceptions = false;
+	
+	
+	
 	private ClientApi()
 	{
 		
 	}
-
-	public static void logToChat(Level logLevel, String str) {
-		String prefix = "["+ModInfo.READABLE_NAME+"] ";
-		if (logLevel == Level.ERROR) {
+	
+	
+	
+	
+	public static void logToChat(Level logLevel, String str)
+	{
+		String prefix = "[" + ModInfo.READABLE_NAME + "] ";
+		if (logLevel == Level.ERROR)
+		{
 			prefix += "\u00A74";
-		} else if (logLevel == Level.WARN) {
+		}
+		else if (logLevel == Level.WARN)
+		{
 			prefix += "\u00A76";
-		} else if (logLevel == Level.INFO) {
+		}
+		else if (logLevel == Level.INFO)
+		{
 			prefix += "\u00A7f";
-		} else if (logLevel == Level.DEBUG) {
+		}
+		else if (logLevel == Level.DEBUG)
+		{
 			prefix += "\u00A77";
-		} else if (logLevel == Level.TRACE) {
+		}
+		else if (logLevel == Level.TRACE)
+		{
 			prefix += "\u00A78";
-		} else {
+		}
+		else
+		{
 			prefix += "\u00A7f";
 		}
 		prefix += "\u00A7l\u00A7u";
 		prefix += logLevel.name();
 		prefix += ":\u00A7r ";
-		if (MC != null) MC.sendChatMessage(prefix + str);
+		if (MC != null)
+			MC.sendChatMessage(prefix + str);
 	}
-
-	public void onClientOnlyConnected() {
-		if (ENABLE_EVENT_LOGGING) LOGGER.info("Client on ClientOnly mode connecting.");
+	
+	
+	
+	//========//
+	// events //
+	//========//
+	
+	public void onClientOnlyConnected()
+	{
+		if (ENABLE_EVENT_LOGGING)
+			LOGGER.info("Client on ClientOnly mode connecting.");
 		SharedApi.currentWorld = new DhClientWorld();
 	}
-	public void onClientOnlyDisconnected() {
-		if (ENABLE_EVENT_LOGGING) LOGGER.info("Client on ClientOnly mode disconnecting.");
+	
+	public void onClientOnlyDisconnected()
+	{
+		if (ENABLE_EVENT_LOGGING)
+			LOGGER.info("Client on ClientOnly mode disconnecting.");
 		SharedApi.currentWorld.close();
 		SharedApi.currentWorld = null;
 	}
 	
 	public void clientChunkLoadEvent(IChunkWrapper chunk, IClientLevelWrapper level)
 	{
-		if (SharedApi.getEnvironment() == WorldEnvironment.Client_Only) {
+		if (SharedApi.getEnvironment() == WorldEnvironment.Client_Only)
+		{
 			//TODO: Implement
 		}
 	}
+	
 	public void clientChunkSaveEvent(IChunkWrapper chunk, IClientLevelWrapper level)
 	{
-		if (SharedApi.getEnvironment() == WorldEnvironment.Client_Only) {
+		if (SharedApi.getEnvironment() == WorldEnvironment.Client_Only)
+		{
 			//TODO: Implement
 		}
 	}
-
+	
 	public void clientLevelUnloadEvent(IClientLevelWrapper level)
 	{
-		if (ENABLE_EVENT_LOGGING) LOGGER.info("Client level {} unloading.", level);
-		if (SharedApi.currentWorld != null) {
+		if (ENABLE_EVENT_LOGGING)
+			LOGGER.info("Client level {} unloading.", level);
+		if (SharedApi.currentWorld != null)
+		{
 			SharedApi.currentWorld.unloadLevel(level);
 		}
 	}
+	
 	public void clientLevelLoadEvent(IClientLevelWrapper level)
 	{
-		if (ENABLE_EVENT_LOGGING) LOGGER.info("Client level {} loading.", level);
-		if (SharedApi.currentWorld != null) {
+		if (ENABLE_EVENT_LOGGING)
+			LOGGER.info("Client level {} loading.", level);
+		if (SharedApi.currentWorld != null)
+		{
 			SharedApi.currentWorld.getOrLoadLevel(level);
 		}
 	}
-
-	private long lastFlush = 0;
-
-	public void rendererShutdownEvent() {
-		if (ENABLE_EVENT_LOGGING) LOGGER.info("Renderer shutting down.");
+	
+	public void rendererShutdownEvent()
+	{
+		if (ENABLE_EVENT_LOGGING)
+			LOGGER.info("Renderer shutting down.");
 		IProfilerWrapper profiler = MC.getProfiler();
 		profiler.push("DH-RendererShutdown");
-
+		
 		profiler.pop();
 	}
-	public void rendererStartupEvent() {
-		if (ENABLE_EVENT_LOGGING) LOGGER.info("Renderer starting up.");
+	
+	public void rendererStartupEvent()
+	{
+		if (ENABLE_EVENT_LOGGING)
+			LOGGER.info("Renderer starting up.");
 		IProfilerWrapper profiler = MC.getProfiler();
 		profiler.push("DH-RendererStartup");
 		// make sure the GLProxy is created before the LodBufferBuilder needs it
 		GLProxy.getInstance();
 		profiler.pop();
 	}
-
-	public void clientTickEvent() {
+	
+	public void clientTickEvent()
+	{
 		IProfilerWrapper profiler = MC.getProfiler();
 		profiler.push("DH-ClientTick");
-
+		
 		boolean doFlush = System.nanoTime() - lastFlush >= SPAM_LOGGER_FLUSH_NS;
-		if (doFlush) {
+		if (doFlush)
+		{
 			lastFlush = System.nanoTime();
 			SpamReducedLogger.flushAll();
 		}
 		ConfigBasedLogger.updateAll();
 		ConfigBasedSpamLogger.updateAll(doFlush);
-
-		if (SharedApi.currentWorld instanceof IClientWorld) {
+		
+		if (SharedApi.currentWorld instanceof IClientWorld)
+		{
 			((IClientWorld) SharedApi.currentWorld).clientTick();
 		}
 		profiler.pop();
 	}
+	
+	
+	
+	//===========//
+	// rendering //
+	//===========//
 	
 	public void renderLods(IClientLevelWrapper levelWrapper, Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, float partialTicks)
 	{
@@ -198,22 +262,31 @@ public class ClientApi
 		IProfilerWrapper profiler = MC.getProfiler();
 		profiler.pop(); // get out of "terrain"
 		profiler.push("DH-RenderLevel");
-		try {
-			if (!MC.playerExists()) return;
-			if (levelWrapper == null) return;
+		try
+		{
+			if (!MC.playerExists())
+				return;
+			if (levelWrapper == null)
+				return;
 			DhWorld dhWorld = SharedApi.currentWorld;
-			if (dhWorld == null) return;
-			if (!(SharedApi.currentWorld instanceof IClientWorld)) return;
+			if (dhWorld == null)
+				return;
+			if (!(SharedApi.currentWorld instanceof IClientWorld))
+				return;
 			//FIXME: Improve class hierarchy of DhWorld, IClientWorld, IServerWorld to fix all this hard casting
 			IClientLevel level = (IClientLevel) dhWorld.getOrLoadLevel(levelWrapper);
-			if (level == null) return; //Level is not ready yet.
-
-			if (prefLoggerEnabled) {
+			if (level == null)
+				return; //Level is not ready yet.
+			
+			if (prefLoggerEnabled)
+			{
 				level.dumpRamUsage();
 			}
-
-			if (Config.Client.Advanced.Debugging.rendererMode.get() == ERendererMode.DEFAULT) {
-				if (MC_RENDER.playerHasBlindnessEffect()) {
+			
+			if (Config.Client.Advanced.Debugging.rendererMode.get() == ERendererMode.DEFAULT)
+			{
+				if (MC_RENDER.playerHasBlindnessEffect())
+				{
 					// if the player is blind, don't render LODs,
 					// and don't change minecraft's fog
 					// which blindness relies on.
@@ -222,35 +295,48 @@ public class ClientApi
 				if (MC_RENDER.getLightmapWrapper() == null)
 					return;
 				profiler.push("Render-Lods");
-				if (!rendererDisabledBecauseOfExceptions) {
-					try {
+				if (!rendererDisabledBecauseOfExceptions)
+				{
+					try
+					{
 						level.render(mcModelViewMatrix, mcProjectionMatrix, partialTicks, profiler);
-					} catch (RuntimeException e) {
+					}
+					catch (RuntimeException e)
+					{
 						rendererDisabledBecauseOfExceptions = true;
 						LOGGER.error("Renderer thrown an uncaught exception: ", e);
-						try {
+						try
+						{
 							MC.sendChatMessage("\u00A74\u00A7l\u00A7uERROR: Distant Horizons"
 									+ " renderer has encountered an exception!");
 							MC.sendChatMessage("\u00A74Renderer is now disabled to prevent further issues.");
 							MC.sendChatMessage("\u00A74Exception detail: " + e.toString());
-						} catch (RuntimeException ignored) {
+						}
+						catch (RuntimeException ignored)
+						{
 						}
 					}
 				}
 				profiler.pop(); // "Render-Lods"
-			} else if (Config.Client.Advanced.Debugging.rendererMode.get() == ERendererMode.DEBUG) {
+			}
+			else if (Config.Client.Advanced.Debugging.rendererMode.get() == ERendererMode.DEBUG)
+			{
 				profiler.push("Render-Test");
-				try {
+				try
+				{
 					ClientApi.testRenderer.render();
-				} catch (RuntimeException e) {
+				}
+				catch (RuntimeException e)
+				{
 					LOGGER.error("Renderer thrown an uncaught exception: ", e);
-					try {
+					try
+					{
 						MC.sendChatMessage("\u00A74\u00A7l\u00A7uERROR: Distant Horizons"
 								+ " renderer has encountered an exception!");
 						MC.sendChatMessage("\u00A74Renderer is now disabled to prevent further issues.");
 						MC.sendChatMessage("\u00A74Exception detail: " + e.toString());
-					} catch (RuntimeException ignored) {
 					}
+					catch (RuntimeException ignored) { }
 				}
 				profiler.pop(); // end LODTestRendering
 			}
@@ -258,11 +344,15 @@ public class ClientApi
 		catch (Exception e)
 		{
 			LOGGER.error("client level rendering uncaught exception: ", e);
-		} finally {
+		}
+		finally
+		{
 			profiler.pop(); // end LOD
 			profiler.push("terrain"); // go back into "terrain"
 		}
 	}
+	
+	
 	
 	//=================//
 	//    DEBUG USE    //
