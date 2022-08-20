@@ -68,9 +68,12 @@ public class MetaFile {
         validateFile();
         LodUtil.assertTrue(assertLock.readLock().tryLock());
         try (FileChannel channel = FileChannel.open(path.toPath(), StandardOpenOption.READ)) {
-            MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, METADATA_SIZE);
-            this.path = path;
+            ByteBuffer buffer = ByteBuffer.allocate(METADATA_SIZE);
+            channel.read(buffer, 0);
+            channel.close();
+            buffer.flip();
 
+            this.path = path;
             int magic = buffer.getInt();
             if (magic != METADATA_MAGIC_BYTES) {
                 throw new IOException("Invalid file: Magic bytes check failed.");
@@ -109,7 +112,11 @@ public class MetaFile {
         validateFile();
         LodUtil.assertTrue(assertLock.readLock().tryLock());
         try (FileChannel channel = FileChannel.open(path.toPath(), StandardOpenOption.READ)) {
-            MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, METADATA_SIZE);
+            ByteBuffer buffer = ByteBuffer.allocate(METADATA_SIZE);
+            channel.read(buffer, 0);
+            channel.close();
+            buffer.flip();
+
             int magic = buffer.getInt();
             if (magic != METADATA_MAGIC_BYTES) {
                 throw new IOException("Invalid file: Magic bytes check failed.");
