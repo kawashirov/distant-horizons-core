@@ -26,4 +26,15 @@ public class UncheckedInterruptedException extends RuntimeException {
     public static UncheckedInterruptedException convert(InterruptedException e) {
         return new UncheckedInterruptedException(e);
     }
+
+    public static void rethrowIfIsInterruption(Throwable t) {
+        if (t instanceof InterruptedException) {
+            throw convert((InterruptedException) t);
+        } else if (t instanceof UncheckedInterruptedException) {
+            throw (UncheckedInterruptedException) t;
+        }
+    }
+    public static boolean isThrowableInterruption(Throwable t) {
+        return t instanceof InterruptedException || t instanceof UncheckedInterruptedException;
+    }
 }

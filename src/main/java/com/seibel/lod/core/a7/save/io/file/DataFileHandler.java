@@ -123,6 +123,8 @@ public class DataFileHandler implements IDataSourceProvider {
             DataMetaFile newMetaFile = new DataMetaFile(level, file, pos, gen);
             metaFile = files.putIfAbsent(pos, newMetaFile); // This is a CAS with expected null value.
             if (metaFile == null) {
+                //FIXME: First check for lower detail level and use them first.
+
                 dataSourceCreator.apply(pos).handle((source, ex) -> {
                     if (ex != null) {
                         LOGGER.error("Failed to create data source for {}", pos, ex);

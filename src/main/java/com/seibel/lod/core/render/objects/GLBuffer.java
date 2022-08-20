@@ -4,6 +4,7 @@ import com.seibel.lod.core.enums.config.EGpuUploadMethod;
 import com.seibel.lod.core.enums.rendering.EGLProxyContext;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.render.GLProxy;
+import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.UnitBytes;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL32;
@@ -55,8 +56,8 @@ public class GLBuffer implements AutoCloseable
     }
 
     protected void create(boolean asBufferStorage) {
-        if (GLProxy.getInstance().getGlContext() == EGLProxyContext.NONE)
-            throw new IllegalStateException("Thread [" +Thread.currentThread().getName() + "] tried to create a GLBuffer outside a OpenGL context.");
+        LodUtil.assertTrue(GLProxy.getInstance().getGlContext() != EGLProxyContext.NONE,
+                "Thread [{}] tried to create a GLBuffer outside a OpenGL context.", Thread.currentThread());
         this.id = GL32.glGenBuffers();
         this.bufferStorage = asBufferStorage;
         count.getAndIncrement();
@@ -65,10 +66,7 @@ public class GLBuffer implements AutoCloseable
     //DEBUG USE
     //private StackTraceElement[] firstCloseCallStack = null;
     protected void destroy(boolean async) {
-        if (this.id == 0) {
-            //ApiShared.LOGGER.warn("Buffer double close! First close call stack: {}", Arrays.toString(firstCloseCallStack));
-            throw new IllegalStateException("Buffer double close!");
-        }
+        LodUtil.assertTrue(this.id != 0, "Buffer double close!");
         if (async && GLProxy.getInstance().getGlContext() != EGLProxyContext.PROXY_WORKER) {
             GLProxy.getInstance().recordOpenGlCall(() -> destroy((false)));
         } else {
@@ -83,7 +81,7 @@ public class GLBuffer implements AutoCloseable
 
     // Requires already binded
     protected void uploadBufferStorage(ByteBuffer bb, int bufferStorageHint) {
-        if (!bufferStorage) throw new IllegalStateException("Buffer is not bufferStorage but its trying to use bufferStorage upload method!");
+        LodUtil.assertTrue(bufferStorage, "Buffer is not bufferStorage but its trying to use bufferStorage upload method!");
         int bbSize = bb.limit() - bb.position();
         destroy(false);
         create(true);
@@ -94,7 +92,7 @@ public class GLBuffer implements AutoCloseable
 
     // Requires already binded
     protected void uploadBufferData(ByteBuffer bb, int bufferDataHint) {
-        if (bufferStorage) throw new IllegalStateException("Buffer is bufferStorage but its trying to use Data upload method!");
+        LodUtil.assertTrue(!bufferStorage, "Buffer is bufferStorage but its trying to use bufferData upload method!");
         int bbSize = bb.limit() - bb.position();
         GL32.glBufferData(getBufferBindingTarget(), bb, bufferDataHint);
         size = bbSize;
@@ -102,7 +100,7 @@ public class GLBuffer implements AutoCloseable
 
     // Requires already binded
     protected void uploadSubData(ByteBuffer bb, int maxExpansionSize, int bufferDataHint) {
-        if (bufferStorage) throw new IllegalStateException("Buffer is bufferStorage but its trying to use SubData upload method!");
+        LodUtil.assertTrue(!bufferStorage, "Buffer is bufferStorage but its trying to use subData upload method!");
         int bbSize = bb.limit() - bb.position();
         if (size < bbSize || size > bbSize * BUFFER_SHRINK_TRIGGER) {
             int newSize = (int) (bbSize * BUFFER_EXPANSION_MULTIPLIER);
@@ -115,11 +113,9 @@ public class GLBuffer implements AutoCloseable
 
     // Requires already binded
     public void uploadBuffer(ByteBuffer bb, EGpuUploadMethod uploadMethod, int maxExpansionSize, int bufferHint) {
-        if (uploadMethod.useEarlyMapping)
-            throw new IllegalArgumentException("UploadMethod signal that this should use Mapping instead of uploadBuffer!");
+        LodUtil.assertTrue(!uploadMethod.useEarlyMapping, "UploadMethod signal that this should use Mapping instead of uploadBuffer!");
         int bbSize = bb.limit()-bb.position();
-        if (bbSize > maxExpansionSize)
-            throw new IllegalArgumentException("maxExpansionSize is "+maxExpansionSize+" but buffer size is "+bbSize+"!");
+        LodUtil.assertTrue(bbSize <= maxExpansionSize, "maxExpansionSize is {} but buffer size is {}!", maxExpansionSize, bbSize);
         GLProxy.GL_LOGGER.debug("Uploading buffer with {}.", new UnitBytes(bbSize));
         // If size is zero, just ignore it.
         if (bbSize == 0) return;
@@ -131,7 +127,7 @@ public class GLBuffer implements AutoCloseable
         }
         switch (uploadMethod) {
             case AUTO:
-                throw new IllegalArgumentException("GpuUploadMethod AUTO must be resolved before call to uploadBuffer()!");
+                LodUtil.assertNotReach("GpuUploadMethod AUTO must be resolved before call to uploadBuffer()!");
             case BUFFER_STORAGE:
                 uploadBufferStorage(bb, bufferHint);
                 break;
@@ -142,14 +138,15 @@ public class GLBuffer implements AutoCloseable
                 uploadSubData(bb, maxExpansionSize, bufferHint);
                 break;
             default:
-                throw new IllegalArgumentException("Invalid GpuUploadMethod enum");
+                LodUtil.assertNotReach("Unknown GpuUploadMethod!");
         }
     }
 
     public ByteBuffer mapBuffer(int targetSize, EGpuUploadMethod uploadMethod, int maxExpensionSize, int bufferHint, int mapFlags) {
-        if (targetSize == 0) throw new IllegalArgumentException("MapBuffer targetSize is 0!");
-        if (!uploadMethod.useEarlyMapping) throw new IllegalStateException("Upload method must be one that use mappings in order to call mapBuffer!");
-        if (isMapped) throw new IllegalStateException("Map Buffer called but buffer is already mapped!");
+        LodUtil.assertTrue(targetSize != 0, "MapBuffer targetSize is 0");
+        LodUtil.assertTrue(uploadMethod.useEarlyMapping, "Upload method must be one that use early mappings in order to call mapBuffer");
+        LodUtil.assertTrue(!isMapped, "Buffer is already mapped");
+
         boolean useBuffStorage = uploadMethod.useBufferStorage;
         if (useBuffStorage != bufferStorage) {
             destroy(false);
@@ -181,7 +178,7 @@ public class GLBuffer implements AutoCloseable
     // Requires already binded
     public void unmapBuffer()
     {
-        if (!isMapped) throw new IllegalStateException("Unmap Buffer called but buffer is already not mapped!");
+        LodUtil.assertTrue(isMapped, "Buffer is not mapped");
         bind();
         GL32.glUnmapBuffer(getBufferBindingTarget());
         isMapped = false;

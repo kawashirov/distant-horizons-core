@@ -16,13 +16,14 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class GenerationQueue implements AutoCloseable {
     final ConcurrentQuadCombinableProviderTree<GenerationResult> cqcpTree = new ConcurrentQuadCombinableProviderTree<>();
     IGenerator generator = null;
     private final Logger logger = DhLoggerBuilder.getLogger();
     private final ConcurrentHashMap<DhLodPos, CompletableFuture<GenerationResult>> taskMap = new ConcurrentHashMap<>();
-    private final LinkedList<CompletableFuture<GenerationResult>> inProgress = new LinkedList<>();
+    private final AtomicReference<ConcurrentHashMap<DhLodPos, CompletableFuture<GenerationResult>>> inProgress = new AtomicReference<>(null);
 
     public GenerationQueue() {}
     public void pollAndStartClosest(DhBlockPos2D targetPos) {
@@ -49,15 +50,17 @@ public class GenerationQueue implements AutoCloseable {
         LodUtil.assertTrue(generator != null);
         LodUtil.assertTrue(this.generator == null);
         this.generator = generator;
+        inProgress.set(new ConcurrentHashMap<>(16));
     }
     public void removeGenerator() {
         LodUtil.assertTrue(generator != null);
         this.generator = null;
-        inProgress.forEach(f -> f.cancel(true));
-        inProgress.clear();
+        ConcurrentHashMap<DhLodPos, CompletableFuture<GenerationResult>> swapped = this.inProgress.getAndSet(null);
+        swapped.forEach((k,f) -> f.cancel(true));
     }
 
     private CompletableFuture<GenerationResult> createFuture(DhLodPos pos) {
+        logger.info("Creating gen future for {}", pos);
         CompletableFuture<GenerationResult> future = new CompletableFuture<>();
         CompletableFuture<GenerationResult> swapped = taskMap.put(pos, future);
         LodUtil.assertTrue(swapped == null);
@@ -80,14 +83,14 @@ public class GenerationQueue implements AutoCloseable {
         int perCallChunksWidth = 1 << (genGranularity - 4);
 
         CompletableFuture<ArrayGridList<ChunkSizedData>> dataFuture = generator.generate(chunkPosMin, genGranularity);
-        inProgress.add(
+        final ConcurrentHashMap<DhLodPos, CompletableFuture<GenerationResult>> map = this.inProgress.get();
+        map.put(pos, //FIXME: Slight race condition issue here with map.clear()!
             dataFuture.handle((data, ex) -> {
                 if (ex != null) {
                     if (ex instanceof CompletionException) {
                         ex = ex.getCause();
                     }
-                    if (ex instanceof InterruptedException) return null; // Ignore interrupted exceptions.
-                    if (ex instanceof UncheckedInterruptedException) return null; // Ignore unchecked interrupted exceptions.
+                    UncheckedInterruptedException.rethrowIfIsInterruption(ex);
                     logger.error("Error generating data for section {}", pos, ex);
                     throw new CompletionException("Generation failed", ex);
                 }
@@ -107,96 +110,11 @@ public class GenerationQueue implements AutoCloseable {
                 return result;
             }).handle((r, e) -> {
                 if (e!=null) resultFuture.completeExceptionally(e); else resultFuture.complete(r);
+                map.remove(pos);
                 return null;
             })
         );
     }
-
-//    private void startFuture(DhLodPos pos, CompletableFuture<GenerationResult> resultFuture) {
-//        byte dataDetail = generator.getDataDetail();
-//        byte minGenGranularity = generator.getMinGenerationGranularity();
-//        byte maxGenGranularity = generator.getMaxGenerationGranularity();
-//        if (minGenGranularity < 4 || maxGenGranularity < 4) {
-//            throw new IllegalStateException("Generation granularity must be at least 4!");
-//        }
-//
-//        byte minUnitDetail = (byte) (dataDetail + minGenGranularity);
-//        byte maxUnitDetail = (byte) (dataDetail + maxGenGranularity);
-//
-//        byte granularity;
-//        int count;
-//        DHChunkPos chunkPosMin;
-//        if (pos.detail < minUnitDetail) {
-//            granularity = minGenGranularity;
-//            count = 1;
-//            chunkPosMin = new DHChunkPos(pos.convertUpwardsTo(minUnitDetail).getCorner());
-//        } else if (pos.detail > maxUnitDetail) {
-//            granularity = maxGenGranularity;
-//            count = 1 << (pos.detail - maxUnitDetail);
-//            chunkPosMin = new DHChunkPos(pos.getCorner());
-//        } else {
-//            granularity = (byte) (pos.detail - dataDetail);
-//            count = 1;
-//            chunkPosMin = new DHChunkPos(pos.getCorner());
-//        }
-//        assert granularity >= minGenGranularity && granularity <= maxGenGranularity;
-//        assert count > 0;
-//        assert granularity >= 4; // Thanks compiler. Guess having a 'always true' warning means I did it right.
-//        logger.info("Generating section {} of size {} with granularity {} at {}", pos, count, granularity, chunkPosMin);
-//        int perCallChunksWidth = 1 << (granularity - 4);
-//        final byte sectionDetail = (byte) (dataDetail + FullDataSource.SECTION_SIZE_OFFSET);
-//
-//        ArrayList<CompletableFuture<Collection<ChunkSizedData>>> futures = new ArrayList<>(count*count);
-//        for (int dx = 0; dx < count; dx++) {
-//            for (int dz = 0; dz < count; dz++) { // TODO: Unroll this loop to yield when generator is busy.
-//                DHChunkPos subCallChunkPosMin = new DHChunkPos(chunkPosMin.x + dx * perCallChunksWidth, chunkPosMin.z + dz * perCallChunksWidth);
-//                CompletableFuture<ArrayGridList<ChunkSizedData>> dataFuture = generator.generate(subCallChunkPosMin, granularity);
-//                futures.add(dataFuture.handle((data, ex) -> {
-//                    if (ex != null) {
-//                        if (ex instanceof CompletionException) {
-//                            ex = ex.getCause();
-//                        }
-//                        if (ex instanceof InterruptedException) return null; // Ignore interrupted exceptions.
-//                        if (ex instanceof UncheckedInterruptedException) return null; // Ignore unchecked interrupted exceptions.
-//                        logger.error("Error generating data for section {}", pos, ex);
-//                        return null;
-//                    }
-//                    LodUtil.assertTrue(data != null);
-//                    if (data.gridSize < (1 << (granularity-4))) {
-//                        logger.error(
-//                                "Generator at {} returned {} by {} chunks but requested granularity was {}, which expect at least {} by {} chunks! ",
-//                                pos, data.gridSize, data.gridSize, granularity, perCallChunksWidth, perCallChunksWidth);
-//                        return null;
-//                    }
-//
-//                    DhLodPos minSectPos = new DhLodPos((byte)(dataDetail+4), data.getFirst().x, data.getFirst().z).convertUpwardsTo(sectionDetail);
-//                    DhLodPos maxSectPos = new DhLodPos((byte)(dataDetail+4), data.getLast().x, data.getLast().z).convertUpwardsTo(sectionDetail);
-//
-//                    int sectionCount = (maxSectPos.x - minSectPos.x) + 1;
-//                    LodUtil.assertTrue(sectionCount > 0 && sectionCount == (maxSectPos.z - minSectPos.z) + 1);
-//
-//                    logger.info("Writing {} by {} chunks (at {}) with data detail {} to {} by {} sections (at {})",
-//                            data.gridSize, data.gridSize, subCallChunkPosMin, dataDetail,
-//                            sectionCount, sectionCount, minSectPos);
-//                    return data;
-//                }));
-//            }
-//        }
-//        inProgress.add(
-//            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenApply((v) -> {
-//                GenerationResult result = new GenerationResult();
-//                for (CompletableFuture<Collection<ChunkSizedData>> future : futures) {
-//                    Collection<ChunkSizedData> data = future.join();
-//                    if (data == null) continue;
-//                    result.dataList.addAll(data);
-//                }
-//                return result;
-//            }).handle((r, e) -> {
-//                if (e!=null) resultFuture.completeExceptionally(e); else resultFuture.complete(r);
-//                return null;
-//            })
-//        );
-//    }
 
     public CompletableFuture<LodDataSource> generate(DhSectionPos sectionPos) {
         byte maxGen = (byte) (generator.getMaxGenerationGranularity() + generator.getDataDetail());
@@ -221,7 +139,9 @@ public class GenerationQueue implements AutoCloseable {
                                     if (data.getBBoxLodPos().overlaps(sectionPos.getSectionBBoxPos())) newSource.update(data);
                                 }
                             } catch (Exception e) {
-                                // continue
+                                UncheckedInterruptedException.rethrowIfIsInterruption(e);
+                                // else log
+                                logger.error("Error generating data for section {}", sectionPos, e);
                             }
                         }
                         return newSource;
@@ -243,7 +163,6 @@ public class GenerationQueue implements AutoCloseable {
     @Override
     public void close() {
         //TODO
-
     }
 
 //

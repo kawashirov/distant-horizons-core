@@ -6,7 +6,6 @@ import com.seibel.lod.core.a7.datatype.column.accessor.ColumnQuadView;
 import com.seibel.lod.core.a7.datatype.column.accessor.IColumnDatatype;
 import com.seibel.lod.core.a7.datatype.column.render.ColumnRenderBuffer;
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
-import com.seibel.lod.core.a7.datatype.full.FullDataSource;
 import com.seibel.lod.core.a7.datatype.transform.FullToColumnTransformer;
 import com.seibel.lod.core.a7.level.IClientLevel;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
@@ -19,6 +18,8 @@ import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.render.LodQuadTree;
 import com.seibel.lod.core.a7.render.LodRenderSection;
 import com.seibel.lod.core.a7.datatype.LodRenderSource;
+import com.seibel.lod.core.util.Reference;
+import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
 import java.io.DataInputStream;
@@ -267,7 +268,7 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     }
 
     private CompletableFuture<ColumnRenderBuffer> inBuildRenderBuffer = null;
-    private ColumnRenderBuffer usedBuffer = null;
+    private Reference<ColumnRenderBuffer> usedBuffer = new Reference<>();
 
 
     private void tryBuildBuffer(IClientLevel level, LodQuadTree quadTree) {
@@ -327,7 +328,10 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
                 lastNs = System.nanoTime();
                 //LOGGER.info("Swapping render buffer for {}", sectionPos);
                 RenderBuffer oldBuffer = referenceSlot.getAndSet(inBuildRenderBuffer.join());
-                if (oldBuffer instanceof ColumnRenderBuffer) usedBuffer = (ColumnRenderBuffer) oldBuffer;
+                if (oldBuffer instanceof ColumnRenderBuffer) {
+                    ColumnRenderBuffer swapped = usedBuffer.swap((ColumnRenderBuffer) oldBuffer);
+                    LodUtil.assertTrue(swapped == null);
+                }
                 inBuildRenderBuffer = null;
                 return true;
             }

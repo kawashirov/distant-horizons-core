@@ -3,7 +3,6 @@ package com.seibel.lod.core.a7.datatype.column.render;
 import com.seibel.lod.core.a7.datatype.column.ColumnRenderSource;
 import com.seibel.lod.core.a7.datatype.column.accessor.ColumnArrayView;
 import com.seibel.lod.core.a7.level.IClientLevel;
-import com.seibel.lod.core.a7.pos.DhBlockPos2D;
 import com.seibel.lod.core.a7.render.a7LodRenderer;
 import com.seibel.lod.core.a7.util.UncheckedInterruptedException;
 import com.seibel.lod.core.a7.render.RenderBuffer;
@@ -18,18 +17,15 @@ import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.objects.DHBlockPos;
 import com.seibel.lod.core.render.GLProxy;
-import com.seibel.lod.core.render.LodRenderProgram;
 import com.seibel.lod.core.render.objects.GLVertexBuffer;
 import com.seibel.lod.core.util.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.lwjgl.opengl.GL32;
 
 import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.seibel.lod.core.render.GLProxy.GL_LOGGER;
 
@@ -189,7 +185,7 @@ public class ColumnRenderBuffer extends RenderBuffer {
         return getCurrentJobsCount() > MAX_CONCURRENT_CALL;
     }
 
-    public static CompletableFuture<ColumnRenderBuffer> build(IClientLevel clientLevel, ColumnRenderBuffer usedBuffer, ColumnRenderSource data, ColumnRenderSource[] adjData) {
+    public static CompletableFuture<ColumnRenderBuffer> build(IClientLevel clientLevel, Reference<ColumnRenderBuffer> usedBufferSlot, ColumnRenderSource data, ColumnRenderSource[] adjData) {
         if (isBusy()) return null;
         //LOGGER.info("RenderRegion startBuild @ {}", data.sectionPos);
         return CompletableFuture.supplyAsync(() -> {
@@ -221,10 +217,11 @@ public class ColumnRenderBuffer extends RenderBuffer {
                         EGpuUploadMethod method = GLProxy.getInstance().getGpuUploadMethod();
                         EGLProxyContext oldContext = glProxy.getGlContext();
                         glProxy.setGlContext(EGLProxyContext.LOD_BUILDER);
-                        ColumnRenderBuffer buffer = usedBuffer!=null ? usedBuffer :
-                                new ColumnRenderBuffer(
-                                        new DHBlockPos(data.sectionPos.getCorner().getCorner(), clientLevel.getMinY())
-                                );
+                        ColumnRenderBuffer buffer = usedBufferSlot.swap(null);
+                        if (buffer == null)
+                            buffer = new ColumnRenderBuffer(
+                                new DHBlockPos(data.sectionPos.getCorner().getCorner(), clientLevel.getMinY())
+                            );
                         try {
                             buffer.uploadBuffer(builder, method);
                             EVENT_LOGGER.trace("RenderRegion end Upload @ {}", data.sectionPos);
@@ -244,7 +241,7 @@ public class ColumnRenderBuffer extends RenderBuffer {
                 }, BUFFER_UPLOADER).handle((v, e) -> {
                     //LOGGER.info("RenderRegion endBuild @ {}", data.sectionPos);
                     if (e != null) {
-                        usedBuffer.close();
+                        if (!usedBufferSlot.isEmpty()) usedBufferSlot.swap(null).close();
                         return null;
                     } else {
                         return v;

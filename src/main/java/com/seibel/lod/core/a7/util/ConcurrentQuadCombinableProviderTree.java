@@ -7,6 +7,7 @@ import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.ref.WeakReference;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
@@ -136,7 +137,7 @@ public class ConcurrentQuadCombinableProviderTree<R extends CombinableResult<R>>
         CompletableFuture<R> future = new CompletableFuture<>();
         CompletableFuture<R> casValue = Atomics.compareAndExchange(node.future, null, future);
         if (casValue != null) { // cas failed. Existing future. Return it.
-            return future;
+            return casValue;
         }
 
         // Next, we need to make the future completable.
@@ -153,7 +154,19 @@ public class ConcurrentQuadCombinableProviderTree<R extends CombinableResult<R>>
             }
         }
         if (allNull) { // all children are null. We can then just run the allNullCompleter in this node.
-            allNullCompleter.apply(node.pos).thenAccept(future::complete);
+            allNullCompleter.apply(node.pos).whenComplete((r, e) -> {
+                // NOTE(*1): This *HAVE* to get the future via the node reference instead of directly capturing the future,
+                //  as otherwise the node will be garbage collected before the future is completed.
+                // With this, we can guarantee that the node is garbage collected only when the future is (being) completed.
+                // (The actual order is not important however as long as the node is still alive when the generation is in progress)
+                CompletableFuture<R> f = node.future.get();
+                LodUtil.assertTrue(f != null, "Future should not be null");
+                if (e != null) {
+                    f.completeExceptionally(e);
+                } else {
+                    f.complete(r);
+                }
+            });
         } else { // some children exist. We need to wait for some or all of them to complete.
             // But before that, we need to create the children node where they are missing.
             for (int i = 0; i < 4; i++) {
@@ -161,17 +174,15 @@ public class ConcurrentQuadCombinableProviderTree<R extends CombinableResult<R>>
                     CompletableFuture<R> newChildFuture = new CompletableFuture<>();
                     Node<R> newChild = new Node<>(node.pos.getChild(i), newChildFuture, node);
                     node.children.set(i, new WeakReference<>(newChild));
+                    childFutures[i] = newChildFuture;
                     // Since the child is new, we can be sure that it doesn't have any children.
                     // So, we need to make the new child's future completable by running the allNullCompleter.
                     //  (The above relies on the fact that we did a CAS on the beginning of this method,
                     //  which means that we have unique access to the node and its links to the children, and that
                     //  no other thread can be concurrently modifying its links)
-                    allNullCompleter.apply(node.pos.getChild(i)).whenComplete((r, e) -> {
-                        // NOTE(*1): This *HAVE* to get the future via the node reference instead of directly capturing the future,
-                        //  as otherwise the node will be garbage collected before the future is completed.
-                        // With this, we can guarantee that the node is garbage collected only when the future is (being) completed.
-                        // (The actual order is not important however as long as the node is still alive when the generation is in progress)
-                        CompletableFuture<R> f = node.future.get();
+                    allNullCompleter.apply(newChild.pos).whenComplete((r, e) -> {
+                        // NOTE: Same as 'NOTE(*1)', we *HAVE* to get the future via the node reference instead of directly capturing the future.
+                        CompletableFuture<R> f = newChild.future.get();
                         LodUtil.assertTrue(f != null, "Future should not be null");
                         if (e != null) {
                             f.completeExceptionally(e);
@@ -180,6 +191,7 @@ public class ConcurrentQuadCombinableProviderTree<R extends CombinableResult<R>>
                         }
                     });
                 }
+                LodUtil.assertTrue(childFutures[i] != null);
             }
             // Now, we can wait for all the child futures to complete, and then complete this node's future with
             //     the combined result of all child futures.
@@ -204,6 +216,7 @@ public class ConcurrentQuadCombinableProviderTree<R extends CombinableResult<R>>
     }
 
     public CompletableFuture<R> createOrUseExisting(DhLodPos pos, Function<DhLodPos, CompletableFuture<R>> completer) {
+        LOGGER.info("Creating or using existing future for {}", pos);
         int cleanRng = ThreadLocalRandom.current().nextInt(0, 10);
         if (cleanRng == 0) cleanIfNeeded();
         // First, ensure that the root map is locked for reading. (The lock is for the structure of the map, not the values)
@@ -249,9 +262,9 @@ public class ConcurrentQuadCombinableProviderTree<R extends CombinableResult<R>>
 
             // First iteration:
             Node<R> currentNode;
+            DhLodPos childPos = pos.convertUpwardsTo((byte) map.topLevel);
             Node<R> childNode = map.setIfNullAndGet( // rule 3: if null, create a new node.
-                    pos.convertUpwardsTo((byte) map.topLevel),
-                    new Node<R>(pos, null)); // No parent node as it's the root.
+                    childPos, new Node<R>(childPos, null)); // No parent node as it's the root.
             rootMapGlobalLock.readLock().unlock(); // We're done with the map, as following code no longer accesses it.
 
             CompletableFuture<R> future = childNode.future.get();
@@ -262,10 +275,11 @@ public class ConcurrentQuadCombinableProviderTree<R extends CombinableResult<R>>
 
                 // Second and subsequent iterations:
                 while (currentNode.pos.detail > pos.detail) {
-                    Node<R> newNode = new Node<R>(pos.convertUpwardsTo((byte) (currentNode.pos.detail - 1)), null, currentNode);
+                    childPos = pos.convertUpwardsTo((byte) (currentNode.pos.detail - 1));
                     // Note: It is important that child link is set and created before we check the child future,
                     //  so to avoid race conditions with checkAndMakeFuture.
-                    childNode = currentNode.setIfNullAndGet(newNode.pos.getChildIndexOfParent(), newNode); // rule 3: if null, create a new node.
+                    childNode = currentNode.setIfNullAndGet(childPos.getChildIndexOfParent(),
+                            new Node<R>(childPos, null, currentNode)); // rule 3: if null, create a new node.
                     CompletableFuture<R> childFuture = childNode.future.get();
                     if (childFuture != null) { // rule 1: if future is not null, halt and return the future.
                         return childFuture;

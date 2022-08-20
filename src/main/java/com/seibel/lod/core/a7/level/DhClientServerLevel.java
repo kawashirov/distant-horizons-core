@@ -102,16 +102,16 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
         tree.close();
         tree = null;
         generationQueue.removeGenerator();
-        renderBufferHandler.close();
-        renderBufferHandler = null;
-        renderFileHandler.flushAndSave(); //Ignore the completion feature so that this action is async
-        renderFileHandler.close();
-        renderFileHandler = null;
         try {
             worldGenerator.close();
         } catch (Exception e) {
             LOGGER.error("Error closing world generator", e);
         }
+        renderBufferHandler.close();
+        renderBufferHandler = null;
+        renderFileHandler.flushAndSave(); //Ignore the completion feature so that this action is async
+        renderFileHandler.close();
+        renderFileHandler = null;
         worldGenerator = null;
     }
 
