@@ -41,10 +41,10 @@ public class RenderMetaFile extends MetaFile {
     }
 
     public CompletableFuture<Void> flushAndSave(ExecutorService renderCacheThread) {
+        if (!path.exists()) return CompletableFuture.completedFuture(null); // No need to save if the file doesn't exist.
         CompletableFuture<LodRenderSource> source = _readCached(data.get());
-        if (source == null) return CompletableFuture.completedFuture(null);
-        return source.thenAccept((a)->{});
-        //TODO: Should we save the data or let user re-calculate it on new load?
+        if (source == null) return CompletableFuture.completedFuture(null); // If there is no cached data, there is no need to save.
+        return source.thenAccept((a)->{}); // Otherwise, wait for the data to be read (which also flushes changes to the file).
     }
 
     @FunctionalInterface
@@ -94,7 +94,7 @@ public class RenderMetaFile extends MetaFile {
             }
         }
 
-        //==== Cached file out of scrope. ====
+        //==== Cached file out of scope. ====
         // Someone is already trying to complete it. so just return the obj.
         if ((obj instanceof CompletableFuture<?>)) {
             return (CompletableFuture<LodRenderSource>)obj;

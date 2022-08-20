@@ -108,12 +108,7 @@ public class DataFileHandler implements IDataSourceProvider {
         }
     }
 
-    /*
-    * This call is concurrent. I.e. it supports multiple threads calling this method at the same time.
-     */
-    @Override
-    public CompletableFuture<LodDataSource> read(DhSectionPos pos) {
-        topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetail));
+    private DataMetaFile atomicGetOrMakeFile(DhSectionPos pos) {
         DataMetaFile metaFile = files.get(pos);
         if (metaFile == null) {
             File file = computeDefaultFilePath(pos);
@@ -123,22 +118,147 @@ public class DataFileHandler implements IDataSourceProvider {
             DataMetaFile newMetaFile = new DataMetaFile(level, file, pos, gen);
             metaFile = files.putIfAbsent(pos, newMetaFile); // This is a CAS with expected null value.
             if (metaFile == null) {
-                //FIXME: First check for lower detail level and use them first.
-
-                dataSourceCreator.apply(pos).handle((source, ex) -> {
-                    if (ex != null) {
-                        LOGGER.error("Failed to create data source for {}", pos, ex);
-                        gen.completeExceptionally(ex);
-                    } else {
-                        gen.complete(source);
-                    }
-                    return null;
-                });
+                buildFile(pos, gen);
                 metaFile = newMetaFile;
             } else {
                 gen.cancel(true);
             }
         }
+        return metaFile;
+    }
+
+    private void selfSearch(DhSectionPos basePos, DhSectionPos pos, ArrayList<DataMetaFile> existFiles, ArrayList<DhSectionPos> missing) {
+        byte detail = pos.sectionDetail;
+        boolean allEmpty = true;
+        outerLoop:
+        while (--detail >= minDetailLevel) {
+            DhLodPos min = pos.getCorner().getCorner(detail);
+            int count = pos.getSectionBBoxPos().getWidth(detail);
+            for (int ox = 0; ox<count; ox++) {
+                for (int oz = 0; oz<count; oz++) {
+                    DhSectionPos subPos = new DhSectionPos(detail, ox+min.x, oz+min.z);
+                    LodUtil.assertTrue(pos.overlaps(basePos) && subPos.overlaps(pos));
+
+                    //TODO: The following check is temp as we only samples corner points per data, which means
+                    // on a very different level, we may not need the entire section at all.
+                    if (!FullDataSource.neededForPosition(basePos, subPos)) continue;
+
+                    if (files.containsKey(subPos)) {
+                        allEmpty = false;
+                        break outerLoop;
+                    }
+                }
+            }
+        }
+
+        if (allEmpty) {
+            missing.add(pos);
+        } else {
+            {
+                DhSectionPos childPos = pos.getChild(0);
+                if (FullDataSource.neededForPosition(basePos, childPos)) {
+                    DataMetaFile metaFile = files.get(childPos);
+                    if (metaFile != null) {
+                        existFiles.add(metaFile);
+                    } else if (childPos.sectionDetail == minDetailLevel) {
+                        missing.add(childPos);
+                    } else {
+                        selfSearch(basePos, childPos, existFiles, missing);
+                    }
+                }
+            }
+            {
+                DhSectionPos childPos = pos.getChild(1);
+                if (FullDataSource.neededForPosition(basePos, childPos)) {
+                    DataMetaFile metaFile = files.get(childPos);
+                    if (metaFile != null) {
+                        existFiles.add(metaFile);
+                    } else if (childPos.sectionDetail == minDetailLevel) {
+                        missing.add(childPos);
+                    } else {
+                        selfSearch(basePos, childPos, existFiles, missing);
+                    }
+                }
+            }
+            {
+                DhSectionPos childPos = pos.getChild(2);
+                if (FullDataSource.neededForPosition(basePos, childPos)) {
+                    DataMetaFile metaFile = files.get(childPos);
+                    if (metaFile != null) {
+                        existFiles.add(metaFile);
+                    } else if (childPos.sectionDetail == minDetailLevel) {
+                        missing.add(childPos);
+                    } else {
+                        selfSearch(basePos, childPos, existFiles, missing);
+                    }
+                }
+            }
+            {
+                DhSectionPos childPos = pos.getChild(3);
+                if (FullDataSource.neededForPosition(basePos, childPos)) {
+                    DataMetaFile metaFile = files.get(childPos);
+                    if (metaFile != null) {
+                        existFiles.add(metaFile);
+                    } else if (childPos.sectionDetail == minDetailLevel) {
+                        missing.add(childPos);
+                    } else {
+                        selfSearch(basePos, childPos, existFiles, missing);
+                    }
+                }
+            }
+        }
+    }
+
+
+    private void buildFile(DhSectionPos pos, CompletableFuture<LodDataSource> gen) {
+        ArrayList<DataMetaFile> existFiles = new ArrayList<>();
+        ArrayList<DhSectionPos> missing = new ArrayList<>();
+        selfSearch(pos, pos, existFiles, missing);
+        LodUtil.assertTrue(!missing.isEmpty() || !existFiles.isEmpty());
+        if (missing.size() == 1 && existFiles.isEmpty() && missing.get(0).equals(pos)) {
+            dataSourceCreator.apply(pos).whenComplete((f, ex) -> {
+                if (ex != null) {
+                    gen.completeExceptionally(ex);
+                } else {
+                    gen.complete(f);
+                }
+            });
+            return;
+        }
+
+
+        LOGGER.info("Creating file at {} using {} existing files and {} new files.", pos, existFiles.size(), missing.size());
+        ArrayList<CompletableFuture<LodDataSource>> futures = new ArrayList<>(existFiles.size() + missing.size());
+        for (DhSectionPos missingPos : missing) {
+            existFiles.add(atomicGetOrMakeFile(missingPos));
+        }
+        FullDataSource fullDataSource = FullDataSource.createEmpty(pos);
+        for (DataMetaFile metaFile : existFiles) {
+            futures.add(
+                    metaFile.loadOrGetCached(fileReaderThread).whenComplete((data, ex) -> {
+                        if (ex != null) return;
+                        if (!(data instanceof FullDataSource)) return;
+                        fullDataSource.writeFromLower((FullDataSource) data);
+                    })
+            );
+        }
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                .whenComplete((v, ex) -> {
+            if (ex != null) {
+                gen.completeExceptionally(ex);
+            } else {
+                gen.complete(fullDataSource);
+            }
+        });
+    }
+
+    /*
+    * This call is concurrent. I.e. it supports multiple threads calling this method at the same time.
+     */
+    @Override
+    public CompletableFuture<LodDataSource> read(DhSectionPos pos) {
+        topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetail));
+        DataMetaFile metaFile = atomicGetOrMakeFile(pos);
         return metaFile.loadOrGetCached(fileReaderThread);
     }
 

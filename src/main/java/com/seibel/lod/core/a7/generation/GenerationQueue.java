@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class GenerationQueue implements AutoCloseable {
     final ConcurrentQuadCombinableProviderTree<GenerationResult> cqcpTree = new ConcurrentQuadCombinableProviderTree<>();
-    IGenerator generator = null;
+    IGenerator generator = null; //FIXME: This is volatile and need atomic control
     private final Logger logger = DhLoggerBuilder.getLogger();
     private final ConcurrentHashMap<DhLodPos, CompletableFuture<GenerationResult>> taskMap = new ConcurrentHashMap<>();
     private final AtomicReference<ConcurrentHashMap<DhLodPos, CompletableFuture<GenerationResult>>> inProgress = new AtomicReference<>(null);

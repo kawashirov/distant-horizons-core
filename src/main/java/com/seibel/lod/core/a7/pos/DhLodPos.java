@@ -31,7 +31,12 @@ public class DhLodPos implements Comparable<DhLodPos> {
     public int getWidth() {
         return 1 << detail;
     }
-    public static int getWidth(byte detail) {
+    public int getWidth(byte detail) {
+        LodUtil.assertTrue(detail <= this.detail);
+        return 1 << (this.detail - detail);
+    }
+
+    public static int blockWidth(byte detail) {
         return 1 << detail;
     }
 

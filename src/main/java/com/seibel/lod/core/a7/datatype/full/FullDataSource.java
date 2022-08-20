@@ -18,7 +18,10 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 public class FullDataSource extends FullArrayView implements LodDataSource { // 1 chunk
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
@@ -197,25 +200,44 @@ public class FullDataSource extends FullArrayView implements LodDataSource { // 
         return new FullDataSource(pos);
     }
 
+    public static boolean neededForPosition(DhSectionPos posToWrite, DhSectionPos posToTest) {
+        if (!posToWrite.overlaps(posToTest)) return false;
+        if (posToTest.sectionDetail > posToWrite.sectionDetail) return false;
+        if (posToWrite.sectionDetail - posToTest.sectionDetail <= SECTION_SIZE_OFFSET) return true;
+        byte sectPerData = (byte) (1 << (posToWrite.sectionDetail - posToTest.sectionDetail - SECTION_SIZE_OFFSET));
+        return posToTest.sectionX % sectPerData == 0 && posToTest.sectionZ % sectPerData == 0;
+    }
 
-    public static FullDataSource createFromLower(DhSectionPos pos, FullDataSource[] lower) {
-        FullDataSource newData = new FullDataSource(pos);
-        LodUtil.assertTrue(lower.length == 4, "Non direct convert from lower is not yet implemented");
-        int halfSize = SECTION_SIZE/2;
-        DhSectionPos cornerPos = pos.getChild(0);
-        for (FullDataSource lowerSection : lower) {
-            if (lowerSection==null || lowerSection.isEmpty) continue;
-            int offsetX = lowerSection.sectionPos.sectionX == cornerPos.sectionX ? 0 : halfSize;
-            int offsetZ = lowerSection.sectionPos.sectionZ == cornerPos.sectionZ ? 0 : halfSize;
-            newData.isEmpty = false;
-            for (int ox = 0; ox < halfSize; ox++) {
-                for (int oz = 0; oz < halfSize; oz++) {
-                    FullArrayView quadView = lowerSection.subView(2, ox*2, oz*2);
-                    SingleFullArrayView target = newData.get(ox+offsetX, oz+offsetZ);
-                    target.downsampleFrom(quadView);
+    public void writeFromLower(FullDataSource subData) {
+        LodUtil.assertTrue(sectionPos.overlaps(subData.sectionPos));
+        LodUtil.assertTrue(subData.sectionPos.sectionDetail < sectionPos.sectionDetail);
+        if (!neededForPosition(sectionPos, subData.sectionPos)) return;
+        DhSectionPos lowerSectPos = subData.sectionPos;
+        byte detailDiff = (byte) (sectionPos.sectionDetail - subData.sectionPos.sectionDetail);
+        byte targetDataDetail = getDataDetail();
+        DhLodPos minDataPos = sectionPos.getCorner(targetDataDetail);
+        if (detailDiff <= SECTION_SIZE_OFFSET) {
+            int count = 1 << detailDiff;
+            int dataPerCount = SECTION_SIZE / count;
+            DhLodPos subDataPos = lowerSectPos.getSectionBBoxPos().getCorner(targetDataDetail);
+            int dataOffsetX = subDataPos.x - minDataPos.x;
+            int dataOffsetZ = subDataPos.z - minDataPos.z;
+            LodUtil.assertTrue(dataOffsetX >= 0 && dataOffsetX < SECTION_SIZE && dataOffsetZ >= 0 && dataOffsetZ < SECTION_SIZE);
+
+            for (int ox = 0; ox < count; ox++) {
+                for (int oz = 0; oz < count; oz++) {
+                    SingleFullArrayView column = this.get(ox + dataOffsetX, oz + dataOffsetZ);
+                    column.downsampleFrom(subData.subView(dataPerCount, ox * dataPerCount, oz * dataPerCount));
                 }
             }
+        } else {
+            // Count == 1
+            DhLodPos subDataPos = lowerSectPos.getSectionBBoxPos().convertUpwardsTo(targetDataDetail);
+            int dataOffsetX = subDataPos.x - minDataPos.x;
+            int dataOffsetZ = subDataPos.z - minDataPos.z;
+            LodUtil.assertTrue(dataOffsetX >= 0 && dataOffsetX < SECTION_SIZE && dataOffsetZ >= 0 && dataOffsetZ < SECTION_SIZE);
+            subData.get(0,0).deepCopyTo(get(dataOffsetX, dataOffsetZ));
         }
-        return newData;
     }
+
 }

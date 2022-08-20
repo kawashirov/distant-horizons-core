@@ -107,12 +107,12 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
         } catch (Exception e) {
             LOGGER.error("Error closing world generator", e);
         }
+        worldGenerator = null;
         renderBufferHandler.close();
         renderBufferHandler = null;
         renderFileHandler.flushAndSave(); //Ignore the completion feature so that this action is async
         renderFileHandler.close();
         renderFileHandler = null;
-        worldGenerator = null;
     }
 
     @Override
@@ -142,8 +142,12 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
 
     @Override
     public CompletableFuture<Void> save() {
-        return renderFileHandler == null ? dataFileHandler.flushAndSave() : renderFileHandler.flushAndSave();
-        //Note: saving renderFileHandler will also save the dataFileHandler.
+
+        if (renderFileHandler != null) {
+            return renderFileHandler.flushAndSave().thenCompose(v -> dataFileHandler.flushAndSave());
+        } else {
+            return dataFileHandler.flushAndSave();
+        }
     }
     @Override
     public void close() {
