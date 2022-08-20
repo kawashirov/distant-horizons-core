@@ -21,6 +21,8 @@ package com.seibel.lod.core.logging;
 
 import com.seibel.lod.core.api.internal.a7.ClientApi;
 import com.seibel.lod.core.enums.config.ELoggerMode;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
+import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.Message;
@@ -33,6 +35,9 @@ import java.util.function.Supplier;
 
 public class ConfigBasedLogger
 {
+	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
+	
+	
 	public static final List<WeakReference<ConfigBasedLogger>> loggers
 			= Collections.synchronizedList(new LinkedList<WeakReference<ConfigBasedLogger>>());
 	
@@ -100,10 +105,10 @@ public class ConfigBasedLogger
 		if (mode.levelForChat.isLessSpecificThan(level))
 		{
 			if (param.length > 0 && param[param.length - 1] instanceof Throwable)
-				ClientApi.logToChat(level, msgStr + "\n" +
+				MC.logToChat(level, msgStr + "\n" +
 						_throwableToDetailString(((Throwable) param[param.length - 1])));
 			else
-				ClientApi.logToChat(level, msgStr);
+				MC.logToChat(level, msgStr);
 		}
 	}
 	

@@ -100,46 +100,13 @@ public class ClientApi
 	
 	
 	
+	//==============//
+	// constructors //
+	//==============//
+	
 	private ClientApi()
 	{
 		
-	}
-	
-	
-	
-	
-	public static void logToChat(Level logLevel, String str)
-	{
-		String prefix = "[" + ModInfo.READABLE_NAME + "] ";
-		if (logLevel == Level.ERROR)
-		{
-			prefix += "\u00A74";
-		}
-		else if (logLevel == Level.WARN)
-		{
-			prefix += "\u00A76";
-		}
-		else if (logLevel == Level.INFO)
-		{
-			prefix += "\u00A7f";
-		}
-		else if (logLevel == Level.DEBUG)
-		{
-			prefix += "\u00A77";
-		}
-		else if (logLevel == Level.TRACE)
-		{
-			prefix += "\u00A78";
-		}
-		else
-		{
-			prefix += "\u00A7f";
-		}
-		prefix += "\u00A7l\u00A7u";
-		prefix += logLevel.name();
-		prefix += ":\u00A7r ";
-		if (MC != null)
-			MC.sendChatMessage(prefix + str);
 	}
 	
 	
