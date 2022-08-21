@@ -250,63 +250,34 @@ public class ClientApi
 				level.dumpRamUsage();
 			}
 			
-			if (Config.Client.Advanced.Debugging.rendererMode.get() == ERendererMode.DEFAULT)
+			
+			profiler.push("Render" + ( Config.Client.Advanced.Debugging.rendererMode.get() == ERendererMode.DEFAULT ? "-lods" : "-debug"));
+			try
 			{
-				if (MC_RENDER.playerHasBlindnessEffect())
+				if (Config.Client.Advanced.Debugging.rendererMode.get() == ERendererMode.DEFAULT)
 				{
-					// if the player is blind, don't render LODs,
-					// and don't change minecraft's fog
-					// which blindness relies on.
-					return;
-				}
-				if (MC_RENDER.getLightmapWrapper() == null)
-					return;
-				profiler.push("Render-Lods");
-				if (!rendererDisabledBecauseOfExceptions)
-				{
-					try
+					if (!rendererDisabledBecauseOfExceptions)
 					{
 						level.render(mcModelViewMatrix, mcProjectionMatrix, partialTicks, profiler);
 					}
-					catch (RuntimeException e)
-					{
-						rendererDisabledBecauseOfExceptions = true;
-						LOGGER.error("Renderer thrown an uncaught exception: ", e);
-						try
-						{
-							MC.sendChatMessage("\u00A74\u00A7l\u00A7uERROR: Distant Horizons"
-									+ " renderer has encountered an exception!");
-							MC.sendChatMessage("\u00A74Renderer is now disabled to prevent further issues.");
-							MC.sendChatMessage("\u00A74Exception detail: " + e.toString());
-						}
-						catch (RuntimeException ignored)
-						{
-						}
-					}
 				}
-				profiler.pop(); // "Render-Lods"
-			}
-			else if (Config.Client.Advanced.Debugging.rendererMode.get() == ERendererMode.DEBUG)
-			{
-				profiler.push("Render-Test");
-				try
+				else if (Config.Client.Advanced.Debugging.rendererMode.get() == ERendererMode.DEBUG)
 				{
 					ClientApi.testRenderer.render();
 				}
-				catch (RuntimeException e)
-				{
-					LOGGER.error("Renderer thrown an uncaught exception: ", e);
-					try
-					{
-						MC.sendChatMessage("\u00A74\u00A7l\u00A7uERROR: Distant Horizons"
-								+ " renderer has encountered an exception!");
-						MC.sendChatMessage("\u00A74Renderer is now disabled to prevent further issues.");
-						MC.sendChatMessage("\u00A74Exception detail: " + e.toString());
-					}
-					catch (RuntimeException ignored) { }
-				}
-				profiler.pop(); // end LODTestRendering
+				// the other rendererMode is DISABLED
 			}
+			catch (RuntimeException e)
+			{
+				rendererDisabledBecauseOfExceptions = true;
+				LOGGER.error("Renderer thrown an uncaught exception: ", e);
+				
+				MC.sendChatMessage("\u00A74\u00A7l\u00A7uERROR: Distant Horizons"
+						+ " renderer has encountered an exception!");
+				MC.sendChatMessage("\u00A74Renderer is now disabled to prevent further issues.");
+				MC.sendChatMessage("\u00A74Exception detail: " + e);
+			}
+			profiler.pop();
 		}
 		catch (Exception e)
 		{
