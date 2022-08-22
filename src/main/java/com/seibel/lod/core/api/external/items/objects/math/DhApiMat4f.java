@@ -29,7 +29,7 @@ package com.seibel.lod.core.api.external.items.objects.math;
  * of a 4x4 matrix.
  * 
  * @author James Seibel
- * @version 2022-7-13
+ * @version 2022-8-21
  */
 public class DhApiMat4f
 {
@@ -76,7 +76,6 @@ public class DhApiMat4f
 		this.m33 = sourceMatrix.m33;
 	}
 	
-	
 	public DhApiMat4f(float[] values)
 	{
 		m00 = values[0];
@@ -99,6 +98,31 @@ public class DhApiMat4f
 	
 	
 	
+	/** Returns the values of this matrix in row major order (AKA rows then columns) */
+	private float[] getValuesAsArray()
+	{
+		return new float[] {
+				this.m00,
+				this.m01,
+				this.m02,
+				this.m03,
+				
+				this.m10,
+				this.m11,
+				this.m12,
+				this.m13,
+				
+				this.m20,
+				this.m21,
+				this.m22,
+				this.m23,
+				
+				this.m30,
+				this.m31,
+				this.m32,
+				this.m33,
+		};
+	}
 	
 	
 	

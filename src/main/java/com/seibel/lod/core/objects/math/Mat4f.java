@@ -19,6 +19,8 @@
 
 package com.seibel.lod.core.objects.math;
 
+import com.seibel.lod.core.api.external.items.objects.math.DhApiMat4f;
+
 import java.nio.FloatBuffer;
 
 /**
@@ -441,7 +443,49 @@ public class Mat4f
 	}
 	
 	
-	// Forge start
+	
+	//==================//
+	// Distant Horizons //
+	//      methods     //
+	//==================//
+	
+	/** Returns the values of this matrix in row major order (AKA rows then columns) */
+	private float[] getValuesAsArray()
+	{
+		return new float[] {
+			this.m00,
+			this.m01,
+			this.m02,
+			this.m03,
+			
+			this.m10,
+			this.m11,
+			this.m12,
+			this.m13,
+			
+			this.m20,
+			this.m21,
+			this.m22,
+			this.m23,
+			
+			this.m30,
+			this.m31,
+			this.m32,
+			this.m33,
+		};
+	}
+	
+	/** Returns the API version of this object. */
+	public DhApiMat4f createApiObject()
+	{
+		return new DhApiMat4f(this.getValuesAsArray());
+	}
+	
+	
+	//===============//
+	// Forge methods //
+	//===============//
+	
 	public Mat4f(float[] values)
 	{
 		m00 = values[0];
@@ -541,4 +585,5 @@ public class Mat4f
 		this.m22 = matNearClip;
 		this.m23 = matFarClip;
 	}
+	
 }
