@@ -19,24 +19,37 @@
 
 package com.seibel.lod.core.render;
 
+import com.seibel.lod.core.a7.level.IClientLevel;
+import com.seibel.lod.core.a7.world.DhWorld;
+import com.seibel.lod.core.a7.world.IClientWorld;
+import com.seibel.lod.core.api.internal.a7.SharedApi;
+import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.objects.DHBlockPos;
 import com.seibel.lod.core.objects.DHChunkPos;
+import com.seibel.lod.core.objects.math.Mat4f;
 import com.seibel.lod.core.objects.math.Vec3f;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
+import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 
 /**
  * This holds miscellaneous helper code
  * to be used in the rendering process.
  * 
  * @author James Seibel
- * @version 10-19-2021
+ * @version 2022-8-21
  */
 public class RenderUtil
 {
+	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	
+	
+	//=================//
+	// culling methods //
+	//=================//
 	
 	/**
 	 * Returns if the given ChunkPos is in the loaded area of the world.
@@ -64,7 +77,6 @@ public class RenderUtil
 						&& z <= centerCoordinate + MC_RENDER.getRenderDistance());
 	}
 	
-	
 	/**
 	 * Find the coordinates that are in the center half of the given
 	 * 2D matrix, starting at (0,0) and going to (2 * lodRadius, 2 * lodRadius).
@@ -79,7 +91,6 @@ public class RenderUtil
 				(j >= lodRadius - halfRadius
 						&& j <= lodRadius + halfRadius);
 	}
-	
 	
 	/**
 	 * Returns true if one of the region's 4 corners is in front
@@ -118,4 +129,112 @@ public class RenderUtil
 		// flickering or odd disappearances
 		return objectVector.dotProduct(cameraDir) > -0.1;
 	}
+	
+	
+	
+	//=====================//
+	// matrix manipulation //
+	//=====================//
+	
+	/**
+	 * create and return a new projection matrix based on MC's modelView and projection matrices
+	 * @param mcProjMat Minecraft's current projection matrix
+	 */
+	public static Mat4f createLodProjectionMatrix(Mat4f mcProjMat, float partialTicks)
+	{
+		int farPlaneDistanceInBlocks = RenderUtil.getFarClipPlaneDistanceInBlocks();
+		
+		// Create a copy of the current matrix, so it won't be modified.
+		Mat4f lodProj = mcProjMat.copy();
+		
+		// Set new far and near clip plane values.
+		lodProj.setClipPlanes(
+				getNearClipPlaneDistanceInBlocks(partialTicks),
+				(float)((farPlaneDistanceInBlocks+LodUtil.REGION_WIDTH) * Math.sqrt(2)));
+		
+		return lodProj;
+	}
+	
+	/** create and return a new projection matrix based on MC's modelView and projection matrices */
+	public static Mat4f createLodModelViewMatrix(Mat4f mcModelViewMat)
+	{
+		// nothing beyond copying needs to be done to MC's MVM currently,
+		// this method is just here in case that changes in the future
+		return mcModelViewMat.copy();
+	}
+	
+	/**
+	 * create and return a new combined modelView/projection matrix based on MC's modelView and projection matrices
+	 * @param mcProjMat Minecraft's current projection matrix
+	 * @param mcModelViewMat Minecraft's current model view matrix
+	 */
+	public static Mat4f createCombinedModelViewProjectionMatrix(Mat4f mcProjMat, Mat4f mcModelViewMat, float partialTicks)
+	{
+		Mat4f lodProj = createLodProjectionMatrix(mcProjMat, partialTicks);
+		lodProj.multiply(createLodModelViewMatrix(mcModelViewMat));
+		return lodProj;
+	}
+	
+	public static float getNearClipPlaneDistanceInBlocks(float partialTicks)
+	{
+		int vanillaBlockRenderedDistance = MC_RENDER.getRenderDistance() * LodUtil.CHUNK_WIDTH;
+		
+		float nearClipPlane;
+		if (Config.Client.Advanced.lodOnlyMode.get()) {
+			nearClipPlane = 0.1f;
+		} else if (Config.Client.Graphics.AdvancedGraphics.useExtendedNearClipPlane.get()) {
+			nearClipPlane = Math.min(vanillaBlockRenderedDistance - LodUtil.CHUNK_WIDTH, (float) 8 * LodUtil.CHUNK_WIDTH); // allow a max near clip plane of 8 chunks
+		} else {
+			nearClipPlane = 16f;
+		}
+		
+		// modify the based on the player's FOV
+		double fov = MC_RENDER.getFov(partialTicks);
+		double aspectRatio = (double) MC_RENDER.getScreenWidth() / MC_RENDER.getScreenHeight();
+		return (float) (nearClipPlane
+				/ Math.sqrt(1d + LodUtil.pow2(Math.tan(fov / 180d * Math.PI / 2d))
+				* (LodUtil.pow2(aspectRatio) + 1d)));
+	}
+	public static int getFarClipPlaneDistanceInBlocks()
+	{
+		int lodChunkDist = Config.Client.Graphics.Quality.lodChunkRenderDistance.get();
+		return lodChunkDist * LodUtil.CHUNK_WIDTH;
+	}
+	
+	/** @return false if LODs shouldn't be rendered for any reason */
+	public static boolean shouldLodsRender(ILevelWrapper levelWrapper)
+	{
+		if (!MC.playerExists())
+			return false;
+		
+		if (levelWrapper == null)
+			return false;
+		
+		DhWorld dhWorld = SharedApi.currentWorld;
+		if (dhWorld == null)
+			return false;
+		
+		if (!(SharedApi.currentWorld instanceof IClientWorld))
+			return false; // don't attempt to render server worlds
+		
+		//FIXME: Improve class hierarchy of DhWorld, IClientWorld, IServerWorld to fix all this hard casting
+		// (also in ClientApi)
+		IClientLevel level = (IClientLevel) dhWorld.getOrLoadLevel(levelWrapper);
+		if (level == null)
+			return false; //Level is not ready yet.
+		
+		if (MC_RENDER.playerHasBlindnessEffect())
+		{
+			// if the player is blind, don't render LODs,
+			// and don't change minecraft's fog
+			// which blindness relies on.
+			return false;
+		}
+		
+		if (MC_RENDER.getLightmapWrapper() == null)
+			return false;
+		
+		return true;
+	}
+	
 }

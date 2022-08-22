@@ -34,6 +34,7 @@ import com.seibel.lod.core.objects.math.Vec3f;
 import com.seibel.lod.core.render.GLProxy;
 import com.seibel.lod.core.render.LodFogConfig;
 import com.seibel.lod.core.render.LodRenderProgram;
+import com.seibel.lod.core.render.RenderUtil;
 import com.seibel.lod.core.render.objects.GLState;
 import com.seibel.lod.core.render.objects.GLVertexBuffer;
 import com.seibel.lod.core.render.objects.QuadElementBuffer;
@@ -54,7 +55,7 @@ import java.util.concurrent.TimeUnit;
  * This is where LODs are draw to the world.
  * 
  * @author James Seibel
- * @version 12-12-2021
+ * @version 2022-8-21
  */
 public class a7LodRenderer
 {
@@ -125,18 +126,7 @@ public class a7LodRenderer
 			EVENT_LOGGER.error("drawLODs() called after close()!");
 			return;
 		}
-		//=================================//
-		// determine if LODs should render //
-		//=================================//
-		if (MC_RENDER.playerHasBlindnessEffect())
-		{
-			// if the player is blind, don't render LODs,
-			// and don't change minecraft's fog
-			// which blindness relies on.
-			return;
-		}
-		if (MC_RENDER.getLightmapWrapper() == null)
-			return;
+		
 
 		// get MC's shader program
 		// Save all MC render state
@@ -203,24 +193,14 @@ public class a7LodRenderer
 		//LightmapTexture lightmapTexture = new LightmapTexture();
 		
 		/*---------Get required data--------*/
-		// Get the matrixs for rendering
 		int vanillaBlockRenderedDistance = MC_RENDER.getRenderDistance() * LodUtil.CHUNK_WIDTH;
-		int lodChunkDist = Config.Client.Graphics.Quality.lodChunkRenderDistance.get();
-		int farPlaneBlockDistance;
-		// required for setupFog and setupProjectionMatrix
-		if (MC.getWrappedClientWorld().getDimensionType().hasCeiling())
-			farPlaneBlockDistance = Math.min(lodChunkDist, LodUtil.CEILED_DIMENSION_MAX_RENDER_DISTANCE) * LodUtil.CHUNK_WIDTH;
-		else
-			farPlaneBlockDistance = lodChunkDist * LodUtil.CHUNK_WIDTH;
-
-		Mat4f combinedMatrix = createCombinedMatrix(baseProjectionMatrix, baseModelViewMatrix,
-				vanillaBlockRenderedDistance, farPlaneBlockDistance, partialTicks);
+		Mat4f modelViewProjectionMatrix = RenderUtil.createCombinedModelViewProjectionMatrix(baseProjectionMatrix, baseModelViewMatrix, partialTicks);
 		
 		/*---------Fill uniform data--------*/
 		// Fill the uniform data. Note: GL33.GL_TEXTURE0 == texture bindpoint 0
-		shaderProgram.fillUniformData(combinedMatrix,
+		shaderProgram.fillUniformData(modelViewProjectionMatrix,
 				MC_RENDER.isFogStateSpecial() ? getSpecialFogColor(partialTicks) : getFogColor(partialTicks),
-				0, MC.getWrappedClientWorld().getHeight(), MC.getWrappedClientWorld().getMinHeight(), farPlaneBlockDistance,
+				0, MC.getWrappedClientWorld().getHeight(), MC.getWrappedClientWorld().getMinHeight(), RenderUtil.getFarClipPlaneDistanceInBlocks(),
 				vanillaBlockRenderedDistance, MC_RENDER.isFogStateSpecial());
 
 		// Note: Since lightmapTexture is changing every frame, it's faster to recreate it than to reuse the old one.
@@ -272,6 +252,8 @@ public class a7LodRenderer
 		tickLogger.incLogTries();
 	}
 	
+	
+	
 	//=================//
 	// Setup Functions //
 	//=================//
@@ -313,44 +295,7 @@ public class a7LodRenderer
 		return MC_RENDER.getSpecialFogColor(partialTicks);
 	}
 
-	private static float calculateNearClipPlane(float distance, float partialTicks) {
-		double fov = MC_RENDER.getFov(partialTicks);
-		double aspectRatio = (double)MC_RENDER.getScreenWidth()/MC_RENDER.getScreenHeight();
-		return (float) (distance
-						/ Math.sqrt(1d + LodUtil.pow2(Math.tan(fov/180d*Math.PI/2d))
-						* (LodUtil.pow2(aspectRatio) + 1d)));
-	}
-
-	/**
-	 * create and return a new projection matrix based on MC's projection matrix
-	 * @param projMat this is Minecraft's current projection matrix
-	 * @param modelMat this is Minecraft's current model matrix
-	 * @param vanillaBlockRenderedDistance Minecraft's vanilla far plane distance
-	 */
-	private static Mat4f createCombinedMatrix(Mat4f projMat, Mat4f modelMat, float vanillaBlockRenderedDistance,
-											  int farPlaneBlockDistance, float partialTicks)
-	{
-		//Create a copy of the current matrix, so the current matrix isn't modified.
-		Mat4f lodProj = projMat.copy();
-
-		float nearClipPlane;
-		if (Config.Client.Advanced.lodOnlyMode.get()) {
-			nearClipPlane = 0.1f;
-		} else if (Config.Client.Graphics.AdvancedGraphics.useExtendedNearClipPlane.get()) {
-			nearClipPlane = Math.min((vanillaBlockRenderedDistance-16f),8f*16f);
-		} else {
-			nearClipPlane = 16f;
-		}
-
-		//Set new far and near clip plane values.
-		lodProj.setClipPlanes(
-				calculateNearClipPlane(nearClipPlane, partialTicks),
-				(float)((farPlaneBlockDistance+LodUtil.REGION_WIDTH) * Math.sqrt(2)));
-
-		lodProj.multiply(modelMat);
-
-		return lodProj;
-	}
+	
 	
 	//======================//
 	// Cleanup Functions    //

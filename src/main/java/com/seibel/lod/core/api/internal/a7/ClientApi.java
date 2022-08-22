@@ -32,6 +32,7 @@ import com.seibel.lod.core.logging.SpamReducedLogger;
 import com.seibel.lod.core.objects.math.Mat4f;
 import com.seibel.lod.core.render.GLProxy;
 import com.seibel.lod.core.render.RenderSystemTest;
+import com.seibel.lod.core.render.RenderUtil;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
@@ -52,7 +53,7 @@ import java.util.concurrent.TimeUnit;
  * Specifically for the client.
  * 
  * @author James Seibel
- * @version 2022-8-20
+ * @version 2022-8-21
  */
 public class ClientApi
 {
@@ -231,19 +232,13 @@ public class ClientApi
 		profiler.push("DH-RenderLevel");
 		try
 		{
-			if (!MC.playerExists())
+			if (!RenderUtil.shouldLodsRender(levelWrapper))
 				return;
-			if (levelWrapper == null)
-				return;
-			DhWorld dhWorld = SharedApi.currentWorld;
-			if (dhWorld == null)
-				return;
-			if (!(SharedApi.currentWorld instanceof IClientWorld))
-				return;
+			
 			//FIXME: Improve class hierarchy of DhWorld, IClientWorld, IServerWorld to fix all this hard casting
+			// (also in RenderUtil)
+			DhWorld dhWorld = SharedApi.currentWorld;
 			IClientLevel level = (IClientLevel) dhWorld.getOrLoadLevel(levelWrapper);
-			if (level == null)
-				return; //Level is not ready yet.
 			
 			if (prefLoggerEnabled)
 			{
