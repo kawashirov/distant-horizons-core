@@ -1,17 +1,16 @@
 package com.seibel.lod.core.api.external.methods.events.abstractEvents;
 
-import com.seibel.lod.core.api.external.items.objects.math.DhApiMat4f;
 import com.seibel.lod.core.api.external.methods.events.sharedParameterObjects.DhApiRenderParam;
 import com.seibel.lod.core.api.implementation.interfaces.events.IDhApiEvent;
 
 /**
  * @author James Seibel
- * @version 2022-7-17
+ * @version 2022-8-21
  */
 public abstract class DhApiBeforeRenderEvent implements IDhApiEvent<DhApiBeforeRenderEvent.EventParam>
 {
 	/**
-	 * Fired before Distant Horizons finishes rendering fake chunks.
+	 * Fired before Distant Horizons renders fake chunks.
 	 *
 	 * @return whether the event should be canceled or not.
 	 */
@@ -38,14 +37,11 @@ public abstract class DhApiBeforeRenderEvent implements IDhApiEvent<DhApiBeforeR
 	
 	public static class EventParam extends DhApiRenderParam
 	{
-		public EventParam(
-				DhApiMat4f newMinecraftProjectionMatrix, DhApiMat4f newMinecraftModelViewMatrix,
-				DhApiMat4f newDistantHorizonsProjectionMatrix, DhApiMat4f newDistantHorizonsModelViewMatrix,
-				float newPartialTicks)
+		public EventParam(DhApiRenderParam dhApiRenderParam)
 		{
-			super(newMinecraftProjectionMatrix, newMinecraftModelViewMatrix,
-					newDistantHorizonsProjectionMatrix, newDistantHorizonsModelViewMatrix,
-					newPartialTicks);
+			super(dhApiRenderParam.mcProjectionMatrix, dhApiRenderParam.mcModelViewMatrix,
+					dhApiRenderParam.dhProjectionMatrix, dhApiRenderParam.dhModelViewMatrix,
+					dhApiRenderParam.partialTicks);
 		}
 	}
 	

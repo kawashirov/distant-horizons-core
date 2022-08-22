@@ -21,10 +21,14 @@ package com.seibel.lod.core.api.internal.a7;
 
 import com.seibel.lod.core.a7.level.IClientLevel;
 import com.seibel.lod.core.a7.world.*;
+import com.seibel.lod.core.api.external.methods.events.abstractEvents.DhApiAfterRenderEvent;
+import com.seibel.lod.core.api.external.methods.events.abstractEvents.DhApiBeforeRenderEvent;
+import com.seibel.lod.core.api.external.methods.events.sharedParameterObjects.DhApiRenderParam;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.ModInfo;
 import com.seibel.lod.core.enums.rendering.EDebugMode;
 import com.seibel.lod.core.enums.rendering.ERendererMode;
+import com.seibel.lod.core.handlers.dependencyInjection.DhApiEventInjector;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.logging.ConfigBasedSpamLogger;
@@ -38,8 +42,6 @@ import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IProfilerWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
-import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
@@ -251,9 +253,17 @@ public class ClientApi
 			{
 				if (Config.Client.Advanced.Debugging.rendererMode.get() == ERendererMode.DEFAULT)
 				{
-					if (!rendererDisabledBecauseOfExceptions)
+					DhApiRenderParam renderEventParam =
+							new DhApiRenderParam(mcProjectionMatrix, mcModelViewMatrix,
+								RenderUtil.createLodProjectionMatrix(mcProjectionMatrix, partialTicks),
+								RenderUtil.createLodModelViewMatrix(mcModelViewMatrix), partialTicks);
+					
+					boolean renderingCanceled = DhApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeRenderEvent.class, new DhApiBeforeRenderEvent.EventParam(renderEventParam));
+					
+					if (!rendererDisabledBecauseOfExceptions && !renderingCanceled)
 					{
 						level.render(mcModelViewMatrix, mcProjectionMatrix, partialTicks, profiler);
+						DhApiEventInjector.INSTANCE.fireAllEvents(DhApiAfterRenderEvent.class, new DhApiAfterRenderEvent.EventParam(renderEventParam));
 					}
 				}
 				else if (Config.Client.Advanced.Debugging.rendererMode.get() == ERendererMode.DEBUG)

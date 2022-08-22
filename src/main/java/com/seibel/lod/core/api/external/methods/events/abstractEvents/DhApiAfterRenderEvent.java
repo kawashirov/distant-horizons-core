@@ -1,12 +1,11 @@
 package com.seibel.lod.core.api.external.methods.events.abstractEvents;
 
-import com.seibel.lod.core.api.external.items.objects.math.DhApiMat4f;
 import com.seibel.lod.core.api.external.methods.events.sharedParameterObjects.DhApiRenderParam;
 import com.seibel.lod.core.api.implementation.interfaces.events.IDhApiEvent;
 
 /**
  * @author James Seibel
- * @version 2022-7-17
+ * @version 2022-8-21
  */
 public abstract class DhApiAfterRenderEvent implements IDhApiEvent<DhApiAfterRenderEvent.EventParam>
 {
@@ -35,14 +34,11 @@ public abstract class DhApiAfterRenderEvent implements IDhApiEvent<DhApiAfterRen
 	
 	public static class EventParam extends DhApiRenderParam
 	{
-		public EventParam(
-				DhApiMat4f newMinecraftProjectionMatrix, DhApiMat4f newMinecraftModelViewMatrix,
-				DhApiMat4f newDistantHorizonsProjectionMatrix, DhApiMat4f newDistantHorizonsModelViewMatrix,
-				float newPartialTicks)
+		public EventParam(DhApiRenderParam dhApiRenderParam)
 		{
-			super(newMinecraftProjectionMatrix, newMinecraftModelViewMatrix,
-					newDistantHorizonsProjectionMatrix, newDistantHorizonsModelViewMatrix,
-					newPartialTicks);
+			super(dhApiRenderParam.mcProjectionMatrix, dhApiRenderParam.mcModelViewMatrix,
+					dhApiRenderParam.dhProjectionMatrix, dhApiRenderParam.dhModelViewMatrix,
+					dhApiRenderParam.partialTicks);
 		}
 	}
 	
