@@ -25,7 +25,7 @@ import java.util.function.Function;
 
 public class FullDataSource extends FullArrayView implements LodDataSource { // 1 chunk
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
-    public static final byte SECTION_SIZE_OFFSET = ColumnRenderSource.SECTION_SIZE_OFFSET;
+    public static final byte SECTION_SIZE_OFFSET = 6;
     public static final int SECTION_SIZE = 1 << SECTION_SIZE_OFFSET;
     public static final byte LATEST_VERSION = 0;
     public static final long TYPE_ID = "FullDataSource".hashCode();
@@ -41,12 +41,10 @@ public class FullDataSource extends FullArrayView implements LodDataSource { // 
     public DhSectionPos getSectionPos() {
         return sectionPos;
     }
-
     @Override
     public byte getDataDetail() {
         return (byte) (sectionPos.sectionDetail-SECTION_SIZE_OFFSET);
     }
-
     @Override
     public void setLocalVersion(int localVer) {
         localVersion = localVer;

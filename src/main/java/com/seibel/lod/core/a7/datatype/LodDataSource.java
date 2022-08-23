@@ -21,8 +21,4 @@ public interface LodDataSource {
 
     // Saving related
     void saveData(ILevel level, DataMetaFile file, OutputStream dataStream) throws IOException;
-    default File generateFilePathAndName(File levelFolderPath, ILevel level, DhSectionPos sectionPos) {
-        return new File(levelFolderPath, String.format("%s_v%d-%s%s", getClass().getSimpleName(), getDataVersion(),
-                sectionPos.serialize(), IOUtil.LOD_FILE_EXTENSION));
-    }
 }
