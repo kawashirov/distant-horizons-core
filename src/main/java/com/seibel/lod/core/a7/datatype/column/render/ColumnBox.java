@@ -167,7 +167,7 @@ public class ColumnBox
 		boolean allAbove = true;
 		short previousDepth = -1;
 		byte nextSkyLight = upSkyLight;
-		boolean isTransparent = ColorUtil.getAlpha(color);
+		boolean isTransparent = ColorUtil.getAlpha(color) < 255;
 		// TODO transparency ocean floor fix
 		// boolean isOpaque = ((colorMap[0] >> 24) & 0xFF) == 255;
 		for (i = 0; i < dataPoint.size() && DataPointUtil.doesItExist(adjData.get(i))
