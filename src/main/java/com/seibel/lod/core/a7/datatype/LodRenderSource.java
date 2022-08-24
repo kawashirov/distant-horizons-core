@@ -24,10 +24,11 @@ public interface LodRenderSource {
     /**
      * Try and swap in new render buffer for this section. Note that before this call, there should be no other
      *  places storing or referencing the render buffer.
-     * @param referenceSlot The slot for swapping in the new buffer.
+     * @param referenceSlotsOpaque The opaque slot for swapping in the new buffer.
+     * @param referenceSlotsTransparent The transparent slot for swapping in the new buffer.
      * @return True if the swap was successful. False if swap is not needed or if it is in progress.
      */
-    boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<RenderBuffer> referenceSlot);
+    boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<RenderBuffer> referenceSlotsOpaque, AtomicReference<RenderBuffer> referenceSlotsTransparent);
 
     void saveRender(IClientLevel level, RenderMetaFile file, OutputStream dataStream) throws IOException;
 

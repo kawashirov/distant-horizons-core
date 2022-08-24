@@ -17,14 +17,29 @@ public class RenderBufferHandler {
     class RenderBufferNode implements AutoCloseable {
         public final DhSectionPos pos;
         public volatile RenderBufferNode[] children = null;
-        public final AtomicReference<RenderBuffer> renderBufferSlot = new AtomicReference<>();
+        public final AtomicReference<RenderBuffer> renderBufferSlotOpaque = new AtomicReference<>();
+        public final AtomicReference<RenderBuffer> renderBufferSlotTransparent = new AtomicReference<>();
 
         public RenderBufferNode(DhSectionPos pos) {
             this.pos = pos;
         }
 
         public void render(a7LodRenderer renderContext) {
-            RenderBuffer buff = renderBufferSlot.get();
+            RenderBuffer buff;
+
+            buff = renderBufferSlotOpaque.get();
+            if (buff != null) {
+                buff.render(renderContext);
+            } else {
+                RenderBufferNode[] childs = children;
+                if (childs != null) {
+                    for (RenderBufferNode child : childs) {
+                        child.render(renderContext);
+                    }
+                }
+            }
+
+            buff = renderBufferSlotTransparent.get();
             if (buff != null) {
                 buff.render(renderContext);
             } else {
@@ -57,7 +72,7 @@ public class RenderBufferHandler {
 //                }
             } else {
                 LodUtil.assertTrue(container != null); // section.isLoaded() should have ensured this
-                container.trySwapRenderBuffer(target, renderBufferSlot);
+                container.trySwapRenderBuffer(target, renderBufferSlotOpaque, renderBufferSlotTransparent);
             }
 
             // Update children's render buffer state
@@ -97,7 +112,12 @@ public class RenderBufferHandler {
                     child.close();
                 }
             }
-            RenderBuffer buff = renderBufferSlot.getAndSet(null);
+            RenderBuffer buff;
+            buff = renderBufferSlotOpaque.getAndSet(null);
+            if (buff != null) {
+                buff.close();
+            }
+            buff = renderBufferSlotTransparent.getAndSet(null);
             if (buff != null) {
                 buff.close();
             }

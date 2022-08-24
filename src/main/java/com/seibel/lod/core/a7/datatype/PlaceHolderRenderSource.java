@@ -41,7 +41,7 @@ public class PlaceHolderRenderSource implements LodRenderSource {
         return 0;
     }
     @Override
-    public boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<RenderBuffer> referenceSlot) {
+    public boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<RenderBuffer> referenceSlotsOpaque, AtomicReference<RenderBuffer> referenceSlotsTransparent) {
         return false;
     }
     @Override

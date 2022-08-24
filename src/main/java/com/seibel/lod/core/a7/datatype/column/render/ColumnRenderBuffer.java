@@ -185,7 +185,7 @@ public class ColumnRenderBuffer extends RenderBuffer {
         return getCurrentJobsCount() > MAX_CONCURRENT_CALL;
     }
 
-    public static CompletableFuture<ColumnRenderBuffer> build(IClientLevel clientLevel, Reference<ColumnRenderBuffer> usedBufferSlot, ColumnRenderSource data, ColumnRenderSource[] adjData) {
+    public static CompletableFuture<ColumnRenderBuffer[]> build(IClientLevel clientLevel, Reference<ColumnRenderBuffer> usedBufferSlotOpaque, Reference<ColumnRenderBuffer> usedBufferSlotTransparent, ColumnRenderSource data, ColumnRenderSource[] adjData) {
         if (isBusy()) return null;
         //LOGGER.info("RenderRegion startBuild @ {}", data.sectionPos);
         return CompletableFuture.supplyAsync(() -> {
@@ -194,14 +194,22 @@ public class ColumnRenderBuffer extends RenderBuffer {
                         int skyLightCullingBelow = Config.Client.Graphics.AdvancedGraphics.caveCullingHeight.get();
                         // FIXME: Clamp also to the max world height.
                         skyLightCullingBelow = Math.max(skyLightCullingBelow, clientLevel.getMinY());
-                        LodQuadBuilder builder = new LodQuadBuilder(true,
+                        LodQuadBuilder builderOpaque = new LodQuadBuilder(true,
                                 (short) (skyLightCullingBelow - clientLevel.getMinY()));
-                        makeLodRenderData(builder, data, adjData);
-                        if (builder.getCurrentQuadsCount() > 0) {
+
+                        LodQuadBuilder builderTransparent = new LodQuadBuilder(true,
+                                (short) (skyLightCullingBelow - clientLevel.getMinY()));
+
+                        makeLodRenderData(builderOpaque, builderTransparent, data, adjData);
+                        if (builderOpaque.getCurrentQuadsCount() > 0) {
                             //LOGGER.info("her");
                         }
                         EVENT_LOGGER.trace("RenderRegion end QuadBuild @ {}", data.sectionPos);
-                        return builder;
+                        LodQuadBuilder[] builders = new LodQuadBuilder[2];
+                        builders[0] = builderOpaque;
+                        builders[1] = builderOpaque;
+
+                        return builders;
                     } catch (UncheckedInterruptedException e) {
                         throw e;
                     }
@@ -210,24 +218,35 @@ public class ColumnRenderBuffer extends RenderBuffer {
                         throw e3;
                     }
                 }, BUFFER_BUILDERS)
-                .thenApplyAsync((builder) -> {
+                .thenApplyAsync((builders) -> {
                     try {
                         EVENT_LOGGER.trace("RenderRegion start Upload @ {}", data.sectionPos);
                         GLProxy glProxy = GLProxy.getInstance();
                         EGpuUploadMethod method = GLProxy.getInstance().getGpuUploadMethod();
                         EGLProxyContext oldContext = glProxy.getGlContext();
                         glProxy.setGlContext(EGLProxyContext.LOD_BUILDER);
-                        ColumnRenderBuffer buffer = usedBufferSlot.swap(null);
-                        if (buffer == null)
-                            buffer = new ColumnRenderBuffer(
+                        ColumnRenderBuffer buffersSlotOpaque = usedBufferSlotOpaque.swap(null);
+                        ColumnRenderBuffer buffersSlotTransparent = usedBufferSlotTransparent.swap(null);
+
+                        if (buffersSlotOpaque == null)
+                            buffersSlotOpaque = new ColumnRenderBuffer(
                                 new DHBlockPos(data.sectionPos.getCorner().getCorner(), clientLevel.getMinY())
                             );
+                        if (buffersSlotTransparent == null)
+                            buffersSlotTransparent = new ColumnRenderBuffer(
+                                    new DHBlockPos(data.sectionPos.getCorner().getCorner(), clientLevel.getMinY())
+                            );
                         try {
-                            buffer.uploadBuffer(builder, method);
+                            buffersSlotOpaque.uploadBuffer(builders[0], method);
+                            buffersSlotTransparent.uploadBuffer(builders[1], method);
                             EVENT_LOGGER.trace("RenderRegion end Upload @ {}", data.sectionPos);
-                            return buffer;
+                            ColumnRenderBuffer[] buffers = new ColumnRenderBuffer[2];
+                            buffers[0] = buffersSlotOpaque;
+                            buffers[1] = buffersSlotTransparent;
+                            return buffers;
                         } catch (Exception e) {
-                            buffer.close();
+                            buffersSlotOpaque.close();
+                            buffersSlotTransparent.close();
                             throw e;
                         } finally {
                             glProxy.setGlContext(oldContext);
@@ -241,7 +260,14 @@ public class ColumnRenderBuffer extends RenderBuffer {
                 }, BUFFER_UPLOADER).handle((v, e) -> {
                     //LOGGER.info("RenderRegion endBuild @ {}", data.sectionPos);
                     if (e != null) {
-                        if (!usedBufferSlot.isEmpty()) usedBufferSlot.swap(null).close();
+                        if (!usedBufferSlotOpaque.isEmpty()) {
+                            ColumnRenderBuffer buffersSlot = usedBufferSlotOpaque.swap(null);
+                            buffersSlot.close();
+                        }
+                        if (!usedBufferSlotTransparent.isEmpty()) {
+                            ColumnRenderBuffer buffersSlot = usedBufferSlotTransparent.swap(null);
+                            buffersSlot.close();
+                        }
                         return null;
                     } else {
                         return v;
@@ -251,7 +277,7 @@ public class ColumnRenderBuffer extends RenderBuffer {
 
 
 
-    private static void makeLodRenderData(LodQuadBuilder quadBuilder, ColumnRenderSource region, ColumnRenderSource[] adjRegions) {
+    private static void makeLodRenderData(LodQuadBuilder quadBuilderOpaque, LodQuadBuilder quadBuilderTransparent, ColumnRenderSource region, ColumnRenderSource[] adjRegions) {
 
         // Variable initialization
         EDebugMode debugMode = Config.Client.Advanced.Debugging.debugMode.get();
@@ -343,12 +369,21 @@ public class ColumnRenderBuffer extends RenderBuffer {
                     long adjDataTop = i - 1 >= 0 ? posData.get(i - 1) : DataPointUtil.EMPTY_DATA;
                     long adjDataBot = i + 1 < posData.size() ? posData.get(i + 1) : DataPointUtil.EMPTY_DATA;
 
+
                     // We send the call to create the vertices
-                    CubicLodTemplate.addLodToBuffer(data, adjDataTop, adjDataBot, adjData, detailLevel,
-                            x, z, quadBuilder, debugMode);
+                    if(DataPointUtil.getAlpha(data) == 255)
+                    {
+                        CubicLodTemplate.addLodToBuffer(data, adjDataTop, adjDataBot, adjData, detailLevel,
+                                x, z, quadBuilderOpaque, debugMode);
+                    }else
+                    {
+                        CubicLodTemplate.addLodToBuffer(data, adjDataTop, adjDataBot, adjData, detailLevel,
+                                x, z, quadBuilderTransparent, debugMode);
+                    }
                 }
             }
         }
-        quadBuilder.mergeQuads();
+        quadBuilderOpaque.mergeQuads();
+        quadBuilderTransparent.mergeQuads();
     }
 }
