@@ -8,7 +8,7 @@ import com.seibel.lod.core.api.external.items.interfaces.world.IDhApiLevelWrappe
  * Stub implementation of a Level wrapper for basic unit testing.
  *
  * @author James Seibel
- * @version 2022-7-27
+ * @version 2022-8-23
  */
 public class LevelWrapperTest implements IDhApiLevelWrapper
 {
@@ -30,6 +30,4 @@ public class LevelWrapperTest implements IDhApiLevelWrapper
 	@Override
 	public int getHeight() { return 0; }
 	
-	@Override
-	public int getSeaLevel() { return 0; }
 }

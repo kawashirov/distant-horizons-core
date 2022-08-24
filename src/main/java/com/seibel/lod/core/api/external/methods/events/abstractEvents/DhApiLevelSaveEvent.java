@@ -7,10 +7,10 @@ import com.seibel.lod.core.api.implementation.interfaces.events.IDhApiEvent;
  * @author James Seibel
  * @version 2022-8-23
  */
-public abstract class DhApiLevelUnloadEvent implements IDhApiEvent<DhApiLevelUnloadEvent.EventParam>
+public abstract class DhApiLevelSaveEvent implements IDhApiEvent<DhApiLevelSaveEvent.EventParam>
 {
-	/** Fired before Distant Horizons unloads a level. */
-	public abstract void levelUnload(EventParam input);
+	/** Fired after Distant Horizons saves LOD data for the server. */
+	public abstract void save(EventParam input);
 	
 	
 	//=========================//
@@ -20,7 +20,7 @@ public abstract class DhApiLevelUnloadEvent implements IDhApiEvent<DhApiLevelUnl
 	@Override
 	public final boolean onEvent(EventParam input)
 	{
-		levelUnload(input);
+		save(input);
 		return false;
 	}
 	
@@ -34,7 +34,7 @@ public abstract class DhApiLevelUnloadEvent implements IDhApiEvent<DhApiLevelUnl
 	
 	public static class EventParam
 	{
-		/** The recently unloaded level. */
+		/** The newly loaded level. */
 		public final IDhApiLevelWrapper levelWrapper;
 		
 		

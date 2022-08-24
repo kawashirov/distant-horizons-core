@@ -58,6 +58,9 @@ public interface ILevelWrapper extends IBindable
     boolean hasChunkLoaded(int chunkX, int chunkZ);
 
 	IBlockStateWrapper getBlockState(DHBlockPos pos);
+	
 	IBiomeWrapper getBiome(DHBlockPos pos);
+	
 	Object unwrapLevel();
+	
 }

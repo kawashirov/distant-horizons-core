@@ -21,9 +21,9 @@ package com.seibel.lod.core.api.internal.a7;
 
 import com.seibel.lod.core.a7.level.IClientLevel;
 import com.seibel.lod.core.a7.world.*;
-import com.seibel.lod.core.api.external.methods.events.abstractEvents.DhApiAfterRenderEvent;
-import com.seibel.lod.core.api.external.methods.events.abstractEvents.DhApiBeforeRenderEvent;
+import com.seibel.lod.core.api.external.methods.events.abstractEvents.*;
 import com.seibel.lod.core.api.external.methods.events.sharedParameterObjects.DhApiRenderParam;
+import com.seibel.lod.core.api.implementation.wrappers.DhApiLevelWrapper;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.ModInfo;
 import com.seibel.lod.core.enums.rendering.EDebugMode;
@@ -55,7 +55,7 @@ import java.util.concurrent.TimeUnit;
  * Specifically for the client.
  * 
  * @author James Seibel
- * @version 2022-8-21
+ * @version 2022-8-23
  */
 public class ClientApi
 {
@@ -146,6 +146,9 @@ public class ClientApi
 		if (SharedApi.getEnvironment() == WorldEnvironment.Client_Only)
 		{
 			//TODO: Implement
+			
+			// TODO: potentially add a list of chunks that were updated during the save
+			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelSaveEvent.class, new DhApiLevelSaveEvent.EventParam(new DhApiLevelWrapper(level)));
 		}
 	}
 	
@@ -156,6 +159,7 @@ public class ClientApi
 		if (SharedApi.currentWorld != null)
 		{
 			SharedApi.currentWorld.unloadLevel(level);
+			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelUnloadEvent.class, new DhApiLevelUnloadEvent.EventParam(new DhApiLevelWrapper(level)));
 		}
 	}
 	
@@ -166,6 +170,7 @@ public class ClientApi
 		if (SharedApi.currentWorld != null)
 		{
 			SharedApi.currentWorld.getOrLoadLevel(level);
+			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelLoadEvent.class, new DhApiLevelLoadEvent.EventParam(new DhApiLevelWrapper(level)));
 		}
 	}
 	

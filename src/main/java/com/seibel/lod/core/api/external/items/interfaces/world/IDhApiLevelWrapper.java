@@ -40,9 +40,7 @@ public interface IDhApiLevelWrapper extends IDhApiUnsafeWrapper
 	
 	int getHeight();
 	
-	int getSeaLevel();
-	
-	default short getMinHeight()
+	default int getMinHeight()
 	{
 		return 0;
 	}

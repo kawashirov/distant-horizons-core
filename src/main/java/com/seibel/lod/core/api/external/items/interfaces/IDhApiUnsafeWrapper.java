@@ -11,14 +11,14 @@ package com.seibel.lod.core.api.external.items.interfaces;
 public interface IDhApiUnsafeWrapper
 {
 	/**
-	 * This returns the Minecraft object this wrapper is containing. <br>
+	 * Teturns the Minecraft object this wrapper contains. <br>
 	 * <strong>Warning</strong>: This object will be Minecraft
 	 * version dependent and may change without notice. <br> <br>
 	 *
 	 * In order to cast this object to something usable, you may want
 	 * to use <code>obj.getClass()</code> when in your IDE
 	 * in order to determine what object this method returns for
-	 * specific version of Minecraft you are developing for.
+	 * the specific version of Minecraft you are developing for.
 	 */
 	public Object getWrappedMcObject_UNSAFE();
 	

@@ -23,7 +23,7 @@ import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
 
 /**
  * @author James Seibel
- * @version 3-5-2022
+ * @version 2022-8-23
  */
 public interface IDimensionTypeWrapper extends IBindable
 {
@@ -32,4 +32,7 @@ public interface IDimensionTypeWrapper extends IBindable
 	boolean hasCeiling();
 
 	boolean hasSkyLight();
+	
+	Object getWrappedMcObject();
+	
 }

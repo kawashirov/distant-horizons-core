@@ -19,9 +19,15 @@
 
 package com.seibel.lod.core.api.internal.a7;
 
+import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.world.DhClientServerWorld;
 import com.seibel.lod.core.a7.world.DhServerWorld;
 import com.seibel.lod.core.a7.world.IServerWorld;
+import com.seibel.lod.core.api.external.methods.events.abstractEvents.DhApiLevelLoadEvent;
+import com.seibel.lod.core.api.external.methods.events.abstractEvents.DhApiLevelSaveEvent;
+import com.seibel.lod.core.api.external.methods.events.abstractEvents.DhApiLevelUnloadEvent;
+import com.seibel.lod.core.api.implementation.wrappers.DhApiLevelWrapper;
+import com.seibel.lod.core.handlers.dependencyInjection.DhApiEventInjector;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
@@ -35,10 +41,10 @@ import java.lang.invoke.MethodHandles;
 
 /**
  * This holds the methods that should be called by the host mod loader (Fabric,
- * Forge, etc.). Specifically server and client events.
+ * Forge, etc.). Specifically server events.
  *
  * @author James Seibel
- * @version 2021-11-12
+ * @version 2022-8-23
  */
 public class ServerApi
 {
@@ -93,19 +99,30 @@ public class ServerApi
 	public void serverLevelLoadEvent(IServerLevelWrapper level) {
 		if (ENABLE_EVENT_LOGGING) LOGGER.info("Server Level {} loading", level);
 		if (SharedApi.currentWorld != null)
+		{
 			SharedApi.currentWorld.getOrLoadLevel(level);
+			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelLoadEvent.class, new DhApiLevelLoadEvent.EventParam(new DhApiLevelWrapper(level)));
+		}
 	}
 	public void serverLevelUnloadEvent(IServerLevelWrapper level) {
 		if (ENABLE_EVENT_LOGGING) LOGGER.info("Server Level {} unloading", level);
 		if (SharedApi.currentWorld != null)
+		{
 			SharedApi.currentWorld.unloadLevel(level);
+			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelUnloadEvent.class, new DhApiLevelUnloadEvent.EventParam(new DhApiLevelWrapper(level)));
+		}
 	}
 
 	@Deprecated
 	public void serverSaveEvent() {
 		if (ENABLE_EVENT_LOGGING) LOGGER.info("Server world {} saving", SharedApi.currentWorld);
 		if (SharedApi.currentWorld instanceof IServerWorld)
+		{
 			SharedApi.currentWorld.saveAndFlush();
+			
+			// TODO: why is there bot ILevel and ILevelWrapper?
+			//DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelSaveEvent.class, new DhApiLevelSaveEvent.EventParam( /* ... */ );
+		}
 	}
 
 	public void serverChunkLoadEvent(IChunkWrapper chunk, ILevelWrapper world) {
