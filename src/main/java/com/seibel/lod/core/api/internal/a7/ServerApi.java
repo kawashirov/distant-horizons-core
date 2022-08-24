@@ -120,8 +120,10 @@ public class ServerApi
 		{
 			SharedApi.currentWorld.saveAndFlush();
 			
-			// TODO: why is there bot ILevel and ILevelWrapper?
-			//DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelSaveEvent.class, new DhApiLevelSaveEvent.EventParam( /* ... */ );
+			for (ILevel level : SharedApi.currentWorld.getAllLoadedLevels())
+			{
+				DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelSaveEvent.class, new DhApiLevelSaveEvent.EventParam(new DhApiLevelWrapper(level.getLevelWrapper())));
+			}
 		}
 	}
 
