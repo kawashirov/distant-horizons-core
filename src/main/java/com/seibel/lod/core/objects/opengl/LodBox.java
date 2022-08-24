@@ -40,7 +40,7 @@ public class LodBox
 		short maxZ = (short) (z + zSize);
 		byte skyLightTop = skyLight;
 		byte skyLightBot = DataPointUtil.doesItExist(botData) ? DataPointUtil.getLightSky(botData) : 0;
-		
+
 		// Up direction case
 		boolean skipTop = DataPointUtil.doesItExist(topData) && DataPointUtil.getDepth(topData) == maxY;// &&
 		// DataPointUtil.getAlpha(singleAdjDataPoint)

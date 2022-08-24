@@ -41,9 +41,23 @@ public class ColumnBox
 		byte skyLightBot = DataPointUtil.doesItExist(botData) ? DataPointUtil.getLightSky(botData) : 0;
 		boolean isTransparent = ColorUtil.getAlpha(color)<255;
 
-		boolean isTopTransparent = DataPointUtil.getAlpha(topData)<255;
-		boolean isBotTransparent = DataPointUtil.getAlpha(botData)<255;
+		boolean transparencyEnabled = true;
+		boolean fakeOceanFloor = true;
 
+		boolean isTopTransparent = DataPointUtil.getAlpha(topData)<255 && transparencyEnabled;
+		boolean isBotTransparent = DataPointUtil.getAlpha(botData)<255 && transparencyEnabled;
+
+		if(fakeOceanFloor && transparencyEnabled)
+		{
+			if(!isTransparent && isTopTransparent)
+			{
+				ySize += DataPointUtil.getHeight(botData) - (y + ySize) - 1;
+			}
+			else if(isTransparent && !isBotTransparent)
+			{
+				y += ySize - 1;
+			}
+		}
 
 		// Up direction case
 		boolean skipTop = DataPointUtil.doesItExist(topData) && (
@@ -168,14 +182,13 @@ public class ColumnBox
 		short previousDepth = -1;
 		byte nextSkyLight = upSkyLight;
 		boolean isTransparent = ColorUtil.getAlpha(color) < 255;
-		// TODO transparency ocean floor fix
-		// boolean isOpaque = ((colorMap[0] >> 24) & 0xFF) == 255;
 		for (i = 0; i < dataPoint.size() && DataPointUtil.doesItExist(adjData.get(i))
 				&& !DataPointUtil.isVoid(adjData.get(i)); i++)
 		{
 			long adjPoint = adjData.get(i);
 			boolean isAdjTransparent = DataPointUtil.getAlpha(adjPoint) < 255;
-			// TODO transparency ocean floor fix
+
+			/**TODO disable this when disabling transparency */
 			if (!isTransparent && isAdjTransparent)
 				continue;
 

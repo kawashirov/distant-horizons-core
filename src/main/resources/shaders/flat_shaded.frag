@@ -70,7 +70,7 @@ void main()
 
 	}
     //fragColor = vec4(0.7,0.6,0.5,1.0);
-	fragColor = vec4(returnColor.rgb,1.0);
+	fragColor = returnColor;
 }
 
 float linearFog(float x, float fogStart, float fogLength, float fogMin, float fogRange) {
