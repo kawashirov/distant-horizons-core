@@ -207,7 +207,7 @@ public class ColumnRenderBuffer extends RenderBuffer {
                         EVENT_LOGGER.trace("RenderRegion end QuadBuild @ {}", data.sectionPos);
                         LodQuadBuilder[] builders = new LodQuadBuilder[2];
                         builders[0] = builderOpaque;
-                        builders[1] = builderOpaque;
+                        builders[1] = builderTransparent;
 
                         return builders;
                     } catch (UncheckedInterruptedException e) {
@@ -260,12 +260,13 @@ public class ColumnRenderBuffer extends RenderBuffer {
                 }, BUFFER_UPLOADER).handle((v, e) -> {
                     //LOGGER.info("RenderRegion endBuild @ {}", data.sectionPos);
                     if (e != null) {
+                        ColumnRenderBuffer buffersSlot;
                         if (!usedBufferSlotOpaque.isEmpty()) {
-                            ColumnRenderBuffer buffersSlot = usedBufferSlotOpaque.swap(null);
+                            buffersSlot = usedBufferSlotOpaque.swap(null);
                             buffersSlot.close();
                         }
                         if (!usedBufferSlotTransparent.isEmpty()) {
-                            ColumnRenderBuffer buffersSlot = usedBufferSlotTransparent.swap(null);
+                            buffersSlot = usedBufferSlotTransparent.swap(null);
                             buffersSlot.close();
                         }
                         return null;
@@ -375,7 +376,8 @@ public class ColumnRenderBuffer extends RenderBuffer {
                     {
                         CubicLodTemplate.addLodToBuffer(data, adjDataTop, adjDataBot, adjData, detailLevel,
                                 x, z, quadBuilderOpaque, debugMode);
-                    }else
+                    }
+                    else
                     {
                         CubicLodTemplate.addLodToBuffer(data, adjDataTop, adjDataBot, adjData, detailLevel,
                                 x, z, quadBuilderTransparent, debugMode);

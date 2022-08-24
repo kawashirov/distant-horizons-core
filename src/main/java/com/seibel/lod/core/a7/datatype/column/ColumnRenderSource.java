@@ -328,10 +328,14 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
             if (inBuildRenderBuffer.isDone()) {
                 lastNs = System.nanoTime();
                 //LOGGER.info("Swapping render buffer for {}", sectionPos);
+
                 RenderBuffer[] newBuffers = inBuildRenderBuffer.join();
+
                 RenderBuffer oldBuffersOpaque = referenceSlotsOpaque.getAndSet(newBuffers[0]);
-                RenderBuffer oldBuffersTransparent = referenceSlotsOpaque.getAndSet(newBuffers[1]);
+                RenderBuffer oldBuffersTransparent = referenceSlotsTransparent.getAndSet(newBuffers[1]);
+
                 ColumnRenderBuffer swapped;
+
                 if (oldBuffersOpaque instanceof ColumnRenderBuffer) {
                     swapped = usedBufferOpaque.swap((ColumnRenderBuffer) oldBuffersOpaque);
                     LodUtil.assertTrue(swapped == null);

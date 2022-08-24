@@ -1,13 +1,15 @@
 package com.seibel.lod.core.a7.render;
 
 import com.seibel.lod.core.a7.datatype.LodRenderSource;
-import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
+import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
+import com.seibel.lod.core.objects.DHBlockPos;
 import com.seibel.lod.core.objects.Pos2D;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
-import com.seibel.lod.core.render.LodRenderProgram;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.gridList.MovableGridRingList;
+import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 
+import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class RenderBufferHandler {
@@ -144,6 +146,34 @@ public class RenderBufferHandler {
         MovableGridRingList<LodRenderSection> referenceList = target.getRingList(topDetail);
         Pos2D center = referenceList.getCenter();
         renderBufferNodes.move(center.x, center.y, RenderBufferNode::close); // Note: may lock the list
+
+
+        /**TODO improve the ordering*/
+        DHBlockPos playerPos = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class).getPlayerBlockPos();
+        int x = playerPos.x;
+        int z = playerPos.z;
+        Comparator<RenderBufferNode> byDistance = new Comparator<RenderBufferNode>() {
+            @Override
+            public int compare(RenderBufferNode o1, RenderBufferNode o2) {
+                if((o1 == null) && (o2 == null)){
+                    return 0;
+                }else if(o1 == null){
+                    return 1;
+                }else if(o2 == null)
+                {
+                    return -1;
+                }
+                int x1 = o1.pos.sectionX;
+                int z1 = o1.pos.sectionZ;
+                int x2 = o2.pos.sectionX;
+                int z2 = o2.pos.sectionZ;
+
+                return Integer.compare((x1 - x)^2 + (z1 - z)^2,(x2 - x)^2 + (z2 - z)^2) ;
+            }
+        };
+        renderBufferNodes.sort(byDistance);
+
+
         renderBufferNodes.forEachPosOrdered((node, pos) -> {
             DhSectionPos sectPos = new DhSectionPos(topDetail, pos.x, pos.y);
             LodRenderSection section = target.getSection(sectPos);
