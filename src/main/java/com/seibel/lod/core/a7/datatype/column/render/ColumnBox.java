@@ -29,6 +29,8 @@ import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 
 public class ColumnBox
 {
+	private static boolean transparencyEnabled = true;
+	private static boolean fakeOceanFloor = true;
 	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	
 	public static void addBoxQuadsToBuilder(LodQuadBuilder builder, short xSize, short ySize, short zSize, short x,
@@ -39,25 +41,11 @@ public class ColumnBox
 		short maxZ = (short) (z + zSize);
 		byte skyLightTop = skyLight;
 		byte skyLightBot = DataPointUtil.doesItExist(botData) ? DataPointUtil.getLightSky(botData) : 0;
-		boolean isTransparent = ColorUtil.getAlpha(color)<255;
 
-		boolean transparencyEnabled = true;
-		boolean fakeOceanFloor = false;
-
+		boolean isTransparent = ColorUtil.getAlpha(color)<255 && transparencyEnabled;
 		boolean isTopTransparent = DataPointUtil.getAlpha(topData)<255 && transparencyEnabled;
 		boolean isBotTransparent = DataPointUtil.getAlpha(botData)<255 && transparencyEnabled;
 
-		if(fakeOceanFloor && transparencyEnabled)
-		{
-			if(!isTransparent && isTopTransparent)
-			{
-				ySize = (short) (DataPointUtil.getHeight(botData) - y -1);
-			}
-			else if(isTransparent && !isBotTransparent)
-			{
-				y = (short) (y + ySize - 1);
-			}
-		}
 
 		// Up direction case
 		boolean skipTop = DataPointUtil.doesItExist(topData) && (
@@ -67,7 +55,20 @@ public class ColumnBox
 				(isTransparent && (DataPointUtil.getDepth(botData) == maxY)) ||
 						(!isTransparent && (DataPointUtil.getDepth(botData) == maxY) && !isBotTransparent));
 
+		if(fakeOceanFloor && transparencyEnabled)
+		{
+			if(!isTransparent && isTopTransparent)
+			{
+				ySize = (short) (DataPointUtil.getHeight(topData) - y - 1);
+			}
+			else if(isTransparent && !isBotTransparent)
+			{
+				y = (short) (y + ySize - 1);
+				ySize = 1;
+			}
+		}
 
+		maxY = (short) (y + ySize);
 		if (!skipTop)
 			builder.addQuadUp(x, maxY, z, xSize, zSize, ColorUtil.applyShade(color, MC.getShade(ELodDirection.UP)), skyLightTop, blockLight);
 		if (!skipBot)
@@ -189,7 +190,7 @@ public class ColumnBox
 			boolean isAdjTransparent = DataPointUtil.getAlpha(adjPoint) < 255;
 
 			/**TODO disable this when disabling transparency */
-			if (!isTransparent && isAdjTransparent)
+			if (!isTransparent && isAdjTransparent && transparencyEnabled)
 				continue;
 
 			
