@@ -42,7 +42,7 @@ public class ColumnBox
 		boolean isTransparent = ColorUtil.getAlpha(color)<255;
 
 		boolean transparencyEnabled = true;
-		boolean fakeOceanFloor = true;
+		boolean fakeOceanFloor = false;
 
 		boolean isTopTransparent = DataPointUtil.getAlpha(topData)<255 && transparencyEnabled;
 		boolean isBotTransparent = DataPointUtil.getAlpha(botData)<255 && transparencyEnabled;
@@ -51,11 +51,11 @@ public class ColumnBox
 		{
 			if(!isTransparent && isTopTransparent)
 			{
-				ySize += DataPointUtil.getHeight(botData) - (y + ySize) - 1;
+				ySize = (short) (DataPointUtil.getHeight(botData) - y -1);
 			}
 			else if(isTransparent && !isBotTransparent)
 			{
-				y += ySize - 1;
+				y = (short) (y + ySize - 1);
 			}
 		}
 
@@ -96,7 +96,7 @@ public class ColumnBox
 						color, adjOverlapNorth, skyLightTop, blockLight);
 			}
 		}
-		
+
 		//SOUTH face vertex creation
 		{
 			ColumnArrayView[] adjDataSouth = adjData[ELodDirection.SOUTH.ordinal() - 2];
