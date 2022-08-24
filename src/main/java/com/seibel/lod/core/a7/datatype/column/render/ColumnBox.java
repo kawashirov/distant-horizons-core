@@ -66,6 +66,9 @@ public class ColumnBox
 				y = (short) (y + ySize - 1);
 				ySize = 1;
 			}
+		}else if(!transparencyEnabled)
+		{
+			color = ColorUtil.rgbToInt(ColorUtil.getRed(color),ColorUtil.getGreen(color),ColorUtil.getBlue(color));
 		}
 
 		maxY = (short) (y + ySize);
@@ -183,12 +186,13 @@ public class ColumnBox
 		short previousDepth = -1;
 		byte nextSkyLight = upSkyLight;
 		boolean isTransparent = ColorUtil.getAlpha(color) < 255;
+		boolean lastWasTransparent = false;
 		for (i = 0; i < dataPoint.size() && DataPointUtil.doesItExist(adjData.get(i))
 				&& !DataPointUtil.isVoid(adjData.get(i)); i++)
 		{
 			long adjPoint = adjData.get(i);
-			boolean isAdjTransparent = DataPointUtil.getAlpha(adjPoint) < 255;
 
+			boolean isAdjTransparent = DataPointUtil.getAlpha(adjPoint) < 255;
 			/**TODO disable this when disabling transparency */
 			if (!isTransparent && isAdjTransparent && transparencyEnabled)
 				continue;
@@ -196,7 +200,25 @@ public class ColumnBox
 			
 			short height = DataPointUtil.getHeight(adjPoint);
 			short depth = DataPointUtil.getDepth(adjPoint);
-			
+
+			if(fakeOceanFloor && transparencyEnabled)
+			{
+
+				if(lastWasTransparent && !isAdjTransparent)
+				{
+					long previousAdjPoint = adjData.get(i-1);
+					height = (short) (DataPointUtil.getHeight(previousAdjPoint) - 1);
+				}
+				else if(isAdjTransparent && (i + 1) < adjData.size())
+				{
+					long nextAdjPoint = adjData.get(i+1);
+					if (DataPointUtil.getAlpha(nextAdjPoint) == 255)
+					{
+						depth = (short) (height - 1);
+					}
+				}
+			}
+
 			// If the depth of said block is higher than our max Y, continue
 			// Basically: y < maxY <= _____ height
 			// _______&&: y < maxY <= depth
@@ -314,6 +336,7 @@ public class ColumnBox
 			nextSkyLight = upSkyLight;
 			if (i + 1 < adjData.size() && DataPointUtil.doesItExist(adjData.get(i + 1)))
 				nextSkyLight = DataPointUtil.getLightSky(adjData.get(i + 1));
+			lastWasTransparent = isAdjTransparent;
 		}
 		
 		if (allAbove)
