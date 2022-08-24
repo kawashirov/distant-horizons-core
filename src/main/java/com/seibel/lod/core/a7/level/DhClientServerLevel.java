@@ -22,6 +22,7 @@ import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IProfilerWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
+import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
 import org.apache.logging.log4j.Logger;
 
@@ -129,7 +130,13 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
     public IClientLevelWrapper getClientLevelWrapper() {
         return clientLevel;
     }
-
+    
+    @Override
+    public ILevelWrapper getLevelWrapper()
+    {
+        return this.serverLevel;
+    }
+    
     @Override
     public void dumpRamUsage() {
         //TODO

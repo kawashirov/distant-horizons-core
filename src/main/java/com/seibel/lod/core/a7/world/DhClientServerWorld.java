@@ -1,6 +1,7 @@
 package com.seibel.lod.core.a7.world;
 
 import com.seibel.lod.core.a7.level.DhClientServerLevel;
+import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.save.structure.LocalSaveStructure;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.util.EventLoop;
@@ -16,7 +17,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
-public class DhClientServerWorld extends DhWorld implements IClientWorld, IServerWorld {
+public class DhClientServerWorld extends DhWorld implements IClientWorld, IServerWorld
+{
     private final HashMap<ILevelWrapper, DhClientServerLevel> levels;
     public final LocalSaveStructure saveStructure;
     public ExecutorService dhTickerThread = LodUtil.makeSingleThreadPool("DHTickerThread", 2);
@@ -54,7 +56,22 @@ public class DhClientServerWorld extends DhWorld implements IClientWorld, IServe
     public DhClientServerLevel getLevel(ILevelWrapper wrapper) {
         return levels.get(wrapper);
     }
-
+    
+    @Override
+    public ILevel[] getAllLoadedLevels()
+    {
+        ILevel[] array = new ILevel[this.levels.size()];
+        
+        int i = 0;
+        for (ILevel level : this.levels.values())
+        {
+            array[i] = level;
+            i++;
+        }
+        
+        return array;
+    }
+    
     @Override
     public void unloadLevel(ILevelWrapper wrapper) {
         if (levels.containsKey(wrapper)) {

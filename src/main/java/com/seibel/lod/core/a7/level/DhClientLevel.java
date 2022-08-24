@@ -81,7 +81,13 @@ public class DhClientLevel implements IClientLevel {
     public IClientLevelWrapper getClientLevelWrapper() {
         return level;
     }
-
+    
+    @Override
+    public ILevelWrapper getLevelWrapper()
+    {
+        return this.level;
+    }
+    
     @Override
     public int getMinY() {
         return level.getMinHeight();
@@ -97,4 +103,5 @@ public class DhClientLevel implements IClientLevel {
         renderFileHandler.close();
         LOGGER.info("Closed DHLevel for {}", level);
     }
+    
 }

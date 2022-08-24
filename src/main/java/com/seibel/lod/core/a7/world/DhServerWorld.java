@@ -1,6 +1,7 @@
 package com.seibel.lod.core.a7.world;
 
 import com.seibel.lod.core.a7.level.DhServerLevel;
+import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.save.structure.LocalSaveStructure;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
@@ -10,7 +11,8 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 
-public class DhServerWorld extends DhWorld implements IServerWorld {
+public class DhServerWorld extends DhWorld implements IServerWorld
+{
     private final HashMap<IServerLevelWrapper, DhServerLevel> levels;
     public final LocalSaveStructure saveStructure;
 
@@ -35,6 +37,21 @@ public class DhServerWorld extends DhWorld implements IServerWorld {
     public DhServerLevel getLevel(ILevelWrapper wrapper) {
         if (!(wrapper instanceof IServerLevelWrapper)) return null;
         return levels.get(wrapper);
+    }
+    
+    @Override
+    public ILevel[] getAllLoadedLevels()
+    {
+        ILevel[] array = new ILevel[this.levels.size()];
+        
+        int i = 0;
+        for (ILevel level : this.levels.values())
+        {
+            array[i] = level;
+            i++;
+        }
+        
+        return array;
     }
 
     @Override

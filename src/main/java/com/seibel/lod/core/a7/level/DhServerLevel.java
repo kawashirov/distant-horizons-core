@@ -4,12 +4,14 @@ import com.seibel.lod.core.a7.util.FileScanner;
 import com.seibel.lod.core.a7.save.io.file.DataFileHandler;
 import com.seibel.lod.core.a7.save.structure.LocalSaveStructure;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
+import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
 
-public class DhServerLevel implements IServerLevel {
+public class DhServerLevel implements IServerLevel
+{
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 
     public final LocalSaveStructure save;
@@ -57,4 +59,11 @@ public class DhServerLevel implements IServerLevel {
     public IServerLevelWrapper getServerLevelWrapper() {
         return level;
     }
+    
+    @Override
+    public ILevelWrapper getLevelWrapper()
+    {
+        return this.level;
+    }
+    
 }
