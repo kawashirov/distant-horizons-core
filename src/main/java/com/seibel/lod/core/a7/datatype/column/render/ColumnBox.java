@@ -39,15 +39,20 @@ public class ColumnBox
 		short maxZ = (short) (z + zSize);
 		byte skyLightTop = skyLight;
 		byte skyLightBot = DataPointUtil.doesItExist(botData) ? DataPointUtil.getLightSky(botData) : 0;
-		
+		boolean isTransparent = ColorUtil.getAlpha(color)<255;
+
+		boolean isTopTransparent = DataPointUtil.getAlpha(topData)<255;
+		boolean isBotTransparent = DataPointUtil.getAlpha(botData)<255;
+		byte skyLightBot = DataPointUtil.doesItExist(botData) ? DataPointUtil.getLightSky(botData) : 0;
 		// Up direction case
-		boolean skipTop = DataPointUtil.doesItExist(topData) && DataPointUtil.getDepth(topData) == maxY;// &&
-		// DataPointUtil.getAlpha(singleAdjDataPoint)
-		// == 255;
-		boolean skipBot = DataPointUtil.doesItExist(botData) && DataPointUtil.getHeight(botData) == y;// &&
-		// DataPointUtil.getAlpha(singleAdjDataPoint)
-		// == 255;
-		
+		boolean skipTop = DataPointUtil.doesItExist(topData) && (
+				(isTransparent && (DataPointUtil.getDepth(topData) == maxY)) ||
+						(!isTransparent && (DataPointUtil.getDepth(topData) == maxY) && !isTopTransparent));
+		boolean skipBot = DataPointUtil.doesItExist(botData) && (
+				(isTransparent && (DataPointUtil.getDepth(botData) == maxY)) ||
+						(!isTransparent && (DataPointUtil.getDepth(botData) == maxY) && !isBotTransparent));
+
+
 		if (!skipTop)
 			builder.addQuadUp(x, maxY, z, xSize, zSize, ColorUtil.applyShade(color, MC.getShade(ELodDirection.UP)), skyLightTop, blockLight);
 		if (!skipBot)
@@ -161,17 +166,18 @@ public class ColumnBox
 		boolean allAbove = true;
 		short previousDepth = -1;
 		byte nextSkyLight = upSkyLight;
-		
+		boolean isTransparent = ColorUtil.getAlpha(color);
 		// TODO transparency ocean floor fix
 		// boolean isOpaque = ((colorMap[0] >> 24) & 0xFF) == 255;
 		for (i = 0; i < dataPoint.size() && DataPointUtil.doesItExist(adjData.get(i))
 				&& !DataPointUtil.isVoid(adjData.get(i)); i++)
 		{
 			long adjPoint = adjData.get(i);
-			
+			boolean isAdjTransparent = DataPointUtil.getAlpha(adjPoint) < 255;
 			// TODO transparency ocean floor fix
-			// if (isOpaque && DataPointUtil.getAlpha(singleAdjDataPoint) != 255)
-			// continue;
+			if (!isTransparent && isAdjTransparent)
+				continue;
+
 			
 			short height = DataPointUtil.getHeight(adjPoint);
 			short depth = DataPointUtil.getDepth(adjPoint);
