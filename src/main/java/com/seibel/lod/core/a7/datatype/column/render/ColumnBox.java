@@ -30,7 +30,7 @@ import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 public class ColumnBox
 {
 	private static boolean transparencyEnabled = true;
-	private static boolean fakeOceanFloor = true;
+	private static boolean fakeOceanFloor = false;
 	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	
 	public static void addBoxQuadsToBuilder(LodQuadBuilder builder, short xSize, short ySize, short zSize, short x,
@@ -185,15 +185,15 @@ public class ColumnBox
 		boolean allAbove = true;
 		short previousDepth = -1;
 		byte nextSkyLight = upSkyLight;
-		boolean isTransparent = ColorUtil.getAlpha(color) < 255;
+		boolean isTransparent = ColorUtil.getAlpha(color) < 255  && transparencyEnabled;;
 		boolean lastWasTransparent = false;
 		for (i = 0; i < dataPoint.size() && DataPointUtil.doesItExist(adjData.get(i))
 				&& !DataPointUtil.isVoid(adjData.get(i)); i++)
 		{
 			long adjPoint = adjData.get(i);
 
-			boolean isAdjTransparent = DataPointUtil.getAlpha(adjPoint) < 255;
-			/**TODO disable this when disabling transparency */
+			boolean isAdjTransparent = DataPointUtil.getAlpha(adjPoint) < 255 && transparencyEnabled;
+
 			if (!isTransparent && isAdjTransparent && transparencyEnabled)
 				continue;
 
@@ -206,13 +206,11 @@ public class ColumnBox
 
 				if(lastWasTransparent && !isAdjTransparent)
 				{
-					long previousAdjPoint = adjData.get(i-1);
-					height = (short) (DataPointUtil.getHeight(previousAdjPoint) - 1);
+					height = (short) (DataPointUtil.getHeight(adjData.get(i-1)) - 1);
 				}
 				else if(isAdjTransparent && (i + 1) < adjData.size())
 				{
-					long nextAdjPoint = adjData.get(i+1);
-					if (DataPointUtil.getAlpha(nextAdjPoint) == 255)
+					if (DataPointUtil.getAlpha(adjData.get(i+1)) == 255)
 					{
 						depth = (short) (height - 1);
 					}
