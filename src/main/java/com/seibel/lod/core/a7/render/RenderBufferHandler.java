@@ -26,7 +26,7 @@ public class RenderBufferHandler {
             this.pos = pos;
         }
 
-        public void render(a7LodRenderer renderContext) {
+        public void renderOpaque(a7LodRenderer renderContext) {
             RenderBuffer buff;
 
             buff = renderBufferSlotOpaque.get();
@@ -36,11 +36,13 @@ public class RenderBufferHandler {
                 RenderBufferNode[] childs = children;
                 if (childs != null) {
                     for (RenderBufferNode child : childs) {
-                        child.render(renderContext);
+                        child.renderOpaque(renderContext);
                     }
                 }
             }
-
+        }
+        public void renderTransparent(a7LodRenderer renderContext) {
+            RenderBuffer buff;
             buff = renderBufferSlotTransparent.get();
             if (buff != null) {
                 buff.render(renderContext);
@@ -48,7 +50,7 @@ public class RenderBufferHandler {
                 RenderBufferNode[] childs = children;
                 if (childs != null) {
                     for (RenderBufferNode child : childs) {
-                        child.render(renderContext);
+                        child.renderTransparent(renderContext);
                     }
                 }
             }
@@ -138,40 +140,17 @@ public class RenderBufferHandler {
         // Maybe dupe the base list and use atomic swap on render? Or is this not worth it?
         //TODO: Directional culling
         //TODO: Ordered by distance
-        renderBufferNodes.forEachOrdered(n -> n.render(renderContext));
+        renderBufferNodes.forEachOrdered(n -> n.renderOpaque(renderContext));
+        renderBufferNodes.forEachOrdered(n -> n.renderTransparent(renderContext));
     }
 
     public void update() {
         byte topDetail = (byte) (target.getNumbersOfSectionLevels() - 1);
         MovableGridRingList<LodRenderSection> referenceList = target.getRingList(topDetail);
         Pos2D center = referenceList.getCenter();
+        //boolean moved = renderBufferNodes.getCenter().x != center.x || renderBufferNodes.getCenter().y != center.y;
         renderBufferNodes.move(center.x, center.y, RenderBufferNode::close); // Note: may lock the list
 
-
-        /**TODO improve the ordering*/
-        DHBlockPos playerPos = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class).getPlayerBlockPos();
-        int x = playerPos.x;
-        int z = playerPos.z;
-        Comparator<RenderBufferNode> byDistance = new Comparator<RenderBufferNode>() {
-            @Override
-            public int compare(RenderBufferNode o1, RenderBufferNode o2) {
-                if((o1 == null) && (o2 == null)){
-                    return 0;
-                }else if(o1 == null){
-                    return 1;
-                }else if(o2 == null)
-                {
-                    return -1;
-                }
-                int x1 = o1.pos.sectionX;
-                int z1 = o1.pos.sectionZ;
-                int x2 = o2.pos.sectionX;
-                int z2 = o2.pos.sectionZ;
-
-                return Integer.compare((x1 - x)^2 + (z1 - z)^2,(x2 - x)^2 + (z2 - z)^2) ;
-            }
-        };
-        renderBufferNodes.sort(byDistance);
 
 
         renderBufferNodes.forEachPosOrdered((node, pos) -> {
@@ -195,6 +174,31 @@ public class RenderBufferHandler {
             // Update node
             node.update();
         });
+
+
+        /**TODO improve the ordering*/
+        /* DHBlockPos playerPos = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class).getPlayerBlockPos();
+        int x = playerPos.x;
+        int z = playerPos.z;
+        Comparator<RenderBufferNode> byDistance = new Comparator<RenderBufferNode>() {
+            @Override
+            public int compare(RenderBufferNode o1, RenderBufferNode o2) {
+                if ((o1 == null) && (o2 == null)) {
+                    return 0;
+                } else if (o1 == null) {
+                    return 1;
+                } else if (o2 == null) {
+                    return -1;
+                }
+                int x1 = o1.pos.sectionX;
+                int z1 = o1.pos.sectionZ;
+                int x2 = o2.pos.sectionX;
+                int z2 = o2.pos.sectionZ;
+
+                return Integer.compare((x1 - x) ^ 2 + (z1 - z) ^ 2, (x2 - x) ^ 2 + (z2 - z) ^ 2);
+            }
+        };
+        renderBufferNodes.sort(byDistance);*/
     }
 
     public void close() {
