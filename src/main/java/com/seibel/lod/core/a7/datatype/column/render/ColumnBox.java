@@ -43,7 +43,8 @@ public class ColumnBox
 
 		boolean isTopTransparent = DataPointUtil.getAlpha(topData)<255;
 		boolean isBotTransparent = DataPointUtil.getAlpha(botData)<255;
-		byte skyLightBot = DataPointUtil.doesItExist(botData) ? DataPointUtil.getLightSky(botData) : 0;
+
+
 		// Up direction case
 		boolean skipTop = DataPointUtil.doesItExist(topData) && (
 				(isTransparent && (DataPointUtil.getDepth(topData) == maxY)) ||
