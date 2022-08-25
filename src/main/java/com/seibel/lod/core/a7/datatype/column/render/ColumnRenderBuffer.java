@@ -372,7 +372,7 @@ public class ColumnRenderBuffer extends RenderBuffer {
 
 
                     // We send the call to create the vertices
-                    if(DataPointUtil.getAlpha(data) == 255)
+                    if(DataPointUtil.getAlpha(data) == 255 || !a7LodRenderer.transparencyEnabled)
                     {
                         CubicLodTemplate.addLodToBuffer(data, adjDataTop, adjDataBot, adjData, detailLevel,
                                 x, z, quadBuilderOpaque, debugMode);
@@ -386,6 +386,7 @@ public class ColumnRenderBuffer extends RenderBuffer {
             }
         }
         quadBuilderOpaque.mergeQuads();
-        quadBuilderTransparent.mergeQuads();
+        if(a7LodRenderer.transparencyEnabled)
+            quadBuilderTransparent.mergeQuads();
     }
 }

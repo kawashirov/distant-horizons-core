@@ -10,6 +10,7 @@ import com.seibel.lod.core.a7.datatype.transform.FullToColumnTransformer;
 import com.seibel.lod.core.a7.level.IClientLevel;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.a7.render.RenderBuffer;
+import com.seibel.lod.core.a7.render.a7LodRenderer;
 import com.seibel.lod.core.a7.save.io.render.RenderMetaFile;
 import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
@@ -332,20 +333,25 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
                 RenderBuffer[] newBuffers = inBuildRenderBuffer.join();
 
                 RenderBuffer oldBuffersOpaque = referenceSlotsOpaque.getAndSet(newBuffers[0]);
-                RenderBuffer oldBuffersTransparent = referenceSlotsTransparent.getAndSet(newBuffers[1]);
 
                 ColumnRenderBuffer swapped;
+
 
                 if (oldBuffersOpaque instanceof ColumnRenderBuffer) {
                     swapped = usedBufferOpaque.swap((ColumnRenderBuffer) oldBuffersOpaque);
                     LodUtil.assertTrue(swapped == null);
                 }
 
-                if (oldBuffersTransparent instanceof ColumnRenderBuffer) {
-                    swapped = usedBufferTransparent.swap((ColumnRenderBuffer) oldBuffersTransparent);
-                    LodUtil.assertTrue(swapped == null);
-                }
+                if(a7LodRenderer.transparencyEnabled) {
+                    RenderBuffer oldBuffersTransparent = referenceSlotsTransparent.getAndSet(newBuffers[1]);
 
+                    if (a7LodRenderer.transparencyEnabled) {
+                        if (oldBuffersTransparent instanceof ColumnRenderBuffer) {
+                            swapped = usedBufferTransparent.swap((ColumnRenderBuffer) oldBuffersTransparent);
+                            LodUtil.assertTrue(swapped == null);
+                        }
+                    }
+                }
                 inBuildRenderBuffer = null;
                 return true;
             }

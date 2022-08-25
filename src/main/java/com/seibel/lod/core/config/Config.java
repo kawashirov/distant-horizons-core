@@ -156,6 +156,10 @@ public class Config
                                 + "     or "+ EDropoffQuality.PERFORMANCE_FOCUSED +" otherwise.")
                         .build();
 
+                public static ConfigEntry<ETransparency> transparency = new ConfigEntry.Builder<ETransparency>()
+                        .set(ETransparency.COMPLETE)
+                        .comment("")
+                        .build();
                 public static ConfigEntry<Integer> lodBiomeBlending = new ConfigEntry.Builder<Integer>()
                         .setMinDefaultMax(0,1,7)
                         .comment(""

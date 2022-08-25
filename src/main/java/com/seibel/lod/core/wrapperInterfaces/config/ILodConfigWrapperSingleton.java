@@ -89,6 +89,10 @@ public interface ILodConfigWrapperSingleton extends IBindable
 					return dropoffQuality;
 				}
 
+				public void setTransparency(ETransparency newTransparency);
+
+				public ETransparency getTransparency();
+
 				int getLodBiomeBlending();
 				void setLodBiomeBlending(int newLodBiomeBlending);
 			}

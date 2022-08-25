@@ -26,6 +26,10 @@ public class RenderBufferHandler {
             this.pos = pos;
         }
 
+        /**
+         * This will render all opaque lods
+         * @param renderContext
+         */
         public void renderOpaque(a7LodRenderer renderContext) {
             RenderBuffer buff;
 
@@ -41,6 +45,11 @@ public class RenderBufferHandler {
                 }
             }
         }
+
+        /**
+         * This will render all transparent lods
+         * @param renderContext
+         */
         public void renderTransparent(a7LodRenderer renderContext) {
             RenderBuffer buff;
             buff = renderBufferSlotTransparent.get();
@@ -141,7 +150,8 @@ public class RenderBufferHandler {
         //TODO: Directional culling
         //TODO: Ordered by distance
         renderBufferNodes.forEachOrdered(n -> n.renderOpaque(renderContext));
-        renderBufferNodes.forEachOrdered(n -> n.renderTransparent(renderContext));
+        if(a7LodRenderer.transparencyEnabled)
+            renderBufferNodes.forEachOrdered(n -> n.renderTransparent(renderContext));
     }
 
     public void update() {

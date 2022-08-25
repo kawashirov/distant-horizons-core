@@ -189,6 +189,17 @@ public class LodConfigWrapperSingleton implements ILodConfigWrapperSingleton
 				}
 
 				@Override
+				public void setTransparency(ETransparency newTransparency) {
+					Config.Client.Graphics.Quality.transparency.set(newTransparency);
+				}
+
+				@Override
+				public ETransparency getTransparency(){
+					return Config.Client.Graphics.Quality.transparency.get();
+				}
+
+
+				@Override
 				public int getLodBiomeBlending() {
 					return Config.Client.Graphics.Quality.lodBiomeBlending.get();
 				}

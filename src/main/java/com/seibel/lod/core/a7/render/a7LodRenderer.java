@@ -39,6 +39,7 @@ import com.seibel.lod.core.render.objects.GLState;
 import com.seibel.lod.core.render.objects.GLVertexBuffer;
 import com.seibel.lod.core.render.objects.QuadElementBuffer;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.wrapperInterfaces.config.ILodConfigWrapperSingleton;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IProfilerWrapper;
@@ -69,6 +70,9 @@ public class a7LodRenderer
 	public static final long DRAW_LAG_SPIKE_THRESHOLD_NS = TimeUnit.NANOSECONDS.convert(20, TimeUnit.MILLISECONDS);
 
 	public static final boolean ENABLE_IBO = true;
+
+	public static boolean transparencyEnabled = true;
+	public static boolean fakeOceanFloor = true;
 
 	public void setupOffset(DHBlockPos pos) {
 		Vec3d cam = MC_RENDER.getCameraExactPosition();
@@ -147,7 +151,7 @@ public class a7LodRenderer
 		//===================//
 		// draw params setup //
 		//===================//
-		
+
 		profiler.push("LOD draw setup");
 		/*---------Set GL State--------*/
 		// Make sure to unbind current VBO so we don't mess up vanilla settings
@@ -170,10 +174,18 @@ public class a7LodRenderer
 		GL32.glEnable(GL32.GL_DEPTH_TEST);
 		// GL32.glDisable(GL32.GL_DEPTH_TEST);
 		GL32.glDepthFunc(GL32.GL_LESS);
-		// TODO: enable for transparent rendering
-		GL32.glBlendFunc(GL32.GL_SRC_ALPHA, GL32.GL_ONE_MINUS_SRC_ALPHA);
-		GL32.glEnable(GL32.GL_BLEND);
-		//GL32.glDisable(GL32.GL_BLEND);
+
+
+
+		transparencyEnabled = Config.Client.Graphics.Quality.transparency.get().tranparencyEnabled;
+		fakeOceanFloor = Config.Client.Graphics.Quality.transparency.get().fakeTransparencyEnabled;
+		if(transparencyEnabled) {
+			GL32.glBlendFunc(GL32.GL_SRC_ALPHA, GL32.GL_ONE_MINUS_SRC_ALPHA);
+			GL32.glEnable(GL32.GL_BLEND);
+		}else{
+			GL32.glDisable(GL32.GL_BLEND);
+		}
+
 		GL32.glClear(GL32.GL_DEPTH_BUFFER_BIT);
 
 		/*---------Bind required objects--------*/

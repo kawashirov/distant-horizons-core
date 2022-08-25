@@ -20,17 +20,18 @@
 package com.seibel.lod.core.a7.datatype.column.render;
 
 import com.seibel.lod.core.a7.datatype.column.accessor.ColumnArrayView;
+import com.seibel.lod.core.a7.render.a7LodRenderer;
 import com.seibel.lod.core.builders.lodBuilding.bufferBuilding.LodQuadBuilder;
+import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.util.ColorUtil;
 import com.seibel.lod.core.util.DataPointUtil;
+import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 
 public class ColumnBox
 {
-	private static boolean transparencyEnabled = true;
-	private static boolean fakeOceanFloor = false;
 	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	
 	public static void addBoxQuadsToBuilder(LodQuadBuilder builder, short xSize, short ySize, short zSize, short x,
@@ -42,41 +43,37 @@ public class ColumnBox
 		byte skyLightTop = skyLight;
 		byte skyLightBot = DataPointUtil.doesItExist(botData) ? DataPointUtil.getLightSky(botData) : 0;
 
-		boolean isTransparent = ColorUtil.getAlpha(color)<255 && transparencyEnabled;
-		boolean isTopTransparent = DataPointUtil.getAlpha(topData)<255 && transparencyEnabled;
-		boolean isBotTransparent = DataPointUtil.getAlpha(botData)<255 && transparencyEnabled;
+		boolean isTransparent = ColorUtil.getAlpha(color)<255 && a7LodRenderer.transparencyEnabled;
+		boolean isTopTransparent = DataPointUtil.getAlpha(topData)<255 && a7LodRenderer.transparencyEnabled;
+		boolean isBotTransparent = DataPointUtil.getAlpha(botData)<255 && a7LodRenderer.transparencyEnabled;
 
 
 		// Up direction case
-		boolean skipTop = DataPointUtil.doesItExist(topData) && (
-				(isTransparent && (DataPointUtil.getDepth(topData) == maxY)) ||
-						(!isTransparent && (DataPointUtil.getDepth(topData) == maxY) && !isTopTransparent));
-		boolean skipBot = DataPointUtil.doesItExist(botData) && (
-				(isTransparent && (DataPointUtil.getDepth(botData) == maxY)) ||
-						(!isTransparent && (DataPointUtil.getDepth(botData) == maxY) && !isBotTransparent));
+		//We skip if
+		//   current block is not transparent: we check if the adj block is attached and opaque
 
-		if(fakeOceanFloor && transparencyEnabled)
-		{
-			if(!isTransparent && isTopTransparent)
-			{
+		boolean skipTop = DataPointUtil.doesItExist(topData) && (DataPointUtil.getDepth(topData) == maxY) && !isTopTransparent;
+		boolean skipBot = DataPointUtil.doesItExist(botData) && (DataPointUtil.getHeight(botData) == y) && !isBotTransparent;
+		if(a7LodRenderer.transparencyEnabled && a7LodRenderer.fakeOceanFloor) {
+			if (!isTransparent && isTopTransparent && DataPointUtil.doesItExist(topData)) {
+				skyLightTop = (byte) LodUtil.clamp(0, 15 - (DataPointUtil.getHeight(topData) - y), 15);
 				ySize = (short) (DataPointUtil.getHeight(topData) - y - 1);
-			}
-			else if(isTransparent && !isBotTransparent)
-			{
+				//y = (short) (DataPointUtil.getHeight(topData) - 2);
+				//ySize = 1;
+			} else if (isTransparent && !isBotTransparent && DataPointUtil.doesItExist(botData)) {
 				y = (short) (y + ySize - 1);
 				ySize = 1;
 			}
-		}else if(!transparencyEnabled)
-		{
-			color = ColorUtil.rgbToInt(ColorUtil.getRed(color),ColorUtil.getGreen(color),ColorUtil.getBlue(color));
+			maxY = (short) (y + ySize);
 		}
 
-		maxY = (short) (y + ySize);
 		if (!skipTop)
 			builder.addQuadUp(x, maxY, z, xSize, zSize, ColorUtil.applyShade(color, MC.getShade(ELodDirection.UP)), skyLightTop, blockLight);
 		if (!skipBot)
 			builder.addQuadDown(x, y, z, xSize, zSize, ColorUtil.applyShade(color, MC.getShade(ELodDirection.DOWN)), skyLightBot, blockLight);
-		
+
+		if(isTransparent)
+			return;
 		//If the adj pos is at the same level we cull the faces normally, otherwise we divide the face in two and cull the two part separately
 		
 		//NORTH face vertex creation
@@ -185,23 +182,23 @@ public class ColumnBox
 		boolean allAbove = true;
 		short previousDepth = -1;
 		byte nextSkyLight = upSkyLight;
-		boolean isTransparent = ColorUtil.getAlpha(color) < 255  && transparencyEnabled;;
+		boolean isTransparent = ColorUtil.getAlpha(color) < 255  && a7LodRenderer.transparencyEnabled;
 		boolean lastWasTransparent = false;
 		for (i = 0; i < dataPoint.size() && DataPointUtil.doesItExist(adjData.get(i))
 				&& !DataPointUtil.isVoid(adjData.get(i)); i++)
 		{
 			long adjPoint = adjData.get(i);
 
-			boolean isAdjTransparent = DataPointUtil.getAlpha(adjPoint) < 255 && transparencyEnabled;
+			boolean isAdjTransparent = DataPointUtil.getAlpha(adjPoint) < 255 && a7LodRenderer.transparencyEnabled;
 
-			if (!isTransparent && isAdjTransparent && transparencyEnabled)
+			if (!isTransparent && isAdjTransparent && a7LodRenderer.transparencyEnabled)
 				continue;
 
 			
 			short height = DataPointUtil.getHeight(adjPoint);
 			short depth = DataPointUtil.getDepth(adjPoint);
 
-			if(fakeOceanFloor && transparencyEnabled)
+			if(a7LodRenderer.transparencyEnabled && a7LodRenderer.fakeOceanFloor)
 			{
 
 				if(lastWasTransparent && !isAdjTransparent)
