@@ -1,4 +1,4 @@
-version = "Core-Api-Common-" + rootProject.versionStr
+version = "Core-Shared-" + rootProject.versionStr
 
 configurations {
 
