@@ -885,7 +885,7 @@ public class Config
         public static class AutoUpdater
         {
             public static ConfigEntry<Boolean> enableAutoUpdater = new ConfigEntry.Builder<Boolean>()
-                    .set(true)
+                    .set(false) // Keep this as false for development
                     .comment("Automatically checks for updates on game launch")
                     .build();
 

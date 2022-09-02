@@ -6,8 +6,10 @@
 
   "lod.updater.title":
     "Distant Horizons auto updater",
-  "lod.updater.text":
+  "lod.updater.text1":
     "There is a new update for Distant Horizons available",
+  "lod.updater.text2":
+    "Would you like to automatically update from version %s to %s",
   "lod.updater.later":
     "Later",
   "lod.updater.never":
