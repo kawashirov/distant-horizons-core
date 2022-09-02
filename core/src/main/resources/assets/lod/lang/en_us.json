@@ -1,6 +1,29 @@
 {
   "lod.title":
 	"Distant Horizons",
+
+
+
+  "lod.updater.title":
+    "Distant Horizons auto updater",
+  "lod.updater.text":
+    "There is a new update for Distant Horizons available",
+  "lod.updater.later":
+    "Later",
+  "lod.updater.never":
+    "Dont show again",
+  "lod.updater.update":
+    "Update",
+  "lod.updater.update.@tooltip":
+    "Updates the mod this 1 time\n(Updates when game closed)",
+  "lod.updater.silentUpdate":
+    "Always silent update",
+  "lod.updater.silentUpdate.@tooltip":
+    "Every time an update is available, it would update\n(§6WARNING§r: It wont prompt the user on an update, tough it would keep the mod up to date)",
+
+
+
+
   "lod.config.title":
 	"Distant Horizons config",
   "lod.config.client":
