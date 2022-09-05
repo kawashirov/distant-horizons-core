@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.items.enums;
+package com.seibel.lod.api.enums;
 
 import com.seibel.lod.core.api.external.items.enums.override.DhApiOverrideEnumAssembly;
 import com.seibel.lod.core.api.external.items.enums.config.DhApiConfigEnumAssembly;

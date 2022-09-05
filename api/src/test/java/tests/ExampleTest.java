@@ -23,15 +23,16 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
+ * This is just a quick demo to confirm the testing system is set up correctly.
+ * 
  * @author James Seibel
  * @version 2022-9-5
  */
-public class BasicTest
+public class ExampleTest
 {
 	
-	/** This is just a quick demo to confirm the testing system is set up correctly. */
 	@Test
-	public void ExampleTests()
+	public void DemoTest()
 	{
 		Assert.assertTrue("Example test 1", true);
 		Assert.assertFalse("Example test 2", false);

@@ -1,4 +1,4 @@
-package tests;/*
+/*
  *    This file is part of the Distant Horizons mod (formerly the LOD Mod),
  *    licensed under the GNU LGPL v3 License.
  *
@@ -17,7 +17,9 @@ package tests;/*
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import com.seibel.lod.core.api.external.items.enums.DhApiEnumAssembly;
+package tests;
+
+import com.seibel.lod.api.enums.DhApiEnumAssembly;
 import com.seibel.lod.core.enums.rendering.EFogDrawMode;
 import com.seibel.lod.core.enums.CoreEnumAssembly;
 import com.seibel.lod.core.enums.config.EVerticalQuality;
@@ -36,14 +38,6 @@ import java.util.ArrayList;
  */
 public class ApiEnumSyncTests
 {
-	
-	/** This is just a quick demo to confirm the testing system is set up correctly. */
-	@Test
-	public void ExampleTests()
-	{
-		Assert.assertTrue("Example test 1", true);
-		Assert.assertFalse("Example test 2", false);
-	}
 	
 	/** Make sure each DhApi enum has the same values as its corresponding core enum. */
 	@Test
