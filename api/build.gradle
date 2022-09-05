@@ -5,7 +5,8 @@ configurations {
 }
 
 dependencies {
-
+    // TODO: can we remove the need for manifold? it shouldn't be necessary here
+    testAnnotationProcessor "systems.manifold:manifold-preprocessor:${rootProject.manifold_version}"
 }
 
 shadowJar {
