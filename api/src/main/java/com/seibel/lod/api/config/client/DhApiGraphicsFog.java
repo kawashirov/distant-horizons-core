@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.methods.config.client;
+package com.seibel.lod.api.config.client;
 
 import com.seibel.lod.core.api.external.items.interfaces.config.IDhApiConfig;
 import com.seibel.lod.core.api.external.items.enums.config.*;

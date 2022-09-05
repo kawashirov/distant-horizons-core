@@ -1,4 +1,4 @@
-package com.seibel.lod.core.api.external.methods.override;
+package com.seibel.lod.api.override;
 
 import com.seibel.lod.core.api.external.items.interfaces.override.IDhApiWorldGenerator;
 import com.seibel.lod.core.api.external.items.interfaces.world.IDhApiLevelWrapper;

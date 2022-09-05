@@ -1,4 +1,4 @@
-package com.seibel.lod.core.api.external;
+package com.seibel.lod.api;
 
 import com.seibel.lod.core.ModInfo;
 import com.seibel.lod.core.a7.datatype.full.FullDataSource;

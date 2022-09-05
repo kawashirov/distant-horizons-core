@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.methods.config.both;
+package com.seibel.lod.api.config.both;
 
 import com.seibel.lod.core.api.external.items.enums.config.EDhApiDistanceGenerationMode;
 import com.seibel.lod.core.api.external.items.enums.config.EDhApiBlocksToAvoid;

@@ -1,4 +1,4 @@
-package com.seibel.lod.core.api.external.methods.data;
+package com.seibel.lod.api.data;
 
 import com.seibel.lod.core.api.external.items.objects.DhApiResult;
 import com.seibel.lod.core.api.external.items.objects.data.DhApiTerrainDataPoint;
