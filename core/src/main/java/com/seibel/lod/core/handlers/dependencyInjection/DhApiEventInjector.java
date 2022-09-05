@@ -38,8 +38,10 @@ import java.util.ArrayList;
  */
 public class DhApiEventInjector extends DependencyInjector<IDhApiEvent> // Note to self: Don't try adding a generic type to IDhApiEvent, the consturctor won't accept it
 {
+	private static final Logger LOGGER = LogManager.getLogger(DhApiEventInjector.class.getSimpleName());
+	
 	public static final DhApiEventInjector INSTANCE = new DhApiEventInjector();
-	public static final Logger LOGGER = LogManager.getLogger(DhApiEventInjector.class.getSimpleName());
+	
 	
 	
 	public DhApiEventInjector()

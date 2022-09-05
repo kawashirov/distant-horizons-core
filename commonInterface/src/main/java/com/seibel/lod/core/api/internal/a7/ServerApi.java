@@ -50,10 +50,13 @@ public class ServerApi
 {
 	public static final boolean ENABLE_STACK_DUMP_LOGGING = false;
 	public static final ServerApi INSTANCE = new ServerApi();
-    public static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
-	private static final IVersionConstants VERSION_CONSTANTS = SingletonInjector.INSTANCE.get(IVersionConstants.class);
 	public static final boolean ENABLE_EVENT_LOGGING = true;
-
+	
+	private static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+	private static final IVersionConstants VERSION_CONSTANTS = SingletonInjector.INSTANCE.get(IVersionConstants.class);
+	
+	
+	
 	private ServerApi()
 	{
 	}

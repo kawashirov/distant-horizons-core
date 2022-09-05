@@ -59,9 +59,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class ClientApi
 {
-	public static final Logger LOGGER = LogManager.getLogger(ClientApi.class.getSimpleName());
-	public static boolean prefLoggerEnabled = false;
+	private static final Logger LOGGER = LogManager.getLogger(ClientApi.class.getSimpleName());
 	public static final boolean ENABLE_EVENT_LOGGING = true;
+	public static boolean prefLoggerEnabled = false;
 	
 	public static final ClientApi INSTANCE = new ClientApi();
 	public static RenderSystemTest testRenderer = new RenderSystemTest();

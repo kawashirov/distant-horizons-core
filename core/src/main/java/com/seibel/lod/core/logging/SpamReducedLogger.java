@@ -32,7 +32,7 @@ import org.apache.logging.log4j.Logger;
 
 public class SpamReducedLogger
 {
-	public static final Logger LOGGER = LogManager.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+	private static final Logger LOGGER = LogManager.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 	
 	public static final List<WeakReference<SpamReducedLogger>> loggers
 			= Collections.synchronizedList(new LinkedList<WeakReference<SpamReducedLogger>>());

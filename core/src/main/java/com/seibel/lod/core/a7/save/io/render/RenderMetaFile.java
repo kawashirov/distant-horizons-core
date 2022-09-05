@@ -9,7 +9,9 @@ import com.seibel.lod.core.a7.level.IClientLevel;
 import com.seibel.lod.core.a7.pos.DhLodPos;
 import com.seibel.lod.core.a7.save.io.MetaFile;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
+import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,7 +20,10 @@ import java.lang.ref.SoftReference;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class RenderMetaFile extends MetaFile {
+public class RenderMetaFile extends MetaFile
+{
+	private static final Logger LOGGER = DhLoggerBuilder.getLogger(RenderMetaFile.class.getSimpleName());
+	
     private final IClientLevel level;
     public RenderSourceLoader loader;
     public Class<? extends LodRenderSource> dataType;

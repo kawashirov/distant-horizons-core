@@ -26,7 +26,7 @@ import java.nio.file.Path;
  */
 public class ConfigFileHandling
 {
-	public static final Logger LOGGER = LogManager.getLogger(ConfigBase.class.getSimpleName());
+	private static final Logger LOGGER = LogManager.getLogger(ConfigBase.class.getSimpleName());
 	
 	public static final Path ConfigPath = SingletonInjector.INSTANCE.get(IMinecraftSharedWrapper.class)
             .getInstallationDirectory().toPath().resolve("config").resolve(ModInfo.NAME+".toml");

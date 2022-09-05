@@ -27,9 +27,14 @@ import com.seibel.lod.core.a7.pos.DhLodPos;
 import com.seibel.lod.core.a7.save.io.MetaFile;
 import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
+import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
+import org.apache.logging.log4j.Logger;
 
-public class DataMetaFile extends MetaFile {
+public class DataMetaFile extends MetaFile
+{
+	private static final Logger LOGGER = DhLoggerBuilder.getLogger(DataMetaFile.class.getSimpleName());
+	
 	private final ILevel level;
 	public DataSourceLoader loader;
 	public Class<? extends LodDataSource> dataType;
