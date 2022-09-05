@@ -1,5 +1,6 @@
 package com.seibel.lod.core.a7.level;
 
+import com.seibel.lod.core.a7.save.io.file.RemoteDataFileHandler;
 import com.seibel.lod.core.a7.util.FileScanner;
 import com.seibel.lod.core.a7.save.io.file.DataFileHandler;
 import com.seibel.lod.core.a7.save.structure.LocalSaveStructure;
@@ -22,7 +23,7 @@ public class DhServerLevel implements IServerLevel
         this.save = save;
         this.level = level;
         save.getDataFolder(level).mkdirs();
-        dataFileHandler = new DataFileHandler(this, save.getDataFolder(level), null); //FIXME: GenerationQueue
+        dataFileHandler = new DataFileHandler(this, save.getDataFolder(level)); //FIXME: GenerationQueue
         FileScanner.scanFile(save, level, dataFileHandler, null);
         LOGGER.info("Started DHLevel for {} with saves at {}", level, save);
     }

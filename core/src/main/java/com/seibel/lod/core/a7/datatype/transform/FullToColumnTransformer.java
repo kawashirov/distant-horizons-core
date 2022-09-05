@@ -1,13 +1,11 @@
 package com.seibel.lod.core.a7.datatype.transform;
 
+import com.seibel.lod.core.a7.datatype.LodRenderSource;
 import com.seibel.lod.core.a7.datatype.column.accessor.ColumnFormat;
 import com.seibel.lod.core.a7.datatype.column.ColumnRenderSource;
 import com.seibel.lod.core.a7.datatype.column.accessor.ColumnArrayView;
 import com.seibel.lod.core.a7.datatype.column.accessor.ColumnQuadView;
-import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
-import com.seibel.lod.core.a7.datatype.full.FullDataSource;
-import com.seibel.lod.core.a7.datatype.full.FullFormat;
-import com.seibel.lod.core.a7.datatype.full.IdBiomeBlockStateMap;
+import com.seibel.lod.core.a7.datatype.full.*;
 import com.seibel.lod.core.a7.datatype.full.accessor.SingleFullArrayView;
 import com.seibel.lod.core.a7.level.IClientLevel;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
@@ -43,7 +41,7 @@ public class FullToColumnTransformer {
                 for (int z = 0; z < pos.getWidth(dataDetail).value; z++) {
                     ColumnArrayView columnArrayView = columnSource.getVerticalDataView(x, z);
                     SingleFullArrayView fullArrayView = data.get(x, z);
-                    convertColumnData(level, baseX + x, baseZ + z, columnArrayView, fullArrayView);
+                    convertColumnData(level, baseX + x, baseZ + z, columnArrayView, fullArrayView, 1);
                     if (fullArrayView.doesItExist()) LodUtil.assertTrue(columnSource.doesItExist(x, z));
                 }
             }
@@ -60,6 +58,33 @@ public class FullToColumnTransformer {
 //                    convertColumnData(level, columnArrayView, fullArrayView);
 //                }
 //            }
+        } else {
+            throw new UnsupportedOperationException("To be implemented");
+            //FIXME: Implement different size creation of renderData
+        }
+        return columnSource;
+    }
+
+    public static LodRenderSource transformSparseDataToColumnData(IClientLevel level, SparseDataSource data) {
+        final DhSectionPos pos = data.getSectionPos();
+        final byte dataDetail = data.getDataDetail();
+        final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(data.getDataDetail());
+        final ColumnRenderSource columnSource = new ColumnRenderSource(pos, vertSize, level.getMinY());
+        if (data.isEmpty) return columnSource;
+        columnSource.isEmpty = false;
+
+        if (dataDetail == columnSource.getDataDetail()) {
+            int baseX = pos.getCorner().getCorner().x;
+            int baseZ = pos.getCorner().getCorner().z;
+            for (int x = 0; x < pos.getWidth(dataDetail).value; x++) {
+                for (int z = 0; z < pos.getWidth(dataDetail).value; z++) {
+                    SingleFullArrayView fullArrayView = data.tryGet(x, z);
+                    if (fullArrayView == null) continue;
+                    ColumnArrayView columnArrayView = columnSource.getVerticalDataView(x, z);
+                    convertColumnData(level, baseX + x, baseZ + z, columnArrayView, fullArrayView, 1);
+                    if (fullArrayView.doesItExist()) LodUtil.assertTrue(columnSource.doesItExist(x, z));
+                }
+            }
         } else {
             throw new UnsupportedOperationException("To be implemented");
             //FIXME: Implement different size creation of renderData
@@ -87,7 +112,7 @@ public class FullToColumnTransformer {
                     SingleFullArrayView fullArrayView = data.get(x, z);
                     convertColumnData(level, blockX + perRenderWidth * (renderOffsetX+x),
                             blockZ + perRenderWidth * (renderOffsetZ+z),
-                            columnArrayView, fullArrayView);
+                            columnArrayView, fullArrayView, 2);
                     if (fullArrayView.doesItExist()) LodUtil.assertTrue(render.doesItExist(renderOffsetX + x, renderOffsetZ + z));
                 }
             }
@@ -108,7 +133,7 @@ public class FullToColumnTransformer {
                             SingleFullArrayView fullArrayView = data.get(x*dataPerRender+ox, z*dataPerRender+oz);
                             convertColumnData(level, blockX + perRenderWidth * (renderOffsetX+x) + perDataWidth * ox,
                                     blockZ + perRenderWidth * (renderOffsetZ+z) + perDataWidth * oz,
-                                    columnArrayView, fullArrayView);
+                                    columnArrayView, fullArrayView, 2);
                         }
                     }
                     ColumnArrayView downSampledArrayView = render.getVerticalDataView(renderOffsetX + x, renderOffsetZ + z);
@@ -118,19 +143,17 @@ public class FullToColumnTransformer {
         }
     }
 
-    private static void convertColumnData(IClientLevel level, int blockX, int blockZ, ColumnArrayView columnArrayView, SingleFullArrayView fullArrayView) {
+    private static void convertColumnData(IClientLevel level, int blockX, int blockZ, ColumnArrayView columnArrayView, SingleFullArrayView fullArrayView, int genMode) {
         if (!fullArrayView.doesItExist()) return;
-        // TODO: Set gen mode
-        int genModeValue = 1;
         int dataTotalLength = fullArrayView.getSingleLength();
         if (dataTotalLength == 0) return;
 
         if (dataTotalLength > columnArrayView.verticalSize()) {
             ColumnArrayView totalColumnData = new ColumnArrayView(new long[dataTotalLength], dataTotalLength, 0, dataTotalLength);
-            iterateAndConvert(level, blockX, blockZ, genModeValue, totalColumnData, fullArrayView);
+            iterateAndConvert(level, blockX, blockZ, genMode, totalColumnData, fullArrayView);
             columnArrayView.changeVerticalSizeFrom(totalColumnData);
         } else {
-            iterateAndConvert(level, blockX, blockZ, genModeValue, columnArrayView, fullArrayView); //Directly use the arrayView since it fits.
+            iterateAndConvert(level, blockX, blockZ, genMode, columnArrayView, fullArrayView); //Directly use the arrayView since it fits.
         }
     }
 

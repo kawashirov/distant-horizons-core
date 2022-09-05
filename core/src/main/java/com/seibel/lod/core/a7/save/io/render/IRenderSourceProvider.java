@@ -13,4 +13,5 @@ public interface IRenderSourceProvider extends AutoCloseable {
     void addScannedFile(Collection<File> detectedFiles);
     void write(DhSectionPos sectionPos, ChunkSizedData chunkData);
     CompletableFuture<Void> flushAndSave();
+    boolean refreshRenderSource(LodRenderSource source);
 }

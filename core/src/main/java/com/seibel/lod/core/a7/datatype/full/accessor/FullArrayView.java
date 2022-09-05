@@ -2,6 +2,7 @@ package com.seibel.lod.core.a7.datatype.full.accessor;
 
 import com.seibel.lod.core.a7.datatype.full.FullFormat;
 import com.seibel.lod.core.a7.datatype.full.IdBiomeBlockStateMap;
+import com.seibel.lod.core.util.LodUtil;
 
 public class FullArrayView implements IFullDataView {
     protected final long[][] dataArrays;
@@ -77,6 +78,17 @@ public class FullArrayView implements IFullDataView {
                     }
                     target.dataArrays[target.offset + x * target.dataSize + o] = newData;
                 }
+            }
+        }
+    }
+
+    public void downsampleFrom(FullArrayView source) {
+        LodUtil.assertTrue(source.size > size && source.size % size == 0);
+        int dataPerUnit = source.size / size;
+        for (int ox = 0; ox < size; ox++) {
+            for (int oz = 0; oz < size; oz++) {
+                SingleFullArrayView column = get(ox, oz);
+                column.downsampleFrom(source.subView(dataPerUnit, ox * dataPerUnit, oz * dataPerUnit));
             }
         }
     }

@@ -432,6 +432,10 @@ public class LodUtil
 	public static void assertNotReach(String message, Object... args) {
 		throw new AssertFailureException("Assert Not Reach failed:\n " + formatLog(message, args));
 	}
+	public static void assertToDo() {
+		throw new AssertFailureException("TODO!");
+	}
+
 	public static ExecutorService makeSingleThreadPool(String name, int relativePriority) {
 		return Executors.newFixedThreadPool(1, new LodThreadFactory(name, Thread.NORM_PRIORITY+relativePriority));
 	}

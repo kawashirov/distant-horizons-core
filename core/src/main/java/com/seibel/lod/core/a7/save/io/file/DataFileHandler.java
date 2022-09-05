@@ -4,10 +4,11 @@ import com.google.common.collect.HashMultimap;
 import com.seibel.lod.core.a7.datatype.LodDataSource;
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.a7.datatype.full.FullDataSource;
+import com.seibel.lod.core.a7.datatype.full.SparseDataSource;
 import com.seibel.lod.core.a7.level.ILevel;
-import com.seibel.lod.core.a7.level.IServerLevel;
 import com.seibel.lod.core.a7.pos.DhLodPos;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
+import com.seibel.lod.core.a7.save.io.MetaFile;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
@@ -20,9 +21,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 public class DataFileHandler implements IDataSourceProvider {
     // Note: Single main thread only for now. May make it multi-thread later, depending on the usage.
@@ -33,14 +35,10 @@ public class DataFileHandler implements IDataSourceProvider {
     final File saveDir;
     AtomicInteger topDetailLevel = new AtomicInteger(-1);
     final int minDetailLevel = FullDataSource.SECTION_SIZE_OFFSET;
-    final Function<DhSectionPos, CompletableFuture<LodDataSource>> dataSourceCreator;
 
-
-    public DataFileHandler(ILevel level, File saveRootDir,
-                           Function<DhSectionPos, CompletableFuture<LodDataSource>> dataSourceCreator) {
+    public DataFileHandler(ILevel level, File saveRootDir) {
         this.saveDir = saveRootDir;
         this.level = level;
-        this.dataSourceCreator = dataSourceCreator;
     }
 
     /*
@@ -55,7 +53,7 @@ public class DataFileHandler implements IDataSourceProvider {
         { // Sort files by pos.
             for (File file : detectedFiles) {
                 try {
-                    DataMetaFile metaFile = new DataMetaFile(level, file);
+                    DataMetaFile metaFile = new DataMetaFile(this, level, file);
                     filesByPos.put(metaFile.pos, metaFile);
                 } catch (IOException e) {
                     LOGGER.error("Failed to read file {}. File will be deleted.", file, e);
@@ -71,7 +69,7 @@ public class DataFileHandler implements IDataSourceProvider {
             Collection<DataMetaFile> metaFiles = filesByPos.get(pos);
             DataMetaFile fileToUse;
             if (metaFiles.size() > 1) {
-                fileToUse = Collections.max(metaFiles, Comparator.comparingLong(a -> a.timestamp));
+                fileToUse = Collections.max(metaFiles, Comparator.comparingLong(a -> a.metaData.dataVersion.get()));
                 {
                     StringBuilder sb = new StringBuilder();
                     sb.append("Multiple files with the same pos: ");
@@ -108,26 +106,23 @@ public class DataFileHandler implements IDataSourceProvider {
         }
     }
 
-    private DataMetaFile atomicGetOrMakeFile(DhSectionPos pos) {
+    protected DataMetaFile atomicGetOrMakeFile(DhSectionPos pos) {
         DataMetaFile metaFile = files.get(pos);
         if (metaFile == null) {
-            File file = computeDefaultFilePath(pos);
-            //FIXME: Handle file already exists issue. Possibly by renaming the file.
-            LodUtil.assertTrue(!file.exists(), "File {} already exist for path {}", file, pos);
-            CompletableFuture<LodDataSource> gen = new CompletableFuture<>();
-            DataMetaFile newMetaFile = new DataMetaFile(level, file, pos, gen);
-            metaFile = files.putIfAbsent(pos, newMetaFile); // This is a CAS with expected null value.
-            if (metaFile == null) {
-                buildFile(pos, gen);
-                metaFile = newMetaFile;
-            } else {
-                gen.cancel(true);
+            DataMetaFile newMetaFile;
+            try {
+                newMetaFile = new DataMetaFile(this, level, pos);
+            } catch (IOException e) {
+                LOGGER.error("IOException on creating new data file at {}", pos, e);
+                return null;
             }
+            metaFile = files.putIfAbsent(pos, newMetaFile); // This is a CAS with expected null value.
+            if (metaFile == null) metaFile = newMetaFile;
         }
         return metaFile;
     }
 
-    private void selfSearch(DhSectionPos basePos, DhSectionPos pos, ArrayList<DataMetaFile> existFiles, ArrayList<DhSectionPos> missing) {
+    protected void selfSearch(DhSectionPos basePos, DhSectionPos pos, ArrayList<DataMetaFile> existFiles, ArrayList<DhSectionPos> missing) {
         byte detail = pos.sectionDetail;
         boolean allEmpty = true;
         outerLoop:
@@ -210,48 +205,6 @@ public class DataFileHandler implements IDataSourceProvider {
     }
 
 
-    private void buildFile(DhSectionPos pos, CompletableFuture<LodDataSource> gen) {
-        ArrayList<DataMetaFile> existFiles = new ArrayList<>();
-        ArrayList<DhSectionPos> missing = new ArrayList<>();
-        selfSearch(pos, pos, existFiles, missing);
-        LodUtil.assertTrue(!missing.isEmpty() || !existFiles.isEmpty());
-        if (missing.size() == 1 && existFiles.isEmpty() && missing.get(0).equals(pos)) {
-            dataSourceCreator.apply(pos).whenComplete((f, ex) -> {
-                if (ex != null) {
-                    gen.completeExceptionally(ex);
-                } else {
-                    gen.complete(f);
-                }
-            });
-            return;
-        }
-
-
-        LOGGER.info("Creating file at {} using {} existing files and {} new files.", pos, existFiles.size(), missing.size());
-        ArrayList<CompletableFuture<LodDataSource>> futures = new ArrayList<>(existFiles.size() + missing.size());
-        for (DhSectionPos missingPos : missing) {
-            existFiles.add(atomicGetOrMakeFile(missingPos));
-        }
-        FullDataSource fullDataSource = FullDataSource.createEmpty(pos);
-        for (DataMetaFile metaFile : existFiles) {
-            futures.add(
-                    metaFile.loadOrGetCached(fileReaderThread).whenComplete((data, ex) -> {
-                        if (ex != null) return;
-                        if (!(data instanceof FullDataSource)) return;
-                        fullDataSource.writeFromLower((FullDataSource) data);
-                    })
-            );
-        }
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                .whenComplete((v, ex) -> {
-            if (ex != null) {
-                gen.completeExceptionally(ex);
-            } else {
-                gen.complete(fullDataSource);
-            }
-        });
-    }
-
     /*
     * This call is concurrent. I.e. it supports multiple threads calling this method at the same time.
      */
@@ -259,7 +212,8 @@ public class DataFileHandler implements IDataSourceProvider {
     public CompletableFuture<LodDataSource> read(DhSectionPos pos) {
         topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetail));
         DataMetaFile metaFile = atomicGetOrMakeFile(pos);
-        return metaFile.loadOrGetCached(fileReaderThread);
+        if (metaFile == null) return CompletableFuture.completedFuture(null);
+        return metaFile.loadOrGetCached();
     }
 
     /*
@@ -289,22 +243,80 @@ public class DataFileHandler implements IDataSourceProvider {
     public CompletableFuture<Void> flushAndSave() {
         ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
         for (DataMetaFile metaFile : files.values()) {
-            futures.add(metaFile.flushAndSave(fileReaderThread));
+            futures.add(metaFile.flushAndSave());
         }
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
 
     @Override
-    public boolean isCacheValid(DhSectionPos sectionPos, long timestamp) {
+    public long getLatestCacheVersion(DhSectionPos sectionPos) {
         DataMetaFile file = files.get(sectionPos);
-        if (file == null) return false;
-        //TODO
-        return true;
+        if (file == null) return 0;
+        return file.getDataVersion();
     }
 
-    private File computeDefaultFilePath(DhSectionPos pos) { //TODO: Temp code as we haven't decided on the file naming & location yet.
+    @Override
+    public CompletableFuture<LodDataSource> onCreateDataFile(DataMetaFile file) {
+        DhSectionPos pos = file.pos;
+        ArrayList<DataMetaFile> existFiles = new ArrayList<>();
+        ArrayList<DhSectionPos> missing = new ArrayList<>();
+        selfSearch(pos, pos, existFiles, missing);
+        LodUtil.assertTrue(!missing.isEmpty() || !existFiles.isEmpty());
+        if (missing.size() == 1 && existFiles.isEmpty() && missing.get(0).equals(pos)) {
+            // None exist.
+            SparseDataSource dataSource = SparseDataSource.createEmpty(pos);
+            return CompletableFuture.completedFuture(dataSource);
+        } else {
+
+            for (DhSectionPos missingPos : missing) {
+                DataMetaFile newfile = atomicGetOrMakeFile(missingPos);
+                if (newfile != null) existFiles.add(newfile);
+            }
+            final ArrayList<CompletableFuture<Void>> futures = new ArrayList<>(existFiles.size());
+            final SparseDataSource dataSource = SparseDataSource.createEmpty(pos);
+
+            for (DataMetaFile f : existFiles) {
+                futures.add(f.loadOrGetCached()
+                        .exceptionally((ex) -> null)
+                        .thenAccept((data) -> {
+                            if (data != null) {
+                                if (data instanceof SparseDataSource)
+                                    dataSource.sampleFrom((SparseDataSource) data);
+                                else if (data instanceof FullDataSource)
+                                    dataSource.sampleFrom((FullDataSource) data);
+                                else LodUtil.assertNotReach();
+                            }
+                        })
+                );
+            }
+            return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
+                    .thenApply((v) -> dataSource.trySelfPromote());
+        }
+    }
+
+    @Override
+    public LodDataSource onDataFileLoaded(LodDataSource source, Consumer<LodDataSource> updater) {
+        updater.accept(source);
+        if (source instanceof SparseDataSource) return ((SparseDataSource) source).trySelfPromote();
+        return source;
+    }
+    @Override
+    public LodDataSource onDataFileRefresh(LodDataSource source, Consumer<LodDataSource> updater) {
+        updater.accept(source);
+        if (source instanceof SparseDataSource) return ((SparseDataSource) source).trySelfPromote();
+        return source;
+    }
+
+    @Override
+    public File computeDataFilePath(DhSectionPos pos) {
         return new File(saveDir, pos.serialize() + ".lod");
     }
+
+    @Override
+    public Executor getIOExecutor() {
+        return fileReaderThread;
+    }
+
 
     @Override
     public void close() {

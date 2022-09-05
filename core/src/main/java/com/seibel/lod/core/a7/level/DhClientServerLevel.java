@@ -1,7 +1,6 @@
 package com.seibel.lod.core.a7.level;
 
 import com.seibel.lod.core.a7.generation.GenerationQueue;
-import com.seibel.lod.core.a7.generation.IGenerator;
 import com.seibel.lod.core.a7.render.LodQuadTree;
 import com.seibel.lod.core.a7.save.io.file.GeneratedDataFileHandler;
 import com.seibel.lod.core.a7.util.FileScanner;
@@ -24,6 +23,7 @@ import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
+import net.minecraft.world.entity.ambient.Bat;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
@@ -32,23 +32,22 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
     public final LocalSaveStructure save;
-    public final DataFileHandler dataFileHandler;
-    public GenerationQueue generationQueue = null;
+    public final GeneratedDataFileHandler dataFileHandler;
+    public volatile GenerationQueue generationQueue = null;
     public RenderFileHandler renderFileHandler = null;
     public RenderBufferHandler renderBufferHandler = null; //TODO: Should this be owned by renderer?
     public final IServerLevelWrapper serverLevel;
     public IClientLevelWrapper clientLevel;
     public a7LodRenderer renderer = null;
     public LodQuadTree tree = null;
-    public BatchGenerator worldGenerator = null;
+    public volatile BatchGenerator worldGenerator = null;
 
     public DhClientServerLevel(LocalSaveStructure save, IServerLevelWrapper level) {
         this.serverLevel = level;
         this.save = save;
         save.getDataFolder(level).mkdirs();
         save.getRenderCacheFolder(level).mkdirs();
-        generationQueue = new GenerationQueue();
-        dataFileHandler = new GeneratedDataFileHandler(this, save.getDataFolder(level), generationQueue);
+        dataFileHandler = new GeneratedDataFileHandler(this, save.getDataFolder(level));
         FileScanner.scanFile(save, serverLevel, dataFileHandler, null);
         LOGGER.info("Started DHLevel for {} with saves at {}", level, save);
     }
@@ -74,7 +73,8 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
         this.clientLevel = clientLevel;
         // TODO: Make a registry for generators for modding support.
         worldGenerator = new BatchGenerator(this);
-        generationQueue.setGenerator(worldGenerator);
+        generationQueue = new GenerationQueue(worldGenerator);
+        dataFileHandler.setGenerationQueue(generationQueue);
         renderFileHandler = new RenderFileHandler(dataFileHandler, this, save.getRenderCacheFolder(serverLevel));
         tree = new LodQuadTree(this, Config.Client.Graphics.Quality.lodChunkRenderDistance.get()*16,
                 MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, renderFileHandler);
@@ -102,18 +102,25 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
         }
         tree.close();
         tree = null;
-        generationQueue.removeGenerator();
-        try {
-            worldGenerator.close();
-        } catch (Exception e) {
-            LOGGER.error("Error closing world generator", e);
-        }
+        dataFileHandler.popGenerationQueue();
+        final BatchGenerator f_worldGen = worldGenerator;
+        CompletableFuture<Void> closer = generationQueue.startClosing(true, true)
+                .exceptionally(ex -> {
+                    LOGGER.error("Error closing geberation queue", ex);
+                    return null;
+                }).thenRun(f_worldGen::close)
+                .exceptionally(ex -> {
+                    LOGGER.error("Error closing geberation queue", ex);
+                    return null;
+                });
+        generationQueue = null;
         worldGenerator = null;
         renderBufferHandler.close();
         renderBufferHandler = null;
         renderFileHandler.flushAndSave(); //Ignore the completion feature so that this action is async
         renderFileHandler.close();
         renderFileHandler = null;
+        closer.join(); // TODO: Could this cause deadlocks? we are blocking in main thread.
     }
 
     @Override
@@ -158,6 +165,7 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
     }
     @Override
     public void close() {
+        if (generationQueue != null) generationQueue.close();
         if (worldGenerator != null) worldGenerator.close();
         if (renderer != null) renderer.close();
         if (tree != null) tree.close();
@@ -170,10 +178,12 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
 
     @Override
     public void doWorldGen() {
-        if (worldGenerator != null) {
-            worldGenerator.update();
-            if (generationQueue != null)
-                generationQueue.pollAndStartClosest(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
+        final BatchGenerator f_worldGen = worldGenerator;
+        if (f_worldGen != null) {
+            f_worldGen.update();
+            final GenerationQueue f_genQueue = generationQueue;
+            if (f_genQueue != null)
+                f_genQueue.pollAndStartClosest(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
         }
     }
 

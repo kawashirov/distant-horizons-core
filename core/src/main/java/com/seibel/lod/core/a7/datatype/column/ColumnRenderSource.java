@@ -210,6 +210,8 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
             for (int j = 0; j < verticalSize; j++)
             {
                 long current = dataContainer[i * verticalSize + j];
+                if (ColumnFormat.doesItExist(current))
+                    current = ColumnFormat.overrideGenerationMode(current, (byte) 1);
                 output.writeLong(Long.reverseBytes(current));
             }
             if (!ColumnFormat.doesItExist(dataContainer[i]))
@@ -401,5 +403,27 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     @Override
     public boolean isValid() {
         return true;
+    }
+
+    @Override
+    public void weakWrite(LodRenderSource source) {
+        LodUtil.assertTrue(source instanceof ColumnRenderSource);
+        ColumnRenderSource src = (ColumnRenderSource) source;
+
+        LodUtil.assertTrue(src.sectionPos.equals(sectionPos));
+        LodUtil.assertTrue(src.verticalSize == verticalSize);
+
+        if (src.isEmpty) return;
+        isEmpty = false;
+
+        for (int i=0; i<dataContainer.length; i+=verticalSize) {
+            int genMode = ColumnFormat.getGenerationMode(dataContainer[i]);
+            int srcGenMode = ColumnFormat.getGenerationMode(src.dataContainer[i]);
+            if (srcGenMode == 0) continue;
+            if (genMode <= srcGenMode) {
+                new ColumnArrayView(dataContainer, verticalSize, i, verticalSize).copyFrom(
+                    new ColumnArrayView(src.dataContainer, verticalSize, i, verticalSize));
+            }
+        }
     }
 }

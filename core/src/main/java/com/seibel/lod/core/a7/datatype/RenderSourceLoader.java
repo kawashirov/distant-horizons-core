@@ -2,6 +2,7 @@ package com.seibel.lod.core.a7.datatype;
 
 import com.google.common.collect.HashMultimap;
 import com.seibel.lod.core.a7.level.IClientLevel;
+import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.save.io.render.RenderMetaFile;
 
 import java.io.IOException;
@@ -53,7 +54,7 @@ public abstract class RenderSourceLoader {
     }
 
     // Can return null as meaning the file is out of date or something
-    public abstract LodRenderSource loadRender(RenderMetaFile renderFile, InputStream data, IClientLevel level) throws IOException;
+    public abstract LodRenderSource loadRender(RenderMetaFile renderFile, InputStream data, ILevel level) throws IOException;
     public abstract LodRenderSource createRender(LodDataSource dataSource, IClientLevel level);
 
 

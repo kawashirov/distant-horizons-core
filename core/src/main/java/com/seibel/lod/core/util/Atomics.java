@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.booleans.BooleanObjectImmutablePair;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.function.Predicate;
 
 public class Atomics {
     // While java 8 does have built in atomic operations, there doesn't seem to be any Compare And Exchange operation...
@@ -21,6 +22,23 @@ public class Atomics {
         T oldValue = atomic.get();
         if (oldValue == expected && atomic.weakCompareAndSet(expected, newValue)) {
             return new BooleanObjectImmutablePair<>(true, expected);
+        } else {
+            return new BooleanObjectImmutablePair<>(false, oldValue);
+        }
+    }
+
+    public static <T> T conditionalAndExchange(AtomicReference<T> atomic, Predicate<T> requirement, T newValue) {
+        while (true) {
+            T oldValue = atomic.get();
+            if (!requirement.test(oldValue)) return oldValue;
+            if (atomic.weakCompareAndSet(oldValue, newValue)) return oldValue;
+        }
+    }
+
+    public static <T> BooleanObjectImmutablePair<T> conditionalAndExchangeWeak(AtomicReference<T> atomic, Predicate<T> requirement, T newValue) {
+        T oldValue = atomic.get();
+        if (requirement.test(oldValue) && atomic.weakCompareAndSet(oldValue, newValue)) {
+            return new BooleanObjectImmutablePair<>(true, oldValue);
         } else {
             return new BooleanObjectImmutablePair<>(false, oldValue);
         }

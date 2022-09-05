@@ -1,14 +1,18 @@
 package com.seibel.lod.core.a7.save.io.render;
 
+import com.seibel.lod.core.a7.datatype.DataSourceLoader;
 import com.seibel.lod.core.a7.datatype.LodDataSource;
 import com.seibel.lod.core.a7.datatype.LodRenderSource;
 import com.seibel.lod.core.a7.datatype.RenderSourceLoader;
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.a7.datatype.transform.DataRenderTransformer;
 import com.seibel.lod.core.a7.level.IClientLevel;
+import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.pos.DhLodPos;
 import com.seibel.lod.core.a7.save.io.MetaFile;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
+import com.seibel.lod.core.a7.save.io.file.DataMetaFile;
+import com.seibel.lod.core.a7.save.io.file.IDataSourceProvider;
 import com.seibel.lod.core.util.LodUtil;
 
 import java.io.File;
@@ -19,7 +23,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class RenderMetaFile extends MetaFile {
-    private final IClientLevel level;
+    //private final IClientLevel level;
     public RenderSourceLoader loader;
     public Class<? extends LodRenderSource> dataType;
 
@@ -57,29 +61,29 @@ public class RenderMetaFile extends MetaFile {
     }
     CacheValidator validator;
     CacheSourceProducer source;
+    final RenderFileHandler handler;
+    boolean doesFileExist;
 
-    // Load a metaFile in this path. It also automatically read the metadata.
-    public RenderMetaFile(CacheValidator validator, CacheSourceProducer source,
-                          IClientLevel level, File path) throws IOException {
-        super(path);
-        this.level = level;
-        loader = RenderSourceLoader.getLoader(dataTypeId, loaderVersion);
-        if (loader == null) {
-            throw new IOException("Invalid file: Data type loader not found: "
-                    + dataTypeId + "(v" + loaderVersion + ")");
-        }
-        dataType = loader.clazz;
-        this.validator = validator;
-        this.source = source;
+
+    // Create a new metaFile
+    public RenderMetaFile(RenderFileHandler handler, DhSectionPos pos) throws IOException {
+        super(handler.computeRenderFilePath(pos), pos);
+        this.handler = handler;
+        LodUtil.assertTrue(metaData == null);
+        doesFileExist = false;
     }
 
-    // Make a new MetaFile. It doesn't load or write any metadata itself.
-    public RenderMetaFile(CacheValidator validator, CacheSourceProducer source,
-                          IClientLevel level, File path, DhSectionPos pos) {
-        super(path, pos);
-        this.level = level;
-        this.validator = validator;
-        this.source = source;
+    public RenderMetaFile(RenderFileHandler handler, File path) throws IOException {
+        super(path);
+        this.handler = handler;
+        LodUtil.assertTrue(metaData != null);
+        loader = RenderSourceLoader.getLoader(metaData.dataTypeId, metaData.loaderVersion);
+        if (loader == null) {
+            throw new IOException("Invalid file: Data type loader not found: "
+                    + metaData.dataTypeId + "(v" + metaData.loaderVersion + ")");
+        }
+        dataType = loader.clazz;
+        doesFileExist = true;
     }
 
     // Suppress casting of CompletableFuture<?> to CompletableFuture<LodRenderSource>
@@ -90,6 +94,7 @@ public class RenderMetaFile extends MetaFile {
             Object inner = ((SoftReference<?>)obj).get();
             if (inner != null) {
                 LodUtil.assertTrue(inner instanceof LodRenderSource);
+                handler.onReadRenderSourceFromCache(this, (LodRenderSource) inner);
                 return CompletableFuture.completedFuture((LodRenderSource)inner);
             }
         }
@@ -104,7 +109,7 @@ public class RenderMetaFile extends MetaFile {
 
     // Cause: Generic Type runtime casting cannot safety check it.
     // However, the Union type ensures the 'data' should only contain the listed type.
-    public CompletableFuture<LodRenderSource> loadOrGetCached(Executor fileReaderThreads) {
+    public CompletableFuture<LodRenderSource> loadOrGetCached(Executor fileReaderThreads, ILevel level) {
         Object obj = data.get();
 
         CompletableFuture<LodRenderSource> cached = _readCached(obj);
@@ -117,49 +122,68 @@ public class RenderMetaFile extends MetaFile {
 
         // Would use faster and non-nesting Compare and exchange. But java 8 doesn't have it! :(
         boolean worked = data.compareAndSet(obj, future);
-        if (!worked) return loadOrGetCached(fileReaderThreads);
+        if (!worked) return loadOrGetCached(fileReaderThreads, level);
 
         // Now, there should only ever be one thread at a time here due to the CAS operation above.
 
-        // Would use CompletableFuture.completeAsync(...), But, java 8 doesn't have it! :(
-        //return future.completeAsync(this::loadAndUpdateRenderSource, fileReaderThreads);
-        CompletableFuture.supplyAsync(() -> buildFuture(fileReaderThreads), fileReaderThreads)
-                .thenCompose((sourceCompletableFuture) -> sourceCompletableFuture)
-                .whenComplete((renderSource, e) -> {
-            if (e != null) {
-                LOGGER.error("Uncaught error loading file {}: ", path, e);
-                future.complete(null);
-                data.set(null);
-            } else {
-                future.complete(renderSource);
-                data.set(new SoftReference<>(renderSource));
-            }
-        });
+
+        // After cas. We are in exclusive control.
+        if (!doesFileExist) {
+            doesFileExist = true;
+            handler.onCreateRenderFile(this)
+                    .thenApply((data) -> {
+                        metaData = makeMetaData(data);
+                        return data;
+                    })
+                    .thenApply((d) -> handler.onRenderFileLoaded(d, this))
+                    .whenComplete((v, e) -> {
+                        if (e != null) {
+                            LOGGER.error("Uncaught error on creation {}: ", path, e);
+                            future.complete(null);
+                            data.set(null);
+                        } else {
+                            future.complete(v);
+                            //new DataObjTracker(v); //TODO: Obj Tracker??? For debug?
+                            data.set(new SoftReference<>(v));
+                        }
+                    });
+
+
+        } else {
+            CompletableFuture.supplyAsync(() -> {
+                        if (metaData == null)
+                            throw new IllegalStateException("Meta data not loaded!");
+                        // Load the file.
+                        LodRenderSource data;
+                        data = handler.onLoadingRenderFile(this);
+                        if (data == null) {
+                            try (FileInputStream fio = getDataContent()) {
+                                data = loader.loadRender(this, fio, level);
+                            } catch (IOException e) {
+                                throw new CompletionException(e);
+                            }
+                        }
+                        data = handler.onRenderFileLoaded(data, this);
+                        return data;
+                    }, fileReaderThreads)
+                    .whenComplete((f, e) -> {
+                        if (e != null) {
+                            LOGGER.error("Error loading file {}: ", path, e);
+                            future.complete(null);
+                            data.set(null);
+                        } else {
+                            future.complete(f);
+                            data.set(new SoftReference<>(f));
+                        }
+                    });
+        }
         return future;
     }
 
-    private CompletableFuture<LodRenderSource> buildFuture(Executor executorService) {
-        if (path.exists()) {
-            try {
-                updateMetaData();
-                if (validator.isCacheValid(pos, timestamp)) {
-                    // Load the file.
-                    try (FileInputStream fio = getDataContent()) {
-                        return CompletableFuture.completedFuture(
-                                loader.loadRender(this, fio, level));
-                    }
-                }
-            } catch (IOException e) {
-                LOGGER.warn("Failed to read render cache at {}:", path, e);
-                LOGGER.warn("Will delete cache file.");
-                path.delete();
-            }
-        }
-        // Otherwise, re-query and make the RenderSource
-        CompletableFuture<LodDataSource> dataFuture = source.getSourceFuture(pos);
-        return dataFuture.thenCombineAsync(
-                DataRenderTransformer.asyncTransformDataSource(dataFuture, level),
-                this::write, executorService);
+    private static MetaData makeMetaData(LodRenderSource data) {
+        RenderSourceLoader loader = RenderSourceLoader.getLoader(data.getClass(), data.getRenderVersion());
+        return new MetaData(data.getSectionPos(), -1, -1,
+                data.getDataDetail(), loader == null ? 0 : loader.renderTypeId, data.getRenderVersion());
     }
 
     private FileInputStream getDataContent() throws IOException {
@@ -178,36 +202,13 @@ public class RenderMetaFile extends MetaFile {
         return fin;
     }
 
-    @Override
-    protected void updateMetaData() throws IOException {
-        super.updateMetaData();
-        loader = RenderSourceLoader.getLoader(dataTypeId, loaderVersion);
-        if (loader == null) {
-            throw new IOException("Invalid file: Data type loader not found: " + dataTypeId + "(v" + loaderVersion + ")");
-        }
-        dataType = loader.clazz;
-        dataTypeId = loader.renderTypeId;
-    }
-
-    private LodRenderSource write(LodDataSource parent, LodRenderSource render) {
-        if (parent == null) return null;
+    public void save(LodRenderSource data, IClientLevel level) {
+        LodUtil.assertTrue(data == _readCached(this.data.get()).getNow(null));
+        LOGGER.info("Saving updated render file v[{}] at sect {}", metaData.dataVersion.get(), pos);
         try {
-            //TODO: Update Timestamp & stuff based on parent
-            dataLevel = parent.getDataDetail();
-            loader = RenderSourceLoader.getLoader(render.getClass(), render.getRenderVersion());
-            dataType = render.getClass();
-            dataTypeId = loader.renderTypeId;
-            loaderVersion = render.getRenderVersion();
-            super.writeData((out) -> {
-                try {
-                    render.saveRender(level, this, out);
-                } catch (IOException e) {
-                    LOGGER.error("Failed to save data for file {}", path, e);
-                }
-            });
+            super.writeData((out) -> data.saveRender(level, this, out));
         } catch (IOException e) {
-            LOGGER.error("Failed to write data for file {}", path, e);
+            LOGGER.error("Failed to save updated render file at {} for sect {}", path, pos, e);
         }
-        return render;
     }
 }

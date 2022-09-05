@@ -1,28 +1,19 @@
 package com.seibel.lod.core.a7.save.io.file;
 
-import java.awt.*;
 import java.io.*;
 import java.lang.ref.*;
-import java.security.Provider;
-import java.sql.Ref;
-import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executor;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 import com.seibel.lod.core.a7.datatype.LodDataSource;
 import com.seibel.lod.core.a7.datatype.DataSourceLoader;
+import com.seibel.lod.core.a7.datatype.LodRenderSource;
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
-import com.seibel.lod.core.a7.datatype.full.FullDataSource;
 import com.seibel.lod.core.a7.pos.DhLodPos;
 import com.seibel.lod.core.a7.save.io.MetaFile;
 import com.seibel.lod.core.a7.level.ILevel;
@@ -31,14 +22,15 @@ import com.seibel.lod.core.util.LodUtil;
 
 public class DataMetaFile extends MetaFile {
 	private final ILevel level;
+	private final IDataSourceProvider handler;
+	private boolean doesFileExist;
+
 	public DataSourceLoader loader;
 	public Class<? extends LodDataSource> dataType;
-	AtomicInteger localVersion = new AtomicInteger(); // This MUST be atomic
-	
 	// The '?' type should either be:
-	//    SoftReference<LodDataSource>, or		- Non-dirty file that can be GCed
-	//    CompletableFuture<LodDataSource>, or  - File that is being loaded
-	//    null									- Nothing is loaded or being loaded
+	//    SoftReference<LodDataSource>, or		    - Non-dirty file that can be GCed
+	//    CompletableFuture<LodDataSource>, or      - File that is being loaded. No guarantee that the type is promotable or not
+	//    null									    - Nothing is loaded or being loaded
 	AtomicReference<Object> data = new AtomicReference<Object>(null);
 
 	//TODO: use ConcurrentAppendSingleSwapContainer<LodDataSource> instead of below:
@@ -46,14 +38,18 @@ public class DataMetaFile extends MetaFile {
 		ReentrantReadWriteLock appendLock = new ReentrantReadWriteLock();
 		ConcurrentLinkedQueue<ChunkSizedData> queue = new ConcurrentLinkedQueue<>();
 	}
+
+	// ===Concurrent Write stuff===
 	AtomicReference<GuardedMultiAppendQueue> writeQueue =
 			new AtomicReference<>(new GuardedMultiAppendQueue());
 	GuardedMultiAppendQueue _backQueue = new GuardedMultiAppendQueue();
-	private final AtomicBoolean inCacheWriteLock = new AtomicBoolean(false);
+	// ===========================
 
+	private final AtomicBoolean inCacheWriteAccessAsserter = new AtomicBoolean(false);
+
+	// ===Object lifetime stuff===
 	private static final ReferenceQueue<LodDataSource> lifeCycleDebugQueue = new ReferenceQueue<>();
 	private static final Set<DataObjTracker> lifeCycleDebugSet = ConcurrentHashMap.newKeySet();
-
 	private static class DataObjTracker extends PhantomReference<LodDataSource> implements Closeable {
 		private final DhSectionPos pos;
 		DataObjTracker(LodDataSource data) {
@@ -66,6 +62,50 @@ public class DataMetaFile extends MetaFile {
 		public void close() {
 			lifeCycleDebugSet.remove(this);
 		}
+	}
+    // ===========================
+
+
+
+	// Create a new metaFile
+	public DataMetaFile(IDataSourceProvider handler, ILevel level, DhSectionPos pos) throws IOException {
+		super(handler.computeDataFilePath(pos), pos);
+		debugCheck();
+		this.handler = handler;
+		this.level = level;
+		LodUtil.assertTrue(metaData == null);
+		doesFileExist = false;
+	}
+
+	public DataMetaFile(IDataSourceProvider handler, ILevel level, File path) throws IOException {
+		super(path);
+		debugCheck();
+		this.handler = handler;
+		this.level = level;
+		LodUtil.assertTrue(metaData != null);
+		loader = DataSourceLoader.getLoader(metaData.dataTypeId, metaData.loaderVersion);
+		if (loader == null) {
+			throw new IOException("Invalid file: Data type loader not found: "
+					+ metaData.dataTypeId + "(v" + metaData.loaderVersion + ")");
+		}
+		dataType = loader.clazz;
+		doesFileExist = true;
+	}
+
+	public CompletableFuture<Void> flushAndSave() {
+		debugCheck();
+		boolean isEmpty = writeQueue.get().queue.isEmpty();
+		if (!isEmpty) {
+			return loadOrGetCached().thenApply((unused) -> null); // This will flush the data to disk.
+		} else {
+			return CompletableFuture.completedFuture(null);
+		}
+	}
+
+	public long getDataVersion() {
+		debugCheck();
+		MetaData getData = metaData;
+		return getData == null ? 0 : metaData.dataVersion.get();
 	}
 
 	public void addToWriteQueue(ChunkSizedData datatype) {
@@ -85,68 +125,82 @@ public class DataMetaFile extends MetaFile {
 			appendLock.unlock();
 		}
 	}
-	private void swapWriteQueue() {
-		GuardedMultiAppendQueue queue = writeQueue.getAndSet(_backQueue);
-		// Acquire write lock and then release it again as we only need to ensure that the queue
-		// is not being appended to by another thread. Note that the above atomic swap &
-		// the guarantee that all append first acquire the appendLock means after the locK() call,
-		// there will be no other threads able to or is currently appending to the queue.
-		// Note: The above needs the getAndSet() to have at least Release Memory order.
-		// (not that java supports anything non volatile for getAndSet()...)
-		queue.appendLock.writeLock().lock();
-		queue.appendLock.writeLock().unlock();
-		_backQueue = queue;
-	}
 
-	// Load a metaFile in this path. It also automatically read the metadata.
-	public DataMetaFile(ILevel level, File path) throws IOException {
-		super(path);
+	// Cause: Generic Type runtime casting cannot safety check it.
+	// However, the Union type ensures the 'data' should only contain the listed type.
+	public CompletableFuture<LodDataSource> loadOrGetCached() {
 		debugCheck();
-		this.level = level;
-		loader = DataSourceLoader.getLoader(dataTypeId, loaderVersion);
-		if (loader == null) {
-			throw new IOException("Invalid file: Data type loader not found: "
-					+ dataTypeId + "(v" + loaderVersion + ")");
-		}
-		dataType = loader.clazz;
-	}
+		Object obj = data.get();
 
-	// Make a new MetaFile. It doesn't load or write any metadata itself.
-	public DataMetaFile(ILevel level, File path, DhSectionPos pos, CompletableFuture<LodDataSource> creator) {
-		super(path, pos);
-		debugCheck();
-		this.level = level;
+		CompletableFuture<LodDataSource> cached = _readCached(obj);
+		if (cached != null) return cached;
+
 		CompletableFuture<LodDataSource> future = new CompletableFuture<>();
-		data.set(future);
-		creator.thenApply((f) -> {
-				applyWriteQueue(f);
-				return f;
-		}).whenComplete((f, e) -> {
-			if (e != null) {
-				LOGGER.error("Uncaught error on creation {}: ", path, e);
-				future.complete(null);
-				data.set(null);
-			} else {
-				future.complete(f);
-				new DataObjTracker(f);
-				data.set(new SoftReference<>(f));
-			}
-		});
-	}
-	
-	public boolean isValid(int version) {
-		debugCheck();
-		boolean isValid;
-		// First check if write queue is empty, then check if localVersion is equal to version.
-		// Must be done in this order as writer will increment localVersion before polling in the write queue.
-		// Note: Be careful with the localVerion read's memory order if we do switch over to java 1.9.
-		// It should be acquire or higher!
 
-		isValid = writeQueue.get().queue.isEmpty(); // The 'get()' & 'isEmpty()' enforce a memory barrier.
-													// Also, we are just querying the state, and this means no
-													// need to get any locks for the queue.
-		isValid &= localVersion.get() == version; // The 'get()' enforce a memory barrier.
-		return isValid;
+		// Would use faster and non-nesting Compare and exchange. But java 8 doesn't have it! :(
+		boolean worked = data.compareAndSet(obj, future);
+		if (!worked) return loadOrGetCached();
+
+		// After cas. We are in exclusive control.
+		if (!doesFileExist) {
+			doesFileExist = true;
+			handler.onCreateDataFile(this)
+					.thenApply((data) -> {
+						metaData = makeMetaData(data);
+						return data;
+					})
+					.thenApply((data) -> handler.onDataFileLoaded(data, this::applyWriteQueue))
+					.whenComplete((v, e) -> {
+						if (e != null) {
+							LOGGER.error("Uncaught error on creation {}: ", path, e);
+							future.complete(null);
+							data.set(null);
+						} else {
+							future.complete(v);
+							new DataObjTracker(v);
+							data.set(new SoftReference<>(v));
+						}
+					});
+		} else {
+			CompletableFuture.supplyAsync(() -> {
+						if (metaData == null)
+							throw new IllegalStateException("Meta data not loaded!");
+						// Load the file.
+						LodDataSource data;
+						try (FileInputStream fio = getDataContent()){
+							data = loader.loadData(this, fio, level);
+						} catch (IOException e) {
+							throw new CompletionException(e);
+						}
+						// Apply the write queue
+						LodUtil.assertTrue(!inCacheWriteAccessAsserter.get(),"No one should be writing to the cache while we are in the process of " +
+								"loading one into the cache! Is this a deadlock?");
+						data = handler.onDataFileLoaded(data, this::applyWriteQueue);
+						// Finally, return the data.
+						return data;
+					}, handler.getIOExecutor())
+					.whenComplete((f, e) -> {
+						if (e != null) {
+							LOGGER.error("Error loading file {}: ", path, e);
+							future.complete(null);
+							data.set(null);
+						} else {
+							future.complete(f);
+							new DataObjTracker(f);
+							data.set(new SoftReference<>(f));
+						}
+					});
+		}
+
+		// Would use CompletableFuture.completeAsync(...), But, java 8 doesn't have it! :(
+		//return future.completeAsync(this::loadAndUpdateDataSource, fileReaderThreads);
+		return future;
+	}
+
+	private static MetaData makeMetaData(LodDataSource data) {
+		DataSourceLoader loader = DataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
+		return new MetaData(data.getSectionPos(), -1, 1,
+				data.getDataDetail(), loader == null ? 0 : loader.datatypeId, data.getDataVersion());
 	}
 
 	// "unchecked": Suppress casting of CompletableFuture<?> to CompletableFuture<LodDataSource>
@@ -169,13 +223,13 @@ public class DataMetaFile extends MetaFile {
 					//       The latter give us immediate access to the data, but we need to ensure concurrent reads and
 					//       writes doesn't cause unexpected behavior down the line.
 					//       For now, I'll go for the latter option and just hope nothing goes wrong...
-					if (inCacheWriteLock.getAndSet(true) == false) {
+					if (inCacheWriteAccessAsserter.getAndSet(true) == false) {
 						try {
-							applyWriteQueue((LodDataSource) inner);
+							inner = handler.onDataFileRefresh((LodDataSource) inner, this::applyWriteQueue);
 						} catch (Exception e) {
 							LOGGER.error("Error while applying changes to LodDataSource at {}: ", pos, e);
 						} finally {
-							inCacheWriteLock.set(false);
+							inCacheWriteAccessAsserter.set(false);
 						}
 					}
 				}
@@ -192,36 +246,17 @@ public class DataMetaFile extends MetaFile {
 		return null;
 	}
 
-	// Cause: Generic Type runtime casting cannot safety check it.
-	// However, the Union type ensures the 'data' should only contain the listed type.
-	public CompletableFuture<LodDataSource> loadOrGetCached(Executor fileReaderThreads) {
-		debugCheck();
-		Object obj = data.get();
-		
-		CompletableFuture<LodDataSource> cached = _readCached(obj);
-		if (cached != null) return cached;
-
-		CompletableFuture<LodDataSource> future = new CompletableFuture<>();
-		
-		// Would use faster and non-nesting Compare and exchange. But java 8 doesn't have it! :(
-		boolean worked = data.compareAndSet(obj, future);
-		if (!worked) return loadOrGetCached(fileReaderThreads);
-		
-		// Would use CompletableFuture.completeAsync(...), But, java 8 doesn't have it! :(
-		//return future.completeAsync(this::loadAndUpdateDataSource, fileReaderThreads);
-		CompletableFuture.supplyAsync(this::loadAndUpdateDataSource, fileReaderThreads)
-				.whenComplete((f, e) -> {
-			if (e != null) {
-				LOGGER.error("Uncaught error loading file {}: ", path, e);
-				future.complete(null);
-				data.set(null);
-			} else {
-				future.complete(f);
-				new DataObjTracker(f);
-				data.set(new SoftReference<>(f));
-			}
-		});
-		return future;
+	private void swapWriteQueue() {
+		GuardedMultiAppendQueue queue = writeQueue.getAndSet(_backQueue);
+		// Acquire write lock and then release it again as we only need to ensure that the queue
+		// is not being appended to by another thread. Note that the above atomic swap &
+		// the guarantee that all append first acquire the appendLock means after the locK() call,
+		// there will be no other threads able to or is currently appending to the queue.
+		// Note: The above needs the getAndSet() to have at least Release Memory order.
+		// (not that java supports anything non volatile for getAndSet()...)
+		queue.appendLock.writeLock().lock();
+		queue.appendLock.writeLock().unlock();
+		_backQueue = queue;
 	}
 
 	// Return whether any write has happened to the data
@@ -230,54 +265,30 @@ public class DataMetaFile extends MetaFile {
 		// First check if write queue is empty, then swap the write queue.
 		// Must be done in this order to ensure isValid work properly. See isValid() for details.
 		boolean isEmpty = writeQueue.get().queue.isEmpty();
-		int localVer;
 		if (!isEmpty) {
-			localVer = localVersion.incrementAndGet();
 			swapWriteQueue();
 			int count = _backQueue.queue.size();
 			for (ChunkSizedData chunk : _backQueue.queue) {
 				data.update(chunk);
 			}
 			_backQueue.queue.clear();
-			write(data);
-			LOGGER.info("Updated Data file at {} for sect {} with {} chunk writes.", path, pos, count);
-		} else localVer = localVersion.get();
-		data.setLocalVersion(localVer);
-	}
-	
-	private LodDataSource loadAndUpdateDataSource() {
-		LodDataSource data = loadFile();
-		if (data == null) data = FullDataSource.createEmpty(pos);
-		// Apply the write queue
-		LodUtil.assertTrue(!inCacheWriteLock.get(),"No one should be writing to the cache while we are in the process of " +
-				"loading one into the cache! Is this a deadlock?");
-		applyWriteQueue(data);
-		// Finally, return the data.
-		return data;
+			try {
+				// Write/Update data
+				LodUtil.assertTrue(metaData != null);
+				metaData.dataLevel = data.getDataDetail();
+				loader = DataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
+				LodUtil.assertTrue(loader != null, "No loader for {} (v{})", data.getClass(), data.getDataVersion());
+				dataType = data.getClass();
+				metaData.dataTypeId = loader == null ? 0 : loader.datatypeId;
+				metaData.loaderVersion = data.getDataVersion();
+				super.writeData((out) -> data.saveData(level, this, out));
+				LOGGER.info("Updated Data file at {} for sect {} with {} chunk writes.", path, pos, count);
+			} catch (IOException e) {
+				LOGGER.error("Failed to save updated data file at {} for sect {}", path, pos, e);
+			}
+		}
 	}
 
-	private LodDataSource loadFile() {
-		if (!path.exists()) return null;
-		// Refresh the metadata.
-		try {
-			super.updateMetaData();
-		} catch (Exception e) {
-			LOGGER.warn("Metadata for file {} changed unexpectedly and in an invalid state. Dropping file.", path, e);
-			return null;
-		}
-		if (loader == null) {
-			//LOGGER.warn("No loader for file {}. Dropping file.", path); // Disable as data lod has no loader yet.
-			return null;
-		}
-
-		// Load the file.
-		try (FileInputStream fio = getDataContent()){
-			return loader.loadData(this, fio, level);
-		} catch (Exception e) {
-			LOGGER.warn("Failed to load file {}. Dropping file.", path, e);
-			return null;
-		}
-	}
 	private FileInputStream getDataContent() throws IOException {
 		FileInputStream fin = new FileInputStream(path);
 		int toSkip = METADATA_SIZE;
@@ -292,51 +303,6 @@ public class DataMetaFile extends MetaFile {
 			throw new IOException("File IO Error: Failed to skip metadata.");
 		}
 		return fin;
-	}
-
-
-	public CompletableFuture<Void> flushAndSave(Executor fileWriterThreads) {
-		debugCheck();
-		boolean isEmpty = writeQueue.get().queue.isEmpty();
-		if (!isEmpty) {
-			return loadOrGetCached(fileWriterThreads).thenApply((unused) -> null); // This will flush the data to disk.
-		} else {
-			return CompletableFuture.completedFuture(null);
-		}
-	}
-
-	@Override
-	protected void updateMetaData() throws IOException {
-		super.updateMetaData();
-		loader = DataSourceLoader.getLoader(dataTypeId, loaderVersion);
-		if (loader == null) {
-			throw new IOException("Invalid file: Data type loader not found: " + dataTypeId + "(v" + loaderVersion + ")");
-		}
-		dataType = loader.clazz;
-		dataTypeId = loader.datatypeId;
-	}
-
-	private void write(LodDataSource data) {
-		try {
-			dataLevel = data.getDataDetail();
-			loader = DataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
-			// FIXME: Uncomment this and fix id when we have FullDataSource loader!
-			//LodUtil.assertTrue(loader != null, "No loader for {} (v{})", data.getClass(), data.getDataVersion());
-			dataType = data.getClass();
-			dataTypeId = loader == null ? 0 : loader.datatypeId;
-			loaderVersion = data.getDataVersion();
-			timestamp = System.currentTimeMillis(); // TODO: Do we need to use server synced time?
-			// Warn: This may become an attack vector! Be careful!
-			super.writeData((out) -> {
-				try {
-					data.saveData(level, this, out);
-				} catch (IOException e) {
-					LOGGER.error("Failed to save data for file {}", path, e);
-				}
-			});
-		} catch (IOException e) {
-			LOGGER.error("Failed to write data for file {}", path, e);
-		}
 	}
 
 

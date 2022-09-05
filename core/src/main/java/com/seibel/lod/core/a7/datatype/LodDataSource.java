@@ -14,7 +14,6 @@ import java.io.OutputStream;
 public interface LodDataSource {
     DhSectionPos getSectionPos();
     byte getDataDetail();
-    void setLocalVersion(int localVer);
     byte getDataVersion();
 
     void update(ChunkSizedData data);
