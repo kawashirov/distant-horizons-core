@@ -20,7 +20,6 @@
 package com.seibel.lod.core.handlers.dependencyInjection;
 
 import com.seibel.lod.core.api.implementation.interfaces.events.IDhApiEvent;
-import com.seibel.lod.core.api.internal.a7.ClientApi;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

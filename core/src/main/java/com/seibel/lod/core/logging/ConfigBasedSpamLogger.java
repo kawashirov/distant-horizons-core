@@ -19,7 +19,6 @@
 
 package com.seibel.lod.core.logging;
 
-import com.seibel.lod.core.api.internal.a7.ClientApi;
 import com.seibel.lod.core.enums.config.ELoggerMode;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;

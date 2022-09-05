@@ -2,13 +2,14 @@ package com.seibel.lod.core.config.file;
 
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.seibel.lod.core.ModInfo;
-import com.seibel.lod.core.api.internal.a7.ClientApi;
 import com.seibel.lod.core.config.ConfigBase;
 import com.seibel.lod.core.config.types.AbstractConfigType;
 import com.seibel.lod.core.config.types.ConfigEntry;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -23,8 +24,11 @@ import java.nio.file.Path;
  * @author coolGi
  * @version 2022-5-26
  */
-public class ConfigFileHandling {
-    public static final Path ConfigPath = SingletonInjector.INSTANCE.get(IMinecraftSharedWrapper.class)
+public class ConfigFileHandling
+{
+	public static final Logger LOGGER = LogManager.getLogger(ConfigBase.class.getSimpleName());
+	
+	public static final Path ConfigPath = SingletonInjector.INSTANCE.get(IMinecraftSharedWrapper.class)
             .getInstallationDirectory().toPath().resolve("config").resolve(ModInfo.NAME+".toml");
 
     /** Saves the config to the file */
@@ -128,13 +132,13 @@ public class ConfigFileHandling {
                         else if (entry.isValid() == -1) entry.setWithoutSaving(entry.getMin());
                         else if (entry.isValid() == 1) entry.setWithoutSaving(entry.getMax());
                     } else {
-                        ClientApi.LOGGER.warn("Entry ["+ entry.getNameWCategory() +"] is invalid. Expected " + entry.getType() + " but got " + workConfig.get(entry.getNameWCategory()).getClass() + ". Using default value.");
+                        LOGGER.warn("Entry ["+ entry.getNameWCategory() +"] is invalid. Expected " + entry.getType() + " but got " + workConfig.get(entry.getNameWCategory()).getClass() + ". Using default value.");
                         saveEntry(entry, workConfig);
                     }
                 }
             } catch (Exception e) {
 //                e.printStackTrace();
-                ClientApi.LOGGER.warn("Entry ["+entry.getNameWCategory()+"] had an invalid value when loading the config. Using default value.");
+                LOGGER.warn("Entry ["+entry.getNameWCategory()+"] had an invalid value when loading the config. Using default value.");
                 saveEntry(entry, workConfig);
             }
         } else {

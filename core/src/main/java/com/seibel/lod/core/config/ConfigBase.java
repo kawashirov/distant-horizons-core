@@ -1,10 +1,11 @@
 package com.seibel.lod.core.config;
 
-import com.seibel.lod.core.api.internal.a7.ClientApi;
 import com.seibel.lod.core.config.file.ConfigFileHandling;
 import com.seibel.lod.core.config.types.AbstractConfigType;
 import com.seibel.lod.core.config.types.ConfigCategory;
 import com.seibel.lod.core.config.types.ConfigEntry;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -18,7 +19,10 @@ import java.util.Map;
  * @author Ran
  */
 // Init the config after singletons have been blinded
-public class ConfigBase {
+public class ConfigBase 
+{
+	public static final Logger LOGGER = LogManager.getLogger(ConfigBase.class.getSimpleName());
+	
     /*
             What the config works with
 
@@ -76,8 +80,8 @@ public class ConfigBase {
 
                 if (ConfigEntry.class.isAssignableFrom(field.getType())) { // If item is type ConfigEntry
                     if (!isAcceptableType(((ConfigEntry<?>) entry).get().getClass())) {
-                        ClientApi.LOGGER.error("Invalid variable type at [" + (category.isEmpty() ? "" : category + ".") + field.getName() + "].");
-                        ClientApi.LOGGER.error("Type [" + ((ConfigEntry<?>) entry).get().getClass() + "] is not one of these types [" + acceptableInputs.toString() + "]");
+                        LOGGER.error("Invalid variable type at [" + (category.isEmpty() ? "" : category + ".") + field.getName() + "].");
+                        LOGGER.error("Type [" + ((ConfigEntry<?>) entry).get().getClass() + "] is not one of these types [" + acceptableInputs.toString() + "]");
                         entries.remove(entries.size() -1); // Delete the entry if it is invalid so the game can still run
                     }
                 }
