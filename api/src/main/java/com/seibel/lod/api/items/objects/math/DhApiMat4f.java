@@ -19,6 +19,8 @@
 
 package com.seibel.lod.api.items.objects.math;
 
+import com.seibel.lod.core.objects.math.Mat4f;
+
 /**
  * A simple way to store a 4x4 array
  * of floats without having to worry
@@ -94,6 +96,11 @@ public class DhApiMat4f
 		m31 = values[13];
 		m32 = values[14];
 		m33 = values[15];
+	}
+	
+	public DhApiMat4f(Mat4f sourceMatrix)
+	{
+		this(sourceMatrix.getValuesAsArray());
 	}
 	
 	

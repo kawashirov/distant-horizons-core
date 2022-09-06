@@ -448,7 +448,7 @@ public class Mat4f
 	//==================//
 	
 	/** Returns the values of this matrix in row major order (AKA rows then columns) */
-	private float[] getValuesAsArray()
+	public float[] getValuesAsArray()
 	{
 		return new float[] {
 			this.m00,
