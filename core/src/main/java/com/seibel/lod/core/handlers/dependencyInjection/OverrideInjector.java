@@ -19,28 +19,38 @@
 
 package com.seibel.lod.core.handlers.dependencyInjection;
 
-import com.seibel.lod.core.api.external.items.enums.override.EDhApiOverridePriority;
-import com.seibel.lod.api.items.interfaces.override.IDhApiOverrideable;
-import com.seibel.lod.core.api.implementation.objects.GenericEnumConverter;
-import com.seibel.lod.core.enums.override.EOverridePriority;
+import com.seibel.lod.core.api.external.coreInterfaces.ICoreDhApiOverrideable;
 import com.seibel.lod.core.util.StringUtil;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * This class takes care of dependency injection for overridable objects. <Br>
  * This is done so other mods can override our methods to improve features down the line.
  *
  * @author James Seibel
- * @version 2022-8-15
+ * @version 2022-9-5
  */
-public class OverrideInjector<BindableType extends IDhApiOverrideable>
+public class OverrideInjector
 {
-	public static final OverrideInjector<IDhApiOverrideable> INSTANCE = new OverrideInjector<>();
+	public static final OverrideInjector INSTANCE = new OverrideInjector();
+
+	private final HashMap<Class<? extends ICoreDhApiOverrideable>, OverridePriorityListContainer> overrideContainerByInterface = new HashMap<>();
 	
-	private final DependencyInjector<IDhApiOverrideable> primaryInjector = new DependencyInjector<>(IDhApiOverrideable.class, false);
-	private final DependencyInjector<IDhApiOverrideable> secondaryInjector = new DependencyInjector<>(IDhApiOverrideable.class, false);
-	private final DependencyInjector<IDhApiOverrideable> coreInjector = new DependencyInjector<>(IDhApiOverrideable.class, false);
 	
-	private static final GenericEnumConverter<EOverridePriority, EDhApiOverridePriority> ENUM_CONVERTER = new GenericEnumConverter<>(EOverridePriority.class, EDhApiOverridePriority.class);
+	/** 
+	 * All core overrides should have this priority. <Br>
+	 * Should be lower than MIN_OVERRIDE_PRIORITY.
+	 */
+	public static final int CORE_PRIORITY = -1;
+	/** 
+	 * The lowest priority non-core overrides can have.
+	 * Should be higher than CORE_PRIORITY.
+	 */
+	public static final int MIN_NON_CORE_OVERRIDE_PRIORITY = 0;
+	/** The priority given to overrides that don't explicitly define a priority. */
+	public static final int DEFAULT_NON_CORE_OVERRIDE_PRIORITY = 10;
 	
 	/**
 	 * This is used to determine if an override is part of Distant Horizons'
@@ -60,41 +70,57 @@ public class OverrideInjector<BindableType extends IDhApiOverrideable>
 	}
 	
 	/** This constructor should only be used for testing different corePackagePaths. */
-	public OverrideInjector(String newCorePackagePath)
-	{
-		this.corePackagePath = newCorePackagePath;
-	}
+	public OverrideInjector(String newCorePackagePath) { this.corePackagePath = newCorePackagePath; }
 	
 	
 	
 	/**
 	 * See {@link DependencyInjector#bind(Class, IBindable) bind(Class, IBindable)} for full documentation.
 	 *
-	 * @throws IllegalArgumentException if a non-Distant Horizons Override with the priority CORE is passed in
+	 * @throws IllegalArgumentException if a non-Distant Horizons Override with the priority CORE is passed in or a invalid priority value.
+	 * @throws IllegalStateException if another override with the given priority already has been bound.
 	 * @see DependencyInjector#bind(Class, IBindable)
 	 */
-	public void bind(Class<? extends BindableType> dependencyInterface, IDhApiOverrideable dependencyImplementation)  throws IllegalStateException, IllegalArgumentException
+	public void bind(Class<? extends ICoreDhApiOverrideable> dependencyInterface, ICoreDhApiOverrideable dependencyImplementation)  throws IllegalStateException, IllegalArgumentException
 	{
-		if (getCorePriorityEnum(dependencyImplementation) == EOverridePriority.PRIMARY)
+		// make sure a override container exists
+		OverridePriorityListContainer overrideContainer = this.overrideContainerByInterface.get(dependencyInterface);
+		if (overrideContainer == null)
 		{
-			primaryInjector.bind(dependencyInterface, dependencyImplementation);
+			overrideContainer = new OverridePriorityListContainer();
+			this.overrideContainerByInterface.put(dependencyInterface, overrideContainer);
 		}
-		else if (getCorePriorityEnum(dependencyImplementation) == EOverridePriority.SECONDARY)
+		
+		
+		// validate the new override //
+		
+		// check if this override is a core override
+		if (dependencyImplementation.getPriority() == CORE_PRIORITY)
 		{
-			secondaryInjector.bind(dependencyInterface, dependencyImplementation);
-		}
-		else
-		{
+			// this claims to be a core override, is that true?
 			String packageName = dependencyImplementation.getClass().getPackage().getName();
-			if (packageName.startsWith(this.corePackagePath))
+			if (!packageName.startsWith(this.corePackagePath))
 			{
-				coreInjector.bind(dependencyInterface, dependencyImplementation);
-			}
-			else
-			{
-				throw new IllegalArgumentException("Only Distant Horizons internal objects can use the Override Priority [" + EOverridePriority.CORE + "]. Please use [" + EOverridePriority.PRIMARY + "] or [" + EOverridePriority.SECONDARY + "] instead.");
+				throw new IllegalArgumentException("Only Distant Horizons internal objects can use the Override Priority [" + CORE_PRIORITY + "]. Please use a higher number.");
 			}
 		}
+		
+		// make sure the override has a valid priority
+		if (dependencyImplementation.getPriority() < MIN_NON_CORE_OVERRIDE_PRIORITY)
+		{
+			throw new IllegalArgumentException("Invalid priority value [" + dependencyImplementation.getPriority() + "], override priorities must be [" + MIN_NON_CORE_OVERRIDE_PRIORITY + "] or greater.");
+		}
+		
+		// check if a override already exists with this priority
+		ICoreDhApiOverrideable existingOverride = overrideContainer.getOverrideWithPriority(dependencyImplementation.getPriority());
+		if (existingOverride != null)
+		{
+			throw new IllegalStateException("An override already exists with the priority [" + dependencyImplementation.getPriority() + "].");
+		}
+		
+		
+		// bind the override
+		overrideContainer.addOverride(dependencyImplementation);
 	}
 	
 	/**
@@ -103,19 +129,18 @@ public class OverrideInjector<BindableType extends IDhApiOverrideable>
 	 *
 	 * @see DependencyInjector#get(Class, boolean)
 	 */
-	public <T extends BindableType> T get(Class<T> interfaceClass) throws ClassCastException
+	public <T extends ICoreDhApiOverrideable> T get(Class<T> interfaceClass) throws ClassCastException
 	{
-		T value = primaryInjector.get(interfaceClass);
-		if (value == null)
+		OverridePriorityListContainer overrideContainer = this.overrideContainerByInterface.get(interfaceClass);
+		if (overrideContainer != null)
 		{
-			value = secondaryInjector.get(interfaceClass);
+			// TODO make sure this works and potentially fix the warning
+			return (T) overrideContainer.getOverrideWithHighestPriority();
 		}
-		if (value == null)
+		else
 		{
-			value = coreInjector.get(interfaceClass);
+			return null;	
 		}
-		
-		return value;
 	}
 	
 	/**
@@ -126,23 +151,18 @@ public class OverrideInjector<BindableType extends IDhApiOverrideable>
 	 *
 	 * @see DependencyInjector#get(Class, boolean)
 	 */
-	public <T extends BindableType> T get(Class<T> interfaceClass, EOverridePriority overridePriority) throws ClassCastException
+	public <T extends ICoreDhApiOverrideable> T get(Class<T> interfaceClass, int priority) throws ClassCastException
 	{
-		T value;
-		if (overridePriority == EOverridePriority.PRIMARY)
+		OverridePriorityListContainer overrideContainer = this.overrideContainerByInterface.get(interfaceClass);
+		if (overrideContainer != null)
 		{
-			value = primaryInjector.get(interfaceClass);
-		}
-		else if (overridePriority == EOverridePriority.SECONDARY)
-		{
-			value = secondaryInjector.get(interfaceClass);
+			// TODO make sure this works and potentially fix the warning
+			return (T) overrideContainer.getOverrideWithPriority(priority);
 		}
 		else
 		{
-			value = coreInjector.get(interfaceClass);
+			return null;
 		}
-		
-		return value;
 	}
 	
 	
@@ -150,20 +170,12 @@ public class OverrideInjector<BindableType extends IDhApiOverrideable>
 	/** Removes all bound overrides. */
 	public void clear()
 	{
-		this.primaryInjector.clear();
-		this.secondaryInjector.clear();
-		this.coreInjector.clear();
+		this.overrideContainerByInterface.clear();
 	}
 	
 	
 	
 	
 	
-	
-	/** Small helper method so we don't have to use DhApi enums. */
-	private EOverridePriority getCorePriorityEnum(IDhApiOverrideable override)
-	{
-		return ENUM_CONVERTER.convertToCoreType(override.getOverrideType());
-	}
 	
 }
