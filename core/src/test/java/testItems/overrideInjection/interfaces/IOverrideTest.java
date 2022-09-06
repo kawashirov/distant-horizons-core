@@ -1,6 +1,6 @@
 package testItems.overrideInjection.interfaces;
 
-import com.seibel.lod.core.api.external.items.interfaces.override.IDhApiOverrideable;
+import com.seibel.lod.api.items.interfaces.override.IDhApiOverrideable;
 
 /**
  * Dummy override test interface for dependency unit tests.

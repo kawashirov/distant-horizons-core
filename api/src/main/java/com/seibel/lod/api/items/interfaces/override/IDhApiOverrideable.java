@@ -1,4 +1,4 @@
-package com.seibel.lod.core.api.external.items.interfaces.override;
+package com.seibel.lod.api.items.interfaces.override;
 
 import com.seibel.lod.core.api.external.items.enums.override.EDhApiOverridePriority;
 import com.seibel.lod.core.handlers.dependencyInjection.IBindable;

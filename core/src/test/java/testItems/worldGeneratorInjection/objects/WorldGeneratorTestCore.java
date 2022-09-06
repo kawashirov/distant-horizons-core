@@ -3,9 +3,9 @@ package testItems.worldGeneratorInjection.objects;
 import com.seibel.lod.core.api.external.items.enums.override.EDhApiOverridePriority;
 import com.seibel.lod.core.api.external.items.enums.worldGeneration.EDhApiWorldGenThreadMode;
 import com.seibel.lod.core.api.external.items.enums.worldGeneration.EDhApiWorldGenerationStep;
-import com.seibel.lod.core.api.external.items.interfaces.override.IDhApiWorldGenerator;
-import com.seibel.lod.core.api.external.items.interfaces.world.IDhApiChunkWrapper;
-import com.seibel.lod.core.api.external.items.interfaces.world.IDhApiLevelWrapper;
+import com.seibel.lod.api.items.interfaces.override.IDhApiWorldGenerator;
+import com.seibel.lod.api.items.interfaces.world.IDhApiChunkWrapper;
+import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
 
 /**
  * Dummy test implementation object for world generator injection unit tests.

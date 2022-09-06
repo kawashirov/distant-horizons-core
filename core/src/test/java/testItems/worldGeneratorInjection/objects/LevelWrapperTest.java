@@ -1,8 +1,8 @@
 package testItems.worldGeneratorInjection.objects;
 
 import com.seibel.lod.core.api.external.items.enums.worldGeneration.EDhApiLevelType;
-import com.seibel.lod.core.api.external.items.interfaces.world.IDhApiDimensionTypeWrapper;
-import com.seibel.lod.core.api.external.items.interfaces.world.IDhApiLevelWrapper;
+import com.seibel.lod.api.items.interfaces.world.IDhApiDimensionTypeWrapper;
+import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
 
 /**
  * Stub implementation of a Level wrapper for basic unit testing.

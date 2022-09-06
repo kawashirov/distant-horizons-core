@@ -20,7 +20,7 @@
 package com.seibel.lod.core.handlers.dependencyInjection;
 
 import com.seibel.lod.core.api.external.items.enums.override.EDhApiOverridePriority;
-import com.seibel.lod.core.api.external.items.interfaces.override.IDhApiOverrideable;
+import com.seibel.lod.api.items.interfaces.override.IDhApiOverrideable;
 import com.seibel.lod.core.api.implementation.objects.GenericEnumConverter;
 import com.seibel.lod.core.enums.override.EOverridePriority;
 import com.seibel.lod.core.util.StringUtil;

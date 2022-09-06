@@ -17,9 +17,9 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.items.interfaces.world;
+package com.seibel.lod.api.items.interfaces.world;
 
-import com.seibel.lod.core.api.external.items.interfaces.IDhApiUnsafeWrapper;
+import com.seibel.lod.api.items.interfaces.IDhApiUnsafeWrapper;
 
 /**
  * @author James Seibel

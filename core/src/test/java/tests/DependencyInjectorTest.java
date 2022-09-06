@@ -1,9 +1,9 @@
 package tests;
 
 import com.seibel.lod.core.api.external.items.enums.override.EDhApiOverridePriority;
-import com.seibel.lod.core.api.external.items.interfaces.override.IDhApiOverrideable;
-import com.seibel.lod.core.api.external.items.interfaces.override.IDhApiWorldGenerator;
-import com.seibel.lod.core.api.external.items.interfaces.world.IDhApiLevelWrapper;
+import com.seibel.lod.api.items.interfaces.override.IDhApiOverrideable;
+import com.seibel.lod.api.items.interfaces.override.IDhApiWorldGenerator;
+import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.lod.core.enums.override.EOverridePriority;
 import com.seibel.lod.core.handlers.dependencyInjection.*;
 

@@ -1,4 +1,4 @@
-package com.seibel.lod.core.api.external.items.interfaces;
+package com.seibel.lod.api.items.interfaces;
 
 /**
  * The Distant Horizons' API objects can't cover
