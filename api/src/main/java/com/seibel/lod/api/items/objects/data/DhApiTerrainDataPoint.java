@@ -1,4 +1,4 @@
-package com.seibel.lod.core.api.external.items.objects.data;
+package com.seibel.lod.api.items.objects.data;
 
 import java.awt.Color;
 

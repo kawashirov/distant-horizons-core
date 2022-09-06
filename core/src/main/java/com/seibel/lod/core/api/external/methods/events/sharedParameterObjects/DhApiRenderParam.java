@@ -1,6 +1,6 @@
 package com.seibel.lod.core.api.external.methods.events.sharedParameterObjects;
 
-import com.seibel.lod.core.api.external.items.objects.math.DhApiMat4f;
+import com.seibel.lod.api.items.objects.math.DhApiMat4f;
 import com.seibel.lod.core.objects.math.Mat4f;
 
 /**

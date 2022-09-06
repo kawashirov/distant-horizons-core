@@ -19,7 +19,7 @@
 
 package com.seibel.lod.core.objects.math;
 
-import com.seibel.lod.core.api.external.items.objects.math.DhApiMat4f;
+import com.seibel.lod.api.items.objects.math.DhApiMat4f;
 
 import java.nio.FloatBuffer;
 

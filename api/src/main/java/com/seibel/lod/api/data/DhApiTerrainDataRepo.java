@@ -1,7 +1,7 @@
 package com.seibel.lod.api.data;
 
-import com.seibel.lod.core.api.external.items.objects.DhApiResult;
-import com.seibel.lod.core.api.external.items.objects.data.DhApiTerrainDataPoint;
+import com.seibel.lod.api.items.objects.DhApiResult;
+import com.seibel.lod.api.items.objects.data.DhApiTerrainDataPoint;
 
 
 /**

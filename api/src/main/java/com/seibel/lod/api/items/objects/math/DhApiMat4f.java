@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.items.objects.math;
+package com.seibel.lod.api.items.objects.math;
 
 /**
  * A simple way to store a 4x4 array

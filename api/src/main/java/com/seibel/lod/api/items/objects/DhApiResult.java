@@ -1,4 +1,4 @@
-package com.seibel.lod.core.api.external.items.objects;
+package com.seibel.lod.api.items.objects;
 
 /**
  * Allows for more descriptive non-critical failure states.
