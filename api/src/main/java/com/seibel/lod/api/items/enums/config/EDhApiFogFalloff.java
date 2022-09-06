@@ -1,4 +1,4 @@
-package com.seibel.lod.core.api.external.items.enums.config;
+package com.seibel.lod.api.items.enums.config;
 
 /**
  * LINEAR,				<br>

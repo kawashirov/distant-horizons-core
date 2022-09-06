@@ -2,6 +2,7 @@
  *    This file is part of the Distant Horizons mod (formerly the LOD Mod),
  *    licensed under the GNU LGPL v3 License.
  *
+ *    Copyright (C) 2022  Tom Lee (TomTheFurry)
  *    Copyright (C) 2020-2022  James Seibel
  *
  *    This program is free software: you can redistribute it and/or modify
@@ -16,31 +17,38 @@
  *    You should have received a copy of the GNU Lesser General Public License
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-package com.seibel.lod.core.api.external.items.enums.config;
+ 
+package com.seibel.lod.api.items.enums.config;
 
 /**
- * USE_OPTIFINE_FOG_SETTING, <br>
- * FOG_ENABLED, <br>
- * FOG_DISABLED <br>
+ * AUTO <br>
+ * SMOOTH_DROPOFF <br>
+ * PERFORMANCE_FOCUSED <br> <br>
+ *
+ * Determines how lod level drop off should be done
  * 
- * @author James Seibel
- * @version 2022-6-2
+ * @author Tom Lee
+ * @version 7-1-2022
  */
-public enum EDhApiFogDrawMode
+public enum EDhApiDropoffQuality
 {
 	// Reminder:
 	// when adding items up the API minor version
 	// when removing items up the API major version
 	
 	
-	/**
-	 * Use whatever Fog setting optifine is using.
-	 * If optifine isn't installed this defaults to FOG_ENABLED.
-	 */
-	USE_OPTIFINE_SETTING,
+	/** SMOOTH_DROPOFF when <128 lod view distance, or PERFORMANCE_FOCUSED otherwise */
+	AUTO(-1),
 	
-	FOG_ENABLED,
-	FOG_DISABLED;
+	SMOOTH_DROPOFF(10),
+	
+	PERFORMANCE_FOCUSED(0);
+	
+	public final int fastModeSwitch;
+	
+	EDhApiDropoffQuality(int fastModeSwitch) {
+		this.fastModeSwitch = fastModeSwitch;
+	}
+	
 	
 }

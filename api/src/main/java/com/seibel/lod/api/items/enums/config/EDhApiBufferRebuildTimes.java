@@ -17,34 +17,23 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.items.enums.config;
+package com.seibel.lod.api.items.enums.config;
 
 /**
- * BLOCK <Br>
- * TWO_BLOCKS <Br>
- * FOUR_BLOCKS <br>
- * HALF_CHUNK <Br>
- * CHUNK <br>
+ * CONSTANT <br>
+ * FREQUENT <br>
+ * NORMAL <br>
+ * RARE <br> <br>
+ *
+ * Determines how fast the buffers should be regenerated
  * 
- * @author James Seibel
  * @author Leonardo Amato
- * @version 2022-7-5
+ * @version 9-25-2021
  */
-public enum EDhApiHorizontalResolution
+public enum EDhApiBufferRebuildTimes
 {
-	/** render 256 LODs for each chunk */
-	BLOCK,
-	
-	/** render 64 LODs for each chunk */
-	TWO_BLOCKS,
-	
-	/** render 16 LODs for each chunk */
-	FOUR_BLOCKS,
-	
-	/** render 4 LODs for each chunk */
-	HALF_CHUNK,
-	
-	/** render 1 LOD for each chunk */
-	CHUNK;
-	
+	CONSTANT,
+	FREQUENT,
+	NORMAL,
+	RARE;
 }

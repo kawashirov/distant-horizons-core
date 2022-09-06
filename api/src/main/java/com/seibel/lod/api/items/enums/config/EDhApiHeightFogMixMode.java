@@ -16,38 +16,34 @@
  *    You should have received a copy of the GNU Lesser General Public License
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-package com.seibel.lod.core.api.external.items.enums.config;
+ 
+package com.seibel.lod.api.items.enums.config;
 
 /**
- * NONE, <br>
- * NON_FULL, <br>
- * NO_COLLISION, <br>
- * BOTH, <br>
+ * BASIC                        <br>
+ * IGNORE_HEIGHT                <br>
+ * ADDITION                     <br>
+ * MAX                          <br>
+ * MULTIPLY                     <br>
+ * INVERSE_MULTIPLY             <br>
+ * LIMITED_ADDITION             <br>
+ * MULTIPLY_ADDITION            <br>
+ * INVERSE_MULTIPLY_ADDITION    <br>
+ * AVERAGE                      <br>
  *
- * @author Leonardo Amato
- * @version 2022-7-1
+ * @author Leetom
+ * @version 2022-4-14
  */
-public enum EDhApiBlocksToAvoid
+public enum EDhApiHeightFogMixMode
 {
-	// Reminder:
-	// when adding items up the API minor version
-	// when removing items up the API major version
-	
-	NONE(false, false),
-	
-	NON_FULL(true, false),
-	
-	NO_COLLISION(false, true),
-	
-	BOTH(true, true);
-	
-	public final boolean nonFull;
-	public final boolean noCollision;
-	
-	EDhApiBlocksToAvoid(boolean nonFull, boolean noCollision)
-	{
-		this.nonFull = nonFull;
-		this.noCollision = noCollision;
-	}
+    BASIC,
+    IGNORE_HEIGHT,
+    ADDITION,
+    MAX,
+    MULTIPLY,
+    INVERSE_MULTIPLY,
+    LIMITED_ADDITION,
+    MULTIPLY_ADDITION,
+    INVERSE_MULTIPLY_ADDITION,
+    AVERAGE,
 }

@@ -17,30 +17,31 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.items.enums.config;
+package com.seibel.lod.api.items.enums.config;
 
 /**
- * USE_DEFAULT_FOG_COLOR, <br>
- * USE_SKY_COLOR, <br>
+ * AUTO <br>
+ * Near_First <br>
+ * Far_First <br> <br>
  * 
- * @author James Seibel
- * @version 2022-6-9
+ * Determines which LODs should have priority when generating
+ * outside the normal view distance.
+ * 
+ * @author Leonardo Amato
+ * @version 12-1-2021
  */
-public enum EDhApiFogColorMode
+public enum EDhApiGenerationPriority
 {
 	// Reminder:
 	// when adding items up the API minor version
 	// when removing items up the API major version
 	
-	/** Fog uses Minecraft's fog color. */
-	USE_WORLD_FOG_COLOR,
+	/** NEAR_FIRST when connected to servers and BALANCED when on single player */
+	AUTO,
 	
-	/**
-	 * Replicates the effect of the clear sky mod.
-	 * Making the fog blend in with the sky better
-	 * For it to look good you need one of the following mods:
-	 * https://www.curseforge.com/minecraft/mc-mods/clear-skies
-	 * https://www.curseforge.com/minecraft/mc-mods/clear-skies-forge-port
-	 */
-	USE_SKY_COLOR,
+	NEAR_FIRST,
+	
+	BALANCED,
+	
+	FAR_FIRST
 }

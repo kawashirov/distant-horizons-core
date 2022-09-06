@@ -20,7 +20,7 @@
 package com.seibel.lod.api.enums;
 
 import com.seibel.lod.core.api.external.items.enums.override.DhApiOverrideEnumAssembly;
-import com.seibel.lod.core.api.external.items.enums.config.DhApiConfigEnumAssembly;
+import com.seibel.lod.api.items.enums.config.DhApiConfigEnumAssembly;
 import com.seibel.lod.core.api.external.items.enums.worldGeneration.DhApiWorldGenerationEnumAssembly;
 
 /**

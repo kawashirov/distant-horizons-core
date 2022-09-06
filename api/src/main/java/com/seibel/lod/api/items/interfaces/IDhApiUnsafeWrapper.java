@@ -11,7 +11,7 @@ package com.seibel.lod.api.items.interfaces;
 public interface IDhApiUnsafeWrapper
 {
 	/**
-	 * Teturns the Minecraft object this wrapper contains. <br>
+	 * Returns the Minecraft object this wrapper contains. <br>
 	 * <strong>Warning</strong>: This object will be Minecraft
 	 * version dependent and may change without notice. <br> <br>
 	 *

@@ -17,31 +17,38 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.items.enums.config;
+package com.seibel.lod.api.items.enums.config;
 
 /**
- * AUTO <br>
- * Near_First <br>
- * Far_First <br> <br>
+ * NEVER, 	<br>
+ * DYNAMIC, <br>
+ * ALWAYS	<br> <br>
+ *
+ * This represents how far the LODs should overlap with
+ * the vanilla Minecraft terrain.
  * 
- * Determines which LODs should have priority when generating
- * outside the normal view distance.
- * 
- * @author Leonardo Amato
- * @version 12-1-2021
+ * @author James Seibel
+ * @version 2022-6-30
  */
-public enum EDhApiGenerationPriority
+public enum EDhApiVanillaOverdraw
 {
 	// Reminder:
 	// when adding items up the API minor version
 	// when removing items up the API major version
 	
-	/** NEAR_FIRST when connected to servers and BALANCED when on single player */
-	AUTO,
 	
-	NEAR_FIRST,
+	/**
+	 * Don't draw LODs where a minecraft chunk could be.
+	 * Use Overdraw Offset to tweak the border thickness.
+	 */
+	NEVER,
 	
-	BALANCED,
+	/**
+	 * Draw LODs over the farther minecraft chunks.
+	 * Dynamically decides the border thickness
+	 */
+	DYNAMIC,
 	
-	FAR_FIRST
+	/** Draw LODs over all minecraft chunks. */
+	ALWAYS,
 }

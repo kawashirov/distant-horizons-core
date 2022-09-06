@@ -17,38 +17,42 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.items.enums.config;
+package com.seibel.lod.api.items.enums.config;
 
 /**
- * NEVER, 	<br>
- * DYNAMIC, <br>
- * ALWAYS	<br> <br>
+ * LOWEST <br>
+ * LOW <br>
+ * MEDIUM <br>
+ * HIGH <br> <br>
  *
- * This represents how far the LODs should overlap with
- * the vanilla Minecraft terrain.
- * 
- * @author James Seibel
- * @version 2022-6-30
+ * this indicates the base of the quadratic function we use for the quality drop-off
+ *
+ * @author Leonardo Amato
+ * @version 9-29-2021
  */
-public enum EDhApiVanillaOverdraw
+public enum EDhApiHorizontalQuality
 {
 	// Reminder:
 	// when adding items up the API minor version
 	// when removing items up the API major version
 	
 	
-	/**
-	 * Don't draw LODs where a minecraft chunk could be.
-	 * Use Overdraw Offset to tweak the border thickness.
-	 */
-	NEVER,
+	/** 1.0 AKA Linear */
+	LOWEST(1.0f),
 	
-	/**
-	 * Draw LODs over the farther minecraft chunks.
-	 * Dynamically decides the border thickness
-	 */
-	DYNAMIC,
+	/** exponent 1.5 */
+	LOW(1.5f),
 	
-	/** Draw LODs over all minecraft chunks. */
-	ALWAYS,
+	/** exponent 2.0 */
+	MEDIUM(2.0f),
+	
+	/** exponent 2.2 */
+	HIGH(2.2f);
+	
+	public final double quadraticBase;
+	
+	EDhApiHorizontalQuality(double distanceUnit)
+	{
+		this.quadraticBase = distanceUnit;
+	}
 }

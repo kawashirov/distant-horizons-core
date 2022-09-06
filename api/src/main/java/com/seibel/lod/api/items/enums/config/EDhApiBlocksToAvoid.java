@@ -17,41 +17,37 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.items.enums.config;
+package com.seibel.lod.api.items.enums.config;
 
 /**
- * ABOVE_CAMERA,				<br>
- * BELOW_CAMERA,				<br>
- * ABOVE_AND_BELOW_CAMERA,		<br>
- * ABOVE_SET_HEIGHT,			<br>
- * BELOW_SET_HEIGHT,			<br>
- * ABOVE_AND_BELOW_SET_HEIGHT,	<br>
+ * NONE, <br>
+ * NON_FULL, <br>
+ * NO_COLLISION, <br>
+ * BOTH, <br>
  *
- * @author Leetom
- * @version 6-30-2022
+ * @author Leonardo Amato
+ * @version 2022-7-1
  */
-public enum EDhApiHeightFogMode
+public enum EDhApiBlocksToAvoid
 {
 	// Reminder:
 	// when adding items up the API minor version
 	// when removing items up the API major version
 	
+	NONE(false, false),
 	
-	ABOVE_CAMERA(true, true, false),
-	BELOW_CAMERA(true, false, true),
-	ABOVE_AND_BELOW_CAMERA(true, true, true),
-	ABOVE_SET_HEIGHT(false, true, false),
-	BELOW_SET_HEIGHT(false, false, true),
-	ABOVE_AND_BELOW_SET_HEIGHT(false, true, true);
+	NON_FULL(true, false),
 	
-	public final boolean basedOnCamera;
-	public final boolean above;
-	public final boolean below;
+	NO_COLLISION(false, true),
 	
-	EDhApiHeightFogMode(boolean basedOnCamera, boolean above, boolean below)
+	BOTH(true, true);
+	
+	public final boolean nonFull;
+	public final boolean noCollision;
+	
+	EDhApiBlocksToAvoid(boolean nonFull, boolean noCollision)
 	{
-		this.basedOnCamera = basedOnCamera;
-		this.above = above;
-		this.below = below;
+		this.nonFull = nonFull;
+		this.noCollision = noCollision;
 	}
 }
