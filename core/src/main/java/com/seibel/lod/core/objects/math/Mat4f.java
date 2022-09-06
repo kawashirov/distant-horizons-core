@@ -19,8 +19,6 @@
 
 package com.seibel.lod.core.objects.math;
 
-import com.seibel.lod.api.items.objects.math.DhApiMat4f;
-
 import java.nio.FloatBuffer;
 
 /**
@@ -473,12 +471,6 @@ public class Mat4f
 			this.m32,
 			this.m33,
 		};
-	}
-	
-	/** Returns the API version of this object. */
-	public DhApiMat4f createApiObject()
-	{
-		return new DhApiMat4f(this.getValuesAsArray());
 	}
 	
 	
