@@ -1,6 +1,6 @@
 package com.seibel.lod.core.api.external.methods.events.abstractEvents;
 
-import com.seibel.lod.core.api.external.methods.events.sharedParameterObjects.DhApiRenderParam;
+import com.seibel.lod.core.api.external.coreImplementations.objects.events.CoreDhApiRenderParam;
 import com.seibel.lod.core.api.implementation.interfaces.events.IDhApiEvent;
 
 /**
@@ -32,9 +32,9 @@ public abstract class DhApiAfterRenderEvent implements IDhApiEvent<DhApiAfterRen
 	// parameter object //
 	//==================//
 	
-	public static class EventParam extends DhApiRenderParam
+	public static class EventParam extends CoreDhApiRenderParam
 	{
-		public EventParam(DhApiRenderParam dhApiRenderParam)
+		public EventParam(CoreDhApiRenderParam dhApiRenderParam)
 		{
 			super(dhApiRenderParam.mcProjectionMatrix, dhApiRenderParam.mcModelViewMatrix,
 					dhApiRenderParam.dhProjectionMatrix, dhApiRenderParam.dhModelViewMatrix,

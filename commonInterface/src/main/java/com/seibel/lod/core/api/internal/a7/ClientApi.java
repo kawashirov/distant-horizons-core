@@ -22,7 +22,7 @@ package com.seibel.lod.core.api.internal.a7;
 import com.seibel.lod.core.a7.level.IClientLevel;
 import com.seibel.lod.core.a7.world.*;
 import com.seibel.lod.core.api.external.methods.events.abstractEvents.*;
-import com.seibel.lod.core.api.external.methods.events.sharedParameterObjects.DhApiRenderParam;
+import com.seibel.lod.core.api.external.coreImplementations.objects.events.CoreDhApiRenderParam;
 import com.seibel.lod.core.api.implementation.wrappers.DhApiLevelWrapper;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.ModInfo;
@@ -258,8 +258,8 @@ public class ClientApi
 			{
 				if (Config.Client.Advanced.Debugging.rendererMode.get() == ERendererMode.DEFAULT)
 				{
-					DhApiRenderParam renderEventParam =
-							new DhApiRenderParam(mcProjectionMatrix, mcModelViewMatrix,
+					CoreDhApiRenderParam renderEventParam =
+							new CoreDhApiRenderParam(mcProjectionMatrix, mcModelViewMatrix,
 								RenderUtil.createLodProjectionMatrix(mcProjectionMatrix, partialTicks),
 								RenderUtil.createLodModelViewMatrix(mcModelViewMatrix), partialTicks);
 					

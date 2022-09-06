@@ -1,4 +1,4 @@
-package com.seibel.lod.core.api.external.coreInterfaces;
+package com.seibel.lod.core.api.external.coreImplementations.interfaces.override;
 
 import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
 import com.seibel.lod.core.handlers.dependencyInjection.OverrideInjector;

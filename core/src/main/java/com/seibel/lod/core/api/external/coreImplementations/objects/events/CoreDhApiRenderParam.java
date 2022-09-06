@@ -1,44 +1,33 @@
-package com.seibel.lod.core.api.external.methods.events.sharedParameterObjects;
+package com.seibel.lod.core.api.external.coreImplementations.objects.events;
 
-import com.seibel.lod.api.items.objects.math.DhApiMat4f;
 import com.seibel.lod.core.objects.math.Mat4f;
 
 /**
  * Parameter passed into Render events.
  *
  * @author James Seibel
- * @version 2022-8-21
+ * @version 2022-9-5
  */
-public class DhApiRenderParam
+public class CoreDhApiRenderParam
 {
 	/** The projection matrix Minecraft is using to render this frame. */
-	public final DhApiMat4f mcProjectionMatrix;
+	public final Mat4f mcProjectionMatrix;
 	/** The model view matrix Minecraft is using to render this frame. */
-	public final DhApiMat4f mcModelViewMatrix;
+	public final Mat4f mcModelViewMatrix;
 	
 	/** The projection matrix Distant Horizons is using to render this frame. */
-	public final DhApiMat4f dhProjectionMatrix;
+	public final Mat4f dhProjectionMatrix;
 	/** The model view matrix Distant Horizons is using to render this frame. */
-	public final DhApiMat4f dhModelViewMatrix;
+	public final Mat4f dhModelViewMatrix;
 	
 	/** Indicates how far into this tick the frame is. */
 	public final float partialTicks;
 	
 	
 	
-	public DhApiRenderParam(
+	public CoreDhApiRenderParam(
 			Mat4f newMcProjectionMatrix, Mat4f newMcModelViewMatrix,
 			Mat4f newDhProjectionMatrix, Mat4f newDhModelViewMatrix,
-			float newPartialTicks)
-	{
-		this(newMcProjectionMatrix.createApiObject(), newMcModelViewMatrix.createApiObject(),
-				newDhProjectionMatrix.createApiObject(), newDhModelViewMatrix.createApiObject(),
-				newPartialTicks);
-	}
-	
-	public DhApiRenderParam(
-			DhApiMat4f newMcProjectionMatrix, DhApiMat4f newMcModelViewMatrix,
-			DhApiMat4f newDhProjectionMatrix, DhApiMat4f newDhModelViewMatrix,
 			float newPartialTicks)
 	{
 		this.mcProjectionMatrix = newMcProjectionMatrix;
@@ -49,6 +38,5 @@ public class DhApiRenderParam
 		
 		this.partialTicks = newPartialTicks;
 	}
-	
 	
 }
