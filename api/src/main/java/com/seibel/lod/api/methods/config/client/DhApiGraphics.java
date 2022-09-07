@@ -17,13 +17,13 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.api.config.client;
+package com.seibel.lod.api.methods.config.client;
 
 import com.seibel.lod.api.items.enums.config.*;
 import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
 import com.seibel.lod.core.api.implementation.objects.GenericEnumConverter;
 import com.seibel.lod.core.api.implementation.objects.RenderModeEnabledConverter;
-import com.seibel.lod.core.api.implementation.wrappers.DhApiConfig;
+import com.seibel.lod.api.methods.config.DhApiConfig;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.enums.config.*;
 import com.seibel.lod.core.enums.rendering.ERendererMode;

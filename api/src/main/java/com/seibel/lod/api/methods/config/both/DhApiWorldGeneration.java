@@ -17,14 +17,14 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.api.config.both;
+package com.seibel.lod.api.methods.config.both;
 
 import com.seibel.lod.api.items.enums.config.EDhApiDistanceGenerationMode;
 import com.seibel.lod.api.items.enums.config.EDhApiBlocksToAvoid;
 import com.seibel.lod.api.items.enums.config.EDhApiLightGenerationMode;
 import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
 import com.seibel.lod.core.api.implementation.objects.GenericEnumConverter;
-import com.seibel.lod.core.api.implementation.wrappers.DhApiConfig;
+import com.seibel.lod.api.methods.config.DhApiConfig;
 import com.seibel.lod.core.config.Config.Client.WorldGenerator;
 import com.seibel.lod.core.enums.config.EBlocksToAvoid;
 import com.seibel.lod.core.enums.config.EDistanceGenerationMode;

@@ -1,4 +1,4 @@
-package com.seibel.lod.core.api.implementation.wrappers;
+package com.seibel.lod.api.methods.config;
 
 import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
 import com.seibel.lod.core.api.implementation.interfaces.config.IConverter;

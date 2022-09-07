@@ -20,7 +20,6 @@
 package com.seibel.lod.core.enums;
 
 import com.seibel.lod.core.enums.config.CoreConfigEnumAssembly;
-import com.seibel.lod.core.enums.override.CoreOverrideEnumAssembly;
 import com.seibel.lod.core.enums.rendering.CoreRenderingEnumAssembly;
 import com.seibel.lod.core.enums.worldGeneration.CoreWorldGenerationEnumAssembly;
 
@@ -28,7 +27,7 @@ import com.seibel.lod.core.enums.worldGeneration.CoreWorldGenerationEnumAssembly
  * Assembly classes are used to reference the package they are in.
  *
  * @author James Seibel
- * @version 2022-7-25
+ * @version 2022-9-6
  */
 public class CoreEnumAssembly
 {
@@ -36,7 +35,6 @@ public class CoreEnumAssembly
 	// This is done so they can be found via reflection.
 	private static final CoreRenderingEnumAssembly renderingAssembly = new CoreRenderingEnumAssembly();
 	private static final CoreConfigEnumAssembly configAssembly = new CoreConfigEnumAssembly();
-	private static final CoreOverrideEnumAssembly overrideAssembly = new CoreOverrideEnumAssembly();
 	private static final CoreWorldGenerationEnumAssembly worldGenAssembly = new CoreWorldGenerationEnumAssembly();
 	
 	/** All enums should have this prefix */
