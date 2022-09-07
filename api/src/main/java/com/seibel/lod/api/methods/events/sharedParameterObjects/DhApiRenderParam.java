@@ -1,7 +1,7 @@
 package com.seibel.lod.api.methods.events.sharedParameterObjects;
 
 import com.seibel.lod.api.items.objects.math.DhApiMat4f;
-import com.seibel.lod.core.api.external.coreImplementations.objects.events.CoreDhApiRenderParam;
+import com.seibel.lod.core.api.external.coreImplementations.objects.events.sharedParameterObjects.CoreDhApiRenderParam;
 
 /**
  * Parameter passed into Render events.

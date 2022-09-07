@@ -21,7 +21,7 @@ package com.seibel.lod.core.api.internal.a7;
 
 import com.seibel.lod.core.a7.level.IClientLevel;
 import com.seibel.lod.core.a7.world.*;
-import com.seibel.lod.core.api.external.coreImplementations.objects.events.CoreDhApiRenderParam;
+import com.seibel.lod.core.api.external.coreImplementations.objects.events.sharedParameterObjects.CoreDhApiRenderParam;
 import com.seibel.lod.core.api.implementation.wrappers.DhApiLevelWrapper;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.ModInfo;

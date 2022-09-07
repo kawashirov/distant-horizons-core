@@ -1,4 +1,4 @@
-package com.seibel.lod.core.api.external.coreImplementations.objects.events;
+package com.seibel.lod.core.api.external.coreImplementations.objects.events.sharedParameterObjects;
 
 import com.seibel.lod.core.objects.math.Mat4f;
 

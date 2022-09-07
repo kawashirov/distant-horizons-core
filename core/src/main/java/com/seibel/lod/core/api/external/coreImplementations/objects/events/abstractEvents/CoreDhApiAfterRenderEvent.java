@@ -1,6 +1,6 @@
 package com.seibel.lod.core.api.external.coreImplementations.objects.events.abstractEvents;
 
-import com.seibel.lod.core.api.external.coreImplementations.objects.events.CoreDhApiRenderParam;
+import com.seibel.lod.core.api.external.coreImplementations.objects.events.sharedParameterObjects.CoreDhApiRenderParam;
 import com.seibel.lod.core.api.implementation.interfaces.events.ICoreDhApiEvent;
 
 /**
