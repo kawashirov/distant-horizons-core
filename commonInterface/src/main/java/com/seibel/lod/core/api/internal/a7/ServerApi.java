@@ -29,7 +29,6 @@ import com.seibel.lod.core.api.external.methods.events.abstractEvents.DhApiLevel
 import com.seibel.lod.core.api.implementation.wrappers.DhApiLevelWrapper;
 import com.seibel.lod.core.handlers.dependencyInjection.DhApiEventInjector;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
-import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.wrapperInterfaces.IVersionConstants;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;

@@ -1,6 +1,6 @@
 package testItems.eventInjection.abstractObjects;
 
-import com.seibel.lod.core.api.implementation.interfaces.events.IDhApiEvent;
+import com.seibel.lod.core.api.implementation.interfaces.events.ICoreDhApiEvent;
 
 /**
  * A dummy event implementation used for unit testing.
@@ -8,7 +8,7 @@ import com.seibel.lod.core.api.implementation.interfaces.events.IDhApiEvent;
  * @author James Seibel
  * @version 2022-7-16
  */
-public abstract class DhApiTestEvent implements IDhApiEvent<Boolean>
+public abstract class DhApiTestEvent implements ICoreDhApiEvent<Boolean>
 {
 	/**
 	 * Test event.
@@ -30,7 +30,7 @@ public abstract class DhApiTestEvent implements IDhApiEvent<Boolean>
 	//=========================//
 	
 	@Override
-	public final boolean onEvent(Boolean input)
+	public final boolean fireEvent(Boolean input)
 	{
 		return test(input);
 	}
