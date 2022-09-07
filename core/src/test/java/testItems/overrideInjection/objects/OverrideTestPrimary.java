@@ -1,6 +1,5 @@
 package testItems.overrideInjection.objects;
 
-import com.seibel.lod.core.api.external.items.enums.override.EDhApiOverridePriority;
 import com.seibel.lod.core.handlers.dependencyInjection.OverrideInjector;
 import testItems.overrideInjection.interfaces.IOverrideTest;
 

@@ -25,7 +25,7 @@ public class DhApiWorldGeneratorOverrideRegister
 	{
 		try
 		{
-			WorldGeneratorInjector.INSTANCE.bind(worldGenerator);
+//			WorldGeneratorInjector.INSTANCE.bind(worldGenerator);
 			return DhApiResult.createSuccess();
 		}
 		catch (Exception e)
@@ -45,7 +45,7 @@ public class DhApiWorldGeneratorOverrideRegister
 	{
 		try
 		{
-			WorldGeneratorInjector.INSTANCE.bind(levelWrapper, worldGenerator);
+//			WorldGeneratorInjector.INSTANCE.bind(levelWrapper, worldGenerator);
 			return DhApiResult.createSuccess();
 		}
 		catch (Exception e)

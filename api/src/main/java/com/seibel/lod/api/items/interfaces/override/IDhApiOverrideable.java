@@ -1,8 +1,8 @@
 package com.seibel.lod.api.items.interfaces.override;
 
 import com.seibel.lod.core.api.external.coreImplementations.interfaces.override.ICoreDhApiOverrideable;
-import com.seibel.lod.core.api.external.items.enums.override.EDhApiOverridePriority;
 import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
+import com.seibel.lod.core.handlers.dependencyInjection.OverrideInjector;
 
 /**
  * Implemented by all DhApi objects that can be overridden.
@@ -17,6 +17,6 @@ public interface IDhApiOverrideable extends ICoreDhApiOverrideable, IBindable
 	 * For most developers this can be left at the default.
 	 */
 	@Override
-	default EDhApiOverridePriority getPriority() { return EDhApiOverridePriority.PRIMARY; }
+	default int getPriority() { return OverrideInjector.DEFAULT_NON_CORE_OVERRIDE_PRIORITY; }
 	
 }

@@ -23,9 +23,6 @@ import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.world.DhClientServerWorld;
 import com.seibel.lod.core.a7.world.DhServerWorld;
 import com.seibel.lod.core.a7.world.IServerWorld;
-import com.seibel.lod.core.api.external.methods.events.abstractEvents.DhApiLevelLoadEvent;
-import com.seibel.lod.core.api.external.methods.events.abstractEvents.DhApiLevelSaveEvent;
-import com.seibel.lod.core.api.external.methods.events.abstractEvents.DhApiLevelUnloadEvent;
 import com.seibel.lod.core.api.external.coreImplementations.objects.wrappers.DhApiLevelWrapper;
 import com.seibel.lod.core.handlers.dependencyInjection.DhApiEventInjector;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
@@ -103,7 +100,7 @@ public class ServerApi
 		if (SharedApi.currentWorld != null)
 		{
 			SharedApi.currentWorld.getOrLoadLevel(level);
-			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelLoadEvent.class, new DhApiLevelLoadEvent.EventParam(new DhApiLevelWrapper(level)));
+//			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelLoadEvent.class, new DhApiLevelLoadEvent.EventParam(new DhApiLevelWrapper(level)));
 		}
 	}
 	public void serverLevelUnloadEvent(IServerLevelWrapper level) {
@@ -111,7 +108,7 @@ public class ServerApi
 		if (SharedApi.currentWorld != null)
 		{
 			SharedApi.currentWorld.unloadLevel(level);
-			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelUnloadEvent.class, new DhApiLevelUnloadEvent.EventParam(new DhApiLevelWrapper(level)));
+//			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelUnloadEvent.class, new DhApiLevelUnloadEvent.EventParam(new DhApiLevelWrapper(level)));
 		}
 	}
 
@@ -124,7 +121,7 @@ public class ServerApi
 			
 			for (ILevel level : SharedApi.currentWorld.getAllLoadedLevels())
 			{
-				DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelSaveEvent.class, new DhApiLevelSaveEvent.EventParam(new DhApiLevelWrapper(level.getLevelWrapper())));
+//				DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelSaveEvent.class, new DhApiLevelSaveEvent.EventParam(new DhApiLevelWrapper(level.getLevelWrapper())));
 			}
 		}
 	}

@@ -19,8 +19,6 @@
 
 package com.seibel.lod.core.handlers.dependencyInjection;
 
-import com.seibel.lod.api.items.interfaces.override.IDhApiWorldGenerator;
-import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.lod.core.util.StringUtil;
 
 import java.util.HashMap;
@@ -30,122 +28,122 @@ import java.util.HashMap;
  * This is done so other mods can override our world generator(s) to improve or replace them.
  *
  * @author James Seibel
- * @version 2022-8-15
+ * @version 2022-9-7
  */
 public class WorldGeneratorInjector
 {
-	public static final WorldGeneratorInjector INSTANCE = new WorldGeneratorInjector();
-	
-	private final HashMap<IDhApiLevelWrapper, OverrideInjector<IDhApiWorldGenerator>> worldGeneratorByLevelWrapper = new HashMap<>();
-	/** World generators that aren't bound to a specific level and are used if no other world generators are bound. */
-	private final OverrideInjector<IDhApiWorldGenerator> backupUniversalWorldGenerators;
-	
-	/**
-	 * This is used to determine if an override is part of Distant Horizons'
-	 * Core or not.
-	 * This probably isn't the best way of going about this, but it works for now.
-	 */
-	private final String corePackagePath;
-	
-	
-	
-	public WorldGeneratorInjector()
-	{
-		String thisPackageName = this.getClass().getPackage().getName();
-		int secondPackageEndingIndex = StringUtil.nthIndexOf(thisPackageName, ".", 3);
-		this.corePackagePath = thisPackageName.substring(0, secondPackageEndingIndex); // this should be "com.seibel.lod"
-		
-		this.backupUniversalWorldGenerators = new OverrideInjector<>(this.corePackagePath);
-	}
-	
-	/** This constructor should only be used for testing different corePackagePaths. */
-	public WorldGeneratorInjector(String newCorePackagePath)
-	{
-		this.corePackagePath = newCorePackagePath;
-		
-		this.backupUniversalWorldGenerators = new OverrideInjector<>(this.corePackagePath);
-	}
-	
-	
-	
-	/**
-	 * Binds the backup world generator. <Br>
-	 * See {@link DependencyInjector#bind(Class, IBindable) bind(Class, IBindable)} for full documentation.
-	 *
-	 * @throws IllegalArgumentException if a non-Distant Horizons world generator with the priority CORE is passed in
-	 * @see DependencyInjector#bind(Class, IBindable)
-	 */
-	public void bind(IDhApiWorldGenerator worldGeneratorImplementation)  throws IllegalStateException, IllegalArgumentException
-	{
-		bind(null, worldGeneratorImplementation);
-	}
-	
-	/**
-	 * Binds the world generator to the given level. <Br>
-	 * See {@link DependencyInjector#bind(Class, IBindable) bind(Class, IBindable)} for full documentation.
-	 *
-	 * @throws IllegalArgumentException if a non-Distant Horizons world generator with the priority CORE is passed in
-	 * @see DependencyInjector#bind(Class, IBindable)
-	 */
-	public void bind(IDhApiLevelWrapper levelForWorldGenerator, IDhApiWorldGenerator worldGeneratorImplementation)  throws IllegalStateException, IllegalArgumentException
-	{
-		if (levelForWorldGenerator != null)
-		{
-			// bind this generator to a specific level
-			if (!worldGeneratorByLevelWrapper.containsKey(levelForWorldGenerator))
-			{
-				worldGeneratorByLevelWrapper.put(levelForWorldGenerator, new OverrideInjector<>(this.corePackagePath));
-			}
-			
-			worldGeneratorByLevelWrapper.get(levelForWorldGenerator).bind(IDhApiWorldGenerator.class, worldGeneratorImplementation);
-		}
-		else
-		{
-			// a null level wrapper binds the generator to all levels
-			backupUniversalWorldGenerators.bind(IDhApiWorldGenerator.class, worldGeneratorImplementation);
-		}
-	}
-	
-	
-	
-	/**
-	 * Returns the backup world generator with the highest priority. <br>
-	 * See {@link OverrideInjector#get(Class) get(Class)} for more documentation.
-	 *
-	 * @see OverrideInjector#get(Class)
-	 */
-	public IDhApiWorldGenerator get() throws ClassCastException
-	{
-		return backupUniversalWorldGenerators.get(IDhApiWorldGenerator.class);
-	}
-	
-	/**
-	 * Returns the bound world generator with the highest priority. <br>
-	 * (Returns a backup world generator if no world generators have been bound for this specific level.) <br>
-	 * See {@link OverrideInjector#get(Class) get(Class)} for more documentation.
-	 *
-	 * @see OverrideInjector#get(Class)
-	 */
-	public IDhApiWorldGenerator get(IDhApiLevelWrapper levelForWorldGenerator) throws ClassCastException
-	{
-		if (!worldGeneratorByLevelWrapper.containsKey(levelForWorldGenerator))
-		{
-			// no generator exists for this specific level.
-			// check for a backup universal world generator
-			return backupUniversalWorldGenerators.get(IDhApiWorldGenerator.class);
-		}
-		
-		// use the existing world generator
-		return worldGeneratorByLevelWrapper.get(levelForWorldGenerator).get(IDhApiWorldGenerator.class);
-	}
-	
-	
-	
-	/** Removes all bound world generators. */
-	public void clearBoundDependencies() // TODO this should be done when leaving from the current world/server
-	{
-		this.worldGeneratorByLevelWrapper.clear();
-		this.backupUniversalWorldGenerators.clear();
-	}
+//	public static final WorldGeneratorInjector INSTANCE = new WorldGeneratorInjector();
+//	
+//	private final HashMap<IDhApiLevelWrapper, OverrideInjector<IDhApiWorldGenerator>> worldGeneratorByLevelWrapper = new HashMap<>();
+//	/** World generators that aren't bound to a specific level and are used if no other world generators are bound. */
+//	private final OverrideInjector<IDhApiWorldGenerator> backupUniversalWorldGenerators;
+//	
+//	/**
+//	 * This is used to determine if an override is part of Distant Horizons'
+//	 * Core or not.
+//	 * This probably isn't the best way of going about this, but it works for now.
+//	 */
+//	private final String corePackagePath;
+//	
+//	
+//	
+//	public WorldGeneratorInjector()
+//	{
+//		String thisPackageName = this.getClass().getPackage().getName();
+//		int secondPackageEndingIndex = StringUtil.nthIndexOf(thisPackageName, ".", 3);
+//		this.corePackagePath = thisPackageName.substring(0, secondPackageEndingIndex); // this should be "com.seibel.lod"
+//		
+//		this.backupUniversalWorldGenerators = new OverrideInjector<>(this.corePackagePath);
+//	}
+//	
+//	/** This constructor should only be used for testing different corePackagePaths. */
+//	public WorldGeneratorInjector(String newCorePackagePath)
+//	{
+//		this.corePackagePath = newCorePackagePath;
+//		
+//		this.backupUniversalWorldGenerators = new OverrideInjector<>(this.corePackagePath);
+//	}
+//	
+//	
+//	
+//	/**
+//	 * Binds the backup world generator. <Br>
+//	 * See {@link DependencyInjector#bind(Class, IBindable) bind(Class, IBindable)} for full documentation.
+//	 *
+//	 * @throws IllegalArgumentException if a non-Distant Horizons world generator with the priority CORE is passed in
+//	 * @see DependencyInjector#bind(Class, IBindable)
+//	 */
+//	public void bind(IDhApiWorldGenerator worldGeneratorImplementation)  throws IllegalStateException, IllegalArgumentException
+//	{
+//		bind(null, worldGeneratorImplementation);
+//	}
+//	
+//	/**
+//	 * Binds the world generator to the given level. <Br>
+//	 * See {@link DependencyInjector#bind(Class, IBindable) bind(Class, IBindable)} for full documentation.
+//	 *
+//	 * @throws IllegalArgumentException if a non-Distant Horizons world generator with the priority CORE is passed in
+//	 * @see DependencyInjector#bind(Class, IBindable)
+//	 */
+//	public void bind(IDhApiLevelWrapper levelForWorldGenerator, IDhApiWorldGenerator worldGeneratorImplementation)  throws IllegalStateException, IllegalArgumentException
+//	{
+//		if (levelForWorldGenerator != null)
+//		{
+//			// bind this generator to a specific level
+//			if (!worldGeneratorByLevelWrapper.containsKey(levelForWorldGenerator))
+//			{
+//				worldGeneratorByLevelWrapper.put(levelForWorldGenerator, new OverrideInjector<>(this.corePackagePath));
+//			}
+//			
+//			worldGeneratorByLevelWrapper.get(levelForWorldGenerator).bind(IDhApiWorldGenerator.class, worldGeneratorImplementation);
+//		}
+//		else
+//		{
+//			// a null level wrapper binds the generator to all levels
+//			backupUniversalWorldGenerators.bind(IDhApiWorldGenerator.class, worldGeneratorImplementation);
+//		}
+//	}
+//	
+//	
+//	
+//	/**
+//	 * Returns the backup world generator with the highest priority. <br>
+//	 * See {@link OverrideInjector#get(Class) get(Class)} for more documentation.
+//	 *
+//	 * @see OverrideInjector#get(Class)
+//	 */
+//	public IDhApiWorldGenerator get() throws ClassCastException
+//	{
+//		return backupUniversalWorldGenerators.get(IDhApiWorldGenerator.class);
+//	}
+//	
+//	/**
+//	 * Returns the bound world generator with the highest priority. <br>
+//	 * (Returns a backup world generator if no world generators have been bound for this specific level.) <br>
+//	 * See {@link OverrideInjector#get(Class) get(Class)} for more documentation.
+//	 *
+//	 * @see OverrideInjector#get(Class)
+//	 */
+//	public IDhApiWorldGenerator get(IDhApiLevelWrapper levelForWorldGenerator) throws ClassCastException
+//	{
+//		if (!worldGeneratorByLevelWrapper.containsKey(levelForWorldGenerator))
+//		{
+//			// no generator exists for this specific level.
+//			// check for a backup universal world generator
+//			return backupUniversalWorldGenerators.get(IDhApiWorldGenerator.class);
+//		}
+//		
+//		// use the existing world generator
+//		return worldGeneratorByLevelWrapper.get(levelForWorldGenerator).get(IDhApiWorldGenerator.class);
+//	}
+//	
+//	
+//	
+//	/** Removes all bound world generators. */
+//	public void clearBoundDependencies() // TODO this should be done when leaving from the current world/server
+//	{
+//		this.worldGeneratorByLevelWrapper.clear();
+//		this.backupUniversalWorldGenerators.clear();
+//	}
 	
 }

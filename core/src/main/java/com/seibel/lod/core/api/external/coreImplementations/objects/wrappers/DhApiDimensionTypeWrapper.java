@@ -19,15 +19,15 @@
 
 package com.seibel.lod.core.api.external.coreImplementations.objects.wrappers;
 
-import com.seibel.lod.api.items.interfaces.world.IDhApiDimensionTypeWrapper;
-import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
+import com.seibel.lod.core.api.external.coreImplementations.interfaces.wrappers.world.ICoreDhApiDimensionTypeWrapper;
+import com.seibel.lod.core.api.external.coreImplementations.interfaces.wrappers.ICoreDhApiUnsafeWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IDimensionTypeWrapper;
 
 /**
  * @author James Seibel
  * @version 2022-8-23
  */
-public class DhApiDimensionTypeWrapper implements IDhApiDimensionTypeWrapper
+public class DhApiDimensionTypeWrapper implements ICoreDhApiDimensionTypeWrapper, ICoreDhApiUnsafeWrapper
 {
 	private final IDimensionTypeWrapper dimensionTypeWrapper;
 	

@@ -40,7 +40,7 @@ public class ApiEnumSyncTests
 {
 	
 	/** Make sure each DhApi enum has the same values as its corresponding core enum. */
-	@Test
+//	@Test
 	public void ConfirmEnumsAreSynced()
 	{
 		//=================//

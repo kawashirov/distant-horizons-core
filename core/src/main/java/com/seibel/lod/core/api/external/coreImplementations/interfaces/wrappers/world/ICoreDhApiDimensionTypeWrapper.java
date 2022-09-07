@@ -17,23 +17,17 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.api.items.interfaces.world;
-
-import com.seibel.lod.api.items.interfaces.IDhApiUnsafeWrapper;
-import com.seibel.lod.core.api.external.coreImplementations.interfaces.wrappers.world.ICoreDhApiDimensionTypeWrapper;
+package com.seibel.lod.core.api.external.coreImplementations.interfaces.wrappers.world;
 
 /**
  * @author James Seibel
  * @version 2022-7-14
  */
-public interface IDhApiDimensionTypeWrapper extends ICoreDhApiDimensionTypeWrapper, IDhApiUnsafeWrapper
+public interface ICoreDhApiDimensionTypeWrapper
 {
-	@Override
 	String getDimensionName();
 	
-	@Override
 	boolean hasCeiling();
-	
-	@Override
+
 	boolean hasSkyLight();
 }

@@ -147,7 +147,7 @@ public class ClientApi
 			//TODO: Implement
 			
 			// TODO: potentially add a list of chunks that were updated during the save
-			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelSaveEvent.class, new DhApiLevelSaveEvent.EventParam(new DhApiLevelWrapper(level)));
+//			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelSaveEvent.class, new DhApiLevelSaveEvent.EventParam(new DhApiLevelWrapper(level)));
 		}
 	}
 	
@@ -158,7 +158,7 @@ public class ClientApi
 		if (SharedApi.currentWorld != null)
 		{
 			SharedApi.currentWorld.unloadLevel(level);
-			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelUnloadEvent.class, new DhApiLevelUnloadEvent.EventParam(new DhApiLevelWrapper(level)));
+//			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelUnloadEvent.class, new DhApiLevelUnloadEvent.EventParam(new DhApiLevelWrapper(level)));
 		}
 	}
 	
@@ -169,7 +169,7 @@ public class ClientApi
 		if (SharedApi.currentWorld != null)
 		{
 			SharedApi.currentWorld.getOrLoadLevel(level);
-			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelLoadEvent.class, new DhApiLevelLoadEvent.EventParam(new DhApiLevelWrapper(level)));
+//			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelLoadEvent.class, new DhApiLevelLoadEvent.EventParam(new DhApiLevelWrapper(level)));
 		}
 	}
 	
@@ -262,12 +262,12 @@ public class ClientApi
 								RenderUtil.createLodProjectionMatrix(mcProjectionMatrix, partialTicks),
 								RenderUtil.createLodModelViewMatrix(mcModelViewMatrix), partialTicks);
 					
-					boolean renderingCanceled = DhApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeRenderEvent.class, new DhApiBeforeRenderEvent.EventParam(renderEventParam));
+//					boolean renderingCanceled = DhApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeRenderEvent.class, new DhApiBeforeRenderEvent.EventParam(renderEventParam));
 					
-					if (!rendererDisabledBecauseOfExceptions && !renderingCanceled)
+					if (!rendererDisabledBecauseOfExceptions) // && !renderingCanceled)
 					{
 						level.render(mcModelViewMatrix, mcProjectionMatrix, partialTicks, profiler);
-						DhApiEventInjector.INSTANCE.fireAllEvents(DhApiAfterRenderEvent.class, new DhApiAfterRenderEvent.EventParam(renderEventParam));
+//						DhApiEventInjector.INSTANCE.fireAllEvents(DhApiAfterRenderEvent.class, new DhApiAfterRenderEvent.EventParam(renderEventParam));
 					}
 				}
 				else if (Config.Client.Advanced.Debugging.rendererMode.get() == ERendererMode.DEBUG)

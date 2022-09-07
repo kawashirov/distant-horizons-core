@@ -19,7 +19,6 @@
 
 package com.seibel.lod.api.enums;
 
-import com.seibel.lod.core.api.external.items.enums.override.DhApiOverrideEnumAssembly;
 import com.seibel.lod.api.items.enums.config.DhApiConfigEnumAssembly;
 import com.seibel.lod.core.api.external.coreImplementations.enums.worldGeneration.DhApiWorldGenerationEnumAssembly;
 
@@ -35,7 +34,6 @@ public class DhApiEnumAssembly
 	// This is done so they can be found via reflection.
 	private static final DhApiWorldGenerationEnumAssembly worldGenerationAssembly = new DhApiWorldGenerationEnumAssembly();
 	private static final DhApiConfigEnumAssembly configAssembly = new DhApiConfigEnumAssembly();
-	private static final DhApiOverrideEnumAssembly overrideAssembly = new DhApiOverrideEnumAssembly();
 	
 	/** All DH API enums should have this prefix */
 	public static final String API_ENUM_PREFIX = "EDhApi";

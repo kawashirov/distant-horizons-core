@@ -8,18 +8,18 @@ import testItems.eventInjection.abstractObjects.DhApiTestEvent;
  * @author James Seibel
  * @version 2022-7-16
  */
-public class DhTestEvent extends DhApiTestEvent
-{
-	public Boolean eventFiredValue = null;
-	
-	@Override
-	public boolean test(Boolean cancelEvent)
-	{
-		this.eventFiredValue = cancelEvent;
-		return cancelEvent;
-	}
-	
-	@Override
-	public Boolean getTestValue() { return this.eventFiredValue; }
-	
-}
+//public class DhTestEvent extends DhApiTestEvent
+//{
+//	public Boolean eventFiredValue = null;
+//	
+//	@Override
+//	public boolean test(Boolean cancelEvent)
+//	{
+//		this.eventFiredValue = cancelEvent;
+//		return cancelEvent;
+//	}
+//	
+//	@Override
+//	public Boolean getTestValue() { return this.eventFiredValue; }
+//	
+//}

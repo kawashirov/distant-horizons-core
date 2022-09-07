@@ -20,10 +20,9 @@
 package com.seibel.lod.core.api.external.coreImplementations.objects.wrappers;
 
 import com.seibel.lod.core.api.external.coreImplementations.enums.worldGeneration.EDhApiLevelType;
-import com.seibel.lod.core.api.external.items.interfaces.IDhApiUnsafeWrapper;
-import com.seibel.lod.api.items.interfaces.world.IDhApiDimensionTypeWrapper;
-import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
+import com.seibel.lod.core.api.external.coreImplementations.interfaces.wrappers.world.ICoreDhApiLevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
+import com.seibel.lod.core.wrapperInterfaces.world.IDimensionTypeWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
 
@@ -33,20 +32,18 @@ import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
  * @author James Seibel
  * @version 2022-8-23
  */
-public class DhApiLevelWrapper implements IDhApiLevelWrapper
+public class DhApiLevelWrapper implements ICoreDhApiLevelWrapper
 {
 	private final ILevelWrapper levelWrapper;
-	private final IDhApiDimensionTypeWrapper dimensionTypeWrapper;
+	private final IDimensionTypeWrapper dimensionTypeWrapper;
 	
 	
 	public DhApiLevelWrapper(ILevelWrapper newLevelWrapper)
 	{
 		this.levelWrapper = newLevelWrapper;
-		this.dimensionTypeWrapper = new DhApiDimensionTypeWrapper(this.levelWrapper.getDimensionType());
+		this.dimensionTypeWrapper = this.levelWrapper.getDimensionType();
 	}
 	
-	
-	public IDhApiDimensionTypeWrapper getDimensionType() { return this.dimensionTypeWrapper; }
 	
 	public EDhApiLevelType getLevelType()
 	{

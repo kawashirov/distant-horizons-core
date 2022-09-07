@@ -21,6 +21,7 @@ package com.seibel.lod.api.items.interfaces.world;
 
 import com.seibel.lod.api.items.interfaces.IDhApiUnsafeWrapper;
 import com.seibel.lod.core.api.external.coreImplementations.enums.worldGeneration.EDhApiLevelType;
+import com.seibel.lod.core.api.external.coreImplementations.interfaces.wrappers.world.ICoreDhApiLevelWrapper;
 
 /**
  * Can be either a Server or Client level.
@@ -28,21 +29,22 @@ import com.seibel.lod.core.api.external.coreImplementations.enums.worldGeneratio
  * @author James Seibel
  * @version 2022-7-14
  */
-public interface IDhApiLevelWrapper extends IDhApiUnsafeWrapper
+public interface IDhApiLevelWrapper extends ICoreDhApiLevelWrapper, IDhApiUnsafeWrapper
 {
 	IDhApiDimensionTypeWrapper getDimensionType();
 	
 	EDhApiLevelType getLevelType();
 	
+	@Override
 	boolean hasCeiling();
 	
+	@Override
 	boolean hasSkyLight();
 	
+	@Override
 	int getHeight();
 	
-	default int getMinHeight()
-	{
-		return 0;
-	}
+	@Override
+	default int getMinHeight() { return 0; }
 	
 }
