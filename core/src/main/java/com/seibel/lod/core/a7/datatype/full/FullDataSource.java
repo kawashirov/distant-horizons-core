@@ -30,7 +30,6 @@ public class FullDataSource extends FullArrayView implements LodDataSource { // 
     public static final byte LATEST_VERSION = 0;
     public static final long TYPE_ID = "FullDataSource".hashCode();
     private final DhSectionPos sectionPos;
-    private int localVersion = 0;
     public boolean isEmpty = true;
     protected FullDataSource(DhSectionPos sectionPos) {
         super(new IdBiomeBlockStateMap(), new long[SECTION_SIZE*SECTION_SIZE][0], SECTION_SIZE);
@@ -44,10 +43,6 @@ public class FullDataSource extends FullArrayView implements LodDataSource { // 
     @Override
     public byte getDataDetail() {
         return (byte) (sectionPos.sectionDetail-SECTION_SIZE_OFFSET);
-    }
-    @Override
-    public void setLocalVersion(int localVer) {
-        localVersion = localVer;
     }
 
     @Override
@@ -145,8 +140,8 @@ public class FullDataSource extends FullArrayView implements LodDataSource { // 
     public static FullDataSource loadData(DataMetaFile dataFile, InputStream dataStream, ILevel level) throws IOException {
         try (DataInputStream dos = new DataInputStream(dataStream)) {
             int dataDetail = dos.readInt();
-            if(dataDetail != dataFile.dataLevel)
-                throw new IOException(LodUtil.formatLog("Data level mismatch: {} != {}", dataDetail, dataFile.dataLevel));
+            if(dataDetail != dataFile.metaData.dataLevel)
+                throw new IOException(LodUtil.formatLog("Data level mismatch: {} != {}", dataDetail, dataFile.metaData.dataLevel));
             int size = dos.readInt();
             if (size != SECTION_SIZE)
                 throw new IOException(LodUtil.formatLog(

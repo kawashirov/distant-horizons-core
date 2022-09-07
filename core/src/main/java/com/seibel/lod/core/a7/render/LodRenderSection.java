@@ -69,6 +69,7 @@ public class LodRenderSection {
             }
         }
         if (lodRenderSource != null) {
+            provider.refreshRenderSource(lodRenderSource);
             lodRenderSource.flushWrites(level);
         }
     }

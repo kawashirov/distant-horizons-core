@@ -24,6 +24,11 @@ public class PlaceHolderRenderSource implements LodRenderSource {
     }
 
     @Override
+    public byte getDataDetail() {
+        return 0;
+    }
+
+    @Override
     public void enableRender(IClientLevel level, LodQuadTree quadTree) {
     }
 
@@ -36,10 +41,6 @@ public class PlaceHolderRenderSource implements LodRenderSource {
     }
     @Override
     public void dispose() {}
-    @Override
-    public byte getDetailOffset() {
-        return 0;
-    }
     @Override
     public boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<RenderBuffer> referenceSlotsOpaque, AtomicReference<RenderBuffer> referenceSlotsTransparent) {
         return false;
@@ -66,6 +67,11 @@ public class PlaceHolderRenderSource implements LodRenderSource {
     @Override
     public boolean isValid() {
         return isValid;
+    }
+
+    @Override
+    public void weakWrite(LodRenderSource source) {
+
     }
 
 

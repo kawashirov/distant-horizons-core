@@ -13,12 +13,12 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public interface LodRenderSource {
     DhSectionPos getSectionPos();
+    byte getDataDetail();
 
     void enableRender(IClientLevel level, LodQuadTree quadTree);
     void disableRender();
     boolean isRenderReady();
     void dispose(); // notify the container that the parent lodSection is now disposed (can be in loaded or unloaded state)
-    byte getDetailOffset();
 
 
     /**
@@ -32,7 +32,9 @@ public interface LodRenderSource {
 
     void saveRender(IClientLevel level, RenderMetaFile file, OutputStream dataStream) throws IOException;
 
+    @Deprecated
     void write(ChunkSizedData chunkData);
+    @Deprecated
     void flushWrites(IClientLevel level);
 
     byte getRenderVersion();
@@ -41,4 +43,7 @@ public interface LodRenderSource {
      * Whether this object is still valid. If not, a new one should be created.
      */
     boolean isValid();
+
+    // Only override the data that has not been written directly using write(), and skip those that are empty
+    void weakWrite(LodRenderSource source);
 }

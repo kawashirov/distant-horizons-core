@@ -7,9 +7,6 @@ import java.io.File;
 
 public class RemoteDataFileHandler extends DataFileHandler {
     public RemoteDataFileHandler(ILevel level, File saveRootDir) {
-        super(level, saveRootDir, (pos) -> {
-            LodUtil.assertNotReach("TODO");
-            return null;
-        });
+        super(level, saveRootDir);
     }
 }

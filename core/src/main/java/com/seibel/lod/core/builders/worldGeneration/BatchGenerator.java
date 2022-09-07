@@ -40,6 +40,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 public class BatchGenerator implements IChunkGenerator
 {
@@ -264,7 +265,7 @@ public class BatchGenerator implements IChunkGenerator
 	}
 
 	@Override
-	public CompletableFuture<ArrayGridList<IChunkWrapper>> generateChunks(DHChunkPos chunkPosMin, byte granularity) {
+	public CompletableFuture<Void> generateChunks(DHChunkPos chunkPosMin, byte granularity, byte targetDataDetail, Consumer<IChunkWrapper> resultConsumer) {
 		EDistanceGenerationMode mode = Config.Client.WorldGenerator.distanceGenerationMode.get();
 		Steps targetStep = null;
 		switch (mode) {
@@ -286,17 +287,26 @@ public class BatchGenerator implements IChunkGenerator
 				break;
 		};
 
-
 		int chunkXMin = chunkPosMin.x;
 		int chunkZMin = chunkPosMin.z;
 		int genChunkSize = 1 << (granularity - 4); // minus 4 for chunk size as its equal to div by 16
 		double runTimeRatio = Config.Client.Advanced.Threading.numberOfWorldGenerationThreads.get()>1 ? 1.0
 				: Config.Client.Advanced.Threading.numberOfWorldGenerationThreads.get();
-		return generationGroup.generateChunks(chunkXMin, chunkZMin, genChunkSize, targetStep, runTimeRatio);
+		return generationGroup.generateChunks(chunkXMin, chunkZMin, genChunkSize, targetStep, runTimeRatio, resultConsumer);
 	}
 
 	@Override
-	public byte getDataDetail() {
+	public byte getMinDataDetail() {
+		return 0;
+	}
+
+	@Override
+	public byte getMaxDataDetail() {
+		return 0;
+	}
+
+	@Override
+	public int getPriority() {
 		return 0;
 	}
 
@@ -307,7 +317,7 @@ public class BatchGenerator implements IChunkGenerator
 
 	@Override
 	public byte getMaxGenerationGranularity() {
-		return 8;
+		return 6;
 	}
 
 	@Override
@@ -318,5 +328,4 @@ public class BatchGenerator implements IChunkGenerator
 	public void update() {
 		generationGroup.updateAllFutures();
 	}
-
 }

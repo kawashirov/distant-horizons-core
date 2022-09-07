@@ -66,10 +66,7 @@ public class SparseDataSource implements LodDataSource {
     public byte getDataDetail() {
         return (byte) (sectionPos.sectionDetail-SECTION_SIZE_OFFSET);
     }
-    @Override
-    public void setLocalVersion(int localVer) {
-        //TODO: implement
-    }
+
     @Override
     public byte getDataVersion() {
         return LATEST_VERSION;
@@ -104,7 +101,57 @@ public class SparseDataSource implements LodDataSource {
                 }
             }
         }
+        isEmpty = false;
         sparseData[arrayOffset] = newArray;
+    }
+
+    public void sampleFrom(SparseDataSource sparseSource) {
+        DhSectionPos pos = sparseSource.sectionPos;
+        LodUtil.assertTrue(pos.sectionDetail < sectionPos.sectionDetail);
+        LodUtil.assertTrue(pos.overlaps(sectionPos));
+        if (sparseSource.isEmpty) return;
+
+        // Downsample needed
+        DhLodPos basePos = sectionPos.getCorner(SPARSE_UNIT_DETAIL);
+        DhLodPos dataPos = pos.getCorner(SPARSE_UNIT_DETAIL);
+        int offsetX = dataPos.x-basePos.x;
+        int offsetZ = dataPos.z-basePos.z;
+        LodUtil.assertTrue(offsetX >=0 && offsetX < chunks && offsetZ >=0 && offsetZ < chunks);
+
+        for (int ox = 0; ox < sparseSource.chunks; ox++) {
+            for (int oz = 0; oz < sparseSource.chunks; oz++) {
+                FullArrayView sourceChunk = sparseSource.sparseData[ox*sparseSource.chunks + oz];
+                if (sourceChunk != null) {
+                    FullArrayView buff = new FullArrayView(mapping, new long[dataPerChunk * dataPerChunk][], dataPerChunk);
+                    buff.downsampleFrom(sourceChunk);
+                    sparseData[(ox+offsetX)* chunks + (oz+offsetZ)] = buff;
+                }
+            }
+        }
+    }
+    public void sampleFrom(FullDataSource fullSource) {
+        DhSectionPos pos = fullSource.getSectionPos();
+        LodUtil.assertTrue(pos.sectionDetail < sectionPos.sectionDetail);
+        LodUtil.assertTrue(pos.overlaps(sectionPos));
+        if (fullSource.isEmpty) return;
+        // Downsample needed
+        DhLodPos basePos = sectionPos.getCorner(SPARSE_UNIT_DETAIL);
+        DhLodPos dataPos = pos.getCorner(SPARSE_UNIT_DETAIL);
+        int coveredChunks = pos.getWidth(SPARSE_UNIT_DETAIL).value;
+        int sourceDataPerChunk = SPARSE_UNIT_SIZE >>> fullSource.getDataDetail();
+        LodUtil.assertTrue(coveredChunks*sourceDataPerChunk == FullDataSource.SECTION_SIZE);
+        int offsetX = dataPos.x-basePos.x;
+        int offsetZ = dataPos.z-basePos.z;
+        LodUtil.assertTrue(offsetX >=0 && offsetX < chunks && offsetZ >=0 && offsetZ < chunks);
+
+        for (int ox = 0; ox < coveredChunks; ox++) {
+            for (int oz = 0; oz < coveredChunks; oz++) {
+                FullArrayView sourceChunk = fullSource.subView(sourceDataPerChunk, ox*sourceDataPerChunk, oz*sourceDataPerChunk);
+                FullArrayView buff = new FullArrayView(mapping, new long[dataPerChunk * dataPerChunk][], dataPerChunk);
+                buff.downsampleFrom(sourceChunk);
+                sparseData[(ox+offsetX)* chunks + (oz+offsetZ)] = buff;
+            }
+        }
     }
 
     @Override
@@ -160,8 +207,8 @@ public class SparseDataSource implements LodDataSource {
         LodUtil.assertTrue(dataFile.pos.sectionDetail <= MAX_SECTION_DETAIL);
         try (DataInputStream dos = new DataInputStream(dataStream)) {
             int dataDetail = dos.readShort();
-            if(dataDetail != dataFile.dataLevel)
-                throw new IOException(LodUtil.formatLog("Data level mismatch: {} != {}", dataDetail, dataFile.dataLevel));
+            if(dataDetail != dataFile.metaData.dataLevel)
+                throw new IOException(LodUtil.formatLog("Data level mismatch: {} != {}", dataDetail, dataFile.metaData.dataLevel));
             int sparseDetail = dos.readShort();
             if (sparseDetail != SPARSE_UNIT_DETAIL)
                 throw new IOException((LodUtil.formatLog("Unexpected sparse detail level: {} != {}",
@@ -204,8 +251,8 @@ public class SparseDataSource implements LodDataSource {
             for (int i = set.nextSetBit(0); i >= 0 && i < dataChunks.length; i = set.nextSetBit(i + 1)) {
                 long[][] dataColumns = new long[dataPerChunk*dataPerChunk][];
                 dataChunks[i] = dataColumns;
-                for (int j = 0; j < dataColumns.length; j++) {
-                    dataColumns[i] = new long[dos.readByte()];
+                for (int i2 = 0; i2 < dataColumns.length; i2++) {
+                    dataColumns[i2] = new long[dos.readByte()];
                 }
                 for (int k = 0; k < dataColumns.length; k++) {
                     if (dataColumns[k].length == 0) continue;
@@ -240,9 +287,43 @@ public class SparseDataSource implements LodDataSource {
                 FullArrayView array = sparseData[x*chunks+z];
                 if (array == null) continue;
                 // Otherwise, apply data to dataSource
+                dataSource.isEmpty = false;
                 FullArrayView view = dataSource.subView(dataPerChunk, x*dataPerChunk, z*dataPerChunk);
                 array.shadowCopyTo(view);
             }
         }
+    }
+
+
+    public LodDataSource promote(LodDataSource generatedData) {
+        if (!(generatedData instanceof FullDataSource) && !(generatedData instanceof SparseDataSource))
+            throw new UnsupportedOperationException("Requires FullDataSource for the promotion!");
+        if (generatedData instanceof FullDataSource) {
+            applyToFullDataSource((FullDataSource) generatedData);
+            return generatedData;
+        } else {
+            LodUtil.assertToDo(); //TODO
+            return null;
+        }
+    }
+
+    public LodDataSource trySelfPromote() {
+        if (isEmpty) return this;
+        for (FullArrayView array : sparseData) {
+            if (array == null) return this;
+        }
+        FullDataSource newSource = FullDataSource.createEmpty(sectionPos);
+        applyToFullDataSource(newSource);
+        return newSource;
+    }
+
+    // Return null if doesn't exist
+    public SingleFullArrayView tryGet(int x, int z) {
+        LodUtil.assertTrue(x>=0 && x<SECTION_SIZE && z>=0 && z<SECTION_SIZE);
+        int chunkX = x / dataPerChunk;
+        int chunkZ = z / dataPerChunk;
+        FullArrayView chunk = sparseData[chunkX * chunks + chunkZ];
+        if (chunk == null) return null;
+        return chunk.get(chunkX % dataPerChunk, chunkZ % dataPerChunk);
     }
 }

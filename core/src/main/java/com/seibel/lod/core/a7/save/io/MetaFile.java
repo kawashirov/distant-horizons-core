@@ -2,14 +2,13 @@ package com.seibel.lod.core.a7.save.io;
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Consumer;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.Adler32;
 import java.util.zip.CheckedOutputStream;
 
@@ -37,7 +36,7 @@ public class MetaFile
     //
     //    8 bytes: datatype identifier
     //
-    //    8 bytes: timestamp
+    //    8 bytes: data version
 
     // Used size: 40 bytes
     // Remaining space: 24 bytes
@@ -53,28 +52,38 @@ public class MetaFile
     public final DhSectionPos pos;
 
     public File path;
-    public int checksum;
-    public long timestamp;
-    public byte dataLevel;
 
-    //Loader stuff
-    public long dataTypeId;
-    public byte loaderVersion;
+    @FunctionalInterface
+    public interface IOConsumer<T> {
+        void accept(T t) throws IOException;
+    }
 
-    private final ReentrantReadWriteLock assertLock = new ReentrantReadWriteLock();
+    public static class MetaData {
+        public DhSectionPos pos;
+        public int checksum;
+        public AtomicLong dataVersion;
+        public byte dataLevel;
+        //Loader stuff
+        public long dataTypeId;
+        public byte loaderVersion;
 
-    // Load a metaFile in this path. It also automatically read the metadata.
-    protected MetaFile(File path) throws IOException {
-        this.path = path;
-        validateFile();
-        LodUtil.assertTrue(assertLock.readLock().tryLock());
-        try (FileChannel channel = FileChannel.open(path.toPath(), StandardOpenOption.READ)) {
+        public MetaData(DhSectionPos pos, int checksum, long dataVersion, byte dataLevel, long dataTypeId, byte loaderVersion) {
+            this.pos = pos;
+            this.checksum = checksum;
+            this.dataVersion = new AtomicLong(dataVersion);
+            this.dataLevel = dataLevel;
+            this.dataTypeId = dataTypeId;
+            this.loaderVersion = loaderVersion;
+        }
+    }
+    public volatile MetaData metaData = null;
+    private static MetaData readMeta(File file) throws IOException {
+        try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.READ)) {
             ByteBuffer buffer = ByteBuffer.allocate(METADATA_SIZE);
             channel.read(buffer, 0);
             channel.close();
             buffer.flip();
 
-            this.path = path;
             int magic = buffer.getInt();
             if (magic != METADATA_MAGIC_BYTES) {
                 throw new IOException("Invalid file: Magic bytes check failed.");
@@ -82,24 +91,17 @@ public class MetaFile
             int x = buffer.getInt();
             int y = buffer.getInt(); // Unused
             int z = buffer.getInt();
-            checksum = buffer.getInt();
+            int checksum = buffer.getInt();
             byte detailLevel = buffer.get();
-            dataLevel = buffer.get();
-            loaderVersion = buffer.get();
+            byte dataLevel = buffer.get();
+            byte loaderVersion = buffer.get();
             byte unused = buffer.get();
-            dataTypeId = buffer.getLong();
-            timestamp = buffer.getLong();
+            long dataTypeId = buffer.getLong();
+            long timestamp = buffer.getLong();
             LodUtil.assertTrue(buffer.remaining() == METADATA_RESERVED_SIZE);
-            pos = new DhSectionPos(detailLevel, x, z);
-        } finally {
-            assertLock.readLock().unlock();
+            DhSectionPos dataPos = new DhSectionPos(detailLevel, x, z);
+            return new MetaData(dataPos, checksum, timestamp, dataLevel, dataTypeId, loaderVersion);
         }
-    }
-
-    // Make a new MetaFile. It doesn't load or write any metadata itself.
-    protected MetaFile(File path, DhSectionPos pos) {
-        this.path = path;
-        this.pos = pos;
     }
 
     private void validateFile() throws IOException {
@@ -109,42 +111,32 @@ public class MetaFile
         if (!path.canWrite()) throw new IOException("File not writable");
     }
 
-    protected void updateMetaData() throws IOException {
+    // Create a metaFile in this path. If the path has a file, throws FileAlreadyExistsException
+    protected MetaFile(File path, DhSectionPos pos) throws IOException {
+        this.path = path;
+        this.pos = pos;
+        if (path.exists()) throw new FileAlreadyExistsException(path.toString());
+    }
+    // Load a metaFile in this path
+    protected MetaFile(File path) throws IOException {
+        this.path = path;
+        if (!path.exists()) throw new FileNotFoundException("File not found at " + path);
         validateFile();
-        LodUtil.assertTrue(assertLock.readLock().tryLock());
-        try (FileChannel channel = FileChannel.open(path.toPath(), StandardOpenOption.READ)) {
-            ByteBuffer buffer = ByteBuffer.allocate(METADATA_SIZE);
-            channel.read(buffer, 0);
-            channel.close();
-            buffer.flip();
+        metaData = readMeta(path);
+        pos = metaData.pos;
+    }
 
-            int magic = buffer.getInt();
-            if (magic != METADATA_MAGIC_BYTES) {
-                throw new IOException("Invalid file: Magic bytes check failed.");
-            }
-            int x = buffer.getInt();
-            int y = buffer.getInt(); // Unused
-            int z = buffer.getInt();
-            checksum = buffer.getInt();
-            byte detailLevel = buffer.get();
-            dataLevel = buffer.get();
-            byte loaderVersion = buffer.get();
-            byte unused = buffer.get();
-            dataTypeId = buffer.getLong();
-            timestamp = buffer.getLong();
-            LodUtil.assertTrue(buffer.remaining() == METADATA_RESERVED_SIZE);
-
-            DhSectionPos newPos = new DhSectionPos(detailLevel, x, z);
-            if (!newPos.equals(pos)) {
-                throw new IOException("Invalid file: Section position changed.");
-            }
-            this.loaderVersion = loaderVersion;
-        } finally {
-            assertLock.readLock().unlock();
+    protected void loadMetaData() throws IOException {
+        validateFile();
+        metaData = readMeta(path);
+        if (!metaData.pos.equals(pos)) {
+            LOGGER.warn("The file is from a different location than expected! Expects {} but got {}. Ignoring file tag.", pos, metaData.pos);
+            metaData.pos = pos;
         }
     }
 
-    protected void writeData(Consumer<OutputStream> dataWriter) throws IOException {
+    protected void writeData(IOConsumer<OutputStream> dataWriter) throws IOException {
+        LodUtil.assertTrue(metaData != null);
         if (path.exists()) validateFile();
         File writerFile;
         if (USE_ATOMIC_MOVE_REPLACE) {
@@ -153,7 +145,7 @@ public class MetaFile
         } else {
             writerFile = path;
         }
-        LodUtil.assertTrue(assertLock.writeLock().tryLock());
+
         try (FileChannel file = FileChannel.open(writerFile.toPath(),
                 StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
             {
@@ -174,11 +166,11 @@ public class MetaFile
                 buff.putInt(pos.sectionZ);
                 buff.putInt(checksum);
                 buff.put(pos.sectionDetail);
-                buff.put(dataLevel);
-                buff.put(loaderVersion);
+                buff.put(metaData.dataLevel);
+                buff.put(metaData.loaderVersion);
                 buff.put(Byte.MIN_VALUE); // Unused
-                buff.putLong(dataTypeId);
-                buff.putLong(timestamp);
+                buff.putLong(metaData.dataTypeId);
+                buff.putLong(metaData.dataVersion.get());
                 LodUtil.assertTrue(buff.remaining() == METADATA_RESERVED_SIZE);
                 buff.flip();
                 file.write(buff);
@@ -189,7 +181,6 @@ public class MetaFile
                 Files.move(writerFile.toPath(), path.toPath(), StandardCopyOption.ATOMIC_MOVE);
             }
         } finally {
-            assertLock.writeLock().unlock();
             try {
                 if (USE_ATOMIC_MOVE_REPLACE && writerFile.exists()) {
                     boolean i = writerFile.delete(); // Delete temp file. Ignore errors if fails.

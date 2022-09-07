@@ -2,11 +2,14 @@ package com.seibel.lod.core.a7.datatype.column;
 
 import com.seibel.lod.core.a7.datatype.LodDataSource;
 import com.seibel.lod.core.a7.datatype.full.FullDataSource;
+import com.seibel.lod.core.a7.datatype.full.SparseDataSource;
 import com.seibel.lod.core.a7.datatype.transform.FullToColumnTransformer;
 import com.seibel.lod.core.a7.level.IClientLevel;
 import com.seibel.lod.core.a7.datatype.LodRenderSource;
 import com.seibel.lod.core.a7.datatype.RenderSourceLoader;
+import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.save.io.render.RenderMetaFile;
+import com.seibel.lod.core.util.LodUtil;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -18,12 +21,12 @@ public class ColumnRenderLoader extends RenderSourceLoader {
     }
 
     @Override
-    public LodRenderSource loadRender(RenderMetaFile dataFile, InputStream data, IClientLevel level) throws IOException {
+    public LodRenderSource loadRender(RenderMetaFile dataFile, InputStream data, ILevel level) throws IOException {
         try (
                 //TODO: Add decompressor here
                 DataInputStream dis = new DataInputStream(data);
         ) {
-            return new ColumnRenderSource(dataFile.pos, dis, dataFile.loaderVersion, level);
+            return new ColumnRenderSource(dataFile.pos, dis, dataFile.metaData.loaderVersion, level);
         }
     }
 
@@ -31,7 +34,10 @@ public class ColumnRenderLoader extends RenderSourceLoader {
     public LodRenderSource createRender(LodDataSource dataSource, IClientLevel level) {
         if (dataSource instanceof FullDataSource) {
             return FullToColumnTransformer.transformFullDataToColumnData(level, (FullDataSource) dataSource);
+        } else if (dataSource instanceof SparseDataSource) {
+            return FullToColumnTransformer.transformSparseDataToColumnData(level, (SparseDataSource) dataSource);
         }
+        LodUtil.assertNotReach();
         return null;
     }
 

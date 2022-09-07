@@ -94,6 +94,9 @@ public class DhLodPos implements Comparable<DhLodPos> {
         if (width.detail < detail) throw new IllegalArgumentException("add called with width.detail < pos detail");
         return new DhLodPos(detail, x + width.convertTo(detail).value, z + width.convertTo(detail).value);
     }
+    public DhLodPos offset(int ox, int oz) {
+        return new DhLodPos(detail, x+ox, z+oz);
+    }
 
     @Override
     public int compareTo(@NotNull DhLodPos o) {
