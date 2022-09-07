@@ -1,4 +1,4 @@
-package com.seibel.lod.core.api.external.items.enums.worldGeneration;
+package com.seibel.lod.core.api.external.coreImplementations.enums.worldGeneration;
 
 /**
  * MULTI_THREADED, <br>

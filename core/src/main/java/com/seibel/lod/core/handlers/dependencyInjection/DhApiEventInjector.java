@@ -19,7 +19,7 @@
 
 package com.seibel.lod.core.handlers.dependencyInjection;
 
-import com.seibel.lod.core.api.implementation.interfaces.events.ICoreDhApiEvent;
+import com.seibel.lod.core.api.external.coreImplementations.interfaces.events.ICoreDhApiEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

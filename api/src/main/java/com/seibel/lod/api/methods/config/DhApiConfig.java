@@ -1,8 +1,8 @@
 package com.seibel.lod.api.methods.config;
 
 import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
-import com.seibel.lod.core.api.implementation.interfaces.config.IConverter;
-import com.seibel.lod.core.api.implementation.objects.DefaultConverter;
+import com.seibel.lod.core.api.external.coreImplementations.interfaces.config.IConverter;
+import com.seibel.lod.core.api.external.coreImplementations.objects.converters.DefaultConverter;
 import com.seibel.lod.core.config.types.ConfigEntry;
 
 /**

@@ -1,6 +1,6 @@
 package testItems.eventInjection.abstractObjects;
 
-import com.seibel.lod.core.api.implementation.interfaces.events.ICoreDhApiEvent;
+import com.seibel.lod.core.api.external.coreImplementations.interfaces.events.ICoreDhApiEvent;
 
 /**
  * A dummy event implementation used for unit testing.

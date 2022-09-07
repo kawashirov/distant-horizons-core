@@ -1,4 +1,4 @@
-package com.seibel.lod.core.api.implementation.interfaces.events;
+package com.seibel.lod.core.api.external.coreImplementations.interfaces.events;
 
 import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
 

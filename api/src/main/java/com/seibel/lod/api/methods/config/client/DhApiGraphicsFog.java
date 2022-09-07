@@ -21,7 +21,7 @@ package com.seibel.lod.api.methods.config.client;
 
 import com.seibel.lod.api.items.enums.config.*;
 import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
-import com.seibel.lod.core.api.implementation.objects.GenericEnumConverter;
+import com.seibel.lod.core.api.external.coreImplementations.objects.converters.GenericEnumConverter;
 import com.seibel.lod.api.methods.config.DhApiConfig;
 import com.seibel.lod.core.enums.rendering.*;
 import com.seibel.lod.core.config.Config.Client.Graphics.FogQuality;

@@ -26,7 +26,7 @@ import com.seibel.lod.core.a7.world.IServerWorld;
 import com.seibel.lod.core.api.external.methods.events.abstractEvents.DhApiLevelLoadEvent;
 import com.seibel.lod.core.api.external.methods.events.abstractEvents.DhApiLevelSaveEvent;
 import com.seibel.lod.core.api.external.methods.events.abstractEvents.DhApiLevelUnloadEvent;
-import com.seibel.lod.core.api.implementation.wrappers.DhApiLevelWrapper;
+import com.seibel.lod.core.api.external.coreImplementations.objects.wrappers.DhApiLevelWrapper;
 import com.seibel.lod.core.handlers.dependencyInjection.DhApiEventInjector;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.DhLoggerBuilder;

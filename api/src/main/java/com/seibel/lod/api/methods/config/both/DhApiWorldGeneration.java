@@ -23,7 +23,7 @@ import com.seibel.lod.api.items.enums.config.EDhApiDistanceGenerationMode;
 import com.seibel.lod.api.items.enums.config.EDhApiBlocksToAvoid;
 import com.seibel.lod.api.items.enums.config.EDhApiLightGenerationMode;
 import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
-import com.seibel.lod.core.api.implementation.objects.GenericEnumConverter;
+import com.seibel.lod.core.api.external.coreImplementations.objects.converters.GenericEnumConverter;
 import com.seibel.lod.api.methods.config.DhApiConfig;
 import com.seibel.lod.core.config.Config.Client.WorldGenerator;
 import com.seibel.lod.core.enums.config.EBlocksToAvoid;

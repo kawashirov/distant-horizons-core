@@ -1,6 +1,6 @@
 package testItems.worldGeneratorInjection.objects;
 
-import com.seibel.lod.core.api.external.items.enums.worldGeneration.EDhApiLevelType;
+import com.seibel.lod.core.api.external.coreImplementations.enums.worldGeneration.EDhApiLevelType;
 import com.seibel.lod.api.items.interfaces.world.IDhApiDimensionTypeWrapper;
 import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
 

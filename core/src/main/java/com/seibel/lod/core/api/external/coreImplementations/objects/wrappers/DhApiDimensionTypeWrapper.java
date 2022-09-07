@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.implementation.wrappers;
+package com.seibel.lod.core.api.external.coreImplementations.objects.wrappers;
 
 import com.seibel.lod.api.items.interfaces.world.IDhApiDimensionTypeWrapper;
 import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;

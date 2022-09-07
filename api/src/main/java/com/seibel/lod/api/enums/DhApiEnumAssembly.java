@@ -21,7 +21,7 @@ package com.seibel.lod.api.enums;
 
 import com.seibel.lod.core.api.external.items.enums.override.DhApiOverrideEnumAssembly;
 import com.seibel.lod.api.items.enums.config.DhApiConfigEnumAssembly;
-import com.seibel.lod.core.api.external.items.enums.worldGeneration.DhApiWorldGenerationEnumAssembly;
+import com.seibel.lod.core.api.external.coreImplementations.enums.worldGeneration.DhApiWorldGenerationEnumAssembly;
 
 /**
  * Assembly classes are used to reference the package they are in.

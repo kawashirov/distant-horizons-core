@@ -1,6 +1,6 @@
-package com.seibel.lod.core.api.implementation.objects;
+package com.seibel.lod.core.api.external.coreImplementations.objects.converters;
 
-import com.seibel.lod.core.api.implementation.interfaces.config.IConverter;
+import com.seibel.lod.core.api.external.coreImplementations.interfaces.config.IConverter;
 import com.seibel.lod.core.enums.rendering.ERendererMode;
 
 /**

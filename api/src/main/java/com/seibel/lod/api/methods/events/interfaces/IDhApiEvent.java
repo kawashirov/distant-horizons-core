@@ -1,6 +1,6 @@
 package com.seibel.lod.api.methods.events.interfaces;
 
-import com.seibel.lod.core.api.implementation.interfaces.events.ICoreDhApiEvent;
+import com.seibel.lod.core.api.external.coreImplementations.interfaces.events.ICoreDhApiEvent;
 import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
 
 /**
