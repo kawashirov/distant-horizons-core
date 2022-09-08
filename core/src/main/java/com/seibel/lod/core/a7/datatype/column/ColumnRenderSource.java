@@ -210,9 +210,8 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
             for (int j = 0; j < verticalSize; j++)
             {
                 long current = dataContainer[i * verticalSize + j];
-				// TODO
-//                if (ColumnFormat.doesItExist(current))
-//                    current = ColumnFormat.overrideGenerationMode(current, (byte) 1);
+                if (ColumnFormat.doesItExist(current))
+                    current = ColumnFormat.overrideGenerationMode(current, (byte) 1);
                 output.writeLong(Long.reverseBytes(current));
             }
             if (!ColumnFormat.doesItExist(dataContainer[i]))

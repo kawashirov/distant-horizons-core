@@ -86,6 +86,7 @@ public class ColumnFormat {
 
     public final static long HEIGHT_SHIFTED_MASK = HEIGHT_MASK << HEIGHT_SHIFT;
     public final static long DEPTH_SHIFTED_MASK = DEPTH_MASK << DEPTH_SHIFT;
+    public final static long GEN_TYPE_SHIFTED_MASK = GEN_TYPE_MASK << GEN_TYPE_SHIFT;
 
     public final static long VOID_SETTER = HEIGHT_SHIFTED_MASK | DEPTH_SHIFTED_MASK;
 
@@ -216,6 +217,10 @@ public class ColumnFormat {
             return 1;
         }
         return genMode == 0 ? 1 : genMode;
+    }
+
+    public static long overrideGenerationMode(long current, byte b) {
+        return (current & ~GEN_TYPE_SHIFTED_MASK) | ((b & GEN_TYPE_MASK) << GEN_TYPE_SHIFT);
     }
 
     public static boolean isVoid(long dataPoint) {
