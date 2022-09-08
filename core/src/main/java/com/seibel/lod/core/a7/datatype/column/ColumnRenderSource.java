@@ -369,9 +369,8 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
 
     @Override
     public void saveRender(IClientLevel level, RenderMetaFile file, OutputStream dataStream) throws IOException {
-        try (DataOutputStream dos = new DataOutputStream(dataStream)) {
-            writeData(dos);
-        }
+         DataOutputStream dos = new DataOutputStream(dataStream); // DO NOT CLOSE
+         writeData(dos);
     }
 
     @Override

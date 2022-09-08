@@ -10,6 +10,7 @@ import com.seibel.lod.core.a7.save.io.file.DataMetaFile;
 import com.seibel.lod.core.a7.datatype.LodDataSource;
 import com.seibel.lod.core.a7.util.IdMappingUtil;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
+import com.seibel.lod.core.a7.util.UnclosableInputStream;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.objects.DHChunkPos;
 import com.seibel.lod.core.util.LodUtil;
@@ -102,7 +103,8 @@ public class FullDataSource extends FullArrayView implements LodDataSource { // 
 
     @Override
     public void saveData(ILevel level, DataMetaFile file, OutputStream dataStream) throws IOException {
-        try (DataOutputStream dos = new DataOutputStream(dataStream)) {
+        DataOutputStream dos = new DataOutputStream(dataStream); // DO NOT CLOSE
+        {
             dos.writeInt(getDataDetail());
             dos.writeInt(size);
             dos.writeInt(level.getMinY());
@@ -138,7 +140,8 @@ public class FullDataSource extends FullArrayView implements LodDataSource { // 
 
 
     public static FullDataSource loadData(DataMetaFile dataFile, InputStream dataStream, ILevel level) throws IOException {
-        try (DataInputStream dos = new DataInputStream(dataStream)) {
+        DataInputStream dos = new DataInputStream(dataStream); // DO NOT CLOSE
+        {
             int dataDetail = dos.readInt();
             if(dataDetail != dataFile.metaData.dataLevel)
                 throw new IOException(LodUtil.formatLog("Data level mismatch: {} != {}", dataDetail, dataFile.metaData.dataLevel));
@@ -175,7 +178,7 @@ public class FullDataSource extends FullArrayView implements LodDataSource { // 
             // Id mapping
             end = dos.readInt();
             if (end != 0xFFFFFFFF) throw new IOException("invalid data content end guard");
-            IdBiomeBlockStateMap mapping = IdBiomeBlockStateMap.deserialize(dos);
+            IdBiomeBlockStateMap mapping = IdBiomeBlockStateMap.deserialize(new UnclosableInputStream(dos));
             end = dos.readInt();
             if (end != 0xFFFFFFFF) throw new IOException("invalid id mapping end guard");
             return new FullDataSource(dataFile.pos, mapping, data);

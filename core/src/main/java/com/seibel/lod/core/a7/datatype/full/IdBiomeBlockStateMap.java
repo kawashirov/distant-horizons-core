@@ -1,5 +1,6 @@
 package com.seibel.lod.core.a7.datatype.full;
 
+import com.seibel.lod.core.a7.util.UnclosableInputStream;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
@@ -77,28 +78,21 @@ public class IdBiomeBlockStateMap {
         return mapper;
     }
 
-    void serialize(OutputStream os) {
-        try (DataOutputStream dos = new DataOutputStream(os)) {
-            dos.writeInt(entries.size());
-            for (Entry e : entries) {
-                dos.writeUTF(e.serialize());
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+    void serialize(OutputStream os) throws IOException {
+        DataOutputStream dos = new DataOutputStream(os); // DO NOT CLOSE!
+        dos.writeInt(entries.size());
+        for (Entry e : entries) {
+            dos.writeUTF(e.serialize());
         }
     }
-    static IdBiomeBlockStateMap deserialize(InputStream is) {
-        try (DataInputStream dis = new DataInputStream(is)) {
-            int size = dis.readInt();
-            IdBiomeBlockStateMap map = new IdBiomeBlockStateMap();
-            for (int i = 0; i < size; i++) {
-                map.entries.add(Entry.deserialize(dis.readUTF()));
-            }
-            return map;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
+    static IdBiomeBlockStateMap deserialize(InputStream is) throws IOException {
+        DataInputStream dis = new DataInputStream(is); // DO NOT CLOSE!
+        int size = dis.readInt();
+        IdBiomeBlockStateMap map = new IdBiomeBlockStateMap();
+        for (int i = 0; i < size; i++) {
+            map.entries.add(Entry.deserialize(dis.readUTF()));
         }
+        return map;
     }
 
     @Override

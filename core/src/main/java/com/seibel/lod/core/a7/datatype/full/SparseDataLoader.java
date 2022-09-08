@@ -16,11 +16,6 @@ public class SparseDataLoader extends DataSourceLoader {
 
     @Override
     public LodDataSource loadData(DataMetaFile dataFile, InputStream data, ILevel level) throws IOException {
-        try (
-                //TODO: Add decompressor here
-                DataInputStream dis = new DataInputStream(data);
-        ) {
-            return SparseDataSource.loadData(dataFile, dis, level);
-        }
+        return SparseDataSource.loadData(dataFile, data, level);
     }
 }

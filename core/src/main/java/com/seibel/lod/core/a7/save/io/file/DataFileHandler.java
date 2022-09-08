@@ -301,10 +301,12 @@ public class DataFileHandler implements IDataSourceProvider {
         return source;
     }
     @Override
-    public LodDataSource onDataFileRefresh(LodDataSource source, Consumer<LodDataSource> updater) {
-        updater.accept(source);
-        if (source instanceof SparseDataSource) return ((SparseDataSource) source).trySelfPromote();
-        return source;
+    public CompletableFuture<LodDataSource> onDataFileRefresh(LodDataSource source, Consumer<LodDataSource> updater) {
+        return CompletableFuture.supplyAsync(() -> {
+            updater.accept(source);
+            if (source instanceof SparseDataSource) return ((SparseDataSource) source).trySelfPromote();
+            return source;
+        }, fileReaderThread);
     }
 
     @Override

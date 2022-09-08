@@ -230,16 +230,20 @@ public class DataMetaFile extends MetaFile
 					//       For now, I'll go for the latter option and just hope nothing goes wrong...
 					if (inCacheWriteAccessAsserter.getAndSet(true) == false) {
 						try {
-							inner = handler.onDataFileRefresh((LodDataSource) inner, this::applyWriteQueue);
+							return handler.onDataFileRefresh((LodDataSource) inner, this::applyWriteQueue);
 						} catch (Exception e) {
 							LOGGER.error("Error while applying changes to LodDataSource at {}: ", pos, e);
 						} finally {
 							inCacheWriteAccessAsserter.set(false);
 						}
+					} else {
+						// or, return the cached data. FIXME: See above.
+						return CompletableFuture.completedFuture((LodDataSource) inner);
 					}
+				} else {
+					// or, return the cached data.
+					return CompletableFuture.completedFuture((LodDataSource) inner);
 				}
-				// Finally, return the cached data.
-				return CompletableFuture.completedFuture((LodDataSource)inner);
 			}
 		}
 		

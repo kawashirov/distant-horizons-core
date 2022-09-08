@@ -16,11 +16,7 @@ public class FullDataLoader extends DataSourceLoader {
 
     @Override
     public LodDataSource loadData(DataMetaFile dataFile, InputStream data, ILevel level) throws IOException {
-        try (
-                //TODO: Add decompressor here
-                DataInputStream dis = new DataInputStream(data);
-        ) {
-            return FullDataSource.loadData(dataFile, dis, level);
-        }
+        //TODO: Add decompressor here
+        return FullDataSource.loadData(dataFile, data, level);
     }
 }

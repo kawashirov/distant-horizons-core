@@ -7,6 +7,7 @@ import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.pos.DhLodPos;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.a7.save.io.file.DataMetaFile;
+import com.seibel.lod.core.a7.util.UnclosableInputStream;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
@@ -205,7 +206,8 @@ public class SparseDataSource implements LodDataSource {
     public static SparseDataSource loadData(DataMetaFile dataFile, InputStream dataStream, ILevel level) throws IOException {
         LodUtil.assertTrue(dataFile.pos.sectionDetail > SPARSE_UNIT_DETAIL);
         LodUtil.assertTrue(dataFile.pos.sectionDetail <= MAX_SECTION_DETAIL);
-        try (DataInputStream dos = new DataInputStream(dataStream)) {
+        DataInputStream dos = new DataInputStream(dataStream); // DO NOT CLOSE!
+        {
             int dataDetail = dos.readShort();
             if(dataDetail != dataFile.metaData.dataLevel)
                 throw new IOException(LodUtil.formatLog("Data level mismatch: {} != {}", dataDetail, dataFile.metaData.dataLevel));

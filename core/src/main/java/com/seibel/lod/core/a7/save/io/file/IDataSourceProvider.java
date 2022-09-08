@@ -11,6 +11,7 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
@@ -26,7 +27,7 @@ public interface IDataSourceProvider extends AutoCloseable {
 
     CompletableFuture<LodDataSource> onCreateDataFile(DataMetaFile file);
     LodDataSource onDataFileLoaded(LodDataSource source, Consumer<LodDataSource> updater);
-    LodDataSource onDataFileRefresh(LodDataSource source, Consumer<LodDataSource> updater);
+    CompletableFuture<LodDataSource> onDataFileRefresh(LodDataSource source, Consumer<LodDataSource> updater);
     File computeDataFilePath(DhSectionPos pos);
     Executor getIOExecutor();
 

@@ -22,12 +22,8 @@ public class ColumnRenderLoader extends RenderSourceLoader {
 
     @Override
     public LodRenderSource loadRender(RenderMetaFile dataFile, InputStream data, ILevel level) throws IOException {
-        try (
-                //TODO: Add decompressor here
-                DataInputStream dis = new DataInputStream(data);
-        ) {
-            return new ColumnRenderSource(dataFile.pos, dis, dataFile.metaData.loaderVersion, level);
-        }
+        DataInputStream dis = new DataInputStream(data); // DO NOT CLOSE
+        return new ColumnRenderSource(dataFile.pos, dis, dataFile.metaData.loaderVersion, level);
     }
 
     @Override
