@@ -369,29 +369,8 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
 
     @Override
     public void saveRender(IClientLevel level, RenderMetaFile file, OutputStream dataStream) throws IOException {
-        flushWrites(level);
         try (DataOutputStream dos = new DataOutputStream(dataStream)) {
             writeData(dos);
-        }
-    }
-
-    private final ConcurrentLinkedQueue<ChunkSizedData> writeRequest = new ConcurrentLinkedQueue<>();
-
-    @Override
-    public void write(ChunkSizedData chunkData) {
-        writeRequest.add(chunkData);
-    }
-    @Override
-    public void flushWrites(IClientLevel level) {
-        boolean didSomething = false;
-        while (!writeRequest.isEmpty()) {
-            isEmpty = false;
-            ChunkSizedData chunkData = writeRequest.poll();
-            FullToColumnTransformer.writeFullDataChunkToColumnData(this, level, chunkData);
-            didSomething = true;
-        }
-        if (didSomething) {
-            lastNs = -1; // Reset the timeout to allow rebuilding the buffer again
         }
     }
 
@@ -425,5 +404,10 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
                     new ColumnArrayView(src.dataContainer, verticalSize, i, verticalSize));
             }
         }
+    }
+
+    @Override
+    public void fastWrite(ChunkSizedData chunkData, IClientLevel level) {
+        FullToColumnTransformer.writeFullDataChunkToColumnData(this, level, chunkData);
     }
 }

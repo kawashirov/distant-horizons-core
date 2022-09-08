@@ -40,18 +40,9 @@ public class DhServerWorld extends DhWorld implements IServerWorld
     }
     
     @Override
-    public ILevel[] getAllLoadedLevels()
+    public Iterable<? extends ILevel> getAllLoadedLevels()
     {
-        ILevel[] array = new ILevel[this.levels.size()];
-        
-        int i = 0;
-        for (ILevel level : this.levels.values())
-        {
-            array[i] = level;
-            i++;
-        }
-        
-        return array;
+        return levels.values();
     }
 
     @Override

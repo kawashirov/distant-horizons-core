@@ -1,7 +1,6 @@
 package com.seibel.lod.core.a7.world;
 
 import com.seibel.lod.core.a7.level.DhClientLevel;
-import com.seibel.lod.core.a7.level.DhClientServerLevel;
 import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.save.structure.ClientOnlySaveStructure;
 import com.seibel.lod.core.config.Config;
@@ -49,18 +48,9 @@ public class DhClientWorld extends DhWorld implements IClientWorld
     }
     
     @Override
-    public ILevel[] getAllLoadedLevels()
+    public Iterable<? extends ILevel> getAllLoadedLevels()
     {
-        ILevel[] array = new ILevel[this.levels.size()];
-        
-        int i = 0;
-        for (ILevel level : this.levels.values())
-        {
-            array[i] = level;
-            i++;
-        }
-        
-        return array;
+        return levels.values();
     }
 
     @Override
@@ -103,6 +93,7 @@ public class DhClientWorld extends DhWorld implements IClientWorld
             level.close();
         }
         levels.clear();
+        eventLoop.close();
         LOGGER.info("Closed DhWorld of type {}", environment);
     }
 }

@@ -4,6 +4,7 @@ import com.seibel.lod.core.a7.level.DhClientServerLevel;
 import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.save.structure.LocalSaveStructure;
 import com.seibel.lod.core.config.Config;
+import com.seibel.lod.core.logging.f3.F3Screen;
 import com.seibel.lod.core.util.EventLoop;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
@@ -12,39 +13,47 @@ import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.LinkedList;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
 public class DhClientServerWorld extends DhWorld implements IClientWorld, IServerWorld
 {
-    private final HashMap<ILevelWrapper, DhClientServerLevel> levels;
+    private final HashMap<ILevelWrapper, DhClientServerLevel> levelObjMap;
+    private final HashSet<DhClientServerLevel> dhLevels;
     public final LocalSaveStructure saveStructure;
     public ExecutorService dhTickerThread = LodUtil.makeSingleThreadPool("DHTickerThread", 2);
     public EventLoop eventLoop = new EventLoop(dhTickerThread, this::_clientTick); //TODO: Rate-limit the loop
+    public F3Screen.DynamicMessage f3Msg;
 
     public DhClientServerWorld() {
         super(WorldEnvironment.Client_Server);
         saveStructure = new LocalSaveStructure();
-        levels = new HashMap<>();
+        levelObjMap = new HashMap<>();
+        dhLevels = new HashSet<>();
         LOGGER.info("Started DhWorld of type {}", environment);
+        f3Msg = new F3Screen.DynamicMessage(() ->
+                LodUtil.formatLog("{} World with {} levels", environment, dhLevels.size()));
     }
 
     @Override
     public DhClientServerLevel getOrLoadLevel(ILevelWrapper wrapper) {
         if (wrapper instanceof IServerLevelWrapper) {
-            return levels.computeIfAbsent(wrapper, (w) -> {
+            return levelObjMap.computeIfAbsent(wrapper, (w) -> {
                 File levelFile = saveStructure.tryGetLevelFolder(w);
                 LodUtil.assertTrue(levelFile != null);
-                return new DhClientServerLevel(saveStructure, (IServerLevelWrapper) w);
+                DhClientServerLevel level = new DhClientServerLevel(saveStructure, (IServerLevelWrapper) w);
+                dhLevels.add(level);
+                return level;
             });
         } else {
-            return levels.computeIfAbsent(wrapper, (w) -> {
+            return levelObjMap.computeIfAbsent(wrapper, (w) -> {
                 IClientLevelWrapper clientSide = (IClientLevelWrapper) w;
                 IServerLevelWrapper serverSide = clientSide.tryGetServerSideWrapper();
                 LodUtil.assertTrue(serverSide != null);
-                DhClientServerLevel level = levels.get(serverSide);
+                DhClientServerLevel level = levelObjMap.get(serverSide);
                 if (level==null) return null;
                 level.startRenderer(clientSide);
                 return level;
@@ -54,77 +63,61 @@ public class DhClientServerWorld extends DhWorld implements IClientWorld, IServe
 
     @Override
     public DhClientServerLevel getLevel(ILevelWrapper wrapper) {
-        return levels.get(wrapper);
+        return levelObjMap.get(wrapper);
     }
     
     @Override
-    public ILevel[] getAllLoadedLevels()
+    public Iterable<? extends ILevel> getAllLoadedLevels()
     {
-        ILevel[] array = new ILevel[this.levels.size()];
-        
-        int i = 0;
-        for (ILevel level : this.levels.values())
-        {
-            array[i] = level;
-            i++;
-        }
-        
-        return array;
+        return dhLevels;
     }
     
     @Override
     public void unloadLevel(ILevelWrapper wrapper) {
-        if (levels.containsKey(wrapper)) {
+        if (levelObjMap.containsKey(wrapper)) {
             if (wrapper instanceof IServerLevelWrapper) {
-                LOGGER.info("Unloading level {} ", levels.get(wrapper));
-                levels.remove(wrapper).close();
+                LOGGER.info("Unloading level {} ", levelObjMap.get(wrapper));
+                DhClientServerLevel level = levelObjMap.remove(wrapper);
+                dhLevels.remove(level);
+                level.close();
             } else {
-                levels.remove(wrapper).stopRenderer(); // Ignore resource warning. The level obj is referenced elsewhere.
+                levelObjMap.remove(wrapper).stopRenderer(); // Ignore resource warning. The level obj is referenced elsewhere.
             }
         }
     }
 
     private void _clientTick() {
         //LOGGER.info("Client world tick with {} levels", levels.size());
-        int newViewDistance = Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * 16;
-        Iterator<DhClientServerLevel> iterator = levels.values().iterator();
-        while (iterator.hasNext()) {
-            DhClientServerLevel level = iterator.next();
-            if (level.tree != null && level.tree.viewDistance != newViewDistance) {
-                level.close(); //FIXME: Is this fine for current logic?
-                iterator.remove();
-            }
-        }
-        //DetailDistanceUtil.updateSettings();
-        levels.values().forEach(DhClientServerLevel::clientTick);
+        dhLevels.forEach(DhClientServerLevel::clientTick);
     }
+
     public void clientTick() {
         //LOGGER.info("Client world tick");
         eventLoop.tick();
     }
 
     public void serverTick() {
-        levels.values().forEach(DhClientServerLevel::serverTick);
+        dhLevels.forEach(DhClientServerLevel::serverTick);
     }
 
     public void doWorldGen() {
-        levels.values().forEach(DhClientServerLevel::doWorldGen);
+        dhLevels.forEach(DhClientServerLevel::doWorldGen);
     }
 
     @Override
     public CompletableFuture<Void> saveAndFlush() {
-        return CompletableFuture.allOf(levels.values().stream().map(DhClientServerLevel::save).toArray(CompletableFuture[]::new));
+        return CompletableFuture.allOf(dhLevels.stream().map(DhClientServerLevel::save).toArray(CompletableFuture[]::new));
     }
 
     @Override
     public void close() {
         saveAndFlush().join();
-        for (DhClientServerLevel level : levels.values()) {
+        for (DhClientServerLevel level : dhLevels) {
             LOGGER.info("Unloading level " + level.serverLevel.getDimensionType().getDimensionName());
             level.close();
         }
-        levels.clear();
+        levelObjMap.clear();
+        eventLoop.close();
         LOGGER.info("Closed DhWorld of type {}", environment);
     }
-
 }

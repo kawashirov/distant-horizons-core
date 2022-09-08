@@ -146,7 +146,7 @@ public class RenderFileHandler implements IRenderSourceProvider {
         }
         RenderMetaFile metaFile = files.get(sectPos);
         if (metaFile != null) { // Fast path: if there is a file for this section, just write to it.
-            metaFile.updateChunkIfNeeded(chunkData);
+            metaFile.updateChunkIfNeeded(chunkData, level);
         }
     }
 

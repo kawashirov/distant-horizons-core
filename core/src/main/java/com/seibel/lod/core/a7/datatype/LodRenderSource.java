@@ -2,6 +2,7 @@ package com.seibel.lod.core.a7.datatype;
 
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.a7.level.IClientLevel;
+import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.a7.render.LodQuadTree;
 import com.seibel.lod.core.a7.render.RenderBuffer;
@@ -32,11 +33,6 @@ public interface LodRenderSource {
 
     void saveRender(IClientLevel level, RenderMetaFile file, OutputStream dataStream) throws IOException;
 
-    @Deprecated
-    void write(ChunkSizedData chunkData);
-    @Deprecated
-    void flushWrites(IClientLevel level);
-
     byte getRenderVersion();
 
     /**
@@ -44,6 +40,7 @@ public interface LodRenderSource {
      */
     boolean isValid();
 
+    void fastWrite(ChunkSizedData chunkData, IClientLevel level);
     // Only override the data that has not been written directly using write(), and skip those that are empty
     void weakWrite(LodRenderSource source);
 }

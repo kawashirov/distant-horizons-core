@@ -3,6 +3,7 @@ package com.seibel.lod.core.a7.generation;
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.a7.pos.DhBlockPos2D;
 import com.seibel.lod.core.a7.pos.DhLodPos;
+import com.seibel.lod.core.a7.util.UncheckedInterruptedException;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.objects.DHChunkPos;
 import com.seibel.lod.core.util.LodUtil;
@@ -360,7 +361,8 @@ public class GenerationQueue implements Closeable {
                 chunkPosMin, granularity, dataDetail, task.group::accept);
         task.genFuture.whenComplete((v, ex) -> {
            if (ex != null) {
-               logger.error("Error generating data for section {}", pos, ex);
+               if (!UncheckedInterruptedException.isThrowableInterruption(ex))
+                   logger.error("Error generating data for section {}", pos, ex);
                task.group.members.forEach(m -> m.future.complete(false));
            } else {
                logger.info("Section generation at {} complated", pos);
@@ -375,7 +377,13 @@ public class GenerationQueue implements Closeable {
         taskGroups.values().forEach(g -> g.members.forEach(t -> t.future.complete(false)));
         taskGroups.clear();
         ArrayList<CompletableFuture<Void>> array = new ArrayList<>(inProgress.size());
-        inProgress.values().forEach(runningTask -> array.add(runningTask.genFuture));
+        inProgress.values().forEach(runningTask -> array.add(
+                runningTask.genFuture.exceptionally((ex) -> {
+                    if (ex instanceof CompletionException) ex = ex.getCause();
+                    if (!UncheckedInterruptedException.isThrowableInterruption(ex))
+                        logger.error("Error when terminating data generation for section {}", runningTask.group.pos, ex);
+                    return null;
+                })));
         closer = CompletableFuture.allOf(array.toArray(CompletableFuture[]::new));
         if (cancelCurrentGeneration) {
             array.forEach(f -> f.cancel(alsoInterruptRunning));

@@ -17,29 +17,83 @@ public class F3Screen {
             "",
             ModInfo.READABLE_NAME + " version: " + ModInfo.VERSION
     };
-    private static final LinkedList<WeakReference<SelfUpdateMessage>> selfUpdateMessages = new LinkedList<>();
+    private static final LinkedList<WeakReference<Message>> selfUpdateMessages = new LinkedList<>();
     public static void addStringToDisplay(List<String> list) {
         list.addAll(Arrays.asList(DEFAULT_STR));
-        Iterator<WeakReference<SelfUpdateMessage>> it = selfUpdateMessages.iterator();
+        Iterator<WeakReference<Message>> it = selfUpdateMessages.iterator();
         while (it.hasNext()) {
-            WeakReference<SelfUpdateMessage> ref = it.next();
-            SelfUpdateMessage msg = ref.get();
+            WeakReference<Message> ref = it.next();
+            Message msg = ref.get();
             if (msg == null) {
                 it.remove();
             } else {
-                msg.print(list);
+                msg.printTo(list);
             }
         }
     }
 
-    public static class SelfUpdateMessage {
-        private final Supplier<String> supplier;
-        public SelfUpdateMessage(Supplier<String> message) {
+    @SuppressWarnings("unused")
+    public static abstract class Message {
+        protected Message() {
             selfUpdateMessages.add(new WeakReference<>(this));
+        }
+
+        public abstract void printTo(List<String> output);
+    }
+
+    @SuppressWarnings("unused")
+    public static class StaticMessage extends Message {
+        private final String[] lines;
+        public StaticMessage(String... lines) {
+            this.lines = lines;
+        }
+        @Override
+        public void printTo(List<String> output) {
+            output.addAll(Arrays.asList(lines));
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class DynamicMessage extends Message {
+        private final Supplier<String> supplier;
+        public DynamicMessage(Supplier<String> message) {
             this.supplier = message;
         }
-        public void print(List<String> list) {
-            list.add(supplier.get());
+        public void printTo(List<String> list) {
+            String msg = supplier.get();
+            if (msg != null) {
+                list.add(msg);
+            }
         }
+    }
+    @SuppressWarnings("unused")
+    public static class MultiDynamicMessage extends Message {
+        private final Supplier<String>[] supplier;
+        @SafeVarargs
+        public MultiDynamicMessage(Supplier<String>... messages) {
+            this.supplier = messages;
+        }
+        public void printTo(List<String> list) {
+            for (Supplier<String> s : supplier) {
+                String msg = s.get();
+                if (msg != null) {
+                    list.add(msg);
+                }
+            }
+        }
+    }
+
+    public static class NestedMessage extends Message {
+        private final Supplier<String[]> supplier;
+        public NestedMessage(Supplier<String[]> message) {
+            this.supplier = message;
+        }
+        public void printTo(List<String> list) {
+            String[] msg = supplier.get();
+            if (msg != null) {
+                list.addAll(Arrays.asList(msg));
+            }
+        }
+
     }
 }

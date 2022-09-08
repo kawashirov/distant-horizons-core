@@ -8,7 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 
-public class EventLoop { //FIXME This should have close. We are leaking stuff.
+public class EventLoop implements AutoCloseable { //FIXME This should have close. We are leaking stuff.
     private final boolean PAUSE_ON_ERROR = ModInfo.IS_DEV_BUILD;
     private final Logger logger = DhLoggerBuilder.getLogger();
     private final ExecutorService executorService;
@@ -35,10 +35,11 @@ public class EventLoop { //FIXME This should have close. We are leaking stuff.
             future = CompletableFuture.runAsync(runnable, executorService);
         }
     }
-    public void halt() {
+    public void close() {
         if (future != null) {
             future.cancel(true);
         }
+        future = null;
     }
     public boolean isRunning() {
         return future != null && !future.isDone();

@@ -9,6 +9,9 @@ import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
 
 public interface IClientLevel extends ILevel {
+    /**
+     * Return whether the level needs to be reloaded
+     */
     void clientTick();
 
     void render(Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, float partialTicks, IProfilerWrapper profiler);

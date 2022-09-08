@@ -57,6 +57,7 @@ public class DhClientLevel implements IClientLevel {
     public void clientTick() {
         tree.tick(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
         renderBufferHandler.update();
+        return;
     }
 
     @Override

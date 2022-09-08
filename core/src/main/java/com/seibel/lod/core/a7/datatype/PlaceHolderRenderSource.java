@@ -49,11 +49,6 @@ public class PlaceHolderRenderSource implements LodRenderSource {
     public void saveRender(IClientLevel level, RenderMetaFile file, OutputStream dataStream) throws IOException {
         throw new UnsupportedOperationException("EmptyRenderSource should NEVER be saved!");
     }
-    @Override
-    public void write(ChunkSizedData chunkData) {}
-
-    @Override
-    public void flushWrites(IClientLevel level) {}
 
     @Override
     public byte getRenderVersion() {
@@ -68,6 +63,9 @@ public class PlaceHolderRenderSource implements LodRenderSource {
     public boolean isValid() {
         return isValid;
     }
+
+    @Override
+    public void fastWrite(ChunkSizedData chunkData, IClientLevel level) {}
 
     @Override
     public void weakWrite(LodRenderSource source) {

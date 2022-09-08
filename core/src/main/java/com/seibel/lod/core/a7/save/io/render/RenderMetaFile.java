@@ -41,13 +41,13 @@ public class RenderMetaFile extends MetaFile
 
     //FIXME: This can cause concurrent modification of LodRenderSource.
     //       Not sure if it will cause issues or not.
-    public void updateChunkIfNeeded(ChunkSizedData chunkData) {
+    public void updateChunkIfNeeded(ChunkSizedData chunkData, IClientLevel level) {
         DhLodPos chunkPos = new DhLodPos((byte) (chunkData.dataDetail + 4), chunkData.x, chunkData.z);
         LodUtil.assertTrue(pos.getSectionBBoxPos().overlaps(chunkPos), "Chunk pos {} doesn't overlap with section {}", chunkPos, pos);
 
         CompletableFuture<LodRenderSource> source = _readCached(data.get());
         if (source == null) return;
-        if (source.isDone()) source.join().write(chunkData);
+        if (source.isDone()) source.join().fastWrite(chunkData, level);
     }
 
     public CompletableFuture<Void> flushAndSave(ExecutorService renderCacheThread) {
