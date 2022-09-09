@@ -1,15 +1,15 @@
 package com.seibel.lod.api.override;
 
-import com.seibel.lod.api.items.interfaces.override.IDhApiWorldGenerator;
 import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.lod.api.items.objects.DhApiResult;
+import com.seibel.lod.core.api.external.coreImplementations.interfaces.override.worldGenerator.ICoreDhApiWorldGenerator;
 import com.seibel.lod.core.handlers.dependencyInjection.WorldGeneratorInjector;
 
 /**
  * Handles adding world generator overrides.
  *
  * @author James Seibel
- * @version 2022-8-15
+ * @version 2022-9-8
  */
 public class DhApiWorldGeneratorOverrideRegister
 {
@@ -21,11 +21,11 @@ public class DhApiWorldGeneratorOverrideRegister
 	 * If another world generator has already been registered, DhApiResult will return
 	 * the name of the previously registered generator and success = false.
 	 */
-	public static DhApiResult registerWorldGeneratorOverride(IDhApiWorldGenerator worldGenerator)
+	public static DhApiResult registerWorldGeneratorOverride(ICoreDhApiWorldGenerator worldGenerator)
 	{
 		try
 		{
-//			WorldGeneratorInjector.INSTANCE.bind(worldGenerator);
+			WorldGeneratorInjector.INSTANCE.bind(worldGenerator);
 			return DhApiResult.createSuccess();
 		}
 		catch (Exception e)
@@ -41,7 +41,7 @@ public class DhApiWorldGeneratorOverrideRegister
 	 * If another world generator has already been registered, DhApiResult will return
 	 * the name of the previously registered generator and success = false.
 	 */
-	public static DhApiResult registerWorldGeneratorOverride(IDhApiLevelWrapper levelWrapper, IDhApiWorldGenerator worldGenerator)
+	public static DhApiResult registerWorldGeneratorOverride(IDhApiLevelWrapper levelWrapper, ICoreDhApiWorldGenerator worldGenerator)
 	{
 		try
 		{

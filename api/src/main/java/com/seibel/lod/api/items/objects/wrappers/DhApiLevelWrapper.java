@@ -17,9 +17,12 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.coreImplementations.objects.wrappers;
+package com.seibel.lod.api.items.objects.wrappers;
 
-import com.seibel.lod.core.api.external.coreImplementations.enums.worldGeneration.EDhApiLevelType;
+import com.seibel.lod.api.items.enums.worldGeneration.EDhApiLevelType;
+import com.seibel.lod.api.items.interfaces.IDhApiUnsafeWrapper;
+import com.seibel.lod.api.items.interfaces.world.IDhApiDimensionTypeWrapper;
+import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.lod.core.api.external.coreImplementations.interfaces.wrappers.world.ICoreDhApiLevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IDimensionTypeWrapper;
@@ -30,9 +33,9 @@ import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
  * Can be either a Server or Client level.
  * 
  * @author James Seibel
- * @version 2022-8-23
+ * @version 2022-9-8
  */
-public class DhApiLevelWrapper implements ICoreDhApiLevelWrapper
+public class DhApiLevelWrapper implements IDhApiLevelWrapper
 {
 	private final ILevelWrapper levelWrapper;
 	private final IDimensionTypeWrapper dimensionTypeWrapper;
@@ -45,6 +48,10 @@ public class DhApiLevelWrapper implements ICoreDhApiLevelWrapper
 	}
 	
 	
+	@Override
+	public IDhApiDimensionTypeWrapper getDimensionType() { return new DhApiDimensionTypeWrapper(this.dimensionTypeWrapper); }
+	
+	@Override
 	public EDhApiLevelType getLevelType()
 	{
 		if (this.levelWrapper.getClass().isAssignableFrom(IClientLevelWrapper.class))
@@ -62,13 +69,18 @@ public class DhApiLevelWrapper implements ICoreDhApiLevelWrapper
 		}
 	}
 	
+	@Override
 	public boolean hasCeiling() { return this.levelWrapper.hasCeiling(); }
 	
+	@Override
 	public boolean hasSkyLight() { return this.levelWrapper.hasSkyLight(); }
 	
+	@Override
 	public int getHeight() { return this.levelWrapper.getHeight(); }
 	
+	@Override
 	public int getMinHeight() { return this.levelWrapper.getMinHeight(); }
+	
 	
 	@Override
 	public Object getWrappedMcObject_UNSAFE() { return this.levelWrapper.unwrapLevel(); }

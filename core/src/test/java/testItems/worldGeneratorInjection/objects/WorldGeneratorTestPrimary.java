@@ -1,7 +1,8 @@
 package testItems.worldGeneratorInjection.objects;
 
-import com.seibel.lod.core.api.external.coreImplementations.enums.worldGeneration.EDhApiWorldGenThreadMode;
-import com.seibel.lod.core.api.external.coreImplementations.enums.worldGeneration.EDhApiWorldGenerationStep;
+import com.seibel.lod.core.api.external.coreImplementations.interfaces.override.worldGenerator.ICoreDhApiWorldGenerator;
+import com.seibel.lod.core.enums.worldGeneration.EWorldGenThreadMode;
+import com.seibel.lod.core.handlers.dependencyInjection.OverrideInjector;
 
 /**
  * Dummy test implementation object for world generator injection unit tests.
@@ -9,27 +10,27 @@ import com.seibel.lod.core.api.external.coreImplementations.enums.worldGeneratio
  * @author James Seibel
  * @version 2022-7-26
  */
-//public class WorldGeneratorTestPrimary implements IDhApiWorldGenerator
+//public class WorldGeneratorTestPrimary implements ICoreDhApiWorldGenerator
 //{
-//	public static EDhApiWorldGenThreadMode THREAD_MODE = EDhApiWorldGenThreadMode.MULTI_THREADED;
-//	
-//	
+//	public static EWorldGenThreadMode THREAD_MODE = EWorldGenThreadMode.MULTI_THREADED;
+//
+//
 //	//==============//
 //	// IOverridable //
 //	//==============//
-//	
+//
 //	@Override
-//	public EDhApiOverridePriority getOverrideType() { return EDhApiOverridePriority.PRIMARY; }
-//	
-//	
-//	
+//	public int getOverridePriority() { return OverrideInjector.DEFAULT_NON_CORE_OVERRIDE_PRIORITY; }
+//
+//
+//
 //	//======================//
 //	// IDhApiWorldGenerator //
 //	//======================//
-//	
+//
 //	@Override
 //	public EDhApiWorldGenThreadMode getThreadingMode() { return THREAD_MODE; }
-//	
+//
 //	@Override
 //	public IDhApiChunkWrapper generateChunk(int chunkPosX, int chunkPosZ, IDhApiLevelWrapper serverLevelWrapper, EDhApiWorldGenerationStep maxStepToGenerate)
 //	{

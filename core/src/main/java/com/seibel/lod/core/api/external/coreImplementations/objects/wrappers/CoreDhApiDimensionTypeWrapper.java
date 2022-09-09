@@ -25,14 +25,14 @@ import com.seibel.lod.core.wrapperInterfaces.world.IDimensionTypeWrapper;
 
 /**
  * @author James Seibel
- * @version 2022-8-23
+ * @version 2022-9-8
  */
-public class DhApiDimensionTypeWrapper implements ICoreDhApiDimensionTypeWrapper, ICoreDhApiUnsafeWrapper
+public class CoreDhApiDimensionTypeWrapper implements ICoreDhApiDimensionTypeWrapper, ICoreDhApiUnsafeWrapper
 {
 	private final IDimensionTypeWrapper dimensionTypeWrapper;
 	
 	
-	public DhApiDimensionTypeWrapper(IDimensionTypeWrapper newDimensionTypeWrapper)
+	public CoreDhApiDimensionTypeWrapper(IDimensionTypeWrapper newDimensionTypeWrapper)
 	{
 		this.dimensionTypeWrapper = newDimensionTypeWrapper;
 	}
