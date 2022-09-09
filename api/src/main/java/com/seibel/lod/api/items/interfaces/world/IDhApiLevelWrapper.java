@@ -20,7 +20,7 @@
 package com.seibel.lod.api.items.interfaces.world;
 
 import com.seibel.lod.api.items.interfaces.IDhApiUnsafeWrapper;
-import com.seibel.lod.core.api.external.coreImplementations.enums.worldGeneration.EDhApiLevelType;
+import com.seibel.lod.api.items.enums.worldGeneration.EDhApiLevelType;
 import com.seibel.lod.core.api.external.coreImplementations.interfaces.wrappers.world.ICoreDhApiLevelWrapper;
 
 /**

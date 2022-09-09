@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.coreImplementations.enums.worldGeneration;
+package com.seibel.lod.api.items.enums.worldGeneration;
 
 /**
  * Assembly classes are used to reference the package they are in.

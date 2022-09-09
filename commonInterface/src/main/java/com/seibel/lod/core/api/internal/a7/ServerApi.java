@@ -23,8 +23,6 @@ import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.world.DhClientServerWorld;
 import com.seibel.lod.core.a7.world.DhServerWorld;
 import com.seibel.lod.core.a7.world.IServerWorld;
-import com.seibel.lod.core.api.external.coreImplementations.objects.wrappers.DhApiLevelWrapper;
-import com.seibel.lod.core.handlers.dependencyInjection.DhApiEventInjector;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.wrapperInterfaces.IVersionConstants;

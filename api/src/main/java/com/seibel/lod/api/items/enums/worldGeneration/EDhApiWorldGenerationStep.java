@@ -1,4 +1,4 @@
-package com.seibel.lod.core.api.external.coreImplementations.enums.worldGeneration;
+package com.seibel.lod.api.items.enums.worldGeneration;
 
 /**
  * EMPTY, <br>

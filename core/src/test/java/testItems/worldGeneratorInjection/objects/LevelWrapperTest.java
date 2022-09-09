@@ -1,7 +1,5 @@
 package testItems.worldGeneratorInjection.objects;
 
-import com.seibel.lod.core.api.external.coreImplementations.enums.worldGeneration.EDhApiLevelType;
-
 /**
  * Stub implementation of a Level wrapper for basic unit testing.
  *
