@@ -29,7 +29,7 @@ import java.util.HashMap;
  * This is done so other mods can override our methods to improve features down the line.
  *
  * @author James Seibel
- * @version 2022-9-5
+ * @version 2022-9-8
  */
 public class OverrideInjector
 {
@@ -110,7 +110,7 @@ public class OverrideInjector
 			throw new IllegalArgumentException("Invalid priority value [" + dependencyImplementation.getPriority() + "], override priorities must be [" + MIN_NON_CORE_OVERRIDE_PRIORITY + "] or greater.");
 		}
 		
-		// check if a override already exists with this priority
+		// check if an override already exists with this priority
 		ICoreDhApiOverrideable existingOverride = overrideContainer.getOverrideWithPriority(dependencyImplementation.getPriority());
 		if (existingOverride != null)
 		{
@@ -128,18 +128,11 @@ public class OverrideInjector
 	 *
 	 * @see DependencyInjector#get(Class, boolean)
 	 */
+	@SuppressWarnings("unchecked")
 	public <T extends ICoreDhApiOverrideable> T get(Class<T> interfaceClass) throws ClassCastException
 	{
 		OverridePriorityListContainer overrideContainer = this.overrideContainerByInterface.get(interfaceClass);
-		if (overrideContainer != null)
-		{
-			// TODO make sure this works and potentially fix the warning
-			return (T) overrideContainer.getOverrideWithHighestPriority();
-		}
-		else
-		{
-			return null;	
-		}
+		return overrideContainer != null ? (T) overrideContainer.getOverrideWithHighestPriority() : null;
 	}
 	
 	/**
@@ -150,27 +143,17 @@ public class OverrideInjector
 	 *
 	 * @see DependencyInjector#get(Class, boolean)
 	 */
+	@SuppressWarnings("unchecked")
 	public <T extends ICoreDhApiOverrideable> T get(Class<T> interfaceClass, int priority) throws ClassCastException
 	{
 		OverridePriorityListContainer overrideContainer = this.overrideContainerByInterface.get(interfaceClass);
-		if (overrideContainer != null)
-		{
-			// TODO make sure this works and potentially fix the warning
-			return (T) overrideContainer.getOverrideWithPriority(priority);
-		}
-		else
-		{
-			return null;
-		}
+		return overrideContainer != null ? (T) overrideContainer.getOverrideWithPriority(priority) : null;
 	}
 	
 	
 	
 	/** Removes all bound overrides. */
-	public void clear()
-	{
-		this.overrideContainerByInterface.clear();
-	}
+	public void clear() { this.overrideContainerByInterface.clear(); }
 	
 	
 	
