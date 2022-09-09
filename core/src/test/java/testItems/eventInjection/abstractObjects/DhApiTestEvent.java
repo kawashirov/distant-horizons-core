@@ -6,14 +6,13 @@ import com.seibel.lod.core.api.external.coreImplementations.interfaces.events.IC
  * A dummy event implementation used for unit testing.
  *
  * @author James Seibel
- * @version 2022-7-16
+ * @version 2022-9-8
  */
 public abstract class DhApiTestEvent implements ICoreDhApiEvent<Boolean>
 {
 	/**
 	 * Test event.
 	 *
-	 * @param input
 	 * @return whether the event should be canceled or not.
 	 */
 	public abstract boolean test(Boolean input);
@@ -30,11 +29,9 @@ public abstract class DhApiTestEvent implements ICoreDhApiEvent<Boolean>
 	//=========================//
 	
 	@Override
-	public final boolean fireEvent(Boolean input)
-	{
-		return test(input);
-	}
+	public final boolean fireEvent(Boolean input) { return test(input); }
 	
 	@Override
 	public final boolean getCancelable() { return true; }
+	
 }
