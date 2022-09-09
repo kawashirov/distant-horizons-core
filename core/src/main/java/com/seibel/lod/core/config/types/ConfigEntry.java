@@ -1,7 +1,5 @@
 package com.seibel.lod.core.config.types;
 
-import com.seibel.lod.core.config.ConfigBase;
-import com.seibel.lod.core.config.file.ConfigFileHandling;
 
 /**
  * Use for making the config variables
@@ -120,7 +118,7 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>>
     }
     /** Checks if a value is valid */
     public byte isValid(T value) {
-        if (ConfigBase.disableMinMax)
+        if (this.configBase.disableMinMax)
             return 0;
         if (Number.class.isAssignableFrom(value.getClass())) { // Only check min max if it is a number
             if (this.max != null && Double.valueOf(value.toString()) > Double.valueOf(max.toString()))
@@ -135,11 +133,11 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>>
 
     /** This should normally not be called since set() automatically calls this */
     public void save() {
-        ConfigFileHandling.saveEntry(this);
+        configBase.configFileINSTANCE.saveEntry(this);
     }
     /** This should normally not be called except for special circumstances */
     public void load() {
-        ConfigFileHandling.loadEntry(this);
+        configBase.configFileINSTANCE.loadEntry(this);
     }
 
     /** Is the value of this equal to another */

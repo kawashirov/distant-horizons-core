@@ -1,6 +1,6 @@
 package com.seibel.lod.core.config.types;
 
-import com.seibel.lod.core.config.types.ConfigEntryAppearance;
+import com.seibel.lod.core.config.ConfigBase;
 
 /**
  * The class where all config options should extend
@@ -12,6 +12,7 @@ public abstract class AbstractConfigType<T, S> { // The S is the class that is e
     public String name;            // This should only be set once in the init
     protected T value;
     protected final Listener listener;
+    public ConfigBase configBase;
 
     public Object guiValue; // This is a storage variable something like the gui can use
 

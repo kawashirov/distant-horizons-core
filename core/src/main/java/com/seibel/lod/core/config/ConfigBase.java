@@ -21,7 +21,13 @@ import java.util.Map;
 // Init the config after singletons have been blinded
 public class ConfigBase 
 {
+    public static ConfigBase INSTANCE;
+    public ConfigFileHandling configFileINSTANCE;
+
 	public static final Logger LOGGER = LogManager.getLogger(ConfigBase.class.getSimpleName());
+    public final String modID;
+    public final String modName;
+    public final int configVersion;
 	
     /*
             What the config works with
@@ -50,20 +56,24 @@ public class ConfigBase
     }
 
     /** Disables the minimum and maximum of a variable */
-    public static boolean disableMinMax = false; // Very fun to use
-    public static final List<AbstractConfigType<?, ?>> entries = new ArrayList<>();
+    public boolean disableMinMax = false; // Very fun to use
+    public final List<AbstractConfigType<?, ?>> entries = new ArrayList<>();
 
-    public static final int configVersion = 1;
 
-    public static void init(Class<?> config) {
+    public ConfigBase(String modID, String modName, Class<?> config, int configVersion) {
+        this.modID = modID;
+        this.modName = modName;
+        this.configVersion = configVersion;
+
         addAcceptableInputs(); // Add all the acceptable stuff to the acceptableInputs list
         initNestedClass(config, ""); // Init root category
 
         // File handling (load from file)
-        ConfigFileHandling.loadFromFile();
+        this.configFileINSTANCE = new ConfigFileHandling(this);
+        this.configFileINSTANCE.loadFromFile();
     }
 
-    private static void initNestedClass(Class<?> config, String category) {
+    private void initNestedClass(Class<?> config, String category) {
         // Put all the entries in entries
 
         for (Field field : config.getFields()) {
@@ -77,6 +87,7 @@ public class ConfigBase
                 AbstractConfigType<?, ?> entry = entries.get(entries.size() - 1);
                 entry.category = category;
                 entry.name = field.getName();
+                entry.configBase = this;
 
                 if (ConfigEntry.class.isAssignableFrom(field.getType())) { // If item is type ConfigEntry
                     if (!isAcceptableType(((ConfigEntry<?>) entry).get().getClass())) {

@@ -22,17 +22,22 @@ import java.nio.file.Path;
  * Handles reading and writing config files.
  *
  * @author coolGi
- * @version 2022-5-26
+ * @version 2022-9-9
  */
-public class ConfigFileHandling
-{
-	private static final Logger LOGGER = LogManager.getLogger(ConfigBase.class.getSimpleName());
-	
-	public static final Path ConfigPath = SingletonInjector.INSTANCE.get(IMinecraftSharedWrapper.class)
-            .getInstallationDirectory().toPath().resolve("config").resolve(ModInfo.NAME+".toml");
+public class ConfigFileHandling {
+	private static final Logger LOGGER = ConfigBase.LOGGER;
+
+    public final ConfigBase configBase;
+	public final Path ConfigPath;
+
+    public ConfigFileHandling(ConfigBase configBase) {
+        this.configBase = configBase;
+        ConfigPath = SingletonInjector.INSTANCE.get(IMinecraftSharedWrapper.class)
+                .getInstallationDirectory().toPath().resolve("config").resolve(this.configBase.modName+".toml");
+    }
 
     /** Saves the config to the file */
-    public static void saveToFile() {
+    public void saveToFile() {
         CommentedFileConfig config = CommentedFileConfig.builder(ConfigPath.toFile()).build();
         if (!Files.exists(ConfigPath)) // Try to check if the config exists
             try {
@@ -43,7 +48,7 @@ public class ConfigFileHandling
 
         loadConfig(config);
 
-        for (AbstractConfigType<?, ?> entry : ConfigBase.entries) {
+        for (AbstractConfigType<?, ?> entry : this.configBase.entries) {
             if (ConfigEntry.class.isAssignableFrom(entry.getClass())) {
                 createComment((ConfigEntry<?>) entry, config);
                 saveEntry((ConfigEntry<?>) entry, config);
@@ -54,7 +59,7 @@ public class ConfigFileHandling
         config.close();
     }
     /** Loads the config from the file */
-    public static void loadFromFile() {
+    public void loadFromFile() {
         CommentedFileConfig config = CommentedFileConfig.builder(ConfigPath.toFile()).build();
         // Attempt to load the file and if it fails then save config to file
         try {
@@ -71,7 +76,7 @@ public class ConfigFileHandling
         }
 
         // Load all the entries
-        for (AbstractConfigType<?, ?> entry : ConfigBase.entries) {
+        for (AbstractConfigType<?, ?> entry : this.configBase.entries) {
             if (ConfigEntry.class.isAssignableFrom(entry.getClass())) {
                 createComment((ConfigEntry<?>) entry, config);
                 loadEntry((ConfigEntry<?>) entry, config);
@@ -86,7 +91,7 @@ public class ConfigFileHandling
 
 
     // Save an entry when only given the entry
-    public static void saveEntry(ConfigEntry<?> entry) {
+    public void saveEntry(ConfigEntry<?> entry) {
         CommentedFileConfig config = CommentedFileConfig.builder(ConfigPath.toFile()).build();
         loadConfig(config);
         saveEntry(entry, config);
@@ -95,7 +100,7 @@ public class ConfigFileHandling
     }
     // Save an entry
     @SuppressWarnings("unchecked")
-    public static void saveEntry(ConfigEntry<?> entry, CommentedFileConfig workConfig) {
+    public void saveEntry(ConfigEntry<?> entry, CommentedFileConfig workConfig) {
         if (!entry.getAppearance().showInFile) return;
 
         if (ConfigTypeConverters.convertObjects.containsKey(entry.getType())) {
@@ -106,7 +111,7 @@ public class ConfigFileHandling
     }
 
     // Loads an entry when only given the entry
-    public static void loadEntry(ConfigEntry<?> entry) {
+    public void loadEntry(ConfigEntry<?> entry) {
         CommentedFileConfig config = CommentedFileConfig.builder(ConfigPath.toFile()).autosave().build();
         loadConfig(config);
         loadEntry(entry, config);
@@ -115,7 +120,7 @@ public class ConfigFileHandling
     }
     // Loads an entry
     @SuppressWarnings("unchecked") // Suppress due to its always safe
-	public static <T> void loadEntry(ConfigEntry<T> entry, CommentedFileConfig workConfig) {
+	public <T> void loadEntry(ConfigEntry<T> entry, CommentedFileConfig workConfig) {
         if (!entry.getAppearance().showInFile) return;
 
         if (workConfig.contains(entry.getNameWCategory())) {
@@ -147,14 +152,14 @@ public class ConfigFileHandling
     }
 
     // Creates the comment for an entry when only given the entry
-    public static void createComment(ConfigEntry<?> entry) {
+    public void createComment(ConfigEntry<?> entry) {
         CommentedFileConfig config = CommentedFileConfig.builder(ConfigPath.toFile()).autosave().build();
         loadConfig(config);
         createComment(entry, config);
         config.close();
     }
     // Creates a comment for an entry
-    public static void createComment(ConfigEntry<?> entry, CommentedFileConfig workConfig) {
+    public void createComment(ConfigEntry<?> entry, CommentedFileConfig workConfig) {
         if (!entry.getAppearance().showInFile)
             return;
         if (entry.getComment() != null) {
@@ -166,7 +171,7 @@ public class ConfigFileHandling
 
 
     /** Does config.load(); but with error checking */
-    public static void loadConfig(CommentedFileConfig config) {
+    public void loadConfig(CommentedFileConfig config) {
         try {
             config.load();
         } catch (Exception e) {
@@ -188,8 +193,10 @@ public class ConfigFileHandling
 
 
     // ========== API (server) STUFF ========== //
-    @SuppressWarnings("unchecked")
     /** ALWAYS CLEAR WHEN NOT ON SERVER!!!! */
+    // We are not using this stuff, so comment it out for now (if we ever do need it then we can uncomment it)
+    /*
+    @SuppressWarnings("unchecked")
     public static void clearApiValues() {
         for (AbstractConfigType<?, ?> entry : ConfigBase.entries) {
             if (ConfigEntry.class.isAssignableFrom(entry.getClass()) && ((ConfigEntry) entry).allowApiOverride) {
@@ -235,4 +242,5 @@ public class ConfigFileHandling
             }
         }
     }
+     */
 }
