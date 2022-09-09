@@ -30,7 +30,6 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
@@ -280,8 +279,8 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
             ColumnRenderSource[] data = new ColumnRenderSource[ELodDirection.ADJ_DIRECTIONS.length];
             for (ELodDirection direction : ELodDirection.ADJ_DIRECTIONS) {
                 LodRenderSection section = quadTree.getSection(sectionPos.getAdjacent(direction)); //FIXME: Handle traveling through different detail levels
-                if (section != null && section.getRenderContainer() != null && section.getRenderContainer() instanceof ColumnRenderBuffer) {
-                    data[direction.ordinal()-2] = ((ColumnRenderSource) section.getRenderContainer());
+                if (section != null && section.getRenderSource() != null && section.getRenderSource() instanceof ColumnRenderSource) {
+                    data[direction.ordinal()-2] = ((ColumnRenderSource) section.getRenderSource());
                 }
             }
             inBuildRenderBuffer = ColumnRenderBuffer.build(level, usedBufferOpaque, usedBufferTransparent, this, data);

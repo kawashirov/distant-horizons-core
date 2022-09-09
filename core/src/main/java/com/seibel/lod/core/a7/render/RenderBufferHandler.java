@@ -1,15 +1,11 @@
 package com.seibel.lod.core.a7.render;
 
 import com.seibel.lod.core.a7.datatype.LodRenderSource;
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
-import com.seibel.lod.core.objects.DHBlockPos;
 import com.seibel.lod.core.objects.Pos2D;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.gridList.MovableGridRingList;
-import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 
-import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class RenderBufferHandler {
@@ -73,7 +69,7 @@ public class RenderBufferHandler {
             // If this fails, there may be concurrent modification of the quad tree
             //  (as this update() should be called from the same thread that calls update() on the quad tree)
             LodUtil.assertTrue(section != null);
-            LodRenderSource container = section.getRenderContainer();
+            LodRenderSource container = section.getRenderSource();
 
             // Update self's render buffer state
             boolean shouldRender = section.canRender();

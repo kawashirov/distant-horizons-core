@@ -102,7 +102,7 @@ public class LodRenderSection {
         return lodRenderSource != null && !lodRenderSource.isValid();
     }
 
-    public LodRenderSource getRenderContainer() {
+    public LodRenderSource getRenderSource() {
         return lodRenderSource;
     }
 
