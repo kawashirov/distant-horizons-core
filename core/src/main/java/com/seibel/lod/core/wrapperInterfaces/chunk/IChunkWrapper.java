@@ -59,10 +59,6 @@ public interface IChunkWrapper extends IBindable
 	
 	boolean isLightCorrect();
 	
-	boolean isWaterLogged(int x, int y, int z);
-	
-	int getEmittedBrightness(int x, int y, int z);
-	
 	default int getBlockLight(int x, int y, int z) {return -1;}
 	
 	default int getSkyLight(int x, int y, int z) {return -1;}
@@ -96,7 +92,5 @@ public interface IChunkWrapper extends IBindable
 	IBlockStateWrapper getBlockState(int x, int y, int z);
 	IBiomeWrapper getBiome(int x, int y, int z);
 
-    default DHChunkPos getChunkPos() {
-		return new DHChunkPos(getChunkPosX(), getChunkPosZ());
-	}
+	DHChunkPos getChunkPos();
 }

@@ -191,13 +191,14 @@ public class ColumnRenderBuffer extends RenderBuffer {
         return CompletableFuture.supplyAsync(() -> {
                     try {
                         EVENT_LOGGER.trace("RenderRegion start QuadBuild @ {}", data.sectionPos);
+                        boolean enableSkyLightCulling = Config.Client.Graphics.AdvancedGraphics.enableCaveCulling.get();
                         int skyLightCullingBelow = Config.Client.Graphics.AdvancedGraphics.caveCullingHeight.get();
                         // FIXME: Clamp also to the max world height.
                         skyLightCullingBelow = Math.max(skyLightCullingBelow, clientLevel.getMinY());
-                        LodQuadBuilder builderOpaque = new LodQuadBuilder(true,
+                        LodQuadBuilder builderOpaque = new LodQuadBuilder(enableSkyLightCulling,
                                 (short) (skyLightCullingBelow - clientLevel.getMinY()));
 
-                        LodQuadBuilder builderTransparent = new LodQuadBuilder(true,
+                        LodQuadBuilder builderTransparent = new LodQuadBuilder(enableSkyLightCulling,
                                 (short) (skyLightCullingBelow - clientLevel.getMinY()));
 
                         makeLodRenderData(builderOpaque, builderTransparent, data, adjData);

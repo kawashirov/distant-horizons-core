@@ -24,13 +24,14 @@ public class LodDataBuilder {
                 IBiomeWrapper biome = chunk.getBiome(x, lastY, z);
                 IBlockStateWrapper blockState = AIR;
                 int mappedId = chunkData.getMapping().setAndGetId(biome, blockState);
-                byte light = (byte) ((chunk.getBlockLight(x,lastY,z) << 4) + chunk.getSkyLight(x,lastY,z));
+                // FIXME: The +1 offset to reproduce the old behavior. Remove this when we get per-face lighting
+                byte light = (byte) ((chunk.getBlockLight(x,lastY+1,z) << 4) + chunk.getSkyLight(x,lastY+1,z));
                 int y=chunk.getMaxY(x, z);
 
                 for (; y>=chunk.getMinBuildHeight(); y--) {
                     IBiomeWrapper newBiome = chunk.getBiome(x, y, z);
                     IBlockStateWrapper newBlockState = chunk.getBlockState(x, y, z);
-                    byte newLight = (byte) ((chunk.getBlockLight(x,y,z) << 4) + chunk.getSkyLight(x,y,z));
+                    byte newLight = (byte) ((chunk.getBlockLight(x,y+1,z) << 4) + chunk.getSkyLight(x,y+1,z));
 
                     if (!newBiome.equals(biome) || !newBlockState.equals(blockState)) {
                         longs.add(FullFormat.encode(mappedId, lastY-y, y+1 - chunk.getMinBuildHeight(), light));
@@ -39,11 +40,12 @@ public class LodDataBuilder {
                         mappedId = chunkData.getMapping().setAndGetId(biome, blockState);
                         light = newLight;
                         lastY = y;
-                    } else if (newLight != light) {
-                        longs.add(FullFormat.encode(mappedId, lastY-y, y+1 - chunk.getMinBuildHeight(), light));
-                        light = newLight;
-                        lastY = y;
                     }
+//                    else if (newLight != light) {
+//                        longs.add(FullFormat.encode(mappedId, lastY-y, y+1 - chunk.getMinBuildHeight(), light));
+//                        light = newLight;
+//                        lastY = y;
+//                    }
                 }
                 longs.add(FullFormat.encode(mappedId, lastY-y, y+1 - chunk.getMinBuildHeight(), light));
 
