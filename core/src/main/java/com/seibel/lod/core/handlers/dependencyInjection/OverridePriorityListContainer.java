@@ -58,7 +58,7 @@ public class OverridePriorityListContainer implements IBindable
 	}
 	public ICoreDhApiOverrideable getOverrideWithHighestPriority()
 	{
-		if (this.overridePairList.get(0) != null)
+		if (this.overridePairList.size() != 0)
 		{
 			return this.overridePairList.get(0).override;
 		}
@@ -96,8 +96,8 @@ public class OverridePriorityListContainer implements IBindable
 	
 	// utils //
 	
-	/** sort the list so the lowest priority item is first in the list */
-	private void sortList() { this.overridePairList.sort((x,y) -> Integer.compare(x.priority, y.priority)); }
+	/** sort the list so the highest priority item is first in the list */
+	private void sortList() { this.overridePairList.sort((x,y) -> Integer.compare(y.priority, x.priority)); }
 	
 	
 	

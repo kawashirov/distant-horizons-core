@@ -11,29 +11,30 @@ import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
  * Dummy test implementation object for world generator injection unit tests.
  *
  * @author James Seibel
- * @version 2022-7-26
+ * @version 2022-8-9
  */
-public class WorldGeneratorTestCore implements ICoreDhApiWorldGenerator
+public class WorldGeneratorTestSecondary implements ICoreDhApiWorldGenerator
 {
-	public static EWorldGenThreadMode THREAD_MODE = EWorldGenThreadMode.SINGLE_THREADED;
-	
-	
+	public static int PRIORITY = OverrideInjector.DEFAULT_NON_CORE_OVERRIDE_PRIORITY;
+	public static EWorldGenThreadMode THREAD_MODE = EWorldGenThreadMode.SERVER_THREAD;
+
+
 	//==============//
 	// IOverridable //
 	//==============//
-	
+
 	@Override
-	public int getPriority() { return OverrideInjector.CORE_PRIORITY; }
-	
-	
-	
+	public int getPriority() { return PRIORITY; }
+
+
+
 	//======================//
 	// IDhApiWorldGenerator //
 	//======================//
-	
+
 	@Override
 	public EWorldGenThreadMode getCoreThreadingMode() { return THREAD_MODE; }
-	
+
 	@Override
 	public IChunkWrapper generateCoreChunk(int chunkPosX, int chunkPosZ, ICoreDhApiLevelWrapper serverLevelWrapper, EWorldGenerationStep maxStepToGenerate)
 	{

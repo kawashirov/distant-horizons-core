@@ -11,6 +11,8 @@ import testItems.overrideInjection.interfaces.IOverrideTest;
  */
 public class OverrideTestPrimary implements IOverrideTest
 {
+	public static int PRIORITY = OverrideInjector.DEFAULT_NON_CORE_OVERRIDE_PRIORITY;
+	
 	public static int VALUE = 3;
 	
 	
@@ -18,6 +20,6 @@ public class OverrideTestPrimary implements IOverrideTest
 	public int getValue() { return VALUE; }
 	
 	@Override
-	public int getPriority() { return OverrideInjector.DEFAULT_NON_CORE_OVERRIDE_PRIORITY; }
+	public int getPriority() { return PRIORITY; }
 	
 }

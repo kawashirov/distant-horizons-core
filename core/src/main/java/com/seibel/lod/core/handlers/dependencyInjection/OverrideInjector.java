@@ -105,7 +105,7 @@ public class OverrideInjector
 		}
 		
 		// make sure the override has a valid priority
-		if (dependencyImplementation.getPriority() < MIN_NON_CORE_OVERRIDE_PRIORITY)
+		else if (dependencyImplementation.getPriority() < MIN_NON_CORE_OVERRIDE_PRIORITY)
 		{
 			throw new IllegalArgumentException("Invalid priority value [" + dependencyImplementation.getPriority() + "], override priorities must be [" + MIN_NON_CORE_OVERRIDE_PRIORITY + "] or greater.");
 		}
