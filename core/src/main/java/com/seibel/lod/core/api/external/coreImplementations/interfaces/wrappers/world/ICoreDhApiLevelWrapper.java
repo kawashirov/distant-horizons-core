@@ -20,12 +20,13 @@
 package com.seibel.lod.core.api.external.coreImplementations.interfaces.wrappers.world;
 
 import com.seibel.lod.core.api.external.coreImplementations.interfaces.wrappers.ICoreDhApiUnsafeWrapper;
+import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 
 /**
  * Can be either a Server or Client level.
  * 
  * @author James Seibel
- * @version 2022-9-7
+ * @version 2022-9-10
  */
 public interface ICoreDhApiLevelWrapper extends ICoreDhApiUnsafeWrapper
 {

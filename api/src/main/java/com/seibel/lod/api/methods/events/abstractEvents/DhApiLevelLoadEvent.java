@@ -1,11 +1,14 @@
 package com.seibel.lod.api.methods.events.abstractEvents;
 
+import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
+import com.seibel.lod.api.items.objects.wrappers.DhApiLevelWrapper;
 import com.seibel.lod.api.methods.events.interfaces.IDhApiEvent;
 import com.seibel.lod.core.api.external.coreImplementations.objects.events.abstractEvents.CoreDhApiLevelLoadEvent;
+import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 
 /**
  * @author James Seibel
- * @version 2022-9-6
+ * @version 2022-9-10
  */
 public abstract class DhApiLevelLoadEvent 
 	extends CoreDhApiLevelLoadEvent
@@ -22,7 +25,7 @@ public abstract class DhApiLevelLoadEvent
 	@Override
 	public final boolean fireEvent(CoreEventParam input)
 	{
-		onLevelLoad(new EventParam());
+		onLevelLoad(new EventParam(input.levelWrapper));
 		return false;
 	}
 	
@@ -37,11 +40,10 @@ public abstract class DhApiLevelLoadEvent
 	public static class EventParam
 	{
 		/** The newly loaded level. */
-		//public final IDhApiLevelWrapper levelWrapper;
+		public final IDhApiLevelWrapper levelWrapper;
 		
 		
-		// TODO
-		//public EventParam(ILevelWrapper newLevelWrapper) { this.levelWrapper = newLevelWrapper; }
+		public EventParam(ILevelWrapper newLevelWrapper) { this.levelWrapper = new DhApiLevelWrapper(newLevelWrapper); }
 	}
 	
 }

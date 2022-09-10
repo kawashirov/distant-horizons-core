@@ -20,10 +20,8 @@
 package com.seibel.lod.api.items.objects.wrappers;
 
 import com.seibel.lod.api.items.enums.worldGeneration.EDhApiLevelType;
-import com.seibel.lod.api.items.interfaces.IDhApiUnsafeWrapper;
 import com.seibel.lod.api.items.interfaces.world.IDhApiDimensionTypeWrapper;
 import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
-import com.seibel.lod.core.api.external.coreImplementations.interfaces.wrappers.world.ICoreDhApiLevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IDimensionTypeWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
@@ -33,32 +31,32 @@ import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
  * Can be either a Server or Client level.
  * 
  * @author James Seibel
- * @version 2022-9-8
+ * @version 2022-9-10
  */
 public class DhApiLevelWrapper implements IDhApiLevelWrapper
 {
-	private final ILevelWrapper levelWrapper;
-	private final IDimensionTypeWrapper dimensionTypeWrapper;
+	private final ILevelWrapper coreLevelWrapper;
+	private final IDimensionTypeWrapper coreDimensionTypeWrapper;
 	
 	
 	public DhApiLevelWrapper(ILevelWrapper newLevelWrapper)
 	{
-		this.levelWrapper = newLevelWrapper;
-		this.dimensionTypeWrapper = this.levelWrapper.getDimensionType();
+		this.coreLevelWrapper = newLevelWrapper;
+		this.coreDimensionTypeWrapper = this.coreLevelWrapper.getDimensionType();
 	}
 	
 	
 	@Override
-	public IDhApiDimensionTypeWrapper getDimensionType() { return new DhApiDimensionTypeWrapper(this.dimensionTypeWrapper); }
+	public IDhApiDimensionTypeWrapper getDimensionType() { return new DhApiDimensionTypeWrapper(this.coreDimensionTypeWrapper); }
 	
 	@Override
 	public EDhApiLevelType getLevelType()
 	{
-		if (this.levelWrapper.getClass().isAssignableFrom(IClientLevelWrapper.class))
+		if (this.coreLevelWrapper.getClass().isAssignableFrom(IClientLevelWrapper.class))
 		{
 			return EDhApiLevelType.CLIENT_LEVEL;
 		}
-		else if (this.levelWrapper.getClass().isAssignableFrom(IServerLevelWrapper.class))
+		else if (this.coreLevelWrapper.getClass().isAssignableFrom(IServerLevelWrapper.class))
 		{
 			return EDhApiLevelType.CLIENT_LEVEL;
 		}
@@ -70,19 +68,19 @@ public class DhApiLevelWrapper implements IDhApiLevelWrapper
 	}
 	
 	@Override
-	public boolean hasCeiling() { return this.levelWrapper.hasCeiling(); }
+	public boolean hasCeiling() { return this.coreLevelWrapper.hasCeiling(); }
 	
 	@Override
-	public boolean hasSkyLight() { return this.levelWrapper.hasSkyLight(); }
+	public boolean hasSkyLight() { return this.coreLevelWrapper.hasSkyLight(); }
 	
 	@Override
-	public int getHeight() { return this.levelWrapper.getHeight(); }
+	public int getHeight() { return this.coreLevelWrapper.getHeight(); }
 	
 	@Override
-	public int getMinHeight() { return this.levelWrapper.getMinHeight(); }
+	public int getMinHeight() { return this.coreLevelWrapper.getMinHeight(); }
 	
 	
 	@Override
-	public Object getWrappedMcObject_UNSAFE() { return this.levelWrapper.unwrapLevel(); }
+	public Object getWrappedMcObject_UNSAFE() { return this.coreLevelWrapper.unwrapLevel(); }
 	
 }

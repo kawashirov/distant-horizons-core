@@ -21,11 +21,14 @@ package com.seibel.lod.core.api.internal.a7;
 
 import com.seibel.lod.core.a7.level.IClientLevel;
 import com.seibel.lod.core.a7.world.*;
+import com.seibel.lod.core.api.external.coreImplementations.objects.events.abstractEvents.*;
 import com.seibel.lod.core.api.external.coreImplementations.objects.events.sharedParameterObjects.CoreDhApiRenderParam;
+import com.seibel.lod.core.api.external.coreImplementations.objects.wrappers.CoreDhApiLevelWrapper;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.ModInfo;
 import com.seibel.lod.core.enums.rendering.EDebugMode;
 import com.seibel.lod.core.enums.rendering.ERendererMode;
+import com.seibel.lod.core.handlers.dependencyInjection.DhApiEventInjector;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.logging.ConfigBasedSpamLogger;
@@ -52,7 +55,7 @@ import java.util.concurrent.TimeUnit;
  * Specifically for the client.
  * 
  * @author James Seibel
- * @version 2022-8-23
+ * @version 2022-9-10
  */
 public class ClientApi
 {
@@ -145,7 +148,7 @@ public class ClientApi
 			//TODO: Implement
 			
 			// TODO: potentially add a list of chunks that were updated during the save
-//			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelSaveEvent.class, new DhApiLevelSaveEvent.EventParam(new DhApiLevelWrapper(level)));
+			DhApiEventInjector.INSTANCE.fireAllEvents(CoreDhApiLevelSaveEvent.class, new CoreDhApiLevelSaveEvent.CoreEventParam(level));
 		}
 	}
 	
@@ -156,7 +159,7 @@ public class ClientApi
 		if (SharedApi.currentWorld != null)
 		{
 			SharedApi.currentWorld.unloadLevel(level);
-//			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelUnloadEvent.class, new DhApiLevelUnloadEvent.EventParam(new DhApiLevelWrapper(level)));
+			DhApiEventInjector.INSTANCE.fireAllEvents(CoreDhApiLevelUnloadEvent.class, new CoreDhApiLevelUnloadEvent.CoreEventParam(level));
 		}
 	}
 	
@@ -167,7 +170,7 @@ public class ClientApi
 		if (SharedApi.currentWorld != null)
 		{
 			SharedApi.currentWorld.getOrLoadLevel(level);
-//			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelLoadEvent.class, new DhApiLevelLoadEvent.EventParam(new DhApiLevelWrapper(level)));
+			DhApiEventInjector.INSTANCE.fireAllEvents(CoreDhApiLevelLoadEvent.class, new CoreDhApiLevelLoadEvent.CoreEventParam(level));
 		}
 	}
 	
@@ -260,12 +263,11 @@ public class ClientApi
 								RenderUtil.createLodProjectionMatrix(mcProjectionMatrix, partialTicks),
 								RenderUtil.createLodModelViewMatrix(mcModelViewMatrix), partialTicks);
 					
-//					boolean renderingCanceled = DhApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeRenderEvent.class, new DhApiBeforeRenderEvent.EventParam(renderEventParam));
-					
-					if (!rendererDisabledBecauseOfExceptions) // && !renderingCanceled)
+					boolean renderingCanceled = DhApiEventInjector.INSTANCE.fireAllEvents(CoreDhApiBeforeRenderEvent.class, new CoreDhApiBeforeRenderEvent.CoreEventParam(renderEventParam));
+					if (!rendererDisabledBecauseOfExceptions && !renderingCanceled)
 					{
 						level.render(mcModelViewMatrix, mcProjectionMatrix, partialTicks, profiler);
-//						DhApiEventInjector.INSTANCE.fireAllEvents(DhApiAfterRenderEvent.class, new DhApiAfterRenderEvent.EventParam(renderEventParam));
+						DhApiEventInjector.INSTANCE.fireAllEvents(CoreDhApiAfterRenderEvent.class, new CoreDhApiAfterRenderEvent.CoreEventParam(renderEventParam));
 					}
 				}
 				else if (Config.Client.Advanced.Debugging.rendererMode.get() == ERendererMode.DEBUG)

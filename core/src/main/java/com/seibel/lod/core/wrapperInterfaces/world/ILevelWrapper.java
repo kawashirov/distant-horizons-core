@@ -32,7 +32,7 @@ import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
  * Can be either a Server world or a Client world.
  * 
  * @author James Seibel
- * @version 3-5-2022
+ * @version 2022-9-10
  */
 public interface ILevelWrapper extends IBindable
 {
@@ -48,12 +48,9 @@ public interface ILevelWrapper extends IBindable
 	
 	int getHeight();
 	
-	default short getMinHeight()
-	{
-		return 0;
-	}
+	default short getMinHeight() { return 0; }
 
-	default IChunkWrapper tryGetChunk(DHChunkPos pos) {return null;}
+	default IChunkWrapper tryGetChunk(DHChunkPos pos) { return null; }
 
     boolean hasChunkLoaded(int chunkX, int chunkZ);
 
