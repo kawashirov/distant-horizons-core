@@ -377,17 +377,18 @@ public class GenerationQueue implements Closeable {
         taskGroups.values().forEach(g -> g.members.forEach(t -> t.future.complete(false)));
         taskGroups.clear();
         ArrayList<CompletableFuture<Void>> array = new ArrayList<>(inProgress.size());
-        inProgress.values().forEach(runningTask -> array.add(
-                runningTask.genFuture.exceptionally((ex) -> {
-                    if (ex instanceof CompletionException) ex = ex.getCause();
-                    if (!UncheckedInterruptedException.isThrowableInterruption(ex))
-                        logger.error("Error when terminating data generation for section {}", runningTask.group.pos, ex);
-                    return null;
-                })));
-        closer = CompletableFuture.allOf(array.toArray(CompletableFuture[]::new));
-        if (cancelCurrentGeneration) {
-            array.forEach(f -> f.cancel(alsoInterruptRunning));
-        }
+        inProgress.values().forEach(runningTask ->
+        {
+            CompletableFuture<Void> genFuture = runningTask.genFuture; // Do this to prevent it getting swapped out
+            if (cancelCurrentGeneration) genFuture.cancel(alsoInterruptRunning);
+            array.add(genFuture.handle((v, ex) -> {
+                        if (ex instanceof CompletionException) ex = ex.getCause();
+                        if (!UncheckedInterruptedException.isThrowableInterruption(ex))
+                            logger.error("Error when terminating data generation for section {}", runningTask.group.pos, ex);
+                        return null;
+                    }));
+        });
+        closer = CompletableFuture.allOf(array.toArray(CompletableFuture[]::new)); //FIXME: Closer threading issues with pollAndStartClosest
         looseTasks.forEach(t -> t.future.complete(false));
         looseTasks.clear();
         return closer;

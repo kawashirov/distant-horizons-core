@@ -1,5 +1,7 @@
 package com.seibel.lod.core.a7.util;
 
+import java.util.concurrent.CompletionException;
+
 public class UncheckedInterruptedException extends RuntimeException {
     public UncheckedInterruptedException(String message) {
         super(message);
@@ -32,9 +34,12 @@ public class UncheckedInterruptedException extends RuntimeException {
             throw convert((InterruptedException) t);
         } else if (t instanceof UncheckedInterruptedException) {
             throw (UncheckedInterruptedException) t;
+        } else if (t instanceof CompletionException) {
+            rethrowIfIsInterruption(t.getCause());
         }
     }
     public static boolean isThrowableInterruption(Throwable t) {
-        return t instanceof InterruptedException || t instanceof UncheckedInterruptedException;
+        return t instanceof InterruptedException || t instanceof UncheckedInterruptedException
+                || (t instanceof CompletionException && isThrowableInterruption(t.getCause()));
     }
 }

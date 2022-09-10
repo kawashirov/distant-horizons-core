@@ -111,6 +111,7 @@ public class SparseDataSource implements LodDataSource {
         LodUtil.assertTrue(pos.sectionDetail < sectionPos.sectionDetail);
         LodUtil.assertTrue(pos.overlaps(sectionPos));
         if (sparseSource.isEmpty) return;
+        isEmpty = false;
 
         // Downsample needed
         DhLodPos basePos = sectionPos.getCorner(SPARSE_UNIT_DETAIL);
@@ -135,6 +136,7 @@ public class SparseDataSource implements LodDataSource {
         LodUtil.assertTrue(pos.sectionDetail < sectionPos.sectionDetail);
         LodUtil.assertTrue(pos.overlaps(sectionPos));
         if (fullSource.isEmpty) return;
+        isEmpty = false;
         // Downsample needed
         DhLodPos basePos = sectionPos.getCorner(SPARSE_UNIT_DETAIL);
         DhLodPos dataPos = pos.getCorner(SPARSE_UNIT_DETAIL);

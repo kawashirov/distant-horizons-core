@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public interface IDataSourceProvider extends AutoCloseable {
     void addScannedFile(Collection<File> detectedFiles);
@@ -26,8 +27,8 @@ public interface IDataSourceProvider extends AutoCloseable {
     long getLatestCacheVersion(DhSectionPos sectionPos);
 
     CompletableFuture<LodDataSource> onCreateDataFile(DataMetaFile file);
-    LodDataSource onDataFileLoaded(LodDataSource source, Consumer<LodDataSource> updater);
-    CompletableFuture<LodDataSource> onDataFileRefresh(LodDataSource source, Consumer<LodDataSource> updater);
+    LodDataSource onDataFileLoaded(LodDataSource source, Function<LodDataSource, Boolean> updater, Consumer<LodDataSource> onUpdated);
+    CompletableFuture<LodDataSource> onDataFileRefresh(LodDataSource source, Function<LodDataSource, Boolean> updater, Consumer<LodDataSource> onUpdated);
     File computeDataFilePath(DhSectionPos pos);
     Executor getIOExecutor();
 

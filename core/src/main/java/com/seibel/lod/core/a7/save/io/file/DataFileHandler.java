@@ -25,6 +25,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class DataFileHandler implements IDataSourceProvider {
     // Note: Single main thread only for now. May make it multi-thread later, depending on the usage.
@@ -56,9 +57,14 @@ public class DataFileHandler implements IDataSourceProvider {
                     DataMetaFile metaFile = new DataMetaFile(this, level, file);
                     filesByPos.put(metaFile.pos, metaFile);
                 } catch (IOException e) {
-                    LOGGER.error("Failed to read file {}. File will be deleted.", file, e);
-                    if (!file.delete()) {
-                        LOGGER.error("Failed to delete file {}.", file);
+                    LOGGER.error("Failed to read data meta file at {}: ", file, e);
+                    File corruptedFile = new File(file.getParentFile(), file.getName() + ".corrupted");
+                    if (corruptedFile.exists()) corruptedFile.delete();
+                    if (file.renameTo(corruptedFile)) {
+                        LOGGER.error("Renamed corrupted file to {}", file.getName() + ".corrupted");
+                    } else {
+                        LOGGER.error("Failed to rename corrupted file to {}. Will try and delete file", file.getName() + ".corrupted");
+                        file.delete();
                     }
                 }
             }
@@ -295,17 +301,28 @@ public class DataFileHandler implements IDataSourceProvider {
     }
 
     @Override
-    public LodDataSource onDataFileLoaded(LodDataSource source, Consumer<LodDataSource> updater) {
-        updater.accept(source);
-        if (source instanceof SparseDataSource) return ((SparseDataSource) source).trySelfPromote();
+    public LodDataSource onDataFileLoaded(LodDataSource source, Function<LodDataSource, Boolean> updater, Consumer<LodDataSource> onUpdated) {
+        boolean changed = updater.apply(source);
+        if (source instanceof SparseDataSource) {
+            LodDataSource newSource = ((SparseDataSource) source).trySelfPromote();
+            changed |= newSource != source;
+            source = newSource;
+        }
+        if (changed) onUpdated.accept(source);
         return source;
     }
     @Override
-    public CompletableFuture<LodDataSource> onDataFileRefresh(LodDataSource source, Consumer<LodDataSource> updater) {
+    public CompletableFuture<LodDataSource> onDataFileRefresh(LodDataSource source, Function<LodDataSource, Boolean> updater, Consumer<LodDataSource> onUpdated) {
         return CompletableFuture.supplyAsync(() -> {
-            updater.accept(source);
-            if (source instanceof SparseDataSource) return ((SparseDataSource) source).trySelfPromote();
-            return source;
+            LodDataSource sourceLocal = source;
+            boolean changed = updater.apply(sourceLocal);
+            if (sourceLocal instanceof SparseDataSource) {
+                LodDataSource newSource = ((SparseDataSource) sourceLocal).trySelfPromote();
+                changed |= newSource != sourceLocal;
+                sourceLocal = newSource;
+            }
+            if (changed) onUpdated.accept(sourceLocal);
+            return sourceLocal;
         }, fileReaderThread);
     }
 

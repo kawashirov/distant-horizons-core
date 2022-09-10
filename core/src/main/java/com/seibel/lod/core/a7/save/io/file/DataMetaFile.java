@@ -154,7 +154,7 @@ public class DataMetaFile extends MetaFile
 						metaData = makeMetaData(data);
 						return data;
 					})
-					.thenApply((data) -> handler.onDataFileLoaded(data, this::applyWriteQueue))
+					.thenApply((data) -> handler.onDataFileLoaded(data, this::applyWriteQueue, this::saveChanges))
 					.whenComplete((v, e) -> {
 						if (e != null) {
 							LOGGER.error("Uncaught error on creation {}: ", path, e);
@@ -180,7 +180,7 @@ public class DataMetaFile extends MetaFile
 						// Apply the write queue
 						LodUtil.assertTrue(!inCacheWriteAccessAsserter.get(),"No one should be writing to the cache while we are in the process of " +
 								"loading one into the cache! Is this a deadlock?");
-						data = handler.onDataFileLoaded(data, this::applyWriteQueue);
+						data = handler.onDataFileLoaded(data, this::applyWriteQueue, this::saveChanges);
 						// Finally, return the data.
 						return data;
 					}, handler.getIOExecutor())
@@ -230,7 +230,7 @@ public class DataMetaFile extends MetaFile
 					//       For now, I'll go for the latter option and just hope nothing goes wrong...
 					if (inCacheWriteAccessAsserter.getAndSet(true) == false) {
 						try {
-							return handler.onDataFileRefresh((LodDataSource) inner, this::applyWriteQueue);
+							return handler.onDataFileRefresh((LodDataSource) inner, this::applyWriteQueue, this::saveChanges);
 						} catch (Exception e) {
 							LOGGER.error("Error while applying changes to LodDataSource at {}: ", pos, e);
 						} finally {
@@ -268,8 +268,24 @@ public class DataMetaFile extends MetaFile
 		_backQueue = queue;
 	}
 
+	private void saveChanges(LodDataSource data) {
+		try {
+			// Write/Update data
+			LodUtil.assertTrue(metaData != null);
+			metaData.dataLevel = data.getDataDetail();
+			loader = DataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
+			LodUtil.assertTrue(loader != null, "No loader for {} (v{})", data.getClass(), data.getDataVersion());
+			dataType = data.getClass();
+			metaData.dataTypeId = loader == null ? 0 : loader.datatypeId;
+			metaData.loaderVersion = data.getDataVersion();
+			super.writeData((out) -> data.saveData(level, this, out));
+		} catch (IOException e) {
+			LOGGER.error("Failed to save updated data file at {} for sect {}", path, pos, e);
+		}
+	}
+
 	// Return whether any write has happened to the data
-	private void applyWriteQueue(LodDataSource data) {
+	private boolean applyWriteQueue(LodDataSource data) {
 		// Poll the write queue
 		// First check if write queue is empty, then swap the write queue.
 		// Must be done in this order to ensure isValid work properly. See isValid() for details.
@@ -281,21 +297,9 @@ public class DataMetaFile extends MetaFile
 				data.update(chunk);
 			}
 			_backQueue.queue.clear();
-			try {
-				// Write/Update data
-				LodUtil.assertTrue(metaData != null);
-				metaData.dataLevel = data.getDataDetail();
-				loader = DataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
-				LodUtil.assertTrue(loader != null, "No loader for {} (v{})", data.getClass(), data.getDataVersion());
-				dataType = data.getClass();
-				metaData.dataTypeId = loader == null ? 0 : loader.datatypeId;
-				metaData.loaderVersion = data.getDataVersion();
-				super.writeData((out) -> data.saveData(level, this, out));
-				LOGGER.info("Updated Data file at {} for sect {} with {} chunk writes.", path, pos, count);
-			} catch (IOException e) {
-				LOGGER.error("Failed to save updated data file at {} for sect {}", path, pos, e);
-			}
+			LOGGER.info("Updated Data file at {} for sect {} with {} chunk writes.", path, pos, count);
 		}
+		return !isEmpty;
 	}
 
 	private FileInputStream getDataContent() throws IOException {

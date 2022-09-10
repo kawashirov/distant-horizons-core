@@ -53,7 +53,15 @@ public class RenderFileHandler implements IRenderSourceProvider {
                     RenderMetaFile metaFile = new RenderMetaFile(this, file);
                     filesByPos.put(metaFile.pos, metaFile);
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    LOGGER.error("Failed to read render meta file at {}: ", file, e);
+                    File corruptedFile = new File(file.getParentFile(), file.getName() + ".corrupted");
+                    if (corruptedFile.exists()) corruptedFile.delete();
+                    if (file.renameTo(corruptedFile)) {
+                        LOGGER.error("Renamed corrupted file to {}", file.getName() + ".corrupted");
+                    } else {
+                        LOGGER.error("Failed to rename corrupted file to {}. Will try and delete file", file.getName() + ".corrupted");
+                        file.delete();
+                    }
                 }
             }
         }

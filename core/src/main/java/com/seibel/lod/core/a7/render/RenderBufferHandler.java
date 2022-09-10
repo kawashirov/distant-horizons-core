@@ -15,6 +15,7 @@ public class RenderBufferHandler {
     class RenderBufferNode implements AutoCloseable {
         public final DhSectionPos pos;
         public volatile RenderBufferNode[] children = null;
+        //FIXME: The multiple Atomics will cause race conditions between them!
         public final AtomicReference<RenderBuffer> renderBufferSlotOpaque = new AtomicReference<>();
         public final AtomicReference<RenderBuffer> renderBufferSlotTransparent = new AtomicReference<>();
 
@@ -75,10 +76,14 @@ public class RenderBufferHandler {
             boolean shouldRender = section.canRender();
             if (!shouldRender) {
                 //TODO: Does this really need to force the old buffer to not be rendered?
-//                RenderBuffer buff = renderBufferSlot.getAndSet(null);
-//                if (buff != null) {
-//                    buff.close();
-//                }
+                RenderBuffer buff = renderBufferSlotOpaque.getAndSet(null);
+                if (buff != null) {
+                    buff.close();
+                }
+                buff = renderBufferSlotTransparent.getAndSet(null);
+                if (buff != null) {
+                    buff.close();
+                }
             } else {
                 LodUtil.assertTrue(container != null); // section.isLoaded() should have ensured this
                 container.trySwapRenderBuffer(target, renderBufferSlotOpaque, renderBufferSlotTransparent);
