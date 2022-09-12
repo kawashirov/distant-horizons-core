@@ -28,6 +28,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class DhClientServerLevel implements IClientLevel, IServerLevel {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
@@ -42,7 +43,7 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
     public LodRenderer renderer = null;
     public LodQuadTree tree = null;
     public volatile BatchGenerator worldGenerator = null;
-    private final ReentrantLock renderStateLifecycleLock = new ReentrantLock();
+    private final ReentrantReadWriteLock renderStateLifecycleLock = new ReentrantReadWriteLock();
 
     public F3Screen.NestedMessage f3Msg;
 
@@ -70,20 +71,27 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
     @Override
     public void clientTick() {
         //LOGGER.info("Client tick for {}", level);
-        if (clientLevel == null) return;
-        if (tree.viewDistance != Config.Client.Graphics.Quality.lodChunkRenderDistance.get()*16) {
-            IClientLevelWrapper temp = clientLevel;
-            renderStateLifecycleLock.lock();
-            try {
-            stopRenderer();
-            startRenderer(temp);
-            } finally {
-                renderStateLifecycleLock.unlock();
+        renderStateLifecycleLock.readLock().lock();
+        try {
+            if (clientLevel == null) return;
+            if (tree.viewDistance != Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * 16) {
+                IClientLevelWrapper temp = clientLevel;
+                renderStateLifecycleLock.readLock().unlock();
+                renderStateLifecycleLock.writeLock().lock();
+                try {
+                    stopRenderer();
+                    startRenderer(temp);
+                } finally {
+                    renderStateLifecycleLock.readLock().lock();
+                    renderStateLifecycleLock.writeLock().unlock();
+                }
+                return;
             }
-            return;
+            tree.tick(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
+            renderBufferHandler.update();
+        } finally {
+            renderStateLifecycleLock.readLock().unlock();
         }
-        tree.tick(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
-        renderBufferHandler.update();
     }
 
     @Override
@@ -93,7 +101,7 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
 
     public void startRenderer(IClientLevelWrapper clientLevel) {
         LOGGER.info("Starting renderer for {}", this);
-        renderStateLifecycleLock.lock();
+        renderStateLifecycleLock.writeLock().lock();
         try {
             if (renderBufferHandler != null || this.clientLevel != null) {
                 LOGGER.warn("Tried to call startRenderer() on {} when renderer is already setup!", this);
@@ -110,13 +118,13 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
             renderBufferHandler = new RenderBufferHandler(tree);
             FileScanUtil.scanFile(save, serverLevel, null, renderFileHandler);
         } finally {
-            renderStateLifecycleLock.unlock();
+            renderStateLifecycleLock.writeLock().unlock();
         }
     }
 
     @Override
     public void render(Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, float partialTicks, IProfilerWrapper profiler) {
-        if (!renderStateLifecycleLock.tryLock()) return;
+        if (!renderStateLifecycleLock.readLock().tryLock()) return;
         try {
             if (renderBufferHandler == null) {
                 LOGGER.error("Tried to call render() on {} when renderer has not been started!", this);
@@ -127,18 +135,19 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
             }
             renderer.drawLODs(mcModelViewMatrix, mcProjectionMatrix, partialTicks, profiler);
         } finally {
-            renderStateLifecycleLock.unlock();
+            renderStateLifecycleLock.readLock().unlock();
         }
     }
 
     public void stopRenderer() {
         LOGGER.info("Stopping renderer for {}", this);
-        renderStateLifecycleLock.lock();
+        renderStateLifecycleLock.writeLock().lock();
         try {
             if (renderBufferHandler == null) {
                 LOGGER.warn("Tried to call stopRenderer() on {} when renderer is already closed!", this);
                 return;
             }
+
             tree.close();
             tree = null;
             dataFileHandler.popGenerationQueue();
@@ -162,7 +171,7 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
             closer.join(); // TODO: Could this cause deadlocks? we are blocking in main thread.
             clientLevel = null;
         } finally {
-            renderStateLifecycleLock.unlock();
+            renderStateLifecycleLock.writeLock().unlock();
         }
     }
 
@@ -208,7 +217,7 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
     }
     @Override
     public void close() {
-        renderStateLifecycleLock.lock();
+        renderStateLifecycleLock.writeLock().lock();
         try {
             if (generationQueue != null) generationQueue.close();
             if (worldGenerator != null) worldGenerator.close();
@@ -218,7 +227,7 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
             if (renderFileHandler != null) renderFileHandler.close();
             dataFileHandler.close();
         } finally {
-            renderStateLifecycleLock.unlock();
+            renderStateLifecycleLock.writeLock().unlock();
         }
         LOGGER.info("Closed {}", this);
     }

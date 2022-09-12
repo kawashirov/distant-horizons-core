@@ -93,7 +93,8 @@ public class GenerationQueue implements Closeable {
     }
 
     private final ConcurrentLinkedQueue<GenTask> looseTasks = new ConcurrentLinkedQueue<>();
-    private final HashMap<DhLodPos, TaskGroup> taskGroups = new HashMap<>(); // Accessed by poller only
+    // FIXME: Concurrency issue on close!
+    private final ConcurrentHashMap<DhLodPos, TaskGroup> taskGroups = new ConcurrentHashMap<>(); // Accessed by poller only
     private final ConcurrentHashMap<DhLodPos, InProgressTask> inProgress = new ConcurrentHashMap<>();
 
     private final byte maxGranularity;
