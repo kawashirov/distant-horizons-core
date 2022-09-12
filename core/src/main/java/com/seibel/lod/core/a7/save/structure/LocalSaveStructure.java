@@ -8,8 +8,6 @@ import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
 import java.io.File;
 
 public class LocalSaveStructure extends SaveStructure {
-    private static final IMinecraftSharedWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftSharedWrapper.class);
-
     private File debugPath = new File("");
 
     // Fit for Client_Server & Server_Only environment

@@ -20,13 +20,12 @@
 package com.seibel.lod.core.a7.datatype.column.render;
 
 import com.seibel.lod.core.a7.datatype.column.accessor.ColumnArrayView;
+import com.seibel.lod.core.a7.datatype.column.accessor.ColumnFormat;
 import com.seibel.lod.core.a7.render.a7LodRenderer;
 import com.seibel.lod.core.builders.lodBuilding.bufferBuilding.LodQuadBuilder;
-import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.util.ColorUtil;
-import com.seibel.lod.core.util.DataPointUtil;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 
@@ -41,26 +40,26 @@ public class ColumnBox
 		short maxY = (short) (y + ySize);
 		short maxZ = (short) (z + zSize);
 		byte skyLightTop = skyLight;
-		byte skyLightBot = DataPointUtil.doesItExist(botData) ? DataPointUtil.getLightSky(botData) : 0;
+		byte skyLightBot = ColumnFormat.doesItExist(botData) ? ColumnFormat.getLightSky(botData) : 0;
 
 		boolean isTransparent = ColorUtil.getAlpha(color)<255 && a7LodRenderer.transparencyEnabled;
-		boolean isTopTransparent = DataPointUtil.getAlpha(topData)<255 && a7LodRenderer.transparencyEnabled;
-		boolean isBotTransparent = DataPointUtil.getAlpha(botData)<255 && a7LodRenderer.transparencyEnabled;
+		boolean isTopTransparent = ColumnFormat.getAlpha(topData)<255 && a7LodRenderer.transparencyEnabled;
+		boolean isBotTransparent = ColumnFormat.getAlpha(botData)<255 && a7LodRenderer.transparencyEnabled;
 
 
 		// Up direction case
 		//We skip if
 		//   current block is not transparent: we check if the adj block is attached and opaque
 
-		boolean skipTop = DataPointUtil.doesItExist(topData) && (DataPointUtil.getDepth(topData) == maxY) && !isTopTransparent;
-		boolean skipBot = DataPointUtil.doesItExist(botData) && (DataPointUtil.getHeight(botData) == y) && !isBotTransparent;
+		boolean skipTop = ColumnFormat.doesItExist(topData) && (ColumnFormat.getDepth(topData) == maxY) && !isTopTransparent;
+		boolean skipBot = ColumnFormat.doesItExist(botData) && (ColumnFormat.getHeight(botData) == y) && !isBotTransparent;
 		if(a7LodRenderer.transparencyEnabled && a7LodRenderer.fakeOceanFloor) {
-			if (!isTransparent && isTopTransparent && DataPointUtil.doesItExist(topData)) {
-				skyLightTop = (byte) LodUtil.clamp(0, 15 - (DataPointUtil.getHeight(topData) - y), 15);
-				ySize = (short) (DataPointUtil.getHeight(topData) - y - 1);
+			if (!isTransparent && isTopTransparent && ColumnFormat.doesItExist(topData)) {
+				skyLightTop = (byte) LodUtil.clamp(0, 15 - (ColumnFormat.getHeight(topData) - y), 15);
+				ySize = (short) (ColumnFormat.getHeight(topData) - y - 1);
 				//y = (short) (DataPointUtil.getHeight(topData) - 2);
 				//ySize = 1;
-			} else if (isTransparent && !isBotTransparent && DataPointUtil.doesItExist(botData)) {
+			} else if (isTransparent && !isBotTransparent && ColumnFormat.doesItExist(botData)) {
 				y = (short) (y + ySize - 1);
 				ySize = 1;
 			}
@@ -171,7 +170,7 @@ public class ColumnBox
 	{
 		color = ColorUtil.applyShade(color, MC.getShade(direction));
 		ColumnArrayView dataPoint = adjData;
-		if (dataPoint == null || DataPointUtil.isVoid(dataPoint.get(0)))
+		if (dataPoint == null || ColumnFormat.isVoid(dataPoint.get(0)))
 		{
 			builder.addQuadAdj(direction, x, y, z, w0, wy, color, (byte) 15, blockLight);
 			return;
@@ -184,30 +183,30 @@ public class ColumnBox
 		byte nextSkyLight = upSkyLight;
 		boolean isTransparent = ColorUtil.getAlpha(color) < 255  && a7LodRenderer.transparencyEnabled;
 		boolean lastWasTransparent = false;
-		for (i = 0; i < dataPoint.size() && DataPointUtil.doesItExist(adjData.get(i))
-				&& !DataPointUtil.isVoid(adjData.get(i)); i++)
+		for (i = 0; i < dataPoint.size() && ColumnFormat.doesItExist(adjData.get(i))
+				&& !ColumnFormat.isVoid(adjData.get(i)); i++)
 		{
 			long adjPoint = adjData.get(i);
 
-			boolean isAdjTransparent = DataPointUtil.getAlpha(adjPoint) < 255 && a7LodRenderer.transparencyEnabled;
+			boolean isAdjTransparent = ColumnFormat.getAlpha(adjPoint) < 255 && a7LodRenderer.transparencyEnabled;
 
 			if (!isTransparent && isAdjTransparent && a7LodRenderer.transparencyEnabled)
 				continue;
 
 			
-			short height = DataPointUtil.getHeight(adjPoint);
-			short depth = DataPointUtil.getDepth(adjPoint);
+			short height = ColumnFormat.getHeight(adjPoint);
+			short depth = ColumnFormat.getDepth(adjPoint);
 
 			if(a7LodRenderer.transparencyEnabled && a7LodRenderer.fakeOceanFloor)
 			{
 
 				if(lastWasTransparent && !isAdjTransparent)
 				{
-					height = (short) (DataPointUtil.getHeight(adjData.get(i-1)) - 1);
+					height = (short) (ColumnFormat.getHeight(adjData.get(i-1)) - 1);
 				}
 				else if(isAdjTransparent && (i + 1) < adjData.size())
 				{
-					if (DataPointUtil.getAlpha(adjData.get(i+1)) == 255)
+					if (ColumnFormat.getAlpha(adjData.get(i+1)) == 255)
 					{
 						depth = (short) (height - 1);
 					}
@@ -228,7 +227,7 @@ public class ColumnBox
 				// _______&&: depth ______ < y < maxY
 				if (firstFace)
 				{
-					builder.addQuadAdj(direction, x, y, z, w0, wy, color, DataPointUtil.getLightSky(adjPoint),
+					builder.addQuadAdj(direction, x, y, z, w0, wy, color, ColumnFormat.getLightSky(adjPoint),
 							blockLight);
 				}
 				else
@@ -237,7 +236,7 @@ public class ColumnBox
 					if (previousDepth == -1)
 						throw new RuntimeException("Loop error");
 					builder.addQuadAdj(direction, x, y, z, w0, (short) (previousDepth - y), color,
-							DataPointUtil.getLightSky(adjPoint), blockLight);
+							ColumnFormat.getLightSky(adjPoint), blockLight);
 					previousDepth = -1;
 				}
 				break;
@@ -268,7 +267,7 @@ public class ColumnBox
 				if (firstFace)
 				{
 					builder.addQuadAdj(direction, x, height, z, w0, (short) (y + wy - height), color,
-							DataPointUtil.getLightSky(adjPoint), blockLight);
+							ColumnFormat.getLightSky(adjPoint), blockLight);
 				}
 				else
 				{
@@ -278,7 +277,7 @@ public class ColumnBox
 					if (previousDepth > height)
 					{
 						builder.addQuadAdj(direction, x, height, z, w0, (short) (previousDepth - height), color,
-								DataPointUtil.getLightSky(adjPoint), blockLight);
+								ColumnFormat.getLightSky(adjPoint), blockLight);
 					}
 					previousDepth = -1;
 				}
@@ -310,7 +309,7 @@ public class ColumnBox
 				if (firstFace)
 				{
 					builder.addQuadAdj(direction, x, height, z, w0, (short) (y + wy - height), color,
-							DataPointUtil.getLightSky(adjPoint), blockLight);
+							ColumnFormat.getLightSky(adjPoint), blockLight);
 				}
 				else
 				{
@@ -320,7 +319,7 @@ public class ColumnBox
 					if (previousDepth > height)
 					{
 						builder.addQuadAdj(direction, x, height, z, w0, (short) (previousDepth - height), color,
-								DataPointUtil.getLightSky(adjPoint), blockLight);
+								ColumnFormat.getLightSky(adjPoint), blockLight);
 					}
 					previousDepth = -1;
 				}
@@ -329,8 +328,8 @@ public class ColumnBox
 			previousDepth = depth;
 			firstFace = false;
 			nextSkyLight = upSkyLight;
-			if (i + 1 < adjData.size() && DataPointUtil.doesItExist(adjData.get(i + 1)))
-				nextSkyLight = DataPointUtil.getLightSky(adjData.get(i + 1));
+			if (i + 1 < adjData.size() && ColumnFormat.doesItExist(adjData.get(i + 1)))
+				nextSkyLight = ColumnFormat.getLightSky(adjData.get(i + 1));
 			lastWasTransparent = isAdjTransparent;
 		}
 		

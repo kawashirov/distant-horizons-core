@@ -130,7 +130,7 @@ public interface IMinecraftClientWrapper extends IBindable
 	 * Error: <strong>ExceptionClass: exceptionErrorMessage</strong>  <br>
 	 * Exit Code: -1  <br>
 	 */
-	void crashMinecraft(String errorMessage, Throwable exception);
+	void crashMinecraft(String errorMessage, Throwable exception); //FIXME: Move to IMinecraftSharedWrapper
 
     Object getOptionsObject();
 	

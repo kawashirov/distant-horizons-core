@@ -24,6 +24,7 @@ package com.seibel.lod.core.util;
  * @author Leonardo Amato
  * @version ??
  */
+@Deprecated // Use DhSectionPos & DhLodPos & etc classes methods instead
 public class LevelPosUtil
 {
 	public static int[] convert(int[] levelPos, byte newDetailLevel)

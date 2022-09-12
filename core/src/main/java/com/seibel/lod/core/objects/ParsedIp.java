@@ -33,9 +33,9 @@ public class ParsedIp
 	
 	/**
 	 * Can be used to find if a numeric IP is a LAN IP
-	 * 
+	 *
 	 * Ip list source: <br>
-	 * https://networkengineering.stackexchange.com/questions/5825/why-192-168-for-local-addresses
+	 * <a href="https://networkengineering.stackexchange.com/questions/5825/why-192-168-for-local-addresses">...</a>
 	 */
 	public static final String LAN_IP_REGEX = "(10|172\\.16|192\\.168).*";
 	

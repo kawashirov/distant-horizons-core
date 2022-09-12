@@ -19,11 +19,8 @@
 
 package com.seibel.lod.core.a7.datatype.column.accessor;
 
-import com.seibel.lod.core.a7.datatype.column.accessor.ColumnArrayView;
-import com.seibel.lod.core.a7.datatype.column.accessor.IColumnDataView;
 import com.seibel.lod.core.logging.SpamReducedLogger;
 import com.seibel.lod.core.util.ColorUtil;
-import com.seibel.lod.core.util.DataPointUtil;
 import com.seibel.lod.core.util.LodUtil;
 
 import java.util.Arrays;
@@ -349,8 +346,8 @@ public class ColumnFormat {
         long tempData;
         for (int index = 0; index < dataCount; index++) {
             tempData = sourceData.get(index * inputVerticalSize);
-            allVoid = allVoid && DataPointUtil.isVoid(tempData);
-            allEmpty = allEmpty && !DataPointUtil.doesItExist(tempData);
+            allVoid = allVoid && ColumnFormat.isVoid(tempData);
+            allEmpty = allEmpty && !ColumnFormat.doesItExist(tempData);
         }
 
         //We check if there is any data that's not empty or void
@@ -378,9 +375,9 @@ public class ColumnFormat {
                 for (int index = 0; index < dataCount; index++) {
                     if (indeces[index] < inputVerticalSize) {
                         tempData = sourceData.get(index * inputVerticalSize + indeces[index]);
-                        if (!DataPointUtil.isVoid(tempData) && DataPointUtil.doesItExist(tempData)) {
-                            tempHeight = DataPointUtil.getHeight(tempData);
-                            tempDepth = DataPointUtil.getDepth(tempData);
+                        if (!ColumnFormat.isVoid(tempData) && ColumnFormat.doesItExist(tempData)) {
+                            tempHeight = ColumnFormat.getHeight(tempData);
+                            tempDepth = ColumnFormat.getDepth(tempData);
                             if (tempDepth >= newHeight) {
                                 //First case
                                 //the column we are checking is higher than the current column
@@ -455,7 +452,7 @@ public class ColumnFormat {
             for (int index = 0; index < dataCount; index++) {
                 if (indeces[index] < inputVerticalSize) {
                     tempData = sourceData.get(index * inputVerticalSize + indeces[index]);
-                    stillHasDataToCheck |= !DataPointUtil.isVoid(tempData) && DataPointUtil.doesItExist(tempData);
+                    stillHasDataToCheck |= !ColumnFormat.isVoid(tempData) && ColumnFormat.doesItExist(tempData);
                 }
             }
         }

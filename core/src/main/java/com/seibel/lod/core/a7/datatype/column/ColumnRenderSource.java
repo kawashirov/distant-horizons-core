@@ -1,9 +1,6 @@
 package com.seibel.lod.core.a7.datatype.column;
 
-import com.seibel.lod.core.a7.datatype.column.accessor.ColumnArrayView;
-import com.seibel.lod.core.a7.datatype.column.accessor.ColumnFormat;
-import com.seibel.lod.core.a7.datatype.column.accessor.ColumnQuadView;
-import com.seibel.lod.core.a7.datatype.column.accessor.IColumnDatatype;
+import com.seibel.lod.core.a7.datatype.column.accessor.*;
 import com.seibel.lod.core.a7.datatype.column.render.ColumnRenderBuffer;
 import com.seibel.lod.core.a7.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.a7.datatype.transform.FullToColumnTransformer;
@@ -14,7 +11,6 @@ import com.seibel.lod.core.a7.render.a7LodRenderer;
 import com.seibel.lod.core.a7.save.io.render.RenderMetaFile;
 import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
-import com.seibel.lod.core.objects.LodDataView;
 import com.seibel.lod.core.a7.level.ILevel;
 import com.seibel.lod.core.a7.render.LodQuadTree;
 import com.seibel.lod.core.a7.render.LodRenderSection;
@@ -121,7 +117,7 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     }
 
     @Override
-    public boolean copyVerticalData(LodDataView data, int posX, int posZ, boolean override) {
+    public boolean copyVerticalData(IColumnDataView data, int posX, int posZ, boolean override) {
         if (DO_SAFETY_CHECKS) {
             if (data.size() != verticalSize)
                 throw new IllegalArgumentException("data size not the same as vertical size");
@@ -137,7 +133,7 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
         } else {
             if (compare<=0) return false;
         }
-        data.copyTo(dataContainer, index);
+        data.copyTo(dataContainer, index, data.size());
         return true;
     }
 

@@ -19,12 +19,10 @@
 
 package com.seibel.lod.core.util;
 
-import java.io.File;
 import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.seibel.lod.core.a7.util.UncheckedInterruptedException;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.enums.config.EServerFolderNameMode;
 import com.seibel.lod.core.enums.config.EVanillaOverdraw;
@@ -33,7 +31,6 @@ import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.objects.DHChunkPos;
 import com.seibel.lod.core.objects.ParsedIp;
 import com.seibel.lod.core.objects.Pos2D;
-import com.seibel.lod.core.objects.DHRegionPos;
 import com.seibel.lod.core.objects.opengl.DefaultLodVertexFormats;
 import com.seibel.lod.core.objects.opengl.LodVertexFormat;
 import com.seibel.lod.core.util.gridList.EdgeDistanceBooleanGrid;
@@ -41,9 +38,7 @@ import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IDimensionTypeWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.message.Message;
 
 /**
  * This class holds methods and constants that may be used in multiple places.
@@ -183,15 +178,7 @@ public class LodUtil
 		
 		return returnWorld;
 	}
-	
-	/** Convert a 2D absolute position into a quad tree relative position. */
-	public static DHRegionPos convertGenericPosToRegionPos(int x, int z, int detailLevel)
-	{
-		int relativePosX = Math.floorDiv(x, 1 << (LodUtil.REGION_DETAIL_LEVEL - detailLevel));
-		int relativePosZ = Math.floorDiv(z, 1 << (LodUtil.REGION_DETAIL_LEVEL - detailLevel));
-		
-		return new DHRegionPos(relativePosX, relativePosZ);
-	}
+
 
 	/** returns the server name, IP and game version. */
 	@Deprecated // FIXME: There are soooo many duplicated methods doing the same thing everywhere

@@ -27,6 +27,7 @@ import com.seibel.lod.core.enums.config.EHorizontalQuality;
  * @author Leonardo Amato
  * @version ??
  */
+@Deprecated
 public class DetailDistanceUtil
 {
 	private static byte minDetail = Config.Client.Graphics.Quality.drawResolution.get().detailLevel;

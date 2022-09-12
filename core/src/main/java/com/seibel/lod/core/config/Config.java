@@ -141,25 +141,11 @@ public class Config
                                 + " but will increase memory and GPU usage.")
                         .build();
 
-                public static ConfigEntry<EDropoffQuality> dropoffQuality = new ConfigEntry.Builder<EDropoffQuality>()
-                        .set(EDropoffQuality.AUTO)
-                        .comment(""
-                                + "This determines how lod level drop off will be done. \n"
-                                + "\n"
-                                + EDropoffQuality.SMOOTH_DROPOFF + ": \n"
-                                + "    The lod level is calculated for each point, making the drop off a smooth circle. \n"
-                                + EDropoffQuality.PERFORMANCE_FOCUSED + ": \n"
-                                + "    One detail level for an entire region. Minimize CPU usage and \n"
-                                + "     improve terrain refresh delay, especially for high Lod render distance. \n"
-                                + EDropoffQuality.AUTO + ": \n"
-                                + "    Use "+ EDropoffQuality.SMOOTH_DROPOFF + " for less then 128 Lod render distance, \n"
-                                + "     or "+ EDropoffQuality.PERFORMANCE_FOCUSED +" otherwise.")
-                        .build();
-
                 public static ConfigEntry<ETransparency> transparency = new ConfigEntry.Builder<ETransparency>()
                         .set(ETransparency.COMPLETE)
                         .comment("")
                         .build();
+
                 public static ConfigEntry<Integer> lodBiomeBlending = new ConfigEntry.Builder<Integer>()
                         .setMinDefaultMax(0,1,7)
                         .comment(""

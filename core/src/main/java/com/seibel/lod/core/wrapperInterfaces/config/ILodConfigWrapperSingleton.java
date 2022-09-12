@@ -79,16 +79,6 @@ public interface ILodConfigWrapperSingleton extends IBindable
 				EHorizontalQuality getHorizontalQuality();
 				void setHorizontalQuality(EHorizontalQuality newHorizontalQuality);
 
-				EDropoffQuality getDropoffQuality();
-				void setDropoffQuality(EDropoffQuality newDropoffQuality);
-				default EDropoffQuality getResolvedDropoffQuality() {
-					EDropoffQuality dropoffQuality = Config.Client.Graphics.Quality.dropoffQuality.get();
-					if (dropoffQuality == EDropoffQuality.AUTO)
-						dropoffQuality = Config.Client.Graphics.Quality.lodChunkRenderDistance.get() < 128 ?
-								EDropoffQuality.SMOOTH_DROPOFF : EDropoffQuality.PERFORMANCE_FOCUSED;
-					return dropoffQuality;
-				}
-
 				public void setTransparency(ETransparency newTransparency);
 
 				public ETransparency getTransparency();

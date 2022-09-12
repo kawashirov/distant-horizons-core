@@ -2,6 +2,7 @@ package com.seibel.lod.core.a7.datatype.column.render;
 
 import com.seibel.lod.core.a7.datatype.column.ColumnRenderSource;
 import com.seibel.lod.core.a7.datatype.column.accessor.ColumnArrayView;
+import com.seibel.lod.core.a7.datatype.column.accessor.ColumnFormat;
 import com.seibel.lod.core.a7.level.IClientLevel;
 import com.seibel.lod.core.a7.render.a7LodRenderer;
 import com.seibel.lod.core.a7.util.UncheckedInterruptedException;
@@ -290,8 +291,8 @@ public class ColumnRenderBuffer extends RenderBuffer {
                 UncheckedInterruptedException.throwIfInterrupted();
 
                 ColumnArrayView posData = region.getVerticalDataView(x, z);
-                if (posData.size() == 0 || !DataPointUtil.doesItExist(posData.get(0))
-                        || DataPointUtil.isVoid(posData.get(0)))
+                if (posData.size() == 0 || !ColumnFormat.doesItExist(posData.get(0))
+                        || ColumnFormat.isVoid(posData.get(0)))
                     continue;
 
                 ColumnArrayView[][] adjData = new ColumnArrayView[4][];
@@ -365,15 +366,15 @@ public class ColumnRenderBuffer extends RenderBuffer {
                     long data = posData.get(i);
                     // If the data is not renderable (Void or non-existing) we stop since there is
                     // no data left in this position
-                    if (DataPointUtil.isVoid(data) || !DataPointUtil.doesItExist(data))
+                    if (ColumnFormat.isVoid(data) || !ColumnFormat.doesItExist(data))
                         break;
 
-                    long adjDataTop = i - 1 >= 0 ? posData.get(i - 1) : DataPointUtil.EMPTY_DATA;
-                    long adjDataBot = i + 1 < posData.size() ? posData.get(i + 1) : DataPointUtil.EMPTY_DATA;
+                    long adjDataTop = i - 1 >= 0 ? posData.get(i - 1) : ColumnFormat.EMPTY_DATA;
+                    long adjDataBot = i + 1 < posData.size() ? posData.get(i + 1) : ColumnFormat.EMPTY_DATA;
 
 
                     // We send the call to create the vertices
-                    if(DataPointUtil.getAlpha(data) == 255 || !a7LodRenderer.transparencyEnabled)
+                    if(ColumnFormat.getAlpha(data) == 255 || !a7LodRenderer.transparencyEnabled)
                     {
                         CubicLodTemplate.addLodToBuffer(data, adjDataTop, adjDataBot, adjData, detailLevel,
                                 x, z, quadBuilderOpaque, debugMode);

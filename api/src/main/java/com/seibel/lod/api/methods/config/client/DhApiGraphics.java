@@ -85,16 +85,7 @@ public class DhApiGraphics
 	/** Modifies the quadratic function fake chunks use for horizontal quality drop-off. */
 	public static IDhApiConfig<EDhApiHorizontalQuality> getHorizontalQualityDropoffConfig()
 	{ return new DhApiConfig<EHorizontalQuality, EDhApiHorizontalQuality>(Quality.horizontalQuality, new GenericEnumConverter<>(EHorizontalQuality.class, EDhApiHorizontalQuality.class)); }
-	
-	/**
-	 * Defines how fake chunks drop off in quality. <br><br>
-	 *
-	 * Higher quality settings require fake chunk geometry data to be
-	 * rebuilt more often when moving but make quality drop-off less noticeable.
-	 * */
-	public static IDhApiConfig<EDhApiDropoffQuality> getHorizontalQualityDropoffMethodConfig()
-	{ return new DhApiConfig<EDropoffQuality, EDhApiDropoffQuality>(Quality.dropoffQuality, new GenericEnumConverter<>(EDropoffQuality.class, EDhApiDropoffQuality.class)); }
-	
+
 	/**
 	 * The same as vanilla Minecraft's biome blending. <br><br>
 	 *

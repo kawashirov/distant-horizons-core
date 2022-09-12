@@ -19,11 +19,9 @@
 
 package com.seibel.lod.core.wrapperInterfaces.chunk;
 
-import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
 import com.seibel.lod.core.objects.DHChunkPos;
 import com.seibel.lod.core.util.LodUtil;
-import com.seibel.lod.core.wrapperInterfaces.block.IBlockDetailWrapper;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
 
@@ -38,8 +36,10 @@ public interface IChunkWrapper extends IBindable
 	}
 	int getMinBuildHeight();
 	int getMaxBuildHeight();
-	
+
+	// FIXME: getHeightMapValue & getMaxY is the same! Which one to keep?
 	int getHeightMapValue(int xRel, int zRel);
+	int getMaxY(int x, int z);
 
 	@Deprecated
 	int getChunkPosX();
@@ -49,7 +49,6 @@ public interface IChunkWrapper extends IBindable
 	int getRegionPosX();
 	@Deprecated
 	int getRegionPosZ();
-	int getMaxY(int x, int z);
 	int getMaxX();
 	int getMaxZ();
 	int getMinX();

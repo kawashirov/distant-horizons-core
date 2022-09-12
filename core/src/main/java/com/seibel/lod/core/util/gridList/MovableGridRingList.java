@@ -19,7 +19,6 @@
  
 package com.seibel.lod.core.util.gridList;
 
-import com.seibel.lod.core.objects.DHRegionPos;
 import com.seibel.lod.core.objects.Pos2D;
 import com.seibel.lod.core.util.LodUtil;
 

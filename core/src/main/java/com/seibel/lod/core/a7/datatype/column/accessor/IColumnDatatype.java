@@ -1,7 +1,5 @@
 package com.seibel.lod.core.a7.datatype.column.accessor;
 
-import com.seibel.lod.core.objects.LodDataView;
-
 public interface IColumnDatatype {
     byte getDetailOffset();
     default int getDataSize() {
@@ -31,6 +29,6 @@ public interface IColumnDatatype {
      * This methods will add the data in the given position if certain condition are satisfied
      * @param override if override is true we can override data created with same generation mode
      */
-    boolean copyVerticalData(LodDataView data, int posX, int posZ, boolean override);
+    boolean copyVerticalData(IColumnDataView data, int posX, int posZ, boolean override);
     void generateData(IColumnDatatype lowerDataContainer, int posX, int posZ);
 }

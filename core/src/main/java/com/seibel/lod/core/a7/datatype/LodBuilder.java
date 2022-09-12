@@ -12,7 +12,7 @@ import com.seibel.lod.core.util.*;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import org.apache.logging.log4j.LogManager;
 
-//FIXME: Unused class???
+//FIXME: To-Be-Used class
 public class LodBuilder {
     public static final ConfigBasedLogger LOGGER = new ConfigBasedLogger(LogManager.getLogger(),
             () -> Config.Client.Advanced.Debugging.DebugSwitch.logLodBuilderEvent.get());
@@ -76,5 +76,5 @@ public class LodBuilder {
         else // Else, it means someone managed to sneak in a new gen request in this pos. Then lets drop this old task.
             task.future.complete(null);
     }
-    
+
 }

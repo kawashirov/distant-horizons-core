@@ -8,7 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 
-public class EventLoop implements AutoCloseable { //FIXME This should have close. We are leaking stuff.
+public class EventLoop implements AutoCloseable {
     private final boolean PAUSE_ON_ERROR = ModInfo.IS_DEV_BUILD;
     private final Logger logger = DhLoggerBuilder.getLogger();
     private final ExecutorService executorService;

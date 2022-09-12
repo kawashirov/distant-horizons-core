@@ -180,15 +180,6 @@ public class LodConfigWrapperSingleton implements ILodConfigWrapperSingleton
 				}
 
 				@Override
-				public EDropoffQuality getDropoffQuality() {
-					return Config.Client.Graphics.Quality.dropoffQuality.get();
-				}
-				@Override
-				public void setDropoffQuality(EDropoffQuality newDropoffQuality) {
-					Config.Client.Graphics.Quality.dropoffQuality.set(newDropoffQuality);
-				}
-
-				@Override
 				public void setTransparency(ETransparency newTransparency) {
 					Config.Client.Graphics.Quality.transparency.set(newTransparency);
 				}

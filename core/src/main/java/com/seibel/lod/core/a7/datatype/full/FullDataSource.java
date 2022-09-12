@@ -1,6 +1,5 @@
 package com.seibel.lod.core.a7.datatype.full;
 
-import com.seibel.lod.core.a7.datatype.column.ColumnRenderSource;
 import com.seibel.lod.core.a7.datatype.full.accessor.FullArrayView;
 import com.seibel.lod.core.a7.datatype.full.accessor.SingleFullArrayView;
 import com.seibel.lod.core.a7.level.ILevel;
@@ -8,21 +7,13 @@ import com.seibel.lod.core.a7.pos.DhBlockPos2D;
 import com.seibel.lod.core.a7.pos.DhLodPos;
 import com.seibel.lod.core.a7.save.io.file.DataMetaFile;
 import com.seibel.lod.core.a7.datatype.LodDataSource;
-import com.seibel.lod.core.a7.util.IdMappingUtil;
 import com.seibel.lod.core.a7.pos.DhSectionPos;
 import com.seibel.lod.core.a7.util.UnclosableInputStream;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
-import com.seibel.lod.core.objects.DHChunkPos;
 import com.seibel.lod.core.util.LodUtil;
-import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 
 public class FullDataSource extends FullArrayView implements LodDataSource { // 1 chunk
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
