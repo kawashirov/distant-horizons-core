@@ -4,7 +4,7 @@ import com.seibel.lod.core.io.LevelToFileMatcher;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.enums.config.EServerFolderNameMode;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
-import com.seibel.lod.core.ParsedIp;
+import com.seibel.lod.core.util.objects.ParsedIp;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
