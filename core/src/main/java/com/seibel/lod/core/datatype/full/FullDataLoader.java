@@ -3,7 +3,7 @@ package com.seibel.lod.core.datatype.full;
 import com.seibel.lod.core.datatype.DataSourceLoader;
 import com.seibel.lod.core.datatype.LodDataSource;
 import com.seibel.lod.core.level.ILevel;
-import com.seibel.lod.core.io.datafile.DataMetaFile;
+import com.seibel.lod.core.file.datafile.DataMetaFile;
 
 import java.io.IOException;
 import java.io.InputStream;

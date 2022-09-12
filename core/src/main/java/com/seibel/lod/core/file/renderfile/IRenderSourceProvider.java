@@ -1,4 +1,4 @@
-package com.seibel.lod.core.io.renderfile;
+package com.seibel.lod.core.file.renderfile;
 
 import com.seibel.lod.core.datatype.LodRenderSource;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;

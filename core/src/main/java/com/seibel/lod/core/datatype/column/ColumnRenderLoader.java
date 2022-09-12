@@ -8,7 +8,7 @@ import com.seibel.lod.core.level.IClientLevel;
 import com.seibel.lod.core.datatype.LodRenderSource;
 import com.seibel.lod.core.datatype.RenderSourceLoader;
 import com.seibel.lod.core.level.ILevel;
-import com.seibel.lod.core.io.renderfile.RenderMetaFile;
+import com.seibel.lod.core.file.renderfile.RenderMetaFile;
 import com.seibel.lod.core.util.LodUtil;
 
 import java.io.DataInputStream;

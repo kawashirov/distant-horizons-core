@@ -1,4 +1,4 @@
-package com.seibel.lod.core.io.datafile;
+package com.seibel.lod.core.file.datafile;
 
 import com.seibel.lod.core.level.ILevel;
 

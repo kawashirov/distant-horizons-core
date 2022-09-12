@@ -5,7 +5,7 @@ import com.seibel.lod.core.level.IClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.render.RenderBuffer;
-import com.seibel.lod.core.io.renderfile.RenderMetaFile;
+import com.seibel.lod.core.file.renderfile.RenderMetaFile;
 
 import java.io.IOException;
 import java.io.OutputStream;

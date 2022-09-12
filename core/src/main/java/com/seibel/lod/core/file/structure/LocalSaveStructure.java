@@ -1,4 +1,4 @@
-package com.seibel.lod.core.io.structure;
+package com.seibel.lod.core.file.structure;
 
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;

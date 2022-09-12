@@ -1,8 +1,8 @@
 package com.seibel.lod.core.util;
 
-import com.seibel.lod.core.io.datafile.IDataSourceProvider;
-import com.seibel.lod.core.io.renderfile.IRenderSourceProvider;
-import com.seibel.lod.core.io.structure.SaveStructure;
+import com.seibel.lod.core.file.datafile.IDataSourceProvider;
+import com.seibel.lod.core.file.renderfile.IRenderSourceProvider;
+import com.seibel.lod.core.file.structure.SaveStructure;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import org.apache.logging.log4j.Logger;

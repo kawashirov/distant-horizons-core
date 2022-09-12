@@ -2,7 +2,7 @@ package com.seibel.lod.core.world;
 
 import com.seibel.lod.core.level.DhClientLevel;
 import com.seibel.lod.core.level.ILevel;
-import com.seibel.lod.core.io.structure.ClientOnlySaveStructure;
+import com.seibel.lod.core.file.structure.ClientOnlySaveStructure;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.util.DetailDistanceUtil;
 import com.seibel.lod.core.util.objects.EventLoop;

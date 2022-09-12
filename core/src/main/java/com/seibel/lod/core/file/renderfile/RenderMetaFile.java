@@ -1,4 +1,4 @@
-package com.seibel.lod.core.io.renderfile;
+package com.seibel.lod.core.file.renderfile;
 
 import com.seibel.lod.core.datatype.LodDataSource;
 import com.seibel.lod.core.datatype.LodRenderSource;
@@ -7,7 +7,7 @@ import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.level.IClientLevel;
 import com.seibel.lod.core.level.ILevel;
 import com.seibel.lod.core.pos.DhLodPos;
-import com.seibel.lod.core.io.MetaFile;
+import com.seibel.lod.core.file.MetaFile;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;

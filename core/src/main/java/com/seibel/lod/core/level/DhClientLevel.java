@@ -2,11 +2,11 @@ package com.seibel.lod.core.level;
 
 import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.util.FileScanUtil;
-import com.seibel.lod.core.io.datafile.RemoteDataFileHandler;
-import com.seibel.lod.core.io.renderfile.RenderFileHandler;
+import com.seibel.lod.core.file.datafile.RemoteDataFileHandler;
+import com.seibel.lod.core.file.renderfile.RenderFileHandler;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.render.RenderBufferHandler;
-import com.seibel.lod.core.io.structure.ClientOnlySaveStructure;
+import com.seibel.lod.core.file.structure.ClientOnlySaveStructure;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.DhLoggerBuilder;

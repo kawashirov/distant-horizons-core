@@ -3,7 +3,7 @@ package com.seibel.lod.core.datatype;
 import com.google.common.collect.HashMultimap;
 import com.seibel.lod.core.level.IClientLevel;
 import com.seibel.lod.core.level.ILevel;
-import com.seibel.lod.core.io.renderfile.RenderMetaFile;
+import com.seibel.lod.core.file.renderfile.RenderMetaFile;
 
 import java.io.IOException;
 import java.io.InputStream;

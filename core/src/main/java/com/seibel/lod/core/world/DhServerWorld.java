@@ -2,7 +2,7 @@ package com.seibel.lod.core.world;
 
 import com.seibel.lod.core.level.DhServerLevel;
 import com.seibel.lod.core.level.ILevel;
-import com.seibel.lod.core.io.structure.LocalSaveStructure;
+import com.seibel.lod.core.file.structure.LocalSaveStructure;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;

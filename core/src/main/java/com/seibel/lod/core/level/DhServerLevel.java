@@ -1,8 +1,8 @@
 package com.seibel.lod.core.level;
 
 import com.seibel.lod.core.util.FileScanUtil;
-import com.seibel.lod.core.io.datafile.DataFileHandler;
-import com.seibel.lod.core.io.structure.LocalSaveStructure;
+import com.seibel.lod.core.file.datafile.DataFileHandler;
+import com.seibel.lod.core.file.structure.LocalSaveStructure;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;

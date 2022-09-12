@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
  
-package com.seibel.lod.core.io;
+package com.seibel.lod.core.file;
 
 
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;

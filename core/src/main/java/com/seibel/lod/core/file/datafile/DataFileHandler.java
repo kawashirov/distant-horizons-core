@@ -1,4 +1,4 @@
-package com.seibel.lod.core.io.datafile;
+package com.seibel.lod.core.file.datafile;
 
 import com.google.common.collect.HashMultimap;
 import com.seibel.lod.core.datatype.LodDataSource;

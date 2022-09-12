@@ -1,6 +1,6 @@
-package com.seibel.lod.core.io.structure;
+package com.seibel.lod.core.file.structure;
 
-import com.seibel.lod.core.io.LevelToFileMatcher;
+import com.seibel.lod.core.file.LevelToFileMatcher;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.enums.config.EServerFolderNameMode;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;

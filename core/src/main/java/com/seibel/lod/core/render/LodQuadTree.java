@@ -4,7 +4,7 @@ import com.seibel.lod.core.datatype.column.ColumnRenderSource;
 import com.seibel.lod.core.level.IClientLevel;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhSectionPos;
-import com.seibel.lod.core.io.renderfile.IRenderSourceProvider;
+import com.seibel.lod.core.file.renderfile.IRenderSourceProvider;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.Pos2D;
 import com.seibel.lod.core.util.DetailDistanceUtil;

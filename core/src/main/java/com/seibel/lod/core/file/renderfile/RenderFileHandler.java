@@ -1,4 +1,4 @@
-package com.seibel.lod.core.io.renderfile;
+package com.seibel.lod.core.file.renderfile;
 
 import com.google.common.collect.HashMultimap;
 import com.seibel.lod.core.datatype.LodDataSource;
@@ -8,9 +8,9 @@ import com.seibel.lod.core.datatype.RenderSourceLoader;
 import com.seibel.lod.core.datatype.column.ColumnRenderSource;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.transform.DataRenderTransformer;
+import com.seibel.lod.core.file.datafile.IDataSourceProvider;
 import com.seibel.lod.core.level.IClientLevel;
 import com.seibel.lod.core.pos.DhLodPos;
-import com.seibel.lod.core.io.datafile.IDataSourceProvider;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.objects.UncheckedInterruptedException;
 import com.seibel.lod.core.config.Config;

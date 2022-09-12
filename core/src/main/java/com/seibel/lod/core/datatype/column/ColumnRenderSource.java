@@ -8,7 +8,7 @@ import com.seibel.lod.core.level.IClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.RenderBuffer;
 import com.seibel.lod.core.render.renderer.LodRenderer;
-import com.seibel.lod.core.io.renderfile.RenderMetaFile;
+import com.seibel.lod.core.file.renderfile.RenderMetaFile;
 import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.level.ILevel;

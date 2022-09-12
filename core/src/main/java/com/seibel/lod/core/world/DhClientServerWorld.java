@@ -2,7 +2,7 @@ package com.seibel.lod.core.world;
 
 import com.seibel.lod.core.level.DhClientServerLevel;
 import com.seibel.lod.core.level.ILevel;
-import com.seibel.lod.core.io.structure.LocalSaveStructure;
+import com.seibel.lod.core.file.structure.LocalSaveStructure;
 import com.seibel.lod.core.logging.f3.F3Screen;
 import com.seibel.lod.core.util.objects.EventLoop;
 import com.seibel.lod.core.util.LodUtil;

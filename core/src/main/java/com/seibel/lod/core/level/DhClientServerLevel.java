@@ -2,12 +2,12 @@ package com.seibel.lod.core.level;
 
 import com.seibel.lod.core.generation.GenerationQueue;
 import com.seibel.lod.core.render.LodQuadTree;
-import com.seibel.lod.core.io.datafile.GeneratedDataFileHandler;
+import com.seibel.lod.core.file.datafile.GeneratedDataFileHandler;
 import com.seibel.lod.core.util.FileScanUtil;
-import com.seibel.lod.core.io.renderfile.RenderFileHandler;
+import com.seibel.lod.core.file.renderfile.RenderFileHandler;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.render.RenderBufferHandler;
-import com.seibel.lod.core.io.structure.LocalSaveStructure;
+import com.seibel.lod.core.file.structure.LocalSaveStructure;
 import com.seibel.lod.core.generation.BatchGenerator;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;

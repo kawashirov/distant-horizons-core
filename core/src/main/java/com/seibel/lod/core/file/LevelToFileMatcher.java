@@ -1,4 +1,4 @@
-package com.seibel.lod.core.io;
+package com.seibel.lod.core.file;
 
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
