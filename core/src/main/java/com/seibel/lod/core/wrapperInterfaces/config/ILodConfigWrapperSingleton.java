@@ -26,9 +26,9 @@ import com.seibel.lod.core.enums.rendering.EFogDistance;
 import com.seibel.lod.core.enums.rendering.ERendererMode;
 import com.seibel.lod.core.enums.config.*;
 import com.seibel.lod.core.enums.rendering.*;
-import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
-import com.seibel.lod.core.objects.FogSettings;
+import com.seibel.lod.core.dependencyInjection.IBindable;
+import com.seibel.lod.core.dependencyInjection.SingletonInjector;
+import com.seibel.lod.core.render.fog.FogSettings;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 
 /**

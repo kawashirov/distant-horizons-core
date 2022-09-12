@@ -4,7 +4,7 @@ import com.seibel.lod.core.api.external.coreImplementations.interfaces.override.
 import com.seibel.lod.core.api.external.coreImplementations.interfaces.wrappers.world.ICoreDhApiLevelWrapper;
 import com.seibel.lod.core.enums.worldGeneration.EWorldGenThreadMode;
 import com.seibel.lod.core.enums.worldGeneration.EWorldGenerationStep;
-import com.seibel.lod.core.handlers.dependencyInjection.OverrideInjector;
+import com.seibel.lod.core.dependencyInjection.OverrideInjector;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 
 /**

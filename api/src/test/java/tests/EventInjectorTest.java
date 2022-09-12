@@ -1,9 +1,8 @@
 package tests;
 
 import com.seibel.lod.core.api.external.coreImplementations.objects.events.abstractEvents.CoreDhApiTestEvent;
-import com.seibel.lod.core.handlers.dependencyInjection.*;
+import com.seibel.lod.core.dependencyInjection.DhApiEventInjector;
 import org.junit.Assert;
-import org.junit.Test;
 import testItems.events.abstractObjects.DhApiTestEvent;
 import testItems.events.objects.DhTestEvent;
 import testItems.events.objects.DhTestEventAlt;

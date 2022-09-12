@@ -24,10 +24,9 @@ import java.util.ArrayList;
 
 import com.seibel.lod.core.ModInfo;
 import com.seibel.lod.core.enums.ELodDirection;
-import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
-import com.seibel.lod.core.objects.DHBlockPos;
-import com.seibel.lod.core.objects.DHChunkPos;
-import com.seibel.lod.core.wrapperInterfaces.world.IDimensionTypeWrapper;
+import com.seibel.lod.core.dependencyInjection.IBindable;
+import com.seibel.lod.core.pos.DhBlockPos;
+import com.seibel.lod.core.pos.DhChunkPos;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import org.apache.logging.log4j.Level;
 
@@ -71,9 +70,9 @@ public interface IMinecraftClientWrapper extends IBindable
 	
 	boolean playerExists();
 	
-	DHBlockPos getPlayerBlockPos();
+	DhBlockPos getPlayerBlockPos();
 	
-	DHChunkPos getPlayerChunkPos();
+	DhChunkPos getPlayerChunkPos();
 
 	@Deprecated
 	ILevelWrapper getWrappedClientWorld();

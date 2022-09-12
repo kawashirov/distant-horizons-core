@@ -19,7 +19,7 @@
  
 package com.seibel.lod.core.wrapperInterfaces.worldGeneration;
 
-import com.seibel.lod.core.a7.level.ILevel;
+import com.seibel.lod.core.level.ILevel;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 
 import java.util.concurrent.CompletableFuture;

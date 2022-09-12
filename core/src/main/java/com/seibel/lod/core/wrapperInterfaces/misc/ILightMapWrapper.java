@@ -19,7 +19,7 @@
 
 package com.seibel.lod.core.wrapperInterfaces.misc;
 
-import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
+import com.seibel.lod.core.dependencyInjection.IBindable;
 
 /**
  * @author James Seibel

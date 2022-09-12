@@ -1,7 +1,6 @@
 package com.seibel.lod.core.logging.f3;
 
 import com.seibel.lod.core.ModInfo;
-import com.seibel.lod.core.a7.datatype.column.accessor.ColumnArrayView;
 
 import java.lang.ref.WeakReference;
 import java.util.Arrays;

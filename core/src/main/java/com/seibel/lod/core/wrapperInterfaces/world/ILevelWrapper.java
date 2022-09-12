@@ -19,12 +19,9 @@
 
 package com.seibel.lod.core.wrapperInterfaces.world;
 
-import java.io.File;
-
-import com.seibel.lod.core.enums.ELevelType;
-import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
-import com.seibel.lod.core.objects.DHBlockPos;
-import com.seibel.lod.core.objects.DHChunkPos;
+import com.seibel.lod.core.dependencyInjection.IBindable;
+import com.seibel.lod.core.pos.DhBlockPos;
+import com.seibel.lod.core.pos.DhChunkPos;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 
@@ -50,13 +47,13 @@ public interface ILevelWrapper extends IBindable
 	
 	default short getMinHeight() { return 0; }
 
-	default IChunkWrapper tryGetChunk(DHChunkPos pos) { return null; }
+	default IChunkWrapper tryGetChunk(DhChunkPos pos) { return null; }
 
     boolean hasChunkLoaded(int chunkX, int chunkZ);
 
-	IBlockStateWrapper getBlockState(DHBlockPos pos);
+	IBlockStateWrapper getBlockState(DhBlockPos pos);
 	
-	IBiomeWrapper getBiome(DHBlockPos pos);
+	IBiomeWrapper getBiome(DhBlockPos pos);
 	
 	Object unwrapLevel();
 	

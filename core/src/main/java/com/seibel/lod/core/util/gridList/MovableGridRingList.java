@@ -19,7 +19,7 @@
  
 package com.seibel.lod.core.util.gridList;
 
-import com.seibel.lod.core.objects.Pos2D;
+import com.seibel.lod.core.pos.Pos2D;
 import com.seibel.lod.core.util.LodUtil;
 
 import java.util.ArrayList;

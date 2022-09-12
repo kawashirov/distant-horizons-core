@@ -19,7 +19,7 @@
 
 package com.seibel.lod.api.items.objects.math;
 
-import com.seibel.lod.core.objects.math.Mat4f;
+import com.seibel.lod.core.util.math.Mat4f;
 
 /**
  * A simple way to store a 4x4 array

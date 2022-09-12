@@ -19,8 +19,8 @@
  
 package com.seibel.lod.core.util.gridList;
 
-import com.seibel.lod.core.objects.BoolType;
-import com.seibel.lod.core.objects.Pos2D;
+import com.seibel.lod.core.util.objects.BoolType;
+import com.seibel.lod.core.pos.Pos2D;
 
 import java.util.Iterator;
 import java.util.function.IntPredicate;

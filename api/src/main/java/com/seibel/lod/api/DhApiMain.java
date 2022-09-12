@@ -1,7 +1,7 @@
 package com.seibel.lod.api;
 
 import com.seibel.lod.core.ModInfo;
-import com.seibel.lod.core.a7.datatype.full.FullDataSource;
+import com.seibel.lod.core.datatype.full.FullDataSource;
 
 /**
  * This holds API methods related to version numbers and other unchanging endpoints.

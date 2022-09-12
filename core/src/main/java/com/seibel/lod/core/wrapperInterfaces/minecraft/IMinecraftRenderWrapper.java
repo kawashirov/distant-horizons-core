@@ -22,14 +22,14 @@ package com.seibel.lod.core.wrapperInterfaces.minecraft;
 import java.awt.Color;
 import java.util.HashSet;
 
-import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
-import com.seibel.lod.core.handlers.dependencyInjection.ModAccessorInjector;
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
-import com.seibel.lod.core.objects.DHBlockPos;
-import com.seibel.lod.core.objects.DHChunkPos;
-import com.seibel.lod.core.objects.math.Mat4f;
-import com.seibel.lod.core.objects.math.Vec3d;
-import com.seibel.lod.core.objects.math.Vec3f;
+import com.seibel.lod.core.dependencyInjection.IBindable;
+import com.seibel.lod.core.dependencyInjection.ModAccessorInjector;
+import com.seibel.lod.core.dependencyInjection.SingletonInjector;
+import com.seibel.lod.core.pos.DhBlockPos;
+import com.seibel.lod.core.pos.DhChunkPos;
+import com.seibel.lod.core.util.math.Mat4f;
+import com.seibel.lod.core.util.math.Vec3d;
+import com.seibel.lod.core.util.math.Vec3f;
 import com.seibel.lod.core.wrapperInterfaces.IVersionConstants;
 import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.misc.ILightMapWrapper;
@@ -47,7 +47,7 @@ public interface IMinecraftRenderWrapper extends IBindable
 {
 	Vec3f getLookAtVector();
 	
-	DHBlockPos getCameraBlockPosition();
+	DhBlockPos getCameraBlockPosition();
 	
 	boolean playerHasBlindnessEffect();
 	
@@ -83,7 +83,7 @@ public interface IMinecraftRenderWrapper extends IBindable
 	 * <br>
 	 * If not implemented this calls {@link #getMaximumRenderedChunks()}.
 	 */
-	default HashSet<DHChunkPos> getVanillaRenderedChunks()
+	default HashSet<DhChunkPos> getVanillaRenderedChunks()
 	{
 		ISodiumAccessor sodium = ModAccessorInjector.INSTANCE.get(ISodiumAccessor.class);
 		return sodium==null ? getMaximumRenderedChunks() : sodium.getNormalRenderedChunks();
@@ -99,7 +99,7 @@ public interface IMinecraftRenderWrapper extends IBindable
 	 * <strong>Doesn't need to be implemented.</strong> <br>
 	 * Returns every chunk position within the vanilla render distance.
 	 */
-	default HashSet<DHChunkPos> getMaximumRenderedChunks()
+	default HashSet<DhChunkPos> getMaximumRenderedChunks()
 	{
 		IMinecraftClientWrapper mcWrapper = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 		IWrapperFactory factory = SingletonInjector.INSTANCE.get(IWrapperFactory.class);
@@ -109,13 +109,13 @@ public interface IMinecraftRenderWrapper extends IBindable
 
 		int chunkDist = this.getRenderDistance() + 1; // For some reason having '+1' is actually closer to real value
 		
-		DHChunkPos centerChunkPos = mcWrapper.getPlayerChunkPos();
+		DhChunkPos centerChunkPos = mcWrapper.getPlayerChunkPos();
 		int centerChunkX = centerChunkPos.getX();
 		int centerChunkZ = centerChunkPos.getZ();
 		int chunkDist2Mul4 = chunkDist*chunkDist*4;
 		
 		// add every position within render distance
-		HashSet<DHChunkPos> renderedPos = new HashSet<DHChunkPos>();
+		HashSet<DhChunkPos> renderedPos = new HashSet<DhChunkPos>();
 		for (int deltaChunkX = -chunkDist; deltaChunkX <= chunkDist; deltaChunkX++)
 		{
 			for(int deltaChunkZ = -chunkDist; deltaChunkZ <= chunkDist; deltaChunkZ++)
@@ -125,7 +125,7 @@ public interface IMinecraftRenderWrapper extends IBindable
 					continue;
 				}
 				if (!clientWorld.hasChunkLoaded(centerChunkX + deltaChunkX, centerChunkZ + deltaChunkZ)) continue;
-				renderedPos.add(new DHChunkPos(centerChunkX + deltaChunkX, centerChunkZ + deltaChunkZ));
+				renderedPos.add(new DhChunkPos(centerChunkX + deltaChunkX, centerChunkZ + deltaChunkZ));
 			}
 		}
 		return renderedPos;	

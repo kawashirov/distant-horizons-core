@@ -1,11 +1,11 @@
 package com.seibel.lod.core.config.gui;
 
 import com.seibel.lod.core.enums.config.EGpuUploadMethod;
-import com.seibel.lod.core.render.GLProxy;
-import com.seibel.lod.core.render.objects.GLState;
-import com.seibel.lod.core.render.objects.GLVertexBuffer;
-import com.seibel.lod.core.render.objects.ShaderProgram;
-import com.seibel.lod.core.render.objects.VertexAttribute;
+import com.seibel.lod.core.render.glObject.GLProxy;
+import com.seibel.lod.core.render.glObject.GLState;
+import com.seibel.lod.core.render.glObject.buffer.GLVertexBuffer;
+import com.seibel.lod.core.render.glObject.shader.ShaderProgram;
+import com.seibel.lod.core.render.glObject.vertexAttribute.VertexAttribute;
 import org.lwjgl.opengl.GL32;
 
 import java.nio.ByteBuffer;

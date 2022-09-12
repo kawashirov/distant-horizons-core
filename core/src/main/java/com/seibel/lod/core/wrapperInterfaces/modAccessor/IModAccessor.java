@@ -19,7 +19,7 @@
  
 package com.seibel.lod.core.wrapperInterfaces.modAccessor;
 
-import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
+import com.seibel.lod.core.dependencyInjection.IBindable;
 
 /**
  * @author Leetom

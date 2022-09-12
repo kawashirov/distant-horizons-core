@@ -1,6 +1,6 @@
 package testItems.singletonInjection.objects;
 
-import com.seibel.lod.core.handlers.dependencyInjection.IBindable;
+import com.seibel.lod.core.dependencyInjection.IBindable;
 import testItems.singletonInjection.interfaces.ISingletonTestOne;
 import testItems.singletonInjection.interfaces.ISingletonTestTwo;
 

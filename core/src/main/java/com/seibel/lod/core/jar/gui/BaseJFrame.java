@@ -3,8 +3,7 @@ package com.seibel.lod.core.jar.gui;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
-import com.seibel.lod.core.JarMain;
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
+import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.jar.JarUtils;
 import com.seibel.lod.core.wrapperInterfaces.config.IConfigWrapper;
 

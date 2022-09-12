@@ -19,10 +19,10 @@
  
 package com.seibel.lod.core.wrapperInterfaces.modAccessor;
 
-import com.seibel.lod.core.objects.DHChunkPos;
+import com.seibel.lod.core.pos.DhChunkPos;
 
 import java.util.HashSet;
 
 public interface ISodiumAccessor extends IModAccessor {
-	HashSet<DHChunkPos> getNormalRenderedChunks();
+	HashSet<DhChunkPos> getNormalRenderedChunks();
 }

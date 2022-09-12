@@ -19,14 +19,14 @@
  
 package com.seibel.lod.core.wrapperInterfaces.modAccessor;
 
-import com.seibel.lod.core.objects.DHChunkPos;
+import com.seibel.lod.core.pos.DhChunkPos;
 
 import java.util.HashSet;
 
 public interface IOptifineAccessor extends IModAccessor 
 {
 	/** Can be null */
-	HashSet<DHChunkPos> getNormalRenderedChunks();
+	HashSet<DhChunkPos> getNormalRenderedChunks();
 	
 	/**
 	 * Returns the percentage multiplier of the screen's current resolution. <br>

@@ -26,14 +26,15 @@ import java.util.concurrent.Executors;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.enums.config.EServerFolderNameMode;
 import com.seibel.lod.core.enums.config.EVanillaOverdraw;
-import com.seibel.lod.core.handlers.dependencyInjection.SingletonInjector;
+import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
-import com.seibel.lod.core.objects.DHChunkPos;
-import com.seibel.lod.core.objects.ParsedIp;
-import com.seibel.lod.core.objects.Pos2D;
-import com.seibel.lod.core.objects.opengl.DefaultLodVertexFormats;
-import com.seibel.lod.core.objects.opengl.LodVertexFormat;
+import com.seibel.lod.core.pos.DhChunkPos;
+import com.seibel.lod.core.ParsedIp;
+import com.seibel.lod.core.pos.Pos2D;
+import com.seibel.lod.core.render.vertexFormat.DefaultLodVertexFormats;
+import com.seibel.lod.core.render.vertexFormat.LodVertexFormat;
 import com.seibel.lod.core.util.gridList.EdgeDistanceBooleanGrid;
+import com.seibel.lod.core.util.objects.LodThreadFactory;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IDimensionTypeWrapper;
@@ -305,7 +306,7 @@ public class LodUtil
 		if (offset == Integer.MAX_VALUE) return null;
 		int renderDist = MC_RENDER.getRenderDistance() + 1;
 
-		Iterator<DHChunkPos> posIter = MC_RENDER.getVanillaRenderedChunks().iterator();
+		Iterator<DhChunkPos> posIter = MC_RENDER.getVanillaRenderedChunks().iterator();
 
 		return new EdgeDistanceBooleanGrid(new Iterator<Pos2D>() {
 					@Override
@@ -315,7 +316,7 @@ public class LodUtil
 
 					@Override
 					public Pos2D next() {
-						DHChunkPos pos = posIter.next();
+						DhChunkPos pos = posIter.next();
 						return new Pos2D(pos.getX(), pos.getZ());
 					}
 				},
