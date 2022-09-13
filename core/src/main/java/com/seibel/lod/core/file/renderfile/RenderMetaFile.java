@@ -43,7 +43,7 @@ public class RenderMetaFile extends MetaFile
 
         CompletableFuture<LodRenderSource> source = _readCached(data.get());
         if (source == null) return;
-        if (source.isDone()) source.join().fastWrite(chunkData, level);
+        source.thenAccept((renderSource) -> renderSource.fastWrite(chunkData, level));
     }
 
     public CompletableFuture<Void> flushAndSave(ExecutorService renderCacheThread) {
@@ -205,7 +205,6 @@ public class RenderMetaFile extends MetaFile
     }
 
     public void save(LodRenderSource data, IClientLevel level) {
-        LodUtil.assertTrue(data == _readCached(this.data.get()).getNow(null));
         LOGGER.info("Saving updated render file v[{}] at sect {}", metaData.dataVersion.get(), pos);
         try {
             super.writeData((out) -> data.saveRender(level, this, out));

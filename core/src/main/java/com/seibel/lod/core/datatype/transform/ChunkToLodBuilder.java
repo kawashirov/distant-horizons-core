@@ -13,7 +13,7 @@ import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import org.apache.logging.log4j.LogManager;
 
 //FIXME: To-Be-Used class
-public class LodBuilder {
+public class ChunkToLodBuilder {
     public static final ConfigBasedLogger LOGGER = new ConfigBasedLogger(LogManager.getLogger(),
             () -> Config.Client.Advanced.Debugging.DebugSwitch.logLodBuilderEvent.get());
     static class Task {
@@ -26,13 +26,8 @@ public class LodBuilder {
     }
     private final ConcurrentHashMap<DhChunkPos, IChunkWrapper> latestChunkToBuild = new ConcurrentHashMap<>();
     private final ConcurrentLinkedDeque<Task> taskToBuild = new ConcurrentLinkedDeque<>();
-    private final ExecutorService executor = LodUtil.makeSingleThreadPool(LodBuilder.class);
+    private final ExecutorService executor = LodUtil.makeSingleThreadPool(ChunkToLodBuilder.class);
     private final EventLoop ticker = new EventLoop(executor, this::_tick);
-
-    ILevel level;
-    public LodBuilder(ILevel level) {
-        this.level = level;
-    }
 
     public CompletableFuture<ChunkSizedData> tryGenerateData(IChunkWrapper chunk) {
         if (chunk == null) throw new NullPointerException("ChunkWrapper cannot be null!");

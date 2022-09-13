@@ -4,6 +4,7 @@ import com.seibel.lod.core.util.FileScanUtil;
 import com.seibel.lod.core.file.datafile.DataFileHandler;
 import com.seibel.lod.core.file.structure.LocalSaveStructure;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
+import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
 import org.apache.logging.log4j.Logger;
@@ -65,5 +66,10 @@ public class DhServerLevel implements IServerLevel
     {
         return this.level;
     }
-    
+
+    @Override
+    public void updateChunk(IChunkWrapper chunk) {
+        //TODO
+    }
+
 }

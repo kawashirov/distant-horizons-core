@@ -14,6 +14,7 @@ import com.seibel.lod.core.pos.DhBlockPos;
 import com.seibel.lod.core.util.math.Mat4f;
 import com.seibel.lod.core.render.renderer.LodRenderer;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
+import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IProfilerWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
@@ -88,7 +89,12 @@ public class DhClientLevel implements IClientLevel {
     {
         return this.level;
     }
-    
+
+    @Override
+    public void updateChunk(IChunkWrapper chunk) {
+        //TODO
+    }
+
     @Override
     public int getMinY() {
         return level.getMinHeight();

@@ -1,6 +1,11 @@
 package com.seibel.lod.core.level;
 
+import com.seibel.lod.core.datatype.full.ChunkSizedData;
+import com.seibel.lod.core.datatype.full.FullDataSource;
+import com.seibel.lod.core.datatype.transform.ChunkToLodBuilder;
 import com.seibel.lod.core.generation.GenerationQueue;
+import com.seibel.lod.core.pos.DhLodPos;
+import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.file.datafile.GeneratedDataFileHandler;
 import com.seibel.lod.core.util.FileScanUtil;
@@ -18,6 +23,7 @@ import com.seibel.lod.core.util.math.Mat4f;
 import com.seibel.lod.core.render.renderer.LodRenderer;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
+import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IProfilerWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
@@ -35,6 +41,7 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
     private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
     public final LocalSaveStructure save;
     public final GeneratedDataFileHandler dataFileHandler;
+    public final ChunkToLodBuilder chunkToLodBuilder;
     public volatile GenerationQueue generationQueue = null;
     public RenderFileHandler renderFileHandler = null;
     public RenderBufferHandler renderBufferHandler = null; //TODO: Should this be owned by renderer?
@@ -56,6 +63,7 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
         FileScanUtil.scanFile(save, serverLevel, dataFileHandler, null);
         LOGGER.info("Started DHLevel for {} with saves at {}", level, save);
         f3Msg = new F3Screen.NestedMessage(this::f3Log);
+        chunkToLodBuilder = new ChunkToLodBuilder();
     }
 
     private String[] f3Log() {
@@ -94,9 +102,19 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
         }
     }
 
+    private void saveWrites(ChunkSizedData data) {
+        RenderFileHandler renderFileHandler = this.renderFileHandler;
+        DhLodPos pos = data.getBBoxLodPos().convertUpwardsTo(FullDataSource.SECTION_SIZE_OFFSET);
+        if (renderFileHandler != null) {
+            renderFileHandler.write(new DhSectionPos(pos.detail, pos.x, pos.z), data);
+        } else {
+            dataFileHandler.write(new DhSectionPos(pos.detail, pos.x, pos.z), data);
+        }
+    }
+
     @Override
     public void serverTick() {
-        //TODO Update network packet and stuff or state or etc..
+        chunkToLodBuilder.tick();
     }
 
     public void startRenderer(IClientLevelWrapper clientLevel) {
@@ -195,7 +213,15 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
     {
         return this.serverLevel;
     }
-    
+
+    @Override
+    public void updateChunk(IChunkWrapper chunk) {
+        CompletableFuture<ChunkSizedData> future = chunkToLodBuilder.tryGenerateData(chunk);
+        if (future != null) {
+            future.thenAccept(this::saveWrites);
+        }
+    }
+
     @Override
     public void dumpRamUsage() {
         //TODO

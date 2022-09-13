@@ -26,6 +26,7 @@ import com.seibel.lod.core.ModInfo;
 import com.seibel.lod.api.items.enums.rendering.EDebugMode;
 import com.seibel.lod.api.items.enums.rendering.ERendererMode;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
+import com.seibel.lod.core.level.ILevel;
 import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.logging.ConfigBasedSpamLogger;
 import com.seibel.lod.core.logging.SpamReducedLogger;
@@ -137,7 +138,11 @@ public class ClientApi
 	{
 		if (SharedApi.getEnvironment() == WorldEnvironment.Client_Only)
 		{
-			//TODO: Implement
+			ILevel dhLevel = SharedApi.currentWorld.getLevel(level);
+			if (dhLevel != null)
+			{
+				dhLevel.updateChunk(chunk);
+			}
 		}
 	}
 	

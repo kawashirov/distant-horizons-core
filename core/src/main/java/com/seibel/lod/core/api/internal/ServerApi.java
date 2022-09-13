@@ -124,10 +124,18 @@ public class ServerApi
 		}
 	}
 
-	public void serverChunkLoadEvent(IChunkWrapper chunk, ILevelWrapper world) {
-		//TODO
+	public void serverChunkLoadEvent(IChunkWrapper chunk, ILevelWrapper level) {
+		ILevel dhLevel = SharedApi.currentWorld.getLevel(level);
+		if (dhLevel != null)
+		{
+			dhLevel.updateChunk(chunk);
+		}
 	}
-	public void serverChunkSaveEvent(IChunkWrapper chunk, ILevelWrapper world) {
-		//TODO
+	public void serverChunkSaveEvent(IChunkWrapper chunk, ILevelWrapper level) {
+		ILevel dhLevel = SharedApi.currentWorld.getLevel(level);
+		if (dhLevel != null)
+		{
+			dhLevel.updateChunk(chunk);
+		}
 	}
 }
