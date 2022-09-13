@@ -19,7 +19,7 @@
 
 package com.seibel.lod.core.dependencyInjection;
 
-import com.seibel.lod.core.api.external.coreImplementations.interfaces.events.ICoreDhApiEvent;
+import com.seibel.lod.api.methods.events.interfaces.IDhApiEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -36,7 +36,7 @@ import java.util.ArrayList;
  * @author Leetom
  * @version 2022-8-15
  */
-public class DhApiEventInjector extends DependencyInjector<ICoreDhApiEvent> // Note to self: Don't try adding a generic type to IDhApiEvent, the consturctor won't accept it
+public class DhApiEventInjector extends DependencyInjector<IDhApiEvent> // Note to self: Don't try adding a generic type to IDhApiEvent, the consturctor won't accept it
 {
 	private static final Logger LOGGER = LogManager.getLogger(DhApiEventInjector.class.getSimpleName());
 	
@@ -46,7 +46,7 @@ public class DhApiEventInjector extends DependencyInjector<ICoreDhApiEvent> // N
 	
 	public DhApiEventInjector()
 	{
-		super(ICoreDhApiEvent.class, true);
+		super(IDhApiEvent.class, true);
 	}
 	
 	
@@ -56,7 +56,7 @@ public class DhApiEventInjector extends DependencyInjector<ICoreDhApiEvent> // N
 	 * @throws IllegalArgumentException if the implementation object doesn't implement the interface
 	 * @return true if the handler was unbound, false if the handler wasn't bound.
 	 */
-	public boolean unbind(Class<? extends ICoreDhApiEvent> dependencyInterface, Class<? extends ICoreDhApiEvent> dependencyClassToRemove) throws IllegalArgumentException
+	public boolean unbind(Class<? extends IDhApiEvent> dependencyInterface, Class<? extends IDhApiEvent> dependencyClassToRemove) throws IllegalArgumentException
 	{
 		// make sure the given dependency implements the necessary interfaces
 		boolean implementsInterface = checkIfClassImplements(dependencyClassToRemove, dependencyInterface)
@@ -77,7 +77,7 @@ public class DhApiEventInjector extends DependencyInjector<ICoreDhApiEvent> // N
 		// actually remove the dependency
 		if (this.dependencies.containsKey(dependencyInterface))
 		{
-			ArrayList<ICoreDhApiEvent> dependencyList = this.dependencies.get(dependencyInterface);
+			ArrayList<IDhApiEvent> dependencyList = this.dependencies.get(dependencyInterface);
 			int indexToRemove = -1;
 			for(int i = 0; i < dependencyList.size(); i++)
 			{
@@ -107,12 +107,12 @@ public class DhApiEventInjector extends DependencyInjector<ICoreDhApiEvent> // N
 	 * @return if any of the events returned that this event should be canceled.
 	 * @param <T> the parameter type taken by the event handlers.
 	 */
-	public <T, U extends ICoreDhApiEvent<T>> boolean fireAllEvents(Class<U> dependencyInterface, T eventParameterObject)
+	public <T, U extends IDhApiEvent<T>> boolean fireAllEvents(Class<U> dependencyInterface, T eventParameterObject)
 	{
 		boolean cancelEvent = false;
 		
 		ArrayList<U> eventList = this.getAll(dependencyInterface);
-		for (ICoreDhApiEvent<T> event : eventList)
+		for (IDhApiEvent<T> event : eventList)
 		{
 			if (event != null)
 			{

@@ -1,6 +1,7 @@
 package com.seibel.lod.core.pos;
 
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.util.MathUtil;
 
 public class DhBlockPos2D {
     public final int x;
@@ -25,7 +26,7 @@ public class DhBlockPos2D {
         return Math.sqrt(Math.pow(x - other.x, 2) + Math.pow(z - other.z, 2));
     }
     public long distSquared(DhBlockPos2D other) {
-        return LodUtil.pow2((long)x - other.x) + LodUtil.pow2((long)z - other.z);
+        return MathUtil.pow2((long)x - other.x) + MathUtil.pow2((long)z - other.z);
     }
 
     public Pos2D toPos2D() {

@@ -191,8 +191,8 @@ public class RenderUtil
 		double fov = MC_RENDER.getFov(partialTicks);
 		double aspectRatio = (double) MC_RENDER.getScreenWidth() / MC_RENDER.getScreenHeight();
 		return (float) (nearClipPlane
-				/ Math.sqrt(1d + LodUtil.pow2(Math.tan(fov / 180d * Math.PI / 2d))
-				* (LodUtil.pow2(aspectRatio) + 1d)));
+				/ Math.sqrt(1d + MathUtil.pow2(Math.tan(fov / 180d * Math.PI / 2d))
+				* (MathUtil.pow2(aspectRatio) + 1d)));
 	}
 	public static int getFarClipPlaneDistanceInBlocks()
 	{

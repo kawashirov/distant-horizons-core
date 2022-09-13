@@ -19,7 +19,7 @@
 
 package com.seibel.lod.core.dependencyInjection;
 
-import com.seibel.lod.core.api.external.coreImplementations.interfaces.override.ICoreDhApiOverrideable;
+import com.seibel.lod.api.items.interfaces.override.IDhApiOverrideable;
 import com.seibel.lod.core.util.StringUtil;
 
 import java.util.HashMap;
@@ -31,25 +31,12 @@ import java.util.HashMap;
  * @author James Seibel
  * @version 2022-9-8
  */
-public class OverrideInjector
+public class OverrideInjector implements IOverrideInjector<IDhApiOverrideable>
 {
 	public static final OverrideInjector INSTANCE = new OverrideInjector();
 
-	private final HashMap<Class<? extends ICoreDhApiOverrideable>, OverridePriorityListContainer> overrideContainerByInterface = new HashMap<>();
+	private final HashMap<Class<? extends IDhApiOverrideable>, OverridePriorityListContainer> overrideContainerByInterface = new HashMap<>();
 	
-	
-	/** 
-	 * All core overrides should have this priority. <Br>
-	 * Should be lower than MIN_OVERRIDE_PRIORITY.
-	 */
-	public static final int CORE_PRIORITY = -1;
-	/** 
-	 * The lowest priority non-core overrides can have.
-	 * Should be higher than CORE_PRIORITY.
-	 */
-	public static final int MIN_NON_CORE_OVERRIDE_PRIORITY = 0;
-	/** The priority given to overrides that don't explicitly define a priority. */
-	public static final int DEFAULT_NON_CORE_OVERRIDE_PRIORITY = 10;
 	
 	/**
 	 * This is used to determine if an override is part of Distant Horizons'
@@ -68,19 +55,12 @@ public class OverrideInjector
 		this.corePackagePath = thisPackageName.substring(0, secondPackageEndingIndex); // this should be "com.seibel.lod"
 	}
 	
-	/** This constructor should only be used for testing different corePackagePaths. */
 	public OverrideInjector(String newCorePackagePath) { this.corePackagePath = newCorePackagePath; }
 	
 	
 	
-	/**
-	 * See {@link DependencyInjector#bind(Class, IBindable) bind(Class, IBindable)} for full documentation.
-	 *
-	 * @throws IllegalArgumentException if a non-Distant Horizons Override with the priority CORE is passed in or a invalid priority value.
-	 * @throws IllegalStateException if another override with the given priority already has been bound.
-	 * @see DependencyInjector#bind(Class, IBindable)
-	 */
-	public void bind(Class<? extends ICoreDhApiOverrideable> dependencyInterface, ICoreDhApiOverrideable dependencyImplementation)  throws IllegalStateException, IllegalArgumentException
+	@Override
+	public void bind(Class<? extends IDhApiOverrideable> dependencyInterface, IDhApiOverrideable dependencyImplementation)  throws IllegalStateException, IllegalArgumentException
 	{
 		// make sure a override container exists
 		OverridePriorityListContainer overrideContainer = this.overrideContainerByInterface.get(dependencyInterface);
@@ -111,7 +91,7 @@ public class OverrideInjector
 		}
 		
 		// check if an override already exists with this priority
-		ICoreDhApiOverrideable existingOverride = overrideContainer.getOverrideWithPriority(dependencyImplementation.getPriority());
+		IDhApiOverrideable existingOverride = overrideContainer.getOverrideWithPriority(dependencyImplementation.getPriority());
 		if (existingOverride != null)
 		{
 			throw new IllegalStateException("An override already exists with the priority [" + dependencyImplementation.getPriority() + "].");
@@ -122,29 +102,17 @@ public class OverrideInjector
 		overrideContainer.addOverride(dependencyImplementation);
 	}
 	
-	/**
-	 * Returns the bound dependency with the highest priority. <br>
-	 * See {@link DependencyInjector#get(Class, boolean) get(Class, boolean)} for full documentation.
-	 *
-	 * @see DependencyInjector#get(Class, boolean)
-	 */
+	@Override
 	@SuppressWarnings("unchecked")
-	public <T extends ICoreDhApiOverrideable> T get(Class<T> interfaceClass) throws ClassCastException
+	public <T extends IDhApiOverrideable> T get(Class<T> interfaceClass) throws ClassCastException
 	{
 		OverridePriorityListContainer overrideContainer = this.overrideContainerByInterface.get(interfaceClass);
 		return overrideContainer != null ? (T) overrideContainer.getOverrideWithHighestPriority() : null;
 	}
 	
-	/**
-	 * Returns a dependency of type T with the specified priority if one has been bound. <br>
-	 * If there is a dependency, but it was bound with a different priority this will return null. <br> <br>
-	 *
-	 * See {@link DependencyInjector#get(Class, boolean) get(Class, boolean)} for more documentation.
-	 *
-	 * @see DependencyInjector#get(Class, boolean)
-	 */
+	@Override
 	@SuppressWarnings("unchecked")
-	public <T extends ICoreDhApiOverrideable> T get(Class<T> interfaceClass, int priority) throws ClassCastException
+	public <T extends IDhApiOverrideable> T get(Class<T> interfaceClass, int priority) throws ClassCastException
 	{
 		OverridePriorityListContainer overrideContainer = this.overrideContainerByInterface.get(interfaceClass);
 		return overrideContainer != null ? (T) overrideContainer.getOverrideWithPriority(priority) : null;
@@ -152,7 +120,7 @@ public class OverrideInjector
 	
 	
 	
-	/** Removes all bound overrides. */
+	@Override
 	public void clear() { this.overrideContainerByInterface.clear(); }
 	
 	

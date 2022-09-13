@@ -20,6 +20,7 @@
 package com.seibel.lod.core.render.glObject.vertexAttribute;
 
 import com.seibel.lod.core.render.glObject.GLProxy;
+import com.seibel.lod.core.util.MathUtil;
 import org.lwjgl.opengl.GL32;
 
 import com.seibel.lod.core.util.LodUtil;
@@ -43,7 +44,7 @@ public abstract class VertexAttribute {
 			this(elementCount, glType, normalized, byteSize, false);
 		}
 		private static int _align(int bytes) {
-			return LodUtil.ceilDiv(bytes, 4)*4;
+			return MathUtil.ceilDiv(bytes, 4)*4;
 		}
 		
 		public static VertexPointer addFloatPointer(boolean normalized) {

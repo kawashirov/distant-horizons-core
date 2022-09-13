@@ -20,6 +20,7 @@
 package com.seibel.lod.core.pos;
 
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.util.MathUtil;
 
 import java.util.Objects;
 
@@ -45,7 +46,7 @@ public class Pos2D {
         return Math.sqrt(Math.pow(x - other.x, 2) + Math.pow(y - other.y, 2));
     }
     public long distSquared(Pos2D other) {
-        return LodUtil.pow2((long)x - other.x) + LodUtil.pow2((long)y - other.y);
+        return MathUtil.pow2((long)x - other.x) + MathUtil.pow2((long)y - other.y);
     }
 
     public int hashCode() {

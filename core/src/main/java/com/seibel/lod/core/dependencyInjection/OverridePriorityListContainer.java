@@ -1,6 +1,6 @@
 package com.seibel.lod.core.dependencyInjection;
 
-import com.seibel.lod.core.api.external.coreImplementations.interfaces.override.ICoreDhApiOverrideable;
+import com.seibel.lod.api.items.interfaces.override.IDhApiOverrideable;
 
 import java.util.ArrayList;
 
@@ -17,7 +17,7 @@ public class OverridePriorityListContainer implements IBindable
 	
 	
 	/** Doesn't do any validation */
-	public void addOverride(ICoreDhApiOverrideable override)
+	public void addOverride(IDhApiOverrideable override)
 	{
 		OverridePriorityPair priorityPair = new OverridePriorityPair(override, override.getPriority());
 		this.overridePairList.add(priorityPair);
@@ -26,7 +26,7 @@ public class OverridePriorityListContainer implements IBindable
 	}
 	
 	/** @return true if the override was removed from the list, false otherwise. */
-	public boolean removeOverride(ICoreDhApiOverrideable override)
+	public boolean removeOverride(IDhApiOverrideable override)
 	{
 		if (this.overridePairList.contains(override))
 		{
@@ -44,7 +44,7 @@ public class OverridePriorityListContainer implements IBindable
 	
 	// getters //
 	
-	public ICoreDhApiOverrideable getOverrideWithLowestPriority()
+	public IDhApiOverrideable getOverrideWithLowestPriority()
 	{
 		if (this.overridePairList.size() == 0)
 		{
@@ -56,7 +56,7 @@ public class OverridePriorityListContainer implements IBindable
 			return this.overridePairList.get(this.overridePairList.size() - 1).override;
 		}
 	}
-	public ICoreDhApiOverrideable getOverrideWithHighestPriority()
+	public IDhApiOverrideable getOverrideWithHighestPriority()
 	{
 		if (this.overridePairList.size() != 0)
 		{
@@ -67,7 +67,7 @@ public class OverridePriorityListContainer implements IBindable
 			return null;
 		}
 	}
-	public ICoreDhApiOverrideable getCoreOverride()
+	public IDhApiOverrideable getCoreOverride()
 	{
 		int lastIndex = this.overridePairList.size() - 1;
 		if (this.overridePairList.get(lastIndex) != null && this.overridePairList.get(lastIndex).priority == OverrideInjector.CORE_PRIORITY)
@@ -80,7 +80,7 @@ public class OverridePriorityListContainer implements IBindable
 		}
 	}
 	/** Returns null if no override with the given priority is found */
-	public ICoreDhApiOverrideable getOverrideWithPriority(int priority)
+	public IDhApiOverrideable getOverrideWithPriority(int priority)
 	{
 		for (OverridePriorityPair pair : this.overridePairList)
 		{
@@ -103,10 +103,10 @@ public class OverridePriorityListContainer implements IBindable
 	
 	private class OverridePriorityPair
 	{
-		public final ICoreDhApiOverrideable override;
+		public final IDhApiOverrideable override;
 		public int priority;
 		
-		public OverridePriorityPair(ICoreDhApiOverrideable newOverride, int newPriority)
+		public OverridePriorityPair(IDhApiOverrideable newOverride, int newPriority)
 		{
 			this.override = newOverride;
 			this.priority = newPriority;

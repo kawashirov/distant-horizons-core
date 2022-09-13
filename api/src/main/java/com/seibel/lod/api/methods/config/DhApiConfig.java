@@ -1,9 +1,9 @@
 package com.seibel.lod.api.methods.config;
 
 import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
-import com.seibel.lod.core.api.external.coreImplementations.interfaces.config.IConverter;
-import com.seibel.lod.core.api.external.coreImplementations.objects.converters.DefaultConverter;
-import com.seibel.lod.core.config.types.ConfigEntry;
+import com.seibel.lod.core.interfaces.config.IConfigEntry;
+import com.seibel.lod.core.interfaces.config.IConverter;
+import com.seibel.lod.core.interfaces.config.converters.DefaultConverter;
 
 /**
  * A wrapper used to interface with Distant Horizon's Config.
@@ -18,7 +18,7 @@ import com.seibel.lod.core.config.types.ConfigEntry;
  */
 public class DhApiConfig<coreType, apiType> implements IDhApiConfig<apiType>
 {
-	private final ConfigEntry<coreType> configEntry;
+	private final IConfigEntry<coreType> configEntry;
 	
 	private final IConverter<coreType, apiType> configConverter;
 	
@@ -30,7 +30,7 @@ public class DhApiConfig<coreType, apiType> implements IDhApiConfig<apiType>
 	 * Uses the default object converter, this requires coreType and apiType to be the same.
 	 */
 	@SuppressWarnings("unchecked") // DefaultConverter's cast is safe
-	public DhApiConfig(ConfigEntry<coreType> newConfigEntry)
+	public DhApiConfig(IConfigEntry<coreType> newConfigEntry)
 	{
 		this.configEntry = newConfigEntry;
 		this.configConverter = (IConverter<coreType, apiType>) new DefaultConverter<coreType>();
@@ -40,7 +40,7 @@ public class DhApiConfig<coreType, apiType> implements IDhApiConfig<apiType>
 	 * This constructor should only be called internally. <br>
 	 * There is no reason for API users to create this object. <br><br>
 	 */
-	public DhApiConfig(ConfigEntry<coreType> newConfigEntry, IConverter<coreType, apiType> newConverter)
+	public DhApiConfig(IConfigEntry<coreType> newConfigEntry, IConverter<coreType, apiType> newConverter)
 	{
 		this.configEntry = newConfigEntry;
 		this.configConverter = newConverter;
@@ -53,7 +53,7 @@ public class DhApiConfig<coreType, apiType> implements IDhApiConfig<apiType>
 	
 	public boolean setValue(apiType newValue)
 	{
-		if (this.configEntry.allowApiOverride)
+		if (this.configEntry.getAllowApiOverride())
 		{
 			this.configEntry.setApiValue(this.configConverter.convertToCoreType(newValue));
 			return true;
@@ -64,7 +64,7 @@ public class DhApiConfig<coreType, apiType> implements IDhApiConfig<apiType>
 		}
 	}
 	
-	public boolean getCanBeOverrodeByApi() { return this.configEntry.allowApiOverride; }
+	public boolean getCanBeOverrodeByApi() { return this.configEntry.getAllowApiOverride(); }
 	
 	public apiType getDefaultValue() { return this.configConverter.convertToApiType(configEntry.getDefaultValue()); }
 	public apiType getMaxValue() { return this.configConverter.convertToApiType(this.configEntry.getMax()); }

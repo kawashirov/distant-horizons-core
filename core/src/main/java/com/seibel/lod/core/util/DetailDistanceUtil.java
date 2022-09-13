@@ -84,7 +84,7 @@ public class DetailDistanceUtil
 		else
 			detail = (int) (Math.log(distance/distanceUnit) / logBase);
 		
-		return (byte) LodUtil.clamp(minDetail, detail+minDetail, maxDetail - 1);
+		return (byte) MathUtil.clamp(minDetail, detail+minDetail, maxDetail - 1);
 	}
 	
 	public static byte getDetailLevelFromDistance(double distance)

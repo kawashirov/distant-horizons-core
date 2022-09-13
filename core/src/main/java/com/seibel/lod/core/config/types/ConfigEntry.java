@@ -1,13 +1,15 @@
 package com.seibel.lod.core.config.types;
 
 
+import com.seibel.lod.core.interfaces.config.IConfigEntry;
+
 /**
  * Use for making the config variables
  *
  * @author coolGi
  * @version 2022-5-26
  */
-public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>>
+public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implements IConfigEntry<T>
 {
     private final T defaultValue;
     private String comment;
@@ -40,16 +42,21 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>>
 
 
     /** Gets the default value of the option */
-    public T getDefaultValue() {
+	@Override
+	public T getDefaultValue() {
         return this.defaultValue;
     }
-
+	
+	@Override
     public void setApiValue(T newApiValue) {
         this.apiValue = newApiValue;
     }
-    public T getApiValue() {
+	@Override
+	public T getApiValue() {
         return this.apiValue;
     }
+	@Override 
+	public boolean getAllowApiOverride() { return this.allowApiOverride; }
     @Override
     public void set(T newValue) {
         super.set(newValue);
@@ -61,42 +68,51 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>>
             return apiValue;
         return super.get();
     }
+	@Override
     public T getTrueValue() {
         return super.get();
     }
 
     /** Sets the value without saving */
+	@Override
     public void setWithoutSaving(T newValue) {
         super.set(newValue);
     }
 
     /** Gets the min value */
+	@Override
     public T getMin() {
         return this.min;
     }
     /** Sets the min value */
+	@Override
     public void setMin(T newMin) {
         this.min = newMin;
     }
     /** Gets the max value */
+	@Override
     public T getMax() {
         return this.max;
     }
     /** Sets the max value */
+	@Override
     public void setMax(T newMax) {
         this.max = newMax;
     }
     /** Sets the min and max in 1 setter */
+	@Override
     public void setMinMax(T newMin, T newMax) {
         this.max = newMin;
         this.min = newMax;
     }
 
     /** Gets the comment */
+	@Override
     public String getComment() {
         return this.comment;
     }
     /** Sets the comment */
+	@Override
     public void setComment(String newComment) {
         this.comment = newComment;
     }
@@ -113,10 +129,12 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>>
      * 1 == number too high
      * -1 == number too low
      */
+	@Override
     public byte isValid() {
         return isValid(value);
     }
     /** Checks if a value is valid */
+	@Override
     public byte isValid(T value) {
         if (this.configBase.disableMinMax)
             return 0;
@@ -139,7 +157,10 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>>
     public void load() {
         configBase.configFileINSTANCE.loadEntry(this);
     }
-
+	
+	
+	@Override
+	public boolean equals(IConfigEntry<?> obj) { return obj.getClass() == ConfigEntry.class ? equals((ConfigEntry<?>)obj) : false; }
     /** Is the value of this equal to another */
     public boolean equals(ConfigEntry<?> obj) {
         // Can all of this just be "return this.value.equals(obj.value)"?

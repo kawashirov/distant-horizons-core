@@ -2,15 +2,14 @@ package com.seibel.lod.api.methods.events.abstractEvents;
 
 import com.seibel.lod.api.methods.events.interfaces.IDhApiEvent;
 import com.seibel.lod.api.methods.events.sharedParameterObjects.DhApiRenderParam;
-import com.seibel.lod.core.api.external.coreImplementations.objects.events.abstractEvents.CoreDhApiBeforeRenderEvent;
+import com.seibel.lod.core.util.math.Mat4f;
 
 /**
  * @author James Seibel
  * @version 2022-9-6
  */
 public abstract class DhApiBeforeRenderEvent
-		extends CoreDhApiBeforeRenderEvent
-		implements IDhApiEvent<DhApiBeforeRenderEvent.EventParam, CoreDhApiBeforeRenderEvent.CoreEventParam>
+		implements IDhApiEvent<DhApiBeforeRenderEvent.EventParam>
 {
 	/**
 	 * Fired before Distant Horizons renders fake chunks.
@@ -25,7 +24,7 @@ public abstract class DhApiBeforeRenderEvent
 	//=========================//
 	
 	@Override
-	public final boolean fireEvent(CoreEventParam input) { return beforeRender(new EventParam(input)); }
+	public final boolean fireEvent(EventParam input) { return beforeRender(input); }
 	
 	@Override
 	public final boolean getCancelable() { return true; }
@@ -37,7 +36,10 @@ public abstract class DhApiBeforeRenderEvent
 	
 	public static class EventParam extends DhApiRenderParam
 	{
-		public EventParam(CoreEventParam dhApiRenderParam) { super(dhApiRenderParam); }
+		public EventParam(DhApiRenderParam parent)
+		{
+			super(parent.mcProjectionMatrix, parent.mcModelViewMatrix, parent.dhProjectionMatrix, parent.dhModelViewMatrix, parent.partialTicks);
+		}
 	}
 	
 }

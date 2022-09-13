@@ -1,7 +1,6 @@
 package com.seibel.lod.api.methods.events.sharedParameterObjects;
 
-import com.seibel.lod.api.items.objects.math.DhApiMat4f;
-import com.seibel.lod.core.api.external.coreImplementations.objects.events.sharedParameterObjects.CoreDhApiRenderParam;
+import com.seibel.lod.core.util.math.Mat4f;
 
 /**
  * Parameter passed into Render events.
@@ -12,29 +11,32 @@ import com.seibel.lod.core.api.external.coreImplementations.objects.events.share
 public class DhApiRenderParam
 {
 	/** The projection matrix Minecraft is using to render this frame. */
-	public final DhApiMat4f mcProjectionMatrix;
+	public final Mat4f mcProjectionMatrix;
 	/** The model view matrix Minecraft is using to render this frame. */
-	public final DhApiMat4f mcModelViewMatrix;
+	public final Mat4f mcModelViewMatrix;
 	
 	/** The projection matrix Distant Horizons is using to render this frame. */
-	public final DhApiMat4f dhProjectionMatrix;
+	public final Mat4f dhProjectionMatrix;
 	/** The model view matrix Distant Horizons is using to render this frame. */
-	public final DhApiMat4f dhModelViewMatrix;
+	public final Mat4f dhModelViewMatrix;
 	
 	/** Indicates how far into this tick the frame is. */
 	public final float partialTicks;
 	
 	
 	
-	public DhApiRenderParam(CoreDhApiRenderParam param)
+	public DhApiRenderParam(
+			Mat4f newMcProjectionMatrix, Mat4f newMcModelViewMatrix,
+			Mat4f newDhProjectionMatrix, Mat4f newDhModelViewMatrix,
+			float newPartialTicks)
 	{
-		this.mcProjectionMatrix = new DhApiMat4f(param.mcProjectionMatrix);
-		this.mcModelViewMatrix = new DhApiMat4f(param.mcModelViewMatrix);
+		this.mcProjectionMatrix = newMcProjectionMatrix;
+		this.mcModelViewMatrix = newMcModelViewMatrix;
 		
-		this.dhProjectionMatrix = new DhApiMat4f(param.dhProjectionMatrix);
-		this.dhModelViewMatrix = new DhApiMat4f(param.dhModelViewMatrix);
+		this.dhProjectionMatrix = newDhProjectionMatrix;
+		this.dhModelViewMatrix = newDhModelViewMatrix;
 		
-		this.partialTicks = param.partialTicks;
+		this.partialTicks = newPartialTicks;
 	}
 	
 }

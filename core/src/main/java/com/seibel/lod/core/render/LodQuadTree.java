@@ -9,6 +9,7 @@ import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.Pos2D;
 import com.seibel.lod.core.util.DetailDistanceUtil;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.util.MathUtil;
 import com.seibel.lod.core.util.gridList.MovableGridRingList;
 import org.apache.logging.log4j.Logger;
 
@@ -77,7 +78,7 @@ public class LodQuadTree implements AutoCloseable {
             for (byte i = LAYER_BEGINNING_OFFSET; i < numbersOfSectionLevels; i++) {
                 byte targetDataDetail = getLayerDataDetail(i);
                 int maxDist = getFurthestDistance(targetDataDetail);
-                int halfSize = LodUtil.ceilDiv(maxDist, (1 << i)) + 2; // +2 to make sure the section is fully contained in the ringList
+                int halfSize = MathUtil.ceilDiv(maxDist, (1 << i)) + 2; // +2 to make sure the section is fully contained in the ringList
                 {
                     DhSectionPos checkerPos = new DhSectionPos(i, halfSize, halfSize);
                     byte checkedDetail = calculateExpectedDetailLevel(new DhBlockPos2D(initialPlayerX, initialPlayerZ),checkerPos);

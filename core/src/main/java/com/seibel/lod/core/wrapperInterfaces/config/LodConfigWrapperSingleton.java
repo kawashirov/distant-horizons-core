@@ -3,7 +3,7 @@ package com.seibel.lod.core.wrapperInterfaces.config;
 import com.seibel.lod.core.enums.rendering.EFogDrawMode;
 import com.seibel.lod.core.enums.rendering.EFogColorMode;
 import com.seibel.lod.core.enums.rendering.EFogDistance;
-import com.seibel.lod.core.enums.rendering.ERendererMode;
+import com.seibel.lod.api.items.enums.rendering.ERendererMode;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.enums.config.*;
 import com.seibel.lod.core.enums.rendering.*;

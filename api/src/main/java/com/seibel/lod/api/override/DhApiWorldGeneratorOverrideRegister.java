@@ -2,8 +2,6 @@ package com.seibel.lod.api.override;
 
 import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.lod.api.items.objects.DhApiResult;
-import com.seibel.lod.core.api.external.coreImplementations.interfaces.override.worldGenerator.ICoreDhApiWorldGenerator;
-import com.seibel.lod.core.dependencyInjection.WorldGeneratorInjector;
 
 /**
  * Handles adding world generator overrides.
@@ -21,18 +19,18 @@ public class DhApiWorldGeneratorOverrideRegister
 	 * If another world generator has already been registered, DhApiResult will return
 	 * the name of the previously registered generator and success = false.
 	 */
-	public static DhApiResult registerWorldGeneratorOverride(ICoreDhApiWorldGenerator worldGenerator)
-	{
-		try
-		{
-			WorldGeneratorInjector.INSTANCE.bind(worldGenerator);
-			return DhApiResult.createSuccess();
-		}
-		catch (Exception e)
-		{
-			return DhApiResult.createFail(e.getMessage());
-		}
-	}
+//	public static DhApiResult registerWorldGeneratorOverride(ICoreDhApiWorldGenerator worldGenerator)
+//	{
+//		try
+//		{
+//			WorldGeneratorInjector.INSTANCE.bind(worldGenerator);
+//			return DhApiResult.createSuccess();
+//		}
+//		catch (Exception e)
+//		{
+//			return DhApiResult.createFail(e.getMessage());
+//		}
+//	}
 	
 	/**
 	 * Registers the given world generator for the given level. <Br> <Br>
@@ -41,18 +39,18 @@ public class DhApiWorldGeneratorOverrideRegister
 	 * If another world generator has already been registered, DhApiResult will return
 	 * the name of the previously registered generator and success = false.
 	 */
-	public static DhApiResult registerWorldGeneratorOverride(IDhApiLevelWrapper levelWrapper, ICoreDhApiWorldGenerator worldGenerator)
-	{
-		try
-		{
+//	public static DhApiResult registerWorldGeneratorOverride(IDhApiLevelWrapper levelWrapper, ICoreDhApiWorldGenerator worldGenerator)
+//	{
+//		try
+//		{
 //			WorldGeneratorInjector.INSTANCE.bind(levelWrapper, worldGenerator);
-			return DhApiResult.createSuccess();
-		}
-		catch (Exception e)
-		{
-			return DhApiResult.createFail(e.getMessage());
-		}
-	}
+//			return DhApiResult.createSuccess();
+//		}
+//		catch (Exception e)
+//		{
+//			return DhApiResult.createFail(e.getMessage());
+//		}
+//	}
 	
 	
 }

@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.util.MathUtil;
 
 /**
  * BLOCK <Br>
@@ -166,7 +167,7 @@ public enum EHorizontalResolution
 	{
 		EHorizontalResolution[] lowerDetails = getSelfAndLowerDetails(maxDetailLevel);
 		int distanceBetweenDetails = maxDistance / lowerDetails.length;
-		int index = LodUtil.clamp(0, distance / distanceBetweenDetails, lowerDetails.length - 1);
+		int index = MathUtil.clamp(0, distance / distanceBetweenDetails, lowerDetails.length - 1);
 		
 		return lowerDetails[index];
 		

@@ -1,18 +1,14 @@
 package com.seibel.lod.api.methods.events.abstractEvents;
 
 import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
-import com.seibel.lod.api.items.objects.wrappers.DhApiLevelWrapper;
 import com.seibel.lod.api.methods.events.interfaces.IDhApiEvent;
-import com.seibel.lod.core.api.external.coreImplementations.objects.events.abstractEvents.CoreDhApiLevelUnloadEvent;
-import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 
 /**
  * @author James Seibel
  * @version 2022-9-10
  */
-public abstract class DhApiLevelUnloadEvent 
-	extends CoreDhApiLevelUnloadEvent
-	implements IDhApiEvent<DhApiLevelUnloadEvent.EventParam, CoreDhApiLevelUnloadEvent.CoreEventParam>
+public abstract class DhApiLevelUnloadEvent
+	implements IDhApiEvent<DhApiLevelUnloadEvent.EventParam>
 {
 	/** Fired before Distant Horizons unloads a level. */
 	public abstract void onLevelUnload(EventParam input);
@@ -23,9 +19,9 @@ public abstract class DhApiLevelUnloadEvent
 	//=========================//
 	
 	@Override
-	public final boolean fireEvent(CoreDhApiLevelUnloadEvent.CoreEventParam input)
+	public final boolean fireEvent(EventParam input)
 	{
-		onLevelUnload(new EventParam(input.levelWrapper));
+		onLevelUnload(input);
 		return false;
 	}
 	
@@ -43,7 +39,7 @@ public abstract class DhApiLevelUnloadEvent
 		public final IDhApiLevelWrapper levelWrapper;
 		
 		
-		public EventParam(ILevelWrapper newLevelWrapper) { this.levelWrapper = new DhApiLevelWrapper(newLevelWrapper); }
+		public EventParam(IDhApiLevelWrapper newLevelWrapper) { this.levelWrapper = newLevelWrapper; }
 	}
 	
 }

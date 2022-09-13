@@ -1,7 +1,5 @@
 package com.seibel.lod.api.items.interfaces;
 
-import com.seibel.lod.core.api.external.coreImplementations.interfaces.wrappers.ICoreDhApiUnsafeWrapper;
-
 /**
  * The Distant Horizons' API objects can't cover
  * every potential use case. Sometimes developers just need
@@ -10,7 +8,7 @@ import com.seibel.lod.core.api.external.coreImplementations.interfaces.wrappers.
  * @author James Seibel
  * @version 2022-9-6
  */
-public interface IDhApiUnsafeWrapper extends ICoreDhApiUnsafeWrapper
+public interface IDhApiUnsafeWrapper
 {
 	/**
 	 * Returns the Minecraft object this wrapper contains. <br>
@@ -22,7 +20,6 @@ public interface IDhApiUnsafeWrapper extends ICoreDhApiUnsafeWrapper
 	 * in order to determine what object this method returns for
 	 * the specific version of Minecraft you are developing for.
 	 */
-	@Override
 	public Object getWrappedMcObject_UNSAFE();
 	
 }

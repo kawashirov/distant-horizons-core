@@ -1,8 +1,7 @@
 package com.seibel.lod.api.methods.events;
 
 import com.seibel.lod.api.items.objects.DhApiResult;
-import com.seibel.lod.core.api.external.coreImplementations.interfaces.events.ICoreDhApiEvent;
-import com.seibel.lod.core.dependencyInjection.DhApiEventInjector;
+import com.seibel.lod.api.methods.events.interfaces.IDhApiEvent;
 
 /**
  * Handles adding/removing event handlers.
@@ -18,11 +17,11 @@ public class DhApiEventRegister
 	 * If multiple of the same eventHandler are added DhApiResult will return
 	 * the name of the already added handler and success = false.
 	 */
-	public static DhApiResult on(Class<? extends ICoreDhApiEvent> eventInterface, ICoreDhApiEvent eventHandlerImplementation)
+	public static DhApiResult on(Class<? extends IDhApiEvent> eventInterface, IDhApiEvent eventHandlerImplementation)
 	{
 		try
 		{
-			DhApiEventInjector.INSTANCE.bind(eventInterface, eventHandlerImplementation);
+//			DhApiEventInjector.INSTANCE.bind(eventInterface, eventHandlerImplementation);
 			return DhApiResult.createSuccess();
 		}
 		catch (IllegalStateException e)
@@ -36,16 +35,16 @@ public class DhApiEventRegister
 	 * If no eventHandler of the given class has been registered the result will return
 	 * success = false.
 	 */
-	public static DhApiResult off(Class<? extends ICoreDhApiEvent> eventInterface, Class<ICoreDhApiEvent> eventHandlerClass)
+	public static DhApiResult off(Class<? extends IDhApiEvent> eventInterface, Class<IDhApiEvent> eventHandlerClass)
 	{
-		if (DhApiEventInjector.INSTANCE.unbind(eventInterface, eventHandlerClass))
-		{
-			return DhApiResult.createSuccess();
-		}
-		else
-		{
+//		if (DhApiEventInjector.INSTANCE.unbind(eventInterface, eventHandlerClass))
+//		{
+//			return DhApiResult.createSuccess();
+//		}
+//		else
+//		{
 			return DhApiResult.createFail("No event handler [" + eventHandlerClass.getSimpleName() + "] was bound for the event [" + eventInterface.getSimpleName() + "].");
-		}
+//		}
 	}
 	
 }

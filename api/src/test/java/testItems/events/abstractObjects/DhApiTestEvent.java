@@ -1,12 +1,6 @@
 package testItems.events.abstractObjects;
 
-import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
-import com.seibel.lod.api.items.objects.wrappers.DhApiLevelWrapper;
-import com.seibel.lod.api.methods.events.abstractEvents.DhApiLevelLoadEvent;
 import com.seibel.lod.api.methods.events.interfaces.IDhApiEvent;
-import com.seibel.lod.core.api.external.coreImplementations.objects.events.abstractEvents.CoreDhApiLevelLoadEvent;
-import com.seibel.lod.core.api.external.coreImplementations.objects.events.abstractEvents.CoreDhApiTestEvent;
-import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 
 /**
  * A dummy event implementation used for unit testing.
@@ -15,11 +9,14 @@ import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
  * @version 2022-9-11
  */
 public abstract class DhApiTestEvent
-		extends CoreDhApiTestEvent
-		implements IDhApiEvent<Boolean, Boolean>
+		implements IDhApiEvent<Boolean>
 {
 	
 	public abstract void onTestEvent(Boolean input);
+	
+	/** just used for testing */
+	public abstract boolean getTestValue();
+	
 	
 	
 	//=========================//

@@ -19,8 +19,8 @@
 
 package com.seibel.lod.core.dependencyInjection;
 
-import com.seibel.lod.core.api.external.coreImplementations.interfaces.override.worldGenerator.ICoreDhApiWorldGenerator;
-import com.seibel.lod.core.api.external.coreImplementations.interfaces.wrappers.world.ICoreDhApiLevelWrapper;
+import com.seibel.lod.api.items.interfaces.override.worldGenerator.IDhApiWorldGenerator;
+import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.lod.core.util.StringUtil;
 
 import java.util.HashMap;
@@ -36,7 +36,7 @@ public class WorldGeneratorInjector
 {
 	public static final WorldGeneratorInjector INSTANCE = new WorldGeneratorInjector();
 
-	private final HashMap<ICoreDhApiLevelWrapper, OverrideInjector> worldGeneratorByLevelWrapper = new HashMap<>();
+	private final HashMap<IDhApiLevelWrapper, OverrideInjector> worldGeneratorByLevelWrapper = new HashMap<>();
 	/** World generators that aren't bound to a specific level and are used if no other world generators are bound. */
 	private final OverrideInjector backupUniversalWorldGenerators;
 
@@ -75,7 +75,7 @@ public class WorldGeneratorInjector
 	 * @throws IllegalArgumentException if a non-Distant Horizons world generator with the priority CORE is passed in
 	 * @see DependencyInjector#bind(Class, IBindable)
 	 */
-	public void bind(ICoreDhApiWorldGenerator worldGeneratorImplementation)  throws IllegalStateException, IllegalArgumentException
+	public void bind(IDhApiWorldGenerator worldGeneratorImplementation)  throws IllegalStateException, IllegalArgumentException
 	{
 		bind(null, worldGeneratorImplementation);
 	}
@@ -87,7 +87,7 @@ public class WorldGeneratorInjector
 	 * @throws IllegalArgumentException if a non-Distant Horizons world generator with the priority CORE is passed in
 	 * @see DependencyInjector#bind(Class, IBindable)
 	 */
-	public void bind(ICoreDhApiLevelWrapper levelForWorldGenerator, ICoreDhApiWorldGenerator worldGeneratorImplementation)  throws IllegalStateException, IllegalArgumentException
+	public void bind(IDhApiLevelWrapper levelForWorldGenerator, IDhApiWorldGenerator worldGeneratorImplementation)  throws IllegalStateException, IllegalArgumentException
 	{
 		if (levelForWorldGenerator != null)
 		{
@@ -97,12 +97,12 @@ public class WorldGeneratorInjector
 				worldGeneratorByLevelWrapper.put(levelForWorldGenerator, new OverrideInjector(this.corePackagePath));
 			}
 
-			worldGeneratorByLevelWrapper.get(levelForWorldGenerator).bind(ICoreDhApiWorldGenerator.class, worldGeneratorImplementation);
+			worldGeneratorByLevelWrapper.get(levelForWorldGenerator).bind(IDhApiWorldGenerator.class, worldGeneratorImplementation);
 		}
 		else
 		{
 			// a null level wrapper binds the generator to all levels
-			backupUniversalWorldGenerators.bind(ICoreDhApiWorldGenerator.class, worldGeneratorImplementation);
+			backupUniversalWorldGenerators.bind(IDhApiWorldGenerator.class, worldGeneratorImplementation);
 		}
 	}
 
@@ -114,9 +114,9 @@ public class WorldGeneratorInjector
 	 *
 	 * @see OverrideInjector#get(Class)
 	 */
-	public ICoreDhApiWorldGenerator get() throws ClassCastException
+	public IDhApiWorldGenerator get() throws ClassCastException
 	{
-		return backupUniversalWorldGenerators.get(ICoreDhApiWorldGenerator.class);
+		return backupUniversalWorldGenerators.get(IDhApiWorldGenerator.class);
 	}
 
 	/**
@@ -126,17 +126,17 @@ public class WorldGeneratorInjector
 	 *
 	 * @see OverrideInjector#get(Class)
 	 */
-	public ICoreDhApiWorldGenerator get(ICoreDhApiLevelWrapper levelForWorldGenerator) throws ClassCastException
+	public IDhApiWorldGenerator get(IDhApiLevelWrapper levelForWorldGenerator) throws ClassCastException
 	{
 		if (!worldGeneratorByLevelWrapper.containsKey(levelForWorldGenerator))
 		{
 			// no generator exists for this specific level.
 			// check for a backup universal world generator
-			return backupUniversalWorldGenerators.get(ICoreDhApiWorldGenerator.class);
+			return backupUniversalWorldGenerators.get(IDhApiWorldGenerator.class);
 		}
 
 		// use the existing world generator
-		return worldGeneratorByLevelWrapper.get(levelForWorldGenerator).get(ICoreDhApiWorldGenerator.class);
+		return worldGeneratorByLevelWrapper.get(levelForWorldGenerator).get(IDhApiWorldGenerator.class);
 	}
 
 

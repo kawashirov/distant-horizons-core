@@ -1,6 +1,6 @@
 package testItems.overrideInjection.interfaces;
 
-import com.seibel.lod.core.api.external.coreImplementations.interfaces.override.ICoreDhApiOverrideable;
+import com.seibel.lod.api.items.interfaces.override.IDhApiOverrideable;
 
 /**
  * Dummy override test interface for dependency unit tests.
@@ -8,7 +8,7 @@ import com.seibel.lod.core.api.external.coreImplementations.interfaces.override.
  * @author James Seibel
  * @version 2022-9-5
  */
-public interface IOverrideTest extends ICoreDhApiOverrideable
+public interface IOverrideTest extends IDhApiOverrideable
 {
 	public int getValue();
 	

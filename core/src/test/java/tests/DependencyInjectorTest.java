@@ -1,7 +1,8 @@
 package tests;
 
-import com.seibel.lod.core.api.external.coreImplementations.interfaces.override.worldGenerator.ICoreDhApiWorldGenerator;
-import com.seibel.lod.core.api.external.coreImplementations.interfaces.wrappers.world.ICoreDhApiLevelWrapper;
+import com.seibel.lod.api.items.enums.worldGeneration.EDhApiWorldGenThreadMode;
+import com.seibel.lod.api.items.interfaces.override.worldGenerator.IDhApiWorldGenerator;
+import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.lod.core.dependencyInjection.DependencyInjector;
 import com.seibel.lod.core.dependencyInjection.IBindable;
 import com.seibel.lod.core.dependencyInjection.OverrideInjector;
@@ -166,7 +167,7 @@ public class DependencyInjectorTest
 
 
 		// variables to use later
-		ICoreDhApiWorldGenerator generator;
+		IDhApiWorldGenerator generator;
 		WorldGeneratorTestCore coreGenerator = new WorldGeneratorTestCore();
 		WorldGeneratorTestSecondary secondaryGenerator = new WorldGeneratorTestSecondary();
 		WorldGeneratorTestPrimary primaryGenerator = new WorldGeneratorTestPrimary();
@@ -211,7 +212,7 @@ public class DependencyInjectorTest
 
 		// in-line get
 		// (make sure the returned type is correct and compiles, the actual value doesn't matter)
-		EWorldGenThreadMode threadMode = TEST_INJECTOR.get().getCoreThreadingMode();
+		EDhApiWorldGenThreadMode threadMode = TEST_INJECTOR.get().getCoreThreadingMode();
 
 	}
 
@@ -226,12 +227,12 @@ public class DependencyInjectorTest
 
 
 		// variables to use later
-		ICoreDhApiWorldGenerator generator;
+		IDhApiWorldGenerator generator;
 		WorldGeneratorTestCore backupGenerator = new WorldGeneratorTestCore();
 		WorldGeneratorTestPrimary levelGenerator = new WorldGeneratorTestPrimary();
 
-		ICoreDhApiLevelWrapper boundLevel = new LevelWrapperTest();
-		ICoreDhApiLevelWrapper unboundLevel = new LevelWrapperTest();
+		IDhApiLevelWrapper boundLevel = new LevelWrapperTest();
+		IDhApiLevelWrapper unboundLevel = new LevelWrapperTest();
 
 
 

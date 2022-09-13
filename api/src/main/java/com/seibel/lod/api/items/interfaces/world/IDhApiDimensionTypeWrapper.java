@@ -20,20 +20,16 @@
 package com.seibel.lod.api.items.interfaces.world;
 
 import com.seibel.lod.api.items.interfaces.IDhApiUnsafeWrapper;
-import com.seibel.lod.core.api.external.coreImplementations.interfaces.wrappers.world.ICoreDhApiDimensionTypeWrapper;
 
 /**
  * @author James Seibel
  * @version 2022-7-14
  */
-public interface IDhApiDimensionTypeWrapper extends ICoreDhApiDimensionTypeWrapper, IDhApiUnsafeWrapper
+public interface IDhApiDimensionTypeWrapper extends IDhApiUnsafeWrapper
 {
-	@Override
 	String getDimensionName();
 	
-	@Override
 	boolean hasCeiling();
 	
-	@Override
 	boolean hasSkyLight();
 }

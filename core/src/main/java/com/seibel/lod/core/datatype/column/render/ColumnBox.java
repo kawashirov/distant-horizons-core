@@ -26,6 +26,7 @@ import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.util.ColorUtil;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.util.MathUtil;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 
 public class ColumnBox
@@ -54,7 +55,7 @@ public class ColumnBox
 		boolean skipBot = ColumnFormat.doesItExist(botData) && (ColumnFormat.getHeight(botData) == y) && !isBotTransparent;
 		if(LodRenderer.transparencyEnabled && LodRenderer.fakeOceanFloor) {
 			if (!isTransparent && isTopTransparent && ColumnFormat.doesItExist(topData)) {
-				skyLightTop = (byte) LodUtil.clamp(0, 15 - (ColumnFormat.getHeight(topData) - y), 15);
+				skyLightTop = (byte) MathUtil.clamp(0, 15 - (ColumnFormat.getHeight(topData) - y), 15);
 				ySize = (short) (ColumnFormat.getHeight(topData) - y - 1);
 				//y = (short) (DataPointUtil.getHeight(topData) - 2);
 				//ySize = 1;

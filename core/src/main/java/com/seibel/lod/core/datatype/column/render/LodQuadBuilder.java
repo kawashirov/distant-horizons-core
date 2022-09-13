@@ -33,6 +33,7 @@ import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.render.glObject.buffer.GLVertexBuffer;
 import com.seibel.lod.core.util.ColorUtil;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.util.MathUtil;
 import org.apache.logging.log4j.Logger;
 
 //TODO: Recheck this class for refactoring
@@ -464,7 +465,7 @@ public class LodQuadBuilder
 	/** Returns how many Buffers will be needed to render everything in this builder. */
 	public int getCurrentNeededVertexBufferCount()
 	{
-		return LodUtil.ceilDiv(getCurrentQuadsCount(), RenderBuffer.MAX_QUADS_PER_BUFFER);
+		return MathUtil.ceilDiv(getCurrentQuadsCount(), RenderBuffer.MAX_QUADS_PER_BUFFER);
 	}
 
 }
