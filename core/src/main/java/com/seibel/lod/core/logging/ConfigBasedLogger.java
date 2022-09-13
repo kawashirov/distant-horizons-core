@@ -19,7 +19,7 @@
 
 package com.seibel.lod.core.logging;
 
-import com.seibel.lod.core.enums.config.ELoggerMode;
+import com.seibel.lod.api.items.enums.config.ELoggerMode;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import org.apache.logging.log4j.Level;

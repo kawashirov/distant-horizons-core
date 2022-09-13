@@ -17,42 +17,41 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.enums.config;
+package com.seibel.lod.api.items.enums.rendering;
 
 /**
- * LOWEST <br>
- * LOW <br>
- * MEDIUM <br>
- * HIGH <br> <br>
+ * ABOVE_CAMERA,				<br>
+ * BELOW_CAMERA,				<br>
+ * ABOVE_AND_BELOW_CAMERA,		<br>
+ * ABOVE_SET_HEIGHT,			<br>
+ * BELOW_SET_HEIGHT,			<br>
+ * ABOVE_AND_BELOW_SET_HEIGHT,	<br>
  *
- * this indicates the base of the quadratic function we use for the quality drop-off
- * 
- * @author Leonardo Amato
- * @version 9-29-2021
+ * @author Leetom
+ * @version 6-30-2022
  */
-public enum EHorizontalQuality
+public enum EHeightFogMode
 {
 	// Reminder:
 	// when adding items up the API minor version
 	// when removing items up the API major version
 	
 	
-	/** 1.0 AKA Linear */
-	LOWEST(1.0f),
+	ABOVE_CAMERA(true, true, false),
+	BELOW_CAMERA(true, false, true),
+	ABOVE_AND_BELOW_CAMERA(true, true, true),
+	ABOVE_SET_HEIGHT(false, true, false),
+	BELOW_SET_HEIGHT(false, false, true),
+	ABOVE_AND_BELOW_SET_HEIGHT(false, true, true);
 	
-	/** exponent 1.5 */
-	LOW(1.5f),
+	public final boolean basedOnCamera;
+	public final boolean above;
+	public final boolean below;
 	
-	/** exponent 2.0 */
-	MEDIUM(2.0f),
-	
-	/** exponent 2.2 */
-	HIGH(2.2f);
-	
-	public final double quadraticBase;
-	
-	EHorizontalQuality(double distanceUnit)
+	EHeightFogMode(boolean basedOnCamera, boolean above, boolean below)
 	{
-		this.quadraticBase = distanceUnit;
+		this.basedOnCamera = basedOnCamera;
+		this.above = above;
+		this.below = below;
 	}
 }

@@ -17,29 +17,30 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.enums.rendering;
+package com.seibel.lod.api.items.interfaces.config.client;
+
+import com.seibel.lod.api.items.enums.config.EGpuUploadMethod;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
 
 /**
- * USE_OPTIFINE_FOG_SETTING, <br>
- * FOG_ENABLED, <br>
- * FOG_DISABLED <br>
- * 
+ * Distant Horizons' OpenGL buffer configuration.
+ *
  * @author James Seibel
- * @version 2022-6-2
+ * @version 2022-7-5
  */
-public enum EFogDrawMode
+public interface IDhApiBuffers
 {
-	// Reminder:
-	// when adding items up the API minor version
-	// when removing items up the API major version
+	
+	/** Defines how geometry data is uploaded to the GPU. */
+	IDhApiConfig<EGpuUploadMethod> getGpuUploadMethodConfig();
 	
 	/**
-	 * Use whatever Fog setting optifine is using.
-	 * If optifine isn't installed this defaults to FOG_ENABLED.
+	 * Defines how long we should wait after uploading one
+	 * Megabyte of geometry data to the GPU before uploading
+	 * the next Megabyte of data. <br>
+	 * This can be set to a non-zero number to reduce stuttering caused by
+	 * uploading buffers to the GPU.
 	 */
-	USE_OPTIFINE_SETTING,
-	
-	FOG_ENABLED,
-	FOG_DISABLED;
+	IDhApiConfig<Integer> getBufferUploadTimeoutPerMegabyteInMillisecondsConfig();
 	
 }

@@ -19,14 +19,12 @@
 
 package com.seibel.lod.core.api.internal;
 
-import com.seibel.lod.api.methods.events.abstractEvents.*;
 import com.seibel.lod.api.methods.events.sharedParameterObjects.DhApiRenderParam;
 import com.seibel.lod.core.level.IClientLevel;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.ModInfo;
-import com.seibel.lod.core.enums.rendering.EDebugMode;
+import com.seibel.lod.api.items.enums.rendering.EDebugMode;
 import com.seibel.lod.api.items.enums.rendering.ERendererMode;
-import com.seibel.lod.core.dependencyInjection.DhApiEventInjector;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.logging.ConfigBasedSpamLogger;

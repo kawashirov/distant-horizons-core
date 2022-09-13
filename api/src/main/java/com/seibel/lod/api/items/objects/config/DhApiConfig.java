@@ -1,4 +1,4 @@
-package com.seibel.lod.api.methods.config;
+package com.seibel.lod.api.items.objects.config;
 
 import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
 import com.seibel.lod.core.interfaces.config.IConfigEntry;

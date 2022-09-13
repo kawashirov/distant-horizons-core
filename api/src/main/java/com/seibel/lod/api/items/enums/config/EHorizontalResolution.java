@@ -17,12 +17,11 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.enums.config;
+package com.seibel.lod.api.items.enums.config;
 
 import java.util.ArrayList;
 import java.util.Collections;
 
-import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.MathUtil;
 
 /**

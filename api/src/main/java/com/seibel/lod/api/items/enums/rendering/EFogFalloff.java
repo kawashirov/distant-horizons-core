@@ -1,4 +1,4 @@
-package com.seibel.lod.core.enums.rendering;
+package com.seibel.lod.api.items.enums.rendering;
 
 /**
  * LINEAR,				<br>

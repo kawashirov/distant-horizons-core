@@ -17,28 +17,33 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.coreImplementations.methods.config.client;
-
-import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
-import com.seibel.lod.api.items.objects.config.DhApiConfig;
-import com.seibel.lod.core.config.Config.Client.Advanced.Debugging;
-import com.seibel.lod.api.items.enums.rendering.EDebugMode;
+package com.seibel.lod.api.items.enums.config;
 
 /**
- * Distant Horizons' debug configuration.
- *
- * @author James Seibel
- * @version 2022-7-5
+ * Low <br>
+ * Medium <br>
+ * High <br>
+ * <br>
+ * this is a quality scale for the detail drop-off
+ * 
+ * @author Leonardo Amato
+ * @version 9-25-2021
  */
-public class DhApiDebugging
+public enum EHorizontalScale
 {
-	/** Can be used to debug the standard fake chunk rendering. */
-	public static IDhApiConfig<EDebugMode> getDebugRenderModeConfig()
-	{ return new DhApiConfig<>(Debugging.debugMode); }
+	/** Lods are 2D with heightMap */
+	LOW(64),
 	
-	/** If enabled debug keybindings can be used. */
-	public static IDhApiConfig<Boolean> getEnableDebugKeybindingsConfig()
-	{ return new DhApiConfig<>(Debugging.enableDebugKeybindings); }
+	/** Lods expand in three dimension */
+	MEDIUM(128),
 	
+	/** Lods expand in three dimension */
+	HIGH(256);
 	
+	public final int distanceUnit;
+	
+	EHorizontalScale(int distanceUnit)
+	{
+		this.distanceUnit = distanceUnit;
+	}
 }

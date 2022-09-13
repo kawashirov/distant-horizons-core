@@ -17,12 +17,10 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.coreImplementations.methods.config.client;
+package com.seibel.lod.api.items.interfaces.config.client;
 
-import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
-import com.seibel.lod.api.items.objects.config.DhApiConfig;
-import com.seibel.lod.core.config.Config.Client.Multiplayer;
 import com.seibel.lod.api.items.enums.config.EServerFolderNameMode;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
 
 /**
  * Distant Horizons' client-side multiplayer configuration.
@@ -30,15 +28,14 @@ import com.seibel.lod.api.items.enums.config.EServerFolderNameMode;
  * @author James Seibel
  * @version 2022-7-5
  */
-public class DhApiMultiplayer
+public interface IDhApiMultiplayer
 {
 	
 	/**
 	 * Defines how multiplayer server folders are named. <br>
 	 * Note: Changing this while connected to a multiplayer world will cause undefined behavior!
 	 */
-	public static IDhApiConfig<EServerFolderNameMode> getFolderSavingModeConfig()
-	{ return new DhApiConfig<>(Multiplayer.serverFolderNameMode); }
+	IDhApiConfig<EServerFolderNameMode> getFolderSavingModeConfig();
 	
 	/**
 	 * Defines the necessary similarity (as a percent) that two potential levels
@@ -49,8 +46,7 @@ public class DhApiMultiplayer
 	 * Setting this to a non-zero value allows for usage in servers that user Multiverse
 	 * or similar mods.
 	 */
-	public static IDhApiConfig<Double> getMultiverseSimilarityRequirementConfig()
-	{ return new DhApiConfig<>(Multiplayer.multiDimensionRequiredSimilarity); }
+	IDhApiConfig<Double> getMultiverseSimilarityRequirementConfig();
 	
 	
 }

@@ -17,37 +17,29 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.enums.config;
+package com.seibel.lod.api.items.enums.rendering;
 
 /**
- * NONE, <br>
- * NON_FULL, <br>
- * NO_COLLISION, <br>
- * BOTH, <br>
- *
- * @author Leonardo Amato
- * @version 2022-7-1
+ * USE_OPTIFINE_FOG_SETTING, <br>
+ * FOG_ENABLED, <br>
+ * FOG_DISABLED <br>
+ * 
+ * @author James Seibel
+ * @version 2022-6-2
  */
-public enum EBlocksToAvoid
+public enum EFogDrawMode
 {
 	// Reminder:
 	// when adding items up the API minor version
 	// when removing items up the API major version
 	
-	NONE(false, false),
+	/**
+	 * Use whatever Fog setting optifine is using.
+	 * If optifine isn't installed this defaults to FOG_ENABLED.
+	 */
+	USE_OPTIFINE_SETTING,
 	
-	NON_FULL(true, false),
+	FOG_ENABLED,
+	FOG_DISABLED;
 	
-	NO_COLLISION(false, true),
-	
-	BOTH(true, true);
-	
-	public final boolean nonFull;
-	public final boolean noCollision;
-	
-	EBlocksToAvoid(boolean nonFull, boolean noCollision)
-	{
-		this.nonFull = nonFull;
-		this.noCollision = noCollision;
-	}
 }

@@ -17,41 +17,38 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.enums.rendering;
+package com.seibel.lod.api.items.enums.config;
 
 /**
- * ABOVE_CAMERA,				<br>
- * BELOW_CAMERA,				<br>
- * ABOVE_AND_BELOW_CAMERA,		<br>
- * ABOVE_SET_HEIGHT,			<br>
- * BELOW_SET_HEIGHT,			<br>
- * ABOVE_AND_BELOW_SET_HEIGHT,	<br>
+ * NEVER, 	<br>
+ * DYNAMIC, <br>
+ * ALWAYS	<br> <br>
  *
- * @author Leetom
- * @version 6-30-2022
+ * This represents how far the LODs should overlap with
+ * the vanilla Minecraft terrain.
+ * 
+ * @author James Seibel
+ * @version 2022-6-30
  */
-public enum EHeightFogMode
+public enum EVanillaOverdraw
 {
 	// Reminder:
 	// when adding items up the API minor version
 	// when removing items up the API major version
 	
 	
-	ABOVE_CAMERA(true, true, false),
-	BELOW_CAMERA(true, false, true),
-	ABOVE_AND_BELOW_CAMERA(true, true, true),
-	ABOVE_SET_HEIGHT(false, true, false),
-	BELOW_SET_HEIGHT(false, false, true),
-	ABOVE_AND_BELOW_SET_HEIGHT(false, true, true);
+	/**
+	 * Don't draw LODs where a minecraft chunk could be.
+	 * Use Overdraw Offset to tweak the border thickness.
+	 */
+	NEVER,
 	
-	public final boolean basedOnCamera;
-	public final boolean above;
-	public final boolean below;
+	/**
+	 * Draw LODs over the farther minecraft chunks.
+	 * Dynamically decides the border thickness
+	 */
+	DYNAMIC,
 	
-	EHeightFogMode(boolean basedOnCamera, boolean above, boolean below)
-	{
-		this.basedOnCamera = basedOnCamera;
-		this.above = above;
-		this.below = below;
-	}
+	/** Draw LODs over all minecraft chunks. */
+	ALWAYS,
 }

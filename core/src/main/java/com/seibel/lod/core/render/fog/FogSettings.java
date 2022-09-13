@@ -19,7 +19,7 @@
 
 package com.seibel.lod.core.render.fog;
 
-import com.seibel.lod.core.enums.rendering.EFogFalloff;
+import com.seibel.lod.api.items.enums.rendering.EFogFalloff;
 
 import java.util.Objects;
 

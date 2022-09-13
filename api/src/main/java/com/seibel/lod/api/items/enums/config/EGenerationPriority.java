@@ -17,39 +17,31 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.enums.config;
+package com.seibel.lod.api.items.enums.config;
 
 /**
- * CONSTANT <br>
- * FREQUENT <br>
- * NORMAL <br>
- * RARE <br> <br>
+ * AUTO <br>
+ * Near_First <br>
+ * Far_First <br> <br>
  *
- * Determines how fast the buffers should be regenerated
+ * Determines which LODs should have priority when generating
+ * outside the normal view distance.
  * 
  * @author Leonardo Amato
- * @version 9-25-2021
+ * @version 12-1-2021
  */
-public enum EBufferRebuildTimes
+public enum EGenerationPriority
 {
-	CONSTANT(0, 0, 0, 1),
+	// Reminder:
+	// when adding items up the API minor version
+	// when removing items up the API major version
 	
-	FREQUENT(1000, 500, 2500, 1),
+	/** NEAR_FIRST when connected to servers and BALANCED when on single player */
+	AUTO,
 	
-	NORMAL(2000, 1000, 5000, 4),
+	NEAR_FIRST,
 	
-	RARE(5000, 2000, 10000, 16);
+	BALANCED,
 	
-	public final int playerMoveTimeout;
-	public final int renderedChunkTimeout;
-	public final int chunkChangeTimeout;
-	public final int playerMoveDistance;
-	
-	EBufferRebuildTimes(int playerMoveTimeout, int renderedChunkTimeout, int chunkChangeTimeout, int playerMoveDistance)
-	{
-		this.playerMoveTimeout = playerMoveTimeout;
-		this.renderedChunkTimeout = renderedChunkTimeout;
-		this.chunkChangeTimeout = chunkChangeTimeout;
-		this.playerMoveDistance = playerMoveDistance;
-	}
+	FAR_FIRST
 }

@@ -2,7 +2,7 @@ package com.seibel.lod.core.file.structure;
 
 import com.seibel.lod.core.file.LevelToFileMatcher;
 import com.seibel.lod.core.config.Config;
-import com.seibel.lod.core.enums.config.EServerFolderNameMode;
+import com.seibel.lod.api.items.enums.config.EServerFolderNameMode;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.util.objects.ParsedIp;
 import com.seibel.lod.core.util.LodUtil;

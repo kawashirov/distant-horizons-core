@@ -20,9 +20,9 @@
 package com.seibel.lod.core.api.external.coreImplementations.methods.config.client;
 
 import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
-import com.seibel.lod.api.methods.config.DhApiConfig;
+import com.seibel.lod.api.items.objects.config.DhApiConfig;
 import com.seibel.lod.core.config.Config.Client.Advanced.Buffers;
-import com.seibel.lod.core.enums.config.EGpuUploadMethod;
+import com.seibel.lod.api.items.enums.config.EGpuUploadMethod;
 
 /**
  * Distant Horizons' OpenGL buffer configuration.

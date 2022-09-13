@@ -19,7 +19,7 @@
 
 package com.seibel.lod.core;
 
-import com.seibel.lod.core.enums.rendering.EFogDrawMode;
+import com.seibel.lod.api.items.enums.rendering.EFogDrawMode;
 import com.seibel.lod.core.dependencyInjection.IBindable;
 
 /**

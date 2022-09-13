@@ -17,38 +17,25 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.enums.config;
+package com.seibel.lod.api.items.enums.rendering;
 
 /**
- * NEVER, 	<br>
- * DYNAMIC, <br>
- * ALWAYS	<br> <br>
- *
- * This represents how far the LODs should overlap with
- * the vanilla Minecraft terrain.
+ * Minecraft, Lod_Builder, None
  * 
  * @author James Seibel
- * @version 2022-6-30
+ * @version 10-1-2021
  */
-public enum EVanillaOverdraw
+public enum EGLProxyContext
 {
-	// Reminder:
-	// when adding items up the API minor version
-	// when removing items up the API major version
+	/** Minecraft's render thread */
+	MINECRAFT,
 	
+	/** The context we send buffers to the GPU on */
+	LOD_BUILDER,
 	
-	/**
-	 * Don't draw LODs where a minecraft chunk could be.
-	 * Use Overdraw Offset to tweak the border thickness.
-	 */
-	NEVER,
+	/** A context that can be used for miscellaneous tasks, owned by the GLProxy */
+	PROXY_WORKER,
 	
-	/**
-	 * Draw LODs over the farther minecraft chunks.
-	 * Dynamically decides the border thickness
-	 */
-	DYNAMIC,
-	
-	/** Draw LODs over all minecraft chunks. */
-	ALWAYS,
+	/** used to un-bind threads */
+	NONE,
 }

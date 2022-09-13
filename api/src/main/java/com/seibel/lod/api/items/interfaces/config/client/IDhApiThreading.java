@@ -17,11 +17,9 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.coreImplementations.methods.config.client;
+package com.seibel.lod.api.items.interfaces.config.client;
 
 import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
-import com.seibel.lod.api.items.objects.config.DhApiConfig;
-import com.seibel.lod.core.config.Config.Client.Advanced.Threading;
 
 /**
  * Distant Horizons' threading configuration.
@@ -29,7 +27,7 @@ import com.seibel.lod.core.config.Config.Client.Advanced.Threading;
  * @author James Seibel
  * @version 2022-7-5
  */
-public class DhApiThreading
+public interface IDhApiThreading
 {
 	
 	/**
@@ -49,19 +47,17 @@ public class DhApiThreading
 	 * 				count of threads and then a double percent active config.
 	 */
 	@Deprecated
-	public static IDhApiConfig<Double> getWorldGeneratorThreadConfig()
-	{ return new DhApiConfig<Double, Double>(Threading.numberOfWorldGenerationThreads); }
+	IDhApiConfig<Double> getWorldGeneratorThreadConfig();
 	
 	// TODO the above should be replaced with these
-//	public static IDhApiConfig<Integer> getWorldGeneratorThreadConfig()
+//	IDhApiConfig<Integer> getWorldGeneratorThreadConfig()
 //	{ return new DhApiConfig<>(Threading.numberOfWorldGenerationThreads); }
 	
-//	public static IDhApiConfig<Double> getWorldGeneratorThreadActivePercentConfig()
+//	IDhApiConfig<Double> getWorldGeneratorThreadActivePercentConfig()
 //	{ return new DhApiConfig<>(Threading.ToBeDetermined); }
 	
 	
 	/** Defines how many buffer (GPU Terrain data) builder threads are used. */
-	public static IDhApiConfig<Integer> getBufferBuilderThreadConfig()
-	{ return new DhApiConfig<Integer, Integer>(Threading.numberOfBufferBuilderThreads); }
+	IDhApiConfig<Integer> getBufferBuilderThreadConfig();
 	
 }

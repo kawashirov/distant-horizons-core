@@ -19,7 +19,7 @@
 
 package com.seibel.lod.core.datatype.transform;
 
-import com.seibel.lod.core.enums.config.EDistanceGenerationMode;
+import com.seibel.lod.api.items.enums.config.EDistanceGenerationMode;
 
 /**
  * This is used to easily configure how LodChunks are generated.

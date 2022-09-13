@@ -17,24 +17,25 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
  
-package com.seibel.lod.core.enums.config;
+package com.seibel.lod.api.items.enums.config;
 
 /**
- * FAST, <br>
- * FANCY,
- *
- * @author Leetom
- * @version 2022-7-1
+ * NONE, GAME_SHADING
+ * 
+ * @author James Seibel
+ * @version 7-25-2020
  */
-public enum ELightGenerationMode
+public enum EShadingMode
 {
-	// Reminder:
-	// when adding items up the API minor version
-	// when removing items up the API major version
+	/**
+	 * LODs will have darker sides and bottoms to simulate
+	 * Minecraft's fast lighting.
+	 */
+	GAME_SHADING,
 	
-	/** Fake light values using a height map */
-	FAST,
-	
-	/** Run the lighting engine though the chunk to generate proper light values */
-	FANCY
+	/**
+	 * LODs will use ambient occlusion to mimic Minecraft's
+	 * Fancy lighting.
+	 */
+	AMBIENT_OCCLUSION
 }

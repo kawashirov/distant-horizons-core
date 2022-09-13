@@ -17,25 +17,21 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.enums.rendering;
+package com.seibel.lod.api.items.enums.rendering;
 
 /**
- * Minecraft, Lod_Builder, None
+ * NEAR, FAR, or NEAR_AND_FAR.
  * 
  * @author James Seibel
- * @version 10-1-2021
+ * @version 2022-6-2
  */
-public enum EGLProxyContext
+public enum EFogDistance
 {
-	/** Minecraft's render thread */
-	MINECRAFT,
+	// Reminder:
+	// when adding items up the API minor version
+	// when removing items up the API major version
 	
-	/** The context we send buffers to the GPU on */
-	LOD_BUILDER,
-	
-	/** A context that can be used for miscellaneous tasks, owned by the GLProxy */
-	PROXY_WORKER,
-	
-	/** used to un-bind threads */
-	NONE,
+	NEAR,
+	FAR,
+	NEAR_AND_FAR
 }

@@ -17,12 +17,10 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.coreImplementations.methods.config.client;
+package com.seibel.lod.api.items.interfaces.config.client;
 
-import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
-import com.seibel.lod.api.items.objects.config.DhApiConfig;
-import com.seibel.lod.core.config.Config.Client.Advanced.Debugging;
 import com.seibel.lod.api.items.enums.rendering.EDebugMode;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
 
 /**
  * Distant Horizons' debug configuration.
@@ -30,15 +28,13 @@ import com.seibel.lod.api.items.enums.rendering.EDebugMode;
  * @author James Seibel
  * @version 2022-7-5
  */
-public class DhApiDebugging
+public interface IDhApiDebugging
 {
 	/** Can be used to debug the standard fake chunk rendering. */
-	public static IDhApiConfig<EDebugMode> getDebugRenderModeConfig()
-	{ return new DhApiConfig<>(Debugging.debugMode); }
+	IDhApiConfig<EDebugMode> getDebugRenderModeConfig();
 	
 	/** If enabled debug keybindings can be used. */
-	public static IDhApiConfig<Boolean> getEnableDebugKeybindingsConfig()
-	{ return new DhApiConfig<>(Debugging.enableDebugKeybindings); }
+	IDhApiConfig<Boolean> getEnableDebugKeybindingsConfig();
 	
 	
 }

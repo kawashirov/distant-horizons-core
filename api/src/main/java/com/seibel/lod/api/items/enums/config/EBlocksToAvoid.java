@@ -17,30 +17,37 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.enums.rendering;
+package com.seibel.lod.api.items.enums.config;
 
 /**
- * USE_DEFAULT_FOG_COLOR, <br>
- * USE_SKY_COLOR, <br>
- * 
- * @author James Seibel
- * @version 2022-6-9
+ * NONE, <br>
+ * NON_FULL, <br>
+ * NO_COLLISION, <br>
+ * BOTH, <br>
+ *
+ * @author Leonardo Amato
+ * @version 2022-7-1
  */
-public enum EFogColorMode
+public enum EBlocksToAvoid
 {
 	// Reminder:
-	// when adding items: up the API minor version
-	// when removing items: up the API major version
+	// when adding items up the API minor version
+	// when removing items up the API major version
 	
-	/** Fog uses Minecraft's fog color. */
-	USE_WORLD_FOG_COLOR,
+	NONE(false, false),
 	
-	/**
-	 * Replicates the effect of the clear sky mod.
-	 * Making the fog blend in with the sky better
-	 * For it to look good you need one of the following mods:
-	 * https://www.curseforge.com/minecraft/mc-mods/clear-skies
-	 * https://www.curseforge.com/minecraft/mc-mods/clear-skies-forge-port
-	 */
-	USE_SKY_COLOR,
+	NON_FULL(true, false),
+	
+	NO_COLLISION(false, true),
+	
+	BOTH(true, true);
+	
+	public final boolean nonFull;
+	public final boolean noCollision;
+	
+	EBlocksToAvoid(boolean nonFull, boolean noCollision)
+	{
+		this.nonFull = nonFull;
+		this.noCollision = noCollision;
+	}
 }

@@ -27,7 +27,7 @@ import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import org.apache.logging.log4j.Logger;
 
-import com.seibel.lod.core.enums.rendering.EFogDrawMode;
+import com.seibel.lod.api.items.enums.rendering.EFogDrawMode;
 
 /**
  * A singleton used to get variables from methods
