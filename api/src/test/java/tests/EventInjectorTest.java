@@ -14,7 +14,7 @@ import java.util.ArrayList;
  */
 public class EventInjectorTest
 {
-	
+
 //	//@Test
 //	public void testEventDependencies() // this also tests list dependencies since there can be more than one event handler bound per event
 //	{
