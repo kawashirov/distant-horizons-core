@@ -19,7 +19,7 @@
 
 package com.seibel.lod.core.wrapperInterfaces.world;
 
-import com.seibel.lod.core.dependencyInjection.IBindable;
+import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
 import com.seibel.lod.core.pos.DhBlockPos;
 import com.seibel.lod.core.pos.DhChunkPos;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;

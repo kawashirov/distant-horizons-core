@@ -1,7 +1,7 @@
 package com.seibel.lod.api.items.interfaces.override;
 
-import com.seibel.lod.core.dependencyInjection.IBindable;
-import com.seibel.lod.core.dependencyInjection.IOverrideInjector;
+import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
+import com.seibel.lod.core.interfaces.dependencyInjection.IOverrideInjector;
 
 /**
  * Implemented by all DhApi objects that can be overridden.

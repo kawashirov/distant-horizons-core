@@ -1,4 +1,4 @@
-package com.seibel.lod.core.dependencyInjection;
+package com.seibel.lod.core.interfaces.dependencyInjection;
 
 
 import com.seibel.lod.api.items.interfaces.override.IDhApiOverrideable;

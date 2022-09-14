@@ -19,8 +19,6 @@
 
 package com.seibel.lod.core;
 
-import java.util.Locale;
-
 /**
  * This file is similar to mcmod.info
  * <br>
@@ -50,6 +48,5 @@ public final class ModInfo
 	public static final int API_MAJOR_VERSION = 0;
 	/** This version should be updated whenever new methods are added to the DH API */
 	public static final int API_MINOR_VERSION = 0;
-
-
+	
 }

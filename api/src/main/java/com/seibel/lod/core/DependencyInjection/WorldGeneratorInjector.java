@@ -17,10 +17,11 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.dependencyInjection;
+package com.seibel.lod.core.DependencyInjection;
 
 import com.seibel.lod.api.items.interfaces.override.worldGenerator.IDhApiWorldGenerator;
 import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
+import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
 import com.seibel.lod.core.util.StringUtil;
 
 import java.util.HashMap;

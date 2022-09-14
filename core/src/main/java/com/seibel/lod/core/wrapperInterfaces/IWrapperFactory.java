@@ -20,7 +20,7 @@
 package com.seibel.lod.core.wrapperInterfaces;
 
 import com.seibel.lod.core.level.ILevel;
-import com.seibel.lod.core.dependencyInjection.IBindable;
+import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.lod.core.wrapperInterfaces.worldGeneration.AbstractBatchGenerationEnvionmentWrapper;

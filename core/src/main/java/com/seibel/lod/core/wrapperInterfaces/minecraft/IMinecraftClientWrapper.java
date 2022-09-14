@@ -24,7 +24,7 @@ import java.util.ArrayList;
 
 import com.seibel.lod.core.ModInfo;
 import com.seibel.lod.core.enums.ELodDirection;
-import com.seibel.lod.core.dependencyInjection.IBindable;
+import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
 import com.seibel.lod.core.pos.DhBlockPos;
 import com.seibel.lod.core.pos.DhChunkPos;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;

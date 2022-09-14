@@ -17,7 +17,10 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.dependencyInjection;
+package com.seibel.lod.core.DependencyInjection;
+
+import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
+import com.seibel.lod.core.interfaces.dependencyInjection.IDependencyInjector;
 
 import java.util.ArrayList;
 import java.util.HashMap;

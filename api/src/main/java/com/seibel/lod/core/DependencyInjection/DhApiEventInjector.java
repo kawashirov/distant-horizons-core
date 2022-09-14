@@ -17,26 +17,23 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.dependencyInjection;
+package com.seibel.lod.core.DependencyInjection;
 
 import com.seibel.lod.api.methods.events.interfaces.IDhApiEvent;
+import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
+import com.seibel.lod.core.interfaces.dependencyInjection.IDhApiEventInjector;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 
 /**
- * This class takes care of dependency injection for mods accessors. (for mod compatibility
- * support). <Br> <Br>
- *
- * If a IModAccessor returns null either that means the mod isn't loaded in the game
- * or an Accessor hasn't been implemented for the given Minecraft version.
- *
+ * This class takes care of dependency injection for API events.
+ * 
  * @author James Seibel
- * @author Leetom
- * @version 2022-8-15
+ * @version 2022-9-13
  */
-public class DhApiEventInjector extends DependencyInjector<IDhApiEvent> // Note to self: Don't try adding a generic type to IDhApiEvent, the consturctor won't accept it
+public class DhApiEventInjector extends DependencyInjector<IDhApiEvent> implements IDhApiEventInjector // Note to self: Don't try adding a generic type to IDhApiEvent, the consturctor won't accept it
 {
 	private static final Logger LOGGER = LogManager.getLogger(DhApiEventInjector.class.getSimpleName());
 	
@@ -50,12 +47,7 @@ public class DhApiEventInjector extends DependencyInjector<IDhApiEvent> // Note 
 	}
 	
 	
-	/**
-	 * Unlinks the given event handler, preventing the handler from being called in the future.
-	 *
-	 * @throws IllegalArgumentException if the implementation object doesn't implement the interface
-	 * @return true if the handler was unbound, false if the handler wasn't bound.
-	 */
+	@Override
 	public boolean unbind(Class<? extends IDhApiEvent> dependencyInterface, Class<? extends IDhApiEvent> dependencyClassToRemove) throws IllegalArgumentException
 	{
 		// make sure the given dependency implements the necessary interfaces
@@ -99,14 +91,7 @@ public class DhApiEventInjector extends DependencyInjector<IDhApiEvent> // Note 
 		return false;
 	}
 	
-	/**
-	 * Fires all bound events of the given type (does nothing if no events are bound).
-	 *
-	 * @param dependencyInterface event type
-	 * @param eventParameterObject event parameter
-	 * @return if any of the events returned that this event should be canceled.
-	 * @param <T> the parameter type taken by the event handlers.
-	 */
+	@Override
 	public <T, U extends IDhApiEvent<T>> boolean fireAllEvents(Class<U> dependencyInterface, T eventParameterObject)
 	{
 		boolean cancelEvent = false;

@@ -22,7 +22,7 @@ package com.seibel.lod.core.wrapperInterfaces.minecraft;
 import java.awt.Color;
 import java.util.HashSet;
 
-import com.seibel.lod.core.dependencyInjection.IBindable;
+import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
 import com.seibel.lod.core.dependencyInjection.ModAccessorInjector;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.pos.DhBlockPos;

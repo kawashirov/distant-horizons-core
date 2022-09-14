@@ -19,6 +19,9 @@
 
 package com.seibel.lod.core.dependencyInjection;
 
+import com.seibel.lod.core.DependencyInjection.DependencyInjector;
+import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
+
 /**
  * This class takes care of dependency injection
  * for singletons.

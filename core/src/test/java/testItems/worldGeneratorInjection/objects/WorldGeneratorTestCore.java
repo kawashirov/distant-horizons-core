@@ -5,7 +5,7 @@ import com.seibel.lod.api.items.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.api.items.interfaces.override.worldGenerator.IDhApiWorldGenerator;
 import com.seibel.lod.api.items.interfaces.world.IDhApiChunkWrapper;
 import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
-import com.seibel.lod.core.dependencyInjection.OverrideInjector;
+import com.seibel.lod.core.DependencyInjection.OverrideInjector;
 
 /**
  * Dummy test implementation object for world generator injection unit tests.

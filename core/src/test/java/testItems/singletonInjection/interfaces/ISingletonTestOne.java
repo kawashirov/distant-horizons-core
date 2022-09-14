@@ -1,6 +1,6 @@
 package testItems.singletonInjection.interfaces;
 
-import com.seibel.lod.core.dependencyInjection.IBindable;
+import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
 
 /**
  * Dummy test interface for dependency unit tests.

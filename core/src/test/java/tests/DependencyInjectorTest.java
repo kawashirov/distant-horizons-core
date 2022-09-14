@@ -3,11 +3,10 @@ package tests;
 import com.seibel.lod.api.items.enums.worldGeneration.EDhApiWorldGenThreadMode;
 import com.seibel.lod.api.items.interfaces.override.worldGenerator.IDhApiWorldGenerator;
 import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
-import com.seibel.lod.core.dependencyInjection.DependencyInjector;
-import com.seibel.lod.core.dependencyInjection.IBindable;
-import com.seibel.lod.core.dependencyInjection.OverrideInjector;
-import com.seibel.lod.core.dependencyInjection.WorldGeneratorInjector;
-import com.seibel.lod.core.enums.worldGeneration.EWorldGenThreadMode;
+import com.seibel.lod.core.DependencyInjection.DependencyInjector;
+import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
+import com.seibel.lod.core.DependencyInjection.OverrideInjector;
+import com.seibel.lod.core.DependencyInjection.WorldGeneratorInjector;
 
 import org.junit.Assert;
 import org.junit.Test;

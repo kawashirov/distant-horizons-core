@@ -1,6 +1,6 @@
 package com.seibel.lod.api.methods.events.interfaces;
 
-import com.seibel.lod.core.dependencyInjection.IBindable;
+import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
 
 /**
  * A combination of all interfaces required by all
