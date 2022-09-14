@@ -1,4 +1,4 @@
-package com.seibel.lod.api.override;
+package com.seibel.lod.api.methods.override;
 
 import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.lod.api.items.objects.DhApiResult;
