@@ -6,7 +6,7 @@ import com.seibel.lod.api.methods.events.interfaces.IDhApiEvent;
  * A dummy event implementation used for unit testing.
  *
  * @author James Seibel
- * @version 2022-9-11
+ * @version 2022-9-13
  */
 public abstract class DhApiTestEvent
 		implements IDhApiEvent<Boolean>
@@ -15,7 +15,7 @@ public abstract class DhApiTestEvent
 	public abstract void onTestEvent(Boolean input);
 	
 	/** just used for testing */
-	public abstract boolean getTestValue();
+	public abstract Boolean getTestValue();
 	
 	
 	
@@ -27,7 +27,7 @@ public abstract class DhApiTestEvent
 	public final boolean fireEvent(Boolean input)
 	{
 		onTestEvent(input);
-		return false;
+		return input;
 	}
 	
 	@Override

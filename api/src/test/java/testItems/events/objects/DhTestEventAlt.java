@@ -25,6 +25,6 @@ public class DhTestEventAlt extends DhApiTestEvent
 	
 	// test (non standard) methods //
 	@Override
-	public boolean getTestValue() { return eventFiredValue; }
+	public Boolean getTestValue() { return eventFiredValue; }
 	
 }
