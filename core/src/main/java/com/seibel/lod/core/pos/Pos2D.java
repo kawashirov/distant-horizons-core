@@ -25,6 +25,7 @@ import com.seibel.lod.core.util.MathUtil;
 import java.util.Objects;
 
 public class Pos2D {
+    public static final Pos2D ZERO = new Pos2D(0, 0);
     public final int x;
     public final int y;
     public Pos2D(int x, int y) {
@@ -48,7 +49,12 @@ public class Pos2D {
     public long distSquared(Pos2D other) {
         return MathUtil.pow2((long)x - other.x) + MathUtil.pow2((long)y - other.y);
     }
-
+    public int chebyshevDist(Pos2D o) {
+        return Math.max(Math.abs(x - o.x), Math.abs(y - o.y));
+    }
+    public int manhattanDist(Pos2D o) {
+        return Math.abs(x - o.x) + Math.abs(y - o.y);
+    }
     public int hashCode() {
         return Objects.hash(x, y);
     }

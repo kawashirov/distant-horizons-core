@@ -57,7 +57,7 @@ public class DataMetaFile extends MetaFile
 		private final DhSectionPos pos;
 		DataObjTracker(LodDataSource data) {
 			super(data, lifeCycleDebugQueue);
-			LOGGER.info("Phantom created on {}! count: {}", data.getSectionPos(), lifeCycleDebugSet.size());
+			//LOGGER.info("Phantom created on {}! count: {}", data.getSectionPos(), lifeCycleDebugSet.size());
 			lifeCycleDebugSet.add(this);
 			pos = data.getSectionPos();
 		}
@@ -146,7 +146,6 @@ public class DataMetaFile extends MetaFile
 
 		// After cas. We are in exclusive control.
 		if (!doesFileExist) {
-			doesFileExist = true;
 			handler.onCreateDataFile(this)
 					.thenApply((data) -> {
 						metaData = makeMetaData(data);
@@ -267,18 +266,24 @@ public class DataMetaFile extends MetaFile
 	}
 
 	private void saveChanges(LodDataSource data) {
-		try {
-			// Write/Update data
-			LodUtil.assertTrue(metaData != null);
-			metaData.dataLevel = data.getDataDetail();
-			loader = DataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
-			LodUtil.assertTrue(loader != null, "No loader for {} (v{})", data.getClass(), data.getDataVersion());
-			dataType = data.getClass();
-			metaData.dataTypeId = loader == null ? 0 : loader.datatypeId;
-			metaData.loaderVersion = data.getDataVersion();
-			super.writeData((out) -> data.saveData(level, this, out));
-		} catch (IOException e) {
-			LOGGER.error("Failed to save updated data file at {} for sect {}", path, pos, e);
+		if (data.isEmpty()) {
+			if (path.exists()) if (!path.delete()) LOGGER.warn("Failed to delete data file at {}", path);
+			doesFileExist = false;
+		} else {
+			try {
+				// Write/Update data
+				LodUtil.assertTrue(metaData != null);
+				metaData.dataLevel = data.getDataDetail();
+				loader = DataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
+				LodUtil.assertTrue(loader != null, "No loader for {} (v{})", data.getClass(), data.getDataVersion());
+				dataType = data.getClass();
+				metaData.dataTypeId = loader == null ? 0 : loader.datatypeId;
+				metaData.loaderVersion = data.getDataVersion();
+				super.writeData((out) -> data.saveData(level, this, out));
+				doesFileExist = true;
+			} catch (IOException e) {
+				LOGGER.error("Failed to save updated data file at {} for sect {}", path, pos, e);
+			}
 		}
 	}
 

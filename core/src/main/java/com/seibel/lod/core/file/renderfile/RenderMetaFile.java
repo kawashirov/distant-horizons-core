@@ -64,7 +64,7 @@ public class RenderMetaFile extends MetaFile
     CacheValidator validator;
     CacheSourceProducer source;
     final RenderFileHandler handler;
-    boolean doesFileExist;
+    private boolean doesFileExist;
 
 
     // Create a new metaFile
@@ -131,7 +131,6 @@ public class RenderMetaFile extends MetaFile
 
         // After cas. We are in exclusive control.
         if (!doesFileExist) {
-            doesFileExist = true;
             handler.onCreateRenderFile(this)
                     .thenApply((data) -> {
                         metaData = makeMetaData(data);
@@ -149,8 +148,6 @@ public class RenderMetaFile extends MetaFile
                             data.set(new SoftReference<>(v));
                         }
                     });
-
-
         } else {
             CompletableFuture.supplyAsync(() -> {
                         if (metaData == null)
@@ -205,11 +202,17 @@ public class RenderMetaFile extends MetaFile
     }
 
     public void save(LodRenderSource data, IClientLevel level) {
-        LOGGER.info("Saving updated render file v[{}] at sect {}", metaData.dataVersion.get(), pos);
-        try {
-            super.writeData((out) -> data.saveRender(level, this, out));
-        } catch (IOException e) {
-            LOGGER.error("Failed to save updated render file at {} for sect {}", path, pos, e);
+        if (data.isEmpty()) {
+            if (path.exists()) if (!path.delete()) LOGGER.warn("Failed to delete render file at {}", path);
+            doesFileExist = false;
+        } else {
+            LOGGER.info("Saving updated render file v[{}] at sect {}", metaData.dataVersion.get(), pos);
+            try {
+                super.writeData((out) -> data.saveRender(level, this, out));
+                doesFileExist = true;
+            } catch (IOException e) {
+                LOGGER.error("Failed to save updated render file at {} for sect {}", path, pos, e);
+            }
         }
     }
 }

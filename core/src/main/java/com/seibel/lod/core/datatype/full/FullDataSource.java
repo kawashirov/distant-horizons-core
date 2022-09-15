@@ -22,7 +22,7 @@ public class FullDataSource extends FullArrayView implements LodDataSource { // 
     public static final byte LATEST_VERSION = 0;
     public static final long TYPE_ID = "FullDataSource".hashCode();
     private final DhSectionPos sectionPos;
-    public boolean isEmpty = true;
+    private boolean isEmpty = true;
     protected FullDataSource(DhSectionPos sectionPos) {
         super(new IdBiomeBlockStateMap(), new long[SECTION_SIZE*SECTION_SIZE][0], SECTION_SIZE);
         this.sectionPos = sectionPos;
@@ -90,6 +90,14 @@ public class FullDataSource extends FullArrayView implements LodDataSource { // 
             //TODO;
         }
 
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return isEmpty;
+    }
+    public void markNotEmpty() {
+        isEmpty = false;
     }
 
     @Override

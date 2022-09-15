@@ -105,6 +105,11 @@ public class SparseDataSource implements LodDataSource {
         sparseData[arrayOffset] = newArray;
     }
 
+    @Override
+    public boolean isEmpty() {
+        return isEmpty;
+    }
+
     public void sampleFrom(SparseDataSource sparseSource) {
         DhSectionPos pos = sparseSource.sectionPos;
         LodUtil.assertTrue(pos.sectionDetail < sectionPos.sectionDetail);
@@ -134,7 +139,7 @@ public class SparseDataSource implements LodDataSource {
         DhSectionPos pos = fullSource.getSectionPos();
         LodUtil.assertTrue(pos.sectionDetail < sectionPos.sectionDetail);
         LodUtil.assertTrue(pos.overlaps(sectionPos));
-        if (fullSource.isEmpty) return;
+        if (fullSource.isEmpty()) return;
         isEmpty = false;
         // Downsample needed
         DhLodPos basePos = sectionPos.getCorner(SPARSE_UNIT_DETAIL);
@@ -290,7 +295,7 @@ public class SparseDataSource implements LodDataSource {
                 FullArrayView array = sparseData[x*chunks+z];
                 if (array == null) continue;
                 // Otherwise, apply data to dataSource
-                dataSource.isEmpty = false;
+                dataSource.markNotEmpty();
                 FullArrayView view = dataSource.subView(dataPerChunk, x*dataPerChunk, z*dataPerChunk);
                 array.shadowCopyTo(view);
             }

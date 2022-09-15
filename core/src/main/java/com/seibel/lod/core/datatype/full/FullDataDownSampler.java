@@ -82,7 +82,7 @@ public class FullDataDownSampler {
             int offsetZ = trgOffset.z - srcOffset.z;
             LodUtil.assertTrue(offsetX >= 0 && offsetX < FullDataSource.SECTION_SIZE
                     && offsetZ >= 0 && offsetZ < FullDataSource.SECTION_SIZE);
-            target.isEmpty = false;
+            target.markNotEmpty();
             source.get(0,0).deepCopyTo(target.get(offsetX, offsetZ));
 
         } else if (detailDiff > 0) {
@@ -96,7 +96,7 @@ public class FullDataDownSampler {
             int offsetZ = trgOffset.z - srcOffset.z;
             LodUtil.assertTrue(offsetX >= 0 && offsetX < FullDataSource.SECTION_SIZE
                     && offsetZ >= 0 && offsetZ < FullDataSource.SECTION_SIZE);
-            target.isEmpty = false;
+            target.markNotEmpty();
 
             for (int ox = 0; ox < overlappedTrgDataSize; ox++) {
                 for (int oz = 0; oz < overlappedTrgDataSize; oz++) {

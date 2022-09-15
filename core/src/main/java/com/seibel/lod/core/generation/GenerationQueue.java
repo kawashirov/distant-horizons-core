@@ -3,6 +3,8 @@ package com.seibel.lod.core.generation;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhLodPos;
+import com.seibel.lod.core.pos.Pos2D;
+import com.seibel.lod.core.util.MathUtil;
 import com.seibel.lod.core.util.objects.UncheckedInterruptedException;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhChunkPos;
@@ -16,7 +18,28 @@ import java.util.function.Consumer;
 
 public class GenerationQueue implements Closeable {
     public static final int SHUTDOWN_TIMEOUT_SEC = 10;
+    public static final int MAX_TASKS_PROCESSED_PER_TICK = 10000;
 
+    /**
+     * Source: <a href="https://stackoverflow.com/questions/3706219/algorithm-for-iterating-over-an-outward-spiral-on-a-discrete-2d-grid-from-the-or">...</a>
+     * Description: Left-upper semi-diagonal (0-4-16-36-64) contains squared layer number (4 * layer^2).
+     * External if-statement defines layer and finds (pre-)result for position in corresponding row or
+     * column of left-upper semi-plane, and internal if-statement corrects result for mirror position.
+     */
+    private static int gridSpiralIndexing(int X, int Y) {
+        int index = 0;
+        if(X*X >= Y*Y) {
+            index = 4 * X * X - X - Y;
+            if(X < Y)
+                index = index - 2 * (X - Y);
+        } else {
+            index = 4 *Y*Y -X - Y;
+            if(X < Y)
+                index = index + 2 * (X - Y);
+        }
+
+        return index;
+    }
 
     private final Logger logger = DhLoggerBuilder.getLogger();
     public static abstract class GenTaskTracker {
@@ -94,7 +117,18 @@ public class GenerationQueue implements Closeable {
 
     private final ConcurrentLinkedQueue<GenTask> looseTasks = new ConcurrentLinkedQueue<>();
     // FIXME: Concurrency issue on close!
-    private final ConcurrentHashMap<DhLodPos, TaskGroup> taskGroups = new ConcurrentHashMap<>(); // Accessed by poller only
+    // FIXME: This is using up a TONS of time to process!
+    private final ConcurrentSkipListMap<DhLodPos, TaskGroup> taskGroups = new ConcurrentSkipListMap<>(
+            (a, b) -> {
+                if (a.detail != b.detail) return a.detail - b.detail;
+                int aDist = a.getCenter().toPos2D().chebyshevDist(Pos2D.ZERO);
+                int bDist = b.getCenter().toPos2D().chebyshevDist(Pos2D.ZERO);
+                if (aDist != bDist) return aDist - bDist;
+                if (a.x != b.x) return a.x - b.x;
+                return a.z - b.z;
+            }
+    ); // Accessed by poller only
+
     private final ConcurrentHashMap<DhLodPos, InProgressTask> inProgress = new ConcurrentHashMap<>();
 
     private final byte maxGranularity;
@@ -247,8 +281,10 @@ public class GenerationQueue implements Closeable {
     }
 
     private void processLooseTasks() {
-        while (!looseTasks.isEmpty()) {
+        int taskProcessed = 0;
+        while (!looseTasks.isEmpty() && taskProcessed < MAX_TASKS_PROCESSED_PER_TICK) {
             GenTask task = looseTasks.poll();
+            taskProcessed++;
             byte taskDataDetail = task.dataDetail;
             byte taskGranularity = (byte) (task.pos.detail - taskDataDetail);
             LodUtil.assertTrue(taskGranularity >= 4 && taskGranularity >= minGranularity && taskGranularity <= maxGranularity);
@@ -287,7 +323,9 @@ public class GenerationQueue implements Closeable {
                     addAndCombineGroup(group);
                 }
             }
-
+        }
+        if (taskProcessed != 0) {
+            logger.info("Processed " + taskProcessed + " loose tasks");
         }
 
 
@@ -314,15 +352,26 @@ public class GenerationQueue implements Closeable {
         // Select the one with the highest data detail level and closest to the target pos
         TaskGroup best = null;
         long cachedDist = Long.MAX_VALUE;
+        int lastChebDist = Integer.MIN_VALUE;
+        boolean continueNextRound = true;
+        byte currentDetailChecking = -1;
+
         for (TaskGroup group : taskGroups.values()) {
-            if (best != null) {
-                if (group.dataDetail < best.dataDetail) continue;
-                long dist = group.pos.getCenter().distSquared(targetPos);
-                if (cachedDist <= dist) continue;
-                cachedDist = dist;
+            if (currentDetailChecking == -1) currentDetailChecking = group.dataDetail;
+            LodUtil.assertTrue(currentDetailChecking == group.dataDetail);
+            int chebDistToOrigin = group.pos.getCenter().toPos2D().chebyshevDist(Pos2D.ZERO);
+            if (chebDistToOrigin > lastChebDist) {
+                if (!continueNextRound) break; // We have found the best one
+                continueNextRound = false;
+                lastChebDist = chebDistToOrigin;
             }
+            long dist = group.pos.getCenter().distSquared(targetPos);
+            if (best != null && dist >= cachedDist) continue;
+            cachedDist = dist;
             best = group;
+            continueNextRound = true;
         }
+
         if (best != null) {
             InProgressTask startedTask = new InProgressTask(best);
             InProgressTask casTask = inProgress.putIfAbsent(best.pos, startedTask);

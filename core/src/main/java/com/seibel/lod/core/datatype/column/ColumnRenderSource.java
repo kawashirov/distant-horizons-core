@@ -45,7 +45,7 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     public final long[] dataContainer;
     public final int[] airDataContainer;
 
-    public boolean isEmpty = true;
+    private boolean isEmpty = true;
 
     /**
      * Constructor of the ColumnDataType
@@ -376,6 +376,14 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     @Override
     public boolean isValid() {
         return true;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return isEmpty;
+    }
+    public void markNotEmpty() {
+        isEmpty = false;
     }
 
     @Override

@@ -257,8 +257,13 @@ public class RenderFileHandler implements IRenderSourceProvider {
 
     public boolean refreshRenderSource(LodRenderSource source) {
         RenderMetaFile file = files.get(source.getSectionPos());
+        if (source instanceof PlaceHolderRenderSource) {
+            if (file == null || file.metaData == null) {
+                return false;
+            }
+        }
         LodUtil.assertTrue(file != null);
-        LodUtil.assertTrue(file.doesFileExist);
+        LodUtil.assertTrue(file.metaData != null);
         long newCacheVersion = dataSourceProvider.getLatestCacheVersion(file.pos);
         //NOTE: Do this instead of direct compare so values that wrapped around still works correctly.
         if (newCacheVersion - file.metaData.dataVersion.get() <= 0)

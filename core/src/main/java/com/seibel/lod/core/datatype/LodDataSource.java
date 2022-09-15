@@ -15,6 +15,8 @@ public interface LodDataSource {
 
     void update(ChunkSizedData data);
 
+    boolean isEmpty();
+
     // Saving related
     void saveData(ILevel level, DataMetaFile file, OutputStream dataStream) throws IOException;
 }

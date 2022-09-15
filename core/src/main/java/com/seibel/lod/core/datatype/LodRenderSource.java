@@ -39,6 +39,8 @@ public interface LodRenderSource {
      */
     boolean isValid();
 
+    boolean isEmpty();
+
     void fastWrite(ChunkSizedData chunkData, IClientLevel level);
     // Only override the data that has not been written directly using write(), and skip those that are empty
     void weakWrite(LodRenderSource source);

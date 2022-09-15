@@ -65,12 +65,15 @@ public class PlaceHolderRenderSource implements LodRenderSource {
     }
 
     @Override
+    public boolean isEmpty() {
+        return true;
+    }
+
+    @Override
     public void fastWrite(ChunkSizedData chunkData, IClientLevel level) {}
 
     @Override
-    public void weakWrite(LodRenderSource source) {
-
-    }
+    public void weakWrite(LodRenderSource source) {}
 
 
 }

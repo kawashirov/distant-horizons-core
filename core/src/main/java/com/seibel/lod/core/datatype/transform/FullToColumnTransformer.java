@@ -31,8 +31,8 @@ public class FullToColumnTransformer {
         final byte dataDetail = data.getDataDetail();
         final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(data.getDataDetail());
         final ColumnRenderSource columnSource = new ColumnRenderSource(pos, vertSize, level.getMinY());
-        if (data.isEmpty) return columnSource;
-        columnSource.isEmpty = false;
+        if (data.isEmpty()) return columnSource;
+        columnSource.markNotEmpty();
 
         if (dataDetail == columnSource.getDataDetail()) {
             int baseX = pos.getCorner().getCorner().x;
@@ -71,7 +71,7 @@ public class FullToColumnTransformer {
         final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(data.getDataDetail());
         final ColumnRenderSource columnSource = new ColumnRenderSource(pos, vertSize, level.getMinY());
         if (data.isEmpty) return columnSource;
-        columnSource.isEmpty = false;
+        columnSource.markNotEmpty();
 
         if (dataDetail == columnSource.getDataDetail()) {
             int baseX = pos.getCorner().getCorner().x;
@@ -103,6 +103,7 @@ public class FullToColumnTransformer {
         final int blockZ = pos.getCorner().getCorner().z;
         final int perRenderWidth = 1 << render.getDataDetail();
         final int perDataWidth = 1 << data.dataDetail;
+        render.markNotEmpty();
         if (data.dataDetail == render.getDataDetail()) {
             if (renderOffsetX < 0 || renderOffsetX+16 > render.getDataSize() || renderOffsetZ < 0 || renderOffsetZ+16 > render.getDataSize())
                 throw new IllegalArgumentException("Data offset is out of bounds");
