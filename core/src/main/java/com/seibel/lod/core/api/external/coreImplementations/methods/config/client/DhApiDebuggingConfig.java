@@ -20,31 +20,24 @@
 package com.seibel.lod.core.api.external.coreImplementations.methods.config.client;
 
 import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
+import com.seibel.lod.api.items.interfaces.config.client.IDhApiDebuggingConfig;
 import com.seibel.lod.api.items.objects.config.DhApiConfig;
-import com.seibel.lod.core.config.Config.Client.Advanced.Buffers;
-import com.seibel.lod.api.items.enums.config.EGpuUploadMethod;
+import com.seibel.lod.core.config.Config.Client.Advanced.Debugging;
+import com.seibel.lod.api.items.enums.rendering.EDebugMode;
 
 /**
- * Distant Horizons' OpenGL buffer configuration.
+ * Distant Horizons' debug configuration.
  *
  * @author James Seibel
- * @version 2022-7-5
+ * @version 2022-9-15
  */
-public class DhApiBuffers
+public class DhApiDebuggingConfig implements IDhApiDebuggingConfig
 {
 	
-	/** Defines how geometry data is uploaded to the GPU. */
-	public static IDhApiConfig<EGpuUploadMethod> getGpuUploadMethodConfig()
-	{ return new DhApiConfig<>(Buffers.gpuUploadMethod); }
+	public IDhApiConfig<EDebugMode> getDebugRenderModeConfig()
+	{ return new DhApiConfig<>(Debugging.debugMode); }
 	
-	/**
-	 * Defines how long we should wait after uploading one
-	 * Megabyte of geometry data to the GPU before uploading
-	 * the next Megabyte of data. <br>
-	 * This can be set to a non-zero number to reduce stuttering caused by
-	 * uploading buffers to the GPU.
-	 */
-	public static IDhApiConfig<Integer> getBufferUploadTimeoutPerMegabyteInMillisecondsConfig()
-	{ return new DhApiConfig<>(Buffers.gpuUploadPerMegabyteInMilliseconds); }
+	public IDhApiConfig<Boolean> getEnableDebugKeybindingsConfig()
+	{ return new DhApiConfig<>(Debugging.enableDebugKeybindings); }
 	
 }

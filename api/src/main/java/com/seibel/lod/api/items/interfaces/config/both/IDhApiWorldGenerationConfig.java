@@ -17,16 +17,13 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.coreImplementations.methods.config.both;
+package com.seibel.lod.api.items.interfaces.config.both;
 
-import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
-import com.seibel.lod.api.items.interfaces.config.both.IDhApiWorldGeneration;
-import com.seibel.lod.api.items.objects.config.DhApiConfig;
-import com.seibel.lod.core.config.Config.Client.WorldGenerator;
 import com.seibel.lod.api.items.enums.config.EBlocksToAvoid;
 import com.seibel.lod.api.items.enums.config.EDistanceGenerationMode;
 import com.seibel.lod.api.items.enums.config.EGenerationPriority;
 import com.seibel.lod.api.items.enums.config.ELightGenerationMode;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
 
 /**
  * Distant Horizons' world generation configuration. <br><br>
@@ -34,33 +31,25 @@ import com.seibel.lod.api.items.enums.config.ELightGenerationMode;
  * Note: Fake chunks are NOT saved in Minecraft's vanilla save system.
  *
  * @author James Seibel
- * @version 2022-7-11
+ * @version 2022-9-15
  */
-public class DhApiWorldGeneration implements IDhApiWorldGeneration
+public interface IDhApiWorldGenerationConfig
 {
 	
 	/**
 	 * Defines whether fake chunks will be generated
 	 * outside Minecraft's vanilla render distance.
 	 */
-	@Override
-	public IDhApiConfig<Boolean> getEnableDistantWorldGenerationConfig()
-	{ return new DhApiConfig<>(WorldGenerator.enableDistantGeneration); }
+	IDhApiConfig<Boolean> getEnableDistantWorldGenerationConfig();
 	
 	/** Defines to what level fake chunks will be generated. */
-	@Override
-	public IDhApiConfig<EDistanceGenerationMode> getDistantGeneratorDetailLevelConfig()
-	{ return new DhApiConfig<>(WorldGenerator.distanceGenerationMode); }
+	IDhApiConfig<EDistanceGenerationMode> getDistantGeneratorDetailLevelConfig();
 	
 	/** Defines how generated fake chunks will be lit. */
-	@Override
-	public IDhApiConfig<ELightGenerationMode> getLightingModeConfig()
-	{ return new DhApiConfig<>(WorldGenerator.lightGenerationMode); }
+	IDhApiConfig<ELightGenerationMode> getLightingModeConfig();
 	
 	/** Defines the order in which fake chunks will be generated. */
-	@Override
-	public IDhApiConfig<EGenerationPriority> getGenerationPriorityConfig()
-	{ return new DhApiConfig<>(WorldGenerator.generationPriority); }
+	IDhApiConfig<EGenerationPriority> getGenerationPriorityConfig();
 	
 	/**
 	 * Defines what blocks will be ignored when generating LODs.
@@ -70,9 +59,7 @@ public class DhApiWorldGeneration implements IDhApiWorldGeneration
 	 * 				(vs the color based system we have currently)
 	 */
 	@Deprecated
-	@Override
-	public IDhApiConfig<EBlocksToAvoid> getBlocksToAvoidConfig()
-	{ return new DhApiConfig<>(WorldGenerator.blocksToAvoid); }
+	IDhApiConfig<EBlocksToAvoid> getBlocksToAvoidConfig();
 	
 	/**
 	 * Defines if the color of avoided blocks will color the block below them. <Br>
@@ -83,9 +70,7 @@ public class DhApiWorldGeneration implements IDhApiWorldGeneration
 	 * 				(vs the color based system we have currently)
 	 */
 	@Deprecated
-	@Override
-	public IDhApiConfig<Boolean> getTintWithAvoidedBlocksConfig()
-	{ return new DhApiConfig<>(WorldGenerator.tintWithAvoidedBlocks); }
+	IDhApiConfig<Boolean> getTintWithAvoidedBlocksConfig();
 	
 	
 }

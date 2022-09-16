@@ -17,28 +17,36 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.coreImplementations.methods.config.client;
+package com.seibel.lod.api.items.interfaces.config.client;
 
+import com.seibel.lod.api.items.enums.config.EServerFolderNameMode;
 import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
-import com.seibel.lod.api.items.objects.config.DhApiConfig;
-import com.seibel.lod.core.config.Config.Client.Advanced.Debugging;
-import com.seibel.lod.api.items.enums.rendering.EDebugMode;
 
 /**
- * Distant Horizons' debug configuration.
+ * Distant Horizons' client-side multiplayer configuration.
  *
  * @author James Seibel
- * @version 2022-7-5
+ * @version 2022-9-15
  */
-public class DhApiDebugging
+public interface IDhApiMultiplayerConfig
 {
-	/** Can be used to debug the standard fake chunk rendering. */
-	public static IDhApiConfig<EDebugMode> getDebugRenderModeConfig()
-	{ return new DhApiConfig<>(Debugging.debugMode); }
 	
-	/** If enabled debug keybindings can be used. */
-	public static IDhApiConfig<Boolean> getEnableDebugKeybindingsConfig()
-	{ return new DhApiConfig<>(Debugging.enableDebugKeybindings); }
+	/**
+	 * Defines how multiplayer server folders are named. <br>
+	 * Note: Changing this while connected to a multiplayer world will cause undefined behavior!
+	 */
+	IDhApiConfig<EServerFolderNameMode> getFolderSavingModeConfig();
+	
+	/**
+	 * Defines the necessary similarity (as a percent) that two potential levels
+	 * need in order to be considered the same. <br> <br>
+	 *
+	 * Setting this to zero causes every level of a specific dimension type to be consider
+	 * the same level. <br>
+	 * Setting this to a non-zero value allows for usage in servers that user Multiverse
+	 * or similar mods.
+	 */
+	IDhApiConfig<Double> getMultiverseSimilarityRequirementConfig();
 	
 	
 }

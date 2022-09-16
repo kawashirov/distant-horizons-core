@@ -6,13 +6,15 @@ import com.seibel.lod.core.interfaces.config.IConverter;
 import com.seibel.lod.core.interfaces.config.converters.DefaultConverter;
 
 /**
- * A wrapper used to interface with Distant Horizon's Config.
+ * A wrapper used to interface with Distant Horizon's Config. <br> <br>
  *
  * When using this object you need to explicitly define the generic types,
  * otherwise Intellij won't do any type checking and the wrong types can be used. <br>
  * For example a method returning IDhApiConfig<Integer> when the config should be a Boolean.
  *
- * @param <apiType>
+ * @param <apiType> The datatype you, an API dev will use.
+ * @param <coreType> The datatype Distant Horizons uses in the background; implementing developers can ignore this.
+ *     
  * @author James Seibel
  * @version 2022-6-30
  */

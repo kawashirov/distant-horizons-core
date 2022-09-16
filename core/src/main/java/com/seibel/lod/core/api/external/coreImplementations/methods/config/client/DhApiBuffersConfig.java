@@ -17,24 +17,27 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.api.items.interfaces.config.client;
+package com.seibel.lod.core.api.external.coreImplementations.methods.config.client;
 
-import com.seibel.lod.api.items.enums.rendering.EDebugMode;
 import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
+import com.seibel.lod.api.items.interfaces.config.client.IDhApiBuffersConfig;
+import com.seibel.lod.api.items.objects.config.DhApiConfig;
+import com.seibel.lod.core.config.Config.Client.Advanced.Buffers;
+import com.seibel.lod.api.items.enums.config.EGpuUploadMethod;
 
 /**
- * Distant Horizons' debug configuration.
+ * Distant Horizons' OpenGL buffer configuration.
  *
  * @author James Seibel
- * @version 2022-7-5
+ * @version 2022-9-15
  */
-public interface IDhApiDebugging
+public class DhApiBuffersConfig implements IDhApiBuffersConfig
 {
-	/** Can be used to debug the standard fake chunk rendering. */
-	IDhApiConfig<EDebugMode> getDebugRenderModeConfig();
 	
-	/** If enabled debug keybindings can be used. */
-	IDhApiConfig<Boolean> getEnableDebugKeybindingsConfig();
+	public IDhApiConfig<EGpuUploadMethod> getGpuUploadMethodConfig()
+	{ return new DhApiConfig<>(Buffers.gpuUploadMethod); }
 	
+	public IDhApiConfig<Integer> getBufferUploadTimeoutPerMegabyteInMillisecondsConfig()
+	{ return new DhApiConfig<>(Buffers.gpuUploadPerMegabyteInMilliseconds); }
 	
 }

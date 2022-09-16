@@ -17,47 +17,36 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.api.items.interfaces.config.client;
+package com.seibel.lod.core.api.external.coreImplementations.methods.config.client;
 
 import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
+import com.seibel.lod.api.items.interfaces.config.client.IDhApiThreadingConfig;
+import com.seibel.lod.api.items.objects.config.DhApiConfig;
+import com.seibel.lod.core.config.Config.Client.Advanced.Threading;
 
 /**
  * Distant Horizons' threading configuration.
  *
  * @author James Seibel
- * @version 2022-7-5
+ * @version 2022-9-15
  */
-public interface IDhApiThreading
+public class DhApiThreadingConfig implements IDhApiThreadingConfig
 {
 	
-	/**
-	 * Defines how many world generator threads are used to generate
-	 * terrain outside Minecraf's vanilla render distance. <br>
-	 * <br>
-	 * If the number of threads is less than 1 it will be treated as a percentage
-	 * representing how often the single thread will actively generate terrain. <br> <br>
-	 *
-	 * 0.1 = 1 thread active 10% of the time <br>
-	 * 0.5 = 1 thread active 50% of the time <br>
-	 * 1.0 = 1 thread active 100% of the time <br>
-	 * 1.5 = 2 threads active 100% of the time (partial values are rounded up) <br>
-	 * 2.0 = 2 threads active 100% of the time <br>
-	 *
-	 * @deprecated this (and the related config) should be replaced with an int
-	 * 				count of threads and then a double percent active config.
-	 */
 	@Deprecated
-	IDhApiConfig<Double> getWorldGeneratorThreadConfig();
+	@Override
+	public IDhApiConfig<Double> getWorldGeneratorThreadConfig()
+	{ return new DhApiConfig<>(Threading.numberOfWorldGenerationThreads); }
 	
 	// TODO the above should be replaced with these
-//	IDhApiConfig<Integer> getWorldGeneratorThreadConfig()
+//	public static IDhApiConfig<Integer> getWorldGeneratorThreadConfig()
 //	{ return new DhApiConfig<>(Threading.numberOfWorldGenerationThreads); }
 	
-//	IDhApiConfig<Double> getWorldGeneratorThreadActivePercentConfig()
+//	public static IDhApiConfig<Double> getWorldGeneratorThreadActivePercentConfig()
 //	{ return new DhApiConfig<>(Threading.ToBeDetermined); }
 	
-	
-	/** Defines how many buffer (GPU Terrain data) builder threads are used. */
-	IDhApiConfig<Integer> getBufferBuilderThreadConfig();
+	@Override
+	public IDhApiConfig<Integer> getBufferBuilderThreadConfig()
+	{ return new DhApiConfig<>(Threading.numberOfBufferBuilderThreads); }
 	
 }

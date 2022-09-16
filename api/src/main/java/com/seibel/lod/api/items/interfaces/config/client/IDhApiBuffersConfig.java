@@ -19,34 +19,28 @@
 
 package com.seibel.lod.api.items.interfaces.config.client;
 
-import com.seibel.lod.api.items.enums.config.EServerFolderNameMode;
+import com.seibel.lod.api.items.enums.config.EGpuUploadMethod;
 import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
 
 /**
- * Distant Horizons' client-side multiplayer configuration.
+ * Distant Horizons' OpenGL buffer configuration.
  *
  * @author James Seibel
- * @version 2022-7-5
+ * @version 2022-9-15
  */
-public interface IDhApiMultiplayer
+public interface IDhApiBuffersConfig
 {
 	
-	/**
-	 * Defines how multiplayer server folders are named. <br>
-	 * Note: Changing this while connected to a multiplayer world will cause undefined behavior!
-	 */
-	IDhApiConfig<EServerFolderNameMode> getFolderSavingModeConfig();
+	/** Defines how geometry data is uploaded to the GPU. */
+	IDhApiConfig<EGpuUploadMethod> getGpuUploadMethodConfig();
 	
 	/**
-	 * Defines the necessary similarity (as a percent) that two potential levels
-	 * need in order to be considered the same. <br> <br>
-	 *
-	 * Setting this to zero causes every level of a specific dimension type to be consider
-	 * the same level. <br>
-	 * Setting this to a non-zero value allows for usage in servers that user Multiverse
-	 * or similar mods.
+	 * Defines how long we should wait after uploading one
+	 * Megabyte of geometry data to the GPU before uploading
+	 * the next Megabyte of data. <br>
+	 * This can be set to a non-zero number to reduce stuttering caused by
+	 * uploading buffers to the GPU.
 	 */
-	IDhApiConfig<Double> getMultiverseSimilarityRequirementConfig();
-	
+	IDhApiConfig<Integer> getBufferUploadTimeoutPerMegabyteInMillisecondsConfig();
 	
 }

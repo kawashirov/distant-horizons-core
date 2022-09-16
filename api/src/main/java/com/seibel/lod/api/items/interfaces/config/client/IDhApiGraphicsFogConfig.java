@@ -17,12 +17,11 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.coreImplementations.methods.config.client;
+package com.seibel.lod.api.items.interfaces.config.client;
 
 import com.seibel.lod.api.items.enums.rendering.*;
 import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
 import com.seibel.lod.api.items.objects.config.DhApiConfig;
-import com.seibel.lod.core.config.Config.Client.Graphics.FogQuality;
 
 /**
  * Distant Horizons' fog configuration. <br><br>
@@ -32,9 +31,9 @@ import com.seibel.lod.core.config.Config.Client.Graphics.FogQuality;
  * these settings will only affect Distant horizons' fog.
  *
  * @author James Seibel
- * @version 2022-7-11
+ * @version 2022-9-15
  */
-public class DhApiGraphicsFog
+public interface IDhApiGraphicsFogConfig
 {
 	
 	//====================//
@@ -42,23 +41,19 @@ public class DhApiGraphicsFog
 	//====================//
 	
 	/** Defines at what distance fog is rendered on fake chunks. */
-	public static IDhApiConfig<EFogDistance> getFogDistanceConfig()
-	{ return new DhApiConfig<>(FogQuality.fogDistance); }
+	IDhApiConfig<EFogDistance> getFogDistanceConfig();
 	
 	/** Should be used to enable/disable fog rendering. */
-	public static IDhApiConfig<EFogDrawMode> getFogRenderConfig()
-	{ return new DhApiConfig<>(FogQuality.fogDrawMode); }
+	IDhApiConfig<EFogDrawMode> getFogRenderConfig();
 	
 	/** Can be used to enable support with mods that change vanilla MC's fog color. */
-	public static IDhApiConfig<EFogColorMode> getFogColorConfig()
-	{ return new DhApiConfig<>(FogQuality.fogColorMode); }
+	IDhApiConfig<EFogColorMode> getFogColorConfig();
 	
 	/**
 	 * If enabled attempts to disable vanilla MC's fog on real chunks. <br>
 	 * May not play nice with other fog editing mods.
 	 */
-	public static IDhApiConfig<Boolean> getDisableVanillaFogConfig()
-	{ return new DhApiConfig<>(FogQuality.disableVanillaFog); }
+	IDhApiConfig<Boolean> getDisableVanillaFogConfig();
 	
 	
 	//=======================//
@@ -73,8 +68,7 @@ public class DhApiGraphicsFog
 	 * 0.0 = fog starts at the camera <br>
 	 * 1.0 = fog starts at the edge of the fake chunk render distance <br>
 	 */
-	public static IDhApiConfig<Double> getFogStartDistanceConfig()
-	{ return new DhApiConfig<>(FogQuality.AdvancedFog.farFogStart); }
+	IDhApiConfig<Double> getFogStartDistanceConfig();
 	
 	/**
 	 * Defines where the fog ends as a percent of the radius
@@ -84,24 +78,19 @@ public class DhApiGraphicsFog
 	 * 0.0 = fog ends at the camera <br>
 	 * 1.0 = fog ends at the edge of the fake chunk render distance <br>
 	 */
-	public static IDhApiConfig<Double> getFogEndDistanceConfig()
-	{ return new DhApiConfig<>(FogQuality.AdvancedFog.farFogEnd); }
+	IDhApiConfig<Double> getFogEndDistanceConfig();
 	
 	/** Defines how opaque the fog is at its thinnest point. */
-	public static IDhApiConfig<Double> getFogMinThicknessConfig()
-	{ return new DhApiConfig<>(FogQuality.AdvancedFog.farFogMin); }
+	IDhApiConfig<Double> getFogMinThicknessConfig();
 	
 	/** Defines how opaque the fog is at its thickest point. */
-	public static IDhApiConfig<Double> getFogMaxThicknessConfig()
-	{ return new DhApiConfig<>(FogQuality.AdvancedFog.farFogMax); }
+	IDhApiConfig<Double> getFogMaxThicknessConfig();
 	
 	/** Defines how the fog changes in thickness. */
-	public static IDhApiConfig<EFogFalloff> getFogFalloffConfig()
-	{ return new DhApiConfig<>(FogQuality.AdvancedFog.farFogType); }
+	IDhApiConfig<EFogFalloff> getFogFalloffConfig();
 	
 	/** Defines the fog density. */
-	public static IDhApiConfig<Double> getFogDensityConfig()
-	{ return new DhApiConfig<>(FogQuality.AdvancedFog.farFogDensity); }
+	IDhApiConfig<Double> getFogDensityConfig();
 	
 	
 	//=====================//
@@ -109,43 +98,33 @@ public class DhApiGraphicsFog
 	//=====================//
 	
 	/** Defines how the height fog mixes. */
-	public static IDhApiConfig<EHeightFogMixMode> getHeightFogMixModeConfig()
-	{ return new DhApiConfig<>(FogQuality.AdvancedFog.HeightFog.heightFogMixMode); }
+	IDhApiConfig<EHeightFogMixMode> getHeightFogMixModeConfig();
 	
 	/** Defines how the height fog is drawn relative to the camera or world. */
-	public static IDhApiConfig<EHeightFogMode> getHeightFogModeConfig()
-	{ return new DhApiConfig<>(FogQuality.AdvancedFog.HeightFog.heightFogMode); }
+	IDhApiConfig<EHeightFogMode> getHeightFogModeConfig();
 	
 	/**
-	 * Defines the height fog's base height if {@link DhApiGraphicsFog#getHeightFogModeConfig()}
+	 * Defines the height fog's base height if {@link IDhApiGraphicsFogConfig#getHeightFogModeConfig()}
 	 * is set to use a specific height.
 	 */
-	public static IDhApiConfig<Double> getHeightFogBaseHeightConfig()
-	{ return new DhApiConfig<>(FogQuality.AdvancedFog.HeightFog.heightFogHeight); }
+	IDhApiConfig<Double> getHeightFogBaseHeightConfig();
 	
 	/** Defines the height fog's starting height as a percent of the world height. */
-	public static IDhApiConfig<Double> getHeightFogStartingHeightPercentConfig()
-	{ return new DhApiConfig<>(FogQuality.AdvancedFog.HeightFog.heightFogStart); }
+	IDhApiConfig<Double> getHeightFogStartingHeightPercentConfig();
 	
 	/** Defines the height fog's ending height as a percent of the world height. */
-	public static IDhApiConfig<Double> getHeightFogEndingHeightPercentConfig()
-	{ return new DhApiConfig<>(FogQuality.AdvancedFog.HeightFog.heightFogEnd); }
+	IDhApiConfig<Double> getHeightFogEndingHeightPercentConfig();
 	
 	/** Defines how opaque the height fog is at its thinnest point. */
-	public static IDhApiConfig<Double> getHeightFogMinThicknessConfig()
-	{ return new DhApiConfig<>(FogQuality.AdvancedFog.HeightFog.heightFogMin); }
+	IDhApiConfig<Double> getHeightFogMinThicknessConfig();
 	
 	/** Defines how opaque the height fog is at its thickest point. */
-	public static IDhApiConfig<Double> getHeightFogMaxThicknessConfig()
-	{ return new DhApiConfig<>(FogQuality.AdvancedFog.HeightFog.heightFogMax); }
+	IDhApiConfig<Double> getHeightFogMaxThicknessConfig();
 	
 	/** Defines how the height fog changes in thickness. */
-	public static IDhApiConfig<EFogFalloff> getHeightFogFalloffConfig()
-	{ return new DhApiConfig<>(FogQuality.AdvancedFog.HeightFog.heightFogType); }
+	IDhApiConfig<EFogFalloff> getHeightFogFalloffConfig();
 	
 	/** Defines the height fog's density. */
-	public static IDhApiConfig<Double> getHeightFogDensityConfig()
-	{ return new DhApiConfig<>(FogQuality.AdvancedFog.HeightFog.heightFogDensity); }
-	
+	IDhApiConfig<Double> getHeightFogDensityConfig();
 	
 }

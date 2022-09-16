@@ -19,28 +19,22 @@
 
 package com.seibel.lod.api.items.interfaces.config.client;
 
-import com.seibel.lod.api.items.enums.config.EGpuUploadMethod;
+import com.seibel.lod.api.items.enums.rendering.EDebugMode;
 import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
 
 /**
- * Distant Horizons' OpenGL buffer configuration.
+ * Distant Horizons' debug configuration.
  *
  * @author James Seibel
- * @version 2022-7-5
+ * @version 2022-9-15
  */
-public interface IDhApiBuffers
+public interface IDhApiDebuggingConfig
 {
+	/** Can be used to debug the standard fake chunk rendering. */
+	IDhApiConfig<EDebugMode> getDebugRenderModeConfig();
 	
-	/** Defines how geometry data is uploaded to the GPU. */
-	IDhApiConfig<EGpuUploadMethod> getGpuUploadMethodConfig();
+	/** If enabled debug keybindings can be used. */
+	IDhApiConfig<Boolean> getEnableDebugKeybindingsConfig();
 	
-	/**
-	 * Defines how long we should wait after uploading one
-	 * Megabyte of geometry data to the GPU before uploading
-	 * the next Megabyte of data. <br>
-	 * This can be set to a non-zero number to reduce stuttering caused by
-	 * uploading buffers to the GPU.
-	 */
-	IDhApiConfig<Integer> getBufferUploadTimeoutPerMegabyteInMillisecondsConfig();
 	
 }
