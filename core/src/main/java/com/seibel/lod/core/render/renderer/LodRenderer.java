@@ -85,6 +85,10 @@ public class LodRenderer
 		GL32.glDrawElements(GL32.GL_TRIANGLES, (vbo.getVertexCount()/4)*6,
 				quadIBO.getType(), 0);
 	}
+	public Vec3f getLookVector() {
+		return MC_RENDER.getLookAtVector();
+	}
+
 
 	public static class LagSpikeCatcher {
 		long timer = System.nanoTime();
@@ -130,7 +134,6 @@ public class LodRenderer
 			EVENT_LOGGER.error("drawLODs() called after close()!");
 			return;
 		}
-		
 
 		// get MC's shader program
 		// Save all MC render state
@@ -179,13 +182,9 @@ public class LodRenderer
 
 		transparencyEnabled = Config.Client.Graphics.Quality.transparency.get().tranparencyEnabled;
 		fakeOceanFloor = Config.Client.Graphics.Quality.transparency.get().fakeTransparencyEnabled;
-		if(transparencyEnabled) {
-			GL32.glBlendFunc(GL32.GL_SRC_ALPHA, GL32.GL_ONE_MINUS_SRC_ALPHA);
-			GL32.glEnable(GL32.GL_BLEND);
-		}else{
-			GL32.glDisable(GL32.GL_BLEND);
-		}
 
+		GL32.glDisable(GL32.GL_BLEND); // We render opaque first, then transparent
+		GL32.glDepthMask(true);
 		GL32.glClear(GL32.GL_DEPTH_BUFFER_BIT);
 
 		/*---------Bind required objects--------*/
@@ -223,6 +222,8 @@ public class LodRenderer
 		//GL32.glEnable( GL32.GL_POLYGON_OFFSET_FILL );
 		//GL32.glPolygonOffset( 1f, 1f );
 
+		bufferHandler.prepare(this);
+
 		//===========//
 		// rendering //
 		//===========//
@@ -233,11 +234,20 @@ public class LodRenderer
 		Vec3d cameraPos = MC_RENDER.getCameraExactPosition();
 		DhBlockPos cameraBlockPos = MC_RENDER.getCameraBlockPosition();
 		Vec3f cameraDir = MC_RENDER.getLookAtVector();
-		int drawCount = 0;
 
 		//TODO: Directional culling
-		bufferHandler.render(this);
+		bufferHandler.renderOpaque(this);
 
+		//======================//
+		// render transparency //
+		//======================//
+		if (LodRenderer.transparencyEnabled) {
+			GL32.glEnable(GL32.GL_BLEND);
+			GL32.glBlendFunc(GL32.GL_SRC_ALPHA, GL32.GL_ONE_MINUS_SRC_ALPHA);
+			GL32.glDepthMask(false); // This so that even on incorrect sorting of transparent blocks, it still mostly looks correct
+			bufferHandler.renderTransparent(this);
+			GL32.glDepthMask(true); // Apparently the depth mask state is stored in the FBO, so glState fails to restore it...
+		}
 		//if (drawCall==0)
 		//	tickLogger.info("DrawCall Count: {}", drawCount);
 		

@@ -9,6 +9,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 // WARNING: This is not THREAD-SAFE!
 public class IdBiomeBlockStateMap {
@@ -47,7 +48,7 @@ public class IdBiomeBlockStateMap {
 
 
     final ArrayList<Entry> entries = new ArrayList<>();
-    final HashMap<Entry, Integer> idMap = new HashMap<>();
+    final ConcurrentHashMap<Entry, Integer> idMap = new ConcurrentHashMap<>(); // FIXME: Improve performance
 
     public Entry get(int id) {
         return entries.get(id);

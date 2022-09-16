@@ -36,6 +36,7 @@ public class GLState {
     public int blendSrc;
     public int blendDst;
     public boolean depth;
+    public boolean depthWrite;
     public int depthFunc;
     public boolean stencil;
     public int stencilFunc;
@@ -61,6 +62,7 @@ public class GLState {
         blendSrc = GL32.glGetInteger(GL32.GL_BLEND_SRC);
         blendDst = GL32.glGetInteger(GL32.GL_BLEND_DST);
         depth = GL32.glIsEnabled(GL32.GL_DEPTH_TEST);
+        depthWrite = GL32.glGetInteger(GL32.GL_DEPTH_WRITEMASK) == GL32.GL_TRUE;
         depthFunc = GL32.glGetInteger(GL32.GL_DEPTH_FUNC);
         stencil = GL32.glIsEnabled(GL32.GL_STENCIL_TEST);
         stencilFunc = GL32.glGetInteger(GL32.GL_STENCIL_FUNC);
@@ -100,7 +102,9 @@ public class GLState {
         GL32.glBindVertexArray(vao);
         GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, vbo);
         GL32.glBindBuffer(GL32.GL_ELEMENT_ARRAY_BUFFER, ebo);
+        GL32.glUseProgram(prog);
 
+        GL32.glDepthMask(depthWrite);
         GL32.glBlendFunc(blendSrc, blendDst);
         if (depth) {
             GL32.glEnable(GL32.GL_DEPTH_TEST);
@@ -115,7 +119,6 @@ public class GLState {
         }
         GL32.glStencilFunc(stencilFunc, stencilRef, stencilMask);
         GL32.glViewport(view[0], view[1], view[2], view[3]);
-        GL32.glUseProgram(prog);
         if (cull) {
             GL32.glEnable(GL32.GL_CULL_FACE);
         } else {

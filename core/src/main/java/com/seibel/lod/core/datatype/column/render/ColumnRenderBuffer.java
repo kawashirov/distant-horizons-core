@@ -42,27 +42,25 @@ public class ColumnRenderBuffer extends RenderBuffer {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
     private static final long MAX_BUFFER_UPLOAD_TIMEOUT_NANOSECONDS = 1_000_000;
     GLVertexBuffer[] vbos;
+    GLVertexBuffer[] vbosTransparent;
     public final DhBlockPos pos;
 
     public ColumnRenderBuffer(DhBlockPos pos) {
         this.pos = pos;
         vbos = new GLVertexBuffer[0];
+        vbosTransparent = new GLVertexBuffer[0];
     }
 
-
-    private void _uploadBuffersDirect(LodQuadBuilder builder, EGpuUploadMethod method) throws InterruptedException {
-        resize(builder.getCurrentNeededVertexBufferCount());
+    private static void _doUploadBuffersDirect(GLVertexBuffer[] vbos, Iterator<ByteBuffer> iter, EGpuUploadMethod method) throws InterruptedException {
         long remainingNS = 0;
         long BPerNS = Config.Client.Advanced.Buffers.gpuUploadPerMegabyteInMilliseconds.get();
-
         int i = 0;
-        Iterator<ByteBuffer> iter = builder.makeVertexBuffers();
         while (iter.hasNext()) {
             if (i >= vbos.length) {
                 throw new RuntimeException("Too many vertex buffers!!");
             }
             ByteBuffer bb = iter.next();
-            GLVertexBuffer vbo = getOrMakeVbo(i++, method.useBufferStorage);
+            GLVertexBuffer vbo = getOrMake(vbos, i++, method.useBufferStorage);
             int size = bb.limit() - bb.position();
             try {
                 vbo.bind();
@@ -88,42 +86,57 @@ public class ColumnRenderBuffer extends RenderBuffer {
         }
     }
 
+
+    private void _uploadBuffersDirect(LodQuadBuilder builder, EGpuUploadMethod method) throws InterruptedException {
+        vbos = resize(vbos, builder.getCurrentNeededOpaqueVertexBufferCount());
+        _doUploadBuffersDirect(vbos, builder.makeOpaqueVertexBuffers(), method);
+        vbosTransparent = resize(vbosTransparent, builder.getCurrentNeededTransparentVertexBufferCount());
+        _doUploadBuffersDirect(vbosTransparent, builder.makeTransparentVertexBuffers(), method);
+    }
+
     private void _uploadBuffersMapped(LodQuadBuilder builder, EGpuUploadMethod method)
     {
-        resize(builder.getCurrentNeededVertexBufferCount());
+        vbos = resize(vbos, builder.getCurrentNeededOpaqueVertexBufferCount());
         for (int i=0; i<vbos.length; i++) {
             if (vbos[i]==null) vbos[i] = new GLVertexBuffer(method.useBufferStorage);
         }
-        LodQuadBuilder.BufferFiller func = builder.makeBufferFiller(method);
-        int i = 0;
-        while (i < vbos.length && func.fill(vbos[i++])) {}
+        LodQuadBuilder.BufferFiller func = builder.makeOpaqueBufferFiller(method);
+        {
+            int i = 0;
+            while (i < vbos.length && func.fill(vbos[i++])) {
+            }
+        }
+        vbosTransparent = resize(vbosTransparent, builder.getCurrentNeededTransparentVertexBufferCount());
+        for (int i=0; i<vbosTransparent.length; i++) {
+            if (vbosTransparent[i]==null) vbosTransparent[i] = new GLVertexBuffer(method.useBufferStorage);
+        }
+        func = builder.makeTransparentBufferFiller(method);
+        {
+            int i = 0;
+            while (i < vbosTransparent.length && func.fill(vbosTransparent[i++])) {
+            }
+        }
     }
 
-    private GLVertexBuffer getOrMakeVbo(int iIndex, boolean useBuffStorage) {
+    private static GLVertexBuffer[] resize(GLVertexBuffer[] vbos, int newSize) {
+        if (vbos.length == newSize) return vbos;
+        GLVertexBuffer[] newVbos = new GLVertexBuffer[newSize];
+        System.arraycopy(vbos, 0, newVbos, 0, Math.min(vbos.length, newSize));
+        if (newSize < vbos.length) {
+            for (int i = newSize; i < vbos.length; i++) {
+                if (vbos[i] != null) {
+                    vbos[i].close();
+                }
+            }
+        }
+        return newVbos;
+    }
+
+    private static GLVertexBuffer getOrMake(GLVertexBuffer[] vbos, int iIndex, boolean useBuffStorage) {
         if (vbos[iIndex] == null) {
             vbos[iIndex] = new GLVertexBuffer(useBuffStorage);
         }
         return vbos[iIndex];
-    }
-
-    private void resize(int size) {
-        if (vbos.length != size) {
-            GLVertexBuffer[] newVbos = new GLVertexBuffer[size];
-            if (vbos.length > size) {
-                for (int i=size; i<vbos.length; i++) {
-                    if (vbos[i]!=null) vbos[i].close();
-                    vbos[i] = null;
-                }
-            }
-            for (int i=0; i<newVbos.length && i<vbos.length; i++) {
-                newVbos[i] = vbos[i];
-                vbos[i] = null;
-            }
-            for (GLVertexBuffer b : vbos) {
-                if (b != null) throw new RuntimeException("LEAKING VBO!");
-            }
-            vbos = newVbos;
-        }
     }
 
     public void uploadBuffer(LodQuadBuilder builder, EGpuUploadMethod method) throws InterruptedException {
@@ -135,10 +148,24 @@ public class ColumnRenderBuffer extends RenderBuffer {
     }
 
     @Override
-    public boolean render(LodRenderer renderContext) {
+    public boolean renderOpaque(LodRenderer renderContext) {
         boolean hasRendered = false;
         renderContext.setupOffset(pos);
         for (GLVertexBuffer vbo : vbos) {
+            if (vbo == null) continue;
+            if (vbo.getVertexCount() == 0) continue;
+            hasRendered = true;
+            renderContext.drawVbo(vbo);
+            //LodRenderer.tickLogger.info("Vertex buffer: {}", vbo);
+        }
+        return hasRendered;
+    }
+
+    @Override
+    public boolean renderTransparent(LodRenderer renderContext) {
+        boolean hasRendered = false;
+        renderContext.setupOffset(pos);
+        for (GLVertexBuffer vbo : vbosTransparent) {
             if (vbo == null) continue;
             if (vbo.getVertexCount() == 0) continue;
             hasRendered = true;
@@ -173,6 +200,10 @@ public class ColumnRenderBuffer extends RenderBuffer {
                 if (b == null) continue;
                 b.destroy(false);
             }
+            for (GLVertexBuffer b : vbosTransparent) {
+                if (b == null) continue;
+                b.destroy(false);
+            }
         });
     }
 
@@ -186,32 +217,23 @@ public class ColumnRenderBuffer extends RenderBuffer {
         return getCurrentJobsCount() > MAX_CONCURRENT_CALL;
     }
 
-    public static CompletableFuture<ColumnRenderBuffer[]> build(IClientLevel clientLevel, Reference<ColumnRenderBuffer> usedBufferSlotOpaque, Reference<ColumnRenderBuffer> usedBufferSlotTransparent, ColumnRenderSource data, ColumnRenderSource[] adjData) {
+    public static CompletableFuture<ColumnRenderBuffer> build(IClientLevel clientLevel, Reference<ColumnRenderBuffer> usedBufferSlot, ColumnRenderSource data, ColumnRenderSource[] adjData) {
         if (isBusy()) return null;
         //LOGGER.info("RenderRegion startBuild @ {}", data.sectionPos);
         return CompletableFuture.supplyAsync(() -> {
                     try {
+                        boolean enableTransparency = Config.Client.Graphics.Quality.transparency.get().tranparencyEnabled;
                         EVENT_LOGGER.trace("RenderRegion start QuadBuild @ {}", data.sectionPos);
                         boolean enableSkyLightCulling = Config.Client.Graphics.AdvancedGraphics.enableCaveCulling.get();
                         int skyLightCullingBelow = Config.Client.Graphics.AdvancedGraphics.caveCullingHeight.get();
                         // FIXME: Clamp also to the max world height.
                         skyLightCullingBelow = Math.max(skyLightCullingBelow, clientLevel.getMinY());
-                        LodQuadBuilder builderOpaque = new LodQuadBuilder(enableSkyLightCulling,
-                                (short) (skyLightCullingBelow - clientLevel.getMinY()));
+                        LodQuadBuilder builder = new LodQuadBuilder(enableSkyLightCulling,
+                                (short) (skyLightCullingBelow - clientLevel.getMinY()), enableTransparency);
 
-                        LodQuadBuilder builderTransparent = new LodQuadBuilder(enableSkyLightCulling,
-                                (short) (skyLightCullingBelow - clientLevel.getMinY()));
-
-                        makeLodRenderData(builderOpaque, builderTransparent, data, adjData);
-                        if (builderOpaque.getCurrentQuadsCount() > 0) {
-                            //LOGGER.info("her");
-                        }
+                        makeLodRenderData(builder, data, adjData);
                         EVENT_LOGGER.trace("RenderRegion end QuadBuild @ {}", data.sectionPos);
-                        LodQuadBuilder[] builders = new LodQuadBuilder[2];
-                        builders[0] = builderOpaque;
-                        builders[1] = builderTransparent;
-
-                        return builders;
+                        return builder;
                     } catch (UncheckedInterruptedException e) {
                         throw e;
                     }
@@ -220,35 +242,25 @@ public class ColumnRenderBuffer extends RenderBuffer {
                         throw e3;
                     }
                 }, BUFFER_BUILDERS)
-                .thenApplyAsync((builders) -> {
+                .thenApplyAsync((builder) -> {
                     try {
                         EVENT_LOGGER.trace("RenderRegion start Upload @ {}", data.sectionPos);
                         GLProxy glProxy = GLProxy.getInstance();
                         EGpuUploadMethod method = GLProxy.getInstance().getGpuUploadMethod();
                         EGLProxyContext oldContext = glProxy.getGlContext();
                         glProxy.setGlContext(EGLProxyContext.LOD_BUILDER);
-                        ColumnRenderBuffer buffersSlotOpaque = usedBufferSlotOpaque.swap(null);
-                        ColumnRenderBuffer buffersSlotTransparent = usedBufferSlotTransparent.swap(null);
+                        ColumnRenderBuffer buffer = usedBufferSlot.swap(null);
 
-                        if (buffersSlotOpaque == null)
-                            buffersSlotOpaque = new ColumnRenderBuffer(
+                        if (buffer == null)
+                            buffer = new ColumnRenderBuffer(
                                 new DhBlockPos(data.sectionPos.getCorner().getCorner(), clientLevel.getMinY())
                             );
-                        if (buffersSlotTransparent == null)
-                            buffersSlotTransparent = new ColumnRenderBuffer(
-                                    new DhBlockPos(data.sectionPos.getCorner().getCorner(), clientLevel.getMinY())
-                            );
                         try {
-                            buffersSlotOpaque.uploadBuffer(builders[0], method);
-                            buffersSlotTransparent.uploadBuffer(builders[1], method);
+                            buffer.uploadBuffer(builder, method);
                             EVENT_LOGGER.trace("RenderRegion end Upload @ {}", data.sectionPos);
-                            ColumnRenderBuffer[] buffers = new ColumnRenderBuffer[2];
-                            buffers[0] = buffersSlotOpaque;
-                            buffers[1] = buffersSlotTransparent;
-                            return buffers;
+                            return buffer;
                         } catch (Exception e) {
-                            buffersSlotOpaque.close();
-                            buffersSlotTransparent.close();
+                            buffer.close();
                             throw e;
                         } finally {
                             glProxy.setGlContext(oldContext);
@@ -262,14 +274,10 @@ public class ColumnRenderBuffer extends RenderBuffer {
                 }, BUFFER_UPLOADER).handle((v, e) -> {
                     //LOGGER.info("RenderRegion endBuild @ {}", data.sectionPos);
                     if (e != null) {
-                        ColumnRenderBuffer buffersSlot;
-                        if (!usedBufferSlotOpaque.isEmpty()) {
-                            buffersSlot = usedBufferSlotOpaque.swap(null);
-                            buffersSlot.close();
-                        }
-                        if (!usedBufferSlotTransparent.isEmpty()) {
-                            buffersSlot = usedBufferSlotTransparent.swap(null);
-                            buffersSlot.close();
+                        ColumnRenderBuffer buffer;
+                        if (!usedBufferSlot.isEmpty()) {
+                            buffer = usedBufferSlot.swap(null);
+                            buffer.close();
                         }
                         return null;
                     } else {
@@ -280,7 +288,7 @@ public class ColumnRenderBuffer extends RenderBuffer {
 
 
 
-    private static void makeLodRenderData(LodQuadBuilder quadBuilderOpaque, LodQuadBuilder quadBuilderTransparent, ColumnRenderSource region, ColumnRenderSource[] adjRegions) {
+    private static void makeLodRenderData(LodQuadBuilder quadBuilder, ColumnRenderSource region, ColumnRenderSource[] adjRegions) {
 
         // Variable initialization
         EDebugMode debugMode = Config.Client.Advanced.Debugging.debugMode.get();
@@ -372,23 +380,11 @@ public class ColumnRenderBuffer extends RenderBuffer {
                     long adjDataTop = i - 1 >= 0 ? posData.get(i - 1) : ColumnFormat.EMPTY_DATA;
                     long adjDataBot = i + 1 < posData.size() ? posData.get(i + 1) : ColumnFormat.EMPTY_DATA;
 
-
-                    // We send the call to create the vertices
-                    if(ColumnFormat.getAlpha(data) == 255 || !LodRenderer.transparencyEnabled)
-                    {
-                        CubicLodTemplate.addLodToBuffer(data, adjDataTop, adjDataBot, adjData, detailLevel,
-                                x, z, quadBuilderOpaque, debugMode);
-                    }
-                    else
-                    {
-                        CubicLodTemplate.addLodToBuffer(data, adjDataTop, adjDataBot, adjData, detailLevel,
-                                x, z, quadBuilderTransparent, debugMode);
-                    }
+                    CubicLodTemplate.addLodToBuffer(data, adjDataTop, adjDataBot, adjData, detailLevel,
+                            x, z, quadBuilder, debugMode);
                 }
             }
         }
-        quadBuilderOpaque.mergeQuads();
-        if(LodRenderer.transparencyEnabled)
-            quadBuilderTransparent.mergeQuads();
+        quadBuilder.mergeQuads();
     }
 }

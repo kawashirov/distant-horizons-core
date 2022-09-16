@@ -265,9 +265,8 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
         return SECTION_SIZE_OFFSET;
     }
 
-    private CompletableFuture<ColumnRenderBuffer[]> inBuildRenderBuffer = null;
-    private Reference<ColumnRenderBuffer> usedBufferOpaque = new Reference<>();
-    private Reference<ColumnRenderBuffer> usedBufferTransparent = new Reference<>();
+    private CompletableFuture<ColumnRenderBuffer> inBuildRenderBuffer = null;
+    private Reference<ColumnRenderBuffer> usedBuffer = new Reference<>();
 
 
     private void tryBuildBuffer(IClientLevel level, LodQuadTree quadTree) {
@@ -279,7 +278,7 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
                     data[direction.ordinal()-2] = ((ColumnRenderSource) section.getRenderSource());
                 }
             }
-            inBuildRenderBuffer = ColumnRenderBuffer.build(level, usedBufferOpaque, usedBufferTransparent, this, data);
+            inBuildRenderBuffer = ColumnRenderBuffer.build(level, usedBuffer, this, data);
         }
     }
     private void cancelBuildBuffer() {
@@ -303,11 +302,6 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     }
 
     @Override
-    public boolean isRenderReady() {
-        return inBuildRenderBuffer == null || inBuildRenderBuffer.isDone();
-    }
-
-    @Override
     public void dispose() {
         cancelBuildBuffer();
     }
@@ -318,7 +312,7 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     private static final long SWAP_BUSY_COLLISION_TIMEOUT = /* 1 sec */ 1_000_000_000L;
 
     @Override
-    public boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<RenderBuffer> referenceSlotsOpaque, AtomicReference<RenderBuffer> referenceSlotsTransparent) {
+    public boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<RenderBuffer> referenceSlot) {
         if (lastNs != -1 && System.nanoTime() - lastNs < SWAP_TIMEOUT) {
             return false;
         }
@@ -326,28 +320,11 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
             if (inBuildRenderBuffer.isDone()) {
                 lastNs = System.nanoTime();
                 //LOGGER.info("Swapping render buffer for {}", sectionPos);
-
-                RenderBuffer[] newBuffers = inBuildRenderBuffer.join();
-
-                RenderBuffer oldBuffersOpaque = referenceSlotsOpaque.getAndSet(newBuffers[0]);
-
-                ColumnRenderBuffer swapped;
-
-
-                if (oldBuffersOpaque instanceof ColumnRenderBuffer) {
-                    swapped = usedBufferOpaque.swap((ColumnRenderBuffer) oldBuffersOpaque);
+                RenderBuffer newBuffer = inBuildRenderBuffer.join();
+                RenderBuffer oldBuffer = referenceSlot.getAndSet(newBuffer);
+                if (oldBuffer instanceof ColumnRenderBuffer) {
+                    ColumnRenderBuffer swapped = usedBuffer.swap((ColumnRenderBuffer) oldBuffer);
                     LodUtil.assertTrue(swapped == null);
-                }
-
-                if(LodRenderer.transparencyEnabled) {
-                    RenderBuffer oldBuffersTransparent = referenceSlotsTransparent.getAndSet(newBuffers[1]);
-
-                    if (LodRenderer.transparencyEnabled) {
-                        if (oldBuffersTransparent instanceof ColumnRenderBuffer) {
-                            swapped = usedBufferTransparent.swap((ColumnRenderBuffer) oldBuffersTransparent);
-                            LodUtil.assertTrue(swapped == null);
-                        }
-                    }
                 }
                 inBuildRenderBuffer = null;
                 return true;

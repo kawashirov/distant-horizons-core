@@ -1,63 +1,128 @@
 package com.seibel.lod.core.render;
 
 import com.seibel.lod.core.datatype.LodRenderSource;
+import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.pos.Pos2D;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.renderer.LodRenderer;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.gridList.MovableGridRingList;
+import com.seibel.lod.core.util.math.Mat4f;
+import com.seibel.lod.core.util.math.Vec3f;
+import com.seibel.lod.core.util.objects.SortedArraySet;
 
+import java.util.Comparator;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.Vector;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class RenderBufferHandler {
     public final LodQuadTree target;
     private final MovableGridRingList<RenderBufferNode> renderBufferNodes;
 
+    private static class LoadedRenderBuffer {
+        public final RenderBuffer buffer;
+        public final DhSectionPos pos;
+        LoadedRenderBuffer(RenderBuffer buffer, DhSectionPos pos) {
+            this.buffer = buffer;
+            this.pos = pos;
+        }
+    }
+
+    // TODO: Make sorting go into the update loop instead of the render loop as it doesn't need to be done every frame
+    private SortedArraySet<LoadedRenderBuffer> loadedNearToFarBuffers = null;
+
+    // The followiing buildRenderList sorting method is based on the following reddit post:
+    // https://www.reddit.com/r/VoxelGameDev/comments/a0l8zc/correct_depthordering_for_translucent_discrete/
+    public void buildRenderList(Vec3f lookForwardVector) {
+        ELodDirection[] axisDirections = new ELodDirection[3];
+        // Do the axis that are longest first (i.e. the largest absolute value of the lookForwardVector)
+        // , with the sign being the opposite of the respective lookForwardVector component's sign
+        float absX = Math.abs(lookForwardVector.x);
+        float absY = Math.abs(lookForwardVector.y);
+        float absZ = Math.abs(lookForwardVector.z);
+        ELodDirection xDir = lookForwardVector.x < 0 ? ELodDirection.EAST : ELodDirection.WEST;
+        ELodDirection yDir = lookForwardVector.y < 0 ? ELodDirection.UP : ELodDirection.DOWN;
+        ELodDirection zDir = lookForwardVector.z < 0 ? ELodDirection.SOUTH : ELodDirection.NORTH;
+        if (absX >= absY && absX >= absZ) {
+            axisDirections[0] = xDir;
+            if (absY >= absZ) {
+                axisDirections[1] = yDir;
+                axisDirections[2] = zDir;
+            } else {
+                axisDirections[1] = zDir;
+                axisDirections[2] = yDir;
+            }
+        } else if (absY >= absX && absY >= absZ) {
+            axisDirections[0] = yDir;
+            if (absX >= absZ) {
+                axisDirections[1] = xDir;
+                axisDirections[2] = zDir;
+            } else {
+                axisDirections[1] = zDir;
+                axisDirections[2] = xDir;
+            }
+        } else {
+            axisDirections[0] = zDir;
+            if (absX >= absY) {
+                axisDirections[1] = xDir;
+                axisDirections[2] = yDir;
+            } else {
+                axisDirections[1] = yDir;
+                axisDirections[2] = xDir;
+            }
+        }
+
+        // Now that we have the axis directions, we can sort the render list
+        Comparator<LoadedRenderBuffer> sortFarToNear = (a, b) -> {
+            Pos2D aPos = a.pos.getCenter().getCenter().toPos2D();
+            Pos2D bPos = b.pos.getCenter().getCenter().toPos2D();
+            for (ELodDirection axisDirection : axisDirections) {
+                if (axisDirection.getAxis().isVertical()) continue; // We works on the horizontal plane only for section sorting
+                int abDiff;
+                if (axisDirection.getAxis().equals(ELodDirection.Axis.X)) {
+                    abDiff = aPos.x - bPos.x;
+                } else {
+                    abDiff = aPos.y - bPos.y;
+                }
+                if (abDiff == 0) continue;
+                if (axisDirection.getAxisDirection().equals(ELodDirection.AxisDirection.NEGATIVE)) {
+                    abDiff = -abDiff; // Reverse the sign
+                }
+                return abDiff;
+            }
+            return a.pos.sectionDetail - b.pos.sectionDetail; // If all else fails, sort by detail
+        };
+        Comparator<LoadedRenderBuffer> sortNearToFar = (a, b) -> -sortFarToNear.compare(a, b);
+        // Build the sorted list
+        loadedNearToFarBuffers = new SortedArraySet<>(sortNearToFar);
+        // Add all the loaded buffers to the sorted list
+        renderBufferNodes.forEach((r) -> {if (r!=null) r.collect(loadedNearToFarBuffers);});
+    }
+
+
     class RenderBufferNode implements AutoCloseable {
         public final DhSectionPos pos;
         public volatile RenderBufferNode[] children = null;
+
         //FIXME: The multiple Atomics will cause race conditions between them!
-        public final AtomicReference<RenderBuffer> renderBufferSlotOpaque = new AtomicReference<>();
-        public final AtomicReference<RenderBuffer> renderBufferSlotTransparent = new AtomicReference<>();
+        public final AtomicReference<RenderBuffer> renderBufferSlot = new AtomicReference<>();
 
         public RenderBufferNode(DhSectionPos pos) {
             this.pos = pos;
         }
 
-        /**
-         * This will render all opaque lods
-         * @param renderContext
-         */
-        public void renderOpaque(LodRenderer renderContext) {
+        public void collect(SortedArraySet<LoadedRenderBuffer> sortedSet) {
             RenderBuffer buff;
-
-            buff = renderBufferSlotOpaque.get();
+            buff = renderBufferSlot.get();
             if (buff != null) {
-                buff.render(renderContext);
+                sortedSet.add(new LoadedRenderBuffer(buff, pos));
             } else {
                 RenderBufferNode[] childs = children;
                 if (childs != null) {
                     for (RenderBufferNode child : childs) {
-                        child.renderOpaque(renderContext);
-                    }
-                }
-            }
-        }
-
-        /**
-         * This will render all transparent lods
-         * @param renderContext
-         */
-        public void renderTransparent(LodRenderer renderContext) {
-            RenderBuffer buff;
-            buff = renderBufferSlotTransparent.get();
-            if (buff != null) {
-                buff.render(renderContext);
-            } else {
-                RenderBufferNode[] childs = children;
-                if (childs != null) {
-                    for (RenderBufferNode child : childs) {
-                        child.renderTransparent(renderContext);
+                        child.collect(sortedSet);
                     }
                 }
             }
@@ -77,17 +142,13 @@ public class RenderBufferHandler {
             boolean shouldRender = section.canRender();
             if (!shouldRender) {
                 //TODO: Does this really need to force the old buffer to not be rendered?
-                RenderBuffer buff = renderBufferSlotOpaque.getAndSet(null);
-                if (buff != null) {
-                    buff.close();
-                }
-                buff = renderBufferSlotTransparent.getAndSet(null);
+                RenderBuffer buff = renderBufferSlot.getAndSet(null);
                 if (buff != null) {
                     buff.close();
                 }
             } else {
                 LodUtil.assertTrue(container != null); // section.isLoaded() should have ensured this
-                container.trySwapRenderBuffer(target, renderBufferSlotOpaque, renderBufferSlotTransparent);
+                container.trySwapRenderBuffer(target, renderBufferSlot);
             }
 
             // Update children's render buffer state
@@ -109,7 +170,7 @@ public class RenderBufferHandler {
             } else {
                 if (children != null) {
                     //FIXME: Concurrency issue here: If render thread is concurrently using the child's buffer,
-                    //  and this thread got priority to close the buffer, it causes a bug wher the render thread
+                    //  and this thread got priority to close the buffer, it causes a bug where the render thread
                     //  will be using a closed buffer!!!!
                     RenderBufferNode[] childs = children;
                     children = null;
@@ -128,11 +189,7 @@ public class RenderBufferHandler {
                 }
             }
             RenderBuffer buff;
-            buff = renderBufferSlotOpaque.getAndSet(null);
-            if (buff != null) {
-                buff.close();
-            }
-            buff = renderBufferSlotTransparent.getAndSet(null);
+            buff = renderBufferSlot.getAndSet(null);
             if (buff != null) {
                 buff.close();
             }
@@ -146,14 +203,19 @@ public class RenderBufferHandler {
         renderBufferNodes = new MovableGridRingList<>(referenceList.getHalfSize(), center);
     }
 
-    public void render(LodRenderer renderContext) {
-        //TODO: This might get locked by update() causing move() call. Is there a way to avoid this?
-        // Maybe dupe the base list and use atomic swap on render? Or is this not worth it?
+    //TODO: This might get locked by update() causing move() call. Is there a way to avoid this?
+    // Maybe dupe the base list and use atomic swap on render? Or is this not worth it?
+    public void prepare(LodRenderer renderContext) {
+        buildRenderList(renderContext.getLookVector());
+    }
+
+    public void renderOpaque(LodRenderer renderContext) {
         //TODO: Directional culling
-        //TODO: Ordered by distance
-        renderBufferNodes.forEachOrdered(n -> n.renderOpaque(renderContext));
+        loadedNearToFarBuffers.forEach(b -> b.buffer.renderOpaque(renderContext));
+    }
+    public void renderTransparent(LodRenderer renderContext) {
         if(LodRenderer.transparencyEnabled)
-            renderBufferNodes.forEachOrdered(n -> n.renderTransparent(renderContext));
+            loadedNearToFarBuffers.forEach(b -> b.buffer.renderTransparent(renderContext));
     }
 
     public void update() {
@@ -186,31 +248,6 @@ public class RenderBufferHandler {
             // Update node
             node.update();
         });
-
-
-        /**TODO improve the ordering*/
-        /* DHBlockPos playerPos = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class).getPlayerBlockPos();
-        int x = playerPos.x;
-        int z = playerPos.z;
-        Comparator<RenderBufferNode> byDistance = new Comparator<RenderBufferNode>() {
-            @Override
-            public int compare(RenderBufferNode o1, RenderBufferNode o2) {
-                if ((o1 == null) && (o2 == null)) {
-                    return 0;
-                } else if (o1 == null) {
-                    return 1;
-                } else if (o2 == null) {
-                    return -1;
-                }
-                int x1 = o1.pos.sectionX;
-                int z1 = o1.pos.sectionZ;
-                int x2 = o2.pos.sectionX;
-                int z2 = o2.pos.sectionZ;
-
-                return Integer.compare((x1 - x) ^ 2 + (z1 - z) ^ 2, (x2 - x) ^ 2 + (z2 - z) ^ 2);
-            }
-        };
-        renderBufferNodes.sort(byDistance);*/
     }
 
     public void close() {

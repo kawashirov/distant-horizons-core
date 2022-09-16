@@ -32,7 +32,8 @@ public abstract class RenderBuffer implements AutoCloseable
 	// ========== Called by render thread ==========
 	/* Called on... well... rendering.
 	 * Return false if nothing rendered. (Optional) */
-	public abstract boolean render(LodRenderer renderContext);
+	public abstract boolean renderOpaque(LodRenderer renderContext);
+	public abstract boolean renderTransparent(LodRenderer renderContext);
 
 	// ========== Called by any thread. (thread safe) ==========
 	
@@ -55,7 +56,6 @@ public abstract class RenderBuffer implements AutoCloseable
 	public static final int QUADS_BYTE_SIZE = LodUtil.LOD_VERTEX_FORMAT.getByteSize() * 4;
 	public static final int MAX_QUADS_PER_BUFFER = (1024 * 1024 * 1) / QUADS_BYTE_SIZE;
 	public static final int FULL_SIZED_BUFFER = MAX_QUADS_PER_BUFFER * QUADS_BYTE_SIZE;
-
 
 
 }

@@ -24,6 +24,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.ListIterator;
+import java.util.Objects;
 
 import com.seibel.lod.core.render.RenderBuffer;
 import com.seibel.lod.core.enums.ELodDirection;
@@ -47,7 +48,11 @@ public class LodQuadBuilder
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	public final boolean skipQuadsWithZeroSkylight;
 	public final short skyLightCullingBelow;
-	final ArrayList<BufferQuad>[] quads = (ArrayList<BufferQuad>[]) new ArrayList[6];
+	@SuppressWarnings("unchecked")
+	final ArrayList<BufferQuad>[] opaqueQuads = (ArrayList<BufferQuad>[]) new ArrayList[6];
+	@SuppressWarnings("unchecked")
+	final ArrayList<BufferQuad>[] transparentQuads = (ArrayList<BufferQuad>[]) new ArrayList[6];
+	final boolean doTransparency;
 	
 	public static final int[][][] DIRECTION_VERTEX_IBO_QUAD = new int[][][]
 		{
@@ -100,17 +105,16 @@ public class LodQuadBuilder
 	
 	private int premergeCount = 0;
 
-	public LodQuadBuilder(boolean enableSkylightCulling, short skyLightCullingBelow)
+	public LodQuadBuilder(boolean enableSkylightCulling, short skyLightCullingBelow, boolean doTransparency)
 	{
-		for (int i = 0; i < 6; i++)
-			quads[i] = new ArrayList<>();
-		
+		this.doTransparency = doTransparency;
+		for (int i = 0; i < 6; i++) {
+			opaqueQuads[i] = new ArrayList<>();
+			if (doTransparency) transparentQuads[i] = new ArrayList<>();
+		}
 		this.skipQuadsWithZeroSkylight = enableSkylightCulling;
 		this.skyLightCullingBelow = skyLightCullingBelow;
 	}
-	
-	
-	
 	
 	public void addQuadAdj(ELodDirection dir, short x, short y, short z,
 			short widthEastWest, short widthNorthSouthOrUpDown,
@@ -121,7 +125,8 @@ public class LodQuadBuilder
 		if (skipQuadsWithZeroSkylight && skylight == 0 && y < skyLightCullingBelow)
 			return;
 		BufferQuad quad = new BufferQuad(x, y, z, widthEastWest, widthNorthSouthOrUpDown, color, skylight, blocklight, dir);
-		ArrayList<BufferQuad> qs = quads[dir.ordinal()];
+		ArrayList<BufferQuad> qs = (doTransparency && ColorUtil.getAlpha(color) < 255)
+				? transparentQuads[dir.ordinal()] : opaqueQuads[dir.ordinal()];
 		if (!qs.isEmpty() &&
 				(qs.get(qs.size()-1).tryMerge(quad, BufferMergeDirectionEnum.EastWest)
 				|| qs.get(qs.size()-1).tryMerge(quad, BufferMergeDirectionEnum.NorthSouthOrUpDown))
@@ -138,7 +143,8 @@ public class LodQuadBuilder
 		if (skipQuadsWithZeroSkylight && skylight == 0 && y < skyLightCullingBelow)
 			return;
 		BufferQuad quad = new BufferQuad(x, y, z, width, wz, color, skylight, blocklight, ELodDirection.UP);
-		ArrayList<BufferQuad> qs = quads[ELodDirection.UP.ordinal()];
+		ArrayList<BufferQuad> qs = (doTransparency && ColorUtil.getAlpha(color) < 255)
+				? transparentQuads[ELodDirection.UP.ordinal()] : opaqueQuads[ELodDirection.UP.ordinal()];
 		if (!qs.isEmpty() &&
 				(qs.get(qs.size()-1).tryMerge(quad, BufferMergeDirectionEnum.EastWest)
 						|| qs.get(qs.size()-1).tryMerge(quad, BufferMergeDirectionEnum.NorthSouthOrUpDown))
@@ -154,7 +160,8 @@ public class LodQuadBuilder
 		if (skipQuadsWithZeroSkylight && skylight == 0 && y < skyLightCullingBelow)
 			return;
 		BufferQuad quad = new BufferQuad(x, y, z, width, wz, color, skylight, blocklight, ELodDirection.DOWN);
-		ArrayList<BufferQuad> qs = quads[ELodDirection.DOWN.ordinal()];
+		ArrayList<BufferQuad> qs = (doTransparency && ColorUtil.getAlpha(color) < 255)
+				? transparentQuads[ELodDirection.DOWN.ordinal()] : opaqueQuads[ELodDirection.DOWN.ordinal()];
 		if (!qs.isEmpty() &&
 				(qs.get(qs.size()-1).tryMerge(quad, BufferMergeDirectionEnum.EastWest)
 						|| qs.get(qs.size()-1).tryMerge(quad, BufferMergeDirectionEnum.NorthSouthOrUpDown))
@@ -249,35 +256,38 @@ public class LodQuadBuilder
 	public void mergeQuads()
 	{
 		long mergeCount = 0;
-		long preQuadsCount = getCurrentQuadsCount();
+		long preQuadsCount = getCurrentOpaqueQuadsCount() + getCurrentTransparentQuadsCount();
 		if (preQuadsCount <= 1)
 			return;
 
 		for (int directionIndex = 0; directionIndex < 6; directionIndex++)
 		{
-			mergeCount += mergeQuadsInternal(directionIndex, BufferMergeDirectionEnum.EastWest);
+			mergeCount += mergeQuadsInternal(opaqueQuads, directionIndex, BufferMergeDirectionEnum.EastWest);
+			if (doTransparency)
+				mergeCount += mergeQuadsInternal(transparentQuads, directionIndex, BufferMergeDirectionEnum.EastWest);
 			// only run the second merge if the face is the top or bottom
-			//if (directionIndex == LodDirection.UP.ordinal() || directionIndex == LodDirection.DOWN.ordinal())
-			//{
-			//	long pass2 = mergeQuadsInternal(directionIndex, BufferMergeDirectionEnum.NorthSouthOrUpDown);
-			//	mergeCount += pass2;
-			//}
+			if (directionIndex == ELodDirection.UP.ordinal() || directionIndex == ELodDirection.DOWN.ordinal())
+			{
+				mergeCount += mergeQuadsInternal(opaqueQuads, directionIndex, BufferMergeDirectionEnum.NorthSouthOrUpDown);
+				if (doTransparency)
+					mergeCount += mergeQuadsInternal(transparentQuads, directionIndex, BufferMergeDirectionEnum.NorthSouthOrUpDown);
+			}
 		}
-		long postQuadsCount = getCurrentQuadsCount();
+		long postQuadsCount = getCurrentOpaqueQuadsCount() + getCurrentTransparentQuadsCount();
 		//if (mergeCount != 0)
 		LOGGER.debug("Merged {}/{}({}) quads", mergeCount, preQuadsCount, mergeCount / (double) preQuadsCount);
 	}
 
 	/** Merges all of this builder's quads for the given directionIndex (up, down, left, etc.) in the given direction */
-	private long mergeQuadsInternal(int directionIndex, BufferMergeDirectionEnum mergeDirection)
+	private static long mergeQuadsInternal(ArrayList<BufferQuad>[] list, int directionIndex, BufferMergeDirectionEnum mergeDirection)
 	{
-		if (quads[directionIndex].size() <= 1)
+		if (list[directionIndex].size() <= 1)
 			return 0;
-		
-		quads[directionIndex].sort( (objOne, objTwo) -> objOne.compare(objTwo, mergeDirection) );
+
+		list[directionIndex].sort( (objOne, objTwo) -> objOne.compare(objTwo, mergeDirection) );
 		
 		long mergeCount = 0;
-		ListIterator<BufferQuad> iter = quads[directionIndex].listIterator();
+		ListIterator<BufferQuad> iter = list[directionIndex].listIterator();
 		BufferQuad currentQuad = iter.next();
 		while (iter.hasNext())
 		{
@@ -295,13 +305,13 @@ public class LodQuadBuilder
 				currentQuad = nextQuad;
 			}
 		}
-		quads[directionIndex].removeIf(o -> o == null);
+		list[directionIndex].removeIf(Objects::isNull);
 		return mergeCount;
 	}
 	
 	
 	
-	public Iterator<ByteBuffer> makeVertexBuffers()
+	public Iterator<ByteBuffer> makeOpaqueVertexBuffers()
 	{
 		return new Iterator<ByteBuffer>()
 		{
@@ -312,7 +322,7 @@ public class LodQuadBuilder
 			
 			private int skipEmpty(int d)
 			{
-				while (d < 6 && quads[d].isEmpty())
+				while (d < 6 && opaqueQuads[d].isEmpty())
 					d++;
 				return d;
 			}
@@ -344,16 +354,16 @@ public class LodQuadBuilder
 			private void writeData()
 			{
 				int i = quad;
-				for (; i < quads[dir].size(); i++)
+				for (; i < opaqueQuads[dir].size(); i++)
 				{
 					if (!bb.hasRemaining())
 					{
 						break;
 					}
-					putQuad(bb, quads[dir].get(i));
+					putQuad(bb, opaqueQuads[dir].get(i));
 				}
 				
-				if (i >= quads[dir].size())
+				if (i >= opaqueQuads[dir].size())
 				{
 					quad = 0;
 					dir++;
@@ -366,14 +376,79 @@ public class LodQuadBuilder
 			}
 		};
 	}
-	
+
+	public Iterator<ByteBuffer> makeTransparentVertexBuffers()
+	{
+		return new Iterator<ByteBuffer>()
+		{
+			final ByteBuffer bb = ByteBuffer.allocateDirect(RenderBuffer.FULL_SIZED_BUFFER)
+					.order(ByteOrder.nativeOrder());
+			int dir = skipEmpty(0);
+			int quad = 0;
+
+			private int skipEmpty(int d)
+			{
+				while (d < 6 && transparentQuads[d].isEmpty())
+					d++;
+				return d;
+			}
+
+			@Override
+			public boolean hasNext()
+			{
+				return dir < 6;
+			}
+
+			@Override
+			public ByteBuffer next()
+			{
+				if (dir >= 6)
+				{
+					return null;
+				}
+				bb.clear();
+				bb.limit(RenderBuffer.FULL_SIZED_BUFFER);
+				while (bb.hasRemaining() && dir < 6)
+				{
+					writeData();
+				}
+				bb.limit(bb.position());
+				bb.rewind();
+				return bb;
+			}
+
+			private void writeData()
+			{
+				int i = quad;
+				for (; i < transparentQuads[dir].size(); i++)
+				{
+					if (!bb.hasRemaining())
+					{
+						break;
+					}
+					putQuad(bb, transparentQuads[dir].get(i));
+				}
+
+				if (i >= transparentQuads[dir].size())
+				{
+					quad = 0;
+					dir++;
+					dir = skipEmpty(dir);
+				}
+				else
+				{
+					quad = i;
+				}
+			}
+		};
+	}
 	public interface BufferFiller
 	{
 		/** If true: more data needs to be filled */
 		boolean fill(GLVertexBuffer vbo);
 	}
 	
-	public BufferFiller makeBufferFiller(EGpuUploadMethod method)
+	public BufferFiller makeOpaqueBufferFiller(EGpuUploadMethod method)
 	{
 		return new BufferFiller()
 		{
@@ -414,10 +489,10 @@ public class LodQuadBuilder
 			
 			private int _countRemainingQuads()
 			{
-				int a = quads[dir].size() - quad;
-				for (int i = dir + 1; i < quads.length; i++)
+				int a = opaqueQuads[dir].size() - quad;
+				for (int i = dir + 1; i < opaqueQuads.length; i++)
 				{
-					a += quads[i].size();
+					a += opaqueQuads[i].size();
 				}
 				return a;
 			}
@@ -427,20 +502,20 @@ public class LodQuadBuilder
 				int startQ = quad;
 				
 				int i = startQ;
-				for (i = startQ; i < quads[dir].size(); i++)
+				for (i = startQ; i < opaqueQuads[dir].size(); i++)
 				{
 					if (!bb.hasRemaining())
 					{
 						break;
 					}
-					putQuad(bb, quads[dir].get(i));
+					putQuad(bb, opaqueQuads[dir].get(i));
 				}
 				
-				if (i >= quads[dir].size())
+				if (i >= opaqueQuads[dir].size())
 				{
 					quad = 0;
 					dir++;
-					while (dir < 6 && quads[dir].isEmpty())
+					while (dir < 6 && opaqueQuads[dir].isEmpty())
 						dir++;
 				}
 				else
@@ -450,21 +525,112 @@ public class LodQuadBuilder
 			}
 		};
 	}
-	
-	
-	
-	public int getCurrentQuadsCount()
+
+	public BufferFiller makeTransparentBufferFiller(EGpuUploadMethod method)
+	{
+		return new BufferFiller()
+		{
+			int dir = 0;
+			int quad = 0;
+
+			public boolean fill(GLVertexBuffer vbo)
+			{
+				if (dir >= 6)
+				{
+					vbo.setVertexCount(0);
+					return false;
+				}
+
+				int numOfQuads = _countRemainingQuads();
+				if (numOfQuads > RenderBuffer.MAX_QUADS_PER_BUFFER)
+					numOfQuads = RenderBuffer.MAX_QUADS_PER_BUFFER;
+				if (numOfQuads == 0)
+				{
+					vbo.setVertexCount(0);
+					return false;
+				}
+				ByteBuffer bb = vbo.mapBuffer(numOfQuads * RenderBuffer.QUADS_BYTE_SIZE, method,
+						RenderBuffer.FULL_SIZED_BUFFER);
+				if (bb == null)
+					throw new NullPointerException("mapBuffer returned null");
+				bb.clear();
+				bb.limit(numOfQuads * RenderBuffer.QUADS_BYTE_SIZE);
+				while (bb.hasRemaining() && dir < 6)
+				{
+					writeData(bb);
+				}
+				bb.rewind();
+				vbo.unmapBuffer();
+				vbo.setVertexCount(numOfQuads*4);
+				return dir < 6;
+			}
+
+			private int _countRemainingQuads()
+			{
+				int a = transparentQuads[dir].size() - quad;
+				for (int i = dir + 1; i < transparentQuads.length; i++)
+				{
+					a += transparentQuads[i].size();
+				}
+				return a;
+			}
+
+			private void writeData(ByteBuffer bb)
+			{
+				int startQ = quad;
+
+				int i = startQ;
+				for (i = startQ; i < transparentQuads[dir].size(); i++)
+				{
+					if (!bb.hasRemaining())
+					{
+						break;
+					}
+					putQuad(bb, transparentQuads[dir].get(i));
+				}
+
+				if (i >= transparentQuads[dir].size())
+				{
+					quad = 0;
+					dir++;
+					while (dir < 6 && transparentQuads[dir].isEmpty())
+						dir++;
+				}
+				else
+				{
+					quad = i;
+				}
+			}
+		};
+	}
+
+
+
+	public int getCurrentOpaqueQuadsCount()
 	{
 		int i = 0;
-		for (ArrayList<BufferQuad> qs : quads)
+		for (ArrayList<BufferQuad> qs : opaqueQuads)
+			i += qs.size();
+		return i;
+	}
+	public int getCurrentTransparentQuadsCount()
+	{
+		if (!doTransparency) return 0;
+		int i = 0;
+		for (ArrayList<BufferQuad> qs : transparentQuads)
 			i += qs.size();
 		return i;
 	}
 
-	/** Returns how many Buffers will be needed to render everything in this builder. */
-	public int getCurrentNeededVertexBufferCount()
+	/** Returns how many Buffers will be needed to render opaque quads in this builder. */
+	public int getCurrentNeededOpaqueVertexBufferCount()
 	{
-		return MathUtil.ceilDiv(getCurrentQuadsCount(), RenderBuffer.MAX_QUADS_PER_BUFFER);
+		return MathUtil.ceilDiv(getCurrentOpaqueQuadsCount(), RenderBuffer.MAX_QUADS_PER_BUFFER);
 	}
-
+	/** Returns how many Buffers will be needed to render transparent quads in this builder. */
+	public int getCurrentNeededTransparentVertexBufferCount()
+	{
+		if (!doTransparency) return 0;
+		return MathUtil.ceilDiv(getCurrentTransparentQuadsCount(), RenderBuffer.MAX_QUADS_PER_BUFFER);
+	}
 }

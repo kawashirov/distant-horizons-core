@@ -472,7 +472,10 @@ public class Mat4f
 			this.m33,
 		};
 	}
-	
+
+	public Vec3f asNonNormalizedLookForwardVector() {
+		return new Vec3f(this.m02, this.m12, this.m22);
+	}
 	
 	//===============//
 	// Forge methods //

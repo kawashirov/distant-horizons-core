@@ -34,15 +34,10 @@ public class PlaceHolderRenderSource implements LodRenderSource {
 
     @Override
     public void disableRender() {}
-
-    @Override
-    public boolean isRenderReady() {
-        return false;
-    }
     @Override
     public void dispose() {}
     @Override
-    public boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<RenderBuffer> referenceSlotsOpaque, AtomicReference<RenderBuffer> referenceSlotsTransparent) {
+    public boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<RenderBuffer> referenceSlots) {
         return false;
     }
     @Override
