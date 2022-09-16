@@ -13,7 +13,7 @@ import com.seibel.lod.core.interfaces.dependencyInjection.IDhApiEventInjector;
  */
 public class DhApiEventRegister
 {
-	private static final IDhApiEventInjector EVENT_INJECTOR = ApiCoreInjectors.getInstance().eventInjector;
+	private static final IDhApiEventInjector EVENT_INJECTOR = ApiCoreInjectors.getInstance().events;
 	
 	/**
 	 * Registers the given event handler. <Br>

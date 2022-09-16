@@ -1,6 +1,6 @@
 package com.seibel.lod.api.items.objects.config;
 
-import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfigValue;
 import com.seibel.lod.core.interfaces.config.IConfigEntry;
 import com.seibel.lod.core.interfaces.config.IConverter;
 import com.seibel.lod.core.interfaces.config.converters.DefaultConverter;
@@ -18,7 +18,7 @@ import com.seibel.lod.core.interfaces.config.converters.DefaultConverter;
  * @author James Seibel
  * @version 2022-6-30
  */
-public class DhApiConfig<coreType, apiType> implements IDhApiConfig<apiType>
+public class DhApiConfigValue<coreType, apiType> implements IDhApiConfigValue<apiType>
 {
 	private final IConfigEntry<coreType> configEntry;
 	
@@ -32,7 +32,7 @@ public class DhApiConfig<coreType, apiType> implements IDhApiConfig<apiType>
 	 * Uses the default object converter, this requires coreType and apiType to be the same.
 	 */
 	@SuppressWarnings("unchecked") // DefaultConverter's cast is safe
-	public DhApiConfig(IConfigEntry<coreType> newConfigEntry)
+	public DhApiConfigValue(IConfigEntry<coreType> newConfigEntry)
 	{
 		this.configEntry = newConfigEntry;
 		this.configConverter = (IConverter<coreType, apiType>) new DefaultConverter<coreType>();
@@ -42,7 +42,7 @@ public class DhApiConfig<coreType, apiType> implements IDhApiConfig<apiType>
 	 * This constructor should only be called internally. <br>
 	 * There is no reason for API users to create this object. <br><br>
 	 */
-	public DhApiConfig(IConfigEntry<coreType> newConfigEntry, IConverter<coreType, apiType> newConverter)
+	public DhApiConfigValue(IConfigEntry<coreType> newConfigEntry, IConverter<coreType, apiType> newConverter)
 	{
 		this.configEntry = newConfigEntry;
 		this.configConverter = newConverter;
