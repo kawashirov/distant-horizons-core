@@ -19,9 +19,9 @@
 
 package com.seibel.lod.core.api.external.coreImplementations.methods.config.client;
 
-import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfigValue;
 import com.seibel.lod.api.items.interfaces.config.client.IDhApiDebuggingConfig;
-import com.seibel.lod.api.items.objects.config.DhApiConfig;
+import com.seibel.lod.api.items.objects.config.DhApiConfigValue;
 import com.seibel.lod.core.config.Config.Client.Advanced.Debugging;
 import com.seibel.lod.api.items.enums.rendering.EDebugMode;
 
@@ -33,11 +33,16 @@ import com.seibel.lod.api.items.enums.rendering.EDebugMode;
  */
 public class DhApiDebuggingConfig implements IDhApiDebuggingConfig
 {
+	public static DhApiDebuggingConfig INSTANCE = new DhApiDebuggingConfig();
 	
-	public IDhApiConfig<EDebugMode> getDebugRenderModeConfig()
-	{ return new DhApiConfig<>(Debugging.debugMode); }
+	private DhApiDebuggingConfig() { }
 	
-	public IDhApiConfig<Boolean> getEnableDebugKeybindingsConfig()
-	{ return new DhApiConfig<>(Debugging.enableDebugKeybindings); }
+	
+	
+	public IDhApiConfigValue<EDebugMode> getDebugRenderMode()
+	{ return new DhApiConfigValue<>(Debugging.debugMode); }
+	
+	public IDhApiConfigValue<Boolean> getEnableDebugKeybindings()
+	{ return new DhApiConfigValue<>(Debugging.enableDebugKeybindings); }
 	
 }

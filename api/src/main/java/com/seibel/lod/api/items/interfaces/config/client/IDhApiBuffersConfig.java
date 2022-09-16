@@ -20,7 +20,8 @@
 package com.seibel.lod.api.items.interfaces.config.client;
 
 import com.seibel.lod.api.items.enums.config.EGpuUploadMethod;
-import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfigValue;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfigGroup;
 
 /**
  * Distant Horizons' OpenGL buffer configuration.
@@ -28,11 +29,11 @@ import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
  * @author James Seibel
  * @version 2022-9-15
  */
-public interface IDhApiBuffersConfig
+public interface IDhApiBuffersConfig extends IDhApiConfigGroup
 {
 	
 	/** Defines how geometry data is uploaded to the GPU. */
-	IDhApiConfig<EGpuUploadMethod> getGpuUploadMethodConfig();
+	IDhApiConfigValue<EGpuUploadMethod> getGpuUploadMethod();
 	
 	/**
 	 * Defines how long we should wait after uploading one
@@ -41,6 +42,6 @@ public interface IDhApiBuffersConfig
 	 * This can be set to a non-zero number to reduce stuttering caused by
 	 * uploading buffers to the GPU.
 	 */
-	IDhApiConfig<Integer> getBufferUploadTimeoutPerMegabyteInMillisecondsConfig();
+	IDhApiConfigValue<Integer> getBufferUploadTimeoutPerMegabyteInMilliseconds();
 	
 }

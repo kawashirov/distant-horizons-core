@@ -19,9 +19,9 @@
 
 package com.seibel.lod.core.api.external.coreImplementations.methods.config.both;
 
-import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfigValue;
 import com.seibel.lod.api.items.interfaces.config.both.IDhApiWorldGenerationConfig;
-import com.seibel.lod.api.items.objects.config.DhApiConfig;
+import com.seibel.lod.api.items.objects.config.DhApiConfigValue;
 import com.seibel.lod.core.config.Config.Client.WorldGenerator;
 import com.seibel.lod.api.items.enums.config.EBlocksToAvoid;
 import com.seibel.lod.api.items.enums.config.EDistanceGenerationMode;
@@ -38,32 +38,37 @@ import com.seibel.lod.api.items.enums.config.ELightGenerationMode;
  */
 public class DhApiWorldGenerationConfig implements IDhApiWorldGenerationConfig
 {
+	public static DhApiWorldGenerationConfig INSTANCE = new DhApiWorldGenerationConfig(); 
+	
+	private DhApiWorldGenerationConfig() { }
+	
+	
 	
 	@Override
-	public IDhApiConfig<Boolean> getEnableDistantWorldGenerationConfig()
-	{ return new DhApiConfig<>(WorldGenerator.enableDistantGeneration); }
+	public IDhApiConfigValue<Boolean> getEnableDistantWorldGeneration()
+	{ return new DhApiConfigValue<>(WorldGenerator.enableDistantGeneration); }
 	
 	@Override
-	public IDhApiConfig<EDistanceGenerationMode> getDistantGeneratorDetailLevelConfig()
-	{ return new DhApiConfig<>(WorldGenerator.distanceGenerationMode); }
+	public IDhApiConfigValue<EDistanceGenerationMode> getDistantGeneratorDetailLevel()
+	{ return new DhApiConfigValue<>(WorldGenerator.distanceGenerationMode); }
 	
 	@Override
-	public IDhApiConfig<ELightGenerationMode> getLightingModeConfig()
-	{ return new DhApiConfig<>(WorldGenerator.lightGenerationMode); }
+	public IDhApiConfigValue<ELightGenerationMode> getLightingMode()
+	{ return new DhApiConfigValue<>(WorldGenerator.lightGenerationMode); }
 	
 	@Override
-	public IDhApiConfig<EGenerationPriority> getGenerationPriorityConfig()
-	{ return new DhApiConfig<>(WorldGenerator.generationPriority); }
+	public IDhApiConfigValue<EGenerationPriority> getGenerationPriority()
+	{ return new DhApiConfigValue<>(WorldGenerator.generationPriority); }
 	
 	@Deprecated
 	@Override
-	public IDhApiConfig<EBlocksToAvoid> getBlocksToAvoidConfig()
-	{ return new DhApiConfig<>(WorldGenerator.blocksToAvoid); }
+	public IDhApiConfigValue<EBlocksToAvoid> getBlocksToAvoid()
+	{ return new DhApiConfigValue<>(WorldGenerator.blocksToAvoid); }
 	
 	@Deprecated
 	@Override
-	public IDhApiConfig<Boolean> getTintWithAvoidedBlocksConfig()
-	{ return new DhApiConfig<>(WorldGenerator.tintWithAvoidedBlocks); }
+	public IDhApiConfigValue<Boolean> getTintWithAvoidedBlocks()
+	{ return new DhApiConfigValue<>(WorldGenerator.tintWithAvoidedBlocks); }
 	
 	
 }

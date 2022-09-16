@@ -21,7 +21,8 @@ package com.seibel.lod.api.items.interfaces.config.client;
 
 import com.seibel.lod.api.items.enums.config.*;
 import com.seibel.lod.api.items.enums.rendering.ERendererMode;
-import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfigValue;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfigGroup;
 
 /**
  * Distant Horizons' graphics/rendering configuration.
@@ -29,7 +30,7 @@ import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
  * @author James Seibel
  * @version 2022-9-15
  */
-public interface IDhApiGraphicsConfig
+public interface IDhApiGraphicsConfig extends IDhApiConfigGroup
 {
 	
 	//========================//
@@ -37,15 +38,15 @@ public interface IDhApiGraphicsConfig
 	//========================//
 	
 	/** The distance is the radius measured in chunks. */
-	IDhApiConfig<Integer> getChunkRenderDistanceConfig();
+	IDhApiConfigValue<Integer> getChunkRenderDistance();
 	
 	/**
-	 * Simplified version of {@link IDhApiGraphicsConfig#getRenderingModeConfig()}
+	 * Simplified version of {@link IDhApiGraphicsConfig#getRenderingMode()}
 	 * that only enables/disables the fake chunk rendering. <br><br>
 	 *
-	 * Changing this config also changes {@link IDhApiGraphicsConfig#getRenderingModeConfig()}'s value.
+	 * Changing this config also changes {@link IDhApiGraphicsConfig#getRenderingMode()}'s value.
 	 */
-	IDhApiConfig<Boolean> getRenderingEnabledConfig();
+	IDhApiConfigValue<Boolean> getRenderingEnabled();
 	
 	/**
 	 * Can be used to enable/disable fake chunk rendering or enable the debug renderer. <br><br>
@@ -53,9 +54,9 @@ public interface IDhApiGraphicsConfig
 	 * The debug renderer is used to confirm rendering is working at and will draw
 	 * a single multicolor rhombus on the screen in skybox space (AKA behind MC's rendering). <br><br>
 	 *
-	 * Changing this config also changes {@link IDhApiGraphicsConfig#getRenderingEnabledConfig()}'s value.
+	 * Changing this config also changes {@link IDhApiGraphicsConfig#getRenderingEnabled()}'s value.
 	 */
-	IDhApiConfig<ERendererMode> getRenderingModeConfig();
+	IDhApiConfigValue<ERendererMode> getRenderingMode();
 	
 	
 	
@@ -64,13 +65,13 @@ public interface IDhApiGraphicsConfig
 	//==================//
 	
 	/** Defines how detailed fake chunks are in the horizontal direction */
-	IDhApiConfig<EHorizontalResolution> getMaxDetailLevelConfig();
+	IDhApiConfigValue<EHorizontalResolution> getMaxDetailLevel();
 	
 	/** Defines how detailed fake chunks are in the vertical direction */
-	IDhApiConfig<EVerticalQuality> getVerticalQualityConfig();
+	IDhApiConfigValue<EVerticalQuality> getVerticalQuality();
 	
 	/** Modifies the quadratic function fake chunks use for horizontal quality drop-off. */
-	IDhApiConfig<EHorizontalQuality> getHorizontalQualityDropoffConfig();
+	IDhApiConfigValue<EHorizontalQuality> getHorizontalQualityDropoff();
 
 	/**
 	 * The same as vanilla Minecraft's biome blending. <br><br>
@@ -80,7 +81,7 @@ public interface IDhApiGraphicsConfig
 	 * 2 = blending of 5x5			<br>
 	 * ...							<br>
 	 */
-	IDhApiConfig<Integer> getBiomeBlendingConfig();
+	IDhApiConfigValue<Integer> getBiomeBlending();
 	
 	
 	
@@ -89,13 +90,13 @@ public interface IDhApiGraphicsConfig
 	//===========================//
 	
 	/** If directional culling is disabled fake chunks will be rendered behind the camera. */
-	IDhApiConfig<Boolean> getDisableDirectionalCullingConfig();
+	IDhApiConfigValue<Boolean> getDisableDirectionalCulling();
 	
 	/** Determines how fake chunks are rendered in comparison to vanilla MC's chunks. */
-	IDhApiConfig<EVanillaOverdraw> getVanillaOverdrawConfig();
+	IDhApiConfigValue<EVanillaOverdraw> getVanillaOverdraw();
 	
 	/** Modifies how far the vanilla overdraw is rendered in chunks. */
-	IDhApiConfig<Integer> getVanillaOverdrawOffsetConfig();
+	IDhApiConfigValue<Integer> getVanillaOverdrawOffset();
 	
 	/**
 	 * If enabled the near clip plane is extended to reduce
@@ -103,34 +104,34 @@ public interface IDhApiGraphicsConfig
 	 * Disabling this reduces holes in the world due to the near clip plane
 	 * being too close to the camera and the terrain not being covered by vanilla terrain.
 	 */
-	IDhApiConfig<Boolean> getUseExtendedNearClipPlaneConfig();
+	IDhApiConfigValue<Boolean> getUseExtendedNearClipPlane();
 	
 	/**
 	 * Modifies how bright fake chunks are. <br>
 	 * This is done when generating the vertex data and is applied before any shaders.
 	 */
-	IDhApiConfig<Double> getBrightnessMultiplierConfig();
+	IDhApiConfigValue<Double> getBrightnessMultiplier();
 	
 	/**
 	 * Modifies how saturated fake chunks are. <br>
 	 * This is done when generating the vertex data and is applied before any shaders.
 	 */
-	IDhApiConfig<Double> getSaturationMultiplierConfig();
+	IDhApiConfigValue<Double> getSaturationMultiplier();
 	
 	/** Defines if Distant Horizons should attempt to cull fake chunk cave geometry. */
-	IDhApiConfig<Boolean> getCaveCullingEnabledConfig();
+	IDhApiConfigValue<Boolean> getCaveCullingEnabled();
 	
 	/** Defines what height cave culling should be used below if enabled. */
-	IDhApiConfig<Integer> getCaveCullingHeightConfig();
+	IDhApiConfigValue<Integer> getCaveCullingHeight();
 	
 	/** This ratio is relative to Earth's real world curvature. */
-	IDhApiConfig<Integer> getEarthCurvatureRatioConfig();
+	IDhApiConfigValue<Integer> getEarthCurvatureRatio();
 	
 	/** If enabled vanilla chunk rendering is disabled and only fake chunks are rendered. */
-	IDhApiConfig<Boolean> getEnableLodOnlyModeConfig();
+	IDhApiConfigValue<Boolean> getEnableLodOnlyMode();
 	
 	/** Defines how often the geometry should be rebuilt when the player moves. */
-	IDhApiConfig<EBufferRebuildTimes> getGeometryRebuildFrequencyConfig();
+	IDhApiConfigValue<EBufferRebuildTimes> getGeometryRebuildFrequency();
 	
 	
 	

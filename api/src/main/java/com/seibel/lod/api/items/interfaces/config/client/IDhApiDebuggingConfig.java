@@ -20,7 +20,8 @@
 package com.seibel.lod.api.items.interfaces.config.client;
 
 import com.seibel.lod.api.items.enums.rendering.EDebugMode;
-import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfigValue;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfigGroup;
 
 /**
  * Distant Horizons' debug configuration.
@@ -28,13 +29,13 @@ import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
  * @author James Seibel
  * @version 2022-9-15
  */
-public interface IDhApiDebuggingConfig
+public interface IDhApiDebuggingConfig extends IDhApiConfigGroup
 {
 	/** Can be used to debug the standard fake chunk rendering. */
-	IDhApiConfig<EDebugMode> getDebugRenderModeConfig();
+	IDhApiConfigValue<EDebugMode> getDebugRenderMode();
 	
 	/** If enabled debug keybindings can be used. */
-	IDhApiConfig<Boolean> getEnableDebugKeybindingsConfig();
+	IDhApiConfigValue<Boolean> getEnableDebugKeybindings();
 	
 	
 }

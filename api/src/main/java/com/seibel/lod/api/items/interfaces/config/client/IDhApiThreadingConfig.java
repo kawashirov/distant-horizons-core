@@ -19,7 +19,8 @@
 
 package com.seibel.lod.api.items.interfaces.config.client;
 
-import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfigValue;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfigGroup;
 
 /**
  * Distant Horizons' threading configuration.
@@ -27,7 +28,7 @@ import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
  * @author James Seibel
  * @version 2022-9-15
  */
-public interface IDhApiThreadingConfig
+public interface IDhApiThreadingConfig extends IDhApiConfigGroup
 {
 	
 	/**
@@ -47,7 +48,7 @@ public interface IDhApiThreadingConfig
 	 * 				count of threads and then a double percent active config.
 	 */
 	@Deprecated
-	IDhApiConfig<Double> getWorldGeneratorThreadConfig();
+	IDhApiConfigValue<Double> getWorldGeneratorThread();
 	
 	// TODO the above should be replaced with these
 //	IDhApiConfig<Integer> getWorldGeneratorThreadConfig()
@@ -58,6 +59,6 @@ public interface IDhApiThreadingConfig
 	
 	
 	/** Defines how many buffer (GPU Terrain data) builder threads are used. */
-	IDhApiConfig<Integer> getBufferBuilderThreadConfig();
+	IDhApiConfigValue<Integer> getBufferBuilderThread();
 	
 }

@@ -20,7 +20,8 @@
 package com.seibel.lod.api.items.interfaces.config.client;
 
 import com.seibel.lod.api.items.enums.config.EServerFolderNameMode;
-import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfigValue;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfigGroup;
 
 /**
  * Distant Horizons' client-side multiplayer configuration.
@@ -28,14 +29,14 @@ import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
  * @author James Seibel
  * @version 2022-9-15
  */
-public interface IDhApiMultiplayerConfig
+public interface IDhApiMultiplayerConfig extends IDhApiConfigGroup
 {
 	
 	/**
 	 * Defines how multiplayer server folders are named. <br>
 	 * Note: Changing this while connected to a multiplayer world will cause undefined behavior!
 	 */
-	IDhApiConfig<EServerFolderNameMode> getFolderSavingModeConfig();
+	IDhApiConfigValue<EServerFolderNameMode> getFolderSavingMode();
 	
 	/**
 	 * Defines the necessary similarity (as a percent) that two potential levels
@@ -46,7 +47,7 @@ public interface IDhApiMultiplayerConfig
 	 * Setting this to a non-zero value allows for usage in servers that user Multiverse
 	 * or similar mods.
 	 */
-	IDhApiConfig<Double> getMultiverseSimilarityRequirementConfig();
+	IDhApiConfigValue<Double> getMultiverseSimilarityRequirement();
 	
 	
 }

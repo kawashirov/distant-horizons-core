@@ -20,9 +20,9 @@
 package com.seibel.lod.core.api.external.coreImplementations.methods.config.client;
 
 import com.seibel.lod.api.items.enums.config.*;
-import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfigValue;
 import com.seibel.lod.api.items.interfaces.config.client.IDhApiGraphicsConfig;
-import com.seibel.lod.api.items.objects.config.DhApiConfig;
+import com.seibel.lod.api.items.objects.config.DhApiConfigValue;
 import com.seibel.lod.core.interfaces.config.converters.RenderModeEnabledConverter;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.api.items.enums.rendering.ERendererMode;
@@ -38,22 +38,27 @@ import com.seibel.lod.core.config.Config.Client.Graphics.AdvancedGraphics;
  */
 public class DhApiGraphicsConfig implements IDhApiGraphicsConfig
 {
+	public static DhApiGraphicsConfig INSTANCE = new DhApiGraphicsConfig();
+	
+	private DhApiGraphicsConfig() { }
+	
+	
 	
 	//========================//
 	// basic graphic settings //
 	//========================//
 	
 	@Override
-	public IDhApiConfig<Integer> getChunkRenderDistanceConfig()
-	{ return new DhApiConfig<>(Quality.lodChunkRenderDistance); }
+	public IDhApiConfigValue<Integer> getChunkRenderDistance()
+	{ return new DhApiConfigValue<>(Quality.lodChunkRenderDistance); }
 	
 	@Override
-	public IDhApiConfig<Boolean> getRenderingEnabledConfig()
-	{ return new DhApiConfig<ERendererMode, Boolean>(Debugging.rendererMode, new RenderModeEnabledConverter()); }
+	public IDhApiConfigValue<Boolean> getRenderingEnabled()
+	{ return new DhApiConfigValue<ERendererMode, Boolean>(Debugging.rendererMode, new RenderModeEnabledConverter()); }
 	
 	@Override
-	public IDhApiConfig<ERendererMode> getRenderingModeConfig()
-	{ return new DhApiConfig<>(Debugging.rendererMode); }
+	public IDhApiConfigValue<ERendererMode> getRenderingMode()
+	{ return new DhApiConfigValue<>(Debugging.rendererMode); }
 	
 	
 	
@@ -62,20 +67,20 @@ public class DhApiGraphicsConfig implements IDhApiGraphicsConfig
 	//==================//
 	
 	@Override
-	public IDhApiConfig<EHorizontalResolution> getMaxDetailLevelConfig()
-	{ return new DhApiConfig<>(Quality.drawResolution); }
+	public IDhApiConfigValue<EHorizontalResolution> getMaxDetailLevel()
+	{ return new DhApiConfigValue<>(Quality.drawResolution); }
 	
 	@Override
-	public IDhApiConfig<EVerticalQuality> getVerticalQualityConfig()
-	{ return new DhApiConfig<>(Quality.verticalQuality); }
+	public IDhApiConfigValue<EVerticalQuality> getVerticalQuality()
+	{ return new DhApiConfigValue<>(Quality.verticalQuality); }
 	
 	@Override
-	public IDhApiConfig<EHorizontalQuality> getHorizontalQualityDropoffConfig()
-	{ return new DhApiConfig<>(Quality.horizontalQuality); }
+	public IDhApiConfigValue<EHorizontalQuality> getHorizontalQualityDropoff()
+	{ return new DhApiConfigValue<>(Quality.horizontalQuality); }
 	
 	@Override
-	public IDhApiConfig<Integer> getBiomeBlendingConfig()
-	{ return new DhApiConfig<>(Quality.lodBiomeBlending); }
+	public IDhApiConfigValue<Integer> getBiomeBlending()
+	{ return new DhApiConfigValue<>(Quality.lodBiomeBlending); }
 	
 	
 	
@@ -84,48 +89,48 @@ public class DhApiGraphicsConfig implements IDhApiGraphicsConfig
 	//===========================//
 	
 	@Override
-	public IDhApiConfig<Boolean> getDisableDirectionalCullingConfig()
-	{ return new DhApiConfig<>(AdvancedGraphics.disableDirectionalCulling); }
+	public IDhApiConfigValue<Boolean> getDisableDirectionalCulling()
+	{ return new DhApiConfigValue<>(AdvancedGraphics.disableDirectionalCulling); }
 	
 	@Override
-	public IDhApiConfig<EVanillaOverdraw> getVanillaOverdrawConfig()
-	{ return new DhApiConfig<>(AdvancedGraphics.vanillaOverdraw); }
+	public IDhApiConfigValue<EVanillaOverdraw> getVanillaOverdraw()
+	{ return new DhApiConfigValue<>(AdvancedGraphics.vanillaOverdraw); }
 	
 	@Override
-	public IDhApiConfig<Integer> getVanillaOverdrawOffsetConfig()
-	{ return new DhApiConfig<>(AdvancedGraphics.overdrawOffset); }
+	public IDhApiConfigValue<Integer> getVanillaOverdrawOffset()
+	{ return new DhApiConfigValue<>(AdvancedGraphics.overdrawOffset); }
 	
 	@Override
-	public IDhApiConfig<Boolean> getUseExtendedNearClipPlaneConfig()
-	{ return new DhApiConfig<>(AdvancedGraphics.useExtendedNearClipPlane); }
+	public IDhApiConfigValue<Boolean> getUseExtendedNearClipPlane()
+	{ return new DhApiConfigValue<>(AdvancedGraphics.useExtendedNearClipPlane); }
 	
 	@Override
-	public IDhApiConfig<Double> getBrightnessMultiplierConfig()
-	{ return new DhApiConfig<>(AdvancedGraphics.brightnessMultiplier); }
+	public IDhApiConfigValue<Double> getBrightnessMultiplier()
+	{ return new DhApiConfigValue<>(AdvancedGraphics.brightnessMultiplier); }
 	
 	@Override
-	public IDhApiConfig<Double> getSaturationMultiplierConfig()
-	{ return new DhApiConfig<>(AdvancedGraphics.saturationMultiplier); }
+	public IDhApiConfigValue<Double> getSaturationMultiplier()
+	{ return new DhApiConfigValue<>(AdvancedGraphics.saturationMultiplier); }
 	
 	@Override
-	public IDhApiConfig<Boolean> getCaveCullingEnabledConfig()
-	{ return new DhApiConfig<>(AdvancedGraphics.enableCaveCulling); }
+	public IDhApiConfigValue<Boolean> getCaveCullingEnabled()
+	{ return new DhApiConfigValue<>(AdvancedGraphics.enableCaveCulling); }
 	
 	@Override
-	public IDhApiConfig<Integer> getCaveCullingHeightConfig()
-	{ return new DhApiConfig<>(AdvancedGraphics.caveCullingHeight); }
+	public IDhApiConfigValue<Integer> getCaveCullingHeight()
+	{ return new DhApiConfigValue<>(AdvancedGraphics.caveCullingHeight); }
 	
 	@Override
-	public IDhApiConfig<Integer> getEarthCurvatureRatioConfig()
-	{ return new DhApiConfig<>(AdvancedGraphics.earthCurveRatio); }
+	public IDhApiConfigValue<Integer> getEarthCurvatureRatio()
+	{ return new DhApiConfigValue<>(AdvancedGraphics.earthCurveRatio); }
 	
 	@Override
-	public IDhApiConfig<Boolean> getEnableLodOnlyModeConfig()
-	{ return new DhApiConfig<>(Config.Client.Advanced.lodOnlyMode); }
+	public IDhApiConfigValue<Boolean> getEnableLodOnlyMode()
+	{ return new DhApiConfigValue<>(Config.Client.Advanced.lodOnlyMode); }
 	
 	@Override
-	public IDhApiConfig<EBufferRebuildTimes> getGeometryRebuildFrequencyConfig()
-	{ return new DhApiConfig<>(Config.Client.Advanced.Buffers.rebuildTimes); }
+	public IDhApiConfigValue<EBufferRebuildTimes> getGeometryRebuildFrequency()
+	{ return new DhApiConfigValue<>(Config.Client.Advanced.Buffers.rebuildTimes); }
 	
 	
 	

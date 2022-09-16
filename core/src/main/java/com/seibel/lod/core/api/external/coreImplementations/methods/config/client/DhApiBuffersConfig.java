@@ -19,9 +19,9 @@
 
 package com.seibel.lod.core.api.external.coreImplementations.methods.config.client;
 
-import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfigValue;
 import com.seibel.lod.api.items.interfaces.config.client.IDhApiBuffersConfig;
-import com.seibel.lod.api.items.objects.config.DhApiConfig;
+import com.seibel.lod.api.items.objects.config.DhApiConfigValue;
 import com.seibel.lod.core.config.Config.Client.Advanced.Buffers;
 import com.seibel.lod.api.items.enums.config.EGpuUploadMethod;
 
@@ -33,11 +33,16 @@ import com.seibel.lod.api.items.enums.config.EGpuUploadMethod;
  */
 public class DhApiBuffersConfig implements IDhApiBuffersConfig
 {
+	public static DhApiBuffersConfig INSTANCE = new DhApiBuffersConfig();
 	
-	public IDhApiConfig<EGpuUploadMethod> getGpuUploadMethodConfig()
-	{ return new DhApiConfig<>(Buffers.gpuUploadMethod); }
+	private DhApiBuffersConfig() { }
 	
-	public IDhApiConfig<Integer> getBufferUploadTimeoutPerMegabyteInMillisecondsConfig()
-	{ return new DhApiConfig<>(Buffers.gpuUploadPerMegabyteInMilliseconds); }
+	
+	
+	public IDhApiConfigValue<EGpuUploadMethod> getGpuUploadMethod()
+	{ return new DhApiConfigValue<>(Buffers.gpuUploadMethod); }
+	
+	public IDhApiConfigValue<Integer> getBufferUploadTimeoutPerMegabyteInMilliseconds()
+	{ return new DhApiConfigValue<>(Buffers.gpuUploadPerMegabyteInMilliseconds); }
 	
 }

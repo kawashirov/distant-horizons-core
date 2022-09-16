@@ -23,7 +23,8 @@ import com.seibel.lod.api.items.enums.config.EBlocksToAvoid;
 import com.seibel.lod.api.items.enums.config.EDistanceGenerationMode;
 import com.seibel.lod.api.items.enums.config.EGenerationPriority;
 import com.seibel.lod.api.items.enums.config.ELightGenerationMode;
-import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfigValue;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfigGroup;
 
 /**
  * Distant Horizons' world generation configuration. <br><br>
@@ -33,33 +34,33 @@ import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
  * @author James Seibel
  * @version 2022-9-15
  */
-public interface IDhApiWorldGenerationConfig
+public interface IDhApiWorldGenerationConfig extends IDhApiConfigGroup
 {
 	
 	/**
 	 * Defines whether fake chunks will be generated
 	 * outside Minecraft's vanilla render distance.
 	 */
-	IDhApiConfig<Boolean> getEnableDistantWorldGenerationConfig();
+	IDhApiConfigValue<Boolean> getEnableDistantWorldGeneration();
 	
 	/** Defines to what level fake chunks will be generated. */
-	IDhApiConfig<EDistanceGenerationMode> getDistantGeneratorDetailLevelConfig();
+	IDhApiConfigValue<EDistanceGenerationMode> getDistantGeneratorDetailLevel();
 	
 	/** Defines how generated fake chunks will be lit. */
-	IDhApiConfig<ELightGenerationMode> getLightingModeConfig();
+	IDhApiConfigValue<ELightGenerationMode> getLightingMode();
 	
 	/** Defines the order in which fake chunks will be generated. */
-	IDhApiConfig<EGenerationPriority> getGenerationPriorityConfig();
+	IDhApiConfigValue<EGenerationPriority> getGenerationPriority();
 	
 	/**
-	 * Defines what blocks will be ignored when generating LODs.
+	 * Defines what blocks will be ignored when generating LODs. <br><br>
 	 *
 	 * TODO if this isn't deprecated before 1.7 it should probably be moved to the graphics tab
 	 * @deprecated this method won't be needed once we transition to an ID based save system <br>
 	 * 				(vs the color based system we have currently)
 	 */
 	@Deprecated
-	IDhApiConfig<EBlocksToAvoid> getBlocksToAvoidConfig();
+	IDhApiConfigValue<EBlocksToAvoid> getBlocksToAvoid();
 	
 	/**
 	 * Defines if the color of avoided blocks will color the block below them. <Br>
@@ -70,7 +71,7 @@ public interface IDhApiWorldGenerationConfig
 	 * 				(vs the color based system we have currently)
 	 */
 	@Deprecated
-	IDhApiConfig<Boolean> getTintWithAvoidedBlocksConfig();
+	IDhApiConfigValue<Boolean> getTintWithAvoidedBlocks();
 	
 	
 }

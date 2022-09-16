@@ -19,9 +19,9 @@
 
 package com.seibel.lod.core.api.external.coreImplementations.methods.config.client;
 
-import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfigValue;
 import com.seibel.lod.api.items.interfaces.config.client.IDhApiThreadingConfig;
-import com.seibel.lod.api.items.objects.config.DhApiConfig;
+import com.seibel.lod.api.items.objects.config.DhApiConfigValue;
 import com.seibel.lod.core.config.Config.Client.Advanced.Threading;
 
 /**
@@ -32,11 +32,16 @@ import com.seibel.lod.core.config.Config.Client.Advanced.Threading;
  */
 public class DhApiThreadingConfig implements IDhApiThreadingConfig
 {
+	public static DhApiThreadingConfig INSTANCE = new DhApiThreadingConfig();
+	
+	private DhApiThreadingConfig() { }
+	
+	
 	
 	@Deprecated
 	@Override
-	public IDhApiConfig<Double> getWorldGeneratorThreadConfig()
-	{ return new DhApiConfig<>(Threading.numberOfWorldGenerationThreads); }
+	public IDhApiConfigValue<Double> getWorldGeneratorThread()
+	{ return new DhApiConfigValue<>(Threading.numberOfWorldGenerationThreads); }
 	
 	// TODO the above should be replaced with these
 //	public static IDhApiConfig<Integer> getWorldGeneratorThreadConfig()
@@ -46,7 +51,7 @@ public class DhApiThreadingConfig implements IDhApiThreadingConfig
 //	{ return new DhApiConfig<>(Threading.ToBeDetermined); }
 	
 	@Override
-	public IDhApiConfig<Integer> getBufferBuilderThreadConfig()
-	{ return new DhApiConfig<>(Threading.numberOfBufferBuilderThreads); }
+	public IDhApiConfigValue<Integer> getBufferBuilderThread()
+	{ return new DhApiConfigValue<>(Threading.numberOfBufferBuilderThreads); }
 	
 }

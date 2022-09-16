@@ -19,9 +19,9 @@
 
 package com.seibel.lod.core.api.external.coreImplementations.methods.config.client;
 
-import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
+import com.seibel.lod.api.items.interfaces.config.IDhApiConfigValue;
 import com.seibel.lod.api.items.interfaces.config.client.IDhApiMultiplayerConfig;
-import com.seibel.lod.api.items.objects.config.DhApiConfig;
+import com.seibel.lod.api.items.objects.config.DhApiConfigValue;
 import com.seibel.lod.core.config.Config.Client.Multiplayer;
 import com.seibel.lod.api.items.enums.config.EServerFolderNameMode;
 
@@ -33,11 +33,16 @@ import com.seibel.lod.api.items.enums.config.EServerFolderNameMode;
  */
 public class DhApiMultiplayerConfig implements IDhApiMultiplayerConfig
 {
+	public static DhApiMultiplayerConfig INSTANCE = new DhApiMultiplayerConfig();
 	
-	public IDhApiConfig<EServerFolderNameMode> getFolderSavingModeConfig()
-	{ return new DhApiConfig<>(Multiplayer.serverFolderNameMode); }
+	private DhApiMultiplayerConfig() { }
 	
-	public IDhApiConfig<Double> getMultiverseSimilarityRequirementConfig()
-	{ return new DhApiConfig<>(Multiplayer.multiDimensionRequiredSimilarity); }
+	
+	
+	public IDhApiConfigValue<EServerFolderNameMode> getFolderSavingMode()
+	{ return new DhApiConfigValue<>(Multiplayer.serverFolderNameMode); }
+	
+	public IDhApiConfigValue<Double> getMultiverseSimilarityRequirement()
+	{ return new DhApiConfigValue<>(Multiplayer.multiDimensionRequiredSimilarity); }
 	
 }
