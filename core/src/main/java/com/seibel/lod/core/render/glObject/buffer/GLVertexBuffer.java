@@ -23,7 +23,7 @@ import java.nio.ByteBuffer;
 
 import org.lwjgl.opengl.GL32;
 
-import com.seibel.lod.api.items.enums.config.EGpuUploadMethod;
+import com.seibel.lod.api.enums.config.EGpuUploadMethod;
 
 /**
  * This is a container for a OpenGL

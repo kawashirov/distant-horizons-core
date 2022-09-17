@@ -19,8 +19,8 @@
 
 package com.seibel.lod.core.wrapperInterfaces.world;
 
-import com.seibel.lod.api.items.interfaces.world.IDhApiDimensionTypeWrapper;
-import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
+import com.seibel.lod.api.interfaces.world.IDhApiDimensionTypeWrapper;
+import com.seibel.lod.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
 import com.seibel.lod.core.pos.DhBlockPos;
 import com.seibel.lod.core.pos.DhChunkPos;

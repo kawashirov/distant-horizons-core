@@ -1,11 +1,11 @@
 package com.seibel.lod.core.api.external.methods.config;
 
-import com.seibel.lod.api.items.interfaces.config.IDhApiConfig;
-import com.seibel.lod.api.items.interfaces.config.both.IDhApiWorldGenerationConfig;
-import com.seibel.lod.api.items.interfaces.config.client.IDhApiBuffersConfig;
-import com.seibel.lod.api.items.interfaces.config.client.IDhApiGraphicsConfig;
-import com.seibel.lod.api.items.interfaces.config.client.IDhApiMultiplayerConfig;
-import com.seibel.lod.api.items.interfaces.config.client.IDhApiThreadingConfig;
+import com.seibel.lod.api.interfaces.config.IDhApiConfig;
+import com.seibel.lod.api.interfaces.config.both.IDhApiWorldGenerationConfig;
+import com.seibel.lod.api.interfaces.config.client.IDhApiBuffersConfig;
+import com.seibel.lod.api.interfaces.config.client.IDhApiGraphicsConfig;
+import com.seibel.lod.api.interfaces.config.client.IDhApiMultiplayerConfig;
+import com.seibel.lod.api.interfaces.config.client.IDhApiThreadingConfig;
 import com.seibel.lod.core.api.external.methods.config.both.DhApiWorldGenerationConfig;
 import com.seibel.lod.core.api.external.methods.config.client.DhApiBuffersConfig;
 import com.seibel.lod.core.api.external.methods.config.client.DhApiGraphicsConfig;

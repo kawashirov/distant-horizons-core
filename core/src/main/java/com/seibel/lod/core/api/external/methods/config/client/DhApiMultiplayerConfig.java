@@ -19,11 +19,11 @@
 
 package com.seibel.lod.core.api.external.methods.config.client;
 
-import com.seibel.lod.api.items.interfaces.config.IDhApiConfigValue;
-import com.seibel.lod.api.items.interfaces.config.client.IDhApiMultiplayerConfig;
-import com.seibel.lod.api.items.objects.config.DhApiConfigValue;
+import com.seibel.lod.api.interfaces.config.IDhApiConfigValue;
+import com.seibel.lod.api.interfaces.config.client.IDhApiMultiplayerConfig;
+import com.seibel.lod.api.objects.config.DhApiConfigValue;
 import com.seibel.lod.core.config.Config.Client.Multiplayer;
-import com.seibel.lod.api.items.enums.config.EServerFolderNameMode;
+import com.seibel.lod.api.enums.config.EServerFolderNameMode;
 
 /**
  * Distant Horizons' client-side multiplayer configuration.

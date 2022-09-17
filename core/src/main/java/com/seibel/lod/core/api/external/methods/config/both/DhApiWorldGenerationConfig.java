@@ -19,14 +19,14 @@
 
 package com.seibel.lod.core.api.external.methods.config.both;
 
-import com.seibel.lod.api.items.interfaces.config.IDhApiConfigValue;
-import com.seibel.lod.api.items.interfaces.config.both.IDhApiWorldGenerationConfig;
-import com.seibel.lod.api.items.objects.config.DhApiConfigValue;
+import com.seibel.lod.api.interfaces.config.IDhApiConfigValue;
+import com.seibel.lod.api.interfaces.config.both.IDhApiWorldGenerationConfig;
+import com.seibel.lod.api.objects.config.DhApiConfigValue;
 import com.seibel.lod.core.config.Config.Client.WorldGenerator;
-import com.seibel.lod.api.items.enums.config.EBlocksToAvoid;
-import com.seibel.lod.api.items.enums.config.EDistanceGenerationMode;
-import com.seibel.lod.api.items.enums.config.EGenerationPriority;
-import com.seibel.lod.api.items.enums.config.ELightGenerationMode;
+import com.seibel.lod.api.enums.config.EBlocksToAvoid;
+import com.seibel.lod.api.enums.config.EDistanceGenerationMode;
+import com.seibel.lod.api.enums.config.EGenerationPriority;
+import com.seibel.lod.api.enums.config.ELightGenerationMode;
 
 /**
  * Distant Horizons' world generation configuration. <br><br>

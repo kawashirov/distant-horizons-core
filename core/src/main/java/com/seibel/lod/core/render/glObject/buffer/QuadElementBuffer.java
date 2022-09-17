@@ -1,6 +1,6 @@
 package com.seibel.lod.core.render.glObject.buffer;
 
-import com.seibel.lod.api.items.enums.config.EGpuUploadMethod;
+import com.seibel.lod.api.enums.config.EGpuUploadMethod;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.render.glObject.GLProxy;
 import com.seibel.lod.core.render.glObject.GLEnums;

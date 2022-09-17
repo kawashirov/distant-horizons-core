@@ -20,8 +20,8 @@
 package com.seibel.lod.core.config;
 
 
-import com.seibel.lod.api.items.enums.config.*;
-import com.seibel.lod.api.items.enums.rendering.*;
+import com.seibel.lod.api.enums.config.*;
+import com.seibel.lod.api.enums.rendering.*;
 import com.seibel.lod.core.config.types.*;
 
 

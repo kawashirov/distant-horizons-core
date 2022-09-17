@@ -1,8 +1,8 @@
 package tests;
 
-import com.seibel.lod.api.items.enums.worldGeneration.EDhApiWorldGenThreadMode;
-import com.seibel.lod.api.items.interfaces.override.worldGenerator.IDhApiWorldGenerator;
-import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
+import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenThreadMode;
+import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
+import com.seibel.lod.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.lod.core.DependencyInjection.DependencyInjector;
 import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
 import com.seibel.lod.core.DependencyInjection.OverrideInjector;

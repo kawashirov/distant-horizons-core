@@ -40,8 +40,8 @@ import org.lwjgl.opengl.GLUtil;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.seibel.lod.core.ModInfo;
-import com.seibel.lod.api.items.enums.config.EGpuUploadMethod;
-import com.seibel.lod.api.items.enums.rendering.EGLProxyContext;
+import com.seibel.lod.api.enums.config.EGpuUploadMethod;
+import com.seibel.lod.api.enums.rendering.EGLProxyContext;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.util.objects.GLMessage;
 import com.seibel.lod.core.util.objects.GLMessageOutputStream;

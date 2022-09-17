@@ -24,8 +24,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.seibel.lod.core.config.Config;
-import com.seibel.lod.api.items.enums.config.EServerFolderNameMode;
-import com.seibel.lod.api.items.enums.config.EVanillaOverdraw;
+import com.seibel.lod.api.enums.config.EServerFolderNameMode;
+import com.seibel.lod.api.enums.config.EVanillaOverdraw;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhChunkPos;

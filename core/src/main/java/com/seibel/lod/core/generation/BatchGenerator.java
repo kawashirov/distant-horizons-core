@@ -21,7 +21,7 @@ package com.seibel.lod.core.generation;
 
 import com.seibel.lod.core.level.ILevel;
 import com.seibel.lod.core.config.Config;
-import com.seibel.lod.api.items.enums.config.EDistanceGenerationMode;
+import com.seibel.lod.api.enums.config.EDistanceGenerationMode;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhChunkPos;

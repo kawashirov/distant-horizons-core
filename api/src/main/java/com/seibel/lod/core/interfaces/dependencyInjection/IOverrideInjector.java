@@ -1,7 +1,7 @@
 package com.seibel.lod.core.interfaces.dependencyInjection;
 
 
-import com.seibel.lod.api.items.interfaces.override.IDhApiOverrideable;
+import com.seibel.lod.api.interfaces.override.IDhApiOverrideable;
 
 public interface IOverrideInjector<BindableType extends IBindable>
 {

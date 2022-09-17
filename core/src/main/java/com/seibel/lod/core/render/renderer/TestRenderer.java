@@ -19,8 +19,8 @@
  
 package com.seibel.lod.core.render.renderer;
 
-import com.seibel.lod.api.items.enums.config.EGpuUploadMethod;
-import com.seibel.lod.api.items.enums.config.ELoggerMode;
+import com.seibel.lod.api.enums.config.EGpuUploadMethod;
+import com.seibel.lod.api.enums.config.ELoggerMode;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.ConfigBasedLogger;
 

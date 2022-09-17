@@ -19,7 +19,7 @@
 
 package com.seibel.lod.core.DependencyInjection;
 
-import com.seibel.lod.api.items.interfaces.override.IDhApiOverrideable;
+import com.seibel.lod.api.interfaces.override.IDhApiOverrideable;
 import com.seibel.lod.core.interfaces.dependencyInjection.IOverrideInjector;
 import com.seibel.lod.core.util.StringUtil;
 

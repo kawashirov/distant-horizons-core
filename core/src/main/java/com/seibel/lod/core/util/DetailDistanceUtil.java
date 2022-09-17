@@ -20,7 +20,7 @@
 package com.seibel.lod.core.util;
 
 import com.seibel.lod.core.config.Config;
-import com.seibel.lod.api.items.enums.config.EHorizontalQuality;
+import com.seibel.lod.api.enums.config.EHorizontalQuality;
 
 /**
  * 

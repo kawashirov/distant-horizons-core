@@ -19,8 +19,8 @@
 
 package com.seibel.lod.core.wrapperInterfaces.config;
 
-import com.seibel.lod.api.items.enums.config.*;
-import com.seibel.lod.api.items.enums.rendering.*;
+import com.seibel.lod.api.enums.config.*;
+import com.seibel.lod.api.enums.rendering.*;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;

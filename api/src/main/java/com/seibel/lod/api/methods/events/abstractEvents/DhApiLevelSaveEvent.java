@@ -1,6 +1,6 @@
 package com.seibel.lod.api.methods.events.abstractEvents;
 
-import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
+import com.seibel.lod.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.lod.api.methods.events.interfaces.IDhApiEvent;
 
 /**

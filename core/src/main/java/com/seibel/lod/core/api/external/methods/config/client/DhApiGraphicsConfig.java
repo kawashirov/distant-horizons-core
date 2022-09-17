@@ -19,13 +19,13 @@
 
 package com.seibel.lod.core.api.external.methods.config.client;
 
-import com.seibel.lod.api.items.enums.config.*;
-import com.seibel.lod.api.items.interfaces.config.IDhApiConfigValue;
-import com.seibel.lod.api.items.interfaces.config.client.IDhApiGraphicsConfig;
-import com.seibel.lod.api.items.objects.config.DhApiConfigValue;
-import com.seibel.lod.core.interfaces.config.converters.RenderModeEnabledConverter;
+import com.seibel.lod.api.enums.config.*;
+import com.seibel.lod.api.interfaces.config.IDhApiConfigValue;
+import com.seibel.lod.api.interfaces.config.client.IDhApiGraphicsConfig;
+import com.seibel.lod.api.objects.config.DhApiConfigValue;
+import com.seibel.lod.core.util.converters.RenderModeEnabledConverter;
 import com.seibel.lod.core.config.Config;
-import com.seibel.lod.api.items.enums.rendering.ERendererMode;
+import com.seibel.lod.api.enums.rendering.ERendererMode;
 import com.seibel.lod.core.config.Config.Client.Graphics.Quality;
 import com.seibel.lod.core.config.Config.Client.Advanced.Debugging;
 import com.seibel.lod.core.config.Config.Client.Graphics.AdvancedGraphics;

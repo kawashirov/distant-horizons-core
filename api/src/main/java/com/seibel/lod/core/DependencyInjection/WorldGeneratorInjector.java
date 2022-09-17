@@ -19,8 +19,8 @@
 
 package com.seibel.lod.core.DependencyInjection;
 
-import com.seibel.lod.api.items.interfaces.override.worldGenerator.IDhApiWorldGenerator;
-import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
+import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
+import com.seibel.lod.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
 import com.seibel.lod.core.util.StringUtil;
 

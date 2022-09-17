@@ -29,7 +29,7 @@ import java.util.Objects;
 import com.seibel.lod.core.render.RenderBuffer;
 import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.enums.ELodDirection.Axis;
-import com.seibel.lod.api.items.enums.config.EGpuUploadMethod;
+import com.seibel.lod.api.enums.config.EGpuUploadMethod;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.render.glObject.buffer.GLVertexBuffer;
 import com.seibel.lod.core.util.ColorUtil;

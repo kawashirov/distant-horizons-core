@@ -19,7 +19,7 @@
 
 package com.seibel.lod.core.render.fog;
 
-import com.seibel.lod.api.items.enums.rendering.*;
+import com.seibel.lod.api.enums.rendering.*;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.IReflectionHandler;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;

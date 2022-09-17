@@ -21,11 +21,6 @@ package com.seibel.lod.core;
 
 /**
  * This file is similar to mcmod.info
- * <br>
- * If you are looking at this mod's source code and don't
- * know where to start.
- * Go to the api/lod package (folder) and take a look at the ClientApi.java file,
- * Pretty much all of the mod stems from there.
  *
  * @author James Seibel
  * @author Ran
