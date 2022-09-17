@@ -58,7 +58,7 @@ import java.util.concurrent.TimeUnit;
  * Specifically for the client.
  * 
  * @author James Seibel
- * @version 2022-9-10
+ * @version 2022-9-16
  */
 public class ClientApi
 {
@@ -155,7 +155,7 @@ public class ClientApi
 			//TODO: Implement
 			
 			// TODO: potentially add a list of chunks that were updated during the save
-			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelSaveEvent.class, new DhApiLevelSaveEvent.EventParam(null)); // TODO create a wrapper object to pass back
+			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelSaveEvent.class, new DhApiLevelSaveEvent.EventParam(level));
 		}
 	}
 	
@@ -166,7 +166,7 @@ public class ClientApi
 		if (SharedApi.currentWorld != null)
 		{
 			SharedApi.currentWorld.unloadLevel(level);
-			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelUnloadEvent.class, new DhApiLevelUnloadEvent.EventParam(null)); // TODO create a wrapper object to pass back
+			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelUnloadEvent.class, new DhApiLevelUnloadEvent.EventParam(level));
 		}
 	}
 	
@@ -177,7 +177,7 @@ public class ClientApi
 		if (SharedApi.currentWorld != null)
 		{
 			SharedApi.currentWorld.getOrLoadLevel(level);
-			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelLoadEvent.class, new DhApiLevelLoadEvent.EventParam(null)); // TODO create a wrapper object to pass back
+			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelLoadEvent.class, new DhApiLevelLoadEvent.EventParam(level));
 		}
 	}
 	

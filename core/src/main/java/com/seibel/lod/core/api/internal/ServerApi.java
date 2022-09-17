@@ -42,7 +42,7 @@ import java.lang.invoke.MethodHandles;
  * Forge, etc.). Specifically server events.
  *
  * @author James Seibel
- * @version 2022-8-23
+ * @version 2022-9-16
  */
 public class ServerApi
 {
@@ -102,7 +102,7 @@ public class ServerApi
 		if (SharedApi.currentWorld != null)
 		{
 			SharedApi.currentWorld.getOrLoadLevel(level);
-			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelLoadEvent.class, new DhApiLevelLoadEvent.EventParam(null)); // TODO create a wrapper object to pass back 
+			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelLoadEvent.class, new DhApiLevelLoadEvent.EventParam(level));
 		}
 	}
 	public void serverLevelUnloadEvent(IServerLevelWrapper level) {
@@ -110,7 +110,7 @@ public class ServerApi
 		if (SharedApi.currentWorld != null)
 		{
 			SharedApi.currentWorld.unloadLevel(level);
-			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelUnloadEvent.class, new DhApiLevelUnloadEvent.EventParam(null)); // TODO create a wrapper object to pass back
+			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelUnloadEvent.class, new DhApiLevelUnloadEvent.EventParam(level));
 		}
 	}
 
@@ -123,7 +123,7 @@ public class ServerApi
 			
 			for (ILevel level : SharedApi.currentWorld.getAllLoadedLevels())
 			{
-				DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelSaveEvent.class, new DhApiLevelSaveEvent.EventParam(null)); // TODO create a wrapper object to pass back
+				DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelSaveEvent.class, new DhApiLevelSaveEvent.EventParam(level.getLevelWrapper()));
 			}
 		}
 	}
