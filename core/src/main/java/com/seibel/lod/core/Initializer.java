@@ -4,7 +4,7 @@ import com.seibel.lod.core.api.external.methods.config.DhApiConfig;
 import com.seibel.lod.core.datatype.column.ColumnRenderLoader;
 import com.seibel.lod.core.datatype.full.FullDataLoader;
 import com.seibel.lod.core.datatype.full.SparseDataLoader;
-import com.seibel.lod.core.interfaces.dependencyInjection.ApiCoreInjectors;
+import com.seibel.lod.api.DhApiMain;
 
 /**
  * Handles first time Core setup.
@@ -22,7 +22,7 @@ public class Initializer
 		
 		
 		// link Core's config to the API
-		ApiCoreInjectors.getInstance().configs = DhApiConfig.INSTANCE;
+		DhApiMain.configs = DhApiConfig.INSTANCE;
 		
     }
 }

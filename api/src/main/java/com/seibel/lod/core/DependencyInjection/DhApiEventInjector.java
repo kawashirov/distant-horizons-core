@@ -41,10 +41,7 @@ public class DhApiEventInjector extends DependencyInjector<IDhApiEvent> implemen
 	
 	
 	
-	public DhApiEventInjector()
-	{
-		super(IDhApiEvent.class, true);
-	}
+	private DhApiEventInjector() { super(IDhApiEvent.class, true); }
 	
 	
 	@Override

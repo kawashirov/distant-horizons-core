@@ -2,19 +2,18 @@ package com.seibel.lod.api.methods.events;
 
 import com.seibel.lod.api.items.objects.DhApiResult;
 import com.seibel.lod.api.methods.events.interfaces.IDhApiEvent;
-import com.seibel.lod.core.interfaces.dependencyInjection.ApiCoreInjectors;
+import com.seibel.lod.api.DhApiMain;
+import com.seibel.lod.core.DependencyInjection.DhApiEventInjector;
 import com.seibel.lod.core.interfaces.dependencyInjection.IDhApiEventInjector;
 
 /**
  * Handles adding/removing event handlers.
  *
  * @author James Seibel
- * @version 2022-9-13
+ * @version 2022-9-16
  */
 public class DhApiEventRegister
 {
-	private static final IDhApiEventInjector EVENT_INJECTOR = ApiCoreInjectors.getInstance().events;
-	
 	/**
 	 * Registers the given event handler. <Br>
 	 * Only one eventHandler of a specific class can be registered at a time.
@@ -25,7 +24,7 @@ public class DhApiEventRegister
 	{
 		try
 		{
-			EVENT_INJECTOR.bind(eventInterface, eventHandlerImplementation);
+			DhApiEventInjector.INSTANCE.bind(eventInterface, eventHandlerImplementation);
 			return DhApiResult.createSuccess();
 		}
 		catch (IllegalStateException e)
@@ -41,7 +40,7 @@ public class DhApiEventRegister
 	 */
 	public static DhApiResult off(Class<? extends IDhApiEvent> eventInterface, Class<IDhApiEvent> eventHandlerClass)
 	{
-		if (EVENT_INJECTOR.unbind(eventInterface, eventHandlerClass))
+		if (DhApiEventInjector.INSTANCE.unbind(eventInterface, eventHandlerClass))
 		{
 			return DhApiResult.createSuccess();
 		}

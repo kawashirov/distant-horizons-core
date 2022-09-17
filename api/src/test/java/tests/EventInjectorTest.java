@@ -21,7 +21,7 @@ public class EventInjectorTest
 	public void testEventDependencies() // this also tests list dependencies since there can be more than one event handler bound per event
 	{
 		// Injector setup
-		DhApiEventInjector TEST_EVENT_HANDLER = new DhApiEventInjector();
+		DhApiEventInjector TEST_EVENT_HANDLER = DhApiEventInjector.INSTANCE;
 
 
 		// pre-dependency setup
