@@ -19,6 +19,8 @@
 
 package com.seibel.lod.core.wrapperInterfaces.world;
 
+import com.seibel.lod.api.items.interfaces.world.IDhApiDimensionTypeWrapper;
+import com.seibel.lod.api.items.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
 import com.seibel.lod.core.pos.DhBlockPos;
 import com.seibel.lod.core.pos.DhChunkPos;
@@ -29,32 +31,39 @@ import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
  * Can be either a Server world or a Client world.
  * 
  * @author James Seibel
- * @version 2022-9-10
+ * @version 2022-9-16
  */
-public interface ILevelWrapper extends IBindable
+public interface ILevelWrapper extends IDhApiLevelWrapper, IBindable
 {
-	IDimensionTypeWrapper getDimensionType();
+	
+	@Override
+	IDhApiDimensionTypeWrapper getDimensionType();
 	
 	int getBlockLight(int x, int y, int z);
 	
 	int getSkyLight(int x, int y, int z);
 	
+	@Override
 	boolean hasCeiling();
 	
+	@Override
 	boolean hasSkyLight();
 	
+	@Override
 	int getHeight();
 	
-	default short getMinHeight() { return 0; }
-
+	@Override
+	default int getMinHeight() { return 0; }
+	
 	default IChunkWrapper tryGetChunk(DhChunkPos pos) { return null; }
-
+	
     boolean hasChunkLoaded(int chunkX, int chunkZ);
-
+	
 	IBlockStateWrapper getBlockState(DhBlockPos pos);
 	
 	IBiomeWrapper getBiome(DhBlockPos pos);
 	
-	Object unwrapLevel();
+	@Override
+	Object getWrappedMcObject_UNSAFE();
 	
 }

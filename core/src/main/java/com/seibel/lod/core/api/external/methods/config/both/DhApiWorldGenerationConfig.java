@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.coreImplementations.methods.config.both;
+package com.seibel.lod.core.api.external.methods.config.both;
 
 import com.seibel.lod.api.items.interfaces.config.IDhApiConfigValue;
 import com.seibel.lod.api.items.interfaces.config.both.IDhApiWorldGenerationConfig;

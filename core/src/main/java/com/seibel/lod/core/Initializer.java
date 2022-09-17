@@ -1,16 +1,10 @@
 package com.seibel.lod.core;
 
-import com.seibel.lod.api.items.interfaces.config.IDhApiConfigGroup;
-import com.seibel.lod.api.items.interfaces.config.both.IDhApiWorldGenerationConfig;
-import com.seibel.lod.api.items.interfaces.config.client.*;
-import com.seibel.lod.core.api.external.coreImplementations.methods.config.DhApiConfig;
-import com.seibel.lod.core.api.external.coreImplementations.methods.config.both.DhApiWorldGenerationConfig;
-import com.seibel.lod.core.api.external.coreImplementations.methods.config.client.*;
+import com.seibel.lod.core.api.external.methods.config.DhApiConfig;
 import com.seibel.lod.core.datatype.column.ColumnRenderLoader;
 import com.seibel.lod.core.datatype.full.FullDataLoader;
 import com.seibel.lod.core.datatype.full.SparseDataLoader;
 import com.seibel.lod.core.interfaces.dependencyInjection.ApiCoreInjectors;
-import com.seibel.lod.core.interfaces.dependencyInjection.IDependencyInjector;
 
 /**
  * Handles first time Core setup.

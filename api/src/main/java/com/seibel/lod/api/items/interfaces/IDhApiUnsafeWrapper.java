@@ -6,10 +6,11 @@ package com.seibel.lod.api.items.interfaces;
  * the base Minecraft Objects.
  *
  * @author James Seibel
- * @version 2022-9-6
+ * @version 2022-9-16
  */
 public interface IDhApiUnsafeWrapper
 {
+	
 	/**
 	 * Returns the Minecraft object this wrapper contains. <br>
 	 * <strong>Warning</strong>: This object will be Minecraft
@@ -20,6 +21,6 @@ public interface IDhApiUnsafeWrapper
 	 * in order to determine what object this method returns for
 	 * the specific version of Minecraft you are developing for.
 	 */
-	public Object getWrappedMcObject_UNSAFE();
+	Object getWrappedMcObject_UNSAFE();
 	
 }

@@ -19,20 +19,22 @@
 
 package com.seibel.lod.core.wrapperInterfaces.world;
 
+import com.seibel.lod.api.items.interfaces.world.IDhApiDimensionTypeWrapper;
 import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
 
 /**
  * @author James Seibel
- * @version 2022-8-23
+ * @version 2022-9-16
  */
-public interface IDimensionTypeWrapper extends IBindable
+public interface IDimensionTypeWrapper extends IDhApiDimensionTypeWrapper, IBindable
 {
+	
 	String getDimensionName();
 	
 	boolean hasCeiling();
 
 	boolean hasSkyLight();
 	
-	Object getWrappedMcObject();
+	Object getWrappedMcObject_UNSAFE();
 	
 }

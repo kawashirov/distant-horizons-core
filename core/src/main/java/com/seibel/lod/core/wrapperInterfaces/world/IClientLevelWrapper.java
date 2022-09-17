@@ -5,8 +5,16 @@ import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 
 import javax.annotation.Nullable;
 
-public interface IClientLevelWrapper extends ILevelWrapper {
+/**
+ * 
+ * @version 2022-9-16
+ */
+public interface IClientLevelWrapper extends ILevelWrapper
+{
+	
     @Nullable
     IServerLevelWrapper tryGetServerSideWrapper();
+	
     int computeBaseColor(DhBlockPos pos, IBiomeWrapper biome, IBlockStateWrapper blockState);
+	
 }

@@ -17,32 +17,32 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.coreImplementations.methods.config.client;
+package com.seibel.lod.core.api.external.methods.config.client;
 
 import com.seibel.lod.api.items.interfaces.config.IDhApiConfigValue;
-import com.seibel.lod.api.items.interfaces.config.client.IDhApiBuffersConfig;
+import com.seibel.lod.api.items.interfaces.config.client.IDhApiMultiplayerConfig;
 import com.seibel.lod.api.items.objects.config.DhApiConfigValue;
-import com.seibel.lod.core.config.Config.Client.Advanced.Buffers;
-import com.seibel.lod.api.items.enums.config.EGpuUploadMethod;
+import com.seibel.lod.core.config.Config.Client.Multiplayer;
+import com.seibel.lod.api.items.enums.config.EServerFolderNameMode;
 
 /**
- * Distant Horizons' OpenGL buffer configuration.
+ * Distant Horizons' client-side multiplayer configuration.
  *
  * @author James Seibel
  * @version 2022-9-15
  */
-public class DhApiBuffersConfig implements IDhApiBuffersConfig
+public class DhApiMultiplayerConfig implements IDhApiMultiplayerConfig
 {
-	public static DhApiBuffersConfig INSTANCE = new DhApiBuffersConfig();
+	public static DhApiMultiplayerConfig INSTANCE = new DhApiMultiplayerConfig();
 	
-	private DhApiBuffersConfig() { }
+	private DhApiMultiplayerConfig() { }
 	
 	
 	
-	public IDhApiConfigValue<EGpuUploadMethod> getGpuUploadMethod()
-	{ return new DhApiConfigValue<>(Buffers.gpuUploadMethod); }
+	public IDhApiConfigValue<EServerFolderNameMode> getFolderSavingMode()
+	{ return new DhApiConfigValue<>(Multiplayer.serverFolderNameMode); }
 	
-	public IDhApiConfigValue<Integer> getBufferUploadTimeoutPerMegabyteInMilliseconds()
-	{ return new DhApiConfigValue<>(Buffers.gpuUploadPerMegabyteInMilliseconds); }
+	public IDhApiConfigValue<Double> getMultiverseSimilarityRequirement()
+	{ return new DhApiConfigValue<>(Multiplayer.multiDimensionRequiredSimilarity); }
 	
 }
