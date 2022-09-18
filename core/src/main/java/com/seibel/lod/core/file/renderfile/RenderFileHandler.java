@@ -140,6 +140,10 @@ public class RenderFileHandler implements IRenderSourceProvider {
      */
     @Override
     public void write(DhSectionPos sectionPos, ChunkSizedData chunkData) {
+        if (chunkData.getBBoxLodPos().convertUpwardsTo((byte)6).equals(new DhLodPos((byte)6, 10, -11))) {
+            int doNothing = 0;
+        }
+
         recursive_write(sectionPos,chunkData);
         dataSourceProvider.write(sectionPos, chunkData);
     }

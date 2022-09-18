@@ -280,7 +280,7 @@ public class SparseDataSource implements LodDataSource {
             FullArrayView[] objectChunks = new FullArrayView[chunks*chunks];
             for (int i=0; i<dataChunks.length; i++) {
                 if (dataChunks[i] == null) continue;
-                objectChunks[i] = new FullArrayView(mapping, new long[dataPerChunk * dataPerChunk][], dataPerChunk);
+                objectChunks[i] = new FullArrayView(mapping, dataChunks[i], dataPerChunk);
             }
 
             return new SparseDataSource(dataFile.pos, mapping, objectChunks);

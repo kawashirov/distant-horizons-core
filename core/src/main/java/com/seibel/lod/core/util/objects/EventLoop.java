@@ -40,6 +40,7 @@ public class EventLoop implements AutoCloseable {
             future.cancel(true);
         }
         future = null;
+        executorService.shutdown();
     }
     public boolean isRunning() {
         return future != null && !future.isDone();
