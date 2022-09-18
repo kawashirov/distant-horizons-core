@@ -22,7 +22,6 @@ package com.seibel.lod.api.interfaces.config.client;
 import com.seibel.lod.api.enums.config.*;
 import com.seibel.lod.api.enums.rendering.ERendererMode;
 import com.seibel.lod.api.interfaces.config.IDhApiConfigValue;
-import com.seibel.lod.api.items.enums.config.*;
 import com.seibel.lod.api.interfaces.config.IDhApiConfigGroup;
 
 /**
