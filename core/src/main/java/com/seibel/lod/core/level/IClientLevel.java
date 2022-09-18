@@ -16,8 +16,6 @@ public interface IClientLevel extends ILevel {
 
     void render(Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, float partialTicks, IProfilerWrapper profiler);
 
-    RenderBufferHandler getRenderBufferHandler();
-
     int computeBaseColor(DhBlockPos pos, IBiomeWrapper biome, IBlockStateWrapper block);
 
     IClientLevelWrapper getClientLevelWrapper();

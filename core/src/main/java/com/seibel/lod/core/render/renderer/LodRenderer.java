@@ -106,16 +106,16 @@ public class LodRenderer
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 
 	public EDebugMode previousDebugMode = null;
-	public final IClientLevel level;
+	public final RenderBufferHandler bufferHandler;
 
 	// The shader program
 	LodRenderProgram shaderProgram = null;
 	public QuadElementBuffer quadIBO = null;
 	public boolean isSetupComplete = false;
 
-	public LodRenderer(IClientLevel level)
+	public LodRenderer(RenderBufferHandler bufferHandler)
 	{
-		this.level = level;
+		this.bufferHandler = bufferHandler;
 	}
 
 	private boolean closeCalled = false;
@@ -147,9 +147,6 @@ public class LodRenderer
 		GLProxy glProxy = GLProxy.getInstance();
 		if (Config.Client.Graphics.FogQuality.disableVanillaFog.get())
 			MC_RENDER.tryDisableVanillaFog();
-
-		// The Buffer manager
-		RenderBufferHandler bufferHandler = level.getRenderBufferHandler();
 		
 		//===================//
 		// draw params setup //

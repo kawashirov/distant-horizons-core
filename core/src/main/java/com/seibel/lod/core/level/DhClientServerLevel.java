@@ -1,5 +1,6 @@
 package com.seibel.lod.core.level;
 
+import com.seibel.lod.core.config.AppliedConfigState;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.full.FullDataSource;
 import com.seibel.lod.core.datatype.transform.ChunkToLodBuilder;
@@ -33,26 +34,62 @@ import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class DhClientServerLevel implements IClientLevel, IServerLevel {
+    class RenderState {
+        final IClientLevelWrapper clientLevel;
+        final LodQuadTree tree;
+        final RenderFileHandler renderFileHandler;
+        final RenderBufferHandler renderBufferHandler; //TODO: Should this be owned by renderer?
+        final LodRenderer renderer;
+        RenderState(IClientLevelWrapper clientLevel) {
+            this.clientLevel = clientLevel;
+            renderFileHandler = new RenderFileHandler(dataFileHandler, DhClientServerLevel.this, save.getRenderCacheFolder(serverLevel));
+            tree = new LodQuadTree(DhClientServerLevel.this, Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * 16,
+                    MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, renderFileHandler);
+            renderBufferHandler = new RenderBufferHandler(tree);
+            FileScanUtil.scanFile(save, serverLevel, null, renderFileHandler);
+            renderer = new LodRenderer(renderBufferHandler);
+        }
+        CompletableFuture<Void> close() {
+            renderer.close();
+            renderBufferHandler.close();
+            tree.close();
+            return renderFileHandler.flushAndSave();
+        }
+    }
+    class WorldGenState {
+        final BatchGenerator batchGenerator;
+        final GenerationQueue generationQueue;
+        WorldGenState() {
+            batchGenerator = new BatchGenerator(DhClientServerLevel.this);
+            generationQueue = new GenerationQueue(batchGenerator);
+            dataFileHandler.setGenerationQueue(generationQueue);
+        }
+        CompletableFuture<Void> close(boolean doInterrupt) {
+            dataFileHandler.popGenerationQueue();
+            return generationQueue.startClosing(true, doInterrupt)
+                    .exceptionally(ex -> {
+                        LOGGER.error("Error closing generation queue", ex);
+                        return null;
+                    }).thenRun(batchGenerator::close)
+                    .exceptionally(ex -> {
+                        LOGGER.error("Error closing world gen", ex);
+                        return null;
+                    });
+        }
+    }
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
     public final LocalSaveStructure save;
     public final GeneratedDataFileHandler dataFileHandler;
     public final ChunkToLodBuilder chunkToLodBuilder;
-    public volatile GenerationQueue generationQueue = null;
-    public RenderFileHandler renderFileHandler = null;
-    public RenderBufferHandler renderBufferHandler = null; //TODO: Should this be owned by renderer?
     public final IServerLevelWrapper serverLevel;
-    public IClientLevelWrapper clientLevel;
-    public LodRenderer renderer = null;
-    public LodQuadTree tree = null;
-    public volatile BatchGenerator worldGenerator = null;
-    private final ReentrantReadWriteLock renderStateLifecycleLock = new ReentrantReadWriteLock();
-
+    private final AppliedConfigState<Boolean> generatorEnabled;
     public F3Screen.NestedMessage f3Msg;
+    public final AtomicReference<RenderState> renderState = new AtomicReference<>();
+    public final AtomicReference<WorldGenState> worldGenState = new AtomicReference<>();
 
     public DhClientServerLevel(LocalSaveStructure save, IServerLevelWrapper level) {
         this.serverLevel = level;
@@ -64,10 +101,12 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
         LOGGER.info("Started DHLevel for {} with saves at {}", level, save);
         f3Msg = new F3Screen.NestedMessage(this::f3Log);
         chunkToLodBuilder = new ChunkToLodBuilder();
+        generatorEnabled = new AppliedConfigState<>(Config.Client.WorldGenerator.enableDistantGeneration);
     }
 
     private String[] f3Log() {
-        if (clientLevel == null) {
+        RenderState rs = renderState.get();
+        if (rs == null) {
             return new String[]{LodUtil.formatLog("level @ {}: Inactive", serverLevel.getDimensionType().getDimensionName())};
         } else {
             return new String[]{
@@ -78,35 +117,30 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
 
     @Override
     public void clientTick() {
-        //LOGGER.info("Client tick for {}", level);
-        renderStateLifecycleLock.readLock().lock();
-        try {
-            if (clientLevel == null) return;
-            if (tree.viewDistance != Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * 16) {
-                IClientLevelWrapper temp = clientLevel;
-                renderStateLifecycleLock.readLock().unlock();
-                renderStateLifecycleLock.writeLock().lock();
-                try {
-                    stopRenderer();
-                    startRenderer(temp);
-                } finally {
-                    renderStateLifecycleLock.readLock().lock();
-                    renderStateLifecycleLock.writeLock().unlock();
-                }
+        RenderState rs = renderState.get();
+        if (rs == null) return;
+
+        if (rs.tree.viewDistance != Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * 16) {
+            if (!renderState.compareAndSet(rs, null)) return; //If we fail, we'll just wait for the next tick
+            IClientLevelWrapper levelWrapper = rs.clientLevel;
+            rs.close().join(); //TODO: Make it async.
+            rs = new RenderState(levelWrapper);
+            if (!renderState.compareAndSet(null, rs)) { //FIXME: How to handle this?
+                LOGGER.warn("Failed to set render state due to concurrency after changing view distance");
+                rs.close();
                 return;
             }
-            tree.tick(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
-            renderBufferHandler.update();
-        } finally {
-            renderStateLifecycleLock.readLock().unlock();
         }
+
+        rs.tree.tick(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
+        rs.renderBufferHandler.update();
     }
 
     private void saveWrites(ChunkSizedData data) {
-        RenderFileHandler renderFileHandler = this.renderFileHandler;
+        RenderState rs = renderState.get();
         DhLodPos pos = data.getBBoxLodPos().convertUpwardsTo(FullDataSource.SECTION_SIZE_OFFSET);
-        if (renderFileHandler != null) {
-            renderFileHandler.write(new DhSectionPos(pos.detail, pos.x, pos.z), data);
+        if (rs != null) {
+            rs.renderFileHandler.write(new DhSectionPos(pos.detail, pos.x, pos.z), data);
         } else {
             dataFileHandler.write(new DhSectionPos(pos.detail, pos.x, pos.z), data);
         }
@@ -119,93 +153,69 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
 
     public void startRenderer(IClientLevelWrapper clientLevel) {
         LOGGER.info("Starting renderer for {}", this);
-        renderStateLifecycleLock.writeLock().lock();
-        try {
-            if (renderBufferHandler != null || this.clientLevel != null) {
-                LOGGER.warn("Tried to call startRenderer() on {} when renderer is already setup!", this);
-                return;
+        RenderState rs = new RenderState(clientLevel);
+        if (!renderState.compareAndSet(null, rs)) {
+            LOGGER.warn("Failed to start renderer due to concurrency");
+            rs.close();
+        } else {
+            generatorEnabled.pollNewValue();
+            if (generatorEnabled.get() && worldGenState.get() == null) {
+                WorldGenState wgs = new WorldGenState();
+                if (!worldGenState.compareAndSet(null, wgs)) {
+                    LOGGER.warn("Failed to start world gen due to concurrency");
+                    wgs.close(false);
+                }
             }
-            this.clientLevel = clientLevel;
-            // TODO: Make a registry for generators for modding support.
-            worldGenerator = new BatchGenerator(this);
-            generationQueue = new GenerationQueue(worldGenerator);
-            dataFileHandler.setGenerationQueue(generationQueue);
-            renderFileHandler = new RenderFileHandler(dataFileHandler, this, save.getRenderCacheFolder(serverLevel));
-            tree = new LodQuadTree(this, Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * 16,
-                    MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, renderFileHandler);
-            renderBufferHandler = new RenderBufferHandler(tree);
-            FileScanUtil.scanFile(save, serverLevel, null, renderFileHandler);
-        } finally {
-            renderStateLifecycleLock.writeLock().unlock();
+
         }
     }
 
     @Override
     public void render(Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, float partialTicks, IProfilerWrapper profiler) {
-        if (!renderStateLifecycleLock.readLock().tryLock()) return;
-        try {
-            if (renderBufferHandler == null) {
-                LOGGER.error("Tried to call render() on {} when renderer has not been started!", this);
-                return;
-            }
-            if (renderer == null) {
-                renderer = new LodRenderer(this);
-            }
-            renderer.drawLODs(mcModelViewMatrix, mcProjectionMatrix, partialTicks, profiler);
-        } finally {
-            renderStateLifecycleLock.readLock().unlock();
+        RenderState rs = renderState.get();
+        if (rs == null) {
+            LOGGER.error("Tried to call render() on {} when renderer has not been started!", this);
+            return;
         }
+        rs.renderer.drawLODs(mcModelViewMatrix, mcProjectionMatrix, partialTicks, profiler);
     }
 
     public void stopRenderer() {
         LOGGER.info("Stopping renderer for {}", this);
-        renderStateLifecycleLock.writeLock().lock();
-        try {
-            if (renderBufferHandler == null) {
-                LOGGER.warn("Tried to call stopRenderer() on {} when renderer is already closed!", this);
-                return;
+        RenderState rs = renderState.get();
+        if (rs == null) {
+            LOGGER.warn("Tried to stop renderer for {} when it was not started!", this);
+            return;
+        }
+        while (!renderState.compareAndSet(rs, null)) {
+            rs = renderState.get();
+            if (rs == null) return;
+        }
+        rs.close().join(); //TODO: Make it async.
+        WorldGenState wgs = worldGenState.get();
+        if (wgs != null) {
+            while (!worldGenState.compareAndSet(wgs, null)) {
+                wgs = worldGenState.get();
+                if (wgs == null) return;
             }
+            wgs.close(true).join(); //TODO: Make it async.
+        }
+    }
 
-            tree.close();
-            tree = null;
-            dataFileHandler.popGenerationQueue();
-            final BatchGenerator f_worldGen = worldGenerator;
-            CompletableFuture<Void> closer = generationQueue.startClosing(true, true)
-                    .exceptionally(ex -> {
-                        LOGGER.error("Error closing generation queue", ex);
-                        return null;
-                    }).thenRun(f_worldGen::close)
-                    .exceptionally(ex -> {
-                        LOGGER.error("Error closing world gen", ex);
-                        return null;
-                    });
-            generationQueue = null;
-            worldGenerator = null;
-            renderBufferHandler.close();
-            renderBufferHandler = null;
-            renderFileHandler.flushAndSave(); //Ignore the completion feature so that this action is async
-            renderFileHandler.close();
-            renderFileHandler = null;
-            closer.join(); // TODO: Could this cause deadlocks? we are blocking in main thread.
-            clientLevel = null;
-        } finally {
-            renderStateLifecycleLock.writeLock().unlock();
+    @Override //FIXME
+    public int computeBaseColor(DhBlockPos pos, IBiomeWrapper biome, IBlockStateWrapper block) {
+        IClientLevelWrapper clientLevel = getClientLevelWrapper();
+        if (clientLevel == null) {
+            return 0;
+        } else {
+            return clientLevel.computeBaseColor(pos, biome, block);
         }
     }
 
     @Override
-    public RenderBufferHandler getRenderBufferHandler() {
-        return renderBufferHandler;
-    }
-
-    @Override
-    public int computeBaseColor(DhBlockPos pos, IBiomeWrapper biome, IBlockStateWrapper block) {
-        return clientLevel.computeBaseColor(pos, biome, block);
-    }
-
-    @Override
     public IClientLevelWrapper getClientLevelWrapper() {
-        return clientLevel;
+        RenderState rs = renderState.get();
+        return rs == null ? null : rs.clientLevel;
     }
     
     @Override
@@ -234,26 +244,31 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
 
     @Override
     public CompletableFuture<Void> save() {
-
-        if (renderFileHandler != null) {
-            return renderFileHandler.flushAndSave().thenCompose(v -> dataFileHandler.flushAndSave());
+        RenderState rs = renderState.get();
+        if (rs != null) {
+            return rs.renderFileHandler.flushAndSave().thenCombine(dataFileHandler.flushAndSave(), (a, b) -> null);
         } else {
             return dataFileHandler.flushAndSave();
         }
     }
+
     @Override
     public void close() {
-        renderStateLifecycleLock.writeLock().lock();
-        try {
-            if (generationQueue != null) generationQueue.close();
-            if (worldGenerator != null) worldGenerator.close();
-            if (renderer != null) renderer.close();
-            if (tree != null) tree.close();
-            if (renderBufferHandler != null) renderBufferHandler.close();
-            if (renderFileHandler != null) renderFileHandler.close();
-            dataFileHandler.close();
-        } finally {
-            renderStateLifecycleLock.writeLock().unlock();
+        RenderState rs = renderState.get();
+        if (rs != null) {
+            while (!renderState.compareAndSet(rs, null)) {
+                rs = renderState.get();
+                if (rs == null) return;
+            }
+            rs.close().join(); //TODO: Make it async.
+        }
+        WorldGenState wgs = worldGenState.get();
+        if (wgs != null) {
+            while (!worldGenState.compareAndSet(wgs, null)) {
+                wgs = worldGenState.get();
+                if (wgs == null) return;
+            }
+            wgs.close(true).join(); //TODO: Make it async.
         }
         LOGGER.info("Closed {}", this);
     }
@@ -261,12 +276,27 @@ public class DhClientServerLevel implements IClientLevel, IServerLevel {
 
     @Override
     public void doWorldGen() {
-        final BatchGenerator f_worldGen = worldGenerator;
-        if (f_worldGen != null) {
-            f_worldGen.update();
-            final GenerationQueue f_genQueue = generationQueue;
-            if (f_genQueue != null)
-                f_genQueue.pollAndStartClosest(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
+        WorldGenState wgs = worldGenState.get();
+        if (generatorEnabled.pollNewValue()) {
+            boolean shouldDoWorldGen = generatorEnabled.get() && renderState.get() != null;
+            if (shouldDoWorldGen && wgs == null) {
+                WorldGenState newWgs = new WorldGenState();
+                if (!worldGenState.compareAndSet(null, newWgs)) {
+                    LOGGER.warn("Failed to start world gen due to concurrency");
+                    newWgs.close(false);
+                }
+            } else if (!shouldDoWorldGen && wgs != null) {
+                while (!worldGenState.compareAndSet(wgs, null)) {
+                    wgs = worldGenState.get();
+                    if (wgs == null) return;
+                }
+                wgs.close(true).join(); //TODO: Make it async.
+            }
+        }
+
+        if (wgs != null) {
+            wgs.batchGenerator.update();
+            wgs.generationQueue.pollAndStartClosest(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
         }
     }
 

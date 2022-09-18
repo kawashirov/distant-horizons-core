@@ -58,20 +58,14 @@ public class DhClientLevel implements IClientLevel {
     public void clientTick() {
         tree.tick(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
         renderBufferHandler.update();
-        return;
     }
 
     @Override
     public void render(Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, float partialTicks, IProfilerWrapper profiler) {
         if (renderer == null) {
-            renderer = new LodRenderer(this);
+            renderer = new LodRenderer(renderBufferHandler);
         }
         renderer.drawLODs(mcModelViewMatrix, mcProjectionMatrix, partialTicks, profiler);
-    }
-
-    @Override
-    public RenderBufferHandler getRenderBufferHandler() {
-        return renderBufferHandler;
     }
 
     @Override
