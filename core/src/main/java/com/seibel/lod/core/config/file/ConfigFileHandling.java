@@ -31,7 +31,7 @@ public class ConfigFileHandling {
                 .getInstallationDirectory().toPath().resolve("config").resolve(this.configBase.modName+".toml");
     }
 
-    /** Saves the config to the file */
+    /** Saves the entire config to the file */
     public void saveToFile() {
         CommentedFileConfig config = CommentedFileConfig.builder(ConfigPath.toFile()).build();
         if (!Files.exists(ConfigPath)) // Try to check if the config exists
@@ -53,7 +53,10 @@ public class ConfigFileHandling {
         config.save();
         config.close();
     }
-    /** Loads the config from the file */
+    /**
+     * Loads the entire config from the file
+     * @apiNote This overwrites any value currently stored in the config
+     */
     public void loadFromFile() {
         CommentedFileConfig config = CommentedFileConfig.builder(ConfigPath.toFile()).build();
         // Attempt to load the file and if it fails then save config to file

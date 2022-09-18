@@ -12,10 +12,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Gets the releases available on gitlab and sends out the link
+ * Gets the releases available on gitlab and sends out the link.
+ * Please move over to ModrinthGetter for downloading releases of the mod
  *
  * @author coolGi
  */
+// TODO: Change this to a way to get the nightly builds
 @Deprecated
 public class GitlabGetter {
     public static final String GitLabApi = "https://gitlab.com/api/v4/projects/";

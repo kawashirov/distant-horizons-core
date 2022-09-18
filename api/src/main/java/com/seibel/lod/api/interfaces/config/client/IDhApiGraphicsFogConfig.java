@@ -22,7 +22,6 @@ package com.seibel.lod.api.interfaces.config.client;
 import com.seibel.lod.api.enums.rendering.*;
 import com.seibel.lod.api.interfaces.config.IDhApiConfigGroup;
 import com.seibel.lod.api.interfaces.config.IDhApiConfigValue;
-import com.seibel.lod.api.items.enums.rendering.*;
 
 /**
  * Distant Horizons' fog configuration. <br><br>

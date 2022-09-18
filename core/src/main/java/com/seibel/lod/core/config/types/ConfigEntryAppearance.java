@@ -1,5 +1,11 @@
 package com.seibel.lod.core.config.types;
 
+/**
+ * Allows options or categories to only be shown in the file or only in the ui
+ * (remember that if you make it only visible in the ui then the option wont save on game restart)
+ *
+ * @author coolGi
+ */
 public enum ConfigEntryAppearance {
     ALL(true, true),
     ONLY_SHOW(true, false),

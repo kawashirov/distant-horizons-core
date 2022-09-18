@@ -9,7 +9,7 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 
 /**
- * Does something similar to wget
+ * Does something similar to wget/curl.
  * It allows you to download a file from a link
  *
  * @author coolGi
@@ -17,7 +17,7 @@ import java.security.MessageDigest;
 public class WebDownloader {
     public static boolean netIsAvailable() {
         try {
-            final URL url = new URL("https://gitlab.com");
+            final URL url = new URL("https://www.google.com"); // Google will probably be online forever so we use that to check network connection
             final URLConnection conn = url.openConnection();
             conn.connect();
             conn.getInputStream().close();

@@ -7,6 +7,12 @@ import org.json.simple.parser.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Allows for custom varuable types to be saved in the config
+ * (currently its only used for Map's)
+ *
+ * @author coolGi
+ */
 public class ConfigTypeConverters {
     // Once you've made a converter add it to here where the first value is the type you want to convert and the 2nd value is the converter
     public static final Map<Class, ConverterBase> convertObjects = new HashMap<Class, ConverterBase>() {{
@@ -17,7 +23,7 @@ public class ConfigTypeConverters {
         try {
             return convertObjects.get(clazz).convertToString(value);
         } catch (Exception e) {
-            System.out.println("Type [" + clazz.toString() + "] isnt a convertible value in the config file handler");
+            System.out.println("Type [" + clazz.toString() + "] isn't a convertible value in the config file handler");
             return null;
         }
     }
@@ -25,7 +31,7 @@ public class ConfigTypeConverters {
         try {
             return convertObjects.get(clazz).convertFromString(value);
         } catch (Exception e) {
-            System.out.println("Type [" + clazz.toString() + "] isnt a convertible value in the config file handler");
+            System.out.println("Type [" + clazz.toString() + "] isn't a convertible value in the config file handler");
             return null;
         }
     }

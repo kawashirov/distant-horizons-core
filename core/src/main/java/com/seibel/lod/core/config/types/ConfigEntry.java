@@ -5,6 +5,7 @@ import com.seibel.lod.core.interfaces.config.IConfigEntry;
 
 /**
  * Use for making the config variables
+ * for types that are not supported by it look in ConfigBase
  *
  * @author coolGi
  * @version 2022-5-26
@@ -29,14 +30,13 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
 
 
     /** Creates the entry */
-    private ConfigEntry(ConfigEntryAppearance appearance, T value, String comment, T min, T max, boolean allowApiOverride, Runnable runnable, ConfigEntryPerformance performance, Listener listener) {
+    private ConfigEntry(ConfigEntryAppearance appearance, T value, String comment, T min, T max, boolean allowApiOverride, ConfigEntryPerformance performance, Listener listener) {
         super(appearance, value, listener);
         this.defaultValue = value;
         this.comment = comment;
         this.min = min;
         this.max = max;
         this.allowApiOverride = allowApiOverride;
-        this.runnable = runnable;
         this.performance = performance;
     }
 
@@ -125,9 +125,9 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
     /**
      * Checks if the option is valid
      *
-     * 0 == valid
-     * 1 == number too high
-     * -1 == number too low
+     * @return      0 == valid
+     *          <p> 1 == number too high
+     *         <p> -1 == number too low
      */
 	@Override
     public byte isValid() {
@@ -139,9 +139,9 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
         if (this.configBase.disableMinMax)
             return 0;
         if (Number.class.isAssignableFrom(value.getClass())) { // Only check min max if it is a number
-            if (this.max != null && Double.valueOf(value.toString()) > Double.valueOf(max.toString()))
+            if (this.max != null && Double.parseDouble(value.toString()) > Double.parseDouble(max.toString()))
                 return 1;
-            if (this.min != null && Double.valueOf(value.toString()) < Double.valueOf(min.toString()))
+            if (this.min != null && Double.parseDouble(value.toString()) < Double.parseDouble(min.toString()))
                 return -1;
 
             return 0;
@@ -160,41 +160,23 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
 	
 	
 	@Override
-	public boolean equals(IConfigEntry<?> obj) { return obj.getClass() == ConfigEntry.class ? equals((ConfigEntry<?>)obj) : false; }
+	public boolean equals(IConfigEntry<?> obj) { return obj.getClass() == ConfigEntry.class && equals((ConfigEntry<?>) obj); }
     /** Is the value of this equal to another */
     public boolean equals(ConfigEntry<?> obj) {
         // Can all of this just be "return this.value.equals(obj.value)"?
 
-        if (this.value.getClass() != obj.value.getClass())
-            return false;
-        if (Number.class.isAssignableFrom(this.value.getClass())) {
-            if (this.value == obj.value)
-                return true;
-            else return false;
-        } else {
-            if (this.value.equals(obj.value))
-                return true;
-            else return false;
-        }
+        if (Number.class.isAssignableFrom(this.value.getClass()))
+            return this.value == obj.value;
+        else
+            return this.value.equals(obj.value);
     }
 
-    public Runnable getRunnable() {
-        return this.runnable;
-    }
-    public void setRunnable(Runnable runnable) {
-        this.runnable = runnable;
-    }
-    public void runRunnable() {
-        if (runnable != null)
-            runnable.run();
-    }
 
     public static class Builder<T> extends AbstractConfigType.Builder<T, Builder<T>> {
         private String tmpComment = null;
         private T tmpMin;
         private T tmpMax;
         private boolean tmpUseApiOverwrite;
-        private Runnable tmpRunnable;
         private ConfigEntryPerformance tmpPerformance = ConfigEntryPerformance.DONT_SHOW;
 
         public Builder<T> comment(String newComment) {
@@ -202,6 +184,7 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
             return this;
         }
 
+        /** Allows most values to be set by 1 setter */
         public Builder<T> setMinDefaultMax(T newMin, T newDefault, T newMax) {
             this.set(newDefault);
             this.setMinMax(newMin, newMax);
@@ -228,11 +211,6 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
             return this;
         }
 
-        public Builder<T> setRunnable(Runnable newRunnable) {
-            this.tmpRunnable = newRunnable;
-            return this;
-        }
-
         public Builder<T> setPerformance(ConfigEntryPerformance newPerformance) {
             this.tmpPerformance = newPerformance;
             return this;
@@ -241,7 +219,7 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
 
 
         public ConfigEntry<T> build() {
-            return new ConfigEntry<T>(tmpAppearance, tmpValue, tmpComment, tmpMin, tmpMax, tmpUseApiOverwrite, tmpRunnable, tmpPerformance, tmpListener);
+            return new ConfigEntry<T>(tmpAppearance, tmpValue, tmpComment, tmpMin, tmpMax, tmpUseApiOverwrite, tmpPerformance, tmpListener);
         }
     }
 }

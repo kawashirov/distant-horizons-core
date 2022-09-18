@@ -1,7 +1,11 @@
 package com.seibel.lod.core.config.types;
 
-import com.seibel.lod.core.config.types.ConfigEntryAppearance;
-
+/**
+ * Adds a categoty to the config
+ * See our config file for more information on how to use it
+ *
+ * @author coolGi
+ */
 public class ConfigCategory extends AbstractConfigType<Class, ConfigCategory> {
     public String destination;    // Where the category goes to
 

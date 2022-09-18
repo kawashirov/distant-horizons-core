@@ -39,6 +39,7 @@ public class BaseJFrame extends JFrame {
         } catch (Exception e) {e.printStackTrace();}
         setSize(720, 480);
         setLocationRelativeTo(null); // Puts the window at the middle of the screen
+        setLayout(new BorderLayout());
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 

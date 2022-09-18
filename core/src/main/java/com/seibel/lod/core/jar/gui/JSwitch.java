@@ -25,6 +25,7 @@ import javax.swing.plaf.ButtonUI;
  *
  * @author coolGi
  */
+// TODO: Make this for the theme (and finish the documentation once it is done)
 @SuppressWarnings("serial")
 public class JSwitch extends AbstractButton {
     private static final String uiClassID = "SwitchUI";

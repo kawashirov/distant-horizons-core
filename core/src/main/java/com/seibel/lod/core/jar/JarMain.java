@@ -1,7 +1,8 @@
-package com.seibel.lod.core;
+package com.seibel.lod.core.jar;
 
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
+import com.seibel.lod.core.ModInfo;
 import com.seibel.lod.core.jar.DarkModeDetector;
 import com.seibel.lod.core.jar.JarUtils;
 import com.seibel.lod.core.jar.gui.BaseJFrame;
@@ -34,6 +35,7 @@ public class JarMain {
             Locale.setDefault(Locale.US);
         }
         // Set up the theme
+        System.setProperty("apple.awt.application.appearance", "system");
         if (isDarkTheme)
             FlatDarkLaf.setup();
         else

@@ -3,6 +3,11 @@ package com.seibel.lod.core.jar.gui.cusomJObject;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * A rectangular box that can be placed with java swing
+ *
+ * @author coolGi
+ */
 public class JBox extends JComponent {
     private static final String uiClassID = "BoxBarUI";
 

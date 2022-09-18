@@ -4,6 +4,12 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
+/**
+ * Some general utils for the jar
+ * this includes stuff like accessing files inside the jar and checking the checksum of a file
+ *
+ * @author coolGi
+ */
 public class JarUtils {
     public static final File jarFile = new File(JarUtils.class.getProtectionDomain().getCodeSource().getLocation().getPath());
 

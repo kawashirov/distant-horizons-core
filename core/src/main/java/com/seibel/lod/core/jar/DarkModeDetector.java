@@ -3,7 +3,7 @@ package com.seibel.lod.core.jar;
 import java.io.*;
 import java.util.regex.Pattern;
 
-import static com.seibel.lod.core.JarMain.getOperatingSystem;
+import static com.seibel.lod.core.jar.JarMain.getOperatingSystem;
 
 /**
  * A fork of iris'is dark mode detector (https://github.com/IrisShaders/Iris-Installer/blob/master/src/main/java/net/hypercubemc/iris_installer/DarkModeDetector.java)

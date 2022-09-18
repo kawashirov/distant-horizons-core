@@ -1,7 +1,7 @@
 package com.seibel.lod.core.config.types;
 
 /**
- * Adds something like a ConfigEntry but without a button to change the input and only in the gui
+ * Adds something like a ConfigEntry but without a button to change the input
  *
  * @author coolGi
  */

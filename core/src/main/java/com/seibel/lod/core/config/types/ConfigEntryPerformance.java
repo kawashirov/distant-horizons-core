@@ -2,6 +2,7 @@ package com.seibel.lod.core.config.types;
 
 /**
  * What is the performance impact of an entry
+ * (default is DONT_SHOW)
  *
  * @author coolGi
  */

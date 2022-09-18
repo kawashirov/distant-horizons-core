@@ -25,8 +25,10 @@ public abstract class AbstractConfigType<T, S> { // The S is the class that is e
     }
 
     public interface Listener {
+        /** Called whenever the value changes at all (including in the code iself) */
         void onModify();
-//        void onUiModify(); // TODO
+        /** Called whenever the value is changed through the UI (only when the done button is pressed) */
+        void onUiModify(); // TODO
     }
 
     
