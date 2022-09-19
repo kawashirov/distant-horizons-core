@@ -151,7 +151,7 @@ public class DataMetaFile extends MetaFile
 						metaData = makeMetaData(data);
 						return data;
 					})
-					.thenApply((data) -> handler.onDataFileLoaded(data, this::applyWriteQueue, this::saveChanges))
+					.thenApply((data) -> handler.onDataFileLoaded(data, metaData, this::saveChanges, this::applyWriteQueue))
 					.whenComplete((v, e) -> {
 						if (e != null) {
 							LOGGER.error("Uncaught error on creation {}: ", path, e);
@@ -177,7 +177,7 @@ public class DataMetaFile extends MetaFile
 						// Apply the write queue
 						LodUtil.assertTrue(!inCacheWriteAccessAsserter.get(),"No one should be writing to the cache while we are in the process of " +
 								"loading one into the cache! Is this a deadlock?");
-						data = handler.onDataFileLoaded(data, this::applyWriteQueue, this::saveChanges);
+						data = handler.onDataFileLoaded(data, metaData, this::saveChanges, this::applyWriteQueue);
 						// Finally, return the data.
 						return data;
 					}, handler.getIOExecutor())

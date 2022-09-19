@@ -5,6 +5,7 @@ import com.seibel.lod.core.datatype.LodDataSource;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.full.FullDataSource;
 import com.seibel.lod.core.datatype.full.SparseDataSource;
+import com.seibel.lod.core.file.MetaFile;
 import com.seibel.lod.core.level.ILevel;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
@@ -300,8 +301,10 @@ public class DataFileHandler implements IDataSourceProvider {
     }
 
     @Override
-    public LodDataSource onDataFileLoaded(LodDataSource source, Function<LodDataSource, Boolean> updater, Consumer<LodDataSource> onUpdated) {
+    public LodDataSource onDataFileLoaded(LodDataSource source, MetaFile.MetaData metaData,
+                                          Consumer<LodDataSource> onUpdated, Function<LodDataSource, Boolean> updater) {
         boolean changed = updater.apply(source);
+        if (changed) metaData.dataVersion.incrementAndGet();
         if (source instanceof SparseDataSource) {
             LodDataSource newSource = ((SparseDataSource) source).trySelfPromote();
             changed |= newSource != source;
