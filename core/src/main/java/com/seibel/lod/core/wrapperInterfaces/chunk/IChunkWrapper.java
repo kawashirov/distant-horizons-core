@@ -92,4 +92,6 @@ public interface IChunkWrapper extends IBindable
 	IBiomeWrapper getBiome(int x, int y, int z);
 
 	DhChunkPos getChunkPos();
+
+    boolean isStillValid();
 }

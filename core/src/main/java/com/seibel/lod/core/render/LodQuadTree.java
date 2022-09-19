@@ -78,7 +78,7 @@ public class LodQuadTree implements AutoCloseable {
             for (byte i = LAYER_BEGINNING_OFFSET; i < numbersOfSectionLevels; i++) {
                 byte targetDataDetail = getLayerDataDetail(i);
                 int maxDist = getFurthestDistance(targetDataDetail);
-                int halfSize = MathUtil.ceilDiv(maxDist, (1 << i)) + 2; // +2 to make sure the section is fully contained in the ringList
+                int halfSize = MathUtil.ceilDiv(maxDist, (1 << i)) + 8; // +8 to make sure the section is fully contained in the ringList
                 {
                     DhSectionPos checkerPos = new DhSectionPos(i, halfSize, halfSize);
                     byte checkedDetail = calculateExpectedDetailLevel(new DhBlockPos2D(initialPlayerX, initialPlayerZ),checkerPos);

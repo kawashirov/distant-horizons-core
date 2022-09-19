@@ -58,6 +58,7 @@ public class LodDataBuilder {
 
     public static boolean canGenerateLodFromChunk(IChunkWrapper chunk)
     {
+        //return true;
         return chunk != null &&
                 chunk.isLightCorrect();
     }

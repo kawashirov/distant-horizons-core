@@ -28,6 +28,8 @@ package com.seibel.lod.api.enums.rendering;
  * SHOW_GENMODE_WIREFRAME,				<br>
  * SHOW_OVERLAPPING_QUADS,				<br>
  * SHOW_OVERLAPPING_QUADS_WIREFRAME,	<br>
+ * SHOW_RENDER_SOURCE_FLAG,	<br>
+ * SHOW_RENDER_SOURCE_FLAG_WIREFRAME,	<br>
  *
  * @author Leetom
  * @author James Seibel
@@ -62,8 +64,14 @@ public enum EDebugMode
 	SHOW_OVERLAPPING_QUADS,
 
 	/** Only draw overlapping LOD quads, and draws in wireframe. */
-	SHOW_OVERLAPPING_QUADS_WIREFRAME;
-	
+	SHOW_OVERLAPPING_QUADS_WIREFRAME,
+
+	/** LOD colors are based on renderSource flags. */
+	SHOW_RENDER_SOURCE_FLAG,
+
+	/** LOD colors are based on renderSource flags, and draws in wireframe. */
+	SHOW_RENDER_SOURCE_FLAG_WIREFRAME;
+
 	/** returns the next debug mode */
 	// Deprecated: use DebugMode.next() instead
 	@Deprecated
@@ -81,13 +89,17 @@ public enum EDebugMode
 			case SHOW_GENMODE: return SHOW_GENMODE_WIREFRAME;
 			case SHOW_GENMODE_WIREFRAME: return SHOW_OVERLAPPING_QUADS;
 			case SHOW_OVERLAPPING_QUADS: return SHOW_OVERLAPPING_QUADS_WIREFRAME;
+			case SHOW_OVERLAPPING_QUADS_WIREFRAME: return SHOW_RENDER_SOURCE_FLAG;
+			case SHOW_RENDER_SOURCE_FLAG: return SHOW_RENDER_SOURCE_FLAG_WIREFRAME;
 			default: return OFF;
 		}
 	}
 
 	public static EDebugMode previous(EDebugMode type) {
 		switch (type) {
-			case OFF: return SHOW_OVERLAPPING_QUADS_WIREFRAME;
+			case OFF: return SHOW_RENDER_SOURCE_FLAG_WIREFRAME;
+			case SHOW_RENDER_SOURCE_FLAG_WIREFRAME: return SHOW_RENDER_SOURCE_FLAG;
+			case SHOW_RENDER_SOURCE_FLAG: return SHOW_OVERLAPPING_QUADS_WIREFRAME;
 			case SHOW_OVERLAPPING_QUADS_WIREFRAME: return SHOW_OVERLAPPING_QUADS;
 			case SHOW_OVERLAPPING_QUADS: return SHOW_GENMODE_WIREFRAME;
 			case SHOW_GENMODE_WIREFRAME: return SHOW_GENMODE;

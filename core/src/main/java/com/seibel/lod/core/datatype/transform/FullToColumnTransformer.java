@@ -45,6 +45,7 @@ public class FullToColumnTransformer {
                     if (fullArrayView.doesItExist()) LodUtil.assertTrue(columnSource.doesItExist(x, z));
                 }
             }
+            columnSource.debugFillFlag(0, 0, ColumnRenderSource.SECTION_SIZE, ColumnRenderSource.SECTION_SIZE, ColumnRenderSource.DebugSourceFlag.FULL);
 //        } else if (dataDetail == 0 && columnSource.getDataDetail() > dataDetail) {
 //            byte deltaDetail = (byte) (columnSource.getDataDetail() - dataDetail);
 //            int perColumnWidth = 1 << deltaDetail;
@@ -82,6 +83,7 @@ public class FullToColumnTransformer {
                     if (fullArrayView == null) continue;
                     ColumnArrayView columnArrayView = columnSource.getVerticalDataView(x, z);
                     convertColumnData(level, baseX + x, baseZ + z, columnArrayView, fullArrayView, 1);
+                    columnSource.debugFillFlag(x, z, 1, 1, ColumnRenderSource.DebugSourceFlag.SPARSE);
                     if (fullArrayView.doesItExist()) LodUtil.assertTrue(columnSource.doesItExist(x, z));
                 }
             }
@@ -117,6 +119,7 @@ public class FullToColumnTransformer {
                     if (fullArrayView.doesItExist()) LodUtil.assertTrue(render.doesItExist(renderOffsetX + x, renderOffsetZ + z));
                 }
             }
+            render.debugFillFlag(renderOffsetX, renderOffsetZ, 16, 16, ColumnRenderSource.DebugSourceFlag.DIRECT);
         } else {
             final int dataPerRender = 1 << (render.getDataDetail() - data.dataDetail);
             final int dataSize = 16 / dataPerRender;
@@ -141,6 +144,7 @@ public class FullToColumnTransformer {
                     downSampledArrayView.mergeMultiDataFrom(tempQuadView);
                 }
             }
+            render.debugFillFlag(renderOffsetX, renderOffsetZ, dataSize, dataSize, ColumnRenderSource.DebugSourceFlag.DIRECT);
         }
     }
 

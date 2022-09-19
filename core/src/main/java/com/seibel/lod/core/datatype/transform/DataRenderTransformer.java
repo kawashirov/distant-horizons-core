@@ -13,7 +13,7 @@ import java.util.concurrent.ExecutorService;
 //TODO: Merge this with FullToColumnTransformer
 public class DataRenderTransformer {
     public static final ExecutorService TRANSFORMER_THREADS
-            = LodUtil.makeThreadPool(2, "Data/Render Transformer");
+            = LodUtil.makeThreadPool(4, "Data/Render Transformer");
 
     public static CompletableFuture<LodRenderSource> transformDataSource(LodDataSource data, IClientLevel level) {
         return CompletableFuture.supplyAsync(() -> transform(data, level), TRANSFORMER_THREADS);
