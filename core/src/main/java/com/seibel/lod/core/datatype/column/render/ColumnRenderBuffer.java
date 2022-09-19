@@ -302,6 +302,7 @@ public class ColumnRenderBuffer extends RenderBuffer {
                 if (posData.size() == 0 || !ColumnFormat.doesItExist(posData.get(0))
                         || ColumnFormat.isVoid(posData.get(0)))
                     continue;
+                ColumnRenderSource.DebugSourceFlag debugSourceFlag = region.debugGetFlag(x, z);
 
                 ColumnArrayView[][] adjData = new ColumnArrayView[4][];
                 // We extract the adj data in the four cardinal direction
@@ -381,7 +382,7 @@ public class ColumnRenderBuffer extends RenderBuffer {
                     long adjDataBot = i + 1 < posData.size() ? posData.get(i + 1) : ColumnFormat.EMPTY_DATA;
 
                     CubicLodTemplate.addLodToBuffer(data, adjDataTop, adjDataBot, adjData, detailLevel,
-                            x, z, quadBuilder, debugMode);
+                            x, z, quadBuilder, debugMode, debugSourceFlag);
                 }
             }
         }

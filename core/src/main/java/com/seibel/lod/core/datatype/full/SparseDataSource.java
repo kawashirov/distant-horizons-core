@@ -242,14 +242,11 @@ public class SparseDataSource implements LodDataSource {
             if (end != 0xFFFFFFFF) throw new IOException("invalid header end guard");
             int length = dos.readInt();
 
-            if (length <= 0 || length > chunks*chunks/8+64)
+            if (length < 0 || length > (chunks*chunks/8+64)*2)
                 throw new IOException(LodUtil.formatLog("Sparse Flag BitSet size outside reasonable range: {} (expects {} to {})",
                         length, 1, chunks*chunks/8+63));
             byte[] bytes = dos.readNBytes(length);
             BitSet set = BitSet.valueOf(bytes);
-            if (set.size() < chunks*chunks)
-                throw new IOException((LodUtil.formatLog("Sparse Flag BitSet too small: {} != {}*{}",
-                        set.size(), chunks, chunks)));
 
             long[][][] dataChunks = new long[chunks*chunks][][];
 
@@ -332,6 +329,6 @@ public class SparseDataSource implements LodDataSource {
         int chunkZ = z / dataPerChunk;
         FullArrayView chunk = sparseData[chunkX * chunks + chunkZ];
         if (chunk == null) return null;
-        return chunk.get(chunkX % dataPerChunk, chunkZ % dataPerChunk);
+        return chunk.get(x % dataPerChunk, z % dataPerChunk);
     }
 }

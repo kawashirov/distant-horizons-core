@@ -19,6 +19,7 @@
 
 package com.seibel.lod.core.datatype.column.render;
 
+import com.seibel.lod.core.datatype.column.ColumnRenderSource;
 import com.seibel.lod.core.datatype.column.accessor.ColumnFormat;
 import com.seibel.lod.api.enums.rendering.EDebugMode;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
@@ -38,7 +39,8 @@ public class CubicLodTemplate
 	private static final ILodConfigWrapperSingleton CONFIG = SingletonInjector.INSTANCE.get(ILodConfigWrapperSingleton.class);
 
 
-	public static void addLodToBuffer(long data, long topData, long botData, ColumnArrayView[][] adjData, byte detailLevel, int offsetPosX, int offsetOosZ, LodQuadBuilder quadBuilder, EDebugMode debugging)
+	public static void addLodToBuffer(long data, long topData, long botData, ColumnArrayView[][] adjData,
+									  byte detailLevel, int offsetPosX, int offsetOosZ, LodQuadBuilder quadBuilder, EDebugMode debugging, ColumnRenderSource.DebugSourceFlag debugSource)
 	{
 		short width = (short) (1 << detailLevel);
 		short x = (short) LevelPosUtil.convert(detailLevel, offsetPosX, LodUtil.BLOCK_DETAIL_LEVEL);
@@ -89,6 +91,13 @@ public class CubicLodTemplate
 			case SHOW_OVERLAPPING_QUADS_WIREFRAME:
 			{
 				color = ColorUtil.WHITE;
+				fullBright = true;
+				break;
+			}
+			case SHOW_RENDER_SOURCE_FLAG:
+			case SHOW_RENDER_SOURCE_FLAG_WIREFRAME:
+			{
+				color = debugSource == null ? ColorUtil.RED : debugSource.color;
 				fullBright = true;
 				break;
 			}

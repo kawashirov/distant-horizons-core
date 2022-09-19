@@ -163,7 +163,8 @@ public class LodRenderer
 		if (debugModeConfig.get() == EDebugMode.SHOW_DETAIL_WIREFRAME
 			|| debugModeConfig.get() == EDebugMode.SHOW_GENMODE_WIREFRAME
 			|| debugModeConfig.get() == EDebugMode.SHOW_WIREFRAME
-			|| debugModeConfig.get() == EDebugMode.SHOW_OVERLAPPING_QUADS_WIREFRAME) {
+			|| debugModeConfig.get() == EDebugMode.SHOW_OVERLAPPING_QUADS_WIREFRAME
+			|| debugModeConfig.get() == EDebugMode.SHOW_RENDER_SOURCE_FLAG_WIREFRAME) {
 			GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_LINE);
 			//GL32.glDisable(GL32.GL_CULL_FACE);
 		}

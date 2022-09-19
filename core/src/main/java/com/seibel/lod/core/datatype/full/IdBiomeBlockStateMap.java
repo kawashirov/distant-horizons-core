@@ -98,12 +98,12 @@ public class IdBiomeBlockStateMap {
     @Override
     public boolean equals(Object other) {
         if (other == this) return true;
-        if (!(other instanceof IdBiomeBlockStateMap)) return false;
-        IdBiomeBlockStateMap otherMap = (IdBiomeBlockStateMap) other;
-        if (entries.size() != otherMap.entries.size()) return false;
-        for (int i=0; i<entries.size(); i++) {
-            if (!entries.get(i).equals(otherMap.entries.get(i))) return false;
-        }
-        return true;
+//        if (!(other instanceof IdBiomeBlockStateMap)) return false;
+//        IdBiomeBlockStateMap otherMap = (IdBiomeBlockStateMap) other;
+//        if (entries.size() != otherMap.entries.size()) return false;
+//        for (int i=0; i<entries.size(); i++) {
+//            if (!entries.get(i).equals(otherMap.entries.get(i))) return false;
+//        }
+        return false;
     }
 }

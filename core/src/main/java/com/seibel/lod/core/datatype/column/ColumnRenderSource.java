@@ -15,6 +15,7 @@ import com.seibel.lod.core.level.ILevel;
 import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.render.LodRenderSection;
 import com.seibel.lod.core.datatype.LodRenderSource;
+import com.seibel.lod.core.util.ColorUtil;
 import com.seibel.lod.core.util.objects.Reference;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
@@ -45,6 +46,31 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     public final long[] dataContainer;
     public final int[] airDataContainer;
 
+    public enum DebugSourceFlag {
+        FULL(ColorUtil.BLUE),
+        DIRECT(ColorUtil.WHITE),
+        SPARSE(ColorUtil.YELLOW),
+        FILE(ColorUtil.BROWN);
+        public final int color;
+        DebugSourceFlag(int color) {
+            this.color = color;
+        }
+    }
+
+    public final DebugSourceFlag[] debugSourceFlags;
+
+    public void debugFillFlag(int ox, int oz, int w, int h, DebugSourceFlag flag) {
+        for (int x = ox; x < ox + w; x++) {
+            for (int z = oz; z < oz + h; z++) {
+                debugSourceFlags[x * SECTION_SIZE + z] = flag;
+            }
+        }
+    }
+
+    public DebugSourceFlag debugGetFlag(int ox, int oz) {
+        return debugSourceFlags[ox * SECTION_SIZE + oz];
+    }
+
     private boolean isEmpty = true;
 
     /**
@@ -55,6 +81,7 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
         verticalSize = maxVerticalSize;
         dataContainer = new long[SECTION_SIZE * SECTION_SIZE * verticalSize];
         airDataContainer = new int[AIR_SECTION_SIZE * AIR_SECTION_SIZE * verticalSize];
+        debugSourceFlags = new DebugSourceFlag[SECTION_SIZE * SECTION_SIZE];
         this.sectionPos = sectionPos;
         this.yOffset = yOffset;
     }
@@ -98,6 +125,8 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
         verticalSize = inputData.readByte() & 0b01111111;
         dataContainer = loadData(inputData, version, verticalSize);
         airDataContainer = new int[AIR_SECTION_SIZE * AIR_SECTION_SIZE * verticalSize];
+        debugSourceFlags = new DebugSourceFlag[SECTION_SIZE * SECTION_SIZE];
+        debugFillFlag(0, 0, SECTION_SIZE, SECTION_SIZE, DebugSourceFlag.FILE);
     }
 
     @Override
@@ -381,6 +410,7 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
             if (genMode <= srcGenMode) {
                 new ColumnArrayView(dataContainer, verticalSize, i, verticalSize).copyFrom(
                     new ColumnArrayView(src.dataContainer, verticalSize, i, verticalSize));
+                debugSourceFlags[i/verticalSize] = src.debugSourceFlags[i/verticalSize];
             }
         }
     }
