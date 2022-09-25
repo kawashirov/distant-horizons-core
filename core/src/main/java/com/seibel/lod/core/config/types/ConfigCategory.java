@@ -9,8 +9,8 @@ package com.seibel.lod.core.config.types;
 public class ConfigCategory extends AbstractConfigType<Class, ConfigCategory> {
     public String destination;    // Where the category goes to
 
-    public ConfigCategory(ConfigEntryAppearance appearance, Class value, String destination, Listener listener) {
-        super(appearance, value, listener);
+    public ConfigCategory(ConfigEntryAppearance appearance, Class value, String destination) {
+        super(appearance, value);
         this.destination = destination;
     }
 
@@ -39,7 +39,7 @@ public class ConfigCategory extends AbstractConfigType<Class, ConfigCategory> {
         }
 
         public ConfigCategory build() {
-            return new ConfigCategory(tmpAppearance, tmpValue, tmpDestination, tmpListener);
+            return new ConfigCategory(tmpAppearance, tmpValue, tmpDestination);
         }
     }
 }

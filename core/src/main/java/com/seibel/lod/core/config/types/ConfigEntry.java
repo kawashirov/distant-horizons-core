@@ -3,6 +3,9 @@ package com.seibel.lod.core.config.types;
 
 import com.seibel.lod.core.interfaces.config.IConfigEntry;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 /**
  * Use for making the config variables
  * for types that are not supported by it look in ConfigBase
@@ -12,10 +15,18 @@ import com.seibel.lod.core.interfaces.config.IConfigEntry;
  */
 public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implements IConfigEntry<T>
 {
+    public interface Listener {
+        /** Called whenever the value changes at all (including in the code iself) */
+        void onModify();
+        /** Called whenever the value is changed through the UI (only when the done button is pressed) */
+        void onUiModify(); // TODO
+    }
+
     private final T defaultValue;
     private String comment;
     private T min;
     private T max;
+    private final ArrayList<Listener> listener;
 
     // API control //
     /**
@@ -24,20 +35,20 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
      */
     public final boolean allowApiOverride;
     private T apiValue;
-    private Runnable runnable; // What to run when the value gets changed
 
     private final ConfigEntryPerformance performance;
 
 
     /** Creates the entry */
-    private ConfigEntry(ConfigEntryAppearance appearance, T value, String comment, T min, T max, boolean allowApiOverride, ConfigEntryPerformance performance, Listener listener) {
-        super(appearance, value, listener);
+    private ConfigEntry(ConfigEntryAppearance appearance, T value, String comment, T min, T max, boolean allowApiOverride, ConfigEntryPerformance performance, ArrayList<Listener> listener) {
+        super(appearance, value);
         this.defaultValue = value;
         this.comment = comment;
         this.min = min;
         this.max = max;
         this.allowApiOverride = allowApiOverride;
         this.performance = performance;
+        this.listener = listener;
     }
 
 
@@ -61,6 +72,11 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
     public void set(T newValue) {
         super.set(newValue);
         save();
+        this.listener.forEach(Listener::onModify);
+    }
+    public void uiSet(T newValue) {
+        set(newValue);
+        this.listener.forEach(Listener::onUiModify);
     }
     @Override
     public T get() {
@@ -122,6 +138,32 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
         return this.performance;
     }
 
+    /** Adds a listener */
+    public void addListener(Listener newListener) {
+        this.listener.add(newListener);
+    }
+    /** Removes a listener */
+    public void removeListener(Listener oldListener) {
+        this.listener.remove(oldListener);
+    }
+    /** Removes all listeners */
+    public void clearListeners() {
+        this.listener.clear();
+    }
+    /** Gets all the listeners */
+    public ArrayList<Listener> getListeners() {
+        return this.listener;
+    }
+    /** Sets/Replaces the listener list */
+    public void setListeners(ArrayList<Listener> newListeners) {
+        this.listener.clear();
+        this.listener.addAll(newListeners);
+    }
+    public void setListeners(Listener... newListeners) {
+        this.listener.addAll(Arrays.asList(newListeners));
+    }
+
+
     /**
      * Checks if the option is valid
      *
@@ -178,6 +220,7 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
         private T tmpMax;
         private boolean tmpUseApiOverwrite;
         private ConfigEntryPerformance tmpPerformance = ConfigEntryPerformance.DONT_SHOW;
+        protected ArrayList<Listener> tmpListener = new ArrayList<Listener>();
 
         public Builder<T> comment(String newComment) {
             this.tmpComment = newComment;
@@ -213,6 +256,23 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
 
         public Builder<T> setPerformance(ConfigEntryPerformance newPerformance) {
             this.tmpPerformance = newPerformance;
+            return this;
+        }
+
+        public Builder<T> replaceListener(ArrayList<Listener> newListener) {
+            this.tmpListener = newListener;
+            return this;
+        }
+        public Builder<T> addListeners(Listener... newListener) {
+            this.tmpListener.addAll(Arrays.asList(newListener));
+            return this;
+        }
+        public Builder<T> addListener(Listener newListener) {
+            this.tmpListener.add(newListener);
+            return this;
+        }
+        public Builder<T> clearListeners() {
+            this.tmpListener.clear();
             return this;
         }
 

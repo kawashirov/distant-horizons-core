@@ -7,7 +7,7 @@ package com.seibel.lod.core.config.types;
  */
 public class ConfigUIComment extends AbstractConfigType<String, ConfigUIComment>{
     public ConfigUIComment(String value) {
-        super(ConfigEntryAppearance.ONLY_SHOW, value, null); //TODO: Is the listener: null right?
+        super(ConfigEntryAppearance.ONLY_SHOW, value); //TODO: Is the listener: null right?
     }
 
     @Override
