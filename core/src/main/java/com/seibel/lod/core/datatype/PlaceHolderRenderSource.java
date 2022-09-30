@@ -11,64 +11,53 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class PlaceHolderRenderSource implements LodRenderSource {
-    final DhSectionPos pos;
-    boolean isValid = true;
-    public PlaceHolderRenderSource(DhSectionPos pos) {
-        this.pos = pos;
-    }
-
-    @Override
-    public DhSectionPos getSectionPos() {
-        return pos;
-    }
-
-    @Override
-    public byte getDataDetail() {
-        return 0;
-    }
-
-    @Override
-    public void enableRender(IDhClientLevel level, LodQuadTree quadTree) {
-    }
-
-    @Override
-    public void disableRender() {}
-    @Override
-    public void dispose() {}
-    @Override
-    public boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<RenderBuffer> referenceSlots) {
-        return false;
-    }
-    @Override
-    public void saveRender(IDhClientLevel level, RenderMetaFile file, OutputStream dataStream) throws IOException {
-        throw new UnsupportedOperationException("EmptyRenderSource should NEVER be saved!");
-    }
-
-    @Override
-    public byte getRenderVersion() {
-        return 0;
-    }
-
-    public void markInvalid() {
-        isValid = false;
-    }
-
-    @Override
-    public boolean isValid() {
-        return isValid;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return true;
-    }
-
-    @Override
-    public void fastWrite(ChunkSizedData chunkData, IDhClientLevel level) {}
-
-    @Override
-    public void weakWrite(LodRenderSource source) {}
-
-
+public class PlaceHolderRenderSource implements LodRenderSource
+{
+	final DhSectionPos pos;
+	boolean isValid = true;
+	
+	public PlaceHolderRenderSource(DhSectionPos pos) { this.pos = pos; }
+	
+	@Override
+	public DhSectionPos getSectionPos() { return pos; }
+	
+	@Override
+	public byte getDataDetail() { return 0; }
+	
+	@Override
+	public void enableRender(IDhClientLevel level, LodQuadTree quadTree){ /* TODO */ }
+	
+	@Override
+	public void disableRender(){ /* TODO */ }
+	
+	@Override
+	public void dispose(){ /* TODO */ }
+	
+	@Override
+	public boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<RenderBuffer> referenceSlots) { return false; }
+	
+	@Override
+	public void saveRender(IDhClientLevel level, RenderMetaFile file, OutputStream dataStream) throws IOException
+	{
+		throw new UnsupportedOperationException("EmptyRenderSource should NEVER be saved!");
+	}
+	
+	@Override
+	public byte getRenderVersion() { return 0; }
+	
+	public void markInvalid() { isValid = false; }
+	
+	@Override
+	public boolean isValid() { return isValid; }
+	
+	@Override
+	public boolean isEmpty() { return true; }
+	
+	@Override
+	public void fastWrite(ChunkSizedData chunkData, IDhClientLevel level) { /* TODO */ }
+	
+	@Override
+	public void weakWrite(LodRenderSource source) { /* TODO */ }
+	
+	
 }
