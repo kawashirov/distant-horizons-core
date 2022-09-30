@@ -6,7 +6,7 @@ import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.file.datafile.DataMetaFile;
-import com.seibel.lod.core.datatype.LodDataSource;
+import com.seibel.lod.core.datatype.ILodDataSource;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.objects.UnclosableInputStream;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
@@ -15,7 +15,8 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 
-public class FullDataSource extends FullArrayView implements LodDataSource { // 1 chunk
+public class FullDataSource extends FullArrayView implements ILodDataSource
+{ // 1 chunk
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     public static final byte SECTION_SIZE_OFFSET = 6;
     public static final int SECTION_SIZE = 1 << SECTION_SIZE_OFFSET;

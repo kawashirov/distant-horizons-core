@@ -8,7 +8,7 @@ import com.seibel.lod.core.file.datafile.DataMetaFile;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public interface LodDataSource
+public interface ILodDataSource
 {
 	DhSectionPos getSectionPos();
 	

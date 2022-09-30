@@ -9,31 +9,31 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
-public abstract class RenderSourceLoader
+public abstract class AbstractRenderSourceLoader
 {
-	public static final HashMultimap<Class<? extends LodRenderSource>, RenderSourceLoader> loaderRegistry = HashMultimap.create();
-	public static final HashMap<Long, Class<? extends LodRenderSource>> renderTypeIdRegistry = new HashMap<>();
+	public static final HashMultimap<Class<? extends ILodRenderSource>, AbstractRenderSourceLoader> loaderRegistry = HashMultimap.create();
+	public static final HashMap<Long, Class<? extends ILodRenderSource>> renderTypeIdRegistry = new HashMap<>();
 	
-	public static RenderSourceLoader getLoader(long renderTypeId, byte loaderVersion)
+	public static AbstractRenderSourceLoader getLoader(long renderTypeId, byte loaderVersion)
 	{
 		return loaderRegistry.get(renderTypeIdRegistry.get(renderTypeId)).stream()
 				.filter(l -> Arrays.binarySearch(l.loaderSupportedVersions, loaderVersion) >= 0)
 				.findFirst().orElse(null);
 	}
 	
-	public static RenderSourceLoader getLoader(Class<? extends LodRenderSource> clazz, byte loaderVersion)
+	public static AbstractRenderSourceLoader getLoader(Class<? extends ILodRenderSource> clazz, byte loaderVersion)
 	{
 		return loaderRegistry.get(clazz).stream()
 				.filter(l -> Arrays.binarySearch(l.loaderSupportedVersions, loaderVersion) >= 0)
 				.findFirst().orElse(null);
 	}
 	
-	public final Class<? extends LodRenderSource> clazz;
+	public final Class<? extends ILodRenderSource> clazz;
 	public final long renderTypeId;
 	public final byte[] loaderSupportedVersions;
 	public final byte detailOffset;
 	
-	public RenderSourceLoader(Class<? extends LodRenderSource> clazz, long renderTypeId, byte[] loaderSupportedVersions, byte detailOffset)
+	public AbstractRenderSourceLoader(Class<? extends ILodRenderSource> clazz, long renderTypeId, byte[] loaderSupportedVersions, byte detailOffset)
 	{
 		this.renderTypeId = renderTypeId;
 		this.loaderSupportedVersions = loaderSupportedVersions;
@@ -44,7 +44,7 @@ public abstract class RenderSourceLoader
 			throw new IllegalArgumentException("Loader for renderTypeId " + renderTypeId + " already registered with different class: "
 					+ renderTypeIdRegistry.get(renderTypeId) + " != " + clazz);
 		}
-		Set<RenderSourceLoader> loaders = loaderRegistry.get(clazz);
+		Set<AbstractRenderSourceLoader> loaders = loaderRegistry.get(clazz);
 		if (loaders.stream().anyMatch(other -> {
 			// see if any loaderSupportsVersion conflicts with this one
 			for (byte otherVer : other.loaderSupportedVersions)
@@ -64,8 +64,8 @@ public abstract class RenderSourceLoader
 	}
 	
 	// Can return null as meaning the file is out of date or something
-	public abstract LodRenderSource loadRender(RenderMetaFile renderFile, InputStream data, IDhLevel level) throws IOException;
-	public abstract LodRenderSource createRender(LodDataSource dataSource, IDhClientLevel level);
+	public abstract ILodRenderSource loadRender(RenderMetaFile renderFile, InputStream data, IDhLevel level) throws IOException;
+	public abstract ILodRenderSource createRender(ILodDataSource dataSource, IDhClientLevel level);
 	
 	
 }

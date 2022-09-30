@@ -1,20 +1,16 @@
 package com.seibel.lod.core.render;
 
-import com.seibel.lod.core.datatype.LodRenderSource;
+import com.seibel.lod.core.datatype.ILodRenderSource;
 import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.pos.Pos2D;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.renderer.LodRenderer;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.gridList.MovableGridRingList;
-import com.seibel.lod.core.util.math.Mat4f;
 import com.seibel.lod.core.util.math.Vec3f;
 import com.seibel.lod.core.util.objects.SortedArraySet;
 
 import java.util.Comparator;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.Vector;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class RenderBufferHandler {
@@ -136,7 +132,7 @@ public class RenderBufferHandler {
             // If this fails, there may be concurrent modification of the quad tree
             //  (as this update() should be called from the same thread that calls update() on the quad tree)
             LodUtil.assertTrue(section != null);
-            LodRenderSource container = section.getRenderSource();
+            ILodRenderSource container = section.getRenderSource();
 
             // Update self's render buffer state
             boolean shouldRender = section.canRender();

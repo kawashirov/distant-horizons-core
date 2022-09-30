@@ -9,8 +9,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import com.seibel.lod.core.datatype.LodDataSource;
-import com.seibel.lod.core.datatype.DataSourceLoader;
+import com.seibel.lod.core.datatype.ILodDataSource;
+import com.seibel.lod.core.datatype.AbstractDataSourceLoader;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.file.MetaFile;
@@ -28,8 +28,8 @@ public class DataMetaFile extends MetaFile
 	private final IDataSourceProvider handler;
 	private boolean doesFileExist;
 
-	public DataSourceLoader loader;
-	public Class<? extends LodDataSource> dataType;
+	public AbstractDataSourceLoader loader;
+	public Class<? extends ILodDataSource> dataType;
 	// The '?' type should either be:
 	//    SoftReference<LodDataSource>, or		    - Non-dirty file that can be GCed
 	//    CompletableFuture<LodDataSource>, or      - File that is being loaded. No guarantee that the type is promotable or not
@@ -51,11 +51,11 @@ public class DataMetaFile extends MetaFile
 	private final AtomicBoolean inCacheWriteAccessAsserter = new AtomicBoolean(false);
 
 	// ===Object lifetime stuff===
-	private static final ReferenceQueue<LodDataSource> lifeCycleDebugQueue = new ReferenceQueue<>();
+	private static final ReferenceQueue<ILodDataSource> lifeCycleDebugQueue = new ReferenceQueue<>();
 	private static final Set<DataObjTracker> lifeCycleDebugSet = ConcurrentHashMap.newKeySet();
-	private static class DataObjTracker extends PhantomReference<LodDataSource> implements Closeable {
+	private static class DataObjTracker extends PhantomReference<ILodDataSource> implements Closeable {
 		private final DhSectionPos pos;
-		DataObjTracker(LodDataSource data) {
+		DataObjTracker(ILodDataSource data) {
 			super(data, lifeCycleDebugQueue);
 			//LOGGER.info("Phantom created on {}! count: {}", data.getSectionPos(), lifeCycleDebugSet.size());
 			lifeCycleDebugSet.add(this);
@@ -86,7 +86,7 @@ public class DataMetaFile extends MetaFile
 		this.handler = handler;
 		this.level = level;
 		LodUtil.assertTrue(metaData != null);
-		loader = DataSourceLoader.getLoader(metaData.dataTypeId, metaData.loaderVersion);
+		loader = AbstractDataSourceLoader.getLoader(metaData.dataTypeId, metaData.loaderVersion);
 		if (loader == null) {
 			throw new IOException("Invalid file: Data type loader not found: "
 					+ metaData.dataTypeId + "(v" + metaData.loaderVersion + ")");
@@ -131,14 +131,14 @@ public class DataMetaFile extends MetaFile
 
 	// Cause: Generic Type runtime casting cannot safety check it.
 	// However, the Union type ensures the 'data' should only contain the listed type.
-	public CompletableFuture<LodDataSource> loadOrGetCached() {
+	public CompletableFuture<ILodDataSource> loadOrGetCached() {
 		debugCheck();
 		Object obj = data.get();
 
-		CompletableFuture<LodDataSource> cached = _readCached(obj);
+		CompletableFuture<ILodDataSource> cached = _readCached(obj);
 		if (cached != null) return cached;
 
-		CompletableFuture<LodDataSource> future = new CompletableFuture<>();
+		CompletableFuture<ILodDataSource> future = new CompletableFuture<>();
 
 		// Would use faster and non-nesting Compare and exchange. But java 8 doesn't have it! :(
 		boolean worked = data.compareAndSet(obj, future);
@@ -168,7 +168,7 @@ public class DataMetaFile extends MetaFile
 						if (metaData == null)
 							throw new IllegalStateException("Meta data not loaded!");
 						// Load the file.
-						LodDataSource data;
+						ILodDataSource data;
 						try (FileInputStream fio = getDataContent()){
 							data = loader.loadData(this, fio, level);
 						} catch (IOException e) {
@@ -199,8 +199,8 @@ public class DataMetaFile extends MetaFile
 		return future;
 	}
 
-	private static MetaData makeMetaData(LodDataSource data) {
-		DataSourceLoader loader = DataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
+	private static MetaData makeMetaData(ILodDataSource data) {
+		AbstractDataSourceLoader loader = AbstractDataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
 		return new MetaData(data.getSectionPos(), -1, 1,
 				data.getDataDetail(), loader == null ? 0 : loader.datatypeId, data.getDataVersion());
 	}
@@ -208,12 +208,12 @@ public class DataMetaFile extends MetaFile
 	// "unchecked": Suppress casting of CompletableFuture<?> to CompletableFuture<LodDataSource>
 	// "PointlessBooleanExpression": Suppress explicit (boolean == false) check for more understandable CAS operation code.
 	@SuppressWarnings({"unchecked", "PointlessBooleanExpression"})
-	private CompletableFuture<LodDataSource> _readCached(Object obj) {
+	private CompletableFuture<ILodDataSource> _readCached(Object obj) {
 		// Has file cached in RAM and not freed yet.
 		if ((obj instanceof SoftReference<?>)) {
 			Object inner = ((SoftReference<?>)obj).get();
 			if (inner != null) {
-				LodUtil.assertTrue(inner instanceof LodDataSource);
+				LodUtil.assertTrue(inner instanceof ILodDataSource);
 				boolean isEmpty = writeQueue.get().queue.isEmpty();
 				// If the queue is empty, and the CAS on inCacheWriteLock succeeds, then we are the thread
 				// that will be applying the changes to the cache.
@@ -227,7 +227,7 @@ public class DataMetaFile extends MetaFile
 					//       For now, I'll go for the latter option and just hope nothing goes wrong...
 					if (inCacheWriteAccessAsserter.getAndSet(true) == false) {
 						try {
-							return handler.onDataFileRefresh((LodDataSource) inner, this::applyWriteQueue, this::saveChanges);
+							return handler.onDataFileRefresh((ILodDataSource) inner, this::applyWriteQueue, this::saveChanges);
 						} catch (Exception e) {
 							LOGGER.error("Error while applying changes to LodDataSource at {}: ", pos, e);
 						} finally {
@@ -235,11 +235,11 @@ public class DataMetaFile extends MetaFile
 						}
 					} else {
 						// or, return the cached data. FIXME: See above.
-						return CompletableFuture.completedFuture((LodDataSource) inner);
+						return CompletableFuture.completedFuture((ILodDataSource) inner);
 					}
 				} else {
 					// or, return the cached data.
-					return CompletableFuture.completedFuture((LodDataSource) inner);
+					return CompletableFuture.completedFuture((ILodDataSource) inner);
 				}
 			}
 		}
@@ -247,7 +247,7 @@ public class DataMetaFile extends MetaFile
 		//==== Cached file out of scrope. ====
 		// Someone is already trying to complete it. so just return the obj.
 		if ((obj instanceof CompletableFuture<?>)) {
-			return (CompletableFuture<LodDataSource>)obj;
+			return (CompletableFuture<ILodDataSource>)obj;
 		}
 		return null;
 	}
@@ -265,7 +265,7 @@ public class DataMetaFile extends MetaFile
 		_backQueue = queue;
 	}
 
-	private void saveChanges(LodDataSource data) {
+	private void saveChanges(ILodDataSource data) {
 		if (data.isEmpty()) {
 			if (path.exists()) if (!path.delete()) LOGGER.warn("Failed to delete data file at {}", path);
 			doesFileExist = false;
@@ -274,7 +274,7 @@ public class DataMetaFile extends MetaFile
 				// Write/Update data
 				LodUtil.assertTrue(metaData != null);
 				metaData.dataLevel = data.getDataDetail();
-				loader = DataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
+				loader = AbstractDataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
 				LodUtil.assertTrue(loader != null, "No loader for {} (v{})", data.getClass(), data.getDataVersion());
 				dataType = data.getClass();
 				metaData.dataTypeId = loader == null ? 0 : loader.datatypeId;
@@ -288,7 +288,7 @@ public class DataMetaFile extends MetaFile
 	}
 
 	// Return whether any write has happened to the data
-	private boolean applyWriteQueue(LodDataSource data) {
+	private boolean applyWriteQueue(ILodDataSource data) {
 		// Poll the write queue
 		// First check if write queue is empty, then swap the write queue.
 		// Must be done in this order to ensure isValid work properly. See isValid() for details.

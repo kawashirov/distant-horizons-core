@@ -8,21 +8,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
-public abstract class DataSourceLoader
+public abstract class AbstractDataSourceLoader
 {
 	
-	public static final HashMultimap<Class<? extends LodDataSource>, DataSourceLoader> loaderRegistry = HashMultimap.create();
-	public final Class<? extends LodDataSource> clazz;
-	public static final HashMap<Long, Class<? extends LodDataSource>> datatypeIdRegistry = new HashMap<>();
+	public static final HashMultimap<Class<? extends ILodDataSource>, AbstractDataSourceLoader> loaderRegistry = HashMultimap.create();
+	public final Class<? extends ILodDataSource> clazz;
+	public static final HashMap<Long, Class<? extends ILodDataSource>> datatypeIdRegistry = new HashMap<>();
 	
-	public static DataSourceLoader getLoader(long dataTypeId, byte dataVersion)
+	public static AbstractDataSourceLoader getLoader(long dataTypeId, byte dataVersion)
 	{
 		return loaderRegistry.get(datatypeIdRegistry.get(dataTypeId)).stream()
 				.filter(l -> Arrays.binarySearch(l.loaderSupportedVersions, dataVersion) >= 0)
 				.findFirst().orElse(null);
 	}
 	
-	public static DataSourceLoader getLoader(Class<? extends LodDataSource> clazz, byte dataVersion)
+	public static AbstractDataSourceLoader getLoader(Class<? extends ILodDataSource> clazz, byte dataVersion)
 	{
 		return loaderRegistry.get(clazz).stream()
 				.filter(l -> Arrays.binarySearch(l.loaderSupportedVersions, dataVersion) >= 0)
@@ -32,7 +32,7 @@ public abstract class DataSourceLoader
 	public final long datatypeId;
 	public final byte[] loaderSupportedVersions;
 	
-	public DataSourceLoader(Class<? extends LodDataSource> clazz, long datatypeId, byte[] loaderSupportedVersions)
+	public AbstractDataSourceLoader(Class<? extends ILodDataSource> clazz, long datatypeId, byte[] loaderSupportedVersions)
 	{
 		this.datatypeId = datatypeId;
 		this.loaderSupportedVersions = loaderSupportedVersions;
@@ -43,7 +43,7 @@ public abstract class DataSourceLoader
 			throw new IllegalArgumentException("Loader for datatypeId " + datatypeId + " already registered with different class: "
 					+ datatypeIdRegistry.get(datatypeId) + " != " + clazz);
 		}
-		Set<DataSourceLoader> loaders = loaderRegistry.get(clazz);
+		Set<AbstractDataSourceLoader> loaders = loaderRegistry.get(clazz);
 		if (loaders.stream().anyMatch(other -> {
 			// see if any loaderSupportsVersion conflicts with this one
 			for (byte otherVer : other.loaderSupportedVersions)
@@ -62,7 +62,7 @@ public abstract class DataSourceLoader
 	}
 	
 	// Can return null as meaning the requirement is not met
-	public abstract LodDataSource loadData(DataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException;
+	public abstract ILodDataSource loadData(DataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException;
 	
 	
 }

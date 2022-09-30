@@ -13,7 +13,7 @@ import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.render.LodRenderSection;
-import com.seibel.lod.core.datatype.LodRenderSource;
+import com.seibel.lod.core.datatype.ILodRenderSource;
 import com.seibel.lod.core.util.ColorUtil;
 import com.seibel.lod.core.util.objects.Reference;
 import com.seibel.lod.core.util.LodUtil;
@@ -28,7 +28,7 @@ import java.nio.ByteOrder;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
+public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     public static final boolean DO_SAFETY_CHECKS = true;
     public static final byte SECTION_SIZE_OFFSET = 6;
@@ -392,7 +392,7 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     }
 
     @Override
-    public void weakWrite(LodRenderSource source) {
+    public void weakWrite(ILodRenderSource source) {
         LodUtil.assertTrue(source instanceof ColumnRenderSource);
         ColumnRenderSource src = (ColumnRenderSource) source;
 

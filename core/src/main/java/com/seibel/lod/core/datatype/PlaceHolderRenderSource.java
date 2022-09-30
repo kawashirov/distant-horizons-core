@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class PlaceHolderRenderSource implements LodRenderSource
+public class PlaceHolderRenderSource implements ILodRenderSource
 {
 	final DhSectionPos pos;
 	boolean isValid = true;
@@ -57,7 +57,7 @@ public class PlaceHolderRenderSource implements LodRenderSource
 	public void fastWrite(ChunkSizedData chunkData, IDhClientLevel level) { /* TODO */ }
 	
 	@Override
-	public void weakWrite(LodRenderSource source) { /* TODO */ }
+	public void weakWrite(ILodRenderSource source) { /* TODO */ }
 	
 	
 }

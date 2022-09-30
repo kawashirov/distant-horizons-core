@@ -1,6 +1,6 @@
 package com.seibel.lod.core.file.datafile;
 
-import com.seibel.lod.core.datatype.LodDataSource;
+import com.seibel.lod.core.datatype.ILodDataSource;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.full.FullDataSource;
 import com.seibel.lod.core.datatype.full.SparseDataSource;
@@ -23,13 +23,13 @@ public class GeneratedDataFileHandler extends DataFileHandler {
 
     AtomicReference<GenerationQueue> queue = new AtomicReference<>(null);
     // TODO: Should I include a lib that impl weak concurrent hash map?
-    final Map<LodDataSource, GenTask> genQueue = Collections.synchronizedMap(new WeakHashMap<>());
+    final Map<ILodDataSource, GenTask> genQueue = Collections.synchronizedMap(new WeakHashMap<>());
 
     class GenTask extends GenerationQueue.GenTaskTracker {
         final DhSectionPos pos;
-        WeakReference<LodDataSource> targetData;
-        LodDataSource loadedTargetData = null;
-        GenTask(DhSectionPos pos, WeakReference<LodDataSource> targetData) {
+        WeakReference<ILodDataSource> targetData;
+        ILodDataSource loadedTargetData = null;
+        GenTask(DhSectionPos pos, WeakReference<ILodDataSource> targetData) {
             this.pos = pos;
             this.targetData = targetData;
         }
@@ -63,15 +63,15 @@ public class GeneratedDataFileHandler extends DataFileHandler {
         boolean worked = queue.compareAndSet(null, newQueue);
         LodUtil.assertTrue(worked, "previous queue is still here!");
         synchronized (genQueue) {
-            for (Map.Entry<LodDataSource, GenTask> entry : genQueue.entrySet()) {
-                LodDataSource source = entry.getKey();
+            for (Map.Entry<ILodDataSource, GenTask> entry : genQueue.entrySet()) {
+                ILodDataSource source = entry.getKey();
                 DhSectionPos pos = source.getSectionPos();
                 GenTask task = entry.getValue();
                 queue.get().submitGenTask(pos.getSectionBBoxPos(), source.getDataDetail(), task)
                         .whenComplete(
                                 (b, ex) -> {
                                     if (ex != null) LOGGER.error("Uncaught Gen Task Exception at {}:", pos, ex);
-                                    LodDataSource data = task.targetData.get();
+                                    ILodDataSource data = task.targetData.get();
                                     if (ex == null && b) {
                                         files.get(task.pos).metaData.dataVersion.incrementAndGet();
                                         genQueue.remove(data, task);
@@ -91,7 +91,7 @@ public class GeneratedDataFileHandler extends DataFileHandler {
     }
 
     @Override
-    public CompletableFuture<LodDataSource> onCreateDataFile(DataMetaFile file) {
+    public CompletableFuture<ILodDataSource> onCreateDataFile(DataMetaFile file) {
         DhSectionPos pos = file.pos;
         ArrayList<DataMetaFile> existFiles = new ArrayList<>();
         ArrayList<DhSectionPos> missing = new ArrayList<>();
@@ -109,7 +109,7 @@ public class GeneratedDataFileHandler extends DataFileHandler {
                         .whenComplete(
                         (b, ex) -> {
                             if (ex != null) LOGGER.error("Uncaught Gen Task Exception at {}:", pos, ex);
-                            LodDataSource data = task.targetData.get();
+                            ILodDataSource data = task.targetData.get();
                             if (ex == null && b) {
                                 files.get(task.pos).metaData.dataVersion.incrementAndGet();
                                 genQueue.remove(data, task);

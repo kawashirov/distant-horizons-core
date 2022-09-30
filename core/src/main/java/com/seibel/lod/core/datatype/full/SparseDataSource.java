@@ -1,6 +1,6 @@
 package com.seibel.lod.core.datatype.full;
 
-import com.seibel.lod.core.datatype.LodDataSource;
+import com.seibel.lod.core.datatype.ILodDataSource;
 import com.seibel.lod.core.datatype.full.accessor.FullArrayView;
 import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;
 import com.seibel.lod.core.level.IDhLevel;
@@ -14,7 +14,8 @@ import org.apache.logging.log4j.Logger;
 import java.io.*;
 import java.util.BitSet;
 
-public class SparseDataSource implements LodDataSource {
+public class SparseDataSource implements ILodDataSource
+{
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     public static final byte SPARSE_UNIT_DETAIL = 4;
     public static final byte SPARSE_UNIT_SIZE = 1 << SPARSE_UNIT_DETAIL;
@@ -300,7 +301,7 @@ public class SparseDataSource implements LodDataSource {
     }
 
 
-    public LodDataSource promote(LodDataSource generatedData) {
+    public ILodDataSource promote(ILodDataSource generatedData) {
         if (!(generatedData instanceof FullDataSource) && !(generatedData instanceof SparseDataSource))
             throw new UnsupportedOperationException("Requires FullDataSource for the promotion!");
         if (generatedData instanceof FullDataSource) {
@@ -312,7 +313,7 @@ public class SparseDataSource implements LodDataSource {
         }
     }
 
-    public LodDataSource trySelfPromote() {
+    public ILodDataSource trySelfPromote() {
         if (isEmpty) return this;
         for (FullArrayView array : sparseData) {
             if (array == null) return this;

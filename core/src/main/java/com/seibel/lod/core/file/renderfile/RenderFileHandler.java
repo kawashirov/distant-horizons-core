@@ -1,10 +1,10 @@
 package com.seibel.lod.core.file.renderfile;
 
 import com.google.common.collect.HashMultimap;
-import com.seibel.lod.core.datatype.LodDataSource;
+import com.seibel.lod.core.datatype.ILodDataSource;
 import com.seibel.lod.core.datatype.PlaceHolderRenderSource;
-import com.seibel.lod.core.datatype.LodRenderSource;
-import com.seibel.lod.core.datatype.RenderSourceLoader;
+import com.seibel.lod.core.datatype.ILodRenderSource;
+import com.seibel.lod.core.datatype.AbstractRenderSourceLoader;
 import com.seibel.lod.core.datatype.column.ColumnRenderSource;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.transform.DataRenderTransformer;
@@ -111,7 +111,7 @@ public class RenderFileHandler implements IRenderSourceProvider {
      * This call is concurrent. I.e. it supports multiple threads calling this method at the same time.
      */
     @Override
-    public CompletableFuture<LodRenderSource> read(DhSectionPos pos) {
+    public CompletableFuture<ILodRenderSource> read(DhSectionPos pos) {
         RenderMetaFile metaFile = files.get(pos);
         if (metaFile == null) {
             RenderMetaFile newMetaFile;
@@ -191,7 +191,7 @@ public class RenderFileHandler implements IRenderSourceProvider {
         return new File(saveDir, pos.serialize() + ".lod");
     }
 
-    public CompletableFuture<LodRenderSource> onCreateRenderFile(RenderMetaFile file) {
+    public CompletableFuture<ILodRenderSource> onCreateRenderFile(RenderMetaFile file) {
         final int vertSize = Config.Client.Graphics.Quality.verticalQuality
                 .get().calculateMaxVerticalData((byte) (file.pos.sectionDetail - ColumnRenderSource.SECTION_SIZE_OFFSET));
         return CompletableFuture.completedFuture(
@@ -200,10 +200,10 @@ public class RenderFileHandler implements IRenderSourceProvider {
 
     private final ConcurrentHashMap<DhSectionPos, Object> cacheRecreationGuards = new ConcurrentHashMap<>();
 
-    private void updateCache(LodRenderSource data, RenderMetaFile file) {
+    private void updateCache(ILodRenderSource data, RenderMetaFile file) {
         if (cacheRecreationGuards.putIfAbsent(file.pos, new Object()) != null) return;
-        final WeakReference<LodRenderSource> dataRef = new WeakReference<>(data);
-        CompletableFuture<LodDataSource> dataFuture = dataSourceProvider.read(data.getSectionPos());
+        final WeakReference<ILodRenderSource> dataRef = new WeakReference<>(data);
+        CompletableFuture<ILodDataSource> dataFuture = dataSourceProvider.read(data.getSectionPos());
         final long version = dataSourceProvider.getLatestCacheVersion(data.getSectionPos());
                 DataRenderTransformer.asyncTransformDataSource(
                         dataFuture.thenApply((d) -> {
@@ -225,7 +225,7 @@ public class RenderFileHandler implements IRenderSourceProvider {
 
     }
 
-    public LodRenderSource onRenderFileLoaded(LodRenderSource data, RenderMetaFile file) {
+    public ILodRenderSource onRenderFileLoaded(ILodRenderSource data, RenderMetaFile file) {
         long newCacheVersion = dataSourceProvider.getLatestCacheVersion(file.pos);
         //NOTE: Do this instead of direct compare so values that wrapped around still works correctly.
         if (newCacheVersion - file.metaData.dataVersion.get() <= 0)
@@ -234,32 +234,32 @@ public class RenderFileHandler implements IRenderSourceProvider {
         return data;
     }
 
-    public LodRenderSource onLoadingRenderFile(RenderMetaFile file) {
+    public ILodRenderSource onLoadingRenderFile(RenderMetaFile file) {
         return null; //Default behaviour
     }
 
-    private void write(LodRenderSource target, RenderMetaFile file,
-                       LodRenderSource newData, long newDataVersion) {
+    private void write(ILodRenderSource target, RenderMetaFile file,
+                       ILodRenderSource newData, long newDataVersion) {
         if (target == null) return;
         if (newData == null) return;
         target.weakWrite(newData);
         file.metaData.dataVersion.set(newDataVersion);
         file.metaData.dataLevel = target.getDataDetail();
-        file.loader = RenderSourceLoader.getLoader(target.getClass(), target.getRenderVersion());
+        file.loader = AbstractRenderSourceLoader.getLoader(target.getClass(), target.getRenderVersion());
         file.dataType = target.getClass();
         file.metaData.dataTypeId = file.loader.renderTypeId;
         file.metaData.loaderVersion = target.getRenderVersion();
         file.save(target, level);
     }
 
-    public void onReadRenderSourceFromCache(RenderMetaFile file, LodRenderSource data) {
+    public void onReadRenderSourceFromCache(RenderMetaFile file, ILodRenderSource data) {
         long newCacheVersion = dataSourceProvider.getLatestCacheVersion(file.pos);
         //NOTE: Do this instead of direct compare so values that wrapped around still works correctly.
         if (newCacheVersion - file.metaData.dataVersion.get() > 0)
             updateCache(data, file);
     }
 
-    public boolean refreshRenderSource(LodRenderSource source) {
+    public boolean refreshRenderSource(ILodRenderSource source) {
         RenderMetaFile file = files.get(source.getSectionPos());
         if (source instanceof PlaceHolderRenderSource) {
             if (file == null || file.metaData == null) {

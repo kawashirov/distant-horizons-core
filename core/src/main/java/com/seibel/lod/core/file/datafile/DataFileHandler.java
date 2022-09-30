@@ -1,7 +1,7 @@
 package com.seibel.lod.core.file.datafile;
 
 import com.google.common.collect.HashMultimap;
-import com.seibel.lod.core.datatype.LodDataSource;
+import com.seibel.lod.core.datatype.ILodDataSource;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.full.FullDataSource;
 import com.seibel.lod.core.datatype.full.SparseDataSource;
@@ -215,7 +215,7 @@ public class DataFileHandler implements IDataSourceProvider {
     * This call is concurrent. I.e. it supports multiple threads calling this method at the same time.
      */
     @Override
-    public CompletableFuture<LodDataSource> read(DhSectionPos pos) {
+    public CompletableFuture<ILodDataSource> read(DhSectionPos pos) {
         topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetail));
         DataMetaFile metaFile = atomicGetOrMakeFile(pos);
         if (metaFile == null) return CompletableFuture.completedFuture(null);
@@ -262,7 +262,7 @@ public class DataFileHandler implements IDataSourceProvider {
     }
 
     @Override
-    public CompletableFuture<LodDataSource> onCreateDataFile(DataMetaFile file) {
+    public CompletableFuture<ILodDataSource> onCreateDataFile(DataMetaFile file) {
         DhSectionPos pos = file.pos;
         ArrayList<DataMetaFile> existFiles = new ArrayList<>();
         ArrayList<DhSectionPos> missing = new ArrayList<>();
@@ -301,12 +301,12 @@ public class DataFileHandler implements IDataSourceProvider {
     }
 
     @Override
-    public LodDataSource onDataFileLoaded(LodDataSource source, MetaFile.MetaData metaData,
-                                          Consumer<LodDataSource> onUpdated, Function<LodDataSource, Boolean> updater) {
+    public ILodDataSource onDataFileLoaded(ILodDataSource source, MetaFile.MetaData metaData,
+                                          Consumer<ILodDataSource> onUpdated, Function<ILodDataSource, Boolean> updater) {
         boolean changed = updater.apply(source);
         if (changed) metaData.dataVersion.incrementAndGet();
         if (source instanceof SparseDataSource) {
-            LodDataSource newSource = ((SparseDataSource) source).trySelfPromote();
+            ILodDataSource newSource = ((SparseDataSource) source).trySelfPromote();
             changed |= newSource != source;
             source = newSource;
         }
@@ -314,12 +314,12 @@ public class DataFileHandler implements IDataSourceProvider {
         return source;
     }
     @Override
-    public CompletableFuture<LodDataSource> onDataFileRefresh(LodDataSource source, Function<LodDataSource, Boolean> updater, Consumer<LodDataSource> onUpdated) {
+    public CompletableFuture<ILodDataSource> onDataFileRefresh(ILodDataSource source, Function<ILodDataSource, Boolean> updater, Consumer<ILodDataSource> onUpdated) {
         return CompletableFuture.supplyAsync(() -> {
-            LodDataSource sourceLocal = source;
+            ILodDataSource sourceLocal = source;
             boolean changed = updater.apply(sourceLocal);
             if (sourceLocal instanceof SparseDataSource) {
-                LodDataSource newSource = ((SparseDataSource) sourceLocal).trySelfPromote();
+                ILodDataSource newSource = ((SparseDataSource) sourceLocal).trySelfPromote();
                 changed |= newSource != sourceLocal;
                 sourceLocal = newSource;
             }

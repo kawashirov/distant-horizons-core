@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicReference;
 
-public interface LodRenderSource
+public interface ILodRenderSource
 {
 	DhSectionPos getSectionPos();
 	
@@ -44,5 +44,5 @@ public interface LodRenderSource
 	void fastWrite(ChunkSizedData chunkData, IDhClientLevel level);
 	
 	/** Only override the data that has not been written directly using write(), and skip those that are empty */ 
-	void weakWrite(LodRenderSource source);
+	void weakWrite(ILodRenderSource source);
 }

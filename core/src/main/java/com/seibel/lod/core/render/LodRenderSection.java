@@ -2,7 +2,7 @@ package com.seibel.lod.core.render;
 
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
-import com.seibel.lod.core.datatype.LodRenderSource;
+import com.seibel.lod.core.datatype.ILodRenderSource;
 import com.seibel.lod.core.file.renderfile.IRenderSourceProvider;
 
 import java.util.concurrent.CompletableFuture;
@@ -16,8 +16,8 @@ public class LodRenderSection {
     public byte childCount = 0;
 
     // TODO: Should I provide a way to change the render source?
-    private LodRenderSource lodRenderSource;
-    private CompletableFuture<LodRenderSource> loadFuture;
+    private ILodRenderSource lodRenderSource;
+    private CompletableFuture<ILodRenderSource> loadFuture;
     private boolean isRenderEnabled = false;
     private IRenderSourceProvider provider = null;
 
@@ -102,7 +102,7 @@ public class LodRenderSection {
         return lodRenderSource != null && !lodRenderSource.isValid();
     }
 
-    public LodRenderSource getRenderSource() {
+    public ILodRenderSource getRenderSource() {
         return lodRenderSource;
     }
 
