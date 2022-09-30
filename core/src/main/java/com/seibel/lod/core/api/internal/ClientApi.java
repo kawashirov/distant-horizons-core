@@ -38,7 +38,7 @@ import com.seibel.lod.core.render.renderer.TestRenderer;
 import com.seibel.lod.core.util.RenderUtil;
 import com.seibel.lod.core.world.DhClientWorld;
 import com.seibel.lod.core.world.DhWorld;
-import com.seibel.lod.core.world.IClientWorld;
+import com.seibel.lod.core.world.IDhClientWorld;
 import com.seibel.lod.core.world.WorldEnvironment;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
@@ -216,9 +216,9 @@ public class ClientApi
 		ConfigBasedLogger.updateAll();
 		ConfigBasedSpamLogger.updateAll(doFlush);
 		
-		if (SharedApi.currentWorld instanceof IClientWorld)
+		if (SharedApi.currentWorld instanceof IDhClientWorld)
 		{
-			((IClientWorld) SharedApi.currentWorld).clientTick();
+			((IDhClientWorld) SharedApi.currentWorld).clientTick();
 		}
 		profiler.pop();
 	}

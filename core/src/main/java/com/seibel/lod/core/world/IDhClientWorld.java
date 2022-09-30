@@ -1,5 +1,6 @@
 package com.seibel.lod.core.world;
 
-public interface IClientWorld {
+public interface IDhClientWorld
+{
     void clientTick();
 }

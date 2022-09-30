@@ -16,7 +16,7 @@ import java.util.HashSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
-public class DhClientServerWorld extends DhWorld implements IClientWorld, IServerWorld
+public class DhClientServerWorld extends DhWorld implements IDhClientWorld, IDhServerWorld
 {
     private final HashMap<ILevelWrapper, DhClientServerLevel> levelObjMap;
     private final HashSet<DhClientServerLevel> dhLevels;

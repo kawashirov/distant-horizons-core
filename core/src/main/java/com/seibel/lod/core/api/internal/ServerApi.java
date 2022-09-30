@@ -26,7 +26,7 @@ import com.seibel.lod.core.DependencyInjection.DhApiEventInjector;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.world.DhClientServerWorld;
 import com.seibel.lod.core.world.DhServerWorld;
-import com.seibel.lod.core.world.IServerWorld;
+import com.seibel.lod.core.world.IDhServerWorld;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.wrapperInterfaces.IVersionConstants;
@@ -66,8 +66,8 @@ public class ServerApi
 	private int lastWorldGenTickDelta = 0;
 	public void serverTickEvent()
 	{
-		if (SharedApi.currentWorld instanceof IServerWorld) {
-			IServerWorld serverWorld = (IServerWorld) SharedApi.currentWorld;
+		if (SharedApi.currentWorld instanceof IDhServerWorld) {
+			IDhServerWorld serverWorld = (IDhServerWorld) SharedApi.currentWorld;
 			serverWorld.serverTick();
 			lastWorldGenTickDelta--;
 			if (lastWorldGenTickDelta <= 0) {
@@ -117,7 +117,7 @@ public class ServerApi
 	@Deprecated
 	public void serverSaveEvent() {
 		if (ENABLE_EVENT_LOGGING) LOGGER.info("Server world {} saving", SharedApi.currentWorld);
-		if (SharedApi.currentWorld instanceof IServerWorld)
+		if (SharedApi.currentWorld instanceof IDhServerWorld)
 		{
 			SharedApi.currentWorld.saveAndFlush();
 			

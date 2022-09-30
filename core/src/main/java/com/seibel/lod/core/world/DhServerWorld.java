@@ -11,7 +11,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 
-public class DhServerWorld extends DhWorld implements IServerWorld
+public class DhServerWorld extends DhWorld implements IDhServerWorld
 {
     private final HashMap<IServerLevelWrapper, DhServerLevel> levels;
     public final LocalSaveStructure saveStructure;

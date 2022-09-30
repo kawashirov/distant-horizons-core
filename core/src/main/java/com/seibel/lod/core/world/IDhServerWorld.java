@@ -1,6 +1,7 @@
 package com.seibel.lod.core.world;
 
-public interface IServerWorld {
+public interface IDhServerWorld
+{
     void serverTick();
     void doWorldGen();
 }

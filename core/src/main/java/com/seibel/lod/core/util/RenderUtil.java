@@ -21,7 +21,7 @@ package com.seibel.lod.core.util;
 
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.world.DhWorld;
-import com.seibel.lod.core.world.IClientWorld;
+import com.seibel.lod.core.world.IDhClientWorld;
 import com.seibel.lod.core.api.internal.SharedApi;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
@@ -213,7 +213,7 @@ public class RenderUtil
 		if (dhWorld == null)
 			return false;
 		
-		if (!(SharedApi.currentWorld instanceof IClientWorld))
+		if (!(SharedApi.currentWorld instanceof IDhClientWorld))
 			return false; // don't attempt to render server worlds
 		
 		//FIXME: Improve class hierarchy of DhWorld, IClientWorld, IServerWorld to fix all this hard casting

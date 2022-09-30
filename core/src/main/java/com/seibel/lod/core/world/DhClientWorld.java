@@ -16,7 +16,7 @@ import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
-public class DhClientWorld extends DhWorld implements IClientWorld
+public class DhClientWorld extends DhWorld implements IDhClientWorld
 {
     private final HashMap<IClientLevelWrapper, DhClientLevel> levels;
     public final ClientOnlySaveStructure saveStructure;
