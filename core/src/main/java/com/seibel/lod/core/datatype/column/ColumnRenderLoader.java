@@ -4,10 +4,10 @@ import com.seibel.lod.core.datatype.LodDataSource;
 import com.seibel.lod.core.datatype.full.FullDataSource;
 import com.seibel.lod.core.datatype.full.SparseDataSource;
 import com.seibel.lod.core.datatype.transform.FullToColumnTransformer;
-import com.seibel.lod.core.level.IClientLevel;
+import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.datatype.LodRenderSource;
 import com.seibel.lod.core.datatype.RenderSourceLoader;
-import com.seibel.lod.core.level.ILevel;
+import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.file.renderfile.RenderMetaFile;
 import com.seibel.lod.core.util.LodUtil;
 
@@ -21,13 +21,13 @@ public class ColumnRenderLoader extends RenderSourceLoader {
     }
 
     @Override
-    public LodRenderSource loadRender(RenderMetaFile dataFile, InputStream data, ILevel level) throws IOException {
+    public LodRenderSource loadRender(RenderMetaFile dataFile, InputStream data, IDhLevel level) throws IOException {
         DataInputStream dis = new DataInputStream(data); // DO NOT CLOSE
         return new ColumnRenderSource(dataFile.pos, dis, dataFile.metaData.loaderVersion, level);
     }
 
     @Override
-    public LodRenderSource createRender(LodDataSource dataSource, IClientLevel level) {
+    public LodRenderSource createRender(LodDataSource dataSource, IDhClientLevel level) {
         if (dataSource instanceof FullDataSource) {
             return FullToColumnTransformer.transformFullDataToColumnData(level, (FullDataSource) dataSource);
         } else if (dataSource instanceof SparseDataSource) {

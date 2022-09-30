@@ -4,8 +4,8 @@ import com.seibel.lod.core.datatype.LodDataSource;
 import com.seibel.lod.core.datatype.LodRenderSource;
 import com.seibel.lod.core.datatype.RenderSourceLoader;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
-import com.seibel.lod.core.level.IClientLevel;
-import com.seibel.lod.core.level.ILevel;
+import com.seibel.lod.core.level.IDhClientLevel;
+import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.file.MetaFile;
 import com.seibel.lod.core.pos.DhSectionPos;
@@ -37,7 +37,7 @@ public class RenderMetaFile extends MetaFile
 
     //FIXME: This can cause concurrent modification of LodRenderSource.
     //       Not sure if it will cause issues or not.
-    public void updateChunkIfNeeded(ChunkSizedData chunkData, IClientLevel level) {
+    public void updateChunkIfNeeded(ChunkSizedData chunkData, IDhClientLevel level) {
         DhLodPos chunkPos = new DhLodPos((byte) (chunkData.dataDetail + 4), chunkData.x, chunkData.z);
         LodUtil.assertTrue(pos.getSectionBBoxPos().overlaps(chunkPos), "Chunk pos {} doesn't overlap with section {}", chunkPos, pos);
 
@@ -111,7 +111,7 @@ public class RenderMetaFile extends MetaFile
 
     // Cause: Generic Type runtime casting cannot safety check it.
     // However, the Union type ensures the 'data' should only contain the listed type.
-    public CompletableFuture<LodRenderSource> loadOrGetCached(Executor fileReaderThreads, ILevel level) {
+    public CompletableFuture<LodRenderSource> loadOrGetCached(Executor fileReaderThreads, IDhLevel level) {
         Object obj = data.get();
 
         CompletableFuture<LodRenderSource> cached = _readCached(obj);
@@ -201,7 +201,7 @@ public class RenderMetaFile extends MetaFile
         return fin;
     }
 
-    public void save(LodRenderSource data, IClientLevel level) {
+    public void save(LodRenderSource data, IDhClientLevel level) {
         if (data.isEmpty()) {
             if (path.exists()) if (!path.delete()) LOGGER.warn("Failed to delete render file at {}", path);
             doesFileExist = false;

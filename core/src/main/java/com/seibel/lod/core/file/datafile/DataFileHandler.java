@@ -6,7 +6,7 @@ import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.full.FullDataSource;
 import com.seibel.lod.core.datatype.full.SparseDataSource;
 import com.seibel.lod.core.file.MetaFile;
-import com.seibel.lod.core.level.ILevel;
+import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
@@ -32,12 +32,12 @@ public class DataFileHandler implements IDataSourceProvider {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     final ExecutorService fileReaderThread = LodUtil.makeThreadPool(4, "FileReaderThread");
     final ConcurrentHashMap<DhSectionPos, DataMetaFile> files = new ConcurrentHashMap<>();
-    final ILevel level;
+    final IDhLevel level;
     final File saveDir;
     AtomicInteger topDetailLevel = new AtomicInteger(-1);
     final int minDetailLevel = FullDataSource.SECTION_SIZE_OFFSET;
 
-    public DataFileHandler(ILevel level, File saveRootDir) {
+    public DataFileHandler(IDhLevel level, File saveRootDir) {
         this.saveDir = saveRootDir;
         this.level = level;
     }

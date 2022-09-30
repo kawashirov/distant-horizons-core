@@ -22,13 +22,13 @@ package com.seibel.lod.core.api.internal;
 import com.seibel.lod.api.methods.events.abstractEvents.*;
 import com.seibel.lod.api.methods.events.sharedParameterObjects.DhApiRenderParam;
 import com.seibel.lod.core.DependencyInjection.DhApiEventInjector;
-import com.seibel.lod.core.level.IClientLevel;
+import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.ModInfo;
 import com.seibel.lod.api.enums.rendering.EDebugMode;
 import com.seibel.lod.api.enums.rendering.ERendererMode;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
-import com.seibel.lod.core.level.ILevel;
+import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.logging.ConfigBasedSpamLogger;
 import com.seibel.lod.core.logging.SpamReducedLogger;
@@ -140,7 +140,7 @@ public class ClientApi
 	{
 		if (SharedApi.getEnvironment() == WorldEnvironment.Client_Only)
 		{
-			ILevel dhLevel = SharedApi.currentWorld.getLevel(level);
+			IDhLevel dhLevel = SharedApi.currentWorld.getLevel(level);
 			if (dhLevel != null)
 			{
 				dhLevel.updateChunk(chunk);
@@ -252,7 +252,7 @@ public class ClientApi
 			//FIXME: Improve class hierarchy of DhWorld, IClientWorld, IServerWorld to fix all this hard casting
 			// (also in RenderUtil)
 			DhWorld dhWorld = SharedApi.currentWorld;
-			IClientLevel level = (IClientLevel) dhWorld.getOrLoadLevel(levelWrapper);
+			IDhClientLevel level = (IDhClientLevel) dhWorld.getOrLoadLevel(levelWrapper);
 			
 			if (prefLoggerEnabled)
 			{

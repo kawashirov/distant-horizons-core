@@ -3,7 +3,7 @@ package com.seibel.lod.core.datatype.full;
 import com.seibel.lod.core.datatype.LodDataSource;
 import com.seibel.lod.core.datatype.full.accessor.FullArrayView;
 import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;
-import com.seibel.lod.core.level.ILevel;
+import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.file.datafile.DataMetaFile;
@@ -162,7 +162,7 @@ public class SparseDataSource implements LodDataSource {
     }
 
     @Override
-    public void saveData(ILevel level, DataMetaFile file, OutputStream dataStream) throws IOException {
+    public void saveData(IDhLevel level, DataMetaFile file, OutputStream dataStream) throws IOException {
         try (DataOutputStream dos = new DataOutputStream(dataStream)) {
             dos.writeShort(getDataDetail());
             dos.writeShort(SPARSE_UNIT_DETAIL);
@@ -209,7 +209,7 @@ public class SparseDataSource implements LodDataSource {
         }
     }
 
-    public static SparseDataSource loadData(DataMetaFile dataFile, InputStream dataStream, ILevel level) throws IOException {
+    public static SparseDataSource loadData(DataMetaFile dataFile, InputStream dataStream, IDhLevel level) throws IOException {
         LodUtil.assertTrue(dataFile.pos.sectionDetail > SPARSE_UNIT_DETAIL);
         LodUtil.assertTrue(dataFile.pos.sectionDetail <= MAX_SECTION_DETAIL);
         DataInputStream dos = new DataInputStream(dataStream); // DO NOT CLOSE!

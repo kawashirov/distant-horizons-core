@@ -1,7 +1,7 @@
 package com.seibel.lod.core.render;
 
 import com.seibel.lod.core.datatype.column.ColumnRenderSource;
-import com.seibel.lod.core.level.IClientLevel;
+import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.file.renderfile.IRenderSourceProvider;
@@ -52,7 +52,7 @@ public class LodQuadTree implements AutoCloseable {
     public final int viewDistance;
     private final IRenderSourceProvider renderSourceProvider;
 
-    private final IClientLevel level; //FIXME: Proper hierarchy to remove this reference!
+    private final IDhClientLevel level; //FIXME: Proper hierarchy to remove this reference!
 
     /**
      * Constructor of the quadTree
@@ -60,7 +60,7 @@ public class LodQuadTree implements AutoCloseable {
      * @param initialPlayerX player x coordinate
      * @param initialPlayerZ player z coordinate
      */
-    public LodQuadTree(IClientLevel level, int viewDistance, int initialPlayerX, int initialPlayerZ, IRenderSourceProvider provider) {
+    public LodQuadTree(IDhClientLevel level, int viewDistance, int initialPlayerX, int initialPlayerZ, IRenderSourceProvider provider) {
         DetailDistanceUtil.updateSettings(); //TODO: Move this to somewhere else
         this.level = level;
         renderSourceProvider = provider;

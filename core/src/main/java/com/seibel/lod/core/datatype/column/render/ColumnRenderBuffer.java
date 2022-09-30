@@ -3,7 +3,7 @@ package com.seibel.lod.core.datatype.column.render;
 import com.seibel.lod.core.datatype.column.ColumnRenderSource;
 import com.seibel.lod.core.datatype.column.accessor.ColumnArrayView;
 import com.seibel.lod.core.datatype.column.accessor.ColumnFormat;
-import com.seibel.lod.core.level.IClientLevel;
+import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.render.renderer.LodRenderer;
 import com.seibel.lod.core.util.objects.UncheckedInterruptedException;
 import com.seibel.lod.core.render.RenderBuffer;
@@ -217,7 +217,7 @@ public class ColumnRenderBuffer extends RenderBuffer {
         return getCurrentJobsCount() > MAX_CONCURRENT_CALL;
     }
 
-    public static CompletableFuture<ColumnRenderBuffer> build(IClientLevel clientLevel, Reference<ColumnRenderBuffer> usedBufferSlot, ColumnRenderSource data, ColumnRenderSource[] adjData) {
+    public static CompletableFuture<ColumnRenderBuffer> build(IDhClientLevel clientLevel, Reference<ColumnRenderBuffer> usedBufferSlot, ColumnRenderSource data, ColumnRenderSource[] adjData) {
         if (isBusy()) return null;
         //LOGGER.info("RenderRegion startBuild @ {}", data.sectionPos);
         return CompletableFuture.supplyAsync(() -> {

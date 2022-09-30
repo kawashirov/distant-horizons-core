@@ -19,7 +19,7 @@
  
 package com.seibel.lod.core.wrapperInterfaces.worldGeneration;
 
-import com.seibel.lod.core.level.ILevel;
+import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 
 import java.util.concurrent.CompletableFuture;
@@ -30,7 +30,7 @@ public abstract class AbstractBatchGenerationEnvionmentWrapper {
 		Empty, StructureStart, StructureReference, Biomes, Noise, Surface, Carvers, LiquidCarvers, Features, Light,
 	}
 
-	public AbstractBatchGenerationEnvionmentWrapper(ILevel level) {
+	public AbstractBatchGenerationEnvionmentWrapper(IDhLevel level) {
 	}
 
 	public abstract void resizeThreadPool(int newThreadCount);

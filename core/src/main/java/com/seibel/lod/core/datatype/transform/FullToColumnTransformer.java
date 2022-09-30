@@ -7,7 +7,7 @@ import com.seibel.lod.core.datatype.column.accessor.ColumnArrayView;
 import com.seibel.lod.core.datatype.column.accessor.ColumnQuadView;
 import com.seibel.lod.core.datatype.full.*;
 import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;
-import com.seibel.lod.core.level.IClientLevel;
+import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
@@ -26,7 +26,7 @@ public class FullToColumnTransformer {
      * @throws IllegalArgumentException thrown if either the chunk or world is null.
      */
 
-    public static ColumnRenderSource transformFullDataToColumnData(IClientLevel level, FullDataSource data) {
+    public static ColumnRenderSource transformFullDataToColumnData(IDhClientLevel level, FullDataSource data) {
         final DhSectionPos pos = data.getSectionPos();
         final byte dataDetail = data.getDataDetail();
         final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(data.getDataDetail());
@@ -66,7 +66,7 @@ public class FullToColumnTransformer {
         return columnSource;
     }
 
-    public static LodRenderSource transformSparseDataToColumnData(IClientLevel level, SparseDataSource data) {
+    public static LodRenderSource transformSparseDataToColumnData(IDhClientLevel level, SparseDataSource data) {
         final DhSectionPos pos = data.getSectionPos();
         final byte dataDetail = data.getDataDetail();
         final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(data.getDataDetail());
@@ -94,7 +94,7 @@ public class FullToColumnTransformer {
         return columnSource;
     }
 
-    public static void writeFullDataChunkToColumnData(ColumnRenderSource render, IClientLevel level, ChunkSizedData data) {
+    public static void writeFullDataChunkToColumnData(ColumnRenderSource render, IDhClientLevel level, ChunkSizedData data) {
         if (data.dataDetail != 0)
             throw new UnsupportedOperationException("To be implemented");
 
@@ -148,7 +148,7 @@ public class FullToColumnTransformer {
         }
     }
 
-    private static void convertColumnData(IClientLevel level, int blockX, int blockZ, ColumnArrayView columnArrayView, SingleFullArrayView fullArrayView, int genMode) {
+    private static void convertColumnData(IDhClientLevel level, int blockX, int blockZ, ColumnArrayView columnArrayView, SingleFullArrayView fullArrayView, int genMode) {
         if (!fullArrayView.doesItExist()) return;
         int dataTotalLength = fullArrayView.getSingleLength();
         if (dataTotalLength == 0) return;
@@ -162,7 +162,7 @@ public class FullToColumnTransformer {
         }
     }
 
-    private static void iterateAndConvert(IClientLevel level, int blockX, int blockZ, int genMode, ColumnArrayView column, SingleFullArrayView data) {
+    private static void iterateAndConvert(IDhClientLevel level, int blockX, int blockZ, int genMode, ColumnArrayView column, SingleFullArrayView data) {
         IdBiomeBlockStateMap mapping = data.getMapping();
         boolean isVoid = true;
         int offset = 0;

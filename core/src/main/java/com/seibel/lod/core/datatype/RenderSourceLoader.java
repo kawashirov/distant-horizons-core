@@ -1,8 +1,8 @@
 package com.seibel.lod.core.datatype;
 
 import com.google.common.collect.HashMultimap;
-import com.seibel.lod.core.level.IClientLevel;
-import com.seibel.lod.core.level.ILevel;
+import com.seibel.lod.core.level.IDhClientLevel;
+import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.file.renderfile.RenderMetaFile;
 
 import java.io.IOException;
@@ -54,8 +54,8 @@ public abstract class RenderSourceLoader {
     }
 
     // Can return null as meaning the file is out of date or something
-    public abstract LodRenderSource loadRender(RenderMetaFile renderFile, InputStream data, ILevel level) throws IOException;
-    public abstract LodRenderSource createRender(LodDataSource dataSource, IClientLevel level);
+    public abstract LodRenderSource loadRender(RenderMetaFile renderFile, InputStream data, IDhLevel level) throws IOException;
+    public abstract LodRenderSource createRender(LodDataSource dataSource, IDhClientLevel level);
 
 
 }

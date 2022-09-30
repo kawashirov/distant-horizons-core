@@ -1,6 +1,6 @@
 package com.seibel.lod.core.render;
 
-import com.seibel.lod.core.level.IClientLevel;
+import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.datatype.LodRenderSource;
 import com.seibel.lod.core.file.renderfile.IRenderSourceProvider;
@@ -26,7 +26,7 @@ public class LodRenderSection {
         this.pos = pos;
     }
 
-    public void enableRender(IClientLevel level, LodQuadTree quadTree) {
+    public void enableRender(IDhClientLevel level, LodQuadTree quadTree) {
         if (isRenderEnabled) return;
         loadFuture = provider.read(pos);
         isRenderEnabled = true;
@@ -60,7 +60,7 @@ public class LodRenderSection {
         loadFuture = renderDataProvider.read(pos);
     }
 
-    public void tick(LodQuadTree quadTree, IClientLevel level) {
+    public void tick(LodQuadTree quadTree, IDhClientLevel level) {
         if (loadFuture != null && loadFuture.isDone()) {
             lodRenderSource = loadFuture.join();
             loadFuture = null;

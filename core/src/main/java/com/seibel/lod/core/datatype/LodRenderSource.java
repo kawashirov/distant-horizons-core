@@ -1,7 +1,7 @@
 package com.seibel.lod.core.datatype;
 
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
-import com.seibel.lod.core.level.IClientLevel;
+import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.render.RenderBuffer;
@@ -15,7 +15,7 @@ public interface LodRenderSource {
     DhSectionPos getSectionPos();
     byte getDataDetail();
 
-    void enableRender(IClientLevel level, LodQuadTree quadTree);
+    void enableRender(IDhClientLevel level, LodQuadTree quadTree);
     void disableRender();
     void dispose(); // notify the container that the parent lodSection is now disposed (can be in loaded or unloaded state)
 
@@ -28,7 +28,7 @@ public interface LodRenderSource {
      */
     boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<RenderBuffer> referenceSlot);
 
-    void saveRender(IClientLevel level, RenderMetaFile file, OutputStream dataStream) throws IOException;
+    void saveRender(IDhClientLevel level, RenderMetaFile file, OutputStream dataStream) throws IOException;
 
     byte getRenderVersion();
 
@@ -39,7 +39,7 @@ public interface LodRenderSource {
 
     boolean isEmpty();
 
-    void fastWrite(ChunkSizedData chunkData, IClientLevel level);
+    void fastWrite(ChunkSizedData chunkData, IDhClientLevel level);
     // Only override the data that has not been written directly using write(), and skip those that are empty
     void weakWrite(LodRenderSource source);
 }

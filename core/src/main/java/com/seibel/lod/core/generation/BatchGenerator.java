@@ -19,7 +19,7 @@
 
 package com.seibel.lod.core.generation;
 
-import com.seibel.lod.core.level.ILevel;
+import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.api.enums.config.EDistanceGenerationMode;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
@@ -43,11 +43,11 @@ public class BatchGenerator implements IChunkGenerator
 	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	private static final IWrapperFactory FACTORY = SingletonInjector.INSTANCE.get(IWrapperFactory.class);
 	public AbstractBatchGenerationEnvionmentWrapper generationGroup;
-	public ILevel targetLodLevel;
+	public IDhLevel targetLodLevel;
 	public static final int generationGroupSize = 4;
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 
-	public BatchGenerator(ILevel targetLodLevel) {
+	public BatchGenerator(IDhLevel targetLodLevel) {
 		this.targetLodLevel = targetLodLevel;
 		generationGroup = FACTORY.createBatchGenerator(targetLodLevel);
 		LOGGER.info("Batch Chunk Generator initialized");

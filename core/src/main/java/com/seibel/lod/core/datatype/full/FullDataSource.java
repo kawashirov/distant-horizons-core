@@ -2,7 +2,7 @@ package com.seibel.lod.core.datatype.full;
 
 import com.seibel.lod.core.datatype.full.accessor.FullArrayView;
 import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;
-import com.seibel.lod.core.level.ILevel;
+import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.file.datafile.DataMetaFile;
@@ -101,7 +101,7 @@ public class FullDataSource extends FullArrayView implements LodDataSource { // 
     }
 
     @Override
-    public void saveData(ILevel level, DataMetaFile file, OutputStream dataStream) throws IOException {
+    public void saveData(IDhLevel level, DataMetaFile file, OutputStream dataStream) throws IOException {
         DataOutputStream dos = new DataOutputStream(dataStream); // DO NOT CLOSE
         {
             dos.writeInt(getDataDetail());
@@ -138,7 +138,7 @@ public class FullDataSource extends FullArrayView implements LodDataSource { // 
     }
 
 
-    public static FullDataSource loadData(DataMetaFile dataFile, InputStream dataStream, ILevel level) throws IOException {
+    public static FullDataSource loadData(DataMetaFile dataFile, InputStream dataStream, IDhLevel level) throws IOException {
         DataInputStream dos = new DataInputStream(dataStream); // DO NOT CLOSE
         {
             int dataDetail = dos.readInt();

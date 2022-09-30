@@ -5,7 +5,7 @@ import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.full.FullDataSource;
 import com.seibel.lod.core.datatype.full.SparseDataSource;
 import com.seibel.lod.core.generation.GenerationQueue;
-import com.seibel.lod.core.level.IServerLevel;
+import com.seibel.lod.core.level.IDhServerLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
@@ -55,7 +55,7 @@ public class GeneratedDataFileHandler extends DataFileHandler {
     }
 
 
-    public GeneratedDataFileHandler(IServerLevel level, File saveRootDir) {
+    public GeneratedDataFileHandler(IDhServerLevel level, File saveRootDir) {
         super(level, saveRootDir);
     }
 

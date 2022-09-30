@@ -24,7 +24,8 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
 
-public class DhClientLevel implements IClientLevel {
+public class DhClientLevel implements IDhClientLevel
+{
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
     public final ClientOnlySaveStructure save;
@@ -74,15 +75,10 @@ public class DhClientLevel implements IClientLevel {
     }
 
     @Override
-    public IClientLevelWrapper getClientLevelWrapper() {
-        return level;
-    }
+    public IClientLevelWrapper getClientLevelWrapper() { return level; }
     
     @Override
-    public ILevelWrapper getLevelWrapper()
-    {
-        return this.level;
-    }
+    public ILevelWrapper getLevelWrapper() { return this.level; }
 
     @Override
     public void updateChunk(IChunkWrapper chunk) {
@@ -90,14 +86,10 @@ public class DhClientLevel implements IClientLevel {
     }
 
     @Override
-    public int getMinY() {
-        return level.getMinHeight();
-    }
+    public int getMinY() { return level.getMinHeight();  }
 
     @Override
-    public CompletableFuture<Void> save() {
-        return renderFileHandler.flushAndSave();
-    }
+    public CompletableFuture<Void> save() { return renderFileHandler.flushAndSave(); }
 
     @Override
     public void close() {

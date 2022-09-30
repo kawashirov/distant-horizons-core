@@ -19,7 +19,7 @@
 
 package com.seibel.lod.core.wrapperInterfaces;
 
-import com.seibel.lod.core.level.ILevel;
+import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
@@ -35,7 +35,7 @@ import java.io.IOException;
  */
 public interface IWrapperFactory extends IBindable 
 {
-	AbstractBatchGenerationEnvionmentWrapper createBatchGenerator(ILevel targetLevel);
+	AbstractBatchGenerationEnvionmentWrapper createBatchGenerator(IDhLevel targetLevel);
 	IBiomeWrapper deserializeBiomeWrapper(String str) throws IOException;
 	IBlockStateWrapper deserializeBlockStateWrapper(String str) throws IOException;
 	IBlockStateWrapper getAirBlockStateWrapper();

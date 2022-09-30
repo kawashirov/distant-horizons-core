@@ -14,7 +14,7 @@ import com.seibel.lod.core.datatype.DataSourceLoader;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.file.MetaFile;
-import com.seibel.lod.core.level.ILevel;
+import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
@@ -24,7 +24,7 @@ public class DataMetaFile extends MetaFile
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger(DataMetaFile.class.getSimpleName());
 	
-	private final ILevel level;
+	private final IDhLevel level;
 	private final IDataSourceProvider handler;
 	private boolean doesFileExist;
 
@@ -71,7 +71,7 @@ public class DataMetaFile extends MetaFile
 
 
 	// Create a new metaFile
-	public DataMetaFile(IDataSourceProvider handler, ILevel level, DhSectionPos pos) throws IOException {
+	public DataMetaFile(IDataSourceProvider handler, IDhLevel level, DhSectionPos pos) throws IOException {
 		super(handler.computeDataFilePath(pos), pos);
 		debugCheck();
 		this.handler = handler;
@@ -80,7 +80,7 @@ public class DataMetaFile extends MetaFile
 		doesFileExist = false;
 	}
 
-	public DataMetaFile(IDataSourceProvider handler, ILevel level, File path) throws IOException {
+	public DataMetaFile(IDataSourceProvider handler, IDhLevel level, File path) throws IOException {
 		super(path);
 		debugCheck();
 		this.handler = handler;

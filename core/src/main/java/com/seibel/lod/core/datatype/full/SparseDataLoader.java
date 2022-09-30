@@ -2,7 +2,7 @@ package com.seibel.lod.core.datatype.full;
 
 import com.seibel.lod.core.datatype.DataSourceLoader;
 import com.seibel.lod.core.datatype.LodDataSource;
-import com.seibel.lod.core.level.ILevel;
+import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.file.datafile.DataMetaFile;
 
 import java.io.IOException;
@@ -14,7 +14,7 @@ public class SparseDataLoader extends DataSourceLoader {
     }
 
     @Override
-    public LodDataSource loadData(DataMetaFile dataFile, InputStream data, ILevel level) throws IOException {
+    public LodDataSource loadData(DataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException {
         return SparseDataSource.loadData(dataFile, data, level);
     }
 }

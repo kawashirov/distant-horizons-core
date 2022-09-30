@@ -1,7 +1,7 @@
 package com.seibel.lod.core.world;
 
 import com.seibel.lod.core.level.DhClientServerLevel;
-import com.seibel.lod.core.level.ILevel;
+import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.file.structure.LocalSaveStructure;
 import com.seibel.lod.core.logging.f3.F3Screen;
 import com.seibel.lod.core.util.objects.EventLoop;
@@ -64,7 +64,7 @@ public class DhClientServerWorld extends DhWorld implements IClientWorld, IServe
     }
     
     @Override
-    public Iterable<? extends ILevel> getAllLoadedLevels()
+    public Iterable<? extends IDhLevel> getAllLoadedLevels()
     {
         return dhLevels;
     }

@@ -4,14 +4,13 @@ import com.seibel.lod.core.datatype.column.accessor.*;
 import com.seibel.lod.core.datatype.column.render.ColumnRenderBuffer;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.transform.FullToColumnTransformer;
-import com.seibel.lod.core.level.IClientLevel;
+import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.RenderBuffer;
-import com.seibel.lod.core.render.renderer.LodRenderer;
 import com.seibel.lod.core.file.renderfile.RenderMetaFile;
 import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
-import com.seibel.lod.core.level.ILevel;
+import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.render.LodRenderSection;
 import com.seibel.lod.core.datatype.LodRenderSource;
@@ -115,7 +114,7 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     }
 
     // Load from data stream with maxVerticalSize loaded from the data stream
-    public ColumnRenderSource(DhSectionPos sectionPos, DataInputStream inputData, int version, ILevel level) throws IOException {
+    public ColumnRenderSource(DhSectionPos sectionPos, DataInputStream inputData, int version, IDhLevel level) throws IOException {
         this.sectionPos = sectionPos;
         yOffset = level.getMinY();
         byte detailLevel = inputData.readByte();
@@ -298,7 +297,7 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     private Reference<ColumnRenderBuffer> usedBuffer = new Reference<>();
 
 
-    private void tryBuildBuffer(IClientLevel level, LodQuadTree quadTree) {
+    private void tryBuildBuffer(IDhClientLevel level, LodQuadTree quadTree) {
         if (inBuildRenderBuffer == null && !ColumnRenderBuffer.isBusy() && !isEmpty) {
             ColumnRenderSource[] data = new ColumnRenderSource[ELodDirection.ADJ_DIRECTIONS.length];
             for (ELodDirection direction : ELodDirection.ADJ_DIRECTIONS) {
@@ -318,9 +317,9 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
         }
     }
 
-    private IClientLevel level = null; //FIXME: hack to pass level into tryBuildBuffer
+    private IDhClientLevel level = null; //FIXME: hack to pass level into tryBuildBuffer
     @Override
-    public void enableRender(IClientLevel level, LodQuadTree quadTree) {
+    public void enableRender(IDhClientLevel level, LodQuadTree quadTree) {
         this.level = level;
         //tryBuildBuffer(level, quadTree);
     }
@@ -369,7 +368,7 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     }
 
     @Override
-    public void saveRender(IClientLevel level, RenderMetaFile file, OutputStream dataStream) throws IOException {
+    public void saveRender(IDhClientLevel level, RenderMetaFile file, OutputStream dataStream) throws IOException {
          DataOutputStream dos = new DataOutputStream(dataStream); // DO NOT CLOSE
          writeData(dos);
     }
@@ -416,7 +415,7 @@ public class ColumnRenderSource implements LodRenderSource, IColumnDatatype {
     }
 
     @Override
-    public void fastWrite(ChunkSizedData chunkData, IClientLevel level) {
+    public void fastWrite(ChunkSizedData chunkData, IDhClientLevel level) {
         FullToColumnTransformer.writeFullDataChunkToColumnData(this, level, chunkData);
     }
 }

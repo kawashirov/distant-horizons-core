@@ -9,7 +9,7 @@ import com.seibel.lod.core.datatype.column.ColumnRenderSource;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.transform.DataRenderTransformer;
 import com.seibel.lod.core.file.datafile.IDataSourceProvider;
-import com.seibel.lod.core.level.IClientLevel;
+import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.objects.UncheckedInterruptedException;
@@ -30,11 +30,11 @@ public class RenderFileHandler implements IRenderSourceProvider {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     final ExecutorService renderCacheThread = LodUtil.makeSingleThreadPool("RenderCacheThread");
     final ConcurrentHashMap<DhSectionPos, RenderMetaFile> files = new ConcurrentHashMap<>();
-    final IClientLevel level;
+    final IDhClientLevel level;
     final File saveDir;
     final IDataSourceProvider dataSourceProvider;
 
-    public RenderFileHandler(IDataSourceProvider sourceProvider, IClientLevel level, File saveRootDir) {
+    public RenderFileHandler(IDataSourceProvider sourceProvider, IDhClientLevel level, File saveRootDir) {
         this.dataSourceProvider = sourceProvider;
         this.level = level;
         this.saveDir = saveRootDir;

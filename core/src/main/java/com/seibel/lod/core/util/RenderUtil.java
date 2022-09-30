@@ -19,7 +19,7 @@
 
 package com.seibel.lod.core.util;
 
-import com.seibel.lod.core.level.IClientLevel;
+import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.world.DhWorld;
 import com.seibel.lod.core.world.IClientWorld;
 import com.seibel.lod.core.api.internal.SharedApi;
@@ -218,7 +218,7 @@ public class RenderUtil
 		
 		//FIXME: Improve class hierarchy of DhWorld, IClientWorld, IServerWorld to fix all this hard casting
 		// (also in ClientApi)
-		IClientLevel level = (IClientLevel) dhWorld.getOrLoadLevel(levelWrapper);
+		IDhClientLevel level = (IDhClientLevel) dhWorld.getOrLoadLevel(levelWrapper);
 		if (level == null)
 			return false; //Level is not ready yet.
 		

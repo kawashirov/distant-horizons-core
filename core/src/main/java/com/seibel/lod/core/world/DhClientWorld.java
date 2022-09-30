@@ -1,7 +1,7 @@
 package com.seibel.lod.core.world;
 
 import com.seibel.lod.core.level.DhClientLevel;
-import com.seibel.lod.core.level.ILevel;
+import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.file.structure.ClientOnlySaveStructure;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.util.DetailDistanceUtil;
@@ -48,7 +48,7 @@ public class DhClientWorld extends DhWorld implements IClientWorld
     }
     
     @Override
-    public Iterable<? extends ILevel> getAllLoadedLevels()
+    public Iterable<? extends IDhLevel> getAllLoadedLevels()
     {
         return levels.values();
     }

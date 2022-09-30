@@ -1,7 +1,7 @@
 package com.seibel.lod.core.datatype;
 
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
-import com.seibel.lod.core.level.IClientLevel;
+import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.render.RenderBuffer;
@@ -29,7 +29,7 @@ public class PlaceHolderRenderSource implements LodRenderSource {
     }
 
     @Override
-    public void enableRender(IClientLevel level, LodQuadTree quadTree) {
+    public void enableRender(IDhClientLevel level, LodQuadTree quadTree) {
     }
 
     @Override
@@ -41,7 +41,7 @@ public class PlaceHolderRenderSource implements LodRenderSource {
         return false;
     }
     @Override
-    public void saveRender(IClientLevel level, RenderMetaFile file, OutputStream dataStream) throws IOException {
+    public void saveRender(IDhClientLevel level, RenderMetaFile file, OutputStream dataStream) throws IOException {
         throw new UnsupportedOperationException("EmptyRenderSource should NEVER be saved!");
     }
 
@@ -65,7 +65,7 @@ public class PlaceHolderRenderSource implements LodRenderSource {
     }
 
     @Override
-    public void fastWrite(ChunkSizedData chunkData, IClientLevel level) {}
+    public void fastWrite(ChunkSizedData chunkData, IDhClientLevel level) {}
 
     @Override
     public void weakWrite(LodRenderSource source) {}

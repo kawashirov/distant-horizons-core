@@ -1,7 +1,7 @@
 package com.seibel.lod.core.datatype;
 
 import com.google.common.collect.HashMultimap;
-import com.seibel.lod.core.level.ILevel;
+import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.file.datafile.DataMetaFile;
 
 import java.io.IOException;
@@ -52,7 +52,7 @@ public abstract class DataSourceLoader {
     }
 
     // Can return null as meaning the requirement is not met
-    public abstract LodDataSource loadData(DataMetaFile dataFile, InputStream data, ILevel level) throws IOException;
+    public abstract LodDataSource loadData(DataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException;
 
 
 }

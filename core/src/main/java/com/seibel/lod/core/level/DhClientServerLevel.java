@@ -36,7 +36,8 @@ import org.apache.logging.log4j.Logger;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class DhClientServerLevel implements IClientLevel, IServerLevel {
+public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
+{
     class RenderState {
         final IClientLevelWrapper clientLevel;
         final LodQuadTree tree;

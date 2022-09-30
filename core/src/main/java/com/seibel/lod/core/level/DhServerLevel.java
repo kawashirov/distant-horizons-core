@@ -11,7 +11,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
 
-public class DhServerLevel implements IServerLevel
+public class DhServerLevel implements IDhServerLevel
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 

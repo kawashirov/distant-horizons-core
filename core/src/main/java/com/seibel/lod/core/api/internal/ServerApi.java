@@ -23,7 +23,7 @@ import com.seibel.lod.api.methods.events.abstractEvents.DhApiLevelLoadEvent;
 import com.seibel.lod.api.methods.events.abstractEvents.DhApiLevelSaveEvent;
 import com.seibel.lod.api.methods.events.abstractEvents.DhApiLevelUnloadEvent;
 import com.seibel.lod.core.DependencyInjection.DhApiEventInjector;
-import com.seibel.lod.core.level.ILevel;
+import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.world.DhClientServerWorld;
 import com.seibel.lod.core.world.DhServerWorld;
 import com.seibel.lod.core.world.IServerWorld;
@@ -121,7 +121,7 @@ public class ServerApi
 		{
 			SharedApi.currentWorld.saveAndFlush();
 			
-			for (ILevel level : SharedApi.currentWorld.getAllLoadedLevels())
+			for (IDhLevel level : SharedApi.currentWorld.getAllLoadedLevels())
 			{
 				DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelSaveEvent.class, new DhApiLevelSaveEvent.EventParam(level.getLevelWrapper()));
 			}
@@ -129,14 +129,14 @@ public class ServerApi
 	}
 
 	public void serverChunkLoadEvent(IChunkWrapper chunk, ILevelWrapper level) {
-		ILevel dhLevel = SharedApi.currentWorld.getLevel(level);
+		IDhLevel dhLevel = SharedApi.currentWorld.getLevel(level);
 		if (dhLevel != null)
 		{
 			dhLevel.updateChunk(chunk);
 		}
 	}
 	public void serverChunkSaveEvent(IChunkWrapper chunk, ILevelWrapper level) {
-		ILevel dhLevel = SharedApi.currentWorld.getLevel(level);
+		IDhLevel dhLevel = SharedApi.currentWorld.getLevel(level);
 		if (dhLevel != null)
 		{
 			dhLevel.updateChunk(chunk);

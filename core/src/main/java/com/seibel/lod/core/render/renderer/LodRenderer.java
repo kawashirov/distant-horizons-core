@@ -19,7 +19,6 @@
 
 package com.seibel.lod.core.render.renderer;
 
-import com.seibel.lod.core.level.IClientLevel;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.config.types.ConfigEntry;
 import com.seibel.lod.api.enums.rendering.EDebugMode;
