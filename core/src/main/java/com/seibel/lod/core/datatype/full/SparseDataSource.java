@@ -25,7 +25,7 @@ public class SparseDataSource implements ILodDataSource
     public static final byte MAX_SECTION_DETAIL = SECTION_SIZE_OFFSET + SPARSE_UNIT_DETAIL;
     public static final byte LATEST_VERSION = 0;
     public static final long TYPE_ID = "SparseDataSource".hashCode();
-    protected final IdBiomeBlockStateMap mapping;
+    protected final FullDataPointIdMap mapping;
     private final DhSectionPos sectionPos;
     private final FullArrayView[] sparseData;
     private final int chunks;
@@ -45,9 +45,9 @@ public class SparseDataSource implements ILodDataSource
         dataPerChunk = SECTION_SIZE / chunks;
         sparseData = new FullArrayView[chunks * chunks];
         chunkPos = sectionPos.getCorner(SPARSE_UNIT_DETAIL);
-        mapping = new IdBiomeBlockStateMap();
+        mapping = new FullDataPointIdMap();
     }
-    protected SparseDataSource(DhSectionPos sectionPos, IdBiomeBlockStateMap mapping, FullArrayView[] data) {
+    protected SparseDataSource(DhSectionPos sectionPos, FullDataPointIdMap mapping, FullArrayView[] data) {
         LodUtil.assertTrue(sectionPos.sectionDetail > SPARSE_UNIT_DETAIL);
         LodUtil.assertTrue(sectionPos.sectionDetail <= MAX_SECTION_DETAIL);
         this.sectionPos = sectionPos;
@@ -213,7 +213,7 @@ public class SparseDataSource implements ILodDataSource
     public static SparseDataSource loadData(DataMetaFile dataFile, InputStream dataStream, IDhLevel level) throws IOException {
         LodUtil.assertTrue(dataFile.pos.sectionDetail > SPARSE_UNIT_DETAIL);
         LodUtil.assertTrue(dataFile.pos.sectionDetail <= MAX_SECTION_DETAIL);
-        DataInputStream dos = new DataInputStream(dataStream); // DO NOT CLOSE!
+        DataInputStream dos = new DataInputStream(dataStream); // DO NOT CLOSE! It would close all related streams
         {
             int dataDetail = dos.readShort();
             if(dataDetail != dataFile.metaData.dataLevel)
@@ -271,7 +271,7 @@ public class SparseDataSource implements ILodDataSource
             // Id mapping
             end = dos.readInt();
             if (end != 0xFFFFFFFF) throw new IOException("invalid data content end guard");
-            IdBiomeBlockStateMap mapping = IdBiomeBlockStateMap.deserialize(dos);
+            FullDataPointIdMap mapping = FullDataPointIdMap.deserialize(dos);
             end = dos.readInt();
             if (end != 0xFFFFFFFF) throw new IOException("invalid id mapping end guard");
 

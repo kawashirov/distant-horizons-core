@@ -31,7 +31,7 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 	
     protected FullDataSource(DhSectionPos sectionPos)
 	{
-        super(new IdBiomeBlockStateMap(), new long[SECTION_SIZE*SECTION_SIZE][0], SECTION_SIZE);
+        super(new FullDataPointIdMap(), new long[SECTION_SIZE*SECTION_SIZE][0], SECTION_SIZE);
         this.sectionPos = sectionPos;
     }
 	
@@ -207,7 +207,7 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 			end = dos.readInt();
 			if (end != 0xFFFFFFFF)
 				throw new IOException("invalid data content end guard");
-			IdBiomeBlockStateMap mapping = IdBiomeBlockStateMap.deserialize(new UnclosableInputStream(dos));
+			FullDataPointIdMap mapping = FullDataPointIdMap.deserialize(new UnclosableInputStream(dos));
 			end = dos.readInt();
 			if (end != 0xFFFFFFFF)
 				throw new IOException("invalid id mapping end guard");
@@ -215,7 +215,7 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 		}
 	}
 	
-	private FullDataSource(DhSectionPos pos, IdBiomeBlockStateMap mapping, long[][] data)
+	private FullDataSource(DhSectionPos pos, FullDataPointIdMap mapping, long[][] data)
 	{
 		super(mapping, data, SECTION_SIZE);
 		LodUtil.assertTrue(data.length == SECTION_SIZE * SECTION_SIZE);

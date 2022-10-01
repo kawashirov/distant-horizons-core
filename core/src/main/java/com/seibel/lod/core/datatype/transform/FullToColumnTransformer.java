@@ -163,18 +163,17 @@ public class FullToColumnTransformer {
     }
 
     private static void iterateAndConvert(IDhClientLevel level, int blockX, int blockZ, int genMode, ColumnArrayView column, SingleFullArrayView data) {
-        IdBiomeBlockStateMap mapping = data.getMapping();
+        FullDataPointIdMap mapping = data.getMapping();
         boolean isVoid = true;
         int offset = 0;
         for (int i = 0; i < data.getSingleLength(); i++) {
             long fullData = data.getSingle(i);
-            int y = FullFormat.getY(fullData);
-            int blockLength = FullFormat.getDepth(fullData);
-            int id = FullFormat.getId(fullData);
-            int light = FullFormat.getLight(fullData);
-            IdBiomeBlockStateMap.Entry entry = mapping.get(id);
-            IBiomeWrapper biome = entry.biome;
-            IBlockStateWrapper block = entry.blockState;
+            int y = FullDataPoint.getY(fullData);
+            int blockLength = FullDataPoint.getDepth(fullData);
+            int id = FullDataPoint.getId(fullData);
+            int light = FullDataPoint.getLight(fullData);
+            IBiomeWrapper biome = mapping.getBiomeWrapper(id);
+            IBlockStateWrapper block = mapping.getBlockStateWrapper(id);
             if (block.equals(AIR)) continue;
             isVoid = false;
             int color = level.computeBaseColor(new DhBlockPos(blockX, y + level.getMinY(), blockZ), biome, block);

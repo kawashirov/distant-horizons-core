@@ -11,7 +11,7 @@ public class ChunkSizedData extends FullArrayView
 	
 	public ChunkSizedData(byte dataDetail, int x, int z)
 	{
-		super(new IdBiomeBlockStateMap(), new long[16 * 16][0], 16);
+		super(new FullDataPointIdMap(), new long[16 * 16][0], 16);
 		this.dataDetail = dataDetail;
 		this.x = x;
 		this.z = z;

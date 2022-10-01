@@ -1,13 +1,13 @@
 package com.seibel.lod.core.datatype.full.accessor;
 
-import com.seibel.lod.core.datatype.full.IdBiomeBlockStateMap;
+import com.seibel.lod.core.datatype.full.FullDataPointIdMap;
 import com.seibel.lod.core.util.LodUtil;
 
 import java.util.Iterator;
 
 public interface IFullDataView
 {
-	IdBiomeBlockStateMap getMapping();
+	FullDataPointIdMap getMapping();
 	
 	SingleFullArrayView get(int index);
 	

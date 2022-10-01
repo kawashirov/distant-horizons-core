@@ -1,7 +1,7 @@
 package com.seibel.lod.core.datatype.full.accessor;
 
-import com.seibel.lod.core.datatype.full.FullFormat;
-import com.seibel.lod.core.datatype.full.IdBiomeBlockStateMap;
+import com.seibel.lod.core.datatype.full.FullDataPoint;
+import com.seibel.lod.core.datatype.full.FullDataPointIdMap;
 import com.seibel.lod.core.util.LodUtil;
 
 public class FullArrayView implements IFullDataView
@@ -10,9 +10,9 @@ public class FullArrayView implements IFullDataView
 	protected final int offset;
 	protected final int size;
 	protected final int dataSize;
-	protected final IdBiomeBlockStateMap mapping;
+	protected final FullDataPointIdMap mapping;
 	
-	public FullArrayView(IdBiomeBlockStateMap mapping, long[][] dataArrays, int size)
+	public FullArrayView(FullDataPointIdMap mapping, long[][] dataArrays, int size)
 	{
 		if (dataArrays.length != size * size)
 			throw new IllegalArgumentException(
@@ -37,7 +37,7 @@ public class FullArrayView implements IFullDataView
 	}
 	
 	@Override
-	public IdBiomeBlockStateMap getMapping()
+	public FullDataPointIdMap getMapping()
 	{
 		return mapping;
 	}
@@ -66,11 +66,13 @@ public class FullArrayView implements IFullDataView
 		return new FullArrayView(this, size, ox, oz);
 	}
 	
-	/** WARNING: It will potentially share the underlying array object! */
+	/** WARNING: This will potentially share the underlying array object! */
 	public void shadowCopyTo(FullArrayView target)
 	{
 		if (target.size != size)
+		{
 			throw new IllegalArgumentException("Target view must have same size as this view");
+		}
 		if (target.mapping.equals(mapping))
 		{
 			for (int x = 0; x < size; x++)
@@ -81,7 +83,7 @@ public class FullArrayView implements IFullDataView
 		}
 		else
 		{
-			int[] map = target.mapping.computeAndMergeMapFrom(mapping);
+			int[] remappedIds = target.mapping.mergeAndReturnRemappedEntityIds(mapping);
 			for (int x = 0; x < size; x++)
 			{
 				for (int o = 0; o < size; o++)
@@ -90,7 +92,7 @@ public class FullArrayView implements IFullDataView
 					long[] newData = new long[sourceData.length];
 					for (int i = 0; i < newData.length; i++)
 					{
-						newData[i] = FullFormat.remap(map, sourceData[i]);
+						newData[i] = FullDataPoint.remap(remappedIds, sourceData[i]);
 					}
 					target.dataArrays[target.offset + x * target.dataSize + o] = newData;
 				}
