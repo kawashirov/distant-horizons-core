@@ -10,13 +10,16 @@ import java.io.InputStream;
 
 public class FullDataLoader extends AbstractDataSourceLoader
 {
-    public FullDataLoader() {
+    public FullDataLoader()
+	{
         super(FullDataSource.class, FullDataSource.TYPE_ID, new byte[]{FullDataSource.LATEST_VERSION});
     }
-
+	
     @Override
-    public ILodDataSource loadData(DataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException {
+    public ILodDataSource loadData(DataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException
+	{
         //TODO: Add decompressor here
         return FullDataSource.loadData(dataFile, data, level);
     }
+	
 }

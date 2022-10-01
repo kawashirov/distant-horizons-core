@@ -20,6 +20,6 @@ public interface ILodDataSource
 	
 	boolean isEmpty();
 	
-	// Saving related
 	void saveData(IDhLevel level, DataMetaFile file, OutputStream dataStream) throws IOException;
+	
 }
