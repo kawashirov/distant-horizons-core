@@ -1,5 +1,6 @@
 package com.seibel.lod.core.datatype.full;
 
+import com.seibel.lod.core.datatype.IIncompleteDataSource;
 import com.seibel.lod.core.datatype.ILodDataSource;
 import com.seibel.lod.core.datatype.full.accessor.FullArrayView;
 import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;
@@ -14,7 +15,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.*;
 import java.util.BitSet;
 
-public class SparseDataSource implements ILodDataSource
+public class SparseDataSource implements IIncompleteDataSource
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     public static final byte SPARSE_UNIT_DETAIL = 4;
@@ -28,8 +29,8 @@ public class SparseDataSource implements ILodDataSource
     protected final FullDataPointIdMap mapping;
     private final DhSectionPos sectionPos;
     private final FullArrayView[] sparseData;
-    private final int chunks;
-    private final int dataPerChunk;
+    final int chunks;
+    final int dataPerChunk;
     private final DhLodPos chunkPos;
     public boolean isEmpty = true;
 
@@ -56,6 +57,7 @@ public class SparseDataSource implements ILodDataSource
         LodUtil.assertTrue(chunks*chunks == data.length);
         sparseData = data;
         chunkPos = sectionPos.getCorner(SPARSE_UNIT_DETAIL);
+        isEmpty = false;
         this.mapping = mapping;
     }
 
@@ -111,14 +113,26 @@ public class SparseDataSource implements ILodDataSource
         return isEmpty;
     }
 
-    public void sampleFrom(SparseDataSource sparseSource) {
-        DhSectionPos pos = sparseSource.sectionPos;
+
+    @Override
+    public void sampleFrom(ILodDataSource source) {
+        DhSectionPos pos = source.getSectionPos();
         LodUtil.assertTrue(pos.sectionDetail < sectionPos.sectionDetail);
         LodUtil.assertTrue(pos.overlaps(sectionPos));
-        if (sparseSource.isEmpty) return;
+        if (source.isEmpty()) return;
+        if (source instanceof SparseDataSource) {
+            sampleFrom((SparseDataSource) source);
+        } else if (source instanceof FullDataSource) {
+            sampleFrom((FullDataSource) source);
+        } else {
+            LodUtil.assertNotReach();
+        }
+    }
+
+    private void sampleFrom(SparseDataSource sparseSource) {
+        DhSectionPos pos = sparseSource.getSectionPos();
         isEmpty = false;
 
-        // Downsample needed
         DhLodPos basePos = sectionPos.getCorner(SPARSE_UNIT_DETAIL);
         DhLodPos dataPos = pos.getCorner(SPARSE_UNIT_DETAIL);
         int offsetX = dataPos.x-basePos.x;
@@ -136,13 +150,10 @@ public class SparseDataSource implements ILodDataSource
             }
         }
     }
-    public void sampleFrom(FullDataSource fullSource) {
+    private void sampleFrom(FullDataSource fullSource) {
         DhSectionPos pos = fullSource.getSectionPos();
-        LodUtil.assertTrue(pos.sectionDetail < sectionPos.sectionDetail);
-        LodUtil.assertTrue(pos.overlaps(sectionPos));
-        if (fullSource.isEmpty()) return;
         isEmpty = false;
-        // Downsample needed
+
         DhLodPos basePos = sectionPos.getCorner(SPARSE_UNIT_DETAIL);
         DhLodPos dataPos = pos.getCorner(SPARSE_UNIT_DETAIL);
         int coveredChunks = pos.getWidth(SPARSE_UNIT_DETAIL).value;
@@ -285,7 +296,7 @@ public class SparseDataSource implements ILodDataSource
         }
     }
 
-    public void applyToFullDataSource(FullDataSource dataSource) {
+    private void applyToFullDataSource(FullDataSource dataSource) {
         LodUtil.assertTrue(dataSource.getSectionPos().equals(sectionPos));
         LodUtil.assertTrue(dataSource.getDataDetail() == getDataDetail());
         for (int x = 0; x<chunks; x++) {
@@ -297,19 +308,6 @@ public class SparseDataSource implements ILodDataSource
                 FullArrayView view = dataSource.subView(dataPerChunk, x*dataPerChunk, z*dataPerChunk);
                 array.shadowCopyTo(view);
             }
-        }
-    }
-
-
-    public ILodDataSource promote(ILodDataSource generatedData) {
-        if (!(generatedData instanceof FullDataSource) && !(generatedData instanceof SparseDataSource))
-            throw new UnsupportedOperationException("Requires FullDataSource for the promotion!");
-        if (generatedData instanceof FullDataSource) {
-            applyToFullDataSource((FullDataSource) generatedData);
-            return generatedData;
-        } else {
-            LodUtil.assertToDo(); //TODO
-            return null;
         }
     }
 

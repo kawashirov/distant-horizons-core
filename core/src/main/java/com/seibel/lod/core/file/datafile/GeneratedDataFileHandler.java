@@ -1,9 +1,10 @@
 package com.seibel.lod.core.file.datafile;
 
+import com.seibel.lod.core.datatype.IIncompleteDataSource;
 import com.seibel.lod.core.datatype.ILodDataSource;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
-import com.seibel.lod.core.datatype.full.FullDataSource;
 import com.seibel.lod.core.datatype.full.SparseDataSource;
+import com.seibel.lod.core.datatype.full.SpottyDataSource;
 import com.seibel.lod.core.generation.GenerationQueue;
 import com.seibel.lod.core.level.IDhServerLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
@@ -99,7 +100,8 @@ public class GeneratedDataFileHandler extends DataFileHandler {
         LodUtil.assertTrue(!missing.isEmpty() || !existFiles.isEmpty());
         if (missing.size() == 1 && existFiles.isEmpty() && missing.get(0).equals(pos)) {
             // None exist.
-            SparseDataSource dataSource = SparseDataSource.createEmpty(pos);
+            IIncompleteDataSource dataSource = pos.sectionDetail <= SparseDataSource.MAX_SECTION_DETAIL ?
+                    SparseDataSource.createEmpty(pos) : SpottyDataSource.createEmpty(pos);
             GenerationQueue getQueue = queue.get();
             GenTask task = new GenTask(pos, new WeakReference<>(dataSource));
             genQueue.put(dataSource, task);
@@ -126,18 +128,17 @@ public class GeneratedDataFileHandler extends DataFileHandler {
                 if (newfile != null) existFiles.add(newfile);
             }
             final ArrayList<CompletableFuture<Void>> futures = new ArrayList<>(existFiles.size());
-            final SparseDataSource dataSource = SparseDataSource.createEmpty(pos);
+            final IIncompleteDataSource dataSource = pos.sectionDetail <= SparseDataSource.MAX_SECTION_DETAIL ?
+                    SparseDataSource.createEmpty(pos) : SpottyDataSource.createEmpty(pos);
+            LOGGER.debug("Creating {} from sampling {} files: {}", pos, existFiles.size(), existFiles);
 
             for (DataMetaFile f : existFiles) {
                 futures.add(f.loadOrGetCached()
                         .exceptionally((ex) -> null)
                         .thenAccept((data) -> {
                             if (data != null) {
-                                if (data instanceof SparseDataSource)
-                                    dataSource.sampleFrom((SparseDataSource) data);
-                                else if (data instanceof FullDataSource)
-                                    dataSource.sampleFrom((FullDataSource) data);
-                                else LodUtil.assertNotReach();
+                                LOGGER.info("Merging data from {} into {}", data.getSectionPos(), pos);
+                                dataSource.sampleFrom(data);
                             }
                         })
                 );

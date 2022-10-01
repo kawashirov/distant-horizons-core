@@ -17,6 +17,7 @@ import com.seibel.lod.core.file.MetaFile;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
+import com.seibel.lod.core.util.AtomicsUtil;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
@@ -48,7 +49,7 @@ public class DataMetaFile extends MetaFile
 	GuardedMultiAppendQueue _backQueue = new GuardedMultiAppendQueue();
 	// ===========================
 
-	private final AtomicBoolean inCacheWriteAccessAsserter = new AtomicBoolean(false);
+	private AtomicReference<CompletableFuture<ILodDataSource>> inCacheWriteAccessFuture = new AtomicReference<>(null);
 
 	// ===Object lifetime stuff===
 	private static final ReferenceQueue<ILodDataSource> lifeCycleDebugQueue = new ReferenceQueue<>();
@@ -105,16 +106,29 @@ public class DataMetaFile extends MetaFile
 		}
 	}
 
-	public long getDataVersion() {
+	public long getCacheVersion() {
 		debugCheck();
 		MetaData getData = metaData;
 		return getData == null ? 0 : metaData.dataVersion.get();
+	}
+
+	public boolean isCacheVersionValid(long cacheVersion) {
+		debugCheck();
+		boolean noWrite = writeQueue.get().queue.isEmpty();
+		if (!noWrite) {
+			return false;
+		} else {
+			MetaData getData = metaData;
+			//NOTE: Do this instead of direct compare so values that wrapped around still works correctly.
+			return (getData == null ? 0 : metaData.dataVersion.get()) - cacheVersion <= 0;
+		}
 	}
 
 	public void addToWriteQueue(ChunkSizedData datatype) {
 		debugCheck();
 		DhLodPos chunkPos = new DhLodPos((byte) (datatype.dataDetail + 4), datatype.x, datatype.z);
 		LodUtil.assertTrue(pos.getSectionBBoxPos().overlaps(chunkPos), "Chunk pos {} doesn't overlap with section {}", chunkPos, pos);
+		//LOGGER.info("Write Chunk {} to file {}", chunkPos, pos);
 
 		GuardedMultiAppendQueue queue = writeQueue.get();
 		// Using read lock is OK, because the queue's underlying data structure is thread-safe.
@@ -175,7 +189,7 @@ public class DataMetaFile extends MetaFile
 							throw new CompletionException(e);
 						}
 						// Apply the write queue
-						LodUtil.assertTrue(!inCacheWriteAccessAsserter.get(),"No one should be writing to the cache while we are in the process of " +
+						LodUtil.assertTrue(inCacheWriteAccessFuture.get() == null,"No one should be writing to the cache while we are in the process of " +
 								"loading one into the cache! Is this a deadlock?");
 						data = handler.onDataFileLoaded(data, metaData, this::saveChanges, this::applyWriteQueue);
 						// Finally, return the data.
@@ -207,7 +221,7 @@ public class DataMetaFile extends MetaFile
 
 	// "unchecked": Suppress casting of CompletableFuture<?> to CompletableFuture<LodDataSource>
 	// "PointlessBooleanExpression": Suppress explicit (boolean == false) check for more understandable CAS operation code.
-	@SuppressWarnings({"unchecked", "PointlessBooleanExpression"})
+	@SuppressWarnings({"unchecked"})
 	private CompletableFuture<ILodDataSource> _readCached(Object obj) {
 		// Has file cached in RAM and not freed yet.
 		if ((obj instanceof SoftReference<?>)) {
@@ -219,23 +233,33 @@ public class DataMetaFile extends MetaFile
 				// that will be applying the changes to the cache.
 				if (!isEmpty) {
 					// Do a CAS on inCacheWriteLock to ensure that we are the only thread that is writing to the cache,
-					// or if we fail, then that means someone else is already doing it, and we can just continue.
-					// FIXME: Should we return a future that waits for the write to be done for CAS fail? Or should we just return the
-					//       cached data that doesn't have all writes done immediately?
-					//       The latter give us immediate access to the data, but we need to ensure concurrent reads and
-					//       writes doesn't cause unexpected behavior down the line.
-					//       For now, I'll go for the latter option and just hope nothing goes wrong...
-					if (inCacheWriteAccessAsserter.getAndSet(true) == false) {
+					// or if we fail, then that means someone else is already doing it, and we can just return the future
+					CompletableFuture<ILodDataSource> future = new CompletableFuture<>();
+					CompletableFuture<ILodDataSource> cas = AtomicsUtil.compareAndExchange(inCacheWriteAccessFuture, null, future);
+					if (cas == null) {
 						try {
-							return handler.onDataFileRefresh((ILodDataSource) inner, this::applyWriteQueue, this::saveChanges);
+							data.set(future);
+							handler.onDataFileRefresh((ILodDataSource) inner, metaData, this::applyWriteQueue, this::saveChanges).handle((v, e) -> {
+								if (e != null) {
+									LOGGER.error("Error refreshing data {}: ", pos, e);
+									future.complete(null);
+									data.set(null);
+								} else {
+									future.complete(v);
+									new DataObjTracker(v);
+									data.set(new SoftReference<>(v));
+								}
+								inCacheWriteAccessFuture.set(null);
+								return v;
+							});
+							return future;
 						} catch (Exception e) {
-							LOGGER.error("Error while applying changes to LodDataSource at {}: ", pos, e);
-						} finally {
-							inCacheWriteAccessAsserter.set(false);
+							LOGGER.error("Error while doing refreshes to LodDataSource at {}: ", pos, e);
+							return CompletableFuture.completedFuture((ILodDataSource) inner);
 						}
 					} else {
-						// or, return the cached data. FIXME: See above.
-						return CompletableFuture.completedFuture((ILodDataSource) inner);
+						// or, return the future that will be completed when the write is done.
+						return cas;
 					}
 				} else {
 					// or, return the cached data.
@@ -270,6 +294,7 @@ public class DataMetaFile extends MetaFile
 			if (path.exists()) if (!path.delete()) LOGGER.warn("Failed to delete data file at {}", path);
 			doesFileExist = false;
 		} else {
+			LOGGER.info("Saving data file of {}", data.getSectionPos());
 			try {
 				// Write/Update data
 				LodUtil.assertTrue(metaData != null);

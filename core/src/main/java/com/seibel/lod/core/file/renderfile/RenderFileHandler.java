@@ -17,6 +17,7 @@ import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
+import org.lwjgl.system.CallbackI;
 
 import java.io.File;
 import java.io.IOException;
@@ -204,33 +205,31 @@ public class RenderFileHandler implements IRenderSourceProvider {
         if (cacheRecreationGuards.putIfAbsent(file.pos, new Object()) != null) return;
         final WeakReference<ILodRenderSource> dataRef = new WeakReference<>(data);
         CompletableFuture<ILodDataSource> dataFuture = dataSourceProvider.read(data.getSectionPos());
-        final long version = dataSourceProvider.getLatestCacheVersion(data.getSectionPos());
-                DataRenderTransformer.asyncTransformDataSource(
-                        dataFuture.thenApply((d) -> {
-                            if (dataRef.get() == null) throw new UncheckedInterruptedException();
-                            LodUtil.assertTrue(d != null);
-                            return d;
-                        }).exceptionally((ex) -> {
-                            if (ex != null)
-                                LOGGER.error("Uncaught exception when getting data for updateCache()", ex);
-                            return null;
-                        })
-                        , level)
-                .thenAccept((newData) -> write(dataRef.get(), file, newData, version))
-                .exceptionally((ex) -> {
-                    if (!UncheckedInterruptedException.isThrowableInterruption(ex))
-                        LOGGER.error("Exception when updating render file using data source: ", ex);
-                    return null;
-                }).thenRun(() -> cacheRecreationGuards.remove(file.pos));
+        dataFuture = dataFuture.thenApply((d) -> {
+            if (dataRef.get() == null) throw new UncheckedInterruptedException();
+            LodUtil.assertTrue(d != null);
+            return d;
+        }).exceptionally((ex) -> {
+            if (ex != null)
+                LOGGER.error("Uncaught exception when getting data for updateCache()", ex);
+            return null;
+        });
+
+        LOGGER.info("Recreating cache for {}", data.getSectionPos());
+        DataRenderTransformer.asyncTransformDataSource(dataFuture , level)
+        .thenAccept((newData) -> write(dataRef.get(), file, newData, dataSourceProvider.getCacheVersion(data.getSectionPos())))
+        .exceptionally((ex) -> {
+            if (!UncheckedInterruptedException.isThrowableInterruption(ex))
+                LOGGER.error("Exception when updating render file using data source: ", ex);
+            return null;
+        }).thenRun(() -> cacheRecreationGuards.remove(file.pos));
 
     }
 
     public ILodRenderSource onRenderFileLoaded(ILodRenderSource data, RenderMetaFile file) {
-        long newCacheVersion = dataSourceProvider.getLatestCacheVersion(file.pos);
-        //NOTE: Do this instead of direct compare so values that wrapped around still works correctly.
-        if (newCacheVersion - file.metaData.dataVersion.get() <= 0)
-            return data;
-        updateCache(data, file);
+        if (!dataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get())) {
+            updateCache(data, file);
+        }
         return data;
     }
 
@@ -253,10 +252,9 @@ public class RenderFileHandler implements IRenderSourceProvider {
     }
 
     public void onReadRenderSourceFromCache(RenderMetaFile file, ILodRenderSource data) {
-        long newCacheVersion = dataSourceProvider.getLatestCacheVersion(file.pos);
-        //NOTE: Do this instead of direct compare so values that wrapped around still works correctly.
-        if (newCacheVersion - file.metaData.dataVersion.get() > 0)
+        if (!dataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get())) {
             updateCache(data, file);
+        }
     }
 
     public boolean refreshRenderSource(ILodRenderSource source) {
@@ -268,12 +266,11 @@ public class RenderFileHandler implements IRenderSourceProvider {
         }
         LodUtil.assertTrue(file != null);
         LodUtil.assertTrue(file.metaData != null);
-        long newCacheVersion = dataSourceProvider.getLatestCacheVersion(file.pos);
-        //NOTE: Do this instead of direct compare so values that wrapped around still works correctly.
-        if (newCacheVersion - file.metaData.dataVersion.get() <= 0)
-            return false;
-        updateCache(source, file);
-        return true;
+        if (!dataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get())) {
+            updateCache(source, file);
+            return true;
+        }
+        return false;
     }
 
 }

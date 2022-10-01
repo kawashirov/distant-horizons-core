@@ -215,7 +215,7 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 		}
 	}
 	
-	private FullDataSource(DhSectionPos pos, FullDataPointIdMap mapping, long[][] data)
+	FullDataSource(DhSectionPos pos, FullDataPointIdMap mapping, long[][] data)
 	{
 		super(mapping, data, SECTION_SIZE);
 		LodUtil.assertTrue(data.length == SECTION_SIZE * SECTION_SIZE);

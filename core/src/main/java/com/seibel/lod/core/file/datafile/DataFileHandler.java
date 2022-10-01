@@ -1,10 +1,12 @@
 package com.seibel.lod.core.file.datafile;
 
 import com.google.common.collect.HashMultimap;
+import com.seibel.lod.core.datatype.IIncompleteDataSource;
 import com.seibel.lod.core.datatype.ILodDataSource;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.full.FullDataSource;
 import com.seibel.lod.core.datatype.full.SparseDataSource;
+import com.seibel.lod.core.datatype.full.SpottyDataSource;
 import com.seibel.lod.core.file.MetaFile;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhLodPos;
@@ -255,10 +257,17 @@ public class DataFileHandler implements IDataSourceProvider {
     }
 
     @Override
-    public long getLatestCacheVersion(DhSectionPos sectionPos) {
+    public long getCacheVersion(DhSectionPos sectionPos) {
         DataMetaFile file = files.get(sectionPos);
         if (file == null) return 0;
-        return file.getDataVersion();
+        return file.getCacheVersion();
+    }
+
+    @Override
+    public boolean isCacheVersionValid(DhSectionPos sectionPos, long cacheVersion) {
+        DataMetaFile file = files.get(sectionPos);
+        if (file == null) return cacheVersion >= 0;
+        return file.isCacheVersionValid(cacheVersion);
     }
 
     @Override
@@ -270,27 +279,25 @@ public class DataFileHandler implements IDataSourceProvider {
         LodUtil.assertTrue(!missing.isEmpty() || !existFiles.isEmpty());
         if (missing.size() == 1 && existFiles.isEmpty() && missing.get(0).equals(pos)) {
             // None exist.
-            SparseDataSource dataSource = SparseDataSource.createEmpty(pos);
-            return CompletableFuture.completedFuture(dataSource);
+            IIncompleteDataSource incompleteDataSource = pos.sectionDetail <= SparseDataSource.MAX_SECTION_DETAIL ?
+                    SparseDataSource.createEmpty(pos) : SpottyDataSource.createEmpty(pos);
+            return CompletableFuture.completedFuture(incompleteDataSource);
         } else {
-
             for (DhSectionPos missingPos : missing) {
                 DataMetaFile newfile = atomicGetOrMakeFile(missingPos);
                 if (newfile != null) existFiles.add(newfile);
             }
             final ArrayList<CompletableFuture<Void>> futures = new ArrayList<>(existFiles.size());
-            final SparseDataSource dataSource = SparseDataSource.createEmpty(pos);
+            final IIncompleteDataSource dataSource = pos.sectionDetail <= SparseDataSource.MAX_SECTION_DETAIL ?
+                    SparseDataSource.createEmpty(pos) : SpottyDataSource.createEmpty(pos);
 
             for (DataMetaFile f : existFiles) {
                 futures.add(f.loadOrGetCached()
                         .exceptionally((ex) -> null)
                         .thenAccept((data) -> {
                             if (data != null) {
-                                if (data instanceof SparseDataSource)
-                                    dataSource.sampleFrom((SparseDataSource) data);
-                                else if (data instanceof FullDataSource)
-                                    dataSource.sampleFrom((FullDataSource) data);
-                                else LodUtil.assertNotReach();
+                                LOGGER.info("Merging data from {} into {}", data.getSectionPos(), pos);
+                                dataSource.sampleFrom(data);
                             }
                         })
                 );
@@ -305,8 +312,8 @@ public class DataFileHandler implements IDataSourceProvider {
                                           Consumer<ILodDataSource> onUpdated, Function<ILodDataSource, Boolean> updater) {
         boolean changed = updater.apply(source);
         if (changed) metaData.dataVersion.incrementAndGet();
-        if (source instanceof SparseDataSource) {
-            ILodDataSource newSource = ((SparseDataSource) source).trySelfPromote();
+        if (source instanceof IIncompleteDataSource) {
+            ILodDataSource newSource = ((IIncompleteDataSource) source).trySelfPromote();
             changed |= newSource != source;
             source = newSource;
         }
@@ -314,12 +321,13 @@ public class DataFileHandler implements IDataSourceProvider {
         return source;
     }
     @Override
-    public CompletableFuture<ILodDataSource> onDataFileRefresh(ILodDataSource source, Function<ILodDataSource, Boolean> updater, Consumer<ILodDataSource> onUpdated) {
+    public CompletableFuture<ILodDataSource> onDataFileRefresh(ILodDataSource source, MetaFile.MetaData metaData, Function<ILodDataSource, Boolean> updater, Consumer<ILodDataSource> onUpdated) {
         return CompletableFuture.supplyAsync(() -> {
             ILodDataSource sourceLocal = source;
             boolean changed = updater.apply(sourceLocal);
-            if (sourceLocal instanceof SparseDataSource) {
-                ILodDataSource newSource = ((SparseDataSource) sourceLocal).trySelfPromote();
+            if (changed) metaData.dataVersion.incrementAndGet();
+            if (sourceLocal instanceof IIncompleteDataSource) {
+                ILodDataSource newSource = ((IIncompleteDataSource) sourceLocal).trySelfPromote();
                 changed |= newSource != sourceLocal;
                 sourceLocal = newSource;
             }

@@ -1,5 +1,6 @@
 package com.seibel.lod.core.datatype.transform;
 
+import com.seibel.lod.core.datatype.IIncompleteDataSource;
 import com.seibel.lod.core.datatype.ILodRenderSource;
 import com.seibel.lod.core.datatype.column.accessor.ColumnFormat;
 import com.seibel.lod.core.datatype.column.ColumnRenderSource;
@@ -66,12 +67,12 @@ public class FullToColumnTransformer {
         return columnSource;
     }
 
-    public static ILodRenderSource transformSparseDataToColumnData(IDhClientLevel level, SparseDataSource data) {
+    public static ILodRenderSource transformIncompleteDataToColumnData(IDhClientLevel level, IIncompleteDataSource data) {
         final DhSectionPos pos = data.getSectionPos();
         final byte dataDetail = data.getDataDetail();
         final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(data.getDataDetail());
         final ColumnRenderSource columnSource = new ColumnRenderSource(pos, vertSize, level.getMinY());
-        if (data.isEmpty) return columnSource;
+        if (data.isEmpty()) return columnSource;
         columnSource.markNotEmpty();
 
         if (dataDetail == columnSource.getDataDetail()) {

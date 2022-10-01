@@ -19,11 +19,12 @@ public interface IDataSourceProvider extends AutoCloseable {
     void write(DhSectionPos sectionPos, ChunkSizedData chunkData);
     CompletableFuture<Void> flushAndSave();
 
-    long getLatestCacheVersion(DhSectionPos sectionPos);
+    long getCacheVersion(DhSectionPos sectionPos);
+    boolean isCacheVersionValid(DhSectionPos sectionPos, long cacheVersion);
 
     CompletableFuture<ILodDataSource> onCreateDataFile(DataMetaFile file);
     ILodDataSource onDataFileLoaded(ILodDataSource source, MetaFile.MetaData metaData, Consumer<ILodDataSource> onUpdated, Function<ILodDataSource, Boolean> updater);
-    CompletableFuture<ILodDataSource> onDataFileRefresh(ILodDataSource source, Function<ILodDataSource, Boolean> updater, Consumer<ILodDataSource> onUpdated);
+    CompletableFuture<ILodDataSource> onDataFileRefresh(ILodDataSource source, MetaFile.MetaData metaData, Function<ILodDataSource, Boolean> updater, Consumer<ILodDataSource> onUpdated);
     File computeDataFilePath(DhSectionPos pos);
     Executor getIOExecutor();
 
