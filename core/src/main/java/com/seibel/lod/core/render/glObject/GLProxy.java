@@ -104,58 +104,6 @@ public class GLProxy
 	public final GLMessage.Builder proxyWorkerDebugMessageBuilder;
 
 	
-	private String getFailedVersionInfo(GLCapabilities c) {
-		return "Your OpenGL support:\n" +
-				"openGL version 3.2+: " + c.OpenGL32 + " <- REQUIRED\n" +
-				"Vertex Attribute Buffer Binding: " + (c.glVertexAttribBinding!=0) + " <- optional improvement\n" +
-				"Buffer Storage: " + (c.glBufferStorage!=0) + " <- optional improvement\n" +
-				"If you noticed that your computer supports higher OpenGL versions"
-				+ " but not the required version, try running the game in compatibility mode."
-				+ " (How you turn that on, I have no clue~)";
-	}
-
-	private boolean checkCapabilities(GLCapabilities c) {
-		if (!c.OpenGL32) {
-			return false;
-		}
-		namedObjectSupported = c.glNamedBufferStorage!=0;
-		bufferStorageSupported = c.glBufferStorage!=0;
-		VertexAttributeBufferBindingSupported = c.glVertexAttribBinding!=0;
-		return true;
-	}
-
-	private String getVersionInfo(GLCapabilities c) {
-		return "Your OpenGL support:\n" +
-				"openGL version 3.2+: " + c.OpenGL32 + " <- REQUIRED\n" +
-				"Vertex Attribute Buffer Binding: " + (c.glVertexAttribBinding!=0) + " <- optional improvement\n" +
-				"Buffer Storage: " + (c.glBufferStorage!=0) + " <- optional improvement\n";
-	}
-	
-	private static void logMessage(GLMessage msg) {
-		GLMessage.Severity s = msg.severity;
-		if (msg.type == GLMessage.Type.ERROR ||
-			msg.type == GLMessage.Type.UNDEFINED_BEHAVIOR) {
-			GL_LOGGER.error("GL ERROR {} from {}: {}", msg.id, msg.source, msg.message);
-			throw new RuntimeException("GL ERROR: "+msg.toString());
-		}
-		RuntimeException e = new RuntimeException("GL MESSAGE: "+msg.toString());
-		switch (s) {
-		case HIGH:
-			GL_LOGGER.error("{}", e);
-			break;
-		case MEDIUM:
-			GL_LOGGER.warn("{}", e);
-			break;
-		case LOW:
-			GL_LOGGER.info("{}", e);
-			break;
-		case NOTIFICATION:
-			GL_LOGGER.debug("{}", e);
-			break;
-		}
-		
-	}
-	
 	
 	/** 
 	 * @throws IllegalStateException 
@@ -405,9 +353,7 @@ public class GLProxy
 					+ "no context [0].");
 	}
 	
-	public static boolean hasInstance() {
-		return instance != null;
-	}
+	public static boolean hasInstance() { return instance != null; }
 	
 	public static GLProxy getInstance()
 	{
@@ -416,9 +362,9 @@ public class GLProxy
 		return instance;
 	}
 	
-	public EGpuUploadMethod getGpuUploadMethod() {
+	public EGpuUploadMethod getGpuUploadMethod()
+	{
 		EGpuUploadMethod method = Config.Client.Advanced.Buffers.gpuUploadMethod.get();
-
 		if (!bufferStorageSupported && method == EGpuUploadMethod.BUFFER_STORAGE)
 		{
 			// if buffer storage isn't supported
@@ -462,20 +408,90 @@ public class GLProxy
 		}
 	}
 	
-	public static void ensureAllGLJobCompleted() { // Uses global logger since it's a cleanup method
-		if (!hasInstance()) return;
+	public static void ensureAllGLJobCompleted()
+	{
+		if (!hasInstance()) 
+			return;
+		
 		LOGGER.info("Blocking until GL jobs finished...");
-		try {
+		try
+		{
 			instance.workerThread.shutdown();
 			boolean worked = instance.workerThread.awaitTermination(30, TimeUnit.SECONDS);
 			if (!worked)
 				LOGGER.error("GLWorkerThread shutdown timed out! Game may crash on exit due to cleanup failure!");
-		} catch (InterruptedException e) {
+		}
+		catch (InterruptedException e)
+		{
 			LOGGER.error("GLWorkerThread shutdown is interrupted! Game may crash on exit due to cleanup failure!");
 			e.printStackTrace();
-		} finally {
+		}
+		finally
+		{
 			instance.workerThread = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(GLProxy.class.getSimpleName() + "-Worker-Thread").build());
 		}
 		LOGGER.info("All GL jobs finished!");
 	}
+	
+	
+	
+	private String getFailedVersionInfo(GLCapabilities c)
+	{
+		return "Your OpenGL support:\n" +
+				"openGL version 3.2+: " + c.OpenGL32 + " <- REQUIRED\n" +
+				"Vertex Attribute Buffer Binding: " + (c.glVertexAttribBinding!=0) + " <- optional improvement\n" +
+				"Buffer Storage: " + (c.glBufferStorage!=0) + " <- optional improvement\n" +
+				"If you noticed that your computer supports higher OpenGL versions"
+				+ " but not the required version, try running the game in compatibility mode."
+				+ " (How you turn that on, I have no clue~)";
+	}
+	
+	private boolean checkCapabilities(GLCapabilities c)
+	{
+		if (!c.OpenGL32)
+		{
+			return false;
+		}
+		namedObjectSupported = c.glNamedBufferStorage != 0;
+		bufferStorageSupported = c.glBufferStorage != 0;
+		VertexAttributeBufferBindingSupported = c.glVertexAttribBinding != 0;
+		return true;
+	}
+	
+	private String getVersionInfo(GLCapabilities c)
+	{
+		return "Your OpenGL support:\n" +
+				"openGL version 3.2+: " + c.OpenGL32 + " <- REQUIRED\n" +
+				"Vertex Attribute Buffer Binding: " + (c.glVertexAttribBinding != 0) + " <- optional improvement\n" +
+				"Buffer Storage: " + (c.glBufferStorage != 0) + " <- optional improvement\n";
+	}
+	
+	private static void logMessage(GLMessage msg)
+	{
+		GLMessage.Severity s = msg.severity;
+		if (msg.type == GLMessage.Type.ERROR ||
+				msg.type == GLMessage.Type.UNDEFINED_BEHAVIOR)
+		{
+			GL_LOGGER.error("GL ERROR {} from {}: {}", msg.id, msg.source, msg.message);
+			throw new RuntimeException("GL ERROR: " + msg.toString());
+		}
+		RuntimeException e = new RuntimeException("GL MESSAGE: " + msg.toString());
+		switch (s)
+		{
+		case HIGH:
+			GL_LOGGER.error("{}", e);
+			break;
+		case MEDIUM:
+			GL_LOGGER.warn("{}", e);
+			break;
+		case LOW:
+			GL_LOGGER.info("{}", e);
+			break;
+		case NOTIFICATION:
+			GL_LOGGER.debug("{}", e);
+			break;
+		}
+	}
+	
+	
 }
