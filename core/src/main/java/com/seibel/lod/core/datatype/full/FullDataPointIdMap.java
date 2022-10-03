@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Used to map a numerical ID to a Biome/BlockState pair.
  * 
  * @author Leetom
- * @version 2022-9-30
+ * @version 2022-10-2
  */
 public class FullDataPointIdMap
 {
@@ -28,9 +28,12 @@ public class FullDataPointIdMap
 	public IBiomeWrapper getBiomeWrapper(int id) { return entries.get(id).biome; }
 	public IBlockStateWrapper getBlockStateWrapper(int id) { return entries.get(id).blockState; }
 	
-	/** Adds a new entry to the map and returns its numerical ID */
-	public int setAndGetId(IBiomeWrapper biome, IBlockStateWrapper blockState) { return setAndGetId(new Entry(biome, blockState)); }
-	private int setAndGetId(Entry biomeBlockStateEntry)
+	/** 
+	 * If an entry with the given values already exists nothing will 
+	 * be added but the existing item's ID will still be returned.
+	 */
+	public int addIfNotPresentAndGetId(IBiomeWrapper biome, IBlockStateWrapper blockState) { return addIfNotPresentAndGetId(new Entry(biome, blockState)); }
+	private int addIfNotPresentAndGetId(Entry biomeBlockStateEntry)
 	{
 		return idMap.computeIfAbsent(biomeBlockStateEntry, (entry) -> {
 			int id = entries.size();
@@ -51,7 +54,7 @@ public class FullDataPointIdMap
 		int[] remappedEntryIds = new int[entriesToMerge.size()];
 		for (int i = 0; i < entriesToMerge.size(); i++)
 		{
-			remappedEntryIds[i] = setAndGetId(entriesToMerge.get(i));
+			remappedEntryIds[i] = addIfNotPresentAndGetId(entriesToMerge.get(i));
 		}
 		return remappedEntryIds;
 	}

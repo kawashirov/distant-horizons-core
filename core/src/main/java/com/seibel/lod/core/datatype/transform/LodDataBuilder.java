@@ -23,7 +23,7 @@ public class LodDataBuilder {
                 int lastY = chunk.getMaxBuildHeight();
                 IBiomeWrapper biome = chunk.getBiome(x, lastY, z);
                 IBlockStateWrapper blockState = AIR;
-                int mappedId = chunkData.getMapping().setAndGetId(biome, blockState);
+                int mappedId = chunkData.getMapping().addIfNotPresentAndGetId(biome, blockState);
                 // FIXME: The +1 offset to reproduce the old behavior. Remove this when we get per-face lighting
                 byte light = (byte) ((chunk.getBlockLight(x,lastY+1,z) << 4) + chunk.getSkyLight(x,lastY+1,z));
                 int y=chunk.getMaxY(x, z);
@@ -37,7 +37,7 @@ public class LodDataBuilder {
                         longs.add(FullDataPoint.encode(mappedId, lastY-y, y+1 - chunk.getMinBuildHeight(), light));
                         biome = newBiome;
                         blockState = newBlockState;
-                        mappedId = chunkData.getMapping().setAndGetId(biome, blockState);
+                        mappedId = chunkData.getMapping().addIfNotPresentAndGetId(biome, blockState);
                         light = newLight;
                         lastY = y;
                     }
