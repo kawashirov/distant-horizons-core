@@ -1,17 +1,21 @@
 package com.seibel.lod.core.util.objects;
 
-public class Reference<T> {
-    public T v;
-    public Reference() {}
-    public Reference(T v) {
-        this.v = v;
-    }
-    public T swap(T v) {
-        T old = this.v;
-        this.v = v;
-        return old;
-    }
-    public boolean isEmpty() {
-        return v == null;
-    }
+public class Reference<T>
+{
+	public T value;
+	
+	
+	public Reference() { }
+	
+	public Reference(T value) { this.value = value; }
+	
+	public T swap(T v)
+	{
+		T old = this.value;
+		this.value = v;
+		return old;
+	}
+	
+	public boolean isEmpty() { return value == null; }
+	
 }
