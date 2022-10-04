@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -53,6 +54,7 @@ public class ConfigBase
 //        acceptableInputs.add(Float.class);
         acceptableInputs.add(String.class);
         acceptableInputs.add(Map.class); // TODO[CONFIG]: This is handled separately to check the first input is String and the second input is valid
+        acceptableInputs.add(HashMap.class);
     }
 
     /** Disables the minimum and maximum of a variable */
@@ -90,9 +92,9 @@ public class ConfigBase
                 entry.configBase = this;
 
                 if (ConfigEntry.class.isAssignableFrom(field.getType())) { // If item is type ConfigEntry
-                    if (!isAcceptableType(((ConfigEntry<?>) entry).get().getClass())) {
+                    if (!isAcceptableType(((ConfigEntry<?>) entry).getType())) {
                         LOGGER.error("Invalid variable type at [" + (category.isEmpty() ? "" : category + ".") + field.getName() + "].");
-                        LOGGER.error("Type [" + ((ConfigEntry<?>) entry).get().getClass() + "] is not one of these types [" + acceptableInputs.toString() + "]");
+                        LOGGER.error("Type [" + ((ConfigEntry<?>) entry).getType() + "] is not one of these types [" + acceptableInputs.toString() + "]");
                         entries.remove(entries.size() -1); // Delete the entry if it is invalid so the game can still run
                     }
                 }

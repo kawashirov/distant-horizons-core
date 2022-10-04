@@ -1,8 +1,8 @@
 package com.seibel.lod.core.jar.installer;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
+import com.electronwill.nightconfig.core.Config;
+import com.electronwill.nightconfig.core.io.ParsingMode;
+import com.electronwill.nightconfig.json.JsonFormat;
 
 import java.net.URL;
 import java.util.*;
@@ -12,10 +12,11 @@ import java.util.*;
  *
  * @author coolGi
  */
+// TODO: Fix stuff in here (check how to do stuff with `[{jsonStuff},{jsonStuff}]` which needs to be remade with nightconfig's json
 public class ModrinthGetter {
     public static final String ModrinthAPI = "https://api.modrinth.com/v2/project/";
     public static final String projectID = "distanthorizons";
-    public static JSONArray projectRelease = new JSONArray();
+    public static Config projectRelease = Config.inMemory();
 
     public static List<String> releaseID = new ArrayList<>(); // This list contains the release ID's
     public static List<String> mcVersions = new ArrayList<>(); // List of available Minecraft versions in the mod
@@ -35,18 +36,18 @@ public class ModrinthGetter {
 
     public static boolean init() {
         try {
-            projectRelease = (JSONArray) new JSONParser().parse(WebDownloader.downloadAsString(new URL(ModrinthAPI+projectID+"/version")));
+            JsonFormat.fancyInstance().createParser().parse(WebDownloader.downloadAsString(new URL(ModrinthAPI+projectID+"/version")), projectRelease, ParsingMode.REPLACE);
 
 
             for (int i = 0; i < projectRelease.size(); i++) {
-                JSONObject currentRelease = (JSONObject) projectRelease.get(i);
+                Config currentRelease = (Config) projectRelease.get(String.valueOf(i));
                 String workingID = currentRelease.get("id").toString();
 
                 releaseID.add(workingID);
                 releaseNames.put(workingID, currentRelease.get("name").toString().replaceAll(" - 1\\..*", ""));
                 changeLogs.put(workingID, currentRelease.get("changelog").toString());
                 try {
-                    downloadUrl.put(workingID, new URL(((JSONObject) ((JSONArray) currentRelease.get("files")).get(0)).get("url").toString()));
+                    downloadUrl.put(workingID, new URL(currentRelease.get("files.0.url").toString()));
                 } catch (Exception e) { e.printStackTrace(); }
 
                 // Get all the mc versions this mod is available for
@@ -76,14 +77,15 @@ public class ModrinthGetter {
         return downloadUrl.get(((List<String>) mcVerToReleaseID.get(mcVer)).get(0));
     }
     public static String getLatestShaForVersion(String mcVer) {
-        return ((JSONObject)
-                ((JSONObject)
-                        ((JSONArray)
-                                ((JSONObject) projectRelease.get(mcVersions.indexOf(mcVer)))
-                                        .get("files"))
-                                .get(0))
-                        .get("hashes"))
-                .get("sha1")
-                .toString();
+        return projectRelease.get(mcVersions.indexOf(mcVer) + ".files.0.hashes.sha1").toString();
+//        return ((JSONObject)
+//                ((JSONObject)
+//                        ((JSONArray)
+//                                ((JSONObject) projectRelease.get(mcVersions.indexOf(mcVer)))
+//                                        .get("files"))
+//                                .get(0))
+//                        .get("hashes"))
+//                .get("sha1")
+//                .toString();
     }
 }

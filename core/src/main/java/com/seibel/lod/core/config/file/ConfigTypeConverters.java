@@ -1,8 +1,8 @@
 package com.seibel.lod.core.config.file;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import com.electronwill.nightconfig.core.Config;
+import com.electronwill.nightconfig.core.io.ParsingMode;
+import com.electronwill.nightconfig.json.JsonFormat;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +17,7 @@ public class ConfigTypeConverters {
     // Once you've made a converter add it to here where the first value is the type you want to convert and the 2nd value is the converter
     public static final Map<Class, ConverterBase> convertObjects = new HashMap<Class, ConverterBase>() {{
         put(Map.class, new MapConverter());
+        put(HashMap.class, new MapConverter());
     }};
 
     public static String convertToString(Class clazz, Object value) {
@@ -46,35 +47,34 @@ public class ConfigTypeConverters {
     }
 
 
+
+
+
+
     @SuppressWarnings("unchecked")
     public static class MapConverter extends ConverterBase {
         @Override
         public String convertToString(Object item) {
             Map<String, Object> mapObject = (Map<String, Object>) item;
-            JSONObject jsonObject = new JSONObject();
+            Config jsonObject = Config.inMemory();
 
             for (int i = 0; i < mapObject.size(); i++) {
-                jsonObject.put(mapObject.keySet().toArray()[i], mapObject.get(mapObject.keySet().toArray()[i]));
+                jsonObject.add(mapObject.keySet().toArray()[i].toString(), mapObject.get(mapObject.keySet().toArray()[i]));
             }
 
-            return jsonObject.toJSONString();
+            return JsonFormat.fancyInstance().createWriter().writeToString(jsonObject);
         }
 
         @Override
         public Map<String, Object> convertFromString(String s) {
             Map<String, Object> map = new HashMap<>();
 
-            JSONObject jsonObject = null;
+            Config jsonObject = Config.inMemory();
             try {
-                jsonObject = (JSONObject) new JSONParser().parse(s);
-            } catch (ParseException p) {
-                p.printStackTrace();
-            }
+                JsonFormat.fancyInstance().createParser().parse(s, jsonObject, ParsingMode.REPLACE);
+            } catch (Exception e) { e.printStackTrace(); }
 
-            for (int i = 0; i < jsonObject.keySet().toArray().length; i++) {
-                map.put((String) jsonObject.keySet().toArray()[i], jsonObject.get(jsonObject.keySet().toArray()[i]));
-            }
-            return map;
+            return jsonObject.valueMap();
         }
     }
 }
