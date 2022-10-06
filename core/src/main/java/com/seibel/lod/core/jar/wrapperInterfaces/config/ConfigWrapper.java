@@ -1,21 +1,26 @@
 package com.seibel.lod.core.jar.wrapperInterfaces.config;
 
+import com.electronwill.nightconfig.core.Config;
+import com.electronwill.nightconfig.core.io.ParsingMode;
+import com.electronwill.nightconfig.json.JsonFormat;
 import com.seibel.lod.core.jar.JarUtils;
 import com.seibel.lod.core.wrapperInterfaces.config.IConfigWrapper;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 import java.util.Locale;
 
 public class ConfigWrapper implements IConfigWrapper {
     public static final ConfigWrapper INSTANCE = new ConfigWrapper();
-    private static JSONObject jsonObject = new JSONObject();
+    private static Config jsonObject = Config.inMemory();
 
     public static void init() {
         try {
-            jsonObject = (JSONObject) new JSONParser().parse(JarUtils.convertInputStreamToString(JarUtils.accessFile("assets/lod/lang/"+ Locale.getDefault().toString().toLowerCase()+".json")));
-        } catch (ParseException e) { e.printStackTrace(); }
+//            System.out.println(JarUtils.convertInputStreamToString(JarUtils.accessFile("assets/lod/lang/"+ Locale.getDefault().toString().toLowerCase()+".json")).replaceAll(":\\n.+?(?=\")",":"));
+            // FIXME: Is there something in the config that the parser cant read?
+            JsonFormat.fancyInstance().createParser().parse(
+                    JarUtils.convertInputStreamToString(JarUtils.accessFile("assets/lod/lang/"+ Locale.getDefault().toString().toLowerCase()+".json")),
+                    jsonObject, ParsingMode.REPLACE
+            );
+        } catch (Exception e) { e.printStackTrace(); }
     }
 
     @Override

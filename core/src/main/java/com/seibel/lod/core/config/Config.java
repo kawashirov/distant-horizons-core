@@ -24,6 +24,9 @@ import com.seibel.lod.api.enums.config.*;
 import com.seibel.lod.api.enums.rendering.*;
 import com.seibel.lod.core.config.types.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 
 /**
  * This handles any configuration the user has access to.
@@ -69,6 +72,10 @@ public class Config
                 .set(true)
                 .comment("Show the lod button in the options screen next to fov")
                 .build();
+
+//        public static ConfigEntry<HashMap<String, Boolean>> testHashMap = new ConfigEntry.Builder<HashMap<String, Boolean>>()
+//                .set(new HashMap<String, Boolean>())
+//                .build();
 
 
         public static class Graphics
