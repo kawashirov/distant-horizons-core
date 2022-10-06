@@ -298,8 +298,8 @@ public class ColumnRenderBuffer extends RenderBuffer {
             for (int z = 0; z < ColumnRenderSource.SECTION_SIZE; z++) {
                 UncheckedInterruptedException.throwIfInterrupted();
 
-                ColumnArrayView posData = region.getVerticalDataView(x, z);
-                if (posData.size() == 0 || !ColumnFormat.doesItExist(posData.get(0))
+                ColumnArrayView posData = region.getVerticalDataPointView(x, z);
+                if (posData.size() == 0 || !ColumnFormat.doesDataPointExist(posData.get(0))
                         || ColumnFormat.isVoid(posData.get(0)))
                     continue;
                 ColumnRenderSource.DebugSourceFlag debugSourceFlag = region.debugGetFlag(x, z);
@@ -355,11 +355,11 @@ public class ColumnRenderBuffer extends RenderBuffer {
 
                         if (adjDetail == detailLevel || adjDetail > detailLevel) {
                             adjData[lodDirection.ordinal() - 2] = new ColumnArrayView[1];
-                            adjData[lodDirection.ordinal() - 2][0] = adjRegion.getVerticalDataView(xAdj, zAdj);
+                            adjData[lodDirection.ordinal() - 2][0] = adjRegion.getVerticalDataPointView(xAdj, zAdj);
                         } else {
                             adjData[lodDirection.ordinal() - 2] = new ColumnArrayView[2];
-                            adjData[lodDirection.ordinal() - 2][0] = adjRegion.getVerticalDataView(xAdj, zAdj);
-                            adjData[lodDirection.ordinal() - 2][1] =  adjRegion.getVerticalDataView(
+                            adjData[lodDirection.ordinal() - 2][0] = adjRegion.getVerticalDataPointView(xAdj, zAdj);
+                            adjData[lodDirection.ordinal() - 2][1] =  adjRegion.getVerticalDataPointView(
                                     xAdj + (lodDirection.getAxis()== ELodDirection.Axis.X ? 0 : 1),
                                     zAdj + (lodDirection.getAxis()== ELodDirection.Axis.Z ? 0 : 1));
                         }
@@ -375,7 +375,7 @@ public class ColumnRenderBuffer extends RenderBuffer {
                     long data = posData.get(i);
                     // If the data is not renderable (Void or non-existing) we stop since there is
                     // no data left in this position
-                    if (ColumnFormat.isVoid(data) || !ColumnFormat.doesItExist(data))
+                    if (ColumnFormat.isVoid(data) || !ColumnFormat.doesDataPointExist(data))
                         break;
 
                     long adjDataTop = i - 1 >= 0 ? posData.get(i - 1) : ColumnFormat.EMPTY_DATA;

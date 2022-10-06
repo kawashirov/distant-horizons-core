@@ -208,7 +208,7 @@ public class ColumnFormat {
 
     public static byte getGenerationMode(long dataPoint) {
         byte genMode = (byte) ((dataPoint >>> GEN_TYPE_SHIFT) & GEN_TYPE_MASK);
-        if (warnLogger.canMaybeLog() && doesItExist(dataPoint) && genMode == 0) {
+        if (warnLogger.canMaybeLog() && doesDataPointExist(dataPoint) && genMode == 0) {
             warnLogger.warnInc("Existing datapoint with genMode 0 detected! This is invalid in DataPoint version 10!"
                     + " This may be caused by old data that has not been updated correctly.");
             return 1;
@@ -224,7 +224,7 @@ public class ColumnFormat {
         return (((dataPoint >>> DEPTH_SHIFT) & HEIGHT_DEPTH_MASK) == 0);
     }
 
-    public static boolean doesItExist(long dataPoint) {
+    public static boolean doesDataPointExist(long dataPoint) {
         return dataPoint != 0;
     }
 
@@ -238,7 +238,7 @@ public class ColumnFormat {
      */
     @SuppressWarnings("unused")
     public static String toString(long dataPoint) {
-        if (!doesItExist(dataPoint)) return "null";
+        if (!doesDataPointExist(dataPoint)) return "null";
         if (isVoid(dataPoint)) return "void";
         return "H:" + getHeight(dataPoint) +
                 " D:" + getDepth(dataPoint) +
@@ -347,7 +347,7 @@ public class ColumnFormat {
         for (int index = 0; index < dataCount; index++) {
             tempData = sourceData.get(index * inputVerticalSize);
             allVoid = allVoid && ColumnFormat.isVoid(tempData);
-            allEmpty = allEmpty && !ColumnFormat.doesItExist(tempData);
+            allEmpty = allEmpty && !ColumnFormat.doesDataPointExist(tempData);
         }
 
         //We check if there is any data that's not empty or void
@@ -375,7 +375,7 @@ public class ColumnFormat {
                 for (int index = 0; index < dataCount; index++) {
                     if (indeces[index] < inputVerticalSize) {
                         tempData = sourceData.get(index * inputVerticalSize + indeces[index]);
-                        if (!ColumnFormat.isVoid(tempData) && ColumnFormat.doesItExist(tempData)) {
+                        if (!ColumnFormat.isVoid(tempData) && ColumnFormat.doesDataPointExist(tempData)) {
                             tempHeight = ColumnFormat.getHeight(tempData);
                             tempDepth = ColumnFormat.getDepth(tempData);
                             if (tempDepth >= newHeight) {
@@ -452,7 +452,7 @@ public class ColumnFormat {
             for (int index = 0; index < dataCount; index++) {
                 if (indeces[index] < inputVerticalSize) {
                     tempData = sourceData.get(index * inputVerticalSize + indeces[index]);
-                    stillHasDataToCheck |= !ColumnFormat.isVoid(tempData) && ColumnFormat.doesItExist(tempData);
+                    stillHasDataToCheck |= !ColumnFormat.isVoid(tempData) && ColumnFormat.doesDataPointExist(tempData);
                 }
             }
         }
@@ -522,7 +522,7 @@ public class ColumnFormat {
                     //we scan the lods in the position from top to bottom
                     while (dataIndexesCache[index] < inputVerticalSize) {
                         singleData = sourceData.get(index * inputVerticalSize + dataIndexesCache[index]);
-                        if (doesItExist(singleData) && !isVoid(singleData)) {
+                        if (doesDataPointExist(singleData) && !isVoid(singleData)) {
                             dataIndexesCache[index]++;
                             if ((depth <= getDepth(singleData) && getDepth(singleData) < height)
                                     || (depth < getHeight(singleData) && getHeight(singleData) <= height)) {
@@ -532,11 +532,11 @@ public class ColumnFormat {
                         } else
                             break;
                     }
-                    if (!doesItExist(data)) {
+                    if (!doesDataPointExist(data)) {
                         data = createVoidDataPoint(genMode);
                     }
 
-                    if (doesItExist(data)) {
+                    if (doesDataPointExist(data)) {
                         allEmpty = false;
                         if (!isVoid(data)) {
                             numberOfChildren++;

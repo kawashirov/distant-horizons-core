@@ -57,7 +57,7 @@ public class PlaceHolderRenderSource implements ILodRenderSource
 	public void fastWrite(ChunkSizedData chunkData, IDhClientLevel level) { /* TODO */ }
 	
 	@Override
-	public void weakWrite(ILodRenderSource source) { /* TODO */ }
+	public void updateFromRenderSource(ILodRenderSource source) { /* TODO */ }
 	
 	
 }

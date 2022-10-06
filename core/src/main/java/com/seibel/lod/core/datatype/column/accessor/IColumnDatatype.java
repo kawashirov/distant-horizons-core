@@ -9,37 +9,48 @@ public interface IColumnDatatype
 		return 1 << getDetailOffset();
 	}
 	
-	int getMaxNumberOfLods();
+	/** Returns how many LODs could be contained by this object. */
+	int getMaxLodCount();
 	
 	long getRoughRamUsageInBytes();
 	
 	int getVerticalSize();
 	
-	boolean doesItExist(int posX, int posZ);
+	boolean doesDataPointExist(int posX, int posZ);
 	
-	long getData(int posX, int posZ, int verticalIndex);
+	/** Returns the datapoint for the given relative coordinates and vertical index */
+	long getDataPoint(int posX, int posZ, int verticalIndex);
+	/** 
+	 * Returns the top datapoint for the given relative coordinates <br>
+	 * Returns the empty datapoint if no data is present.
+	 */
+	default long getFirstDataPoint(int posX, int posZ) { return getDataPoint(posX, posZ, 0); }
 	
-	default long getSingleData(int posX, int posZ) { return getData(posX, posZ, 0); }
+	/** Returns every datapoint in the vertical slice at the given position as an array */
+	long[] getVerticalDataPointArray(int posX, int posZ);
+	/** Returns every datapoint in the vertical slice at the given position as a ColumnArrayView */
+	ColumnArrayView getVerticalDataPointView(int posX, int posZ);
 	
-	long[] getAllData(int posX, int posZ);
+	/** Returns a QuadView that covers this whole object */
+	ColumnQuadView getFullQuadView();
+	/** Returns a QuadView over the give coordinate range */
+	ColumnQuadView getQuadViewOverRange(int quadX, int quadZ, int quadXSize, int quadZSize);
 	
-	ColumnArrayView getVerticalDataView(int posX, int posZ);
+	/** clears the datapoint stored at the relative position */
+	void clearDataPoint(int posX, int posZ);
 	
-	ColumnQuadView getDataInQuad(int quadX, int quadZ, int quadXSize, int quadZSize);
-	
-	ColumnQuadView getFullQuad();
-	
-	/** clears all data at the relative position */
-	void clear(int posX, int posZ);
-	
-	/** adds the given data to the relative position and vertical index */
-	boolean addData(long data, int posX, int posZ, int verticalIndex);
+	/** 
+	 * adds/sets the given datapoint at the relative position and vertical index 
+	 * @return true if the datapoint was added/set
+	 */
+	boolean setDataPoint(long data, int posX, int posZ, int verticalIndex);
 	
 	/**
 	 * This methods will add the data in the given position if certain condition are satisfied
-	 * @param override if override is true we can override data created with same generation mode
+	 * @param overwriteDataWithSameGenerationMode if false old data will only be overwritten if it was generated with a lower priority than the newData
+	 * @return true if the newData was successfully added, false otherwise
 	 */
-	boolean copyVerticalData(IColumnDataView data, int posX, int posZ, boolean override);
+	boolean copyVerticalData(IColumnDataView newData, int posX, int posZ, boolean overwriteDataWithSameGenerationMode);
 	
 	void generateData(IColumnDatatype lowerDataContainer, int posX, int posZ);
 	

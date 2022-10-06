@@ -25,7 +25,6 @@ import com.seibel.lod.core.render.renderer.LodRenderer;
 import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.util.ColorUtil;
-import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.MathUtil;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 
@@ -40,7 +39,7 @@ public class ColumnBox
 		short maxY = (short) (y + ySize);
 		short maxZ = (short) (z + zSize);
 		byte skyLightTop = skyLight;
-		byte skyLightBot = ColumnFormat.doesItExist(botData) ? ColumnFormat.getLightSky(botData) : 0;
+		byte skyLightBot = ColumnFormat.doesDataPointExist(botData) ? ColumnFormat.getLightSky(botData) : 0;
 
 		boolean isTransparent = ColorUtil.getAlpha(color)<255 && LodRenderer.transparencyEnabled;
 		boolean isTopTransparent = ColumnFormat.getAlpha(topData)<255 && LodRenderer.transparencyEnabled;
@@ -51,15 +50,15 @@ public class ColumnBox
 		//We skip if
 		//   current block is not transparent: we check if the adj block is attached and opaque
 
-		boolean skipTop = ColumnFormat.doesItExist(topData) && (ColumnFormat.getDepth(topData) == maxY) && !isTopTransparent;
-		boolean skipBot = ColumnFormat.doesItExist(botData) && (ColumnFormat.getHeight(botData) == y) && !isBotTransparent;
+		boolean skipTop = ColumnFormat.doesDataPointExist(topData) && (ColumnFormat.getDepth(topData) == maxY) && !isTopTransparent;
+		boolean skipBot = ColumnFormat.doesDataPointExist(botData) && (ColumnFormat.getHeight(botData) == y) && !isBotTransparent;
 		if(LodRenderer.transparencyEnabled && LodRenderer.fakeOceanFloor) {
-			if (!isTransparent && isTopTransparent && ColumnFormat.doesItExist(topData)) {
+			if (!isTransparent && isTopTransparent && ColumnFormat.doesDataPointExist(topData)) {
 				skyLightTop = (byte) MathUtil.clamp(0, 15 - (ColumnFormat.getHeight(topData) - y), 15);
 				ySize = (short) (ColumnFormat.getHeight(topData) - y - 1);
 				//y = (short) (DataPointUtil.getHeight(topData) - 2);
 				//ySize = 1;
-			} else if (isTransparent && !isBotTransparent && ColumnFormat.doesItExist(botData)) {
+			} else if (isTransparent && !isBotTransparent && ColumnFormat.doesDataPointExist(botData)) {
 				y = (short) (y + ySize - 1);
 				ySize = 1;
 			}
@@ -183,7 +182,7 @@ public class ColumnBox
 		byte nextSkyLight = upSkyLight;
 		boolean isTransparent = ColorUtil.getAlpha(color) < 255  && LodRenderer.transparencyEnabled;
 		boolean lastWasTransparent = false;
-		for (i = 0; i < dataPoint.size() && ColumnFormat.doesItExist(adjData.get(i))
+		for (i = 0; i < dataPoint.size() && ColumnFormat.doesDataPointExist(adjData.get(i))
 				&& !ColumnFormat.isVoid(adjData.get(i)); i++)
 		{
 			long adjPoint = adjData.get(i);
@@ -328,7 +327,7 @@ public class ColumnBox
 			previousDepth = depth;
 			firstFace = false;
 			nextSkyLight = upSkyLight;
-			if (i + 1 < adjData.size() && ColumnFormat.doesItExist(adjData.get(i + 1)))
+			if (i + 1 < adjData.size() && ColumnFormat.doesDataPointExist(adjData.get(i + 1)))
 				nextSkyLight = ColumnFormat.getLightSky(adjData.get(i + 1));
 			lastWasTransparent = isAdjTransparent;
 		}

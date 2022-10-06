@@ -17,7 +17,6 @@ import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
-import org.lwjgl.system.CallbackI;
 
 import java.io.File;
 import java.io.IOException;
@@ -241,7 +240,7 @@ public class RenderFileHandler implements IRenderSourceProvider {
                        ILodRenderSource newData, long newDataVersion) {
         if (target == null) return;
         if (newData == null) return;
-        target.weakWrite(newData);
+        target.updateFromRenderSource(newData);
         file.metaData.dataVersion.set(newDataVersion);
         file.metaData.dataLevel = target.getDataDetail();
         file.loader = AbstractRenderSourceLoader.getLoader(target.getClass(), target.getRenderVersion());

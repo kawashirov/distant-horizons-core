@@ -40,13 +40,13 @@ public class FullToColumnTransformer {
             int baseZ = pos.getCorner().getCorner().z;
             for (int x = 0; x < pos.getWidth(dataDetail).value; x++) {
                 for (int z = 0; z < pos.getWidth(dataDetail).value; z++) {
-                    ColumnArrayView columnArrayView = columnSource.getVerticalDataView(x, z);
+                    ColumnArrayView columnArrayView = columnSource.getVerticalDataPointView(x, z);
                     SingleFullArrayView fullArrayView = data.get(x, z);
                     convertColumnData(level, baseX + x, baseZ + z, columnArrayView, fullArrayView, 1);
-                    if (fullArrayView.doesItExist()) LodUtil.assertTrue(columnSource.doesItExist(x, z));
+                    if (fullArrayView.doesItExist()) LodUtil.assertTrue(columnSource.doesDataPointExist(x, z));
                 }
             }
-            columnSource.debugFillFlag(0, 0, ColumnRenderSource.SECTION_SIZE, ColumnRenderSource.SECTION_SIZE, ColumnRenderSource.DebugSourceFlag.FULL);
+            columnSource.fillDebugFlag(0, 0, ColumnRenderSource.SECTION_SIZE, ColumnRenderSource.SECTION_SIZE, ColumnRenderSource.DebugSourceFlag.FULL);
 //        } else if (dataDetail == 0 && columnSource.getDataDetail() > dataDetail) {
 //            byte deltaDetail = (byte) (columnSource.getDataDetail() - dataDetail);
 //            int perColumnWidth = 1 << deltaDetail;
@@ -82,10 +82,10 @@ public class FullToColumnTransformer {
                 for (int z = 0; z < pos.getWidth(dataDetail).value; z++) {
                     SingleFullArrayView fullArrayView = data.tryGet(x, z);
                     if (fullArrayView == null) continue;
-                    ColumnArrayView columnArrayView = columnSource.getVerticalDataView(x, z);
+                    ColumnArrayView columnArrayView = columnSource.getVerticalDataPointView(x, z);
                     convertColumnData(level, baseX + x, baseZ + z, columnArrayView, fullArrayView, 1);
-                    columnSource.debugFillFlag(x, z, 1, 1, ColumnRenderSource.DebugSourceFlag.SPARSE);
-                    if (fullArrayView.doesItExist()) LodUtil.assertTrue(columnSource.doesItExist(x, z));
+                    columnSource.fillDebugFlag(x, z, 1, 1, ColumnRenderSource.DebugSourceFlag.SPARSE);
+                    if (fullArrayView.doesItExist()) LodUtil.assertTrue(columnSource.doesDataPointExist(x, z));
                 }
             }
         } else {
@@ -112,15 +112,15 @@ public class FullToColumnTransformer {
                 throw new IllegalArgumentException("Data offset is out of bounds");
             for (int x = 0; x < 16; x++) {
                 for (int z = 0; z < 16; z++) {
-                    ColumnArrayView columnArrayView = render.getVerticalDataView(renderOffsetX + x, renderOffsetZ + z);
+                    ColumnArrayView columnArrayView = render.getVerticalDataPointView(renderOffsetX + x, renderOffsetZ + z);
                     SingleFullArrayView fullArrayView = data.get(x, z);
                     convertColumnData(level, blockX + perRenderWidth * (renderOffsetX+x),
                             blockZ + perRenderWidth * (renderOffsetZ+z),
                             columnArrayView, fullArrayView, 2);
-                    if (fullArrayView.doesItExist()) LodUtil.assertTrue(render.doesItExist(renderOffsetX + x, renderOffsetZ + z));
+                    if (fullArrayView.doesItExist()) LodUtil.assertTrue(render.doesDataPointExist(renderOffsetX + x, renderOffsetZ + z));
                 }
             }
-            render.debugFillFlag(renderOffsetX, renderOffsetZ, 16, 16, ColumnRenderSource.DebugSourceFlag.DIRECT);
+            render.fillDebugFlag(renderOffsetX, renderOffsetZ, 16, 16, ColumnRenderSource.DebugSourceFlag.DIRECT);
         } else {
             final int dataPerRender = 1 << (render.getDataDetail() - data.dataDetail);
             final int dataSize = 16 / dataPerRender;
@@ -141,11 +141,11 @@ public class FullToColumnTransformer {
                                     columnArrayView, fullArrayView, 2);
                         }
                     }
-                    ColumnArrayView downSampledArrayView = render.getVerticalDataView(renderOffsetX + x, renderOffsetZ + z);
+                    ColumnArrayView downSampledArrayView = render.getVerticalDataPointView(renderOffsetX + x, renderOffsetZ + z);
                     downSampledArrayView.mergeMultiDataFrom(tempQuadView);
                 }
             }
-            render.debugFillFlag(renderOffsetX, renderOffsetZ, dataSize, dataSize, ColumnRenderSource.DebugSourceFlag.DIRECT);
+            render.fillDebugFlag(renderOffsetX, renderOffsetZ, dataSize, dataSize, ColumnRenderSource.DebugSourceFlag.DIRECT);
         }
     }
 

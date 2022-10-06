@@ -43,6 +43,6 @@ public interface ILodRenderSource
 	
 	void fastWrite(ChunkSizedData chunkData, IDhClientLevel level);
 	
-	/** Only override the data that has not been written directly using write(), and skip those that are empty */ 
-	void weakWrite(ILodRenderSource source);
+	/** Overrides any data that has not been written directly using write(). Skips empty source dataPoints. */ 
+	void updateFromRenderSource(ILodRenderSource source);
 }

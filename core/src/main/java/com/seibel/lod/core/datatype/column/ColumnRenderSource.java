@@ -28,10 +28,14 @@ import java.nio.ByteOrder;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * @author Leetom
+ * @version 2022-10-5
+ */
 public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
-	public static final boolean DO_SAFETY_CHECKS = true;
+	public static final boolean DO_SAFETY_CHECKS = true; // TODO: this could potentially be replaced with "ModInfo.IS_DEV_BUILD"
 	public static final byte SECTION_SIZE_OFFSET = 6;
 	public static final int SECTION_SIZE = 1 << SECTION_SIZE_OFFSET;
 	public static final byte LATEST_VERSION = 1;
@@ -98,29 +102,24 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 		this.sectionPos = sectionPos;
 		this.yOffset = level.getMinY();
 		this.verticalSize = inputData.readByte() & 0b01111111;
-		this.dataContainer = loadData(inputData, version, this.verticalSize);
+		this.dataContainer = this.loadData(inputData, version, this.verticalSize);
 		this.airDataContainer = new int[AIR_SECTION_SIZE * AIR_SECTION_SIZE * this.verticalSize];
 		
 		this.debugSourceFlags = new DebugSourceFlag[SECTION_SIZE * SECTION_SIZE];
-		debugFillFlag(0, 0, SECTION_SIZE, SECTION_SIZE, DebugSourceFlag.FILE);
+		this.fillDebugFlag(0, 0, SECTION_SIZE, SECTION_SIZE, DebugSourceFlag.FILE);
 	}
 	
 	
 	
+	//========================//
+	// datapoint manipulation //
+	//========================//
 	
-	public void debugFillFlag(int ox, int oz, int w, int h, DebugSourceFlag flag)
-	{
-		for (int x = ox; x < ox + w; x++)
-		{
-			for (int z = oz; z < oz + h; z++)
-			{
-				debugSourceFlags[x * SECTION_SIZE + z] = flag;
-			}
-		}
-	}
-	
-	public DebugSourceFlag debugGetFlag(int ox, int oz) { return debugSourceFlags[ox * SECTION_SIZE + oz]; }
-	
+	/** 
+	 * Attempts to parse and load the given DataInputStream.
+	 * 
+	 * @throws IOException if the version isn't supported
+	 */
 	private long[] loadData(DataInputStream inputData, int version, int verticalSize) throws IOException
 	{
 		switch (version)
@@ -128,65 +127,69 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 		case 1:
 			return readDataV1(inputData, verticalSize);
 		default:
-			throw new IOException("Invalid Data: The version of the data is not supported");
+			throw new IOException("Invalid Data: The data version [" + version + "] is not supported");
 		}
 	}
 	
 	private long[] readDataV1(DataInputStream inputData, int tempMaxVerticalData) throws IOException
 	{
-		int x = SECTION_SIZE * SECTION_SIZE * tempMaxVerticalData;
+		int maxNumberOfDataPoints = SECTION_SIZE * SECTION_SIZE * tempMaxVerticalData;
+		
 		short tempMinHeight = Short.reverseBytes(inputData.readShort());
 		if (tempMinHeight == Short.MAX_VALUE)
 		{ //FIXME: Temp hack flag for marking a empty section
-			return new long[x];
+			return new long[maxNumberOfDataPoints];
 		}
-		isEmpty = false;
-		byte[] data = new byte[x * Long.BYTES];
-		ByteBuffer bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
+		
+		this.isEmpty = false;
+		byte[] data = new byte[maxNumberOfDataPoints * Long.BYTES];
+		ByteBuffer byteBuffer = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
 		inputData.readFully(data);
-		long[] result = new long[x];
-		bb.asLongBuffer().get(result);
-		if (tempMinHeight != yOffset)
+		
+		long[] result = new long[maxNumberOfDataPoints];
+		byteBuffer.asLongBuffer().get(result);
+		if (tempMinHeight != this.yOffset)
 		{
 			for (int i = 0; i < result.length; i++)
 			{
-				result[i] = ColumnFormat.shiftHeightAndDepth(result[i], (short) (tempMinHeight - yOffset));
+				result[i] = ColumnFormat.shiftHeightAndDepth(result[i], (short) (tempMinHeight - this.yOffset));
 			}
 		}
 		return result;
 	}
 	
 	@Override
-	public void clear(int posX, int posZ)
+	public void clearDataPoint(int posX, int posZ)
 	{
-		for (int verticalIndex = 0; verticalIndex < verticalSize; verticalIndex++)
-			dataContainer[posX * SECTION_SIZE * verticalSize + posZ * verticalSize + verticalIndex] =
-					ColumnFormat.EMPTY_DATA;
+		for (int verticalIndex = 0; verticalIndex < this.verticalSize; verticalIndex++)
+		{
+			this.dataContainer[posX * SECTION_SIZE * this.verticalSize + posZ * this.verticalSize + verticalIndex] = ColumnFormat.EMPTY_DATA;
+		}
 	}
 	
-	
 	@Override
-	public boolean addData(long data, int posX, int posZ, int verticalIndex)
+	public boolean setDataPoint(long data, int posX, int posZ, int verticalIndex)
 	{
-		dataContainer[posX * SECTION_SIZE * verticalSize + posZ * verticalSize + verticalIndex] = data;
+		this.dataContainer[posX * SECTION_SIZE * this.verticalSize + posZ * this.verticalSize + verticalIndex] = data;
 		return true;
 	}
 	
 	@Override
-	public boolean copyVerticalData(IColumnDataView data, int posX, int posZ, boolean override)
+	public boolean copyVerticalData(IColumnDataView newData, int posX, int posZ, boolean overwriteDataWithSameGenerationMode)
 	{
 		if (DO_SAFETY_CHECKS)
 		{
-			if (data.size() != verticalSize)
-				throw new IllegalArgumentException("data size not the same as vertical size");
+			if (newData.size() != this.verticalSize)
+				throw new IllegalArgumentException("newData size not the same as this column's vertical size");
 			if (posX < 0 || posX >= SECTION_SIZE)
 				throw new IllegalArgumentException("X position is out of bounds");
 			if (posZ < 0 || posZ >= SECTION_SIZE)
 				throw new IllegalArgumentException("Z position is out of bounds");
 		}
-		int index = posX * SECTION_SIZE * verticalSize + posZ * verticalSize;
-		int compare = ColumnFormat.compareDatapointPriority(data.get(0), dataContainer[index]);
-		if (override)
+		
+		int dataOffset = posX * SECTION_SIZE * this.verticalSize + posZ * this.verticalSize;
+		int compare = ColumnFormat.compareDatapointPriority(newData.get(0), this.dataContainer[dataOffset]);
+		if (overwriteDataWithSameGenerationMode)
 		{
 			if (compare < 0)
 				return false;
@@ -196,146 +199,198 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 			if (compare <= 0)
 				return false;
 		}
-		data.copyTo(dataContainer, index, data.size());
+		
+		// copy the newData into this column's data
+		newData.copyTo(this.dataContainer, dataOffset, newData.size());
 		return true;
 	}
 	
-	@Override
-	public long getData(int posX, int posZ, int verticalIndex) { return dataContainer[posX * SECTION_SIZE * verticalSize + posZ * verticalSize + verticalIndex]; }
+	
+	
+	// TODO:
 	
 	@Override
-	public long[] getAllData(int posX, int posZ)
+	public long getDataPoint(int posX, int posZ, int verticalIndex) { return this.dataContainer[posX * SECTION_SIZE * this.verticalSize + posZ * this.verticalSize + verticalIndex]; }
+	
+	@Override
+	public long[] getVerticalDataPointArray(int posX, int posZ)
 	{
-		long[] result = new long[verticalSize];
-		int index = posX * SECTION_SIZE * verticalSize + posZ * verticalSize;
-		System.arraycopy(dataContainer, index, result, 0, verticalSize);
+		long[] result = new long[this.verticalSize];
+		int index = posX * SECTION_SIZE * this.verticalSize + posZ * this.verticalSize;
+		System.arraycopy(this.dataContainer, index, result, 0, this.verticalSize);
 		return result;
 	}
 	
 	@Override
-	public ColumnArrayView getVerticalDataView(int posX, int posZ)
+	public ColumnArrayView getVerticalDataPointView(int posX, int posZ)
 	{
-		return new ColumnArrayView(dataContainer, verticalSize,
-				posX * SECTION_SIZE * verticalSize + posZ * verticalSize, verticalSize);
+		return new ColumnArrayView(this.dataContainer, this.verticalSize,
+				posX * SECTION_SIZE * this.verticalSize + posZ * this.verticalSize,
+				this.verticalSize);
 	}
 	
 	@Override
-	public ColumnQuadView getDataInQuad(int quadX, int quadZ, int quadXSize, int quadZSize) { return new ColumnQuadView(dataContainer, SECTION_SIZE, verticalSize, quadX, quadZ, quadXSize, quadZSize); }
+	public ColumnQuadView getFullQuadView() { return getQuadViewOverRange(0, 0, SECTION_SIZE, SECTION_SIZE); }
+	@Override
+	public ColumnQuadView getQuadViewOverRange(int quadX, int quadZ, int quadXSize, int quadZSize) { return new ColumnQuadView(this.dataContainer, SECTION_SIZE, this.verticalSize, quadX, quadZ, quadXSize, quadZSize); }
 	
 	@Override
-	public ColumnQuadView getFullQuad() { return new ColumnQuadView(dataContainer, SECTION_SIZE, verticalSize, 0, 0, SECTION_SIZE, SECTION_SIZE); }
+	public int getVerticalSize() { return this.verticalSize; }
+	
+	
+	
+	//========================//
+	// data update and output //
+	//========================//
+	
+	/** @return true if this object had data written in every column */
+	boolean writeData(DataOutputStream outputStream) throws IOException
+	{
+		outputStream.writeByte(getDataDetail());
+		outputStream.writeByte((byte) this.verticalSize);
+		
+		if (isEmpty)
+		{
+			outputStream.writeByte(Short.MAX_VALUE & 0xFF);
+			outputStream.writeByte((Short.MAX_VALUE >> 8) & 0xFF);
+			
+			return false;
+		}
+		else
+		{
+			// FIXME: yOffset is a int, but we only are writing a short.
+			outputStream.writeByte((byte) (this.yOffset & 0xFF));
+			outputStream.writeByte((byte) ((this.yOffset >> 8) & 0xFF));
+			
+			// write the data for each column
+			boolean allGenerated = true;
+			for (int x = 0; x < SECTION_SIZE * SECTION_SIZE; x++)
+			{
+				for (int z = 0; z < verticalSize; z++)
+				{
+					long currentDatapoint = dataContainer[x * verticalSize + z];
+					if (ColumnFormat.doesDataPointExist(currentDatapoint))
+					{
+						// TODO: the "1" is a placeholder debug line
+						currentDatapoint = ColumnFormat.overrideGenerationMode(currentDatapoint, (byte) 1);
+					}
+					outputStream.writeLong(Long.reverseBytes(currentDatapoint));
+				}
+				
+				if (!ColumnFormat.doesDataPointExist(dataContainer[x]))
+				{
+					allGenerated = false;	
+				}
+			}
+			
+			return allGenerated;
+		}
+	}
 	
 	@Override
-	public int getVerticalSize() { return verticalSize; }
+	public void updateFromRenderSource(ILodRenderSource source)
+	{
+		// TODO if we can only write this one type of data isn't it dangerous to have it in the interface?
+		LodUtil.assertTrue(source instanceof ColumnRenderSource);
+		ColumnRenderSource src = (ColumnRenderSource) source;
+		
+		// validate we are writing for the same location
+		LodUtil.assertTrue(src.sectionPos.equals(this.sectionPos));
+		// validate both objects have the same number of dataPoints
+		LodUtil.assertTrue(src.verticalSize == this.verticalSize);
+		
+		
+		if (src.isEmpty)
+			// the source is empty, don't attempt to update anything
+			return;
+		// the source isn't empty, this object won't be empty after the method finishes
+		this.isEmpty = false;
+		
+		
+		for (int i = 0; i < this.dataContainer.length; i += this.verticalSize)
+		{
+			int thisGenMode = ColumnFormat.getGenerationMode(this.dataContainer[i]);
+			int srcGenMode = ColumnFormat.getGenerationMode(src.dataContainer[i]);
+			
+			if (srcGenMode == 0)
+				// the source hasn't been generated, don't write it
+				continue;
+			
+			// this object's column is older than the source's column, update it
+			if (thisGenMode <= srcGenMode)
+			{
+				ColumnArrayView thisColumnArrayView = new ColumnArrayView(this.dataContainer, this.verticalSize, i, this.verticalSize);
+				ColumnArrayView srcColumnArrayView = new ColumnArrayView(src.dataContainer, src.verticalSize, i, src.verticalSize);
+				thisColumnArrayView.copyFrom(srcColumnArrayView);
+				
+				this.debugSourceFlags[i / this.verticalSize] = src.debugSourceFlags[i / this.verticalSize];
+			}
+		}
+	}
 	
 	@Override
-	public boolean doesItExist(int posX, int posZ) { return ColumnFormat.doesItExist(getSingleData(posX, posZ)); }
+	public void fastWrite(ChunkSizedData chunkData, IDhClientLevel level) { FullToColumnTransformer.writeFullDataChunkToColumnData(this, level, chunkData); }
+	
+	
+	
+	//=====================//
+	// data helper methods //
+	//=====================//
+	
+	@Override
+	public boolean doesDataPointExist(int posX, int posZ) { return ColumnFormat.doesDataPointExist(this.getFirstDataPoint(posX, posZ)); }
 	
 	@Override
 	public void generateData(IColumnDatatype lowerDataContainer, int posX, int posZ)
 	{
-		ColumnQuadView quadView = lowerDataContainer.getDataInQuad(posX * 2, posZ * 2, 2, 2);
-		ColumnArrayView outputView = getVerticalDataView(posX, posZ);
+		ColumnArrayView outputView = this.getVerticalDataPointView(posX, posZ);
+		ColumnQuadView quadView = lowerDataContainer.getQuadViewOverRange(posX * 2, posZ * 2, 2, 2);
 		outputView.mergeMultiDataFrom(quadView);
 	}
 	
-	boolean writeData(DataOutputStream output) throws IOException
-	{
-		output.writeByte(getDataDetail());
-		output.writeByte((byte) verticalSize);
-		// FIXME: yOffset is a int, but we only are writing a short.
-		if (isEmpty)
-		{
-			output.writeByte(Short.MAX_VALUE & 0xFF);
-			output.writeByte((Short.MAX_VALUE >> 8) & 0xFF);
-			return false;
-		}
-		output.writeByte((byte) (yOffset & 0xFF));
-		output.writeByte((byte) ((yOffset >> 8) & 0xFF));
-		boolean allGenerated = true;
-		int x = SECTION_SIZE * SECTION_SIZE;
-		for (int i = 0; i < x; i++)
-		{
-			for (int j = 0; j < verticalSize; j++)
-			{
-				long current = dataContainer[i * verticalSize + j];
-				if (ColumnFormat.doesItExist(current))
-					current = ColumnFormat.overrideGenerationMode(current, (byte) 1);
-				output.writeLong(Long.reverseBytes(current));
-			}
-			if (!ColumnFormat.doesItExist(dataContainer[i]))
-				allGenerated = false;
-		}
-		return allGenerated;
-	}
-	
-	public String toString()
-	{
-		String LINE_DELIMITER = "\n";
-		String DATA_DELIMITER = " ";
-		String SUBDATA_DELIMITER = ",";
-		StringBuilder stringBuilder = new StringBuilder();
-		int size = sectionPos.getWidth().value;
-		stringBuilder.append(sectionPos);
-		stringBuilder.append(LINE_DELIMITER);
-		for (int z = 0; z < size; z++)
-		{
-			for (int x = 0; x < size; x++)
-			{
-				for (int y = 0; y < verticalSize; y++)
-				{
-					//Converting the dataToHex
-					stringBuilder.append(Long.toHexString(getData(x, z, y)));
-					if (y != verticalSize - 1)
-						stringBuilder.append(SUBDATA_DELIMITER);
-				}
-				if (x != size - 1)
-					stringBuilder.append(DATA_DELIMITER);
-			}
-			if (z != size - 1)
-				stringBuilder.append(LINE_DELIMITER);
-		}
-		return stringBuilder.toString();
-	}
+	@Override
+	public int getMaxLodCount() { return SECTION_SIZE * SECTION_SIZE * getVerticalSize(); }
 	
 	@Override
-	public int getMaxNumberOfLods() { return SECTION_SIZE * SECTION_SIZE * getVerticalSize(); }
+	public long getRoughRamUsageInBytes() { return (long) this.dataContainer.length * Long.BYTES; }
 	
-	@Override
-	public long getRoughRamUsageInBytes() { return (long) dataContainer.length * Long.BYTES; }
+	public DhSectionPos getSectionPos() { return this.sectionPos; }
 	
-	public DhSectionPos getSectionPos() { return sectionPos; }
-	
-	public byte getDataDetail() { return (byte) (sectionPos.sectionDetail - SECTION_SIZE_OFFSET); }
+	public byte getDataDetail() { return (byte) (this.sectionPos.sectionDetail - SECTION_SIZE_OFFSET); }
 	
 	@Override
 	public byte getDetailOffset() { return SECTION_SIZE_OFFSET; }
 	
 	
+	
+	//================//
+	// Render Methods //
+	//================//
+	
 	private void tryBuildBuffer(IDhClientLevel level, LodQuadTree quadTree)
 	{
-		if (inBuildRenderBuffer == null && !ColumnRenderBuffer.isBusy() && !isEmpty)
+		if (this.inBuildRenderBuffer == null && !ColumnRenderBuffer.isBusy() && !this.isEmpty)
 		{
 			ColumnRenderSource[] data = new ColumnRenderSource[ELodDirection.ADJ_DIRECTIONS.length];
 			for (ELodDirection direction : ELodDirection.ADJ_DIRECTIONS)
 			{
-				LodRenderSection section = quadTree.getSection(sectionPos.getAdjacent(direction)); //FIXME: Handle traveling through different detail levels
+				LodRenderSection section = quadTree.getSection(this.sectionPos.getAdjacent(direction)); //FIXME: Handle traveling through different detail levels
 				if (section != null && section.getRenderSource() != null && section.getRenderSource() instanceof ColumnRenderSource)
 				{
 					data[direction.ordinal() - 2] = ((ColumnRenderSource) section.getRenderSource());
 				}
 			}
-			inBuildRenderBuffer = ColumnRenderBuffer.build(level, usedBuffer, this, data);
+			this.inBuildRenderBuffer = ColumnRenderBuffer.build(level, this.usedBuffer, this, data);
 		}
 	}
 	
 	private void cancelBuildBuffer()
 	{
-		if (inBuildRenderBuffer != null)
+		if (this.inBuildRenderBuffer != null)
 		{
 			//LOGGER.info("Cancelling build of render buffer for {}", sectionPos);
-			inBuildRenderBuffer.cancel(true);
-			inBuildRenderBuffer = null;
+			this.inBuildRenderBuffer.cancel(true);
+			this.inBuildRenderBuffer = null;
 		}
 	}
 	
@@ -355,37 +410,40 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 	@Override
 	public boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<RenderBuffer> referenceSlot)
 	{
-		if (lastNs != -1 && System.nanoTime() - lastNs < SWAP_TIMEOUT)
+		if (this.lastNs != -1 && System.nanoTime() - this.lastNs < SWAP_TIMEOUT)
 		{
 			return false;
 		}
-		if (inBuildRenderBuffer != null)
+		
+		if (this.inBuildRenderBuffer != null)
 		{
-			if (inBuildRenderBuffer.isDone())
+			if (this.inBuildRenderBuffer.isDone())
 			{
-				lastNs = System.nanoTime();
+				this.lastNs = System.nanoTime();
 				//LOGGER.info("Swapping render buffer for {}", sectionPos);
-				RenderBuffer newBuffer = inBuildRenderBuffer.join();
+				RenderBuffer newBuffer = this.inBuildRenderBuffer.join();
 				RenderBuffer oldBuffer = referenceSlot.getAndSet(newBuffer);
 				if (oldBuffer instanceof ColumnRenderBuffer)
 				{
-					ColumnRenderBuffer swapped = usedBuffer.swap((ColumnRenderBuffer) oldBuffer);
+					ColumnRenderBuffer swapped = this.usedBuffer.swap((ColumnRenderBuffer) oldBuffer);
 					LodUtil.assertTrue(swapped == null);
 				}
-				inBuildRenderBuffer = null;
+				this.inBuildRenderBuffer = null;
 				return true;
 			}
 		}
 		else
 		{
-			if (!isEmpty)
+			if (!this.isEmpty)
 			{
 				if (ColumnRenderBuffer.isBusy())
 				{
-					lastNs += (long) (SWAP_BUSY_COLLISION_TIMEOUT * Math.random());
+					this.lastNs += (long) (SWAP_BUSY_COLLISION_TIMEOUT * Math.random());
 				}
 				else
-					tryBuildBuffer(level, quadTree);
+				{
+					this.tryBuildBuffer(this.level, quadTree);
+				}
 			}
 		}
 		return false;
@@ -405,40 +463,68 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 	public boolean isValid() { return true; }
 	
 	@Override
-	public boolean isEmpty() { return isEmpty; }
+	public boolean isEmpty() { return this.isEmpty; }
+	public void markNotEmpty() { this.isEmpty = false; }
 	
-	public void markNotEmpty() { isEmpty = false; }
 	
-	@Override
-	public void weakWrite(ILodRenderSource source)
+	
+	//=======//
+	// debug //
+	//=======//
+	
+	/** Sets the debug flag for the given area */
+	public void fillDebugFlag(int startX, int startZ, int width, int height, DebugSourceFlag flag)
 	{
-		LodUtil.assertTrue(source instanceof ColumnRenderSource);
-		ColumnRenderSource src = (ColumnRenderSource) source;
-		
-		LodUtil.assertTrue(src.sectionPos.equals(sectionPos));
-		LodUtil.assertTrue(src.verticalSize == verticalSize);
-		
-		if (src.isEmpty)
-			return;
-		isEmpty = false;
-		
-		for (int i = 0; i < dataContainer.length; i += verticalSize)
+		for (int x = startX; x < startX + width; x++)
 		{
-			int genMode = ColumnFormat.getGenerationMode(dataContainer[i]);
-			int srcGenMode = ColumnFormat.getGenerationMode(src.dataContainer[i]);
-			if (srcGenMode == 0)
-				continue;
-			if (genMode <= srcGenMode)
+			for (int z = startZ; z < startZ + height; z++)
 			{
-				new ColumnArrayView(dataContainer, verticalSize, i, verticalSize).copyFrom(
-						new ColumnArrayView(src.dataContainer, verticalSize, i, verticalSize));
-				debugSourceFlags[i / verticalSize] = src.debugSourceFlags[i / verticalSize];
+				debugSourceFlags[x * SECTION_SIZE + z] = flag;
 			}
 		}
 	}
 	
+	public DebugSourceFlag debugGetFlag(int ox, int oz) { return debugSourceFlags[ox * SECTION_SIZE + oz]; }
+	
+	
+	
+	//==============//
+	// base methods //
+	//==============//
+	
 	@Override
-	public void fastWrite(ChunkSizedData chunkData, IDhClientLevel level) { FullToColumnTransformer.writeFullDataChunkToColumnData(this, level, chunkData); }
+	public String toString()
+	{
+		String LINE_DELIMITER = "\n";
+		String DATA_DELIMITER = " ";
+		String SUBDATA_DELIMITER = ",";
+		StringBuilder stringBuilder = new StringBuilder();
+		
+		stringBuilder.append(sectionPos);
+		stringBuilder.append(LINE_DELIMITER);
+		
+		int size = sectionPos.getWidth().value;
+		for (int z = 0; z < size; z++)
+		{
+			for (int x = 0; x < size; x++)
+			{
+				for (int y = 0; y < verticalSize; y++)
+				{
+					//Converting the dataToHex
+					stringBuilder.append(Long.toHexString(getDataPoint(x, z, y)));
+					if (y != verticalSize - 1)
+						stringBuilder.append(SUBDATA_DELIMITER);
+				}
+				
+				if (x != size - 1)
+					stringBuilder.append(DATA_DELIMITER);
+			}
+			
+			if (z != size - 1)
+				stringBuilder.append(LINE_DELIMITER);
+		}
+		return stringBuilder.toString();
+	}
 	
 	
 	
