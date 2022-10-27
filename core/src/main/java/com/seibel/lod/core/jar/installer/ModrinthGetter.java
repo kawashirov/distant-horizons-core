@@ -84,9 +84,10 @@ public class ModrinthGetter {
     }
     public static String getLatestShaForVersion(String mcVer) {
         return ((Config)
-                ((ArrayList) projectRelease.get(Integer.parseInt(mcVersions.indexOf(mcVer) + ".files")))
-                        .get(0))
+                ((ArrayList) projectRelease.get(
+                        mcVersions.indexOf(mcVer)
+                ).get("files")).get(0))
                 .get("hashes.sha1")
-        .toString();
+                .toString();
     }
 }

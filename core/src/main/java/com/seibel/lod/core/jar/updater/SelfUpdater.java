@@ -12,7 +12,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Files;
 import java.security.MessageDigest;
-import java.util.Objects;
 
 /**
  * Used to update the mod automatically
@@ -50,18 +49,10 @@ public class SelfUpdater {
         LOGGER.info("New version ("+ModrinthGetter.getLatestNameForVersion(mcVersion)+") of "+ ModInfo.READABLE_NAME+" is available");
         if (!Config.Client.AutoUpdater.promptForUpdate.get()) {
             // Auto-update mod
-            try {
-                LOGGER.info("Attempting to auto update "+ModInfo.READABLE_NAME);
-                WebDownloader.downloadAsFile(ModrinthGetter.getLatestDownloadForVersion(mcVersion), JarUtils.jarFile.getParentFile().toPath().resolve(ModInfo.NAME+"-"+ModrinthGetter.getLatestNameForVersion(mcVersion)+".jar").toFile());
-                deleteOldOnClose = true;
-                LOGGER.info(ModInfo.READABLE_NAME+" successfully updated. It will apply on game's relaunch");
-            } catch (Exception e) {
-                LOGGER.info("Failed to update "+ModInfo.READABLE_NAME+" to version "+ModrinthGetter.getLatestNameForVersion(mcVersion));
-                e.printStackTrace();
-            }
+            updateMod(mcVersion);
             return false;
-        }
-        return false;
+        } // else
+        return true;
     }
 
     /**
@@ -76,6 +67,25 @@ public class SelfUpdater {
                 LOGGER.warn("Failed to delete previous " + ModInfo.READABLE_NAME + " file, please delete it manually at [" + JarUtils.jarFile + "]");
                 e.printStackTrace();
             }
+        }
+    }
+
+    public static boolean updateMod() {
+        return updateMod(
+                SingletonInjector.INSTANCE.get(IVersionConstants.class).getMinecraftVersion()
+        );
+    }
+    public static boolean updateMod(String minecraftVersion) {
+        try {
+            LOGGER.info("Attempting to auto update " + ModInfo.READABLE_NAME);
+            WebDownloader.downloadAsFile(ModrinthGetter.getLatestDownloadForVersion(minecraftVersion), JarUtils.jarFile.getParentFile().toPath().resolve(ModInfo.NAME + "-" + ModrinthGetter.getLatestNameForVersion(minecraftVersion) + ".jar").toFile());
+            deleteOldOnClose = true;
+            LOGGER.info(ModInfo.READABLE_NAME + " successfully updated. It will apply on game's relaunch");
+            return true;
+        } catch (Exception e) {
+            LOGGER.info("Failed to update "+ModInfo.READABLE_NAME+" to version "+ModrinthGetter.getLatestNameForVersion(minecraftVersion));
+            e.printStackTrace();
+            return false;
         }
     }
 }
