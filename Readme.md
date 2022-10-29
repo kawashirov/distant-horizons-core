@@ -17,8 +17,11 @@ It should be automatically included when pulling the full mod.
 XZ for Java (data compression)\
 https://tukaani.org/xz/java.html
 
-Toml for Java (config handling)\
+Json & Toml for Java (config handling)\
 https://github.com/TheElectronWill/night-config
 
-Json for Java (config handling)\
-https://mvnrepository.com/artifact/com.googlecode.json-simple/json-simple
+SVG Salamander for SVG's\
+https://github.com/blackears/svgSalamander
+
+FlatLaf for theming (Tempory to test stuff)\
+https://www.formdev.com/flatlaf/
