@@ -873,7 +873,7 @@ public class Config
         public static class AutoUpdater
         {
             public static ConfigEntry<Boolean> enableAutoUpdater = new ConfigEntry.Builder<Boolean>()
-                    .set(false) // Keep this as false for development
+                    .set(false) // Keep this as false for development but should be set to true when released
                     .comment("Automatically checks for updates on game launch")
                     .build();
 

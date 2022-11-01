@@ -16,7 +16,7 @@ import java.util.*;
 public class ModrinthGetter {
     public static final String ModrinthAPI = "https://api.modrinth.com/v2/project/";
     public static final String projectID = "distanthorizons";
-    public static Config projectRelease = Config.inMemory();
+    public static ArrayList<Config> projectRelease;
 
     public static List<String> releaseID = new ArrayList<>(); // This list contains the release ID's
     public static List<String> mcVersions = new ArrayList<>(); // List of available Minecraft versions in the mod
@@ -36,18 +36,24 @@ public class ModrinthGetter {
 
     public static boolean init() {
         try {
-            JsonFormat.fancyInstance().createParser().parse(WebDownloader.downloadAsString(new URL(ModrinthAPI+projectID+"/version")), projectRelease, ParsingMode.REPLACE);
+            projectRelease = JsonFormat.fancyInstance().createParser().parse("{\"E\":" + WebDownloader.downloadAsString(new URL(ModrinthAPI+projectID+"/version")) + "}").get("E");
 
 
-            for (int i = 0; i < projectRelease.size(); i++) {
-                Config currentRelease = (Config) projectRelease.get(String.valueOf(i));
+            for (Config currentRelease: projectRelease) {
                 String workingID = currentRelease.get("id").toString();
 
                 releaseID.add(workingID);
                 releaseNames.put(workingID, currentRelease.get("name").toString().replaceAll(" - 1\\..*", ""));
                 changeLogs.put(workingID, currentRelease.get("changelog").toString());
                 try {
-                    downloadUrl.put(workingID, new URL(currentRelease.get("files.0.url").toString()));
+                    downloadUrl.put(workingID,
+                            new URL(
+                                    ((Config)
+                                            ((ArrayList) currentRelease.get("files"))
+                                                    .get(0))
+                                            .get("url")
+                                            .toString()
+                            ));
                 } catch (Exception e) { e.printStackTrace(); }
 
                 // Get all the mc versions this mod is available for
@@ -71,21 +77,17 @@ public class ModrinthGetter {
     }
 
     public static String getLatestNameForVersion(String mcVer) {
-        return releaseNames.get(((List<String>) mcVerToReleaseID.get(mcVer)).get(0));
+        return releaseNames.get(mcVerToReleaseID.get(mcVer).get(0));
     }
     public static URL getLatestDownloadForVersion(String mcVer) {
-        return downloadUrl.get(((List<String>) mcVerToReleaseID.get(mcVer)).get(0));
+        return downloadUrl.get(mcVerToReleaseID.get(mcVer).get(0));
     }
     public static String getLatestShaForVersion(String mcVer) {
-        return projectRelease.get(mcVersions.indexOf(mcVer) + ".files.0.hashes.sha1").toString();
-//        return ((JSONObject)
-//                ((JSONObject)
-//                        ((JSONArray)
-//                                ((JSONObject) projectRelease.get(mcVersions.indexOf(mcVer)))
-//                                        .get("files"))
-//                                .get(0))
-//                        .get("hashes"))
-//                .get("sha1")
-//                .toString();
+        return ((Config)
+                ((ArrayList) projectRelease.get(
+                        mcVersions.indexOf(mcVer)
+                ).get("files")).get(0))
+                .get("hashes.sha1")
+                .toString();
     }
 }

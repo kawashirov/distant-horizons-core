@@ -7,9 +7,9 @@
   "lod.updater.title":
     "Distant Horizons auto updater",
   "lod.updater.text1":
-    "There is a new update for Distant Horizons available",
+    "§lUpdate for Distant Horizons available!",
   "lod.updater.text2":
-    "Would you like to automatically update from version %s to %s",
+    "§fWould you like to automatically update from version %s§f to %s§f?",
   "lod.updater.later":
     "Later",
   "lod.updater.never":
@@ -18,9 +18,9 @@
     "Update",
   "lod.updater.update.@tooltip":
     "Updates the mod this 1 time\n(Updates when game closed)",
-  "lod.updater.silentUpdate":
+  "lod.updater.silent":
     "Always silent update",
-  "lod.updater.silentUpdate.@tooltip":
+  "lod.updater.silent.@tooltip":
     "Every time an update is available, it would update\n(§6WARNING§r: It wont prompt the user on an update, tough it would keep the mod up to date)",
 
 
