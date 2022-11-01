@@ -20,7 +20,7 @@
 package com.seibel.lod.core.util;
 
 import com.seibel.lod.core.level.IDhClientLevel;
-import com.seibel.lod.core.world.DhWorld;
+import com.seibel.lod.core.world.AbstractDhWorld;
 import com.seibel.lod.core.world.IDhClientWorld;
 import com.seibel.lod.core.api.internal.SharedApi;
 import com.seibel.lod.core.config.Config;
@@ -209,7 +209,7 @@ public class RenderUtil
 		if (levelWrapper == null)
 			return false;
 		
-		DhWorld dhWorld = SharedApi.currentWorld;
+		AbstractDhWorld dhWorld = SharedApi.currentWorld;
 		if (dhWorld == null)
 			return false;
 		

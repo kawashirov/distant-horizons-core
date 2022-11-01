@@ -8,13 +8,13 @@ import org.apache.logging.log4j.Logger;
 import java.io.Closeable;
 import java.util.concurrent.CompletableFuture;
 
-public abstract class DhWorld implements Closeable
+public abstract class AbstractDhWorld implements Closeable
 {
     protected static final Logger LOGGER = DhLoggerBuilder.getLogger();
 
-    public final WorldEnvironment environment;
+    public final EWorldEnvironment environment;
 
-    protected DhWorld(WorldEnvironment environment) {
+    protected AbstractDhWorld(EWorldEnvironment environment) {
         this.environment = environment;
     }
     public abstract IDhLevel getOrLoadLevel(ILevelWrapper wrapper);
@@ -27,4 +27,5 @@ public abstract class DhWorld implements Closeable
 
     @Override
     public abstract void close();
+	
 }
