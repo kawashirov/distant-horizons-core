@@ -42,6 +42,13 @@ public class ColumnBox
 		byte skyLightBot = ColumnFormat.doesDataPointExist(botData) ? ColumnFormat.getLightSky(botData) : 0;
 
 		boolean isTransparent = ColorUtil.getAlpha(color)<255 && LodRenderer.transparencyEnabled;
+		if (builder.skipQuadsWithZeroSkylight
+				&& builder.skyLightCullingBelow > maxY
+				&& (ColumnFormat.getDepth(topData) >= builder.skyLightCullingBelow
+					|| !ColumnFormat.doesDataPointExist(topData)))
+		{
+			maxY = builder.skyLightCullingBelow;
+		}
 		boolean isTopTransparent = ColumnFormat.getAlpha(topData)<255 && LodRenderer.transparencyEnabled;
 		boolean isBotTransparent = ColumnFormat.getAlpha(botData)<255 && LodRenderer.transparencyEnabled;
 
