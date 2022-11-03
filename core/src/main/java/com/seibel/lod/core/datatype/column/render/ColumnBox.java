@@ -28,326 +28,275 @@ import com.seibel.lod.core.util.ColorUtil;
 import com.seibel.lod.core.util.MathUtil;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 
-public class ColumnBox
-{
-	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
-	
-	public static void addBoxQuadsToBuilder(LodQuadBuilder builder, short xSize, short ySize, short zSize, short x,
-											short y, short z, int color, byte skyLight, byte blockLight, long topData, long botData, ColumnArrayView[][] adjData)
-	{
-		short maxX = (short) (x + xSize);
-		short maxY = (short) (y + ySize);
-		short maxZ = (short) (z + zSize);
-		byte skyLightTop = skyLight;
-		byte skyLightBot = ColumnFormat.doesDataPointExist(botData) ? ColumnFormat.getLightSky(botData) : 0;
+public class ColumnBox {
+    private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 
-		boolean isTransparent = ColorUtil.getAlpha(color)<255 && LodRenderer.transparencyEnabled;
-		if (builder.skipQuadsWithZeroSkylight
-				&& builder.skyLightCullingBelow > maxY
-				&& (ColumnFormat.getDepth(topData) >= builder.skyLightCullingBelow
-					|| !ColumnFormat.doesDataPointExist(topData)))
-		{
-			maxY = builder.skyLightCullingBelow;
-		}
-		boolean isTopTransparent = ColumnFormat.getAlpha(topData)<255 && LodRenderer.transparencyEnabled;
-		boolean isBotTransparent = ColumnFormat.getAlpha(botData)<255 && LodRenderer.transparencyEnabled;
+    public static void addBoxQuadsToBuilder(LodQuadBuilder builder, short xSize, short ySize, short zSize, short x,
+                                            short y, short z, int color, byte skyLight, byte blockLight, long topData, long botData, ColumnArrayView[][] adjData) {
+        short maxX = (short) (x + xSize);
+        short maxY = (short) (y + ySize);
+        short maxZ = (short) (z + zSize);
+        byte skyLightTop = skyLight;
+        byte skyLightBot = ColumnFormat.doesDataPointExist(botData) ? ColumnFormat.getLightSky(botData) : 0;
+
+        boolean isTransparent = ColorUtil.getAlpha(color) < 255 && LodRenderer.transparencyEnabled;
+        if (builder.skipQuadsWithZeroSkylight
+                && 0 == skyLight
+                && builder.skyLightCullingBelow > maxY
+                && ((ColumnFormat.getAlpha(topData) < 255 && ColumnFormat.getHeight(topData) >= builder.skyLightCullingBelow)
+                || (ColumnFormat.getDepth(topData) >= builder.skyLightCullingBelow)
+                || !ColumnFormat.doesDataPointExist(topData))) {
+            maxY = builder.skyLightCullingBelow;
+        }
+        boolean isTopTransparent = ColumnFormat.getAlpha(topData) < 255 && LodRenderer.transparencyEnabled;
+        boolean isBotTransparent = ColumnFormat.getAlpha(botData) < 255 && LodRenderer.transparencyEnabled;
 
 
-		// Up direction case
-		//We skip if
-		//   current block is not transparent: we check if the adj block is attached and opaque
+        // Up direction case
+        //We skip if
+        //   current block is not transparent: we check if the adj block is attached and opaque
 
-		boolean skipTop = ColumnFormat.doesDataPointExist(topData) && (ColumnFormat.getDepth(topData) == maxY) && !isTopTransparent;
-		boolean skipBot = ColumnFormat.doesDataPointExist(botData) && (ColumnFormat.getHeight(botData) == y) && !isBotTransparent;
-		if(LodRenderer.transparencyEnabled && LodRenderer.fakeOceanFloor) {
-			if (!isTransparent && isTopTransparent && ColumnFormat.doesDataPointExist(topData)) {
-				skyLightTop = (byte) MathUtil.clamp(0, 15 - (ColumnFormat.getHeight(topData) - y), 15);
-				ySize = (short) (ColumnFormat.getHeight(topData) - y - 1);
-				//y = (short) (DataPointUtil.getHeight(topData) - 2);
-				//ySize = 1;
-			} else if (isTransparent && !isBotTransparent && ColumnFormat.doesDataPointExist(botData)) {
-				y = (short) (y + ySize - 1);
-				ySize = 1;
-			}
-			maxY = (short) (y + ySize);
-		}
+        boolean skipTop = ColumnFormat.doesDataPointExist(topData) && (ColumnFormat.getDepth(topData) == maxY) && !isTopTransparent;
+        boolean skipBot = ColumnFormat.doesDataPointExist(botData) && (ColumnFormat.getHeight(botData) == y) && !isBotTransparent;
+        if (LodRenderer.transparencyEnabled && LodRenderer.fakeOceanFloor) {
+            if (!isTransparent && isTopTransparent && ColumnFormat.doesDataPointExist(topData)) {
+                skyLightTop = (byte) MathUtil.clamp(0, 15 - (ColumnFormat.getHeight(topData) - y), 15);
+                ySize = (short) (ColumnFormat.getHeight(topData) - y - 1);
+                //y = (short) (DataPointUtil.getHeight(topData) - 2);
+                //ySize = 1;
+            } else if (isTransparent && !isBotTransparent && ColumnFormat.doesDataPointExist(botData)) {
+                y = (short) (y + ySize - 1);
+                ySize = 1;
+            }
+            maxY = (short) (y + ySize);
+        }
 
-		if (!skipTop)
-			builder.addQuadUp(x, maxY, z, xSize, zSize, ColorUtil.applyShade(color, MC.getShade(ELodDirection.UP)), skyLightTop, blockLight);
-		if (!skipBot)
-			builder.addQuadDown(x, y, z, xSize, zSize, ColorUtil.applyShade(color, MC.getShade(ELodDirection.DOWN)), skyLightBot, blockLight);
+        if (!skipTop)
+            builder.addQuadUp(x, maxY, z, xSize, zSize, ColorUtil.applyShade(color, MC.getShade(ELodDirection.UP)), skyLightTop, blockLight);
+        if (!skipBot)
+            builder.addQuadDown(x, y, z, xSize, zSize, ColorUtil.applyShade(color, MC.getShade(ELodDirection.DOWN)), skyLightBot, blockLight);
 
-		if(isTransparent)
-			return;
-		//If the adj pos is at the same level we cull the faces normally, otherwise we divide the face in two and cull the two part separately
-		
-		//NORTH face vertex creation
-		{
-			ColumnArrayView[] adjDataNorth = adjData[ELodDirection.NORTH.ordinal() - 2];
-			int adjOverlapNorth = ColorUtil.TRANSPARENT;
-			if (adjDataNorth == null)
-			{
-				builder.addQuadAdj(ELodDirection.NORTH, x, y, z, xSize, ySize, color, (byte) 15, blockLight);
-			}
-			else if (adjDataNorth.length == 1)
-			{
-				makeAdjQuads(builder, adjDataNorth[0], ELodDirection.NORTH, x, y, z, xSize, ySize,
-						color, adjOverlapNorth, skyLightTop, blockLight);
-			}
-			else
-			{
-				makeAdjQuads(builder, adjDataNorth[0], ELodDirection.NORTH, x, y, z, (short) (xSize / 2), ySize,
-						color, adjOverlapNorth, skyLightTop, blockLight);
-				makeAdjQuads(builder, adjDataNorth[1], ELodDirection.NORTH, (short) (x + xSize / 2), y, z, (short) (xSize / 2), ySize,
-						color, adjOverlapNorth, skyLightTop, blockLight);
-			}
-		}
+        //if (isTransparent)
+        //    return;
+        //If the adj pos is at the same level we cull the faces normally, otherwise we divide the face in two and cull the two part separately
 
-		//SOUTH face vertex creation
-		{
-			ColumnArrayView[] adjDataSouth = adjData[ELodDirection.SOUTH.ordinal() - 2];
-			int adjOverlapSouth = ColorUtil.TRANSPARENT;
-			if (adjDataSouth == null)
-			{
-				builder.addQuadAdj(ELodDirection.SOUTH, x, y, maxZ, xSize, ySize, color, (byte) 15, blockLight);
-			}
-			else if (adjDataSouth.length == 1)
-			{
-				makeAdjQuads(builder, adjDataSouth[0], ELodDirection.SOUTH, x, y, maxZ, xSize, ySize,
-						color, adjOverlapSouth, skyLightTop, blockLight);
-			}
-			else
-			{
-				makeAdjQuads(builder, adjDataSouth[0], ELodDirection.SOUTH, x, y, maxZ, (short) (xSize / 2), ySize,
-						color, adjOverlapSouth, skyLightTop, blockLight);
-				
-				makeAdjQuads(builder, adjDataSouth[1], ELodDirection.SOUTH, (short) (x + xSize / 2), y, maxZ, (short) (xSize / 2), ySize,
-						color, adjOverlapSouth, skyLightTop, blockLight);
-			}
-		}
-		
-		//WEST face vertex creation
-		{
-			ColumnArrayView[] adjDataWest = adjData[ELodDirection.WEST.ordinal() - 2];
-			int adjOverlapWest = ColorUtil.TRANSPARENT;
-			if (adjDataWest == null)
-			{
-				builder.addQuadAdj(ELodDirection.WEST, x, y, z, zSize, ySize, color, (byte) 15, blockLight);
-			}
-			else if (adjDataWest.length == 1)
-			{
-				makeAdjQuads(builder, adjDataWest[0], ELodDirection.WEST, x, y, z, zSize, ySize,
-						color, adjOverlapWest, skyLightTop, blockLight);
-			}
-			else
-			{
-				makeAdjQuads(builder, adjDataWest[0], ELodDirection.WEST, x, y, z, (short) (zSize / 2), ySize,
-						color, adjOverlapWest, skyLightTop, blockLight);
-				makeAdjQuads(builder, adjDataWest[1], ELodDirection.WEST, x, y, (short) (z + zSize / 2), (short) (zSize / 2), ySize,
-						color, adjOverlapWest, skyLightTop, blockLight);
-			}
-		}
-		
-		//EAST face vertex creation
-		{
-			ColumnArrayView[] adjDataEast = adjData[ELodDirection.EAST.ordinal() - 2];
-			int adjOverlapEast = ColorUtil.TRANSPARENT;
-			if (adjData[ELodDirection.EAST.ordinal() - 2] == null)
-			{
-				builder.addQuadAdj(ELodDirection.EAST, maxX, y, z, zSize, ySize, color, (byte) 15, blockLight);
-			}
-			else if (adjDataEast.length == 1)
-			{
-				makeAdjQuads(builder, adjDataEast[0], ELodDirection.EAST, maxX, y, z, zSize, ySize,
-						color, adjOverlapEast, skyLightTop, blockLight);
-			}
-			else
-			{
-				makeAdjQuads(builder, adjDataEast[0], ELodDirection.EAST, maxX, y, z, (short) (zSize / 2), ySize,
-						color, adjOverlapEast, skyLightTop, blockLight);
-				makeAdjQuads(builder, adjDataEast[1], ELodDirection.EAST, maxX, y, (short) (z + zSize / 2), (short) (zSize / 2), ySize,
-						color, adjOverlapEast, skyLightTop, blockLight);
-			}
-		}
-	}
-	
-	private static void makeAdjQuads(LodQuadBuilder builder, ColumnArrayView adjData, ELodDirection direction, short x, short y,
-									 short z, short w0, short wy, int color, int overlapColor, byte upSkyLight, byte blockLight)
-	{
-		color = ColorUtil.applyShade(color, MC.getShade(direction));
-		ColumnArrayView dataPoint = adjData;
-		if (dataPoint == null || ColumnFormat.isVoid(dataPoint.get(0)))
-		{
-			builder.addQuadAdj(direction, x, y, z, w0, wy, color, (byte) 15, blockLight);
-			return;
-		}
-		
-		int i;
-		boolean firstFace = true;
-		boolean allAbove = true;
-		short previousDepth = -1;
-		byte nextSkyLight = upSkyLight;
-		boolean isTransparent = ColorUtil.getAlpha(color) < 255  && LodRenderer.transparencyEnabled;
-		boolean lastWasTransparent = false;
-		for (i = 0; i < dataPoint.size() && ColumnFormat.doesDataPointExist(adjData.get(i))
-				&& !ColumnFormat.isVoid(adjData.get(i)); i++)
-		{
-			long adjPoint = adjData.get(i);
+        //NORTH face vertex creation
+        {
+            ColumnArrayView[] adjDataNorth = adjData[ELodDirection.NORTH.ordinal() - 2];
+            int adjOverlapNorth = ColorUtil.TRANSPARENT;
+            if (adjDataNorth == null) {
+                builder.addQuadAdj(ELodDirection.NORTH, x, y, z, xSize, ySize, color, (byte) 15, blockLight);
+            } else if (adjDataNorth.length == 1) {
+                makeAdjQuads(builder, adjDataNorth[0], ELodDirection.NORTH, x, y, z, xSize, ySize,
+                        color, adjOverlapNorth, skyLightTop, blockLight);
+            } else {
+                makeAdjQuads(builder, adjDataNorth[0], ELodDirection.NORTH, x, y, z, (short) (xSize / 2), ySize,
+                        color, adjOverlapNorth, skyLightTop, blockLight);
+                makeAdjQuads(builder, adjDataNorth[1], ELodDirection.NORTH, (short) (x + xSize / 2), y, z, (short) (xSize / 2), ySize,
+                        color, adjOverlapNorth, skyLightTop, blockLight);
+            }
+        }
 
-			boolean isAdjTransparent = ColumnFormat.getAlpha(adjPoint) < 255 && LodRenderer.transparencyEnabled;
+        //SOUTH face vertex creation
+        {
+            ColumnArrayView[] adjDataSouth = adjData[ELodDirection.SOUTH.ordinal() - 2];
+            int adjOverlapSouth = ColorUtil.TRANSPARENT;
+            if (adjDataSouth == null) {
+                builder.addQuadAdj(ELodDirection.SOUTH, x, y, maxZ, xSize, ySize, color, (byte) 15, blockLight);
+            } else if (adjDataSouth.length == 1) {
+                makeAdjQuads(builder, adjDataSouth[0], ELodDirection.SOUTH, x, y, maxZ, xSize, ySize,
+                        color, adjOverlapSouth, skyLightTop, blockLight);
+            } else {
+                makeAdjQuads(builder, adjDataSouth[0], ELodDirection.SOUTH, x, y, maxZ, (short) (xSize / 2), ySize,
+                        color, adjOverlapSouth, skyLightTop, blockLight);
 
-			if (!isTransparent && isAdjTransparent && LodRenderer.transparencyEnabled)
-				continue;
+                makeAdjQuads(builder, adjDataSouth[1], ELodDirection.SOUTH, (short) (x + xSize / 2), y, maxZ, (short) (xSize / 2), ySize,
+                        color, adjOverlapSouth, skyLightTop, blockLight);
+            }
+        }
 
-			
-			short height = ColumnFormat.getHeight(adjPoint);
-			short depth = ColumnFormat.getDepth(adjPoint);
+        //WEST face vertex creation
+        {
+            ColumnArrayView[] adjDataWest = adjData[ELodDirection.WEST.ordinal() - 2];
+            int adjOverlapWest = ColorUtil.TRANSPARENT;
+            if (adjDataWest == null) {
+                builder.addQuadAdj(ELodDirection.WEST, x, y, z, zSize, ySize, color, (byte) 15, blockLight);
+            } else if (adjDataWest.length == 1) {
+                makeAdjQuads(builder, adjDataWest[0], ELodDirection.WEST, x, y, z, zSize, ySize,
+                        color, adjOverlapWest, skyLightTop, blockLight);
+            } else {
+                makeAdjQuads(builder, adjDataWest[0], ELodDirection.WEST, x, y, z, (short) (zSize / 2), ySize,
+                        color, adjOverlapWest, skyLightTop, blockLight);
+                makeAdjQuads(builder, adjDataWest[1], ELodDirection.WEST, x, y, (short) (z + zSize / 2), (short) (zSize / 2), ySize,
+                        color, adjOverlapWest, skyLightTop, blockLight);
+            }
+        }
 
-			if(LodRenderer.transparencyEnabled && LodRenderer.fakeOceanFloor)
-			{
+        //EAST face vertex creation
+        {
+            ColumnArrayView[] adjDataEast = adjData[ELodDirection.EAST.ordinal() - 2];
+            int adjOverlapEast = ColorUtil.TRANSPARENT;
+            if (adjData[ELodDirection.EAST.ordinal() - 2] == null) {
+                builder.addQuadAdj(ELodDirection.EAST, maxX, y, z, zSize, ySize, color, (byte) 15, blockLight);
+            } else if (adjDataEast.length == 1) {
+                makeAdjQuads(builder, adjDataEast[0], ELodDirection.EAST, maxX, y, z, zSize, ySize,
+                        color, adjOverlapEast, skyLightTop, blockLight);
+            } else {
+                makeAdjQuads(builder, adjDataEast[0], ELodDirection.EAST, maxX, y, z, (short) (zSize / 2), ySize,
+                        color, adjOverlapEast, skyLightTop, blockLight);
+                makeAdjQuads(builder, adjDataEast[1], ELodDirection.EAST, maxX, y, (short) (z + zSize / 2), (short) (zSize / 2), ySize,
+                        color, adjOverlapEast, skyLightTop, blockLight);
+            }
+        }
+    }
 
-				if(lastWasTransparent && !isAdjTransparent)
-				{
-					height = (short) (ColumnFormat.getHeight(adjData.get(i-1)) - 1);
-				}
-				else if(isAdjTransparent && (i + 1) < adjData.size())
-				{
-					if (ColumnFormat.getAlpha(adjData.get(i+1)) == 255)
-					{
-						depth = (short) (height - 1);
-					}
-				}
-			}
+    private static void makeAdjQuads(LodQuadBuilder builder, ColumnArrayView adjData, ELodDirection direction, short x, short y,
+                                     short z, short w0, short wy, int color, int overlapColor, byte upSkyLight, byte blockLight) {
+        color = ColorUtil.applyShade(color, MC.getShade(direction));
+        ColumnArrayView dataPoint = adjData;
+        if (dataPoint == null || ColumnFormat.isVoid(dataPoint.get(0))) {
+            builder.addQuadAdj(direction, x, y, z, w0, wy, color, (byte) 15, blockLight);
+            return;
+        }
 
-			// If the depth of said block is higher than our max Y, continue
-			// Basically: y < maxY <= _____ height
-			// _______&&: y < maxY <= depth
-			if (y + wy <= depth)
-				continue;
-			// Now: depth < maxY
-			allAbove = false;
-			
-			if (height < y)
-			{
-				// Basically: _____ height < y < maxY
-				// _______&&: depth ______ < y < maxY
-				if (firstFace)
-				{
-					builder.addQuadAdj(direction, x, y, z, w0, wy, color, ColumnFormat.getLightSky(adjPoint),
-							blockLight);
-				}
-				else
-				{
-					// Now: depth < height < y < previousDepth < maxY
-					if (previousDepth == -1)
-						throw new RuntimeException("Loop error");
-					builder.addQuadAdj(direction, x, y, z, w0, (short) (previousDepth - y), color,
-							ColumnFormat.getLightSky(adjPoint), blockLight);
-					previousDepth = -1;
-				}
-				break;
-			}
-			
-			if (depth <= y)
-			{ // AND y <= height
-				if (y + wy <= height)
-				{
-					// Basically: ________ y < maxY <= height
-					// _______&&: depth <= y < maxY
-					// The face is inside adj face completely.
-					if (overlapColor != 0)
-					{
-						builder.addQuadAdj(direction, x, y, z, w0, wy, overlapColor, (byte) 15, (byte) 15);
-					}
-					break;
-				}
-				// Otherwise: ________ y <= Height < maxY
-				// _______&&: depth <= y _________ < maxY
-				// the adj data intersects the lower part of the current data
-				if (height > y && overlapColor != 0)
-				{
-					builder.addQuadAdj(direction, x, y, z, w0, (short) (height - y), overlapColor, (byte) 15, (byte) 15);
-				}
-				// if this is the only face, use the maxY and break,
-				// if there was another face we finish the last one and break
-				if (firstFace)
-				{
-					builder.addQuadAdj(direction, x, height, z, w0, (short) (y + wy - height), color,
-							ColumnFormat.getLightSky(adjPoint), blockLight);
-				}
-				else
-				{
-					// Now: depth <= y <= height <= previousDepth < maxY
-					if (previousDepth == -1)
-						throw new RuntimeException("Loop error");
-					if (previousDepth > height)
-					{
-						builder.addQuadAdj(direction, x, height, z, w0, (short) (previousDepth - height), color,
-								ColumnFormat.getLightSky(adjPoint), blockLight);
-					}
-					previousDepth = -1;
-				}
-				break;
-			}
-			
-			// In here always true: y < depth < maxY
-			// _________________&&: y < _____ (height and maxY)
-			
-			if (y + wy <= height)
-			{
-				// Basically: y _______ < maxY <= height
-				// _______&&: y < depth < maxY
-				// the adj data intersects the higher part of the current data
-				if (overlapColor != 0)
-				{
-					builder.addQuadAdj(direction, x, depth, z, w0, (short) (y + wy - depth), overlapColor, (byte) 15, (byte) 15);
-				}
-				// we start the creation of a new face
-			}
-			else
-			{
-				// Otherwise: y < _____ height < maxY
-				// _______&&: y < depth ______ < maxY
-				if (overlapColor != 0)
-				{
-					builder.addQuadAdj(direction, x, depth, z, w0, (short) (height - depth), overlapColor, (byte) 15, (byte) 15);
-				}
-				if (firstFace)
-				{
-					builder.addQuadAdj(direction, x, height, z, w0, (short) (y + wy - height), color,
-							ColumnFormat.getLightSky(adjPoint), blockLight);
-				}
-				else
-				{
-					// Now: y < depth < height <= previousDepth < maxY
-					if (previousDepth == -1)
-						throw new RuntimeException("Loop error");
-					if (previousDepth > height)
-					{
-						builder.addQuadAdj(direction, x, height, z, w0, (short) (previousDepth - height), color,
-								ColumnFormat.getLightSky(adjPoint), blockLight);
-					}
-					previousDepth = -1;
-				}
-			}
-			// set next top as current depth
-			previousDepth = depth;
-			firstFace = false;
-			nextSkyLight = upSkyLight;
-			if (i + 1 < adjData.size() && ColumnFormat.doesDataPointExist(adjData.get(i + 1)))
-				nextSkyLight = ColumnFormat.getLightSky(adjData.get(i + 1));
-			lastWasTransparent = isAdjTransparent;
-		}
-		
-		if (allAbove)
-		{
-			builder.addQuadAdj(direction, x, y, z, w0, wy, color, upSkyLight, blockLight);
-		}
-		else if (previousDepth != -1)
-		{
-			// We need to finish the last quad.
-			builder.addQuadAdj(direction, x, y, z, w0, (short) (previousDepth - y), color, nextSkyLight,
-					blockLight);
-		}
-	}
+        int i;
+        boolean firstFace = true;
+        boolean allAbove = true;
+        short previousDepth = -1;
+        byte nextSkyLight = upSkyLight;
+        boolean isTransparent = ColorUtil.getAlpha(color) < 255 && LodRenderer.transparencyEnabled;
+        boolean lastWasTransparent = false;
+        for (i = 0; i < dataPoint.size() && ColumnFormat.doesDataPointExist(adjData.get(i))
+                && !ColumnFormat.isVoid(adjData.get(i)); i++) {
+            long adjPoint = adjData.get(i);
+
+            boolean isAdjTransparent = ColumnFormat.getAlpha(adjPoint) < 255 && LodRenderer.transparencyEnabled;
+
+            if (!(!isTransparent && isAdjTransparent && LodRenderer.transparencyEnabled)) {
+
+
+                short height = ColumnFormat.getHeight(adjPoint);
+                short depth = ColumnFormat.getDepth(adjPoint);
+
+                if (LodRenderer.transparencyEnabled && LodRenderer.fakeOceanFloor) {
+
+                    if (lastWasTransparent && !isAdjTransparent) {
+                        height = (short) (ColumnFormat.getHeight(adjData.get(i - 1)) - 1);
+                    } else if (isAdjTransparent && (i + 1) < adjData.size()) {
+                        if (ColumnFormat.getAlpha(adjData.get(i + 1)) == 255) {
+                            depth = (short) (height - 1);
+                        }
+                    }
+                }
+
+                // If the depth of said block is higher than our max Y, continue
+                // Basically: y < maxY <= _____ height
+                // _______&&: y < maxY <= depth
+                if (y + wy <= depth)
+                    continue;
+                // Now: depth < maxY
+                allAbove = false;
+
+                if (height < y) {
+                    // Basically: _____ height < y < maxY
+                    // _______&&: depth ______ < y < maxY
+                    if (firstFace) {
+                        builder.addQuadAdj(direction, x, y, z, w0, wy, color, ColumnFormat.getLightSky(adjPoint),
+                                blockLight);
+                    } else {
+                        // Now: depth < height < y < previousDepth < maxY
+                        if (previousDepth == -1)
+                            throw new RuntimeException("Loop error");
+                        builder.addQuadAdj(direction, x, y, z, w0, (short) (previousDepth - y), color,
+                                ColumnFormat.getLightSky(adjPoint), blockLight);
+                        previousDepth = -1;
+                    }
+                    break;
+                }
+
+                if (depth <= y) { // AND y <= height
+                    if (y + wy <= height) {
+                        // Basically: ________ y < maxY <= height
+                        // _______&&: depth <= y < maxY
+                        // The face is inside adj face completely.
+                        if (overlapColor != 0) {
+                            builder.addQuadAdj(direction, x, y, z, w0, wy, overlapColor, (byte) 15, (byte) 15);
+                        }
+                        break;
+                    }
+                    // Otherwise: ________ y <= Height < maxY
+                    // _______&&: depth <= y _________ < maxY
+                    // the adj data intersects the lower part of the current data
+                    if (height > y && overlapColor != 0) {
+                        builder.addQuadAdj(direction, x, y, z, w0, (short) (height - y), overlapColor, (byte) 15, (byte) 15);
+                    }
+                    // if this is the only face, use the maxY and break,
+                    // if there was another face we finish the last one and break
+                    if (firstFace) {
+                        builder.addQuadAdj(direction, x, height, z, w0, (short) (y + wy - height), color,
+                                ColumnFormat.getLightSky(adjPoint), blockLight);
+                    } else {
+                        // Now: depth <= y <= height <= previousDepth < maxY
+                        if (previousDepth == -1)
+                            throw new RuntimeException("Loop error");
+                        if (previousDepth > height) {
+                            builder.addQuadAdj(direction, x, height, z, w0, (short) (previousDepth - height), color,
+                                    ColumnFormat.getLightSky(adjPoint), blockLight);
+                        }
+                        previousDepth = -1;
+                    }
+                    break;
+                }
+
+                // In here always true: y < depth < maxY
+                // _________________&&: y < _____ (height and maxY)
+
+                if (y + wy <= height) {
+                    // Basically: y _______ < maxY <= height
+                    // _______&&: y < depth < maxY
+                    // the adj data intersects the higher part of the current data
+                    if (overlapColor != 0) {
+                        builder.addQuadAdj(direction, x, depth, z, w0, (short) (y + wy - depth), overlapColor, (byte) 15, (byte) 15);
+                    }
+                    // we start the creation of a new face
+                } else {
+                    // Otherwise: y < _____ height < maxY
+                    // _______&&: y < depth ______ < maxY
+                    if (overlapColor != 0) {
+                        builder.addQuadAdj(direction, x, depth, z, w0, (short) (height - depth), overlapColor, (byte) 15, (byte) 15);
+                    }
+                    if (firstFace) {
+                        builder.addQuadAdj(direction, x, height, z, w0, (short) (y + wy - height), color,
+                                ColumnFormat.getLightSky(adjPoint), blockLight);
+                    } else {
+                        // Now: y < depth < height <= previousDepth < maxY
+                        if (previousDepth == -1)
+                            throw new RuntimeException("Loop error");
+                        if (previousDepth > height) {
+                            builder.addQuadAdj(direction, x, height, z, w0, (short) (previousDepth - height), color,
+                                    ColumnFormat.getLightSky(adjPoint), blockLight);
+                        }
+                        previousDepth = -1;
+                    }
+                }
+
+
+                // set next top as current depth
+                previousDepth = depth;
+                firstFace = false;
+                nextSkyLight = upSkyLight;
+                if (i + 1 < adjData.size() && ColumnFormat.doesDataPointExist(adjData.get(i + 1)))
+                    nextSkyLight = ColumnFormat.getLightSky(adjData.get(i + 1));
+                lastWasTransparent = isAdjTransparent;
+            }
+        }
+
+        if (allAbove) {
+            builder.addQuadAdj(direction, x, y, z, w0, wy, color, upSkyLight, blockLight);
+        } else if (previousDepth != -1) {
+            // We need to finish the last quad.
+            builder.addQuadAdj(direction, x, y, z, w0, (short) (previousDepth - y), color, nextSkyLight,
+                    blockLight);
+        }
+    }
 }
