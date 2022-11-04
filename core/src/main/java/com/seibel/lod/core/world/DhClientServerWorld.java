@@ -16,7 +16,7 @@ import java.util.HashSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
-public class DhClientServerWorld extends DhWorld implements IDhClientWorld, IDhServerWorld
+public class DhClientServerWorld extends AbstractDhWorld implements IDhClientWorld, IDhServerWorld
 {
     private final HashMap<ILevelWrapper, DhClientServerLevel> levelObjMap;
     private final HashSet<DhClientServerLevel> dhLevels;
@@ -26,7 +26,7 @@ public class DhClientServerWorld extends DhWorld implements IDhClientWorld, IDhS
     public F3Screen.DynamicMessage f3Msg;
 
     public DhClientServerWorld() {
-        super(WorldEnvironment.Client_Server);
+        super(EWorldEnvironment.Client_Server);
         saveStructure = new LocalSaveStructure();
         levelObjMap = new HashMap<>();
         dhLevels = new HashSet<>();

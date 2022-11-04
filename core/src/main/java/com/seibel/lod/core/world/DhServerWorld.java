@@ -11,13 +11,13 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 
-public class DhServerWorld extends DhWorld implements IDhServerWorld
+public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 {
     private final HashMap<IServerLevelWrapper, DhServerLevel> levels;
     public final LocalSaveStructure saveStructure;
 
     public DhServerWorld() {
-        super(WorldEnvironment.Server_Only);
+        super(EWorldEnvironment.Server_Only);
         saveStructure = new LocalSaveStructure();
         levels = new HashMap<>();
         LOGGER.info("Started DhWorld of type {}", environment);

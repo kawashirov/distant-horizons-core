@@ -16,7 +16,7 @@ import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
-public class DhClientWorld extends DhWorld implements IDhClientWorld
+public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 {
     private final HashMap<IClientLevelWrapper, DhClientLevel> levels;
     public final ClientOnlySaveStructure saveStructure;
@@ -24,7 +24,7 @@ public class DhClientWorld extends DhWorld implements IDhClientWorld
     public EventLoop eventLoop = new EventLoop(dhTickerThread, this::_clientTick);
 
     public DhClientWorld() {
-        super(WorldEnvironment.Client_Only);
+        super(EWorldEnvironment.Client_Only);
         saveStructure = new ClientOnlySaveStructure();
         levels = new HashMap<>();
         LOGGER.info("Started DhWorld of type {}", environment);

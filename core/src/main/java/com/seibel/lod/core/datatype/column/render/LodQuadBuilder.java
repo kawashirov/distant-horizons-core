@@ -122,7 +122,7 @@ public class LodQuadBuilder
 	{
 		if (dir.ordinal() <= ELodDirection.DOWN.ordinal())
 			throw new IllegalArgumentException("addQuadAdj() is only for adj direction! Not UP or Down!");
-		if (skipQuadsWithZeroSkylight && skylight == 0 && y < skyLightCullingBelow)
+		if (skipQuadsWithZeroSkylight && skylight == 0 && y+widthNorthSouthOrUpDown < skyLightCullingBelow)
 			return;
 		BufferQuad quad = new BufferQuad(x, y, z, widthEastWest, widthNorthSouthOrUpDown, color, skylight, blocklight, dir);
 		ArrayList<BufferQuad> qs = (doTransparency && ColorUtil.getAlpha(color) < 255)

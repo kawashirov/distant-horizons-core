@@ -37,9 +37,9 @@ import com.seibel.lod.core.render.glObject.GLProxy;
 import com.seibel.lod.core.render.renderer.TestRenderer;
 import com.seibel.lod.core.util.RenderUtil;
 import com.seibel.lod.core.world.DhClientWorld;
-import com.seibel.lod.core.world.DhWorld;
+import com.seibel.lod.core.world.AbstractDhWorld;
 import com.seibel.lod.core.world.IDhClientWorld;
-import com.seibel.lod.core.world.WorldEnvironment;
+import com.seibel.lod.core.world.EWorldEnvironment;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
@@ -138,7 +138,7 @@ public class ClientApi
 	
 	public void clientChunkLoadEvent(IChunkWrapper chunk, IClientLevelWrapper level)
 	{
-		if (SharedApi.getEnvironment() == WorldEnvironment.Client_Only)
+		if (SharedApi.getEnvironment() == EWorldEnvironment.Client_Only)
 		{
 			IDhLevel dhLevel = SharedApi.currentWorld.getLevel(level);
 			if (dhLevel != null)
@@ -150,7 +150,7 @@ public class ClientApi
 	
 	public void clientChunkSaveEvent(IChunkWrapper chunk, IClientLevelWrapper level)
 	{
-		if (SharedApi.getEnvironment() == WorldEnvironment.Client_Only)
+		if (SharedApi.getEnvironment() == EWorldEnvironment.Client_Only)
 		{
 			//TODO: Implement
 			
@@ -251,7 +251,7 @@ public class ClientApi
 			
 			//FIXME: Improve class hierarchy of DhWorld, IClientWorld, IServerWorld to fix all this hard casting
 			// (also in RenderUtil)
-			DhWorld dhWorld = SharedApi.currentWorld;
+			AbstractDhWorld dhWorld = SharedApi.currentWorld;
 			IDhClientLevel level = (IDhClientLevel) dhWorld.getOrLoadLevel(levelWrapper);
 			
 			if (prefLoggerEnabled)
