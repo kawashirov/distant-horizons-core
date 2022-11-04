@@ -4,13 +4,13 @@ import com.electronwill.nightconfig.core.Config;
 import com.electronwill.nightconfig.core.io.ParsingMode;
 import com.electronwill.nightconfig.json.JsonFormat;
 import com.seibel.lod.core.jar.JarUtils;
-import com.seibel.lod.core.wrapperInterfaces.config.IConfigWrapper;
+import com.seibel.lod.core.wrapperInterfaces.config.ILangWrapper;
 
 import java.util.Locale;
 
-public class ConfigWrapper implements IConfigWrapper {
-    public static final ConfigWrapper INSTANCE = new ConfigWrapper();
-    private static Config jsonObject = Config.inMemory();
+public class LangWrapper implements ILangWrapper {
+    public static final LangWrapper INSTANCE = new LangWrapper();
+    private static final Config jsonObject = Config.inMemory();
 
     public static void init() {
         try {
@@ -25,10 +25,7 @@ public class ConfigWrapper implements IConfigWrapper {
 
     @Override
     public boolean langExists(String str) {
-        if (jsonObject.get(str) == null)
-            return false;
-        else
-            return true;
+        return jsonObject.get(str) != null;
     }
 
     @Override

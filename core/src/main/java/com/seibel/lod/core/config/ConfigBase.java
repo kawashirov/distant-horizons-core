@@ -4,14 +4,13 @@ import com.seibel.lod.core.config.file.ConfigFileHandling;
 import com.seibel.lod.core.config.types.AbstractConfigType;
 import com.seibel.lod.core.config.types.ConfigCategory;
 import com.seibel.lod.core.config.types.ConfigEntry;
+import com.seibel.lod.core.dependencyInjection.SingletonInjector;
+import com.seibel.lod.core.wrapperInterfaces.config.ILangWrapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Indexes and sets everything up for the file handling and gui
@@ -22,7 +21,9 @@ import java.util.Map;
 // Init the config after singletons have been blinded
 public class ConfigBase 
 {
+    /** Our own config instance, don't modify */
     public static ConfigBase INSTANCE;
+    /** Our own config instance, dont modify */
     public ConfigFileHandling configFileINSTANCE;
 
 	public static final Logger LOGGER = LogManager.getLogger(ConfigBase.class.getSimpleName());
@@ -118,5 +119,70 @@ public class ConfigBase
                 return true;
         }
         return false;
+    }
+
+    /**
+     * Used for checking that all the lang files for the config exist
+     *
+     * @param onlyShowNew If disabled then it would basically remake the config lang
+     * @param checkEnums  Checks if all the lang for the enum's exist
+     */
+    // This is just to re-format the lang or check if there is something in the lang that is missing
+    public String generateLang(boolean onlyShowNew, boolean checkEnums) {
+        ILangWrapper langWrapper = SingletonInjector.INSTANCE.get(ILangWrapper.class);
+        List<Class<? extends Enum>> enumList = new ArrayList<>();
+
+        String generatedLang = "";
+
+        String starter = "  \"";
+        String separator = "\":\n    \"";
+        String ending = "\",\n";
+
+        for (AbstractConfigType<?, ?> entry: this.entries) {
+            String entryPrefix = "lod.config."+entry.getNameWCategory();
+
+            if (checkEnums && entry.getType().isEnum() && !enumList.contains(entry.getType())) { // Put it in an enum list to work with at the end
+                enumList.add((Class<? extends Enum>) entry.getType());
+            }
+            if (!onlyShowNew || langWrapper.langExists(entryPrefix)) {
+                generatedLang += starter
+                        + entryPrefix
+                        + separator
+                        + langWrapper.getLang(entryPrefix)
+                        + ending
+                ;
+                // Adds tooltips
+                if (langWrapper.langExists(entryPrefix+".@tooltip")) {
+                    generatedLang += starter
+                            + entryPrefix+".@tooltip"
+                            + separator
+                            + langWrapper.getLang(entryPrefix+".@tooltip")
+                                    .replaceAll("\n", "\\\\n")
+                                    .replaceAll("\"", "\\\\\"")
+                            + ending
+                    ;
+                }
+            }
+        }
+        if (!enumList.isEmpty()) {
+            generatedLang += "\n"; // Separate the main lang with the enum's
+
+            for (Class<? extends Enum> anEnum: enumList) {
+                for (Object enumStr: new ArrayList<>(EnumSet.allOf(anEnum))) {
+                    String enumPrefix = "lod.config.enum."+anEnum.getSimpleName()+"."+enumStr.toString();
+
+                    if (!onlyShowNew || langWrapper.langExists(enumPrefix)) {
+                        generatedLang += starter
+                                + enumPrefix
+                                + separator
+                                + langWrapper.getLang(enumPrefix)
+                                + ending
+                        ;
+                    }
+                }
+            }
+        }
+
+        return generatedLang;
     }
 }

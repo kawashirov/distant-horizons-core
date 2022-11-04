@@ -16,7 +16,7 @@ import java.util.Arrays;
 public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implements IConfigEntry<T>
 {
     public interface Listener {
-        /** Called whenever the value changes at all (including in the code iself) */
+        /** Called whenever the value changes at all (including in the code itself) */
         void onModify();
         /** Called whenever the value is changed through the UI (only when the done button is pressed) */
         void onUiModify(); // TODO

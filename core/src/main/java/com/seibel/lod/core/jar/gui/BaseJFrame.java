@@ -5,7 +5,7 @@ import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.jar.JarUtils;
-import com.seibel.lod.core.wrapperInterfaces.config.IConfigWrapper;
+import com.seibel.lod.core.wrapperInterfaces.config.ILangWrapper;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -33,7 +33,7 @@ public class BaseJFrame extends JFrame {
     }
 
     public void init() {
-        setTitle(SingletonInjector.INSTANCE.get(IConfigWrapper.class).getLang("lod.title"));
+        setTitle(SingletonInjector.INSTANCE.get(ILangWrapper.class).getLang("lod.title"));
         try {
             setIconImage(new FlatSVGIcon(JarUtils.accessFile("icon.svg")).getImage());
         } catch (Exception e) {e.printStackTrace();}
