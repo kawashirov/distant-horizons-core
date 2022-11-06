@@ -13,16 +13,19 @@ import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import org.apache.logging.log4j.LogManager;
 
 //FIXME: To-Be-Used class
-public class ChunkToLodBuilder {
-    public static final ConfigBasedLogger LOGGER = new ConfigBasedLogger(LogManager.getLogger(),
-            () -> Config.Client.Advanced.Debugging.DebugSwitch.logLodBuilderEvent.get());
+public class ChunkToLodBuilder
+{
+    public static final ConfigBasedLogger LOGGER = new ConfigBasedLogger(LogManager.getLogger(), () -> Config.Client.Advanced.Debugging.DebugSwitch.logLodBuilderEvent.get());
     public static final long MAX_TICK_TIME_NS = 1000000000L / 20L;
     public static final int THREAD_COUNT = 1;
-
-    static class Task {
+	
+    private static class Task
+	{
         final DhChunkPos chunkPos;
         final CompletableFuture<ChunkSizedData> future;
-        Task(DhChunkPos chunkPos, CompletableFuture<ChunkSizedData> future) {
+		
+        Task(DhChunkPos chunkPos, CompletableFuture<ChunkSizedData> future)
+		{
             this.chunkPos = chunkPos;
             this.future = future;
         }
@@ -31,65 +34,91 @@ public class ChunkToLodBuilder {
     private final ConcurrentLinkedDeque<Task> taskToBuild = new ConcurrentLinkedDeque<>();
     private final ExecutorService executor = LodUtil.makeThreadPool(THREAD_COUNT, ChunkToLodBuilder.class);
     private final AtomicInteger runningCount = new AtomicInteger(0);
-
-    public CompletableFuture<ChunkSizedData> tryGenerateData(IChunkWrapper chunk) {
-        if (chunk == null) throw new NullPointerException("ChunkWrapper cannot be null!");
+	
+	
+	
+    public CompletableFuture<ChunkSizedData> tryGenerateData(IChunkWrapper chunk)
+	{
+        if (chunk == null) 
+			throw new NullPointerException("ChunkWrapper cannot be null!");
+		
         IChunkWrapper oldChunk = latestChunkToBuild.put(chunk.getChunkPos(), chunk); // an Exchange operation
         // If there's old chunk, that means we just replaced an unprocessed old request on generating data on this pos.
         //   if so, we can just return null to signal this, as the old request's future will instead be the proper one
         //   that will return the latest generated data.
-        if (oldChunk != null) return null;
+        if (oldChunk != null) 
+			return null;
+		
         // Otherwise, it means we're the first to do so. Lets submit our task to this entry.
         CompletableFuture<ChunkSizedData> future = new CompletableFuture<>();
         taskToBuild.addLast(new Task(chunk.getChunkPos(), future));
         return future;
     }
-
-    public void tick() {
+	
+    public void tick()
+	{
         if (runningCount.get() >= THREAD_COUNT) return;
         if (taskToBuild.isEmpty()) return;
-        for (int i = 0; i<THREAD_COUNT; i++) {
+        for (int i = 0; i<THREAD_COUNT; i++)
+		{
             runningCount.incrementAndGet();
-            CompletableFuture.runAsync(() -> {
-                try {
+            CompletableFuture.runAsync(() ->
+			{
+                try
+				{
                     _tick();
-                } finally {
+                }
+				finally
+				{
                     runningCount.decrementAndGet();
                 }
             }, executor);
         }
     }
-
-    private void _tick() {
+	
+    private void _tick()
+	{
         long time = System.nanoTime();
         int count = 0;
         boolean allDone = false;
-        while (true) {
-            if (System.nanoTime() - time > MAX_TICK_TIME_NS && !taskToBuild.isEmpty()) break;
+        while (true)
+		{
+            if (System.nanoTime() - time > MAX_TICK_TIME_NS && !taskToBuild.isEmpty()) 
+				break;
+			
             Task task = taskToBuild.pollFirst();
-            if (task == null) {
+            if (task == null)
+			{
                 allDone = true;
                 break;
             }
+			
             count++;
             IChunkWrapper latestChunk = latestChunkToBuild.remove(task.chunkPos); // Basically an Exchange operation
-            if (latestChunk == null) {
+            if (latestChunk == null)
+			{
                 LOGGER.error("Somehow Task at {} has latestChunk as null! Skipping task!", task.chunkPos);
                 task.future.complete(null);
                 continue;
             }
-
-            try {
-                if (LodDataBuilder.canGenerateLodFromChunk(latestChunk)) {
+			
+            try
+			{
+                if (LodDataBuilder.canGenerateLodFromChunk(latestChunk))
+				{
                     ChunkSizedData data = LodDataBuilder.createChunkData(latestChunk);
-                    if (data != null) {
+                    if (data != null)
+					{
                         task.future.complete(data);
                         continue;
                     }
                 }
-            } catch (Exception ex) {
+            }
+			catch (Exception ex)
+			{
                 LOGGER.error("Error while processing Task at {}!", task.chunkPos, ex);
             }
+			
             // Failed to build due to chunk not meeting requirement.
             IChunkWrapper casChunk = latestChunkToBuild.putIfAbsent(task.chunkPos, latestChunk); // CAS operation with expected=null
             if (casChunk == null || latestChunk.isStillValid()) // That means CAS have been successful
@@ -98,11 +127,16 @@ public class ChunkToLodBuilder {
                 task.future.complete(null);
             count--;
         }
+		
         long time2 = System.nanoTime();
-        if (!allDone) {
+        if (!allDone)
+		{
             //LOGGER.info("Completed {} tasks in {} in this tick", count, Duration.ofNanos(time2 - time));
-        } else if (count > 0) {
+        }
+		else if (count > 0)
+		{
             //LOGGER.info("Completed all {} tasks in {}", count, Duration.ofNanos(time2 - time));
         }
     }
+	
 }

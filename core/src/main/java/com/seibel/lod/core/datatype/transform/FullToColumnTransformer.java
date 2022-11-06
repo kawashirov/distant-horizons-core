@@ -26,7 +26,6 @@ public class FullToColumnTransformer {
      * Creates a LodNode for a chunk in the given world.
      * @throws IllegalArgumentException thrown if either the chunk or world is null.
      */
-
     public static ColumnRenderSource transformFullDataToColumnData(IDhClientLevel level, FullDataSource data) {
         final DhSectionPos pos = data.getSectionPos();
         final byte dataDetail = data.getDataDetail();

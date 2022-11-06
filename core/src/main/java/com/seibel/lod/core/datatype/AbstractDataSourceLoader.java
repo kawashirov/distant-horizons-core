@@ -61,7 +61,7 @@ public abstract class AbstractDataSourceLoader
 		loaderRegistry.put(clazz, this);
 	}
 	
-	// Can return null as meaning the requirement is not met
+	/** Can return null as meaning the requirement is not met */
 	public abstract ILodDataSource loadData(DataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException;
 	
 	

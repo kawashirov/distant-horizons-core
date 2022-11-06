@@ -45,4 +45,5 @@ public interface ILodRenderSource
 	
 	/** Overrides any data that has not been written directly using write(). Skips empty source dataPoints. */ 
 	void updateFromRenderSource(ILodRenderSource source);
+	
 }

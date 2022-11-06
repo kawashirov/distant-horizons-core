@@ -63,7 +63,7 @@ public abstract class AbstractRenderSourceLoader
 		this.detailOffset = detailOffset;
 	}
 	
-	// Can return null as meaning the file is out of date or something
+	/** Can return null if the file is out of date or something */
 	public abstract ILodRenderSource loadRender(RenderMetaFile renderFile, InputStream data, IDhLevel level) throws IOException;
 	public abstract ILodRenderSource createRender(ILodDataSource dataSource, IDhClientLevel level);
 	

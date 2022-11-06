@@ -25,13 +25,13 @@ public class PlaceHolderRenderSource implements ILodRenderSource
 	public byte getDataDetail() { return 0; }
 	
 	@Override
-	public void enableRender(IDhClientLevel level, LodQuadTree quadTree){ /* TODO */ }
+	public void enableRender(IDhClientLevel level, LodQuadTree quadTree) { /* TODO */ }
 	
 	@Override
-	public void disableRender(){ /* TODO */ }
+	public void disableRender() { /* TODO */ }
 	
 	@Override
-	public void dispose(){ /* TODO */ }
+	public void dispose() { /* TODO */ }
 	
 	@Override
 	public boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<RenderBuffer> referenceSlots) { return false; }
@@ -58,6 +58,5 @@ public class PlaceHolderRenderSource implements ILodRenderSource
 	
 	@Override
 	public void updateFromRenderSource(ILodRenderSource source) { /* TODO */ }
-	
 	
 }
