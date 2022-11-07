@@ -181,7 +181,7 @@ public class LodQuadTree implements AutoCloseable {
      * @return the parent LodSection
      */
     public LodRenderSection getParentSection(DhSectionPos pos) {
-        return getSection(pos.getParent());
+        return getSection(pos.getParentPos());
     }
     
     /**
@@ -192,7 +192,7 @@ public class LodQuadTree implements AutoCloseable {
      * @return one of the child LodSection
      */
     public LodRenderSection getChildSection(DhSectionPos pos, int child0to3) {
-        return getSection(pos.getChild(child0to3));
+        return getSection(pos.getChildByIndex(child0to3));
     }
 
     private LodRenderSection _set(MovableGridRingList<LodRenderSection> list, int x, int z, LodRenderSection t) {
@@ -280,15 +280,15 @@ public class LodQuadTree implements AutoCloseable {
                     if (parentRingList != null) {
                         LodRenderSection parent = _get(parentRingList, pos.x >> 1, pos.y >> 1);
                         if (parent == null) {
-                            if (SUPER_VERBOSE_LOGGING) LOGGER.info("sect {} missing parent. Creating at {}", section.pos, section.pos.getParent());
-                            parent = _set(parentRingList, pos.x >> 1, pos.y >> 1, new LodRenderSection(section.pos.getParent()));
+                            if (SUPER_VERBOSE_LOGGING) LOGGER.info("sect {} missing parent. Creating at {}", section.pos, section.pos.getParentPos());
+                            parent = _set(parentRingList, pos.x >> 1, pos.y >> 1, new LodRenderSection(section.pos.getParentPos()));
                             parent.childCount++;
-                            if (SUPER_VERBOSE_LOGGING) LOGGER.info("parent sect {} now has {} childs.", section.pos.getParent(), parent.childCount);
+                            if (SUPER_VERBOSE_LOGGING) LOGGER.info("parent sect {} now has {} childs.", section.pos.getParentPos(), parent.childCount);
                         }
                         LodUtil.assertTrue(parent.childCount <= 4 && parent.childCount > 0);
                     }
                     for (byte i = 0; i < 4; i++) {
-                        DhSectionPos childPos = section.pos.getChild(i);
+                        DhSectionPos childPos = section.pos.getChildByIndex(i);
                         LodUtil.assertTrue(childRingList != null);
                         LodRenderSection child = _get(childRingList, childPos.sectionX, childPos.sectionZ);
                         if (child == null) {
@@ -338,11 +338,11 @@ public class LodQuadTree implements AutoCloseable {
                             LodUtil.assertTrue(parentRingList != null);
                             LodRenderSection parent = _get(parentRingList, pos.x >> 1, pos.y >> 1);
                             if (parent == null) {
-                                if (SUPER_VERBOSE_LOGGING) LOGGER.info("sect {} missing parent. Creating at {}", sectPos, sectPos.getParent());
-                                parent = _set(parentRingList, pos.x >> 1, pos.y >> 1, new LodRenderSection(sectPos.getParent()));
+                                if (SUPER_VERBOSE_LOGGING) LOGGER.info("sect {} missing parent. Creating at {}", sectPos, sectPos.getParentPos());
+                                parent = _set(parentRingList, pos.x >> 1, pos.y >> 1, new LodRenderSection(sectPos.getParentPos()));
                             }
                             parent.childCount++;
-                            if (SUPER_VERBOSE_LOGGING) LOGGER.info("parent sect {} now has {} childs.", sectPos.getParent(), parent.childCount);
+                            if (SUPER_VERBOSE_LOGGING) LOGGER.info("parent sect {} now has {} childs.", sectPos.getParentPos(), parent.childCount);
                         }
                     }
                 }

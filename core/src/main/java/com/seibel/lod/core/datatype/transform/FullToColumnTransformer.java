@@ -37,8 +37,8 @@ public class FullToColumnTransformer {
         if (dataDetail == columnSource.getDataDetail()) {
             int baseX = pos.getCorner().getCorner().x;
             int baseZ = pos.getCorner().getCorner().z;
-            for (int x = 0; x < pos.getWidth(dataDetail).value; x++) {
-                for (int z = 0; z < pos.getWidth(dataDetail).value; z++) {
+            for (int x = 0; x < pos.getWidth(dataDetail).numberOfLodSectionsWide; x++) {
+                for (int z = 0; z < pos.getWidth(dataDetail).numberOfLodSectionsWide; z++) {
                     ColumnArrayView columnArrayView = columnSource.getVerticalDataPointView(x, z);
                     SingleFullArrayView fullArrayView = data.get(x, z);
                     convertColumnData(level, baseX + x, baseZ + z, columnArrayView, fullArrayView, 1);
@@ -77,8 +77,8 @@ public class FullToColumnTransformer {
         if (dataDetail == columnSource.getDataDetail()) {
             int baseX = pos.getCorner().getCorner().x;
             int baseZ = pos.getCorner().getCorner().z;
-            for (int x = 0; x < pos.getWidth(dataDetail).value; x++) {
-                for (int z = 0; z < pos.getWidth(dataDetail).value; z++) {
+            for (int x = 0; x < pos.getWidth(dataDetail).numberOfLodSectionsWide; x++) {
+                for (int z = 0; z < pos.getWidth(dataDetail).numberOfLodSectionsWide; z++) {
                     SingleFullArrayView fullArrayView = data.tryGet(x, z);
                     if (fullArrayView == null) continue;
                     ColumnArrayView columnArrayView = columnSource.getVerticalDataPointView(x, z);

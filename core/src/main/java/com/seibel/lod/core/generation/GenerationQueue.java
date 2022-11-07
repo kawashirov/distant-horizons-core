@@ -4,7 +4,6 @@ import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.Pos2D;
-import com.seibel.lod.core.util.MathUtil;
 import com.seibel.lod.core.util.objects.UncheckedInterruptedException;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhChunkPos;
@@ -120,7 +119,7 @@ public class GenerationQueue implements Closeable {
     // FIXME: This is using up a TONS of time to process!
     private final ConcurrentSkipListMap<DhLodPos, TaskGroup> taskGroups = new ConcurrentSkipListMap<>(
             (a, b) -> {
-                if (a.detail != b.detail) return a.detail - b.detail;
+                if (a.detailLevel != b.detailLevel) return a.detailLevel - b.detailLevel;
                 int aDist = a.getCenter().toPos2D().chebyshevDist(Pos2D.ZERO);
                 int bDist = b.getCenter().toPos2D().chebyshevDist(Pos2D.ZERO);
                 if (aDist != bDist) return aDist - bDist;
@@ -154,13 +153,13 @@ public class GenerationQueue implements Closeable {
         }
         if (requiredDataDetail > maxDataDetail) requiredDataDetail = maxDataDetail;
 
-        LodUtil.assertTrue(pos.detail > requiredDataDetail+4);
-        byte granularity = (byte) (pos.detail - requiredDataDetail);
+        LodUtil.assertTrue(pos.detailLevel > requiredDataDetail+4);
+        byte granularity = (byte) (pos.detailLevel - requiredDataDetail);
 
         if (granularity > maxGranularity) {
             // Too big of a chunk. We need to split it up
             byte subDetail = (byte) (maxGranularity + requiredDataDetail);
-            int subPosCount = pos.getWidth(subDetail);
+            int subPosCount = pos.getBlockWidth(subDetail);
             DhLodPos cornerSubPos = pos.getCorner(subDetail);
             CompletableFuture<Boolean>[] subFutures = new CompletableFuture[subPosCount*subPosCount];
             ArrayList<GenTask> subTasks = new ArrayList<>(subPosCount*subPosCount);
@@ -171,7 +170,7 @@ public class GenerationQueue implements Closeable {
                     for (int oz = 0; oz < subPosCount; oz++) {
                         CompletableFuture<Boolean> subFuture = new CompletableFuture<>();
                         subFutures[i++] = subFuture;
-                        subTasks.add(new GenTask(cornerSubPos.offset(ox, oz), requiredDataDetail, splitTask, subFuture));
+                        subTasks.add(new GenTask(cornerSubPos.addOffset(ox, oz), requiredDataDetail, splitTask, subFuture));
                     }
                 }
             }
@@ -207,7 +206,7 @@ public class GenerationQueue implements Closeable {
     }
 
     private void addAndCombineGroup(TaskGroup target) {
-        byte granularity = (byte) (target.pos.detail - target.dataDetail);
+        byte granularity = (byte) (target.pos.detailLevel - target.dataDetail);
         LodUtil.assertTrue(granularity <= maxGranularity && granularity >= minGranularity);
         LodUtil.assertTrue(!taskGroups.containsKey(target.pos));
 
@@ -221,7 +220,7 @@ public class GenerationQueue implements Closeable {
                 if (!group.pos.overlaps(target.pos)) continue;
 
                 // We should have already ALWAYS selected the higher granularity.
-                LodUtil.assertTrue(group.pos.detail < target.pos.detail);
+                LodUtil.assertTrue(group.pos.detailLevel < target.pos.detailLevel);
                 groupIter.remove(); // Remove and consume all from that lower granularity request
                 target.members.addAll(group.members);
             }
@@ -231,12 +230,12 @@ public class GenerationQueue implements Closeable {
         if (granularity < maxGranularity) { // Obviously, only do so if we aren't at the maxGranularity already
             // Check for merging and upping the granularity
             DhLodPos corePos = target.pos;
-            DhLodPos parentPos = corePos.convertUpwardsTo((byte) (corePos.detail+1));
+            DhLodPos parentPos = corePos.convertUpwardsTo((byte) (corePos.detailLevel +1));
             int targetChildId = target.pos.getChildIndexOfParent();
             boolean allPassed = true;
             for (int i = 0; i < 4; i++) {
                 if (i == targetChildId) continue;
-                TaskGroup group = taskGroups.get(parentPos.getChild(i));
+                TaskGroup group = taskGroups.get(parentPos.getChildByIndex(i));
                 if (group == null || group.dataDetail != target.dataDetail) {
                     allPassed = false;
                     break;
@@ -247,7 +246,7 @@ public class GenerationQueue implements Closeable {
                 TaskGroup[] groups = new TaskGroup[4];
                 for (int i = 0; i < 4; i++) {
                     if (i==targetChildId) groups[i] = target;
-                    else groups[i] = taskGroups.remove(parentPos.getChild(i));
+                    else groups[i] = taskGroups.remove(parentPos.getChildByIndex(i));
                     LodUtil.assertTrue(groups[i] != null && groups[i].dataDetail == target.dataDetail);
                 }
 
@@ -286,7 +285,7 @@ public class GenerationQueue implements Closeable {
             GenTask task = looseTasks.poll();
             taskProcessed++;
             byte taskDataDetail = task.dataDetail;
-            byte taskGranularity = (byte) (task.pos.detail - taskDataDetail);
+            byte taskGranularity = (byte) (task.pos.detailLevel - taskDataDetail);
             LodUtil.assertTrue(taskGranularity >= 4 && taskGranularity >= minGranularity && taskGranularity <= maxGranularity);
 
             // Check existing one
@@ -401,7 +400,7 @@ public class GenerationQueue implements Closeable {
     private void startTaskGroup(InProgressTask task) {
         byte dataDetail = task.group.dataDetail;
         DhLodPos pos = task.group.pos;
-        byte granularity = (byte) (pos.detail - dataDetail);
+        byte granularity = (byte) (pos.detailLevel - dataDetail);
         LodUtil.assertTrue(granularity >= minGranularity && granularity <= maxGranularity);
         LodUtil.assertTrue(dataDetail >= minDataDetail && dataDetail <= maxDataDetail);
 

@@ -141,9 +141,9 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
         RenderState rs = renderState.get();
         DhLodPos pos = data.getBBoxLodPos().convertUpwardsTo(FullDataSource.SECTION_SIZE_OFFSET);
         if (rs != null) {
-            rs.renderFileHandler.write(new DhSectionPos(pos.detail, pos.x, pos.z), data);
+            rs.renderFileHandler.write(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);
         } else {
-            dataFileHandler.write(new DhSectionPos(pos.detail, pos.x, pos.z), data);
+            dataFileHandler.write(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);
         }
     }
 

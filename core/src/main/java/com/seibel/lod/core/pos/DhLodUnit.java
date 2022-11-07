@@ -1,29 +1,54 @@
 package com.seibel.lod.core.pos;
 
-public class DhLodUnit {
-    public final byte detail;
-    public final int value;
+import com.seibel.lod.core.util.BitShiftUtil;
 
-    public DhLodUnit(byte detail, int value) {
-        this.detail = detail;
-        this.value = value;
+/**
+ * Often used to measure LOD widths
+ *
+ * @author Leetom
+ * @version 2022-11-6
+ */
+public class DhLodUnit
+{
+	/** The detail level of this LOD Unit */
+    public final byte detailLevel;
+	/** How many LOD columns wide this LOD Unit represents */
+    public final int numberOfLodSectionsWide;
+	
+	
+	
+    public DhLodUnit(byte detailLevel, int numberOfLodSectionsWide)
+	{
+        this.detailLevel = detailLevel;
+        this.numberOfLodSectionsWide = numberOfLodSectionsWide;
     }
-
-    public int toBlock() {
-        return value << detail;
-    }
-
-    public static DhLodUnit fromBlock(int block, byte targetDetail) {
-        return new DhLodUnit(targetDetail, Math.floorDiv(block, 1<<targetDetail));
-    }
-
-    public DhLodUnit convertTo(byte targetDetail) {
-        if (detail == targetDetail) {
-            return this;
-        }
-        if (detail > targetDetail) { //TODO check if this is correct
-            return new DhLodUnit(targetDetail, value << (detail - targetDetail));
-        }
-        return new DhLodUnit(targetDetail,  Math.floorDiv(value, 1<<(targetDetail-detail)));
-    }
+	
+	
+	/** @return the size of this LOD unit in Minecraft blocks */
+    public int toBlockWidth() { return this.numberOfLodSectionsWide << this.detailLevel;  }
+	/** @return the LOD Unit relative to the given block width and detail level */
+    public static DhLodUnit fromBlockWidth(int blockWidth, byte targetDetailLevel) { return new DhLodUnit(targetDetailLevel, Math.floorDiv(blockWidth, BitShiftUtil.powerOfTwo(targetDetailLevel))); }
+	
+	/** 
+	 * if the targetDetailLevel and this object's detail are the same, 
+	 * this will be returned instead of creating a new object 
+	 */
+	public DhLodUnit createFromDetailLevel(byte targetDetailLevel)
+	{
+		if (this.detailLevel == targetDetailLevel)
+		{
+			// no need to create a new object, this one is already the right detail level
+			return this;
+		}
+		else if (this.detailLevel > targetDetailLevel)
+		{
+			//TODO check if this is correct
+			return new DhLodUnit(targetDetailLevel, this.numberOfLodSectionsWide * BitShiftUtil.powerOfTwo(this.detailLevel - targetDetailLevel));
+		}
+		else
+		{
+			return new DhLodUnit(targetDetailLevel, Math.floorDiv(this.numberOfLodSectionsWide, BitShiftUtil.powerOfTwo(targetDetailLevel - this.detailLevel)));	
+		}
+	}
+	
 }

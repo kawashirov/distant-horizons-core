@@ -214,7 +214,7 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
             int offsetZ = dataPos.z - basePos.z;
             LodUtil.assertTrue(offsetX >= 0 && offsetX < SECTION_SIZE && offsetZ >= 0 && offsetZ < SECTION_SIZE);
             int chunksPerData = 1 << (getDataDetail() - SparseDataSource.SPARSE_UNIT_DETAIL);
-            int dataSpan = sectionPos.getWidth(getDataDetail()).value;
+            int dataSpan = sectionPos.getWidth(getDataDetail()).numberOfLodSectionsWide;
 
             for (int ox = 0; ox < dataSpan; ox++) {
                 for (int oz = 0; oz < dataSpan; oz++) {
@@ -229,7 +229,7 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
             }
         } else {
             DhLodPos dataPos = pos.getSectionBBoxPos();
-            int lowerSectionsPerData = sectionPos.getWidth(dataPos.detail).value;
+            int lowerSectionsPerData = sectionPos.getWidth(dataPos.detailLevel).numberOfLodSectionsWide;
             if (dataPos.x % lowerSectionsPerData != 0 || dataPos.z % lowerSectionsPerData != 0) return;
 
             DhLodPos basePos = sectionPos.getCorner(getDataDetail());
@@ -254,7 +254,7 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
             DhLodPos dataPos = pos.getCorner(getDataDetail());
             int offsetX = dataPos.x - basePos.x;
             int offsetZ = dataPos.z - basePos.z;
-            int dataSpan = sectionPos.getWidth(getDataDetail()).value;
+            int dataSpan = sectionPos.getWidth(getDataDetail()).numberOfLodSectionsWide;
             for (int ox = 0; ox < dataSpan; ox++) {
                 for (int oz = 0; oz < dataSpan; oz++) {
                     isColumnNotEmpty.set((offsetX + ox) * SECTION_SIZE + offsetZ + oz, true);
@@ -262,7 +262,7 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
             }
         } else {
             DhLodPos dataPos = pos.getSectionBBoxPos();
-            int lowerSectionsPerData = sectionPos.getWidth(dataPos.detail).value;
+            int lowerSectionsPerData = sectionPos.getWidth(dataPos.detailLevel).numberOfLodSectionsWide;
             if (dataPos.x % lowerSectionsPerData != 0 || dataPos.z % lowerSectionsPerData != 0) return;
             DhLodPos basePos = sectionPos.getCorner(getDataDetail());
             dataPos = dataPos.convertUpwardsTo(getDataDetail());

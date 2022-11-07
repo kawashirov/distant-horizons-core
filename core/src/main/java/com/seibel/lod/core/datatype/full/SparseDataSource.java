@@ -156,7 +156,7 @@ public class SparseDataSource implements IIncompleteDataSource
 
         DhLodPos basePos = sectionPos.getCorner(SPARSE_UNIT_DETAIL);
         DhLodPos dataPos = pos.getCorner(SPARSE_UNIT_DETAIL);
-        int coveredChunks = pos.getWidth(SPARSE_UNIT_DETAIL).value;
+        int coveredChunks = pos.getWidth(SPARSE_UNIT_DETAIL).numberOfLodSectionsWide;
         int sourceDataPerChunk = SPARSE_UNIT_SIZE >>> fullSource.getDataDetail();
         LodUtil.assertTrue(coveredChunks*sourceDataPerChunk == FullDataSource.SECTION_SIZE);
         int offsetX = dataPos.x-basePos.x;

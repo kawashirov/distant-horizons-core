@@ -151,10 +151,10 @@ public class RenderFileHandler implements IRenderSourceProvider {
     private void recursive_write(DhSectionPos sectPos, ChunkSizedData chunkData) {
         if (!sectPos.getSectionBBoxPos().overlaps(new DhLodPos((byte) (4 + chunkData.dataDetail), chunkData.x, chunkData.z))) return;
         if (sectPos.sectionDetail > ColumnRenderSource.SECTION_SIZE_OFFSET) {
-            recursive_write(sectPos.getChild(0), chunkData);
-            recursive_write(sectPos.getChild(1), chunkData);
-            recursive_write(sectPos.getChild(2), chunkData);
-            recursive_write(sectPos.getChild(3), chunkData);
+            recursive_write(sectPos.getChildByIndex(0), chunkData);
+            recursive_write(sectPos.getChildByIndex(1), chunkData);
+            recursive_write(sectPos.getChildByIndex(2), chunkData);
+            recursive_write(sectPos.getChildByIndex(3), chunkData);
         }
         RenderMetaFile metaFile = files.get(sectPos);
         if (metaFile != null) { // Fast path: if there is a file for this section, just write to it.

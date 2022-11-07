@@ -156,7 +156,7 @@ public class RenderBufferHandler {
                 if (children == null) {
                     RenderBufferNode[] childs = new RenderBufferNode[4];
                     for (int i = 0; i < 4; i++) {
-                        childs[i] = new RenderBufferNode(pos.getChild(i));
+                        childs[i] = new RenderBufferNode(pos.getChildByIndex(i));
                     }
                     children = childs;
                 }

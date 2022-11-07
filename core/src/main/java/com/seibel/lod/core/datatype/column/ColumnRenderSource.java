@@ -374,7 +374,7 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 			ColumnRenderSource[] data = new ColumnRenderSource[ELodDirection.ADJ_DIRECTIONS.length];
 			for (ELodDirection direction : ELodDirection.ADJ_DIRECTIONS)
 			{
-				LodRenderSection section = quadTree.getSection(this.sectionPos.getAdjacent(direction)); //FIXME: Handle traveling through different detail levels
+				LodRenderSection section = quadTree.getSection(this.sectionPos.getAdjacentPos(direction)); //FIXME: Handle traveling through different detail levels
 				if (section != null && section.getRenderSource() != null && section.getRenderSource() instanceof ColumnRenderSource)
 				{
 					data[direction.ordinal() - 2] = ((ColumnRenderSource) section.getRenderSource());
@@ -503,7 +503,7 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 		stringBuilder.append(sectionPos);
 		stringBuilder.append(LINE_DELIMITER);
 		
-		int size = sectionPos.getWidth().value;
+		int size = sectionPos.getWidth().numberOfLodSectionsWide;
 		for (int z = 0; z < size; z++)
 		{
 			for (int x = 0; x < size; x++)

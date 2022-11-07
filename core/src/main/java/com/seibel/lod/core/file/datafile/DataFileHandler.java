@@ -136,7 +136,7 @@ public class DataFileHandler implements IDataSourceProvider {
         outerLoop:
         while (--detail >= minDetailLevel) {
             DhLodPos min = pos.getCorner().getCorner(detail);
-            int count = pos.getSectionBBoxPos().getWidth(detail);
+            int count = pos.getSectionBBoxPos().getBlockWidth(detail);
             for (int ox = 0; ox<count; ox++) {
                 for (int oz = 0; oz<count; oz++) {
                     DhSectionPos subPos = new DhSectionPos(detail, ox+min.x, oz+min.z);
@@ -158,7 +158,7 @@ public class DataFileHandler implements IDataSourceProvider {
             missing.add(pos);
         } else {
             {
-                DhSectionPos childPos = pos.getChild(0);
+                DhSectionPos childPos = pos.getChildByIndex(0);
                 if (FullDataSource.neededForPosition(basePos, childPos)) {
                     DataMetaFile metaFile = files.get(childPos);
                     if (metaFile != null) {
@@ -171,7 +171,7 @@ public class DataFileHandler implements IDataSourceProvider {
                 }
             }
             {
-                DhSectionPos childPos = pos.getChild(1);
+                DhSectionPos childPos = pos.getChildByIndex(1);
                 if (FullDataSource.neededForPosition(basePos, childPos)) {
                     DataMetaFile metaFile = files.get(childPos);
                     if (metaFile != null) {
@@ -184,7 +184,7 @@ public class DataFileHandler implements IDataSourceProvider {
                 }
             }
             {
-                DhSectionPos childPos = pos.getChild(2);
+                DhSectionPos childPos = pos.getChildByIndex(2);
                 if (FullDataSource.neededForPosition(basePos, childPos)) {
                     DataMetaFile metaFile = files.get(childPos);
                     if (metaFile != null) {
@@ -197,7 +197,7 @@ public class DataFileHandler implements IDataSourceProvider {
                 }
             }
             {
-                DhSectionPos childPos = pos.getChild(3);
+                DhSectionPos childPos = pos.getChildByIndex(3);
                 if (FullDataSource.neededForPosition(basePos, childPos)) {
                     DataMetaFile metaFile = files.get(childPos);
                     if (metaFile != null) {
@@ -232,7 +232,7 @@ public class DataFileHandler implements IDataSourceProvider {
         DhLodPos chunkPos = new DhLodPos((byte) (chunkData.dataDetail+4), chunkData.x, chunkData.z);
         LodUtil.assertTrue(chunkPos.overlaps(sectionPos.getSectionBBoxPos()), "Chunk {} does not overlap section {}", chunkPos, sectionPos);
         chunkPos = chunkPos.convertUpwardsTo((byte) minDetailLevel); // TODO: Handle if chunkData has higher detail than lowestDetail.
-        recursiveWrite(new DhSectionPos(chunkPos.detail, chunkPos.x, chunkPos.z), chunkData);
+        recursiveWrite(new DhSectionPos(chunkPos.detailLevel, chunkPos.x, chunkPos.z), chunkData);
     }
     private void recursiveWrite(DhSectionPos sectionPos, ChunkSizedData chunkData) {
         DataMetaFile metaFile = files.get(sectionPos);
@@ -240,7 +240,7 @@ public class DataFileHandler implements IDataSourceProvider {
             metaFile.addToWriteQueue(chunkData);
         }
         if (sectionPos.sectionDetail <= topDetailLevel.get()) {
-            recursiveWrite(sectionPos.getParent(), chunkData);
+            recursiveWrite(sectionPos.getParentPos(), chunkData);
         }
     }
 
