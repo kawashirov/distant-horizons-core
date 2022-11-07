@@ -32,4 +32,24 @@ public class BitShiftUtil
 	 */
 	public static int half(int value) { return value >> 1; }
 	
+	/**
+	 * Equivalent to: <br>
+	 * value << 1, <br>
+	 * value^2, <br>
+	 * Math.pow(value, 2) <br><br>
+	 * 
+	 * Note: Math.pow() isn't identical for large values where bits would be lost in the shift, however for medium to small values they function the same.
+	 */
+	public static int square(int value) { return value << 1; }
+	
+	/**
+	 * Equivalent to: <br>
+	 * value << power, <br>
+	 * value^power, <br>
+	 * Math.pow(value, power) <br><br>
+	 * 
+	 * Note: Math.pow() isn't identical for large values where bits would be lost in the shift, however for medium to small values they function the same.
+	 */
+	public static int pow(int value, int power) { return value << power; }
+	
 }

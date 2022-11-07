@@ -92,7 +92,7 @@ public class DhSectionPos
 				this.sectionZ * 2 + BitShiftUtil.half(child0to3 & 2));
 	}
 	/** Returns this position's child index in its parent */
-	public int getChildIndexOfParent() { return (this.sectionX & 1) + ((this.sectionZ & 1) << 1); }
+	public int getChildIndexOfParent() { return (this.sectionX & 1) + BitShiftUtil.square(this.sectionZ & 1); }
 	
 	/** Applies the given consumer to all 4 of this position's children. */
 	public void forEachChild(Consumer<DhSectionPos> callback)
