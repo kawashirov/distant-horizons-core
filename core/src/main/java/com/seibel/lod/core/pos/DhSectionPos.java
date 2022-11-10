@@ -8,13 +8,29 @@ import com.seibel.lod.core.util.MathUtil;
 import java.util.function.Consumer;
 
 /**
- * The position object used to define LOD objects in the quad trees.
- *
+ * The position object used to define LOD objects in the quad trees. <br>
+ * 
+ * A section contains 64 x 64 LOD columns at a given quality.
+ * The Section detail level is different from the LOD detail level.
+ * For the specifics of how they compare can be viewed in the constants {@link #SECTION_BLOCK_DETAIL_LEVEL},
+ * {@link #SECTION_CHUNK_DETAIL_LEVEL}, and {@link #SECTION_REGION_DETAIL_LEVEL}).
+ * 
  * @author Leetom
  * @version 2022-11-6
  */
 public class DhSectionPos
 {
+	/** 
+	 * The lowest detail level a Section position can hold.
+	 * This section DetailLevel holds 64 x 64 Block level (detail level 0) LODs. 
+	 */
+	public final static byte SECTION_MINIMUM_DETAIL_LEVEL = 6;
+	
+	public final static byte SECTION_BLOCK_DETAIL_LEVEL = SECTION_MINIMUM_DETAIL_LEVEL + LodUtil.BLOCK_DETAIL_LEVEL;
+	public final static byte SECTION_CHUNK_DETAIL_LEVEL = SECTION_MINIMUM_DETAIL_LEVEL + LodUtil.CHUNK_DETAIL_LEVEL;
+	public final static byte SECTION_REGION_DETAIL_LEVEL = SECTION_MINIMUM_DETAIL_LEVEL + LodUtil.REGION_DETAIL_LEVEL;
+	
+	
 	public final byte sectionDetail;
 	
 	/** in sectionDetail level grid */
@@ -29,6 +45,26 @@ public class DhSectionPos
 		this.sectionDetail = sectionDetail;
 		this.sectionX = sectionX;
 		this.sectionZ = sectionZ;
+	}
+	
+	public DhSectionPos(DhBlockPos blockPos)
+	{
+		DhLodPos lodPos = new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPos.x, blockPos.z);
+		lodPos = lodPos.convertUpwardsTo(SECTION_BLOCK_DETAIL_LEVEL);
+		
+		this.sectionDetail = SECTION_BLOCK_DETAIL_LEVEL;
+		this.sectionX = lodPos.x;
+		this.sectionZ = lodPos.z;
+	}
+	
+	public DhSectionPos(DhChunkPos chunkPos)
+	{
+		DhLodPos lodPos = new DhLodPos(LodUtil.CHUNK_DETAIL_LEVEL, chunkPos.x, chunkPos.z);
+		lodPos = lodPos.convertUpwardsTo(SECTION_CHUNK_DETAIL_LEVEL);
+		
+		this.sectionDetail = SECTION_CHUNK_DETAIL_LEVEL;
+		this.sectionX = lodPos.x;
+		this.sectionZ = lodPos.z;
 	}
 	
 	
