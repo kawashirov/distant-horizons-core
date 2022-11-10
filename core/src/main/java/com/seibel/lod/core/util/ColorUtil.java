@@ -23,7 +23,7 @@ package com.seibel.lod.core.util;
  * 
  * @author Cola
  * @author Leonardo Amato
- * @version 11-13-2021
+ * @version 2022-11-7
  */
 public class ColorUtil
 {
@@ -49,43 +49,24 @@ public class ColorUtil
 	public static final int BROWN = rgbToInt(128,64,0);
 	public static final int PURPLE = rgbToInt(128,0,128);
 	
-	public static int rgbToInt(int red, int green, int blue)
-	{
-		return (0xFF << 24) | (red << 16) | (green << 8) | blue;
-	}
 	
-	public static int rgbToInt(int alpha, int red, int green, int blue)
-	{
-		return (alpha << 24) | (red << 16) | (green << 8) | blue;
-	}
-	public static int rgbToInt(float alpha, float red, float green, float blue)
-	{
-		return rgbToInt((int)(alpha*255f), (int)(red*255f), (int)(green*255f), (int)(blue*255f));
-	}
+	
+	public static int rgbToInt(int red, int green, int blue) { return (0xFF << 24) | (red << 16) | (green << 8) | blue; }
+	public static int rgbToInt(int alpha, int red, int green, int blue) { return (alpha << 24) | (red << 16) | (green << 8) | blue; }
+	public static int rgbToInt(float alpha, float red, float green, float blue) { return rgbToInt((int)(alpha*255f), (int)(red*255f), (int)(green*255f), (int)(blue*255f)); }
+	
+	
 	
 	/** Returns a value between 0 and 255 */
-	public static int getAlpha(int color)
-	{
-		return (color >>> 24) & 0xFF;
-	}
-	
+	public static int getAlpha(int color) { return (color >>> 24) & 0xFF; }
 	/** Returns a value between 0 and 255 */
-	public static int getRed(int color)
-	{
-		return (color >> 16) & 0xFF;
-	}
-	
+	public static int getRed(int color) { return (color >> 16) & 0xFF; }
 	/** Returns a value between 0 and 255 */
-	public static int getGreen(int color)
-	{
-		return (color >> 8) & 0xFF;
-	}
-	
+	public static int getGreen(int color) { return (color >> 8) & 0xFF; }
 	/** Returns a value between 0 and 255 */
-	public static int getBlue(int color)
-	{
-		return color & 0xFF;
-	}
+	public static int getBlue(int color) { return color & 0xFF; }
+	
+	
 	
 	public static int applyShade(int color, int shade)
 	{
@@ -103,6 +84,8 @@ public class ColorUtil
 			return (getAlpha(color) << 24) | ((int) Math.min(getRed(color) * shade, 255) << 16) | ((int) Math.min(getGreen(color) * shade, 255) << 8) | (int) Math.min(getBlue(color) * shade, 255);
 	}
 	
+	
+	
 	/** Multiply ARGB with RGB colors */
 	public static int multiplyARGBwithRGB(int argb, int rgb)
 	{
@@ -115,9 +98,11 @@ public class ColorUtil
 	{
 		return ((getAlpha(color1) * getAlpha(color2) / 255) << 24) | ((getRed(color1) * getRed(color2) / 255) << 16) | ((getGreen(color1) * getGreen(color2) / 255) << 8) | (getBlue(color1) * getBlue(color2) / 255);
 	}
-
-	// Below 2 functions are from: https://stackoverflow.com/questions/13806483/increase-or-decrease-color-saturation
-	// Alpha in [0.0,1.0], hue in [0.0,360.0], Sat in [0.0,1.0], Value in [0.0,1.0]
+	
+	/**
+	 * Below 2 functions are from: https://stackoverflow.com/questions/13806483/increase-or-decrease-color-saturation
+	 * Alpha in [0.0,1.0], hue in [0.0,360.0], Sat in [0.0,1.0], Value in [0.0,1.0]
+	 */
 	public static float[] argbToAhsv(int color) {
 		float a = getAlpha(color) / 255f;
 		float r = getRed(color) / 255f;
@@ -147,7 +132,7 @@ public class ColorUtil
 		}
 		return new float[]{a,h,s,v};
 	}
-	// Alpha in [0.0,1.0], hue in [0.0,360.0], Sat in [0.0,1.0], Value in [0.0,1.0]
+	/** Alpha in [0.0,1.0], hue in [0.0,360.0], Sat in [0.0,1.0], Value in [0.0,1.0] */
 	public static int ahsvToArgb(float a, float h, float s, float v) {
 		if (a > 1.f) a = 1.f;
 		if (h > 360.f) h -= 350.f;
