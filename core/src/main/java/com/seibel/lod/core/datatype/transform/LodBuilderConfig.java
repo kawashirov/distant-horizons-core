@@ -46,7 +46,6 @@ public class LodBuilderConfig
 	 * useHeightmap = false <br>
 	 * useBiomeColors = false <br>
 	 * useSolidBlocksInColorGen = true <br>
-	 * generationMode = Server <br>
 	 */
 	public LodBuilderConfig(EDistanceGenerationMode newDistanceGenerationMode)
 	{
