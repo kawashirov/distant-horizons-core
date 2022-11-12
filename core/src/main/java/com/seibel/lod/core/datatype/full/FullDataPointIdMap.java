@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /** 
  * WARNING: This is not THREAD-SAFE! 
  * <p>
- * Used to map a numerical ID to a Biome/BlockState pair.
+ * Used to map a numerical IDs to a Biome/BlockState pair.
  * 
  * @author Leetom
  * @version 2022-10-2
@@ -25,19 +25,19 @@ public class FullDataPointIdMap
 	
 	
 	
-	public IBiomeWrapper getBiomeWrapper(int id) { return entries.get(id).biome; }
-	public IBlockStateWrapper getBlockStateWrapper(int id) { return entries.get(id).blockState; }
+	public IBiomeWrapper getBiomeWrapper(int id) { return this.entries.get(id).biome; }
+	public IBlockStateWrapper getBlockStateWrapper(int id) { return this.entries.get(id).blockState; }
 	
 	/** 
 	 * If an entry with the given values already exists nothing will 
 	 * be added but the existing item's ID will still be returned.
 	 */
-	public int addIfNotPresentAndGetId(IBiomeWrapper biome, IBlockStateWrapper blockState) { return addIfNotPresentAndGetId(new Entry(biome, blockState)); }
+	public int addIfNotPresentAndGetId(IBiomeWrapper biome, IBlockStateWrapper blockState) { return this.addIfNotPresentAndGetId(new Entry(biome, blockState)); }
 	private int addIfNotPresentAndGetId(Entry biomeBlockStateEntry)
 	{
-		return idMap.computeIfAbsent(biomeBlockStateEntry, (entry) -> {
-			int id = entries.size();
-			entries.add(entry);
+		return this.idMap.computeIfAbsent(biomeBlockStateEntry, (entry) -> {
+			int id = this.entries.size();
+			this.entries.add(entry);
 			return id;
 		});
 	}
@@ -54,7 +54,7 @@ public class FullDataPointIdMap
 		int[] remappedEntryIds = new int[entriesToMerge.size()];
 		for (int i = 0; i < entriesToMerge.size(); i++)
 		{
-			remappedEntryIds[i] = addIfNotPresentAndGetId(entriesToMerge.get(i));
+			remappedEntryIds[i] = this.addIfNotPresentAndGetId(entriesToMerge.get(i));
 		}
 		return remappedEntryIds;
 	}
@@ -63,8 +63,8 @@ public class FullDataPointIdMap
 	void serialize(OutputStream outputStream) throws IOException
 	{
 		DataOutputStream dataStream = new DataOutputStream(outputStream); // DO NOT CLOSE! It would close all related streams
-		dataStream.writeInt(entries.size());
-		for (Entry entry : entries)
+		dataStream.writeInt(this.entries.size());
+		for (Entry entry : this.entries)
 		{
 			dataStream.writeUTF(entry.serialize());
 		}
@@ -119,7 +119,7 @@ public class FullDataPointIdMap
 		
 		
 		@Override
-		public int hashCode() { return Objects.hash(biome, blockState); }
+		public int hashCode() { return Objects.hash(this.biome, this.blockState); }
 		
 		@Override
 		public boolean equals(Object other)
@@ -130,11 +130,11 @@ public class FullDataPointIdMap
 			if (!(other instanceof Entry))
 				return false;
 			
-			return ((Entry) other).biome.equals(biome) && ((Entry) other).blockState.equals(blockState);
+			return ((Entry) other).biome.equals(this.biome) && ((Entry) other).blockState.equals(this.blockState);
 		}
 		
 		
-		public String serialize() { return biome.serialize() + " " + blockState.serialize(); }
+		public String serialize() { return this.biome.serialize() + " " + this.blockState.serialize(); }
 		
 		public static Entry deserialize(String str) throws IOException
 		{

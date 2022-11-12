@@ -112,8 +112,8 @@ public class DhLodPos implements Comparable<DhLodPos>
 			throw new IllegalArgumentException("add called with width.detailLevel < pos detail");
 		
 		return new DhLodPos(this.detailLevel, 
-				x + width.createFromDetailLevel(this.detailLevel).numberOfLodSectionsWide, 
-				z + width.createFromDetailLevel(this.detailLevel).numberOfLodSectionsWide);
+				this.x + width.createFromDetailLevel(this.detailLevel).numberOfLodSectionsWide,
+				this.z + width.createFromDetailLevel(this.detailLevel).numberOfLodSectionsWide);
 	}
 	
 	/** Equivalent to adding a DhLodUnit with the same detail level as this DhLodPos */
@@ -140,7 +140,7 @@ public class DhLodPos implements Comparable<DhLodPos>
 	}
 	
     @Override
-	public int hashCode() { return Objects.hash(detailLevel, x, z); }
+	public int hashCode() { return Objects.hash(this.detailLevel, this.x, this.z); }
 	
     @Override
     public int compareTo(@NotNull DhLodPos obj) 

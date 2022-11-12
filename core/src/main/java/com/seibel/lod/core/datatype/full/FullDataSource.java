@@ -38,9 +38,9 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 	
 	
     @Override
-    public DhSectionPos getSectionPos() {  return sectionPos; }
+    public DhSectionPos getSectionPos() {  return this.sectionPos; }
     @Override
-    public byte getDataDetail() { return (byte) (sectionPos.sectionDetail-SECTION_SIZE_OFFSET); }
+    public byte getDataDetail() { return (byte) (this.sectionPos.sectionDetail-SECTION_SIZE_OFFSET); }
 
     @Override
     public byte getDataVersion() { return LATEST_VERSION; }
@@ -48,13 +48,13 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 	@Override
 	public void update(ChunkSizedData data)
 	{
-		LodUtil.assertTrue(sectionPos.getSectionBBoxPos().overlaps(data.getBBoxLodPos()));
-		if (data.dataDetail == 0 && getDataDetail() == 0)
+		LodUtil.assertTrue(this.sectionPos.getSectionBBoxPos().overlaps(data.getBBoxLodPos()));
+		if (data.dataDetail == 0 && this.getDataDetail() == 0)
 		{
 			DhBlockPos2D chunkBlockPos = new DhBlockPos2D(data.x * 16, data.z * 16);
-			DhBlockPos2D blockOffset = chunkBlockPos.subtract(sectionPos.getCorner().getCorner());
+			DhBlockPos2D blockOffset = chunkBlockPos.subtract(this.sectionPos.getCorner().getCorner());
 			LodUtil.assertTrue(blockOffset.x >= 0 && blockOffset.x < SECTION_SIZE && blockOffset.z >= 0 && blockOffset.z < SECTION_SIZE);
-			isEmpty = false;
+			this.isEmpty = false;
 			data.shadowCopyTo(this.subView(16, blockOffset.x, blockOffset.z));
 			{ // DEBUG ASSERTION
 				for (int x = 0; x < 16; x++)
@@ -67,16 +67,16 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 				}
 			}
 		}
-		else if (data.dataDetail == 0 && getDataDetail() < 4)
+		else if (data.dataDetail == 0 && this.getDataDetail() < 4)
 		{
-			int dataPerFull = 1 << getDataDetail();
+			int dataPerFull = 1 << this.getDataDetail();
 			int fullSize = 16 / dataPerFull;
-			DhLodPos dataOffset = data.getBBoxLodPos().getCorner(getDataDetail());
-			DhLodPos baseOffset = sectionPos.getCorner(getDataDetail());
+			DhLodPos dataOffset = data.getBBoxLodPos().getCorner(this.getDataDetail());
+			DhLodPos baseOffset = this.sectionPos.getCorner(this.getDataDetail());
 			int offsetX = dataOffset.x - baseOffset.x;
 			int offsetZ = dataOffset.z - baseOffset.z;
 			LodUtil.assertTrue(offsetX >= 0 && offsetX < SECTION_SIZE && offsetZ >= 0 && offsetZ < SECTION_SIZE);
-			isEmpty = false;
+			this.isEmpty = false;
 			for (int ox = 0; ox < fullSize; ox++)
 			{
 				for (int oz = 0; oz < fullSize; oz++)
@@ -86,19 +86,19 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 				}
 			}
 		}
-		else if (data.dataDetail == 0 && getDataDetail() >= 4)
+		else if (data.dataDetail == 0 && this.getDataDetail() >= 4)
 		{
 			//FIXME: TEMPORARY
-			int chunkPerFull = 1 << (getDataDetail() - 4);
+			int chunkPerFull = 1 << (this.getDataDetail() - 4);
 			if (data.x % chunkPerFull != 0 || data.z % chunkPerFull != 0)
 				return;
-			DhLodPos baseOffset = sectionPos.getCorner(getDataDetail());
-			DhLodPos dataOffset = data.getBBoxLodPos().convertUpwardsTo(getDataDetail());
+			DhLodPos baseOffset = this.sectionPos.getCorner(this.getDataDetail());
+			DhLodPos dataOffset = data.getBBoxLodPos().convertUpwardsTo(this.getDataDetail());
 			int offsetX = dataOffset.x - baseOffset.x;
 			int offsetZ = dataOffset.z - baseOffset.z;
 			LodUtil.assertTrue(offsetX >= 0 && offsetX < SECTION_SIZE && offsetZ >= 0 && offsetZ < SECTION_SIZE);
-			isEmpty = false;
-			data.get(0, 0).deepCopyTo(get(offsetX, offsetZ));
+			this.isEmpty = false;
+			data.get(0, 0).deepCopyTo(this.get(offsetX, offsetZ));
 		}
 		else
 		{
@@ -109,38 +109,38 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 	}
 
     @Override
-    public boolean isEmpty() { return isEmpty; }
-    public void markNotEmpty() { isEmpty = false; }
+    public boolean isEmpty() { return this.isEmpty; }
+    public void markNotEmpty() { this.isEmpty = false; }
 	
 	@Override
 	public void saveData(IDhLevel level, DataMetaFile file, OutputStream dataStream) throws IOException
 	{
 		DataOutputStream dos = new DataOutputStream(dataStream); // DO NOT CLOSE
 		{
-			dos.writeInt(getDataDetail());
-			dos.writeInt(size);
+			dos.writeInt(this.getDataDetail());
+			dos.writeInt(this.size);
 			dos.writeInt(level.getMinY());
-			if (isEmpty)
+			if (this.isEmpty)
 			{
 				dos.writeInt(0x00000001);
 				return;
 			}
 			dos.writeInt(0xFFFFFFFF);
 			// Data array length
-			for (int x = 0; x < size; x++)
+			for (int x = 0; x < this.size; x++)
 			{
-				for (int z = 0; z < size; z++)
+				for (int z = 0; z < this.size; z++)
 				{
-					dos.writeByte(get(x, z).getSingleLength());
+					dos.writeByte(this.get(x, z).getSingleLength());
 				}
 			}
 			// Data array content (only on non-empty columns)
 			dos.writeInt(0xFFFFFFFF);
-			for (int x = 0; x < size; x++)
+			for (int x = 0; x < this.size; x++)
 			{
-				for (int z = 0; z < size; z++)
+				for (int z = 0; z < this.size; z++)
 				{
-					SingleFullArrayView column = get(x, z);
+					SingleFullArrayView column = this.get(x, z);
 					if (!column.doesItExist())
 						continue;
 					long[] raw = column.getRaw();
@@ -152,7 +152,7 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 			}
 			// Id mapping
 			dos.writeInt(0xFFFFFFFF);
-			mapping.serialize(dos);
+			this.mapping.serialize(dos);
 			dos.writeInt(0xFFFFFFFF);
 		}
 	}
@@ -220,7 +220,7 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 		super(mapping, data, SECTION_SIZE);
 		LodUtil.assertTrue(data.length == SECTION_SIZE * SECTION_SIZE);
 		this.sectionPos = pos;
-		isEmpty = false;
+		this.isEmpty = false;
 	}
 
     public static FullDataSource createEmpty(DhSectionPos pos) { return new FullDataSource(pos); }
@@ -239,14 +239,14 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 	
 	public void writeFromLower(FullDataSource subData)
 	{
-		LodUtil.assertTrue(sectionPos.overlaps(subData.sectionPos));
-		LodUtil.assertTrue(subData.sectionPos.sectionDetail < sectionPos.sectionDetail);
-		if (!neededForPosition(sectionPos, subData.sectionPos))
+		LodUtil.assertTrue(this.sectionPos.overlaps(subData.sectionPos));
+		LodUtil.assertTrue(subData.sectionPos.sectionDetail < this.sectionPos.sectionDetail);
+		if (!neededForPosition(this.sectionPos, subData.sectionPos))
 			return;
 		DhSectionPos lowerSectPos = subData.sectionPos;
-		byte detailDiff = (byte) (sectionPos.sectionDetail - subData.sectionPos.sectionDetail);
-		byte targetDataDetail = getDataDetail();
-		DhLodPos minDataPos = sectionPos.getCorner(targetDataDetail);
+		byte detailDiff = (byte) (this.sectionPos.sectionDetail - subData.sectionPos.sectionDetail);
+		byte targetDataDetail = this.getDataDetail();
+		DhLodPos minDataPos = this.sectionPos.getCorner(targetDataDetail);
 		if (detailDiff <= SECTION_SIZE_OFFSET)
 		{
 			int count = 1 << detailDiff;

@@ -213,7 +213,10 @@ public class DataFileHandler implements IDataSourceProvider {
     }
 
 
-    /*
+    /**
+	 * Returns the 64 x 64 data source for the given section position. <Br>
+	 * If the section hasn't been generated this will also send a generation call, which may take a while. <Br> <Br>
+	 * 
     * This call is concurrent. I.e. it supports multiple threads calling this method at the same time.
      */
     @Override
