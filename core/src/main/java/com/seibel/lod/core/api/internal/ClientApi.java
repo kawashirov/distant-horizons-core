@@ -83,29 +83,6 @@ public class ClientApi
 	
 	
 	
-	
-	public static class LagSpikeCatcher
-	{
-		long timer = System.nanoTime();
-		
-		public LagSpikeCatcher()
-		{
-		}
-		
-		public void end(String source)
-		{
-			if (!ENABLE_LAG_SPIKE_LOGGING)
-				return;
-			timer = System.nanoTime() - timer;
-			if (timer > LAG_SPIKE_THRESHOLD_NS)
-			{
-				LOGGER.info("LagSpikeCatcher: " + source + " took " + Duration.ofNanos(timer) + "!");
-			}
-		}
-	}
-	
-	
-	
 	//==============//
 	// constructors //
 	//==============//
