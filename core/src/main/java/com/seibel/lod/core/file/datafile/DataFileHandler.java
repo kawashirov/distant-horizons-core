@@ -211,25 +211,25 @@ public class DataFileHandler implements IDataSourceProvider {
             }
         }
     }
-
-
-    /**
+	
+	
+	/**
 	 * Returns the 64 x 64 data source for the given section position. <Br>
-	 * If the section hasn't been generated this will also send a generation call, which may take a while. <Br> <Br>
+	 * If the section hasn't been generated this will also send a generation call, which may take a while. <Br>
+	 * The returned data source may be null. <Br> <Br>
 	 * 
-    * This call is concurrent. I.e. it supports multiple threads calling this method at the same time.
-     */
-    @Override
-    public CompletableFuture<ILodDataSource> read(DhSectionPos pos) {
-        topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetail));
-        DataMetaFile metaFile = atomicGetOrMakeFile(pos);
+	 * This call is concurrent. I.e. it supports being called by multiple threads at the same time.
+	 */
+	@Override
+    public CompletableFuture<ILodDataSource> read(DhSectionPos pos)
+	{
+		this.topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetail));
+        DataMetaFile metaFile = this.atomicGetOrMakeFile(pos);
         if (metaFile == null) return CompletableFuture.completedFuture(null);
         return metaFile.loadOrGetCached();
     }
 
-    /*
-    * This call is concurrent. I.e. it supports multiple threads calling this method at the same time.
-     */
+    /** This call is concurrent. I.e. it supports being called by multiple threads at the same time. */
     @Override
     public void write(DhSectionPos sectionPos, ChunkSizedData chunkData) {
         DhLodPos chunkPos = new DhLodPos((byte) (chunkData.dataDetail+4), chunkData.x, chunkData.z);
@@ -247,9 +247,7 @@ public class DataFileHandler implements IDataSourceProvider {
         }
     }
 
-    /*
-     * This call is concurrent. I.e. it supports multiple threads calling this method at the same time.
-     */
+    /** This call is concurrent. I.e. it supports multiple threads calling this method at the same time. */
     @Override
     public CompletableFuture<Void> flushAndSave() {
         ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();

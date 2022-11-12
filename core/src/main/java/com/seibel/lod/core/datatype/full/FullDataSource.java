@@ -15,9 +15,11 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 
+/**
+ * 1 chunk
+ */
 public class FullDataSource extends FullArrayView implements ILodDataSource
-{ // 1 chunk
-	
+{
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     public static final byte SECTION_SIZE_OFFSET = 6;
     public static final int SECTION_SIZE = 1 << SECTION_SIZE_OFFSET;
@@ -35,6 +37,14 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
         this.sectionPos = sectionPos;
     }
 	
+	FullDataSource(DhSectionPos pos, FullDataPointIdMap mapping, long[][] data)
+	{
+		super(mapping, data, SECTION_SIZE);
+		LodUtil.assertTrue(data.length == SECTION_SIZE * SECTION_SIZE);
+		this.sectionPos = pos;
+		this.isEmpty = false;
+	}
+	
 	
 	
     @Override
@@ -44,6 +54,9 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 
     @Override
     public byte getDataVersion() { return LATEST_VERSION; }
+	
+	@Override
+	public SingleFullArrayView tryGet(int x, int z) { return this.get(x, z); }
 	
 	@Override
 	public void update(ChunkSizedData data)
@@ -215,14 +228,6 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 		}
 	}
 	
-	FullDataSource(DhSectionPos pos, FullDataPointIdMap mapping, long[][] data)
-	{
-		super(mapping, data, SECTION_SIZE);
-		LodUtil.assertTrue(data.length == SECTION_SIZE * SECTION_SIZE);
-		this.sectionPos = pos;
-		this.isEmpty = false;
-	}
-
     public static FullDataSource createEmpty(DhSectionPos pos) { return new FullDataSource(pos); }
 	
 	public static boolean neededForPosition(DhSectionPos posToWrite, DhSectionPos posToTest)
@@ -275,5 +280,5 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 			subData.get(0, 0).deepCopyTo(get(dataOffsetX, dataOffsetZ));
 		}
 	}
-
+	
 }

@@ -15,7 +15,7 @@ public interface IFullDataView
 	
 	int width();
 	
-	/** Returns an iterator that  */
+	/** Returns an iterator that goes over each data column */
 	default Iterator<SingleFullArrayView> iterator()
 	{
 		return new Iterator<SingleFullArrayView>()
@@ -24,16 +24,13 @@ public interface IFullDataView
 			private final int size = width() * width();
 			
 			@Override
-			public boolean hasNext()
-			{
-				return index < size;
-			}
+			public boolean hasNext() { return this.index < this.size; }
 			
 			@Override
 			public SingleFullArrayView next()
 			{
-				LodUtil.assertTrue(hasNext(), "No more data to iterate!");
-				return get(index++);
+				LodUtil.assertTrue(this.hasNext(), "No more data to iterate!");
+				return get(this.index++);
 			}
 		};
 	}

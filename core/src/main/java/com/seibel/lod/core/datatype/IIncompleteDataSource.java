@@ -8,7 +8,4 @@ public interface IIncompleteDataSource extends ILodDataSource
 	
 	ILodDataSource trySelfPromote();
 	
-	/** @return null if the data doesn't exist */
-	SingleFullArrayView tryGet(int x, int z);
-	
 }

@@ -72,7 +72,10 @@ public class SparseDataSource implements IIncompleteDataSource
 
     @Override
     public byte getDataVersion() { return LATEST_VERSION; }
-
+	
+	@Override
+	public FullDataPointIdMap getMapping() { return this.mapping; }
+	
     private int calculateOffset(int cx, int cz)
 	{
         int ox = cx - this.chunkPos.x;
@@ -384,8 +387,7 @@ public class SparseDataSource implements IIncompleteDataSource
 		this.applyToFullDataSource(newSource);
         return newSource;
     }
-
-    // Return null if doesn't exist
+	
     public SingleFullArrayView tryGet(int x, int z)
 	{
         LodUtil.assertTrue(x>=0 && x<SECTION_SIZE && z>=0 && z<SECTION_SIZE);

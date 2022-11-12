@@ -27,8 +27,11 @@ public class FullArrayView implements IFullDataView
 	public FullArrayView(FullArrayView source, int size, int offsetX, int offsetZ)
 	{
 		if (source.size < size || source.size < size + offsetX || source.size < size + offsetZ)
+		{
 			throw new IllegalArgumentException(
 					"tried constructing dataArrayView subview with invalid input!");
+		}
+		
 		this.dataArrays = source.dataArrays;
 		this.size = size;
 		this.dataSize = source.dataSize;
