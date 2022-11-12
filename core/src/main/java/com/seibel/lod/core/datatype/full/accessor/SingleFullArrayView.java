@@ -16,10 +16,10 @@ public class SingleFullArrayView implements IFullDataView
 		this.mapping = mapping;
 	}
 	
-	public boolean doesItExist() { return dataArrays[offset].length != 0; }
+	public boolean doesItExist() { return this.dataArrays[this.offset].length != 0; }
 	
 	@Override
-	public FullDataPointIdMap getMapping() { return mapping; }
+	public FullDataPointIdMap getMapping() { return this.mapping; }
 	
 	@Override
 	public SingleFullArrayView get(int index)
@@ -39,14 +39,15 @@ public class SingleFullArrayView implements IFullDataView
 		return this;
 	}
 	
-	public long[] getRaw() { return dataArrays[offset]; }
+	public long[] getRaw() { return this.dataArrays[this.offset]; }
 	
-	public long getSingle(int yIndex) { return dataArrays[offset][yIndex]; }
-	public void setSingle(int yIndex, long value) { dataArrays[offset][yIndex] = value; }
+	public long getSingle(int yIndex) { return this.dataArrays[this.offset][yIndex]; }
+	public void setSingle(int yIndex, long value) { this.dataArrays[this.offset][yIndex] = value; }
 	
-	public void setNew(long[] newArray) { dataArrays[offset] = newArray; }
+	public void setNew(long[] newArray) { this.dataArrays[this.offset] = newArray; }
 	
-	public int getSingleLength() { return dataArrays[offset].length; }
+	/** @return how many data points are in this column */
+	public int getSingleLength() { return this.dataArrays[this.offset].length; }
 	
 	@Override
 	public int width() { return 1; }
@@ -62,14 +63,14 @@ public class SingleFullArrayView implements IFullDataView
 	/** WARNING: It may potentially share the underlying array object! */
 	public void shadowCopyTo(SingleFullArrayView target)
 	{
-		if (target.mapping.equals(mapping))
+		if (target.mapping.equals(this.mapping))
 		{
-			target.dataArrays[target.offset] = dataArrays[offset];
+			target.dataArrays[target.offset] = this.dataArrays[this.offset];
 		}
 		else
 		{
-			int[] remappedEntryIds = target.mapping.mergeAndReturnRemappedEntityIds(mapping);
-			long[] sourceData = dataArrays[offset];
+			int[] remappedEntryIds = target.mapping.mergeAndReturnRemappedEntityIds(this.mapping);
+			long[] sourceData = this.dataArrays[this.offset];
 			long[] newData = new long[sourceData.length];
 			for (int i = 0; i < newData.length; i++)
 			{
@@ -81,14 +82,14 @@ public class SingleFullArrayView implements IFullDataView
 	
 	public void deepCopyTo(SingleFullArrayView target)
 	{
-		if (target.mapping.equals(mapping))
+		if (target.mapping.equals(this.mapping))
 		{
-			target.dataArrays[target.offset] = dataArrays[offset].clone();
+			target.dataArrays[target.offset] = this.dataArrays[this.offset].clone();
 		}
 		else
 		{
-			int[] remappedEntryIds = target.mapping.mergeAndReturnRemappedEntityIds(mapping);
-			long[] sourceData = dataArrays[offset];
+			int[] remappedEntryIds = target.mapping.mergeAndReturnRemappedEntityIds(this.mapping);
+			long[] sourceData = this.dataArrays[this.offset];
 			long[] newData = new long[sourceData.length];
 			for (int i = 0; i < newData.length; i++)
 			{
