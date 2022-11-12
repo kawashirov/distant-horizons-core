@@ -1,6 +1,7 @@
 package com.seibel.lod.core;
 
 import com.seibel.lod.core.api.external.methods.config.DhApiConfig;
+import com.seibel.lod.core.api.external.methods.data.DhApiTerrainDataRepo;
 import com.seibel.lod.core.datatype.column.ColumnRenderLoader;
 import com.seibel.lod.core.datatype.full.FullDataLoader;
 import com.seibel.lod.core.datatype.full.SparseDataLoader;
@@ -11,7 +12,7 @@ import com.seibel.lod.core.datatype.full.SpottyDataLoader;
  * Handles first time Core setup.
  * 
  * @author Leetom
- * @version 2022-9-15
+ * @version 2022-11-12
  */
 public class Initializer
 {
@@ -24,6 +25,7 @@ public class Initializer
 		
 		// link Core's config to the API
 		DhApiMain.configs = DhApiConfig.INSTANCE;
+		DhApiMain.terrainRepo = DhApiTerrainDataRepo.INSTANCE;
 		
     }
 }

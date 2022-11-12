@@ -1,1 +1,0 @@
-The data api package holds objects and methods for getting/setting data stored by Distant Horizons.

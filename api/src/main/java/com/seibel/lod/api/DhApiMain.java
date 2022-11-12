@@ -3,7 +3,6 @@ package com.seibel.lod.api;
 import com.seibel.lod.api.interfaces.config.IDhApiConfig;
 import com.seibel.lod.api.interfaces.override.IDhApiOverrideable;
 import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGeneratorOverrideRegister;
-import com.seibel.lod.api.methods.data.DhApiTerrainDataRepo;
 import com.seibel.lod.api.methods.override.DhApiWorldGeneratorOverrideRegister;
 import com.seibel.lod.core.DependencyInjection.DhApiEventInjector;
 import com.seibel.lod.core.DependencyInjection.OverrideInjector;
@@ -25,7 +24,7 @@ import com.seibel.lod.core.interfaces.dependencyInjection.IOverrideInjector;
  * the concrete object we replaced, there would be issues.
  *
  * @author James Seibel
- * @version 2022-9-16
+ * @version 2022-11-12
  */
 public class DhApiMain
 {
@@ -36,29 +35,40 @@ public class DhApiMain
 	 *
 	 * Use a {@link com.seibel.lod.api.methods.events.abstractEvents.DhApiAfterDhInitEvent DhApiAfterDhInitEvent}
 	 * along with the {@link DhApiMain#events ApiCoreInjectors.events} to be notified when this can
-	 * be safely used.
+	 * be safely used. <br><br>
+	 * 
+	 * Used to interact with Distant Horizons' Configs.
 	 */
-	public static IDhApiConfig configs;
+	public static IDhApiConfig configs = null;
+	
+	/**
+	 * <strong>WARNING:</strong> will be null until after DH initializes for the first time. <br><br>
+	 *
+	 * Use a {@link com.seibel.lod.api.methods.events.abstractEvents.DhApiAfterDhInitEvent DhApiAfterDhInitEvent}
+	 * along with the {@link DhApiMain#events ApiCoreInjectors.events} to be notified when this can
+	 * be safely used. <br><br>
+	 *
+	 * Used to interact with Distant Horizons' terrain data.
+	 */
+	public static IDhApiTerrainDataRepo terrainRepo = null;
+	
 	
 	
 	// always available //
 	
-	/** Used to bind/unbind DH Api events. */
+	/** Used to bind/unbind Distant Horizons Api events. */
 	public static final IDhApiEventInjector events = DhApiEventInjector.INSTANCE;
 	
-	/** Used to bind/unbind DH Api events. */
+	/** Used to bind/unbind Distant Horizons Api events. */
 	public static final IDhApiWorldGeneratorOverrideRegister worldGenOverrides = DhApiWorldGeneratorOverrideRegister.INSTANCE;
 	
-	/** Used to bind overrides to change DH's core behavior. */
+	/** Used to bind overrides to change Distant Horizons' core behavior. */
 	public static final IOverrideInjector<IDhApiOverrideable> overrides = OverrideInjector.INSTANCE;
 	
-	/** Used to interact with DH's terrain data. */
-	public static final IDhApiTerrainDataRepo terrainRepo = DhApiTerrainDataRepo.INSTANCE;
 	
-	
-	/** This version should only be updated when breaking changes are introduced to the DH API. */
+	/** This version should only be updated when breaking changes are introduced to the Distant Horizons API. */
 	public static int getApiMajorVersion() { return ModInfo.API_MAJOR_VERSION; }
-	/** This version should be updated whenever new methods are added to the DH API. */
+	/** This version should be updated whenever new methods are added to the Distant Horizons API. */
 	public static int getApiMinorVersion() { return ModInfo.API_MINOR_VERSION; }
 	
 	/** Returns the mod's version number in the format: Major.Minor.Patch */

@@ -225,7 +225,8 @@ public class DataFileHandler implements IDataSourceProvider {
 	{
 		this.topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetail));
         DataMetaFile metaFile = this.atomicGetOrMakeFile(pos);
-        if (metaFile == null) return CompletableFuture.completedFuture(null);
+        if (metaFile == null) 
+			return CompletableFuture.completedFuture(null);
         return metaFile.loadOrGetCached();
     }
 
