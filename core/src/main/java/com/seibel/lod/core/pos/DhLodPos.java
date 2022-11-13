@@ -1,5 +1,6 @@
 package com.seibel.lod.core.pos;
 
+import com.seibel.lod.core.datatype.ILodDataSource;
 import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.LodUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +30,10 @@ public class DhLodPos implements Comparable<DhLodPos>
 	
 	
 	
+	//=========//
+	// getters //
+	//=========//
+	
     public DhLodUnit getX() { return new DhLodUnit(this.detailLevel, this.x); }
     public DhLodUnit getZ() { return new DhLodUnit(this.detailLevel, this.z); }
 	
@@ -55,14 +60,6 @@ public class DhLodPos implements Comparable<DhLodPos>
 				this.z * BitShiftUtil.powerOfTwo(this.detailLevel - newDetail));
 	}
 	
-	public DhLodPos convertUpwardsTo(byte newDetail)
-	{
-		LodUtil.assertTrue(newDetail >= this.detailLevel);
-		return new DhLodPos(newDetail, 
-				Math.floorDiv(this.x, BitShiftUtil.powerOfTwo(newDetail - this.detailLevel)), 
-				Math.floorDiv(this.z, BitShiftUtil.powerOfTwo(newDetail - this.detailLevel)));
-	}
-	
 	/**
 	 * Returns the DhLodPos 1 detail level lower <br><br>
 	 * 
@@ -87,6 +84,74 @@ public class DhLodPos implements Comparable<DhLodPos>
 	}
 	/** Returns this position's child index in its parent */
 	public int getChildIndexOfParent() { return (this.x & 1) + BitShiftUtil.square(this.z & 1); }
+	
+	/** 
+	 * Returns a DhLodPos with the given detail level and an X/Z position somewhere between (0,0) and (63,63).
+	 * This is done to access specific sections from a {@link ILodDataSource} where LOD columns are stored
+	 * in 64 x 64 blocks.
+	 * 
+	 * @throws IllegalArgumentException if this position's detail level is lower than the output detail level
+	 */
+	public DhLodPos getDhSectionRelativePositionForDetailLevel(byte outputDetailLevel) throws IllegalArgumentException
+	{
+		int xInput = this.x;
+		int zInput = this.z;
+		
+		byte detailLevelDifference = (byte) (outputDetailLevel - this.detailLevel);
+		if (outputDetailLevel < this.detailLevel)
+		{
+			throw new IllegalArgumentException("The output Detail Level [" + outputDetailLevel + "] is less than this " + DhLodPos.class.getSimpleName() + "'s detail level [" + this.detailLevel + "].");
+		}
+		
+		
+		
+		// negative values need to be offset by the detail level difference squared (in blocks)
+		// to skip over -0 (relative position) to -1 (relative position)
+		int blockOffset = BitShiftUtil.powerOfTwo(detailLevelDifference) - 1;
+		xInput += xInput < 0 ? -blockOffset : 0;
+		zInput += zInput < 0 ? -blockOffset : 0;
+		
+		// convert the input positions into the new detail level
+		int xRelativePos = xInput / BitShiftUtil.powerOfTwo(detailLevelDifference);
+		int zRelativePos = zInput / BitShiftUtil.powerOfTwo(detailLevelDifference);
+		
+		// convert the positions into section relative space (0-63)
+		xRelativePos = xInput >= 0 ? (xRelativePos % 64) : 64 + (xRelativePos % 64);
+		zRelativePos = zInput >= 0 ? (zRelativePos % 64) : 64 + (zRelativePos % 64);
+		
+		return new DhLodPos(outputDetailLevel, xRelativePos, zRelativePos);
+	}
+	
+	/** 
+	 * @param sectionDetailLevel This is different from the normal LOD Detail level, see {@link DhSectionPos} for more information
+	 * @throws IllegalArgumentException if this position's detail level is lower than the output detail level 
+	 */
+	public DhSectionPos getSectionPosWithSectionDetailLevel(byte sectionDetailLevel) throws IllegalArgumentException
+	{
+		if (sectionDetailLevel < this.detailLevel)
+		{
+			throw new IllegalArgumentException("The section Detail Level [" + sectionDetailLevel + "] is less than this " + DhLodPos.class.getSimpleName() + "'s detail level [" + this.detailLevel + "].");
+		}
+		
+		DhLodPos lodPos = new DhLodPos(this.detailLevel, this.x, this.z);
+		lodPos = lodPos.convertUpwardsTo(sectionDetailLevel);
+		return new DhSectionPos(lodPos.detailLevel, lodPos.x, lodPos.z);
+	}
+	
+	
+	
+	//=========//
+	// methods //
+	//=========//
+	
+	/** Only works for newDetailLevel's that are greater than or equal to this position's detailLevel */
+	public DhLodPos convertUpwardsTo(byte newDetailLevel)
+	{
+		LodUtil.assertTrue(newDetailLevel >= this.detailLevel);
+		return new DhLodPos(newDetailLevel,
+				Math.floorDiv(this.x, BitShiftUtil.powerOfTwo(newDetailLevel - this.detailLevel)),
+				Math.floorDiv(this.z, BitShiftUtil.powerOfTwo(newDetailLevel - this.detailLevel)));
+	}
 	
 	public boolean overlaps(DhLodPos other)
 	{
@@ -120,6 +185,10 @@ public class DhLodPos implements Comparable<DhLodPos>
 	public DhLodPos addOffset(int xOffset, int zOffset) { return new DhLodPos(this.detailLevel, this.x + xOffset, this.z + zOffset); }
 	
 	
+	
+	//===========//
+	// overrides //
+	//===========//
 	
 	@Override
 	public boolean equals(Object obj)

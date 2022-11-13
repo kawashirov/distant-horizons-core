@@ -14,7 +14,6 @@ import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhBlockPos;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
-import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.ColorUtil;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
@@ -44,7 +43,7 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 	private static final Logger LOGGER = LogManager.getLogger(DhApiTerrainDataRepo.class.getSimpleName());
 	
 	// debugging values
-	private static final Lock debugThreadLock = new ReentrantLock();
+	private static volatile boolean debugThreadRunning = false;
 	private static String currentDebugBiomeName = "";
 	private static int currentDebugBlockColorInt = -1;
 	
@@ -97,8 +96,10 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 	{
 		IMinecraftClientWrapper mcClientWrapper = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 		
-		if (debugThreadLock.tryLock())
+		if (!debugThreadRunning)
 		{
+			debugThreadRunning = true;
+			
 			// thread to prevent locking up the render thread
 			Thread thread = new Thread(() ->
 			{
@@ -107,28 +108,10 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 					IDhLevel level = SharedApi.currentWorld.getLevel(levelWrapper);
 					DhClientServerLevel serverLevel = (DhClientServerLevel) level;
 					
-					int xBlockPos = blockPos.x;
-					int zBlockPos = blockPos.z;
+					DhLodPos inputPos = new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPos.x, blockPos.z);
 					
-					byte inputDetailLevel = LodUtil.BLOCK_DETAIL_LEVEL;
-					byte outputDetailLevel = LodUtil.CHUNK_DETAIL_LEVEL;
-					byte detailLevelDifference = (byte) (outputDetailLevel - inputDetailLevel);
-					
-					DhLodPos lodPos = new DhLodPos(inputDetailLevel, xBlockPos, zBlockPos);
-					lodPos = lodPos.convertUpwardsTo((byte) (DhSectionPos.SECTION_BLOCK_DETAIL_LEVEL + detailLevelDifference));
-					DhSectionPos sectionPos = new DhSectionPos(lodPos.detailLevel, lodPos.x, lodPos.z);
-					
-					
-					// negative values need to be offset by the detail level difference
-					// in order to skip over -0 (relative position) to -1 (relative position)
-					int blockOffset = BitShiftUtil.powerOfTwo(detailLevelDifference) - 1;
-					xBlockPos += xBlockPos < 0 ? -blockOffset : 0;
-					zBlockPos += zBlockPos < 0 ? -blockOffset : 0;
-					
-					int xRelativePos = xBlockPos / BitShiftUtil.powerOfTwo(detailLevelDifference);
-					int zRelativePos = zBlockPos / BitShiftUtil.powerOfTwo(detailLevelDifference);
-					xRelativePos = xBlockPos >= 0 ? (xRelativePos % 64) : 64 + (xRelativePos % 64);
-					zRelativePos = zBlockPos >= 0 ? (zRelativePos % 64) : 64 + (zRelativePos % 64);
+					DhSectionPos sectionPos = inputPos.getSectionPosWithSectionDetailLevel(DhSectionPos.SECTION_BLOCK_DETAIL_LEVEL);
+					DhLodPos relativePos = inputPos.getDhSectionRelativePositionForDetailLevel(LodUtil.BLOCK_DETAIL_LEVEL);
 					
 					
 					// attempt to get the data source for this section
@@ -137,7 +120,7 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 					{
 						// attempt to get the LOD data from the data source
 						FullDataPointIdMap mapping = dataSource.getMapping();
-						SingleFullArrayView dataColumn = dataSource.tryGet(xRelativePos, zRelativePos);
+						SingleFullArrayView dataColumn = dataSource.tryGet(relativePos.x, relativePos.z);
 						if (dataColumn == null)
 						{
 							logBlockBiomeDebugInfoIfDifferent("", -1);
@@ -185,14 +168,14 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 				}
 				finally
 				{
-					debugThreadLock.unlock();
+					debugThreadRunning = false;
 				}
 			});
 			
 			thread.start();
 		}
 	}
-	/** only logs the data if it was different than the currently stored debug data */
+	/** only logs the data if it was different vs the currently stored debug data */
 	private static void logBlockBiomeDebugInfoIfDifferent(ILevelWrapper levelWrapper, DhBlockPos blockPos, long dataPoint, FullDataPointIdMap mapping)
 	{
 		int id = FullDataPoint.getId(dataPoint);
@@ -204,7 +187,7 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 		int newBlockColorInt = ((IClientLevelWrapper)levelWrapper).computeBaseColor(blockPos, biome, blockState);
 		logBlockBiomeDebugInfoIfDifferent(newBiomeName, newBlockColorInt);
 	}
-	/** only logs the data if it was different than the currently stored debug data */
+	/** only logs the data if it was different vs the currently stored debug data */
 	private static void logBlockBiomeDebugInfoIfDifferent(String newBiomeName, int newBlockColorInt)
 	{
 		if (!currentDebugBiomeName.equals(newBiomeName) || currentDebugBlockColorInt != newBlockColorInt)
