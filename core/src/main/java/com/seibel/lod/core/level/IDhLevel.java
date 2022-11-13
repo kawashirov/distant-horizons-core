@@ -1,5 +1,7 @@
 package com.seibel.lod.core.level;
 
+import com.seibel.lod.core.file.datafile.DataFileHandler;
+import com.seibel.lod.core.file.datafile.IDataSourceProvider;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 
@@ -16,5 +18,7 @@ public interface IDhLevel extends AutoCloseable
     ILevelWrapper getLevelWrapper();
 	
     void updateChunk(IChunkWrapper chunk);
+	
+	IDataSourceProvider getFileHandler();
 	
 }

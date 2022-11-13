@@ -4,6 +4,7 @@ import com.seibel.lod.core.config.AppliedConfigState;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.full.FullDataSource;
 import com.seibel.lod.core.datatype.transform.ChunkToLodBuilder;
+import com.seibel.lod.core.file.datafile.IDataSourceProvider;
 import com.seibel.lod.core.generation.GenerationQueue;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
@@ -322,6 +323,9 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 	
 	@Override
 	public IServerLevelWrapper getServerLevelWrapper() { return this.serverLevel; }
+	
+	@Override
+	public IDataSourceProvider getFileHandler() { return this.dataFileHandler; }
 	
 	
 	

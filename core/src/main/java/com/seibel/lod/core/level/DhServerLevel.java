@@ -1,5 +1,6 @@
 package com.seibel.lod.core.level;
 
+import com.seibel.lod.core.file.datafile.IDataSourceProvider;
 import com.seibel.lod.core.util.FileScanUtil;
 import com.seibel.lod.core.file.datafile.DataFileHandler;
 import com.seibel.lod.core.file.structure.LocalSaveStructure;
@@ -64,6 +65,9 @@ public class DhServerLevel implements IDhServerLevel
 	
 	@Override
 	public ILevelWrapper getLevelWrapper() { return this.level; }
+	
+	@Override
+	public IDataSourceProvider getFileHandler() { return this.dataFileHandler; }
 	
 	@Override
 	public void updateChunk(IChunkWrapper chunk)

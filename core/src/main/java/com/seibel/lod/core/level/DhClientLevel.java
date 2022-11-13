@@ -1,5 +1,6 @@
 package com.seibel.lod.core.level;
 
+import com.seibel.lod.core.file.datafile.IDataSourceProvider;
 import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.util.FileScanUtil;
 import com.seibel.lod.core.file.datafile.RemoteDataFileHandler;
@@ -86,6 +87,9 @@ public class DhClientLevel implements IDhClientLevel
 	
 	@Override
 	public ILevelWrapper getLevelWrapper() { return this.level; }
+	
+	@Override
+	public IDataSourceProvider getFileHandler() { return this.dataFileHandler; }
 	
 	@Override
 	public void updateChunk(IChunkWrapper chunk)
