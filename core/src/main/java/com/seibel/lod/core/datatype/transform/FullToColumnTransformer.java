@@ -168,16 +168,16 @@ public class FullToColumnTransformer {
         int offset = 0;
         for (int i = 0; i < data.getSingleLength(); i++) {
             long fullData = data.getSingle(i);
-            int y = FullDataPoint.getY(fullData);
-            int blockLength = FullDataPoint.getDepth(fullData);
+            int bottomY = FullDataPoint.getBottomY(fullData);
+            int blockHeight = FullDataPoint.getHeight(fullData);
             int id = FullDataPoint.getId(fullData);
             int light = FullDataPoint.getLight(fullData);
             IBiomeWrapper biome = mapping.getBiomeWrapper(id);
             IBlockStateWrapper block = mapping.getBlockStateWrapper(id);
             if (block.equals(AIR)) continue;
             isVoid = false;
-            int color = level.computeBaseColor(new DhBlockPos(blockX, y + level.getMinY(), blockZ), biome, block);
-            long columnData = ColumnFormat.createDataPoint(y + blockLength, y, color, light, genMode);
+            int color = level.computeBaseColor(new DhBlockPos(blockX, bottomY + level.getMinY(), blockZ), biome, block);
+            long columnData = ColumnFormat.createDataPoint(bottomY + blockHeight, bottomY, color, light, genMode);
             column.set(offset, columnData);
             offset++;
         }

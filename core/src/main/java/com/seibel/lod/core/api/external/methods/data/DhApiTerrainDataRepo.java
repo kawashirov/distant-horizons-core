@@ -189,8 +189,8 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 							if (dataPoint != 0)
 							{
 								int requestedY = nullableBlockYPos;
-								int bottomY = FullDataPoint.getY(dataPoint) + levelMinimumHeight; // TODO rename getY to getBottomY
-								int height = FullDataPoint.getDepth(dataPoint); // TODO rename to getHeight
+								int bottomY = FullDataPoint.getBottomY(dataPoint) + levelMinimumHeight;
+								int height = FullDataPoint.getHeight(dataPoint);
 								int topY = bottomY + height;
 								
 								// does this datapoint contain the requested Y position? 
@@ -220,14 +220,14 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 		}
 	}
 	
-	private static DhApiTerrainDataPoint generateApiDatapoint(FullDataPointIdMap mapping, byte detailLevel, long dataPoint)
+	private static DhApiTerrainDataPoint generateApiDatapoint(IDhApiLevelWrapper levelWrapper, FullDataPointIdMap mapping, byte detailLevel, long dataPoint)
 	{
 		IBlockStateWrapper blockState = mapping.getBlockStateWrapper(FullDataPoint.getId(dataPoint));
 		IBiomeWrapper biomeWrapper = mapping.getBiomeWrapper(FullDataPoint.getId(dataPoint));
 		
-		int topY = FullDataPoint.getY(dataPoint);
-		int depth = FullDataPoint.getDepth(dataPoint);
-		int bottomY = topY - depth;
+		int bottomY = FullDataPoint.getBottomY(dataPoint) + levelWrapper.getMinHeight();
+		int height = FullDataPoint.getHeight(dataPoint);
+		int topY = bottomY + height;
 		
 		return new DhApiTerrainDataPoint(detailLevel, 
 				FullDataPoint.getLight(dataPoint), topY, bottomY,

@@ -39,6 +39,7 @@ public class FullDataPoint
     public static final int LIGHT_WIDTH = 8;
     public static final int ID_OFFSET = 0;
     public static final int DP_OFFSET = ID_OFFSET + ID_WIDTH;
+	/** indicates the Y position where the LOD starts relative to the level's minimum height */
     public static final int Y_OFFSET = DP_OFFSET + DP_WIDTH;
     public static final int LIGHT_OFFSET = Y_OFFSET + Y_WIDTH;
 	
@@ -62,19 +63,22 @@ public class FullDataPoint
         data |= (long) (depth & DP_MASK) << DP_OFFSET;
         data |= (long) (y & Y_MASK) << Y_OFFSET;
         data |= (long) lightPair << LIGHT_OFFSET;
-        LodUtil.assertTrue(getId(data) == id && getDepth(data) == depth && getY(data) == y && getLight(data) == Byte.toUnsignedInt(lightPair),
+        LodUtil.assertTrue(getId(data) == id && getHeight(data) == depth && getBottomY(data) == y && getLight(data) == Byte.toUnsignedInt(lightPair),
                 "Trying to create datapoint with id[{}], depth[{}], y[{}], lightPair[{}] but got id[{}], depth[{}], y[{}], lightPair[{}]!",
-                id, depth, y, Byte.toUnsignedInt(lightPair), getId(data), getDepth(data), getY(data), getLight(data));
+                id, depth, y, Byte.toUnsignedInt(lightPair), getId(data), getHeight(data), getBottomY(data), getLight(data));
 		
         return data;
     }
 	
+	/** Returns the BlockState/Biome pair ID used to identify this LOD's color  */
     public static int getId(long data) { return (int) (data & ID_MASK); }
-    public static int getDepth(long data) { return (int) ((data >> DP_OFFSET) & DP_MASK); }
-    public static int getY(long data) { return (int) ((data >> Y_OFFSET) & Y_MASK); }
+	/** Returns how many blocks tall this LOD is. */
+    public static int getHeight(long data) { return (int) ((data >> DP_OFFSET) & DP_MASK); }
+	/** Returns the block position of the bottom vertices for this LOD relative to the level's minimum height. */
+    public static int getBottomY(long data) { return (int) ((data >> Y_OFFSET) & Y_MASK); }
     public static int getLight(long data) { return (int) ((data >> LIGHT_OFFSET) & LIGHT_MASK); }
 	
-    public static String toString(long data) { return "[ID:" + getId(data) + ",Y:" + getY(data) + ",Depth:" + getY(data) + ",Light:" + getLight(data) + "]"; }
+    public static String toString(long data) { return "[ID:" + getId(data) + ",Y:" + getBottomY(data) + ",Height:" + getBottomY(data) + ",Light:" + getLight(data) + "]"; }
 	
 	/** Remaps the biome/blockState ID of the given datapoint */
     @Contract(pure = true)
