@@ -1,29 +1,44 @@
 package com.seibel.lod.api.objects.data;
 
-import java.awt.Color;
+import com.seibel.lod.api.interfaces.block.IDhApiBiomeWrapper;
+import com.seibel.lod.api.interfaces.block.IDhApiBlockStateWrapper;
 
 /**
  * Holds a single datapoint of terrain data.
- *
- * // TODO what additional data should this hold?
- *
+ * 
  * @author James Seibel
- * @version 2022-7-12
+ * @version 2022-11-13
  */
 public class DhApiTerrainDataPoint
 {
 	/**
-	 * The average color for the given data point.
-	 * Invisible if the position is air.
-	 * Null if the position is invalid.
+	 * 0 = block <br>
+	 * 1 = 2x2 blocks <br>
+	 * 2 = 4x4 blocks <br>
+	 * 4 = chunk (16x16 blocks) <br>
+	 * 9 = region (512x512 blocks) <br>
 	 */
-	public Color color;
+	public final byte detailLevel;
 	
-	/**
-	 * TODO is this data type correct?
-	 * TODO create an API enum that contains useful values (block, chunk, region, etc.)
-	 * 0 = block
-	 */
-	public short detailLevel;
+	public final int lightLevel;
+	public final int topYBlockPos;
+	public final int bottomYBlockPos;
+	
+	public final IDhApiBlockStateWrapper blockStateWrapper;
+	public final IDhApiBiomeWrapper biomeWrapper;
+	
+	
+	
+	public DhApiTerrainDataPoint(byte detailLevel, int lightLevel, int topYBlockPos, int bottomYBlockPos, IDhApiBlockStateWrapper blockStateWrapper, IDhApiBiomeWrapper biomeWrapper)
+	{
+		this.detailLevel = detailLevel;
+		
+		this.lightLevel = lightLevel;
+		this.topYBlockPos = topYBlockPos;
+		this.bottomYBlockPos = bottomYBlockPos;
+		
+		this.blockStateWrapper = blockStateWrapper;
+		this.biomeWrapper = biomeWrapper;
+	}
 	
 }

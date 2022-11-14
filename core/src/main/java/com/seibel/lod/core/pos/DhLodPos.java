@@ -85,6 +85,8 @@ public class DhLodPos implements Comparable<DhLodPos>
 	/** Returns this position's child index in its parent */
 	public int getChildIndexOfParent() { return (this.x & 1) + BitShiftUtil.square(this.z & 1); }
 	
+	/** @see DhLodPos#getSectionPosWithSectionDetailLevel(byte) */
+	public DhLodPos getDhSectionRelativePositionForDetailLevel() throws IllegalArgumentException { return this.getDhSectionRelativePositionForDetailLevel(this.detailLevel); }
 	/** 
 	 * Returns a DhLodPos with the given detail level and an X/Z position somewhere between (0,0) and (63,63).
 	 * This is done to access specific sections from a {@link ILodDataSource} where LOD columns are stored
