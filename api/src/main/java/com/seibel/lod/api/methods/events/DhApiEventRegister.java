@@ -18,7 +18,7 @@ public class DhApiEventRegister
 	 * If multiple of the same eventHandler are added DhApiResult will return
 	 * the name of the already added handler and success = false.
 	 */
-	public static DhApiResult on(Class<? extends IDhApiEvent> eventInterface, IDhApiEvent eventHandlerImplementation)
+	public static DhApiResult<Void> on(Class<? extends IDhApiEvent> eventInterface, IDhApiEvent eventHandlerImplementation)
 	{
 		try
 		{
@@ -36,7 +36,7 @@ public class DhApiEventRegister
 	 * If no eventHandler of the given class has been registered the result will return
 	 * success = false.
 	 */
-	public static DhApiResult off(Class<? extends IDhApiEvent> eventInterface, Class<IDhApiEvent> eventHandlerClass)
+	public static DhApiResult<Void> off(Class<? extends IDhApiEvent> eventInterface, Class<IDhApiEvent> eventHandlerClass)
 	{
 		if (DhApiEventInjector.INSTANCE.unbind(eventInterface, eventHandlerClass))
 		{

@@ -21,7 +21,7 @@ public class DhApiWorldGeneratorOverrideRegister implements IDhApiWorldGenerator
 	
 	
 	@Override
-	public DhApiResult registerWorldGeneratorOverride(IDhApiWorldGenerator worldGenerator)
+	public DhApiResult<Void> registerWorldGeneratorOverride(IDhApiWorldGenerator worldGenerator)
 	{
 		try
 		{
@@ -35,7 +35,7 @@ public class DhApiWorldGeneratorOverrideRegister implements IDhApiWorldGenerator
 	}
 	
 	@Override
-	public DhApiResult registerWorldGeneratorOverride(IDhApiLevelWrapper levelWrapper, IDhApiWorldGenerator worldGenerator)
+	public DhApiResult<Void> registerWorldGeneratorOverride(IDhApiLevelWrapper levelWrapper, IDhApiWorldGenerator worldGenerator)
 	{
 		try
 		{
