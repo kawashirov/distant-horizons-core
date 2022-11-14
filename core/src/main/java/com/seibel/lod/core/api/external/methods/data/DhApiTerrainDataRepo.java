@@ -180,7 +180,7 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 						if (!getSpecificYCoordinate)
 						{
 							// if we aren't look for a specific datapoint, add each datapoint to the return array
-							returnArray[i] = generateApiDatapoint(mapping, requestedDetailLevel, dataPoint);
+							returnArray[i] = generateApiDatapoint(levelWrapper, mapping, requestedDetailLevel, dataPoint);
 						}
 						else
 						{
@@ -197,7 +197,7 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 								if (bottomY < requestedY && requestedY <= topY)
 								{
 									// this datapoint contains the requested block position, return it
-									DhApiTerrainDataPoint apiTerrainData = generateApiDatapoint(mapping, requestedDetailLevel, dataPoint);
+									DhApiTerrainDataPoint apiTerrainData = generateApiDatapoint(levelWrapper, mapping, requestedDetailLevel, dataPoint);
 									return DhApiResult.createSuccess(new DhApiTerrainDataPoint[]{apiTerrainData});
 								}
 							}
