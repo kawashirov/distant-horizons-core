@@ -49,6 +49,7 @@ public class LodQuadTree implements AutoCloseable {
 
     public final byte numbersOfSectionLevels;
     private final MovableGridRingList<LodRenderSection>[] ringLists;
+	/** measured in blocks */
     public final int viewDistance;
     private final IRenderSourceProvider renderSourceProvider;
 

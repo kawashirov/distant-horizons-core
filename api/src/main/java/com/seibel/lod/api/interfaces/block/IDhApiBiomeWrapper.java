@@ -17,17 +17,15 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.wrapperInterfaces.world;
+package com.seibel.lod.api.interfaces.block;
 
-import com.seibel.lod.api.interfaces.block.IDhApiBiomeWrapper;
-import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
+import com.seibel.lod.api.interfaces.IDhApiUnsafeWrapper;
 
 /**
  * @author James Seibel
  * @version 3-5-2022
  */
-public interface IBiomeWrapper extends IDhApiBiomeWrapper, IBindable
+public interface IDhApiBiomeWrapper extends IDhApiUnsafeWrapper
 {
 	String getName();
-    String serialize();
 }
