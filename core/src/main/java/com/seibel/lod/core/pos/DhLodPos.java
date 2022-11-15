@@ -52,6 +52,7 @@ public class DhLodPos implements Comparable<DhLodPos>
 	}
 	public DhBlockPos2D getCorner() { return new DhBlockPos2D(this.getX().toBlockWidth(), this.getZ().toBlockWidth()); }
 	
+	/** converts this position to a lower detail level, angled towards the corner position. */
 	public DhLodPos getCorner(byte newDetail)
 	{
 		LodUtil.assertTrue(newDetail <= this.detailLevel);

@@ -232,19 +232,25 @@ public class DataFileHandler implements IDataSourceProvider {
 
     /** This call is concurrent. I.e. it supports being called by multiple threads at the same time. */
     @Override
-    public void write(DhSectionPos sectionPos, ChunkSizedData chunkData) {
+    public void write(DhSectionPos sectionPos, ChunkSizedData chunkData)
+	{
         DhLodPos chunkPos = new DhLodPos((byte) (chunkData.dataDetail+4), chunkData.x, chunkData.z);
         LodUtil.assertTrue(chunkPos.overlaps(sectionPos.getSectionBBoxPos()), "Chunk {} does not overlap section {}", chunkPos, sectionPos);
-        chunkPos = chunkPos.convertUpwardsTo((byte) minDetailLevel); // TODO: Handle if chunkData has higher detail than lowestDetail.
-        recursiveWrite(new DhSectionPos(chunkPos.detailLevel, chunkPos.x, chunkPos.z), chunkData);
+        chunkPos = chunkPos.convertUpwardsTo((byte) this.minDetailLevel); // TODO: Handle if chunkData has higher detail than lowestDetail.
+		this.recursiveWrite(new DhSectionPos(chunkPos.detailLevel, chunkPos.x, chunkPos.z), chunkData);
     }
-    private void recursiveWrite(DhSectionPos sectionPos, ChunkSizedData chunkData) {
-        DataMetaFile metaFile = files.get(sectionPos);
-        if (metaFile != null) { // Fast path: if there is a file for this section, just write to it.
+    private void recursiveWrite(DhSectionPos sectionPos, ChunkSizedData chunkData)
+	{
+        DataMetaFile metaFile = this.files.get(sectionPos);
+        if (metaFile != null)
+		{ 
+			// Fast path: if there is a file for this section, just write to it.
             metaFile.addToWriteQueue(chunkData);
         }
-        if (sectionPos.sectionDetail <= topDetailLevel.get()) {
-            recursiveWrite(sectionPos.getParentPos(), chunkData);
+		
+        if (sectionPos.sectionDetail <= this.topDetailLevel.get())
+		{
+			this.recursiveWrite(sectionPos.getParentPos(), chunkData);
         }
     }
 
