@@ -15,8 +15,10 @@ import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhBlockPos;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
+import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.ColorUtil;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.util.math.Vec3f;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
@@ -30,10 +32,10 @@ import java.util.concurrent.ExecutionException;
 
 
 /**
- * Allows getting and setting any terrain data Distant Horizons has stored.
+ * Allows interfacing with the terrain data Distant Horizons has stored.
  *
  * @author James Seibel
- * @version 2022-11-13
+ * @version 2022-11-14
  */
 public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 {
@@ -63,32 +65,32 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 	@Override
 	public DhApiResult<DhApiTerrainDataPoint[]> getColumnDataAtBlockPos(IDhApiLevelWrapper levelWrapper, int blockPosX, int blockPosZ) 
 	{
-		return getTerrainDataArray(levelWrapper, new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPosX, blockPosZ), null);
+		return getTerrainDataColumnArray(levelWrapper, new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPosX, blockPosZ), null);
 	}
 //	@Override
 //	public DhApiResult setDataAtBlockPos(int blockPosX, int blockPosY, int blockPosZ, DhApiTerrainDataPoint newData) { throw new UnsupportedOperationException(); }
 	
 	@Override
-	public DhApiResult<DhApiTerrainDataPoint[]> getColumnDataAtChunkPos(IDhApiLevelWrapper levelWrapper, int chunkPosX, int chunkPosZ)
+	public DhApiResult<DhApiTerrainDataPoint[][][]> getAllTerrainDataAtChunkPos(IDhApiLevelWrapper levelWrapper, int chunkPosX, int chunkPosZ)
 	{
-		return getTerrainDataArray(levelWrapper, new DhLodPos(LodUtil.CHUNK_DETAIL_LEVEL, chunkPosX, chunkPosZ), null);
+		return getTerrainDataOverAreaForPositionDetailLevel(levelWrapper, new DhLodPos(LodUtil.CHUNK_DETAIL_LEVEL, chunkPosX, chunkPosZ));
 	}
 //	@Override
 //	public DhApiResult setDataAtChunkPos(int chunkPosX, int chunkPosZ, DhApiTerrainDataPoint newData) { throw new UnsupportedOperationException(); }
 	
 	@Override
-	public DhApiResult<DhApiTerrainDataPoint[]> getColumnDataAtRegionPos(IDhApiLevelWrapper levelWrapper, int regionPosX, int regionPosZ)
+	public DhApiResult<DhApiTerrainDataPoint[][][]> getAllTerrainDataAtRegionPos(IDhApiLevelWrapper levelWrapper, int regionPosX, int regionPosZ)
 	{
-		return getTerrainDataArray(levelWrapper, new DhLodPos(LodUtil.REGION_DETAIL_LEVEL, regionPosX, regionPosZ), null);
+		return getTerrainDataOverAreaForPositionDetailLevel(levelWrapper, new DhLodPos(LodUtil.REGION_DETAIL_LEVEL, regionPosX, regionPosZ));
 	}
 //	@Override
 //	public DhApiResult setDataAtRegionPos(int regionPosX, int regionPosZ, DhApiTerrainDataPoint newData) { throw new UnsupportedOperationException(); }
 	
 	
 	@Override
-	public DhApiResult<DhApiTerrainDataPoint[]> getColumnDataAtDetailLevelAndPos(IDhApiLevelWrapper levelWrapper, byte detailLevel, int posX, int posZ)
+	public DhApiResult<DhApiTerrainDataPoint[][][]> getAllTerrainDataAtDetailLevelAndPos(IDhApiLevelWrapper levelWrapper, byte detailLevel, int posX, int posZ)
 	{
-		return getTerrainDataArray(levelWrapper, new DhLodPos(detailLevel, posX, posZ), null);
+		return getTerrainDataOverAreaForPositionDetailLevel(levelWrapper, new DhLodPos(detailLevel, posX, posZ));
 	}
 //	@Override
 //	public DhApiResult setDataAtRegionPos(short detailLevel, int relativePosX, int relativePosY, int relativePosZ, DhApiTerrainDataPoint newData) { throw new UnsupportedOperationException(); }
@@ -102,7 +104,7 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 	/** Returns a single API terrain datapoint that contains the given Y block position */
 	private static DhApiResult<DhApiTerrainDataPoint> getTerrainDataAtBlockYPos(IDhApiLevelWrapper levelWrapper, DhLodPos requestedColumnPos, Integer blockYPos)
 	{
-		DhApiResult<DhApiTerrainDataPoint[]> result = getTerrainDataArray(levelWrapper, requestedColumnPos, blockYPos);
+		DhApiResult<DhApiTerrainDataPoint[]> result = getTerrainDataColumnArray(levelWrapper, requestedColumnPos, blockYPos);
 		if (result.success && result.payload.length > 0)
 		{
 			return DhApiResult.createSuccess(result.errorMessage, result.payload[0]);
@@ -114,12 +116,51 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 	}
 	
 	/** 
+	 * Returns all the block columns represented by the given {@link DhLodPos}. <br>
+	 * IE, A position with the detail level: <br>
+	 * 0 (block): will return a 1x1 matrix of data. (don't do this, we have a specific method for that.) <br>
+	 * 1 (2 blocks): will return a 2x2 matrix of data. <br>
+	 * 4 (chunk): will return a 16x16 matrix of data. <br> <br>
+	 * 
+	 * will stop and return the in progress data if any errors are encountered. 
+	 */
+	private static DhApiResult<DhApiTerrainDataPoint[][][]> getTerrainDataOverAreaForPositionDetailLevel(IDhApiLevelWrapper levelWrapper, DhLodPos requestedAreaPos)
+	{
+		DhLodPos startingBlockPos = requestedAreaPos.getCorner(LodUtil.BLOCK_DETAIL_LEVEL);
+		int widthOfAreaInBlocks = BitShiftUtil.powerOfTwo(requestedAreaPos.detailLevel);
+		
+		DhApiTerrainDataPoint[][][] returnArray = new DhApiTerrainDataPoint[widthOfAreaInBlocks][widthOfAreaInBlocks][];
+		int dataColumnsReturned = 0;
+		
+		// get each column over the area
+		for (var x = 0; x < widthOfAreaInBlocks; x++)
+		{
+			for (var z = 0; z < widthOfAreaInBlocks; z++)
+			{
+				DhLodPos blockColumnPos = new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, startingBlockPos.x + x, startingBlockPos.z + z);
+				DhApiResult<DhApiTerrainDataPoint[]> result = getTerrainDataColumnArray(levelWrapper, blockColumnPos, null);
+				if (result.success)
+				{
+					returnArray[x][z] = result.payload;
+					dataColumnsReturned++;
+				}
+				else
+				{
+					return DhApiResult.createFail(result.errorMessage, returnArray);
+				}
+			}
+		}
+		
+		return dataColumnsReturned != 0 ? DhApiResult.createSuccess("[" + dataColumnsReturned + "] columns returned.", returnArray) : DhApiResult.createSuccess("No data found.", returnArray);
+	}
+	
+	/** 
 	 * If nullableBlockYPos is null: returns every datapoint in the column defined by the DhLodPos. <br>
 	 * If nullableBlockYPos is NOT null: returns a single datapoint in the column defined by the DhLodPos which contains the block Y position. <br><br>
 	 * 
 	 * Returns an empty array if no data could be returned.
 	 */
-	private static DhApiResult<DhApiTerrainDataPoint[]> getTerrainDataArray(IDhApiLevelWrapper levelWrapper, DhLodPos requestedColumnPos, Integer nullableBlockYPos)
+	private static DhApiResult<DhApiTerrainDataPoint[]> getTerrainDataColumnArray(IDhApiLevelWrapper levelWrapper, DhLodPos requestedColumnPos, Integer nullableBlockYPos)
 	{
 		if (SharedApi.currentWorld == null)
 		{
@@ -137,8 +178,6 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 		{
 			return DhApiResult.createFail("Unable to get terrain data before the world has loaded.");
 		}
-//		DhClientServerLevel serverLevel = (DhClientServerLevel) level;
-//		IDhLevel serverLevel = (IDhLevel) level;
 		
 		// get the detail levels for this request
 		byte requestedDetailLevel = requestedColumnPos.detailLevel;
@@ -249,8 +288,13 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 			Thread thread = new Thread(() -> {
 				try
 				{
-					DhApiResult<DhApiTerrainDataPoint> x = getTerrainDataAtBlockYPos(levelWrapper, new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPosX, blockPosZ), blockPosY);
-					DhApiResult<DhApiTerrainDataPoint[]> y = getTerrainDataArray(levelWrapper, new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPosX, blockPosZ), null);
+					DhApiResult<DhApiTerrainDataPoint> single = getTerrainDataAtBlockYPos(levelWrapper, new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPosX, blockPosZ), blockPosY);
+					DhApiResult<DhApiTerrainDataPoint[]> column = getTerrainDataColumnArray(levelWrapper, new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPosX, blockPosZ), null);
+					
+					DhLodPos chunkPos = new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPosX, blockPosZ).convertUpwardsTo(LodUtil.CHUNK_DETAIL_LEVEL);
+					DhApiResult<DhApiTerrainDataPoint[][][]> area = getTerrainDataOverAreaForPositionDetailLevel(levelWrapper, chunkPos);
+					
+					int debugPoint = 0;
 				}
 				catch (Exception e)
 				{

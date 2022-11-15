@@ -22,6 +22,7 @@ package com.seibel.lod.core.api.internal;
 import com.seibel.lod.api.methods.events.abstractEvents.*;
 import com.seibel.lod.api.methods.events.sharedParameterObjects.DhApiRenderParam;
 import com.seibel.lod.core.DependencyInjection.DhApiEventInjector;
+import com.seibel.lod.core.api.external.methods.data.DhApiTerrainDataRepo;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.ModInfo;
@@ -49,7 +50,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
 
-import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -235,6 +235,10 @@ public class ClientApi
 			{
 				level.dumpRamUsage();
 			}
+			
+			
+			DhApiTerrainDataRepo.asyncDebugMethod(levelWrapper, MC.getPlayerBlockPos().x, MC.getPlayerBlockPos().y, MC.getPlayerBlockPos().z);
+			
 			
 			
 			profiler.push("Render" + ( Config.Client.Advanced.Debugging.rendererMode.get() == ERendererMode.DEFAULT ? "-lods" : "-debug"));
