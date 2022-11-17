@@ -7,13 +7,13 @@
   "lod.updater.title":
     "Distant Horizons auto updater",
   "lod.updater.text1":
-    "§lUpdate for Distant Horizons available!",
+    "§lNew update available!",
   "lod.updater.text2":
-    "§fWould you like to automatically update from version %s§f to %s§f?",
+    "§fDo you want to update from %s§f to %s§f?",
   "lod.updater.later":
-    "Later",
+    "Not now",
   "lod.updater.never":
-    "Dont show again",
+    "Don't show again",
   "lod.updater.update":
     "Update",
   "lod.updater.update.@tooltip":
@@ -22,6 +22,20 @@
     "Always silent update",
   "lod.updater.silent.@tooltip":
     "Every time an update is available, it would update\n(§6WARNING§r: It wont prompt the user on an update, tough it would keep the mod up to date)",
+
+
+  "lod.general.back":
+    "Back",
+  "lod.general.next":
+    "Next",
+  "lod.general.done":
+    "Done",
+  "lod.general.cancel":
+    "Cancel",
+  "lod.general.yes":
+    "Yes",
+  "lod.general.no":
+    "No",
 
 
 
