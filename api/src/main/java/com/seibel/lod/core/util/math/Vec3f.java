@@ -147,6 +147,7 @@ public class Vec3f
 		return this.x * vector.x + this.y * vector.y + this.z * vector.z;
 	}
 	
+	/** Returns true if normalization had to be done */
 	public boolean normalize()
 	{
 		float squaredSum = this.x * this.x + this.y * this.y + this.z * this.z;

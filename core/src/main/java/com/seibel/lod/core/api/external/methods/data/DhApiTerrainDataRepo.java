@@ -18,12 +18,17 @@ import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.ColorUtil;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.util.MathUtil;
+import com.seibel.lod.core.util.math.Vec3d;
 import com.seibel.lod.core.util.math.Vec3f;
+import com.seibel.lod.core.util.math.Vec3i;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
+import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
+import net.minecraft.client.Minecraft;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -47,12 +52,73 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 	private static volatile boolean debugThreadRunning = false;
 	private static String currentDebugBiomeName = "";
 	private static int currentDebugBlockColorInt = -1;
+	private static Vec3i currentDebugVec3i = new Vec3i();
 	
 	
 	
 	private DhApiTerrainDataRepo() 
 	{
 		
+	}
+	
+	
+	// TODO: this will need ot use API objects
+	public DhApiResult<Vec3i> getLodPosFromRay(IDhApiLevelWrapper levelWrapper, DhBlockPos rayOrigin, Vec3f directionVector, byte detailLevel)
+	{
+		directionVector.normalize();
+		
+		int minBlockHeight = levelWrapper.getMinHeight();
+		int maxBlockHeight = levelWrapper.getHeight();
+		int maxLength = 50;
+		
+		
+		
+		// walk through the grid //
+		
+		int currentLength = 0;
+		
+		Vec3d exactPos = new Vec3d(rayOrigin.x, rayOrigin.y, rayOrigin.z);
+		Vec3i blockPos = new Vec3i(rayOrigin.x, rayOrigin.y, rayOrigin.z);
+		
+		while (blockPos.y >= minBlockHeight && blockPos.y < maxBlockHeight
+				&& currentLength <= maxLength)
+		{
+			// get the LOD at this position
+			DhApiResult<DhApiTerrainDataPoint[]> result = this.getColumnDataAtBlockPos(levelWrapper, blockPos.x, blockPos.z);
+			if (!result.success)
+			{
+				// if there was an error, stop and return it
+				return DhApiResult.createFail(result.errorMessage);
+			}
+			
+			// is there a LOD at this position?
+			for (DhApiTerrainDataPoint dataPoint : result.payload)
+			{
+				// is this LOD air?
+				if (dataPoint.blockStateWrapper != null && !dataPoint.blockStateWrapper.isAir())
+				{
+					// does this LOD contain the given Y position?
+					if (dataPoint.bottomYBlockPos <= exactPos.y && exactPos.y <= dataPoint.topYBlockPos)
+					{
+						return DhApiResult.createSuccess(blockPos);
+					}
+				}
+			}
+			
+			
+			exactPos.x += directionVector.x;
+			exactPos.y += directionVector.y;
+			exactPos.z += directionVector.z;
+			
+			blockPos.x = (int) Math.round(exactPos.x);
+			blockPos.y = (int) Math.round(exactPos.y);
+			blockPos.z = (int) Math.round(exactPos.z);
+			
+			// calculate the taxiCab Distance
+			currentLength = (int) (Math.abs(rayOrigin.x - exactPos.x) + Math.abs(rayOrigin.y - exactPos.y) + Math.abs(rayOrigin.z - exactPos.z));
+		}
+		
+		return DhApiResult.createSuccess(null);
 	}
 	
 	
@@ -158,7 +224,8 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 	 * If nullableBlockYPos is null: returns every datapoint in the column defined by the DhLodPos. <br>
 	 * If nullableBlockYPos is NOT null: returns a single datapoint in the column defined by the DhLodPos which contains the block Y position. <br><br>
 	 * 
-	 * Returns an empty array if no data could be returned.
+	 * If the ApiResult is successful there will be an array of data. <br>
+	 * The returned array will be empty if no data could be retrieved.
 	 */
 	private static DhApiResult<DhApiTerrainDataPoint[]> getTerrainDataColumnArray(IDhApiLevelWrapper levelWrapper, DhLodPos requestedColumnPos, Integer nullableBlockYPos)
 	{
@@ -288,11 +355,26 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 			Thread thread = new Thread(() -> {
 				try
 				{
-					DhApiResult<DhApiTerrainDataPoint> single = getTerrainDataAtBlockYPos(levelWrapper, new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPosX, blockPosZ), blockPosY);
-					DhApiResult<DhApiTerrainDataPoint[]> column = getTerrainDataColumnArray(levelWrapper, new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPosX, blockPosZ), null);
+//					DhApiResult<DhApiTerrainDataPoint> single = getTerrainDataAtBlockYPos(levelWrapper, new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPosX, blockPosZ), blockPosY);
+//					DhApiResult<DhApiTerrainDataPoint[]> column = getTerrainDataColumnArray(levelWrapper, new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPosX, blockPosZ), null);
 					
-					DhLodPos chunkPos = new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPosX, blockPosZ).convertUpwardsTo(LodUtil.CHUNK_DETAIL_LEVEL);
-					DhApiResult<DhApiTerrainDataPoint[][][]> area = getTerrainDataOverAreaForPositionDetailLevel(levelWrapper, chunkPos);
+//					DhLodPos chunkPos = new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPosX, blockPosZ).convertUpwardsTo(LodUtil.CHUNK_DETAIL_LEVEL);
+//					DhApiResult<DhApiTerrainDataPoint[][][]> area = getTerrainDataOverAreaForPositionDetailLevel(levelWrapper, chunkPos);
+					
+					
+					IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
+					DhApiResult<Vec3i> rayCast = INSTANCE.getLodPosFromRay(levelWrapper, MC_RENDER.getCameraBlockPosition(), MC_RENDER.getLookAtVector(), LodUtil.BLOCK_DETAIL_LEVEL);
+					if (rayCast.payload != null && !rayCast.payload.equals(currentDebugVec3i))
+					{
+						currentDebugVec3i = rayCast.payload;
+						LOGGER.info("raycast: " + currentDebugVec3i);
+					}
+					else if (rayCast.payload == null && currentDebugVec3i != null)
+					{
+						currentDebugVec3i = null;
+						LOGGER.info("raycast: [INFINITY]");
+					}
+					
 					
 					int debugPoint = 0;
 				}

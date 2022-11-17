@@ -38,8 +38,13 @@ public interface IDhApiLevelWrapper extends IDhApiUnsafeWrapper
 	
 	boolean hasSkyLight();
 	
+	/** Returns the max block height of the level(?) */
 	int getHeight();
 	
+	/** 
+	 * Returns the lowest possible block position for the level. <br>
+	 * For MC versions before 1.19 this will return 0.
+	 */
 	default int getMinHeight() { return 0; }
 	
 }

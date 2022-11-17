@@ -10,5 +10,6 @@ import com.seibel.lod.api.interfaces.IDhApiUnsafeWrapper;
  */
 public interface IDhApiBlockStateWrapper extends IDhApiUnsafeWrapper
 {
-    
+    boolean isAir();
+	
 }
