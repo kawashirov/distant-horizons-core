@@ -76,6 +76,9 @@ public class ModrinthGetter {
         }
     }
 
+    public static String getLatestIDForVersion(String mcVer) {
+        return mcVerToReleaseID.get(mcVer).get(0);
+    }
     public static String getLatestNameForVersion(String mcVer) {
         return releaseNames.get(mcVerToReleaseID.get(mcVer).get(0));
     }
