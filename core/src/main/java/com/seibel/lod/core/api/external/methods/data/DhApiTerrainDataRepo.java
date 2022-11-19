@@ -2,8 +2,10 @@ package com.seibel.lod.core.api.external.methods.data;
 
 import com.seibel.lod.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.lod.api.objects.DhApiResult;
+import com.seibel.lod.api.objects.data.DhApiRaycastResult;
 import com.seibel.lod.api.objects.data.DhApiTerrainDataPoint;
 import com.seibel.lod.api.interfaces.data.IDhApiTerrainDataRepo;
+import com.seibel.lod.api.objects.math.DhApiVec3i;
 import com.seibel.lod.core.api.internal.SharedApi;
 import com.seibel.lod.core.datatype.ILodDataSource;
 import com.seibel.lod.core.datatype.full.FullDataPoint;
@@ -15,10 +17,7 @@ import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhBlockPos;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
-import com.seibel.lod.core.util.BitShiftUtil;
-import com.seibel.lod.core.util.ColorUtil;
-import com.seibel.lod.core.util.LodUtil;
-import com.seibel.lod.core.util.MathUtil;
+import com.seibel.lod.core.util.*;
 import com.seibel.lod.core.util.math.Vec3d;
 import com.seibel.lod.core.util.math.Vec3f;
 import com.seibel.lod.core.util.math.Vec3i;
@@ -28,11 +27,11 @@ import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
-import net.minecraft.client.Minecraft;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
 
@@ -40,7 +39,7 @@ import java.util.concurrent.ExecutionException;
  * Allows interfacing with the terrain data Distant Horizons has stored.
  *
  * @author James Seibel
- * @version 2022-11-14
+ * @version 2022-11-19
  */
 public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 {
@@ -52,7 +51,7 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 	private static volatile boolean debugThreadRunning = false;
 	private static String currentDebugBiomeName = "";
 	private static int currentDebugBlockColorInt = -1;
-	private static Vec3i currentDebugVec3i = new Vec3i();
+	private static DhApiVec3i currentDebugVec3i = new Vec3i();
 	
 	
 	
@@ -62,14 +61,28 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 	}
 	
 	
-	// TODO: this will need ot use API objects
-	public DhApiResult<Vec3i> getLodPosFromRay(IDhApiLevelWrapper levelWrapper, DhBlockPos rayOrigin, Vec3f directionVector, byte detailLevel)
+	
+	public DhApiResult<DhApiRaycastResult> raycastLodData(IDhApiLevelWrapper levelWrapper, 
+			double rayOriginX, double rayOriginY, double rayOriginZ, 
+			float rayDirectionX, float rayDirectionY, float rayDirectionZ,
+			int maxRayBlockLength)
 	{
-		directionVector.normalize();
+		// TODO add an overloaded method with a default max length
+		return this.raycastLodData(levelWrapper, new Vec3d(rayOriginX, rayOriginY, rayOriginZ), new Vec3f(rayDirectionX, rayDirectionY, rayDirectionZ), maxRayBlockLength);
+	}
+	
+	/** 
+	 * private since it uses non-API objects <br><br>
+	 * 
+	 * Works by walking through the world and attempting to get the LOD <br>
+	 * data present at each step.
+	 */
+	private DhApiResult<DhApiRaycastResult> raycastLodData(IDhApiLevelWrapper levelWrapper, Vec3d rayOrigin, Vec3f rayDirection, int maxRayBlockLength)
+	{
+		rayDirection.normalize();
 		
 		int minBlockHeight = levelWrapper.getMinHeight();
 		int maxBlockHeight = levelWrapper.getHeight();
-		int maxLength = 50;
 		
 		
 		
@@ -77,38 +90,71 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 		
 		int currentLength = 0;
 		
+		// the exact position of this step
 		Vec3d exactPos = new Vec3d(rayOrigin.x, rayOrigin.y, rayOrigin.z);
-		Vec3i blockPos = new Vec3i(rayOrigin.x, rayOrigin.y, rayOrigin.z);
+		// the block position for this step
+		Vec3i blockPos = new Vec3i((int) Math.round(rayOrigin.x), (int) Math.round(rayOrigin.y), (int) Math.round(rayOrigin.z));
+		
+		DhApiRaycastResult closetFoundDataPoint = null;
+		
 		
 		while (blockPos.y >= minBlockHeight && blockPos.y < maxBlockHeight
-				&& currentLength <= maxLength)
+				&& currentLength <= maxRayBlockLength)
 		{
-			// get the LOD at this position
-			DhApiResult<DhApiTerrainDataPoint[]> result = this.getColumnDataAtBlockPos(levelWrapper, blockPos.x, blockPos.z);
-			if (!result.success)
+			// get the LOD columns around this position
+			ArrayList<Vec3i> columnPositions = getIntersectingColumnsAtPosition(blockPos, rayDirection);
+			for (Vec3i columnPos : columnPositions)
 			{
-				// if there was an error, stop and return it
-				return DhApiResult.createFail(result.errorMessage);
-			}
-			
-			// is there a LOD at this position?
-			for (DhApiTerrainDataPoint dataPoint : result.payload)
-			{
-				// is this LOD air?
-				if (dataPoint.blockStateWrapper != null && !dataPoint.blockStateWrapper.isAir())
+				// check each column
+				DhApiResult<DhApiTerrainDataPoint[]> result = this.getColumnDataAtBlockPos(levelWrapper, columnPos.x, columnPos.z);
+				if (!result.success)
 				{
-					// does this LOD contain the given Y position?
-					if (dataPoint.bottomYBlockPos <= exactPos.y && exactPos.y <= dataPoint.topYBlockPos)
+					// if there was an error, stop and return it
+					return DhApiResult.createFail(result.errorMessage);
+				}
+				
+				// is there a LOD at this position?
+				for (DhApiTerrainDataPoint dataPoint : result.payload)
+				{
+					// is this LOD air?
+					if (dataPoint.blockStateWrapper != null && !dataPoint.blockStateWrapper.isAir())
 					{
-						return DhApiResult.createSuccess(blockPos);
+						// does this LOD contain the given Y position?
+						Vec3i dataPointPos = new Vec3i(columnPos.x, dataPoint.bottomYBlockPos, columnPos.z);
+						if (exactPos.y >= dataPoint.bottomYBlockPos &&  exactPos.y <= dataPoint.topYBlockPos)
+						{
+							if (closetFoundDataPoint == null)
+							{
+								closetFoundDataPoint = new DhApiRaycastResult(dataPoint, dataPointPos);
+							}
+							else
+							{
+								// use the LOD closest to the ray's origin
+								double previousDistanceSquared = Math.pow(rayOrigin.x - closetFoundDataPoint.pos.x, 2) + Math.pow(rayOrigin.y - closetFoundDataPoint.pos.y, 2) + Math.pow(rayOrigin.z - closetFoundDataPoint.pos.z, 2);
+								double newDistanceSquared = Math.pow(rayOrigin.x - dataPointPos.x, 2) + Math.pow(rayOrigin.y - dataPointPos.y, 2) + Math.pow(rayOrigin.z - dataPointPos.z, 2);
+								
+								if (previousDistanceSquared > newDistanceSquared)
+								{
+									closetFoundDataPoint = new DhApiRaycastResult(dataPoint, dataPointPos);
+								}
+							}
+						}
 					}
 				}
 			}
 			
+			if (closetFoundDataPoint != null)
+			{
+				return DhApiResult.createSuccess(closetFoundDataPoint);
+			}
 			
-			exactPos.x += directionVector.x;
-			exactPos.y += directionVector.y;
-			exactPos.z += directionVector.z;
+			
+			
+			// take the next step in the ray //
+			
+			exactPos.x += rayDirection.x;
+			exactPos.y += rayDirection.y;
+			exactPos.z += rayDirection.z;
 			
 			blockPos.x = (int) Math.round(exactPos.x);
 			blockPos.y = (int) Math.round(exactPos.y);
@@ -120,6 +166,33 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 		
 		return DhApiResult.createSuccess(null);
 	}
+	
+	/** 
+	 * checks the surrounding 3x3 block columns and returns those that intersect with the ray. <br><br>
+	 * 
+	 * Used to make sure the raycast step doesn't accidentally walk over any adjacent data.
+	 */
+	private static ArrayList<Vec3i> getIntersectingColumnsAtPosition(Vec3i rayEndingPos, Vec3f rayDirection)
+	{
+		ArrayList<Vec3i> returnList = new ArrayList<Vec3i>(9);
+		
+		for (int x = -1; x <= 1; x++)
+		{
+			for (int z = -1; z <= 1; z++)
+			{
+				Vec3i pos = new Vec3i(rayEndingPos.x + x, rayEndingPos.y, rayEndingPos.z + z);
+				
+				// check if this column is intersected by the ray
+				if (RayCastUtil.rayIntersectsSquare(rayEndingPos.x, rayEndingPos.z, rayDirection.x, rayDirection.z, pos.x, pos.z, 1))
+				{
+					returnList.add(pos);
+				}
+			}
+		}
+		
+		return returnList;
+	}	
+	
 	
 	
 	
@@ -300,7 +373,7 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 								int topY = bottomY + height;
 								
 								// does this datapoint contain the requested Y position? 
-								if (bottomY < requestedY && requestedY <= topY)
+								if (bottomY <= requestedY && requestedY < topY) // blockPositions start from the bottom of the block, thus "<=" for bottomY, just "<" for topY
 								{
 									// this datapoint contains the requested block position, return it
 									DhApiTerrainDataPoint apiTerrainData = generateApiDatapoint(levelWrapper, mapping, requestedDetailLevel, dataPoint);
@@ -363,11 +436,26 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 					
 					
 					IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
-					DhApiResult<Vec3i> rayCast = INSTANCE.getLodPosFromRay(levelWrapper, MC_RENDER.getCameraBlockPosition(), MC_RENDER.getLookAtVector(), LodUtil.BLOCK_DETAIL_LEVEL);
-					if (rayCast.payload != null && !rayCast.payload.equals(currentDebugVec3i))
+					DhApiResult<DhApiRaycastResult> rayCast = INSTANCE.raycastLodData(levelWrapper, MC_RENDER.getCameraExactPosition(), MC_RENDER.getLookAtVector(), 50);
+					if (rayCast.payload != null && !rayCast.payload.pos.equals(currentDebugVec3i))
 					{
-						currentDebugVec3i = rayCast.payload;
-						LOGGER.info("raycast: " + currentDebugVec3i);
+						currentDebugVec3i = rayCast.payload.pos;
+						
+						// get a string for the block
+						String blockString = "[NULL BLOCK]"; // shouldn't normally happen unless there is an issue with getting the terrain at the given position
+						if (rayCast.payload.dataPoint.blockStateWrapper != null)
+						{
+							if (!rayCast.payload.dataPoint.blockStateWrapper.isAir() && rayCast.payload.dataPoint.blockStateWrapper.getWrappedMcObject_UNSAFE() != null)
+							{
+								blockString = rayCast.payload.dataPoint.blockStateWrapper.getWrappedMcObject_UNSAFE().toString();
+							}
+							else
+							{
+								blockString = "[AIR]";	
+							}
+						}
+						
+						LOGGER.info("raycast: " + currentDebugVec3i + "\t block: " + blockString);
 					}
 					else if (rayCast.payload == null && currentDebugVec3i != null)
 					{
@@ -376,7 +464,7 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 					}
 					
 					
-					int debugPoint = 0;
+					int debugPoint = 0; // a place to put a debugger break point
 				}
 				catch (Exception e)
 				{
