@@ -237,9 +237,6 @@ public class ClientApi
 			}
 			
 			
-			DhApiTerrainDataRepo.asyncDebugMethod(levelWrapper, MC.getPlayerBlockPos().x, MC.getPlayerBlockPos().y, MC.getPlayerBlockPos().z);
-			
-			
 			
 			profiler.push("Render" + ( Config.Client.Advanced.Debugging.rendererMode.get() == ERendererMode.DEFAULT ? "-lods" : "-debug"));
 			try
