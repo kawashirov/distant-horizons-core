@@ -19,6 +19,7 @@
 
 package com.seibel.lod.core.util.math;
 
+import com.seibel.lod.api.objects.math.DhApiVec3i;
 import com.seibel.lod.core.util.MathUtil;
 
 /**
@@ -26,9 +27,9 @@ import com.seibel.lod.core.util.MathUtil;
  * implementation of a 3 element integer vector.
  * 
  * @author James Seibel
- * @version 11-11-2021
+ * @version 2022-11-19
  */
-public class Vec3i
+public class Vec3i extends DhApiVec3i // extends the API object so it can be returned through the API
 {
 	public static Vec3i XNeg = new Vec3i(-1, 0, 0);
 	public static Vec3i XPos = new Vec3i(1, 0, 0);
@@ -37,16 +38,15 @@ public class Vec3i
 	public static Vec3i ZNeg = new Vec3i(0, 0, -1);
 	public static Vec3i ZPos = new Vec3i(0, 0, 1);
 	
-	
-	public int x;
-	public int y;
-	public int z;
+	// x,y,z variables are handled in the parent object
 	
 	
 	
 	public Vec3i()
 	{
-		
+		this.x = 0;
+		this.y = 0;
+		this.z = 0;
 	}
 	
 	public Vec3i(int x, int y, int z)
@@ -56,42 +56,7 @@ public class Vec3i
 		this.z = z;
 	}
 	
-	@Override
-	public boolean equals(Object obj)
-	{
-		if (this == obj)
-		{
-			return true;
-		}
-		else if (obj != null && this.getClass() == obj.getClass())
-		{
-			Vec3i Vec3f = (Vec3i) obj;
-			if (Float.compare(Vec3f.x, this.x) != 0)
-			{
-				return false;
-			}
-			else if (Float.compare(Vec3f.y, this.y) != 0)
-			{
-				return false;
-			}
-			else
-			{
-				return Float.compare(Vec3f.z, this.z) == 0;
-			}
-		}
-		else
-		{
-			return false;
-		}
-	}
 	
-	@Override
-	public int hashCode()
-	{
-		int i = Float.floatToIntBits(this.x);
-		i = 31 * i + Float.floatToIntBits(this.y);
-		return 31 * i + Float.floatToIntBits(this.z);
-	}
 	
 	public void mul(float scalar)
 	{
@@ -181,18 +146,9 @@ public class Vec3i
 	
 	
 	
-	@Override
-	public String toString()
-	{
-		return "[" + this.x + ", " + this.y + ", " + this.z + "]";
-	}
-	
 	
 	// Forge start
-	public Vec3i(int[] values)
-	{
-		set(values);
-	}
+	public Vec3i(int[] values) { this.set(values); }
 	
 	public void set(int[] values)
 	{
@@ -200,4 +156,5 @@ public class Vec3i
 		this.y = values[1];
 		this.z = values[2];
 	}
+	
 }
