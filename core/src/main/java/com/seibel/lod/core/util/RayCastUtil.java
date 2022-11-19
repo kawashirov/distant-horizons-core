@@ -30,15 +30,8 @@ import com.seibel.lod.core.util.math.Vec3i;
 public class RayCastUtil
 {
 	
-	public static boolean rayIntersectsCube(Vec3d rayStartingPos, Vec3f rayDirection, Vec3i cubeMinPos, int cubeWidth)
-	{
-		// the ray must intersect all 3 axis in order to have gone through the cube
-		return rayIntersectsSquare(rayStartingPos.x, rayStartingPos.z, rayDirection.x, rayDirection.z, cubeMinPos.x, cubeMinPos.z, cubeWidth) &&
-				rayIntersectsSquare(rayStartingPos.x, rayStartingPos.y, rayDirection.x, rayDirection.y, cubeMinPos.x, cubeMinPos.y, cubeWidth);
-	}
-	
 	/**
-	 * this function works for any perpendicular axis, X and Y are just for simplicity and could easily be replaced with X, Y, or Z
+	 * This function should work for any 2 perpendicular axis, X and Y could be replaced with X, Y, or Z
 	 *
 	 * @param rayX the ray's starting X position
 	 * @param rayY the ray's starting Z position
@@ -74,7 +67,7 @@ public class RayCastUtil
 			// should catch if this was true
 			return false;
 		}
-		else if (isRoughly(Math.abs(rayYDirection), 1, roundingValue))
+		else if (isRoughly(Math.abs(rayYDirection), 1, roundingValue) || isRoughly(Math.abs(rayXDirection), 0, roundingValue))
 		{
 			// slope is straight up or down
 			
@@ -91,13 +84,13 @@ public class RayCastUtil
 				return rayX >= squareMinX && rayX <= squareMaxX;
 			}
 		}
-		else if (isRoughly(rayYDirection, 0, roundingValue))
+		else if (isRoughly(Math.abs(rayXDirection), 1, roundingValue) || isRoughly(rayYDirection, 0, roundingValue))
 		{
 			// slope is 0 (horizontal line)
 			
 			// is the ray pointing towards the square?
 			if ((rayXDirection > 0 && rayX > squareMaxX) || // right
-					(rayXDirection < 0 && rayX < squareMinX)) // left
+				(rayXDirection < 0 && rayX < squareMinX)) // left
 			{
 				// the ray is pointing away from the square
 				return false;
@@ -132,7 +125,8 @@ public class RayCastUtil
 			double yIntersectMax = slope * squareMaxX;
 			
 			// does the intersection happen before the ray's origin?
-			if (yIntersectMin <= rayY && (yIntersectMax <= rayY))
+			if ((rayYDirection > 0 && (yIntersectMin <= rayY && yIntersectMax <= rayY)) || // moving in pos Y direction
+				(rayYDirection < 0 && (yIntersectMin >= rayY && yIntersectMax >= rayY)))   // moving in neg Y direction
 			{
 				return false;
 			}
@@ -153,7 +147,8 @@ public class RayCastUtil
 			double xIntersectMax = squareMaxY / slope;
 			
 			// does the intersection happen before the ray's origin?
-			if (xIntersectMin <= rayX && (xIntersectMax <= rayX))
+			if ((rayXDirection > 0 && (xIntersectMin <= rayX && xIntersectMax <= rayX)) || // moving in pos X direction
+				(rayXDirection < 0 && (xIntersectMin >= rayX && xIntersectMax >= rayX)))   // moving in neg X direction
 			{
 				return false;
 			}
