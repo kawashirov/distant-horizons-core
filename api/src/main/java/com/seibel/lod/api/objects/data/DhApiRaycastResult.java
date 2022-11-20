@@ -16,8 +16,8 @@ public class DhApiRaycastResult
 	 * LOD position of this raycast. <br><br>
 	 * 
 	 * <strong>Note: </strong>
-	 * This will NOT be the block position for the given raycast
-	 * if the LOD is more than one block tall. In that case this will
+	 * This will NOT be the exact block position if the LOD the ray
+	 * hits is more than one block tall. In that case this will
 	 * be the bottom block position for that LOD.
 	 */
 	public final DhApiVec3i pos;
