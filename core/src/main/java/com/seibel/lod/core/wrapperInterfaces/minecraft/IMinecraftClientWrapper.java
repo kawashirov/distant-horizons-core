@@ -73,8 +73,8 @@ public interface IMinecraftClientWrapper extends IBindable
 	DhBlockPos getPlayerBlockPos();
 	
 	DhChunkPos getPlayerChunkPos();
-
-	@Deprecated
+	
+	/** Returns the level the client is currently in. */
 	ILevelWrapper getWrappedClientWorld();
 	
 	File getGameDirectory();
