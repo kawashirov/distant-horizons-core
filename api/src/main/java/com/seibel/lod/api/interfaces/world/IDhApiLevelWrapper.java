@@ -43,7 +43,7 @@ public interface IDhApiLevelWrapper extends IDhApiUnsafeWrapper
 	
 	/** 
 	 * Returns the lowest possible block position for the level. <br>
-	 * For MC versions before 1.19 this will return 0.
+	 * For MC versions before 1.18 this will return 0.
 	 */
 	default int getMinHeight() { return 0; }
 	

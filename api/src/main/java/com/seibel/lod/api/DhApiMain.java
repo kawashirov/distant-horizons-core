@@ -3,6 +3,7 @@ package com.seibel.lod.api;
 import com.seibel.lod.api.interfaces.config.IDhApiConfig;
 import com.seibel.lod.api.interfaces.override.IDhApiOverrideable;
 import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGeneratorOverrideRegister;
+import com.seibel.lod.api.interfaces.world.IDhApiWorldProxy;
 import com.seibel.lod.api.methods.override.DhApiWorldGeneratorOverrideRegister;
 import com.seibel.lod.core.DependencyInjection.DhApiEventInjector;
 import com.seibel.lod.core.DependencyInjection.OverrideInjector;
@@ -24,7 +25,7 @@ import com.seibel.lod.core.interfaces.dependencyInjection.IOverrideInjector;
  * the concrete object we replaced, there would be issues.
  *
  * @author James Seibel
- * @version 2022-11-12
+ * @version 2022-11-20
  */
 public class DhApiMain
 {
@@ -51,6 +52,19 @@ public class DhApiMain
 	 * Used to interact with Distant Horizons' terrain data.
 	 */
 	public static IDhApiTerrainDataRepo terrainRepo = null;
+	
+	/**
+	 * <strong>WARNING:</strong> will be null until after DH initializes for the first time. <br><br>
+	 * 
+	 * Use a {@link com.seibel.lod.api.methods.events.abstractEvents.DhApiAfterDhInitEvent DhApiAfterDhInitEvent}
+	 * along with the {@link DhApiMain#events ApiCoreInjectors.events} to be notified when this can
+	 * be safely used. <br><br>
+	 * 
+	 * Used to interact with Distant Horizons' currently loaded world and
+	 * get levels to use with the {@link DhApiMain#terrainRepo}.
+	 */
+	public static IDhApiWorldProxy worldProxy = null;
+	
 	
 	
 	
