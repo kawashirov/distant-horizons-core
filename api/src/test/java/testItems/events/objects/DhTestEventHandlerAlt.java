@@ -8,7 +8,7 @@ import testItems.events.abstractObjects.DhApiTestEvent;
  * @author James Seibel
  * @version 2022-9-11
  */
-public class DhTestEvent extends DhApiTestEvent
+public class DhTestEventHandlerAlt extends DhApiTestEvent
 {
 	public Boolean eventFiredValue = null;
 	

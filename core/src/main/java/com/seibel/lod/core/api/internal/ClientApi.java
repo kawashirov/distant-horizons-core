@@ -22,7 +22,6 @@ package com.seibel.lod.core.api.internal;
 import com.seibel.lod.api.methods.events.abstractEvents.*;
 import com.seibel.lod.api.methods.events.sharedParameterObjects.DhApiRenderParam;
 import com.seibel.lod.core.DependencyInjection.DhApiEventInjector;
-import com.seibel.lod.core.api.external.methods.data.DhApiTerrainDataRepo;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.ModInfo;

@@ -1,15 +1,15 @@
 package com.seibel.lod.api.methods.events.interfaces;
 
+import com.seibel.lod.api.objects.events.DhApiEventDefinition;
 import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
 
 /**
- * A combination of all interfaces required by all
- * DH Api events.
- *
+ * The interface used by all DH Api events.
+ * 
  * @param <T> This is the datatype that will be passed into the event handler's method.
- *  					  
+ * 
  * @author James Seibel
- * @version 2022-9-6
+ * @version 2022-11-20
  */
 public interface IDhApiEvent<T> extends IBindable
 {
@@ -18,11 +18,12 @@ public interface IDhApiEvent<T> extends IBindable
 	//==========//
 	
 	/**
-	 * Returns if the event should be automatically unbound
+	 * Returns true if the event should be automatically unbound
 	 * after firing. <br>
 	 * Can be useful for one time setup events or waiting for a specific game state. <br> <Br>
 	 *
-	 * Defaults to False (the event will not be removed after firing).
+	 * Defaults to False
+	 * IE: The event will not be removed after firing and will continue firing until removed.
 	 */
 	default boolean removeAfterFiring() { return false; };
 	
@@ -31,8 +32,11 @@ public interface IDhApiEvent<T> extends IBindable
 	// internal //
 	//==========//
 	
-	/** Returns true if the event can be canceled. */
-	boolean getCancelable();
+	/** 
+	 * The event definition includes meta information about how the event will behave. <br>
+	 * For example: if the event is cancelable or not.
+	 */
+	DhApiEventDefinition getEventDefinition();
 	
 	/**
 	 * Called internally by Distant Horizons when the event happens.

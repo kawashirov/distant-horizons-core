@@ -10,9 +10,8 @@ import com.seibel.lod.core.events.ApiEventDefinitionHandler;
  * @author James Seibel
  * @version 2022-11-20
  */
-public abstract class DhApiTestEvent implements IDhApiEvent<Boolean>
+public abstract class DhApiOneTimeTestEvent implements IDhApiEvent<Boolean>
 {
-	
 	public abstract void onTestEvent(Boolean input);
 	
 	/** just used for testing */
@@ -32,16 +31,16 @@ public abstract class DhApiTestEvent implements IDhApiEvent<Boolean>
 	}
 	
 	private static boolean firstTimeSetupComplete = false;
-	public DhApiTestEvent()
+	public DhApiOneTimeTestEvent()
 	{
 		if (!firstTimeSetupComplete)
 		{
 			firstTimeSetupComplete = true;
-			ApiEventDefinitionHandler.setEventDefinition(DhApiTestEvent.class, new DhApiEventDefinition(false, false));
+			ApiEventDefinitionHandler.setEventDefinition(DhApiOneTimeTestEvent.class, new DhApiEventDefinition(false, true));
 		}
 	}
 	
 	@Override
-	public final DhApiEventDefinition getEventDefinition() { return ApiEventDefinitionHandler.getEventDefinition(DhApiTestEvent.class); }
+	public final DhApiEventDefinition getEventDefinition() { return ApiEventDefinitionHandler.getEventDefinition(DhApiOneTimeTestEvent.class); }
 	
 }

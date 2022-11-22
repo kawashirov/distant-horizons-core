@@ -2,13 +2,14 @@ package com.seibel.lod.api.methods.events.abstractEvents;
 
 import com.seibel.lod.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.lod.api.methods.events.interfaces.IDhApiEvent;
+import com.seibel.lod.api.objects.events.DhApiEventDefinition;
+import com.seibel.lod.core.events.ApiEventDefinitionHandler;
 
 /**
  * @author James Seibel
- * @version 2022-9-10
+ * @version 2022-11-21
  */
-public abstract class DhApiLevelUnloadEvent
-	implements IDhApiEvent<DhApiLevelUnloadEvent.EventParam>
+public abstract class DhApiLevelUnloadEvent implements IDhApiEvent<DhApiLevelUnloadEvent.EventParam>
 {
 	/** Fired before Distant Horizons unloads a level. */
 	public abstract void onLevelUnload(EventParam input);
@@ -21,12 +22,21 @@ public abstract class DhApiLevelUnloadEvent
 	@Override
 	public final boolean fireEvent(EventParam input)
 	{
-		onLevelUnload(input);
+		this.onLevelUnload(input);
 		return false;
 	}
 	
+	private static boolean firstTimeSetupComplete = false;
+	public DhApiLevelUnloadEvent()
+	{
+		if (!firstTimeSetupComplete)
+		{
+			firstTimeSetupComplete = true;
+			ApiEventDefinitionHandler.setEventDefinition(DhApiLevelUnloadEvent.class, new DhApiEventDefinition(false, false));
+		}
+	}
 	@Override
-	public final boolean getCancelable() { return false; }
+	public final DhApiEventDefinition getEventDefinition() { return ApiEventDefinitionHandler.getEventDefinition(DhApiLevelUnloadEvent.class); }
 	
 	
 	//==================//
