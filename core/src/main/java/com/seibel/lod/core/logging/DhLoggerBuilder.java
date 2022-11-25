@@ -31,10 +31,14 @@ public class DhLoggerBuilder
 	{
 		return LogManager.getLogger(ModInfo.NAME + "-" + className);
 	}
+	
+	/** Returns a logger for the given class. */
 	public static Logger getLogger(Class<?> clazz)
 	{
 		return LogManager.getLogger(ModInfo.NAME + "-" + clazz.getSimpleName());
 	}
+	
+	/** Attempts to return the logger for this containing class. */
 	public static Logger getLogger()
 	{
 		StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
