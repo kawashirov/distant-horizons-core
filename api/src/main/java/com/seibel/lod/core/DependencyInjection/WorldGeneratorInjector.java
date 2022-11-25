@@ -31,7 +31,7 @@ import java.util.HashMap;
  * This is done so other mods can override our world generator(s) to improve or replace them.
  *
  * @author James Seibel
- * @version 2022-9-8
+ * @version 2022-11-25
  */
 public class WorldGeneratorInjector
 {
@@ -78,7 +78,7 @@ public class WorldGeneratorInjector
 	 */
 	public void bind(IDhApiWorldGenerator worldGeneratorImplementation)  throws IllegalStateException, IllegalArgumentException
 	{
-		bind(null, worldGeneratorImplementation);
+		this.bind(null, worldGeneratorImplementation);
 	}
 
 	/**
@@ -93,17 +93,17 @@ public class WorldGeneratorInjector
 		if (levelForWorldGenerator != null)
 		{
 			// bind this generator to a specific level
-			if (!worldGeneratorByLevelWrapper.containsKey(levelForWorldGenerator))
+			if (!this.worldGeneratorByLevelWrapper.containsKey(levelForWorldGenerator))
 			{
-				worldGeneratorByLevelWrapper.put(levelForWorldGenerator, new OverrideInjector(this.corePackagePath));
+				this.worldGeneratorByLevelWrapper.put(levelForWorldGenerator, new OverrideInjector(this.corePackagePath));
 			}
-
-			worldGeneratorByLevelWrapper.get(levelForWorldGenerator).bind(IDhApiWorldGenerator.class, worldGeneratorImplementation);
+			
+			this.worldGeneratorByLevelWrapper.get(levelForWorldGenerator).bind(IDhApiWorldGenerator.class, worldGeneratorImplementation);
 		}
 		else
 		{
 			// a null level wrapper binds the generator to all levels
-			backupUniversalWorldGenerators.bind(IDhApiWorldGenerator.class, worldGeneratorImplementation);
+			this.backupUniversalWorldGenerators.bind(IDhApiWorldGenerator.class, worldGeneratorImplementation);
 		}
 	}
 
@@ -117,7 +117,7 @@ public class WorldGeneratorInjector
 	 */
 	public IDhApiWorldGenerator get() throws ClassCastException
 	{
-		return backupUniversalWorldGenerators.get(IDhApiWorldGenerator.class);
+		return this.backupUniversalWorldGenerators.get(IDhApiWorldGenerator.class);
 	}
 
 	/**
@@ -129,21 +129,21 @@ public class WorldGeneratorInjector
 	 */
 	public IDhApiWorldGenerator get(IDhApiLevelWrapper levelForWorldGenerator) throws ClassCastException
 	{
-		if (!worldGeneratorByLevelWrapper.containsKey(levelForWorldGenerator))
+		if (!this.worldGeneratorByLevelWrapper.containsKey(levelForWorldGenerator))
 		{
 			// no generator exists for this specific level.
 			// check for a backup universal world generator
-			return backupUniversalWorldGenerators.get(IDhApiWorldGenerator.class);
+			return this.backupUniversalWorldGenerators.get(IDhApiWorldGenerator.class);
 		}
 
 		// use the existing world generator
-		return worldGeneratorByLevelWrapper.get(levelForWorldGenerator).get(IDhApiWorldGenerator.class);
+		return this.worldGeneratorByLevelWrapper.get(levelForWorldGenerator).get(IDhApiWorldGenerator.class);
 	}
 
 
 
 	/** Removes all bound world generators. */
-	public void clearBoundDependencies() // TODO this should be done when leaving the current world/server
+	public void clear()
 	{
 		this.worldGeneratorByLevelWrapper.clear();
 		this.backupUniversalWorldGenerators.clear();

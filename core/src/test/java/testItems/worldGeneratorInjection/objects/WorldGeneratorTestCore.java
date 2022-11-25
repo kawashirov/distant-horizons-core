@@ -34,7 +34,7 @@ public class WorldGeneratorTestCore implements IDhApiWorldGenerator
 	
 	/** Returns which thread chunk generation requests can be created on. */
 	@Override 
-	public EDhApiWorldGenThreadMode getCoreThreadingMode()
+	public EDhApiWorldGenThreadMode getThreadingMode()
 	{
 		return THREAD_MODE;
 	}

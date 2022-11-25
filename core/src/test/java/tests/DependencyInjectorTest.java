@@ -189,7 +189,7 @@ public class DependencyInjectorTest
 		// standard get
 		generator = TEST_INJECTOR.get();
 		Assert.assertEquals("Override returned incorrect override type.", generator.getPriority(), OverrideInjector.CORE_PRIORITY);
-		Assert.assertEquals("Incorrect generator returned.", generator.getCoreThreadingMode(), WorldGeneratorTestCore.THREAD_MODE);
+		Assert.assertEquals("Incorrect generator returned.", generator.getThreadingMode(), WorldGeneratorTestCore.THREAD_MODE);
 
 
 		// secondary override
@@ -197,7 +197,7 @@ public class DependencyInjectorTest
 		// priority gets
 		generator = TEST_INJECTOR.get();
 		Assert.assertEquals("Override returned incorrect override type.", generator.getPriority(), WorldGeneratorTestSecondary.PRIORITY);
-		Assert.assertEquals("Incorrect override object returned.", generator.getCoreThreadingMode(), WorldGeneratorTestSecondary.THREAD_MODE);
+		Assert.assertEquals("Incorrect override object returned.", generator.getThreadingMode(), WorldGeneratorTestSecondary.THREAD_MODE);
 
 
 		// primary override
@@ -205,13 +205,13 @@ public class DependencyInjectorTest
 		// priority gets
 		generator = TEST_INJECTOR.get();
 		Assert.assertEquals("Override returned incorrect override type.", generator.getPriority(), WorldGeneratorTestPrimary.PRIORITY);
-		Assert.assertEquals("Incorrect override object returned.", generator.getCoreThreadingMode(), WorldGeneratorTestPrimary.THREAD_MODE);
+		Assert.assertEquals("Incorrect override object returned.", generator.getThreadingMode(), WorldGeneratorTestPrimary.THREAD_MODE);
 
 
 
 		// in-line get
 		// (make sure the returned type is correct and compiles, the actual value doesn't matter)
-		EDhApiWorldGenThreadMode threadMode = TEST_INJECTOR.get().getCoreThreadingMode();
+		EDhApiWorldGenThreadMode threadMode = TEST_INJECTOR.get().getThreadingMode();
 
 	}
 
@@ -243,7 +243,7 @@ public class DependencyInjectorTest
 		generator = TEST_INJECTOR.get();
 		Assert.assertNotNull("Backup generator not bound.", generator);
 		Assert.assertEquals("Incorrect backup generator bound.", generator.getPriority(), OverrideInjector.CORE_PRIORITY);
-		Assert.assertEquals("Incorrect backup generator bound.", generator.getCoreThreadingMode(), WorldGeneratorTestCore.THREAD_MODE);
+		Assert.assertEquals("Incorrect backup generator bound.", generator.getThreadingMode(), WorldGeneratorTestCore.THREAD_MODE);
 
 
 		// bind level specific
@@ -254,13 +254,13 @@ public class DependencyInjectorTest
 		generator = TEST_INJECTOR.get(boundLevel);
 		Assert.assertNotNull("Level generator not bound.", generator);
 		Assert.assertEquals("Incorrect level generator bound.", generator.getPriority(), WorldGeneratorTestPrimary.PRIORITY);
-		Assert.assertEquals("Incorrect level generator bound.", generator.getCoreThreadingMode(), WorldGeneratorTestPrimary.THREAD_MODE);
+		Assert.assertEquals("Incorrect level generator bound.", generator.getThreadingMode(), WorldGeneratorTestPrimary.THREAD_MODE);
 
 		// get unbound level generator
 		generator = TEST_INJECTOR.get(unboundLevel);
 		Assert.assertNotNull("Backup level generator not bound.", generator);
 		Assert.assertEquals("Incorrect level generator bound.", generator.getPriority(), OverrideInjector.CORE_PRIORITY);
-		Assert.assertEquals("Incorrect level generator bound.", generator.getCoreThreadingMode(), WorldGeneratorTestCore.THREAD_MODE);
+		Assert.assertEquals("Incorrect level generator bound.", generator.getThreadingMode(), WorldGeneratorTestCore.THREAD_MODE);
 
 	}
 	

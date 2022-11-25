@@ -33,7 +33,7 @@ public class WorldGeneratorTestPrimary implements IDhApiWorldGenerator
 	//======================//
 
 	@Override
-	public EDhApiWorldGenThreadMode getCoreThreadingMode() { return THREAD_MODE; }
+	public EDhApiWorldGenThreadMode getThreadingMode() { return THREAD_MODE; }
 	
 	@Override 
 	public IDhApiChunkWrapper generateCoreChunk(int chunkPosX, int chunkPosZ, IDhApiLevelWrapper serverLevelWrapper, EDhApiWorldGenerationStep maxStepToGenerate)

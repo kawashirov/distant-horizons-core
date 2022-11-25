@@ -13,7 +13,7 @@ import com.seibel.lod.api.interfaces.world.IDhApiLevelWrapper;
 public interface IDhApiWorldGenerator extends IDhApiOverrideable
 {
 	/** Returns which thread chunk generation requests can be created on. */
-	EDhApiWorldGenThreadMode getCoreThreadingMode();
+	EDhApiWorldGenThreadMode getThreadingMode();
 	
 	IDhApiChunkWrapper generateCoreChunk(int chunkPosX, int chunkPosZ, IDhApiLevelWrapper serverLevelWrapper, EDhApiWorldGenerationStep maxStepToGenerate);
 	
