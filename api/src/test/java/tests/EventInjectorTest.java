@@ -1,8 +1,13 @@
 package tests;
 
+import com.seibel.lod.api.objects.events.DhApiEventDefinition;
 import com.seibel.lod.core.DependencyInjection.ApiEventInjector;
+import com.seibel.lod.core.events.ApiEventDefinitionHandler;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Order;
 import testItems.events.abstractObjects.DhApiOneTimeTestEvent;
 import testItems.events.objects.DhOneTimeTestEventHandler;
 import testItems.events.objects.DhOneTimeTestEventHandlerAlt;
@@ -19,13 +24,25 @@ import java.util.ArrayList;
  */
 public class EventInjectorTest
 {
+	@Before
+	public void testSetup()
+	{
+		// reset the injectors and event definitions
+		ApiEventInjector.INSTANCE.clear();
+		ApiEventDefinitionHandler.INSTANCE.clear();
+		
+		DhApiTestEvent.firstTimeSetupComplete = false;
+		DhApiOneTimeTestEvent.firstTimeSetupComplete = false;
+	}
+	
+	
+	
 	
 	@Test
 	public void testGeneralAndRecurringEvents() // this also tests list dependencies since there can be more than one event handler bound per event
 	{
 		// Injector setup
 		ApiEventInjector TEST_EVENT_HANDLER = ApiEventInjector.INSTANCE;
-		TEST_EVENT_HANDLER.clear();
 		
 
 		// pre-dependency setup
@@ -88,11 +105,18 @@ public class EventInjectorTest
 	}
 	
 	@Test
+	public void testEventDefinition()
+	{
+		String errorMessagePrefix = "Missing " + DhApiEventDefinition.class.getSimpleName() + " for event class [";
+		Assert.assertNotNull(errorMessagePrefix + DhApiTestEvent.class.getSimpleName() + "]", ApiEventDefinitionHandler.getEventDefinition(DhApiTestEvent.class));
+		Assert.assertNotNull(errorMessagePrefix + DhApiOneTimeTestEvent.class.getSimpleName() + "]", ApiEventDefinitionHandler.getEventDefinition(DhApiOneTimeTestEvent.class));
+	}
+	
+	@Test
 	public void testOneTimeEventFiring()
 	{
 		// Injector setup
 		ApiEventInjector TEST_EVENT_HANDLER = ApiEventInjector.INSTANCE;
-		TEST_EVENT_HANDLER.clear();
 		
 		
 		// pre-dependency setup
@@ -124,7 +148,7 @@ public class EventInjectorTest
 		// recurring event test
 		TEST_EVENT_HANDLER.bind(DhApiTestEvent.class, new DhTestEventHandler());
 		ArrayList<DhApiTestEvent> recurringEventList = TEST_EVENT_HANDLER.getAll(DhApiTestEvent.class);
-		Assert.assertNull("This unrealted recurring event shouldn't have been fired.", recurringEventList.get(0).getTestValue());
+		Assert.assertNull("This unrelated recurring event shouldn't have been fired.", recurringEventList.get(0).getTestValue());
 		
 	}
 	

@@ -19,6 +19,7 @@
 
 package com.seibel.lod.core.events;
 
+import com.seibel.lod.api.methods.events.abstractEvents.DhApiBeforeDhInitEvent;
 import com.seibel.lod.api.methods.events.interfaces.IDhApiEvent;
 import com.seibel.lod.api.objects.events.DhApiEventDefinition;
 import org.apache.logging.log4j.LogManager;
@@ -38,34 +39,40 @@ public class ApiEventDefinitionHandler
 {
 	private static final Logger LOGGER = LogManager.getLogger(ApiEventDefinitionHandler.class.getSimpleName());
 	// note to self: don't try adding a generic interface type here, the event dependency handler's constructor method won't accept it
-	private static final HashMap<Class<? extends IDhApiEvent>, DhApiEventDefinition> DEFINITIONS_BY_EVENT_INTERFACE = new HashMap<>();
+	private final HashMap<Class<? extends IDhApiEvent>, DhApiEventDefinition> DEFINITIONS_BY_EVENT_INTERFACE = new HashMap<>();
 	
-	public ApiEventDefinitionHandler INSTANCE = new ApiEventDefinitionHandler();
+	public static final ApiEventDefinitionHandler INSTANCE = new ApiEventDefinitionHandler();
 	
 	
 	
-	private ApiEventDefinitionHandler() {  }
+	private ApiEventDefinitionHandler() { }
+	
+	/** 
+	 * This should only be used for unit testing.
+	 * Under normal circumstances there isn't any reason to clear the event definitions. 
+	 */
+	public void clear() { this.DEFINITIONS_BY_EVENT_INTERFACE.clear(); }
 	
 	
 	
 	public static void setEventDefinition(Class<? extends IDhApiEvent> eventInterface, DhApiEventDefinition definition)
 	{
-		if (DEFINITIONS_BY_EVENT_INTERFACE.containsKey(eventInterface))
+		if (INSTANCE.DEFINITIONS_BY_EVENT_INTERFACE.containsKey(eventInterface))
 		{
 			LOGGER.warn("duplicate key added [" + eventInterface.getSimpleName() + "]");
 		}
 		
-		DEFINITIONS_BY_EVENT_INTERFACE.put(eventInterface, definition);
+		INSTANCE.DEFINITIONS_BY_EVENT_INTERFACE.put(eventInterface, definition);
 	}
 	
 	public static DhApiEventDefinition getEventDefinition(Class<? extends IDhApiEvent> eventInterface)
 	{
-		if (!DEFINITIONS_BY_EVENT_INTERFACE.containsKey(eventInterface))
+		if (!INSTANCE.DEFINITIONS_BY_EVENT_INTERFACE.containsKey(eventInterface))
 		{
 			throw new NullPointerException("event definition missing for: [" + eventInterface.getSimpleName() + "]");
 		}
 		
-		return DEFINITIONS_BY_EVENT_INTERFACE.get(eventInterface);
+		return INSTANCE.DEFINITIONS_BY_EVENT_INTERFACE.get(eventInterface);
 	}
 	
 }

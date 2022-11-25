@@ -31,7 +31,7 @@ public abstract class DhApiTestEvent implements IDhApiEvent<Boolean>
 		return input;
 	}
 	
-	private static boolean firstTimeSetupComplete = false;
+	public static boolean firstTimeSetupComplete = false;
 	public DhApiTestEvent()
 	{
 		if (!firstTimeSetupComplete)
