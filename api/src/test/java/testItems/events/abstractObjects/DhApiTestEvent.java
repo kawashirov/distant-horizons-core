@@ -2,7 +2,6 @@ package testItems.events.abstractObjects;
 
 import com.seibel.lod.api.methods.events.interfaces.IDhApiEvent;
 import com.seibel.lod.api.objects.events.DhApiEventDefinition;
-import com.seibel.lod.core.events.ApiEventDefinitionHandler;
 
 /**
  * A dummy event implementation used for unit testing.
@@ -31,17 +30,8 @@ public abstract class DhApiTestEvent implements IDhApiEvent<Boolean>
 		return input;
 	}
 	
-	public static boolean firstTimeSetupComplete = false;
-	public DhApiTestEvent()
-	{
-		if (!firstTimeSetupComplete)
-		{
-			firstTimeSetupComplete = true;
-			ApiEventDefinitionHandler.setEventDefinition(DhApiTestEvent.class, new DhApiEventDefinition(false, false));
-		}
-	}
-	
+	public final static DhApiEventDefinition EVENT_DEFINITION = new DhApiEventDefinition(false, false);
 	@Override
-	public final DhApiEventDefinition getEventDefinition() { return ApiEventDefinitionHandler.getEventDefinition(DhApiTestEvent.class); }
+	public final DhApiEventDefinition getEventDefinition() { return EVENT_DEFINITION; }
 	
 }

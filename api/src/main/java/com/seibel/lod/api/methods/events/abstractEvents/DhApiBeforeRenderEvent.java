@@ -26,17 +26,9 @@ public abstract class DhApiBeforeRenderEvent implements IDhApiEvent<DhApiBeforeR
 	@Override
 	public final boolean fireEvent(EventParam input) { return this.beforeRender(input); }
 	
-	private static boolean firstTimeSetupComplete = false;
-	public DhApiBeforeRenderEvent()
-	{
-		if (!firstTimeSetupComplete)
-		{
-			firstTimeSetupComplete = true;
-			ApiEventDefinitionHandler.setEventDefinition(DhApiBeforeRenderEvent.class, new DhApiEventDefinition(true, false));
-		}
-	}
+	public final static DhApiEventDefinition EVENT_DEFINITION = new DhApiEventDefinition(true, false);
 	@Override
-	public final DhApiEventDefinition getEventDefinition() { return ApiEventDefinitionHandler.getEventDefinition(DhApiBeforeRenderEvent.class); }
+	public final DhApiEventDefinition getEventDefinition() { return EVENT_DEFINITION; }
 	
 	
 	//==================//

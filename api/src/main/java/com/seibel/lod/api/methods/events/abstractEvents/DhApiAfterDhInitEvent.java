@@ -24,17 +24,9 @@ public abstract class DhApiAfterDhInitEvent implements IDhApiEvent<Void>
 		this.afterDistantHorizonsInit();
 		return false;
 	}
-	
-	private static boolean firstTimeSetupComplete = false;
-	public DhApiAfterDhInitEvent()
-	{
-		if (!firstTimeSetupComplete)
-		{
-			firstTimeSetupComplete = true;
-			ApiEventDefinitionHandler.setEventDefinition(DhApiAfterDhInitEvent.class, new DhApiEventDefinition(false, true));
-		}
-	}
+		
+	public final static DhApiEventDefinition EVENT_DEFINITION = new DhApiEventDefinition(false, true);
 	@Override
-	public final DhApiEventDefinition getEventDefinition() { return ApiEventDefinitionHandler.getEventDefinition(DhApiAfterDhInitEvent.class); }
+	public final DhApiEventDefinition getEventDefinition() { return EVENT_DEFINITION; }
 	
 }

@@ -26,17 +26,9 @@ public abstract class DhApiLevelLoadEvent implements IDhApiEvent<DhApiLevelLoadE
 		return false;
 	}
 	
-	private static boolean firstTimeSetupComplete = false;
-	public DhApiLevelLoadEvent()
-	{
-		if (!firstTimeSetupComplete)
-		{
-			firstTimeSetupComplete = true;
-			ApiEventDefinitionHandler.setEventDefinition(DhApiLevelLoadEvent.class, new DhApiEventDefinition(false, false));
-		}
-	}
+	public final static DhApiEventDefinition EVENT_DEFINITION = new DhApiEventDefinition(false, false);
 	@Override
-	public final DhApiEventDefinition getEventDefinition() { return ApiEventDefinitionHandler.getEventDefinition(DhApiLevelLoadEvent.class); }
+	public final DhApiEventDefinition getEventDefinition() { return EVENT_DEFINITION; }
 	
 	
 	//==================//

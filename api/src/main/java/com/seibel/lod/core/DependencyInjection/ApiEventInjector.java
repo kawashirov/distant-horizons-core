@@ -53,7 +53,7 @@ public class ApiEventInjector extends DependencyInjector<IDhApiEvent> implements
 	public void bind(Class<? extends IDhApiEvent> abstractEvent, IDhApiEvent eventImplementation) throws IllegalStateException, IllegalArgumentException
 	{
 		// is this a one time event?
-		if (ApiEventDefinitionHandler.getEventDefinition(abstractEvent).isOneTimeEvent)
+		if (ApiEventDefinitionHandler.INSTANCE.getEventDefinition(abstractEvent).isOneTimeEvent)
 		{
 			// has this one time event been fired yet?
 			if (firedOneTimeEventParamsByEventInterface.containsKey(abstractEvent))
@@ -120,7 +120,7 @@ public class ApiEventInjector extends DependencyInjector<IDhApiEvent> implements
 		boolean cancelEvent = false;
 		
 		// if this is a one time event, record that it was called
-		if (ApiEventDefinitionHandler.getEventDefinition(abstractEvent).isOneTimeEvent && 
+		if (ApiEventDefinitionHandler.INSTANCE.getEventDefinition(abstractEvent).isOneTimeEvent && 
 			!firedOneTimeEventParamsByEventInterface.containsKey(abstractEvent))
 		{
 			firedOneTimeEventParamsByEventInterface.put(abstractEvent, eventParameterObject);

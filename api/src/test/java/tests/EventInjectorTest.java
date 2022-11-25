@@ -1,13 +1,12 @@
 package tests;
 
+import com.seibel.lod.api.methods.events.abstractEvents.DhApiAfterDhInitEvent;
 import com.seibel.lod.api.objects.events.DhApiEventDefinition;
 import com.seibel.lod.core.DependencyInjection.ApiEventInjector;
 import com.seibel.lod.core.events.ApiEventDefinitionHandler;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Order;
 import testItems.events.abstractObjects.DhApiOneTimeTestEvent;
 import testItems.events.objects.DhOneTimeTestEventHandler;
 import testItems.events.objects.DhOneTimeTestEventHandlerAlt;
@@ -31,8 +30,12 @@ public class EventInjectorTest
 		ApiEventInjector.INSTANCE.clear();
 		ApiEventDefinitionHandler.INSTANCE.clear();
 		
-		DhApiTestEvent.firstTimeSetupComplete = false;
-		DhApiOneTimeTestEvent.firstTimeSetupComplete = false;
+		
+		// register test events
+		ApiEventDefinitionHandler.INSTANCE.setEventDefinition(DhApiTestEvent.class, DhApiTestEvent.EVENT_DEFINITION);
+		ApiEventDefinitionHandler.INSTANCE.setEventDefinition(DhApiOneTimeTestEvent.class, DhApiOneTimeTestEvent.EVENT_DEFINITION);
+		ApiEventDefinitionHandler.INSTANCE.addInitialBindings();
+		
 	}
 	
 	
@@ -108,8 +111,9 @@ public class EventInjectorTest
 	public void testEventDefinition()
 	{
 		String errorMessagePrefix = "Missing " + DhApiEventDefinition.class.getSimpleName() + " for event class [";
-		Assert.assertNotNull(errorMessagePrefix + DhApiTestEvent.class.getSimpleName() + "]", ApiEventDefinitionHandler.getEventDefinition(DhApiTestEvent.class));
-		Assert.assertNotNull(errorMessagePrefix + DhApiOneTimeTestEvent.class.getSimpleName() + "]", ApiEventDefinitionHandler.getEventDefinition(DhApiOneTimeTestEvent.class));
+		Assert.assertNotNull(errorMessagePrefix + DhApiTestEvent.class.getSimpleName() + "]", ApiEventDefinitionHandler.INSTANCE.getEventDefinition(DhApiTestEvent.class));
+		Assert.assertNotNull(errorMessagePrefix + DhApiOneTimeTestEvent.class.getSimpleName() + "]", ApiEventDefinitionHandler.INSTANCE.getEventDefinition(DhApiOneTimeTestEvent.class));
+		Assert.assertNotNull(errorMessagePrefix + DhApiAfterDhInitEvent.class.getSimpleName() + "]", ApiEventDefinitionHandler.INSTANCE.getEventDefinition(DhApiAfterDhInitEvent.class));
 	}
 	
 	@Test

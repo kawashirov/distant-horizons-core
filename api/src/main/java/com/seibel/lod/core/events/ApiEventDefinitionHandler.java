@@ -19,7 +19,7 @@
 
 package com.seibel.lod.core.events;
 
-import com.seibel.lod.api.methods.events.abstractEvents.DhApiBeforeDhInitEvent;
+import com.seibel.lod.api.methods.events.abstractEvents.*;
 import com.seibel.lod.api.methods.events.interfaces.IDhApiEvent;
 import com.seibel.lod.api.objects.events.DhApiEventDefinition;
 import org.apache.logging.log4j.LogManager;
@@ -45,7 +45,20 @@ public class ApiEventDefinitionHandler
 	
 	
 	
-	private ApiEventDefinitionHandler() { }
+	private ApiEventDefinitionHandler() { this.addInitialBindings(); }
+	
+	public void addInitialBindings()
+	{
+		this.setEventDefinition(DhApiAfterDhInitEvent.class, DhApiAfterDhInitEvent.EVENT_DEFINITION);
+		this.setEventDefinition(DhApiAfterRenderEvent.class, DhApiAfterRenderEvent.EVENT_DEFINITION);
+		this.setEventDefinition(DhApiBeforeDhInitEvent.class, DhApiBeforeDhInitEvent.EVENT_DEFINITION);
+		this.setEventDefinition(DhApiBeforeRenderEvent.class, DhApiBeforeRenderEvent.EVENT_DEFINITION);
+		this.setEventDefinition(DhApiLevelLoadEvent.class, DhApiLevelLoadEvent.EVENT_DEFINITION);
+		this.setEventDefinition(DhApiLevelSaveEvent.class, DhApiLevelSaveEvent.EVENT_DEFINITION);
+		this.setEventDefinition(DhApiLevelUnloadEvent.class, DhApiLevelUnloadEvent.EVENT_DEFINITION);
+		
+	}
+	
 	
 	/** 
 	 * This should only be used for unit testing.
@@ -55,24 +68,27 @@ public class ApiEventDefinitionHandler
 	
 	
 	
-	public static void setEventDefinition(Class<? extends IDhApiEvent> eventInterface, DhApiEventDefinition definition)
+	public void setEventDefinition(Class<? extends IDhApiEvent> eventInterface, DhApiEventDefinition definition)
 	{
-		if (INSTANCE.DEFINITIONS_BY_EVENT_INTERFACE.containsKey(eventInterface))
+		if (this.DEFINITIONS_BY_EVENT_INTERFACE.containsKey(eventInterface))
 		{
 			LOGGER.warn("duplicate key added [" + eventInterface.getSimpleName() + "]");
 		}
 		
-		INSTANCE.DEFINITIONS_BY_EVENT_INTERFACE.put(eventInterface, definition);
+		this.DEFINITIONS_BY_EVENT_INTERFACE.put(eventInterface, definition);
 	}
 	
-	public static DhApiEventDefinition getEventDefinition(Class<? extends IDhApiEvent> eventInterface)
+	public DhApiEventDefinition getEventDefinition(Class<? extends IDhApiEvent> eventInterface)
 	{
-		if (!INSTANCE.DEFINITIONS_BY_EVENT_INTERFACE.containsKey(eventInterface))
+		if (!this.DEFINITIONS_BY_EVENT_INTERFACE.containsKey(eventInterface))
 		{
+			// attempt to get the definition for this class
+			
+			
 			throw new NullPointerException("event definition missing for: [" + eventInterface.getSimpleName() + "]");
 		}
 		
-		return INSTANCE.DEFINITIONS_BY_EVENT_INTERFACE.get(eventInterface);
+		return this.DEFINITIONS_BY_EVENT_INTERFACE.get(eventInterface);
 	}
 	
 }

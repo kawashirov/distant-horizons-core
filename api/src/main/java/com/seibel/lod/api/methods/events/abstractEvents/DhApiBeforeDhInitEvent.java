@@ -27,16 +27,8 @@ public abstract class DhApiBeforeDhInitEvent implements IDhApiEvent<Void>
 		return false;
 	}
 	
-	private static boolean firstTimeSetupComplete = false;
-	public DhApiBeforeDhInitEvent()
-	{
-		if (!firstTimeSetupComplete)
-		{
-			firstTimeSetupComplete = true;
-			ApiEventDefinitionHandler.setEventDefinition(DhApiBeforeDhInitEvent.class, new DhApiEventDefinition(false, true));
-		}
-	}
+	public final static DhApiEventDefinition EVENT_DEFINITION = new DhApiEventDefinition(false, true);
 	@Override
-	public final DhApiEventDefinition getEventDefinition() { return ApiEventDefinitionHandler.getEventDefinition(DhApiBeforeDhInitEvent.class); }
+	public final DhApiEventDefinition getEventDefinition() { return EVENT_DEFINITION; }
 	
 }
