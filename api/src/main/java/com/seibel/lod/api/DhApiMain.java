@@ -5,11 +5,11 @@ import com.seibel.lod.api.interfaces.override.IDhApiOverrideable;
 import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGeneratorOverrideRegister;
 import com.seibel.lod.api.interfaces.world.IDhApiWorldProxy;
 import com.seibel.lod.api.methods.override.DhApiWorldGeneratorOverrideRegister;
-import com.seibel.lod.core.DependencyInjection.DhApiEventInjector;
+import com.seibel.lod.core.DependencyInjection.ApiEventInjector;
 import com.seibel.lod.core.DependencyInjection.OverrideInjector;
 import com.seibel.lod.core.ModInfo;
 import com.seibel.lod.api.interfaces.data.IDhApiTerrainDataRepo;
-import com.seibel.lod.core.interfaces.dependencyInjection.IDhApiEventInjector;
+import com.seibel.lod.api.interfaces.events.IDhApiEventInjector;
 import com.seibel.lod.core.interfaces.dependencyInjection.IOverrideInjector;
 
 /**
@@ -71,7 +71,7 @@ public class DhApiMain
 	// always available //
 	
 	/** Used to bind/unbind Distant Horizons Api events. */
-	public static final IDhApiEventInjector events = DhApiEventInjector.INSTANCE;
+	public static final IDhApiEventInjector events = ApiEventInjector.INSTANCE;
 	
 	/** Used to bind/unbind Distant Horizons Api events. */
 	public static final IDhApiWorldGeneratorOverrideRegister worldGenOverrides = DhApiWorldGeneratorOverrideRegister.INSTANCE;

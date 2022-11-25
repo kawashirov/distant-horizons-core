@@ -1,6 +1,6 @@
 package tests;
 
-import com.seibel.lod.core.DependencyInjection.DhApiEventInjector;
+import com.seibel.lod.core.DependencyInjection.ApiEventInjector;
 import org.junit.Assert;
 import org.junit.Test;
 import testItems.events.abstractObjects.DhApiOneTimeTestEvent;
@@ -24,7 +24,7 @@ public class EventInjectorTest
 	public void testGeneralAndRecurringEvents() // this also tests list dependencies since there can be more than one event handler bound per event
 	{
 		// Injector setup
-		DhApiEventInjector TEST_EVENT_HANDLER = DhApiEventInjector.INSTANCE;
+		ApiEventInjector TEST_EVENT_HANDLER = ApiEventInjector.INSTANCE;
 		TEST_EVENT_HANDLER.clear();
 		
 
@@ -91,7 +91,7 @@ public class EventInjectorTest
 	public void testOneTimeEventFiring()
 	{
 		// Injector setup
-		DhApiEventInjector TEST_EVENT_HANDLER = DhApiEventInjector.INSTANCE;
+		ApiEventInjector TEST_EVENT_HANDLER = ApiEventInjector.INSTANCE;
 		TEST_EVENT_HANDLER.clear();
 		
 		

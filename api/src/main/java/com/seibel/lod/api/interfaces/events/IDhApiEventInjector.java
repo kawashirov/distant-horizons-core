@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.interfaces.dependencyInjection;
+package com.seibel.lod.api.interfaces.events;
 
 import com.seibel.lod.api.methods.events.interfaces.IDhApiEvent;
 

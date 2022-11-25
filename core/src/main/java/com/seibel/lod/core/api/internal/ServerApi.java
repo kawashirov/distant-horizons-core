@@ -22,7 +22,7 @@ package com.seibel.lod.core.api.internal;
 import com.seibel.lod.api.methods.events.abstractEvents.DhApiLevelLoadEvent;
 import com.seibel.lod.api.methods.events.abstractEvents.DhApiLevelSaveEvent;
 import com.seibel.lod.api.methods.events.abstractEvents.DhApiLevelUnloadEvent;
-import com.seibel.lod.core.DependencyInjection.DhApiEventInjector;
+import com.seibel.lod.core.DependencyInjection.ApiEventInjector;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.world.DhClientServerWorld;
 import com.seibel.lod.core.world.DhServerWorld;
@@ -102,7 +102,7 @@ public class ServerApi
 		if (SharedApi.currentWorld != null)
 		{
 			SharedApi.currentWorld.getOrLoadLevel(level);
-			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelLoadEvent.class, new DhApiLevelLoadEvent.EventParam(level));
+			ApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelLoadEvent.class, new DhApiLevelLoadEvent.EventParam(level));
 		}
 	}
 	public void serverLevelUnloadEvent(IServerLevelWrapper level) {
@@ -110,7 +110,7 @@ public class ServerApi
 		if (SharedApi.currentWorld != null)
 		{
 			SharedApi.currentWorld.unloadLevel(level);
-			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelUnloadEvent.class, new DhApiLevelUnloadEvent.EventParam(level));
+			ApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelUnloadEvent.class, new DhApiLevelUnloadEvent.EventParam(level));
 		}
 	}
 
@@ -123,7 +123,7 @@ public class ServerApi
 			
 			for (IDhLevel level : SharedApi.currentWorld.getAllLoadedLevels())
 			{
-				DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelSaveEvent.class, new DhApiLevelSaveEvent.EventParam(level.getLevelWrapper()));
+				ApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelSaveEvent.class, new DhApiLevelSaveEvent.EventParam(level.getLevelWrapper()));
 			}
 		}
 	}

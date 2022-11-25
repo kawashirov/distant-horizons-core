@@ -22,7 +22,7 @@ package com.seibel.lod.core.DependencyInjection;
 import com.seibel.lod.api.methods.events.interfaces.IDhApiEvent;
 import com.seibel.lod.core.events.ApiEventDefinitionHandler;
 import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
-import com.seibel.lod.core.interfaces.dependencyInjection.IDhApiEventInjector;
+import com.seibel.lod.api.interfaces.events.IDhApiEventInjector;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -35,16 +35,16 @@ import java.util.HashMap;
  * @author James Seibel
  * @version 2022-11-20
  */
-public class DhApiEventInjector extends DependencyInjector<IDhApiEvent> implements IDhApiEventInjector // Note to self: Don't try adding a generic type to IDhApiEvent, the consturctor won't accept it
+public class ApiEventInjector extends DependencyInjector<IDhApiEvent> implements IDhApiEventInjector // Note to self: Don't try adding a generic type to IDhApiEvent, the consturctor won't accept it
 {
-	private static final Logger LOGGER = LogManager.getLogger(DhApiEventInjector.class.getSimpleName());
+	private static final Logger LOGGER = LogManager.getLogger(ApiEventInjector.class.getSimpleName());
 	private static final HashMap<Class<? extends IDhApiEvent>, Object> FIRED_ONE_TIME_EVENT_PARAMETERS_BY_EVENT_INTERFACE = new HashMap<>();
 	
-	public static final DhApiEventInjector INSTANCE = new DhApiEventInjector();
+	public static final ApiEventInjector INSTANCE = new ApiEventInjector();
 	
 	
 	
-	private DhApiEventInjector() { super(IDhApiEvent.class, true); }
+	private ApiEventInjector() { super(IDhApiEvent.class, true); }
 	
 	
 	

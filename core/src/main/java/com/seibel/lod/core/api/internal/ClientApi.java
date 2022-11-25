@@ -21,7 +21,7 @@ package com.seibel.lod.core.api.internal;
 
 import com.seibel.lod.api.methods.events.abstractEvents.*;
 import com.seibel.lod.api.methods.events.sharedParameterObjects.DhApiRenderParam;
-import com.seibel.lod.core.DependencyInjection.DhApiEventInjector;
+import com.seibel.lod.core.DependencyInjection.ApiEventInjector;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.ModInfo;
@@ -131,7 +131,7 @@ public class ClientApi
 			//TODO: Implement
 			
 			// TODO: potentially add a list of chunks that were updated during the save
-			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelSaveEvent.class, new DhApiLevelSaveEvent.EventParam(level));
+			ApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelSaveEvent.class, new DhApiLevelSaveEvent.EventParam(level));
 		}
 	}
 	
@@ -142,7 +142,7 @@ public class ClientApi
 		if (SharedApi.currentWorld != null)
 		{
 			SharedApi.currentWorld.unloadLevel(level);
-			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelUnloadEvent.class, new DhApiLevelUnloadEvent.EventParam(level));
+			ApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelUnloadEvent.class, new DhApiLevelUnloadEvent.EventParam(level));
 		}
 	}
 	
@@ -153,7 +153,7 @@ public class ClientApi
 		if (SharedApi.currentWorld != null)
 		{
 			SharedApi.currentWorld.getOrLoadLevel(level);
-			DhApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelLoadEvent.class, new DhApiLevelLoadEvent.EventParam(level));
+			ApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelLoadEvent.class, new DhApiLevelLoadEvent.EventParam(level));
 		}
 	}
 	
@@ -247,11 +247,11 @@ public class ClientApi
 								RenderUtil.createLodProjectionMatrix(mcProjectionMatrix, partialTicks),
 								RenderUtil.createLodModelViewMatrix(mcModelViewMatrix), partialTicks);
 					
-					boolean renderingCanceled = DhApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeRenderEvent.class, new DhApiBeforeRenderEvent.EventParam(renderEventParam));
+					boolean renderingCanceled = ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeRenderEvent.class, new DhApiBeforeRenderEvent.EventParam(renderEventParam));
 					if (!rendererDisabledBecauseOfExceptions && !renderingCanceled)
 					{
 						level.render(mcModelViewMatrix, mcProjectionMatrix, partialTicks, profiler);
-						DhApiEventInjector.INSTANCE.fireAllEvents(DhApiAfterRenderEvent.class, new DhApiAfterRenderEvent.EventParam(renderEventParam));
+						ApiEventInjector.INSTANCE.fireAllEvents(DhApiAfterRenderEvent.class, new DhApiAfterRenderEvent.EventParam(renderEventParam));
 					}
 				}
 				else if (Config.Client.Advanced.Debugging.rendererMode.get() == ERendererMode.DEBUG)
