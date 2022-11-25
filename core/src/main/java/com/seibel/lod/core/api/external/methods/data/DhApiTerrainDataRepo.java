@@ -11,10 +11,7 @@ import com.seibel.lod.core.datatype.ILodDataSource;
 import com.seibel.lod.core.datatype.full.FullDataPoint;
 import com.seibel.lod.core.datatype.full.FullDataPointIdMap;
 import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;
-import com.seibel.lod.core.dependencyInjection.SingletonInjector;
-import com.seibel.lod.core.level.DhClientServerLevel;
 import com.seibel.lod.core.level.IDhLevel;
-import com.seibel.lod.core.pos.DhBlockPos;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.*;
@@ -22,15 +19,11 @@ import com.seibel.lod.core.util.math.Vec3d;
 import com.seibel.lod.core.util.math.Vec3f;
 import com.seibel.lod.core.util.math.Vec3i;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
-import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
-import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
-import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
@@ -117,11 +110,11 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 		DhApiResult<DhApiTerrainDataPoint[]> result = getTerrainDataColumnArray(levelWrapper, requestedColumnPos, blockYPos);
 		if (result.success && result.payload.length > 0)
 		{
-			return DhApiResult.createSuccess(result.errorMessage, result.payload[0]);
+			return DhApiResult.createSuccess(result.message, result.payload[0]);
 		}
 		else
 		{
-			return DhApiResult.createFail(result.errorMessage);
+			return DhApiResult.createFail(result.message);
 		}
 	}
 	
@@ -156,7 +149,7 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 				}
 				else
 				{
-					return DhApiResult.createFail(result.errorMessage, returnArray);
+					return DhApiResult.createFail(result.message, returnArray);
 				}
 			}
 		}
@@ -330,7 +323,7 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 				if (!result.success)
 				{
 					// if there was an error, stop and return it
-					return DhApiResult.createFail(result.errorMessage);
+					return DhApiResult.createFail(result.message);
 				}
 				
 				// is there a LOD at this position?
