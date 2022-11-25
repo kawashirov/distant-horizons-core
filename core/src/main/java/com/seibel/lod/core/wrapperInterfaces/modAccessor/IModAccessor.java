@@ -25,6 +25,8 @@ import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
  * @author Leetom
  * @version 3-5-2022
  */
-public interface IModAccessor extends IBindable {
+public interface IModAccessor extends IBindable
+{
 	String getModName();
+	
 }

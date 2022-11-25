@@ -37,7 +37,7 @@ public interface IBindable
 	 * If no circular dependencies are required this method 
 	 * doesn't have to be implemented.
 	 */
-	public default void finishDelayedSetup() { }
+	default void finishDelayedSetup() { }
 	
 	/**
 	 * Returns if this dependency has been setup yet. <Br> <Br>
@@ -45,6 +45,6 @@ public interface IBindable
 	 * If this object doesn't require a delayed setup, this
 	 * method doesn't have to be implemented and should always return true.
 	 */
-	public default boolean getDelayedSetupComplete() { return true; }
+	default boolean getDelayedSetupComplete() { return true; }
 	
 }

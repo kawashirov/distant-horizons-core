@@ -20,186 +20,69 @@
 package com.seibel.lod.core;
 
 import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Field;
 
-import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
-import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
+import com.seibel.lod.core.wrapperInterfaces.modAccessor.AbstractOptifineAccessor;
 import org.apache.logging.log4j.Logger;
 
-import com.seibel.lod.api.enums.rendering.EFogDrawMode;
-
 /**
- * A singleton used to get variables from methods
- * where they are private or potentially absent. 
- * For example: the fog setting in Optifine or the
- * presence/absence of Vivecraft.
+ * A singleton used to determine if a class is present or 
+ * access variables from methods where they are private 
+ * or potentially absent. <br><br>
+ * 
+ * For example: presence/absence of Optifine.
  * 
  * @author James Seibel
- * @version 2022-7-15
+ * @version 2022-11-24
  */
 public class ReflectionHandler implements IReflectionHandler
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 	
-	public static ReflectionHandler instance;
+	public static final ReflectionHandler INSTANCE = new ReflectionHandler();
 	
-	private Field ofFogField = null;
-	private Object mcOptionsObject;
-	
+	// populated when the methods are called the first time
 	private Boolean sodiumPresent = null;
-	private boolean optifinePresent = false;
-	
-	private boolean delayedSetupDone = false;
+	private Boolean optifinePresent = false;
 	
 	
 	
-	
-	@Override
-	public void finishDelayedSetup()
-	{
-		mcOptionsObject = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class).getOptionsObject();
-		setupFogField(mcOptionsObject.getClass().getDeclaredFields());
-		
-		this.delayedSetupDone = true;
-	}
-	
-	@Override
-	public boolean getDelayedSetupComplete() { return this.delayedSetupDone; }
-	
-	private ReflectionHandler()
-	{
-		mcOptionsObject = null;
-	}
-	
-	/**
-	 * @return the ReflectionHandler just created
-	 * @throws IllegalStateException if a ReflectionHandler already exists
-	 */
-	public static ReflectionHandler createSingleton() throws IllegalStateException
-	{
-		if (instance != null)
-		{
-			throw new IllegalStateException();	
-		}
-		
-		instance = new ReflectionHandler();
-		return instance;
-	}
+	private ReflectionHandler() { }
 	
 	
 	
+	//===================//
+	// is [mod] present? //
+	//===================//
 	
-	
-	
-	/** finds the Optifine fog type field */
-	private void setupFogField(Field[] optionFields)
-	{
-		// try and find the ofFogType variable in gameSettings
-		for (Field field : optionFields)
-		{
-			if (field.getName().equals("ofFogType"))
-			{
-				optifinePresent = true;
-				ofFogField = field;
-				return;
-			}
-		}
-		
-		// we didn't find the field,
-		// either optifine isn't installed, or
-		// optifine changed the name of the variable
-		LOGGER.info("Unable to find the Optifine fog field. If Optifine isn't installed this can be ignored.");
-	}
-	
-	
-	/**
-	 * Get what type of fog optifine is currently set to render.
-	 * @return the fog quality
-	 */
-	@Override
-	public EFogDrawMode getFogDrawMode()
-	{
-		if (ofFogField == null)
-		{
-			// either optifine isn't installed,
-			// the variable name was changed, or
-			// the setup method wasn't called yet.
-			return EFogDrawMode.FOG_ENABLED;
-		}
-		
-		int returnNum = 0;
-		
-		try
-		{
-			returnNum = (int) ofFogField.get(mcOptionsObject);
-		}
-		catch (IllegalArgumentException | IllegalAccessException e)
-		{
-			e.printStackTrace();
-		}
-		
-		switch (returnNum)
-		{
-		default:
-		case 0:
-			// optifine's "default" option,
-			// it should never be called in this case
-			
-			// normal options
-		case 1: // fast
-		case 2: // fancy
-			return EFogDrawMode.FOG_ENABLED;
-		case 3: // off
-			return EFogDrawMode.FOG_DISABLED;
-		}
-	}
-	
-	
-	
-	/** Detect if Vivecraft is present. Attempts to find the "VRRenderer" class. */
-	@Override
-	public boolean vivecraftPresent()
-	{
-		try
-		{
-			Class.forName("org.vivecraft.provider.VRRenderer");
-			return true;
-		}
-		catch (ClassNotFoundException ignored)
-		{
-			LOGGER.info(ReflectionHandler.class.getSimpleName() + ": Vivecraft not detected.");
-		}
-		return false;
-	}
 	@Override
 	public boolean optifinePresent()
 	{
-		return optifinePresent;
+		if (this.optifinePresent == null)
+		{
+			// call the base accessor so we don't have duplicate code
+			this.optifinePresent = AbstractOptifineAccessor.isOptifinePresent();
+		}
+		return this.optifinePresent;
 	}
-	
-	
 	
 	@Override
 	public boolean sodiumPresent()
 	{
-		// we don't want to run a potentially expensive
-		// reflection search operation every time this method is called
-		if (sodiumPresent == null)
+		if (this.sodiumPresent == null)
 		{
 			try
 			{
 				Class.forName("me.jellysquid.mods.sodium.client.render.SodiumWorldRenderer");
-				
-				sodiumPresent = true;
+				this.sodiumPresent = true;
 			}
 			catch (ClassNotFoundException e)
 			{
-				sodiumPresent = false;
+				this.sodiumPresent = false;
 			}
 		}
 		
-		return sodiumPresent;
+		return this.sodiumPresent;
 	}
 	
 }

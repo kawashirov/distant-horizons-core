@@ -28,7 +28,7 @@ import org.apache.logging.log4j.Logger;
 import java.lang.invoke.MethodHandles;
 
 /**
- * This class takes care of dependency injection for mods accessors. (for mod compatibility
+ * This class takes care of dependency injection for mod accessors. (for mod compatibility
  * support).  <Br> <Br>
  * 
  * If a IModAccessor returns null either that means the mod isn't loaded in the game

@@ -19,23 +19,28 @@
  
 package com.seibel.lod.core.wrapperInterfaces.modAccessor;
 
+import com.seibel.lod.api.enums.rendering.EFogDrawMode;
+import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.pos.DhChunkPos;
+import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 
+import java.lang.reflect.Field;
 import java.util.HashSet;
 
 public interface IOptifineAccessor extends IModAccessor 
 {
+	
 	/** Can be null */
 	HashSet<DhChunkPos> getNormalRenderedChunks();
+	
+	/** Get what type of fog optifine is currently set to render. */
+	EFogDrawMode getFogDrawMode();
 	
 	/**
 	 * Returns the percentage multiplier of the screen's current resolution. <br>
 	 * 1.0 = 100% <br>
 	 * 1.5 = 150% <br>
 	 */
-	default double getRenderResolutionMultiplier()
-	{
-		return 1.0;
-	}
+	double getRenderResolutionMultiplier();
 	
 }

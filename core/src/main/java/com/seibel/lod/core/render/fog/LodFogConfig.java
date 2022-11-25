@@ -21,10 +21,11 @@ package com.seibel.lod.core.render.fog;
 
 import com.seibel.lod.api.enums.rendering.*;
 import com.seibel.lod.core.config.Config;
-import com.seibel.lod.core.IReflectionHandler;
+import com.seibel.lod.core.dependencyInjection.ModAccessorInjector;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.render.glObject.shader.Shader;
 import com.seibel.lod.core.wrapperInterfaces.config.ILodConfigWrapperSingleton;
+import com.seibel.lod.core.wrapperInterfaces.modAccessor.IOptifineAccessor;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -39,11 +40,11 @@ import static com.seibel.lod.core.render.glObject.GLProxy.GL_LOGGER;
  *
  * @author Leetom
  * @author James Seibel
- * @version 2022-4-14
+ * @version 2022-11-24
  */
 public class LodFogConfig
 {
-	private static final IReflectionHandler REFLECTION_HANDLER = SingletonInjector.INSTANCE.get(IReflectionHandler.class);
+	private static final IOptifineAccessor OPTIFINE = ModAccessorInjector.INSTANCE.get(IOptifineAccessor.class);
 	private static final ILodConfigWrapperSingleton CONFIG = SingletonInjector.INSTANCE.get(ILodConfigWrapperSingleton.class);
 	
 	public static final boolean DEBUG_DUMP_GENERATED_CODE = false;
@@ -62,9 +63,10 @@ public class LodFogConfig
 	public static LodFogConfig generateFogConfig()
 	{
 		EFogDrawMode fogMode = CONFIG.client().graphics().fogQuality().getFogDrawMode();
-		if (fogMode == EFogDrawMode.USE_OPTIFINE_SETTING)
-			fogMode = REFLECTION_HANDLER.getFogDrawMode();
-		
+		if (fogMode == EFogDrawMode.USE_OPTIFINE_SETTING && OPTIFINE != null)
+		{
+			fogMode = OPTIFINE.getFogDrawMode();
+		}
 		return new LodFogConfig(fogMode);
 	}
 	

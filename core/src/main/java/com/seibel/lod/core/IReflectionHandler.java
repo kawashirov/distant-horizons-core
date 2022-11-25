@@ -35,18 +35,13 @@ import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
  * different MC versions.
  * 
  * @author James Seibel
- * @version 3-5-2022
+ * @version 2022-11-24
  */
 public interface IReflectionHandler extends IBindable
 {
-	/** @return Whether Optifine is set to render fog or not. */
-	EFogDrawMode getFogDrawMode();
-	
-	/** @return if Vivecraft is present. Attempts to find the "VRRenderer" class. */
-	boolean vivecraftPresent();
-	
-	/** @return if Sodium (or a sodium like) mod is present. Attempts to find the "SodiumWorldRenderer" class. */
+	/** @return if Sodium (or a sodium like) mod is present. */
 	boolean sodiumPresent();
 
 	boolean optifinePresent();
+	
 }
