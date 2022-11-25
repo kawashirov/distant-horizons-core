@@ -33,7 +33,7 @@ import java.util.HashMap;
  * This class takes care of dependency injection for API events.
  * 
  * @author James Seibel
- * @version 2022-11-20
+ * @version 2022-11-24
  */
 public class ApiEventInjector extends DependencyInjector<IDhApiEvent> implements IDhApiEventInjector // Note to self: Don't try adding a generic type to IDhApiEvent, the consturctor won't accept it
 {
@@ -56,12 +56,12 @@ public class ApiEventInjector extends DependencyInjector<IDhApiEvent> implements
 		if (ApiEventDefinitionHandler.INSTANCE.getEventDefinition(abstractEvent).isOneTimeEvent)
 		{
 			// has this one time event been fired yet?
-			if (firedOneTimeEventParamsByEventInterface.containsKey(abstractEvent))
+			if (this.firedOneTimeEventParamsByEventInterface.containsKey(abstractEvent))
 			{
 				// the one time event has happened, fire the handler
 				
 				// this has to be an unsafe cast since the hash map can't hold the generic objects
-				Object parameter = firedOneTimeEventParamsByEventInterface.get(abstractEvent);
+				Object parameter = this.firedOneTimeEventParamsByEventInterface.get(abstractEvent);
 				eventImplementation.fireEvent(parameter);
 			}
 		}
@@ -121,9 +121,9 @@ public class ApiEventInjector extends DependencyInjector<IDhApiEvent> implements
 		
 		// if this is a one time event, record that it was called
 		if (ApiEventDefinitionHandler.INSTANCE.getEventDefinition(abstractEvent).isOneTimeEvent && 
-			!firedOneTimeEventParamsByEventInterface.containsKey(abstractEvent))
+			!this.firedOneTimeEventParamsByEventInterface.containsKey(abstractEvent))
 		{
-			firedOneTimeEventParamsByEventInterface.put(abstractEvent, eventParameterObject);
+			this.firedOneTimeEventParamsByEventInterface.put(abstractEvent, eventParameterObject);
 		}
 		
 		

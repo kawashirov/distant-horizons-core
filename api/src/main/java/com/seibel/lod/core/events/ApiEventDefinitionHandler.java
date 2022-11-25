@@ -33,7 +33,7 @@ import java.util.HashMap;
  * event instance.
  * 
  * @author James Seibel
- * @version 2022-11-21
+ * @version 2022-11-24
  */
 public class ApiEventDefinitionHandler
 {
@@ -47,6 +47,7 @@ public class ApiEventDefinitionHandler
 	
 	private ApiEventDefinitionHandler() { this.addInitialBindings(); }
 	
+	/** This must include all available events */
 	public void addInitialBindings()
 	{
 		this.setEventDefinition(DhApiAfterDhInitEvent.class, DhApiAfterDhInitEvent.EVENT_DEFINITION);
@@ -82,9 +83,6 @@ public class ApiEventDefinitionHandler
 	{
 		if (!this.DEFINITIONS_BY_EVENT_INTERFACE.containsKey(eventInterface))
 		{
-			// attempt to get the definition for this class
-			
-			
 			throw new NullPointerException("event definition missing for: [" + eventInterface.getSimpleName() + "]");
 		}
 		

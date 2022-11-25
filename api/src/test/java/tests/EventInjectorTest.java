@@ -19,22 +19,25 @@ import java.util.ArrayList;
 
 /**
  * @author James Seibel
- * @version 2022-11-21
+ * @version 2022-11-25
  */
 public class EventInjectorTest
 {
 	@Before
 	public void testSetup()
 	{
+		ApiEventDefinitionHandler definitionHandler = ApiEventDefinitionHandler.INSTANCE;
+		
+		
 		// reset the injectors and event definitions
 		ApiEventInjector.INSTANCE.clear();
-		ApiEventDefinitionHandler.INSTANCE.clear();
+		definitionHandler.clear();
 		
 		
 		// register test events
-		ApiEventDefinitionHandler.INSTANCE.setEventDefinition(DhApiTestEvent.class, DhApiTestEvent.EVENT_DEFINITION);
-		ApiEventDefinitionHandler.INSTANCE.setEventDefinition(DhApiOneTimeTestEvent.class, DhApiOneTimeTestEvent.EVENT_DEFINITION);
-		ApiEventDefinitionHandler.INSTANCE.addInitialBindings();
+		definitionHandler.setEventDefinition(DhApiTestEvent.class, DhApiTestEvent.EVENT_DEFINITION);
+		definitionHandler.setEventDefinition(DhApiOneTimeTestEvent.class, DhApiOneTimeTestEvent.EVENT_DEFINITION);
+		definitionHandler.addInitialBindings();
 		
 	}
 	
@@ -110,14 +113,21 @@ public class EventInjectorTest
 	@Test
 	public void testEventDefinition()
 	{
+		ApiEventDefinitionHandler definitionHandler = ApiEventDefinitionHandler.INSTANCE;
+		
 		String errorMessagePrefix = "Missing " + DhApiEventDefinition.class.getSimpleName() + " for event class [";
-		Assert.assertNotNull(errorMessagePrefix + DhApiTestEvent.class.getSimpleName() + "]", ApiEventDefinitionHandler.INSTANCE.getEventDefinition(DhApiTestEvent.class));
-		Assert.assertNotNull(errorMessagePrefix + DhApiOneTimeTestEvent.class.getSimpleName() + "]", ApiEventDefinitionHandler.INSTANCE.getEventDefinition(DhApiOneTimeTestEvent.class));
-		Assert.assertNotNull(errorMessagePrefix + DhApiAfterDhInitEvent.class.getSimpleName() + "]", ApiEventDefinitionHandler.INSTANCE.getEventDefinition(DhApiAfterDhInitEvent.class));
+		Assert.assertNotNull(errorMessagePrefix + DhApiTestEvent.class.getSimpleName() + "]", definitionHandler.getEventDefinition(DhApiTestEvent.class));
+		Assert.assertNotNull(errorMessagePrefix + DhApiOneTimeTestEvent.class.getSimpleName() + "]", definitionHandler.getEventDefinition(DhApiOneTimeTestEvent.class));
+		Assert.assertNotNull(errorMessagePrefix + DhApiAfterDhInitEvent.class.getSimpleName() + "]", definitionHandler.getEventDefinition(DhApiAfterDhInitEvent.class));
 	}
 	
+	
 	@Test
-	public void testOneTimeEventFiring()
+	public void oneTimeEventTestPreFireBinding() { this.oneTimeEventTest(false); }
+	@Test
+	public void oneTimeEventTestPostFireBinding() { this.oneTimeEventTest(true); }
+	
+	public void oneTimeEventTest(boolean bindEventBeforeOneTimeFiring)
 	{
 		// Injector setup
 		ApiEventInjector TEST_EVENT_HANDLER = ApiEventInjector.INSTANCE;
@@ -127,16 +137,23 @@ public class EventInjectorTest
 		Assert.assertNull("Nothing should have been bound.", TEST_EVENT_HANDLER.get(DhApiOneTimeTestEvent.class));
 		
 		
-		// pre-event fire binding
-		TEST_EVENT_HANDLER.bind(DhApiOneTimeTestEvent.class, new DhOneTimeTestEventHandler());
+		if (bindEventBeforeOneTimeFiring)
+		{
+			TEST_EVENT_HANDLER.bind(DhApiOneTimeTestEvent.class, new DhOneTimeTestEventHandler());
+		}
 		TEST_EVENT_HANDLER.runDelayedSetup();
 		
 		
 		// pre-bound event firing
-		Assert.assertEquals("fireAllEvents canceled returned canceled incorrectly.", true, TEST_EVENT_HANDLER.fireAllEvents(DhApiOneTimeTestEvent.class, true));
-		// validate event fired correctly
-		ArrayList<DhApiOneTimeTestEvent> oneTimeEventList = TEST_EVENT_HANDLER.getAll(DhApiOneTimeTestEvent.class);
-		Assert.assertEquals("Event not fired for pre-fire object.", true, oneTimeEventList.get(0).getTestValue());
+		Assert.assertEquals("fireAllEvents canceled returned canceled incorrectly.", bindEventBeforeOneTimeFiring, TEST_EVENT_HANDLER.fireAllEvents(DhApiOneTimeTestEvent.class, true));
+		
+		// validate pre-bound events fired correctly
+		ArrayList<DhApiOneTimeTestEvent> oneTimeEventList;
+		if (bindEventBeforeOneTimeFiring)
+		{
+			oneTimeEventList = TEST_EVENT_HANDLER.getAll(DhApiOneTimeTestEvent.class);
+			Assert.assertEquals("Event not fired for pre-fire object.", true, oneTimeEventList.get(0).getTestValue());
+		}
 		
 		
 		// post-event fire binding
@@ -144,8 +161,10 @@ public class EventInjectorTest
 		TEST_EVENT_HANDLER.bind(DhApiOneTimeTestEvent.class, new DhOneTimeTestEventHandlerAlt());
 		// validate both events have fired
 		oneTimeEventList = TEST_EVENT_HANDLER.getAll(DhApiOneTimeTestEvent.class);
-		Assert.assertEquals("Event not fired for pre-fire object.", true, oneTimeEventList.get(0).getTestValue());
-		Assert.assertEquals("Event not fired for post-fire object.", true, oneTimeEventList.get(1).getTestValue());
+		for (int i = 0; i < oneTimeEventList.size(); i++)
+		{
+			Assert.assertEquals("Event not fired for object ["+i+"].", true, oneTimeEventList.get(i).getTestValue());
+		}
 		
 		
 		

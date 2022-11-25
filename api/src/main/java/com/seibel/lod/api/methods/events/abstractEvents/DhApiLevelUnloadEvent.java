@@ -40,7 +40,6 @@ public abstract class DhApiLevelUnloadEvent implements IDhApiEvent<DhApiLevelUnl
 		/** The recently unloaded level. */
 		public final IDhApiLevelWrapper levelWrapper;
 		
-		
 		public EventParam(IDhApiLevelWrapper newLevelWrapper) { this.levelWrapper = newLevelWrapper; }
 	}
 	

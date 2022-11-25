@@ -43,11 +43,11 @@ public interface IDhApiEventInjector
 	/**
 	 * Fires all bound events of the given type (does nothing if no events are bound).
 	 *
-	 * @param dependencyInterface event type
+	 * @param abstractEvent event type
 	 * @param eventParameterObject event parameter
-	 * @return if any of the events returned that this event should be canceled.
+	 * @return if any of bound event handlers returned that this event should be canceled.
 	 * @param <T> the parameter type taken by the event handlers.
 	 */
-	<T, U extends IDhApiEvent<T>> boolean fireAllEvents(Class<U> dependencyInterface, T eventParameterObject);
+	<T, U extends IDhApiEvent<T>> boolean fireAllEvents(Class<U> abstractEvent, T eventParameterObject);
 	
 }
