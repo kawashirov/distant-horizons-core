@@ -31,7 +31,7 @@ import java.util.Map;
  *
  * @param <BindableType> extends IBindable and defines what interfaces this dependency handler can deal with.
  * @author James Seibel
- * @version 2022-8-15
+ * @version 2022-11-24
  */
 public class DependencyInjector<BindableType extends IBindable> implements IDependencyInjector<BindableType>
 {
@@ -62,16 +62,16 @@ public class DependencyInjector<BindableType extends IBindable> implements IDepe
 	public void bind(Class<? extends BindableType> dependencyInterface, BindableType dependencyImplementation) throws IllegalStateException, IllegalArgumentException
 	{
 		// duplicate check if requested
-		if (dependencies.containsKey(dependencyInterface) && !this.allowDuplicateBindings)
+		if (this.dependencies.containsKey(dependencyInterface) && !this.allowDuplicateBindings)
 		{
 			throw new IllegalStateException("The dependency [" + dependencyInterface.getSimpleName() + "] has already been bound.");
 		}
 		
 		
 		// make sure the given dependency implements the necessary interfaces
-		boolean implementsInterface = checkIfClassImplements(dependencyImplementation.getClass(), dependencyInterface)
-				|| checkIfClassExtends(dependencyImplementation.getClass(), dependencyInterface);
-		boolean implementsBindable = checkIfClassImplements(dependencyImplementation.getClass(), this.bindableInterface);
+		boolean implementsInterface = this.checkIfClassImplements(dependencyImplementation.getClass(), dependencyInterface) ||
+									  this.checkIfClassExtends(dependencyImplementation.getClass(), dependencyInterface);
+		boolean implementsBindable = this.checkIfClassImplements(dependencyImplementation.getClass(), this.bindableInterface);
 		
 		// display any errors
 		if (!implementsInterface)
@@ -85,13 +85,13 @@ public class DependencyInjector<BindableType extends IBindable> implements IDepe
 		
 		
 		// make sure the hashSet has an array to hold the dependency
-		if (!dependencies.containsKey(dependencyInterface))
+		if (!this.dependencies.containsKey(dependencyInterface))
 		{
-			dependencies.put(dependencyInterface, new ArrayList<BindableType>());
+			this.dependencies.put(dependencyInterface, new ArrayList<BindableType>());
 		}
 		
 		// add the dependency
-		dependencies.get(dependencyInterface).add(dependencyImplementation);
+		this.dependencies.get(dependencyInterface).add(dependencyImplementation);
 	}
 	@Override
 	public boolean checkIfClassImplements(Class<?> classToTest, Class<?> interfaceToLookFor)
@@ -99,7 +99,7 @@ public class DependencyInjector<BindableType extends IBindable> implements IDepe
 		// check the parent class (if applicable)
 		if (classToTest.getSuperclass() != Object.class && classToTest.getSuperclass() != null)
 		{
-			if (checkIfClassImplements(classToTest.getSuperclass(), interfaceToLookFor))
+			if (this.checkIfClassImplements(classToTest.getSuperclass(), interfaceToLookFor))
 			{
 				return true;
 			}
@@ -112,7 +112,7 @@ public class DependencyInjector<BindableType extends IBindable> implements IDepe
 			// recurse to check interface parents if necessary
 			if (implementationInterface.getInterfaces().length != 0)
 			{
-				if (checkIfClassImplements(implementationInterface, interfaceToLookFor))
+				if (this.checkIfClassImplements(implementationInterface, interfaceToLookFor))
 				{
 					return true;
 				}
@@ -127,30 +127,26 @@ public class DependencyInjector<BindableType extends IBindable> implements IDepe
 		return false;
 	}
 	@Override
-	public boolean checkIfClassExtends(Class<?> classToTest, Class<?> extensionToLookFor)
-	{
-		return extensionToLookFor.isAssignableFrom(classToTest);
-	}
+	public boolean checkIfClassExtends(Class<?> classToTest, Class<?> extensionToLookFor) { return extensionToLookFor.isAssignableFrom(classToTest); }
 	
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends BindableType> T get(Class<T> interfaceClass) throws ClassCastException
 	{
-		return (T) getInternalLogic(interfaceClass, false).get(0);
+		return (T) this.getInternalLogic(interfaceClass, false).get(0);
 	}
 	
 	@Override
 	public <T extends BindableType> ArrayList<T> getAll(Class<T> interfaceClass) throws ClassCastException
 	{
-		return getInternalLogic(interfaceClass, false);
+		return this.getInternalLogic(interfaceClass, false);
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends BindableType> T get(Class<T> interfaceClass, boolean allowIncompleteDependencies) throws ClassCastException
 	{
-		return (T) getInternalLogic(interfaceClass, allowIncompleteDependencies).get(0);
+		return (T) this.getInternalLogic(interfaceClass, allowIncompleteDependencies).get(0);
 	}
 	
 	/**
@@ -160,7 +156,7 @@ public class DependencyInjector<BindableType extends IBindable> implements IDepe
 	@SuppressWarnings("unchecked")
 	private <T extends BindableType> ArrayList<T> getInternalLogic(Class<T> interfaceClass, boolean allowIncompleteDependencies) throws ClassCastException
 	{
-		ArrayList<BindableType> dependencyList = dependencies.get(interfaceClass);
+		ArrayList<BindableType> dependencyList = this.dependencies.get(interfaceClass);
 		if (dependencyList != null && dependencyList.size() != 0)
 		{
 			// check if each dependencies' delayed setup has been completed
@@ -188,10 +184,7 @@ public class DependencyInjector<BindableType extends IBindable> implements IDepe
 	
 	/** Removes all bound dependencies. */
 	@Override
-	public void clear()
-	{
-		this.dependencies.clear();
-	}
+	public void clear() { this.dependencies.clear(); }
 	
 	
 	
@@ -199,9 +192,9 @@ public class DependencyInjector<BindableType extends IBindable> implements IDepe
 	@Override
 	public void runDelayedSetup()
 	{
-		for (Class<? extends BindableType> interfaceKey : dependencies.keySet())
+		for (Class<? extends BindableType> interfaceKey : this.dependencies.keySet())
 		{
-			IBindable concreteObject = get(interfaceKey, true);
+			IBindable concreteObject = this.get(interfaceKey, true);
 			if (!concreteObject.getDelayedSetupComplete())
 			{
 				concreteObject.finishDelayedSetup();
