@@ -26,6 +26,7 @@ import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhChunkPos;
 import com.seibel.lod.core.util.BitShiftUtil;
+import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
@@ -38,7 +39,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 /**
- * 
+ * @author Leetom
  * @version 2022-11-25
  */
 public class BatchGenerator implements IChunkGenerator
@@ -103,7 +104,7 @@ public class BatchGenerator implements IChunkGenerator
 		
 		int chunkXMin = chunkPosMin.x;
 		int chunkZMin = chunkPosMin.z;
-		int genChunkSize = BitShiftUtil.powerOfTwo(granularity - 4); // minus 4 for chunk size as its equal to dividing by 16
+		int genChunkSize = BitShiftUtil.powerOfTwo(granularity - 4); // minus 4 for chunk size is equal to dividing by 16
 		double runTimeRatio = Config.Client.Advanced.Threading.numberOfWorldGenerationThreads.get() > 1 ? 
 				1.0 :
 				Config.Client.Advanced.Threading.numberOfWorldGenerationThreads.get();
@@ -111,19 +112,19 @@ public class BatchGenerator implements IChunkGenerator
 	}
 	
 	@Override
-	public byte getMinDataDetail() { return 0; }
+	public byte getMinDataDetailLevel() { return LodUtil.BLOCK_DETAIL_LEVEL; }
 	
 	@Override
-	public byte getMaxDataDetail() { return 0; }
+	public byte getMaxDataDetailLevel() { return LodUtil.BLOCK_DETAIL_LEVEL; }
 	
 	@Override
-	public int getPriority() { return 0; }
+	public int getPriority() { return LodUtil.BLOCK_DETAIL_LEVEL; }
 	
 	@Override
-	public byte getMinGenerationGranularity() { return 4; }
+	public byte getMinGenerationGranularity() { return LodUtil.CHUNK_DETAIL_LEVEL; }
 	
 	@Override
-	public byte getMaxGenerationGranularity() { return 6; }
+	public byte getMaxGenerationGranularity() { return LodUtil.CHUNK_DETAIL_LEVEL + 2; }
 	
 	@Override
 	public void close() { this.stop(true); }

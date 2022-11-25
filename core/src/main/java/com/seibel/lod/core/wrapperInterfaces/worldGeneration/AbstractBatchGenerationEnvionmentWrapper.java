@@ -25,7 +25,8 @@ import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
-public abstract class AbstractBatchGenerationEnvionmentWrapper {
+public abstract class AbstractBatchGenerationEnvionmentWrapper
+{
 	public enum Steps {
 		Empty, StructureStart, StructureReference, Biomes, Noise, Surface, Carvers, LiquidCarvers, Features, Light,
 	}

@@ -5,7 +5,7 @@ import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.full.FullDataSource;
 import com.seibel.lod.core.datatype.transform.ChunkToLodBuilder;
 import com.seibel.lod.core.file.datafile.IDataSourceProvider;
-import com.seibel.lod.core.generation.GenerationQueue;
+import com.seibel.lod.core.generation.WorldGenerationQueue;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.LodQuadTree;
@@ -317,7 +317,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		if (wgs != null)
 		{
 			wgs.batchGenerator.update();
-			wgs.generationQueue.pollAndStartClosest(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
+			wgs.worldGenerationQueue.pollAndStartClosest(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
 		}
 	}
 	
@@ -365,25 +365,25 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 	class WorldGenState
 	{
 		final BatchGenerator batchGenerator;
-		final GenerationQueue generationQueue;
+		final WorldGenerationQueue worldGenerationQueue;
 		
 		WorldGenState()
 		{
 			this.batchGenerator = new BatchGenerator(DhClientServerLevel.this);
-			this.generationQueue = new GenerationQueue(this.batchGenerator);
-			dataFileHandler.setGenerationQueue(this.generationQueue);
+			this.worldGenerationQueue = new WorldGenerationQueue(this.batchGenerator);
+			dataFileHandler.setGenerationQueue(this.worldGenerationQueue);
 		}
 		
 		CompletableFuture<Void> close(boolean doInterrupt)
 		{
 			dataFileHandler.popGenerationQueue();
-			return this.generationQueue.startClosing(true, doInterrupt)
-									   .exceptionally(ex ->
+			return this.worldGenerationQueue.startClosing(true, doInterrupt)
+											.exceptionally(ex ->
 									   {
 										   LOGGER.error("Error closing generation queue", ex);
 										   return null;
 									   }).thenRun(this.batchGenerator::close)
-									   .exceptionally(ex ->
+											.exceptionally(ex ->
 									   {
 										   LOGGER.error("Error closing world gen", ex);
 										   return null;

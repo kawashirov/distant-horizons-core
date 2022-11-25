@@ -5,7 +5,8 @@ import com.seibel.lod.core.datatype.ILodDataSource;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.full.SparseDataSource;
 import com.seibel.lod.core.datatype.full.SpottyDataSource;
-import com.seibel.lod.core.generation.GenerationQueue;
+import com.seibel.lod.core.generation.tasks.AbstractWorldGenTaskTracker;
+import com.seibel.lod.core.generation.WorldGenerationQueue;
 import com.seibel.lod.core.level.IDhServerLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
@@ -22,11 +23,12 @@ import java.util.function.Consumer;
 public class GeneratedDataFileHandler extends DataFileHandler {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 
-    AtomicReference<GenerationQueue> queue = new AtomicReference<>(null);
+    AtomicReference<WorldGenerationQueue> queue = new AtomicReference<>(null);
     // TODO: Should I include a lib that impl weak concurrent hash map?
     final Map<ILodDataSource, GenTask> genQueue = Collections.synchronizedMap(new WeakHashMap<>());
 
-    class GenTask extends GenerationQueue.GenTaskTracker {
+    class GenTask extends AbstractWorldGenTaskTracker
+	{
         final DhSectionPos pos;
         WeakReference<ILodDataSource> targetData;
         ILodDataSource loadedTargetData = null;
@@ -60,7 +62,7 @@ public class GeneratedDataFileHandler extends DataFileHandler {
         super(level, saveRootDir);
     }
 
-    public void setGenerationQueue(GenerationQueue newQueue) {
+    public void setGenerationQueue(WorldGenerationQueue newQueue) {
         boolean worked = queue.compareAndSet(null, newQueue);
         LodUtil.assertTrue(worked, "previous queue is still here!");
         synchronized (genQueue) {
@@ -85,8 +87,8 @@ public class GeneratedDataFileHandler extends DataFileHandler {
         }
     }
 
-    public GenerationQueue popGenerationQueue() {
-        GenerationQueue cas = queue.getAndSet(null);
+    public WorldGenerationQueue popGenerationQueue() {
+        WorldGenerationQueue cas = queue.getAndSet(null);
         LodUtil.assertTrue(cas != null, "there are no previous live generation queue!");
         return cas;
     }
@@ -102,7 +104,7 @@ public class GeneratedDataFileHandler extends DataFileHandler {
             // None exist.
             IIncompleteDataSource dataSource = pos.sectionDetail <= SparseDataSource.MAX_SECTION_DETAIL ?
                     SparseDataSource.createEmpty(pos) : SpottyDataSource.createEmpty(pos);
-            GenerationQueue getQueue = queue.get();
+            WorldGenerationQueue getQueue = queue.get();
             GenTask task = new GenTask(pos, new WeakReference<>(dataSource));
             genQueue.put(dataSource, task);
             if (getQueue != null) {

@@ -1,6 +1,6 @@
 package com.seibel.lod.core.generation;
 
-import com.seibel.lod.core.datatype.full.ChunkSizedData;
+import com.seibel.lod.core.generation.tasks.*;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.Pos2D;
@@ -13,145 +13,21 @@ import org.apache.logging.log4j.Logger;
 import java.io.Closeable;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.function.Consumer;
 
 /**
+ * @author Leetom
  * @version 2022-11-25
  */
-public class GenerationQueue implements Closeable
+public class WorldGenerationQueue implements Closeable
 {
 	public static final int SHUTDOWN_TIMEOUT_SEC = 10;
 	public static final int MAX_TASKS_PROCESSED_PER_TICK = 10000;
 	
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
+	private final IChunkGenerator generator;
 	
-	/**
-	 * Source: <a href="https://stackoverflow.com/questions/3706219/algorithm-for-iterating-over-an-outward-spiral-on-a-discrete-2d-grid-from-the-or">...</a>
-	 * Description: Left-upper semi-diagonal (0-4-16-36-64) contains squared layer number (4 * layer^2).
-	 * External if-statement defines layer and finds (pre-)result for position in corresponding row or
-	 * column of left-upper semi-plane, and internal if-statement corrects result for mirror position.
-	 */
-	private static int gridSpiralIndexing(int X, int Y)
-	{
-		int index = 0;
-		if (X * X >= Y * Y)
-		{
-			index = 4 * X * X - X - Y;
-			if (X < Y)
-				index = index - 2 * (X - Y);
-		}
-		else
-		{
-			index = 4 * Y * Y - X - Y;
-			if (X < Y)
-				index = index + 2 * (X - Y);
-		}
-		
-		return index;
-	}
-	
-	public static abstract class GenTaskTracker
-	{
-		public abstract boolean isValid();
-		
-		public abstract Consumer<ChunkSizedData> getConsumer();
-	}
-	
-	final IGenerator generator;
-	
-	static final class GenTask
-	{
-		final DhLodPos pos;
-		final byte dataDetail;
-		final GenTaskTracker taskTracker;
-		final CompletableFuture<Boolean> future;
-		
-		GenTask(DhLodPos pos, byte dataDetail, GenTaskTracker taskTracker, CompletableFuture<Boolean> future)
-		{
-			this.dataDetail = dataDetail;
-			this.pos = pos;
-			this.taskTracker = taskTracker;
-			this.future = future;
-		}
-	}
-	
-	static final class TaskGroup
-	{
-		final DhLodPos pos;
-		byte dataDetail;
-		final LinkedList<GenTask> members = new LinkedList<>(); // Accessed by gen poller thread only
-		
-		TaskGroup(DhLodPos pos, byte dataDetail)
-		{
-			this.pos = pos;
-			this.dataDetail = dataDetail;
-		}
-		
-		void accept(ChunkSizedData data)
-		{
-			Iterator<GenTask> iter = this.members.iterator();
-			while (iter.hasNext())
-			{
-				GenTask task = iter.next();
-				Consumer<ChunkSizedData> consumer = task.taskTracker.getConsumer();
-				if (consumer == null)
-				{
-					iter.remove();
-					task.future.complete(false);
-				}
-				else
-				{
-					consumer.accept(data);
-				}
-			}
-		}
-	}
-	
-	static final class InProgressTask
-	{
-		final TaskGroup group;
-		CompletableFuture<Void> genFuture = null;
-		
-		InProgressTask(TaskGroup group)
-		{
-			this.group = group;
-		}
-	}
-	
-	static class SplitTask extends GenTaskTracker
-	{
-		final GenTaskTracker parentTracker;
-		final CompletableFuture<Boolean> parentFuture;
-		boolean cachedValid = true;
-		
-		SplitTask(GenTaskTracker parentTracker, CompletableFuture<Boolean> parentFuture)
-		{
-			this.parentTracker = parentTracker;
-			this.parentFuture = parentFuture;
-		}
-		
-		boolean recheckState()
-		{
-			if (!this.cachedValid)
-				return false;
-			
-			this.cachedValid = this.parentTracker.isValid();
-			if (!this.cachedValid)
-				this.parentFuture.complete(false);
-			
-			return this.cachedValid;
-		}
-		
-		@Override
-		public boolean isValid() { return this.cachedValid; }
-		
-		@Override
-		public Consumer<ChunkSizedData> getConsumer() { return this.parentTracker.getConsumer(); }
-		
-	}
-	
-	private final ConcurrentLinkedQueue<GenTask> looseTasks = new ConcurrentLinkedQueue<>();
+	private final ConcurrentLinkedQueue<WorldGenTask> looseTasks = new ConcurrentLinkedQueue<>();
 	// FIXME: Concurrency issue on close!
 	// FIXME: This is using up a TONS of time to process!
 	private final ConcurrentSkipListMap<DhLodPos, TaskGroup> taskGroups = new ConcurrentSkipListMap<>(
@@ -168,21 +44,26 @@ public class GenerationQueue implements Closeable
 			}
 	); // Accessed by poller only
 	
-	private final ConcurrentHashMap<DhLodPos, InProgressTask> inProgress = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<DhLodPos, InProgressWorldGenTask> inProgress = new ConcurrentHashMap<>();
 	
+	// granularity is the detail level for batching world generator requests together
 	private final byte maxGranularity;
 	private final byte minGranularity;
+	
 	private final byte maxDataDetail;
 	private final byte minDataDetail;
 	private volatile CompletableFuture<Void> closer = null;
 	
-	public GenerationQueue(IGenerator generator)
+	
+	
+	
+	public WorldGenerationQueue(IChunkGenerator generator)
 	{
 		this.generator = generator;
 		this.maxGranularity = generator.getMaxGenerationGranularity();
 		this.minGranularity = generator.getMinGenerationGranularity();
-		this.maxDataDetail = generator.getMaxDataDetail();
-		this.minDataDetail = generator.getMinDataDetail();
+		this.maxDataDetail = generator.getMaxDataDetailLevel();
+		this.minDataDetail = generator.getMinDataDetailLevel();
 		
 		if (this.minGranularity < 4)
 			throw new IllegalArgumentException("DH-IGenerator: min granularity must be at least 4!");
@@ -190,7 +71,10 @@ public class GenerationQueue implements Closeable
 			throw new IllegalArgumentException("DH-IGenerator: max granularity smaller than min granularity!");
 	}
 	
-	public CompletableFuture<Boolean> submitGenTask(DhLodPos pos, byte requiredDataDetail, GenTaskTracker tracker)
+	
+	
+	
+	public CompletableFuture<Boolean> submitGenTask(DhLodPos pos, byte requiredDataDetail, AbstractWorldGenTaskTracker tracker)
 	{
 		if (this.closer != null)
 			return CompletableFuture.completedFuture(false);
@@ -212,8 +96,8 @@ public class GenerationQueue implements Closeable
 			int subPosCount = pos.getBlockWidth(subDetail);
 			DhLodPos cornerSubPos = pos.getCorner(subDetail);
 			CompletableFuture<Boolean>[] subFutures = new CompletableFuture[subPosCount * subPosCount];
-			ArrayList<GenTask> subTasks = new ArrayList<>(subPosCount * subPosCount);
-			SplitTask splitTask = new SplitTask(tracker, new CompletableFuture<>());
+			ArrayList<WorldGenTask> subTasks = new ArrayList<>(subPosCount * subPosCount);
+			SplitTaskTracker splitTaskTracker = new SplitTaskTracker(tracker, new CompletableFuture<>());
 			{
 				int i = 0;
 				for (int ox = 0; ox < subPosCount; ox++)
@@ -222,31 +106,31 @@ public class GenerationQueue implements Closeable
 					{
 						CompletableFuture<Boolean> subFuture = new CompletableFuture<>();
 						subFutures[i++] = subFuture;
-						subTasks.add(new GenTask(cornerSubPos.addOffset(ox, oz), requiredDataDetail, splitTask, subFuture));
+						subTasks.add(new WorldGenTask(cornerSubPos.addOffset(ox, oz), requiredDataDetail, splitTaskTracker, subFuture));
 					}
 				}
 			}
 			CompletableFuture.allOf(subFutures).whenComplete((v, ex) -> {
 				if (ex != null)
-					splitTask.parentFuture.completeExceptionally(ex);
-				if (!splitTask.recheckState())
+					splitTaskTracker.parentFuture.completeExceptionally(ex);
+				if (!splitTaskTracker.recheckState())
 					return; // Auto join future
 				for (CompletableFuture<Boolean> subFuture : subFutures)
 				{
 					boolean successful = subFuture.join();
 					if (!successful)
 					{
-						splitTask.parentFuture.complete(false);
+						splitTaskTracker.parentFuture.complete(false);
 						return;
 					}
 				}
-				splitTask.parentFuture.complete(true);
+				splitTaskTracker.parentFuture.complete(true);
 			});
 			this.looseTasks.addAll(subTasks);
 			if (this.closer != null)
 				return CompletableFuture.completedFuture(false);
 			else
-				return splitTask.parentFuture;
+				return splitTaskTracker.parentFuture;
 		}
 		else if (granularity < this.minGranularity)
 		{
@@ -254,7 +138,7 @@ public class GenerationQueue implements Closeable
 			byte parentDetail = (byte) (this.minGranularity + requiredDataDetail);
 			DhLodPos parentPos = pos.convertUpwardsTo(parentDetail);
 			CompletableFuture<Boolean> future = new CompletableFuture<>();
-			this.looseTasks.add(new GenTask(parentPos, requiredDataDetail, tracker, future));
+			this.looseTasks.add(new WorldGenTask(parentPos, requiredDataDetail, tracker, future));
 			if (this.closer != null)
 				return CompletableFuture.completedFuture(false);
 			else
@@ -263,7 +147,7 @@ public class GenerationQueue implements Closeable
 		else
 		{
 			CompletableFuture<Boolean> future = new CompletableFuture<>();
-			this.looseTasks.add(new GenTask(pos, requiredDataDetail, tracker, future));
+			this.looseTasks.add(new WorldGenTask(pos, requiredDataDetail, tracker, future));
 			if (this.closer != null)
 				return CompletableFuture.completedFuture(false);
 			else
@@ -293,7 +177,7 @@ public class GenerationQueue implements Closeable
 				// We should have already ALWAYS selected the higher granularity.
 				LodUtil.assertTrue(group.pos.detailLevel < target.pos.detailLevel);
 				groupIter.remove(); // Remove and consume all from that lower granularity request
-				target.members.addAll(group.members);
+				target.generatorTasks.addAll(group.generatorTasks);
 			}
 		}
 		
@@ -337,7 +221,7 @@ public class GenerationQueue implements Closeable
 					{
 						// We can just append us into the existing list.
 						for (TaskGroup g : groups)
-							newGroup.members.addAll(g.members);
+							newGroup.generatorTasks.addAll(g.generatorTasks);
 					}
 					else
 					{
@@ -346,7 +230,7 @@ public class GenerationQueue implements Closeable
 						boolean worked = this.taskGroups.remove(parentPos, newGroup); // Pop it off for later proper merge check
 						LodUtil.assertTrue(worked);
 						for (TaskGroup g : groups)
-							newGroup.members.addAll(g.members);
+							newGroup.generatorTasks.addAll(g.generatorTasks);
 						this.addAndCombineGroup(newGroup); // Recursive check the new group
 					}
 				}
@@ -355,7 +239,7 @@ public class GenerationQueue implements Closeable
 					// There should not be any higher granularity to check, as otherwise we would have merged ages ago
 					newGroup = new TaskGroup(parentPos, target.dataDetail);
 					for (TaskGroup g : groups)
-						newGroup.members.addAll(g.members);
+						newGroup.generatorTasks.addAll(g.generatorTasks);
 					this.addAndCombineGroup(newGroup); // Recursive check the new group
 				}
 				return; // We have merged. So no need to add the target group
@@ -372,9 +256,9 @@ public class GenerationQueue implements Closeable
 		int taskProcessed = 0;
 		while (!this.looseTasks.isEmpty() && taskProcessed < MAX_TASKS_PROCESSED_PER_TICK)
 		{
-			GenTask task = this.looseTasks.poll();
+			WorldGenTask task = this.looseTasks.poll();
 			taskProcessed++;
-			byte taskDataDetail = task.dataDetail;
+			byte taskDataDetail = task.dataDetailLevel;
 			byte taskGranularity = (byte) (task.pos.detailLevel - taskDataDetail);
 			LodUtil.assertTrue(taskGranularity >= 4 && taskGranularity >= this.minGranularity && taskGranularity <= this.maxGranularity);
 			
@@ -385,7 +269,7 @@ public class GenerationQueue implements Closeable
 				if (group.dataDetail <= taskDataDetail)
 				{
 					// We can just append us into the existing list.
-					group.members.add(task);
+					group.generatorTasks.add(task);
 				}
 				else
 				{
@@ -393,7 +277,7 @@ public class GenerationQueue implements Closeable
 					group.dataDetail = taskDataDetail;
 					boolean worked = this.taskGroups.remove(task.pos, group); // Pop it off for later proper merge check
 					LodUtil.assertTrue(worked);
-					group.members.add(task);
+					group.generatorTasks.add(task);
 					this.addAndCombineGroup(group);
 				}
 			}
@@ -409,7 +293,7 @@ public class GenerationQueue implements Closeable
 					if (group != null && group.dataDetail == taskDataDetail)
 					{
 						// We can just append to the higher granularity group one
-						group.members.add(task);
+						group.generatorTasks.add(task);
 						didAnything = true;
 						break;
 					}
@@ -417,7 +301,7 @@ public class GenerationQueue implements Closeable
 				if (!didAnything)
 				{
 					group = new TaskGroup(task.pos, taskDataDetail);
-					group.members.add(task);
+					group.generatorTasks.add(task);
 					this.addAndCombineGroup(group);
 				}
 			}
@@ -437,10 +321,10 @@ public class GenerationQueue implements Closeable
 		while (groupIter.hasNext())
 		{
 			TaskGroup group = groupIter.next();
-			Iterator<GenTask> taskIter = group.members.iterator();
+			Iterator<WorldGenTask> taskIter = group.generatorTasks.iterator();
 			while (taskIter.hasNext())
 			{
-				GenTask task = taskIter.next();
+				WorldGenTask task = taskIter.next();
 				if (!task.taskTracker.isValid())
 				{
 					taskIter.remove();
@@ -448,7 +332,7 @@ public class GenerationQueue implements Closeable
 				}
 			}
 			
-			if (group.members.isEmpty())
+			if (group.generatorTasks.isEmpty())
 				groupIter.remove();
 		}
 	}
@@ -485,8 +369,8 @@ public class GenerationQueue implements Closeable
 		
 		if (best != null)
 		{
-			InProgressTask startedTask = new InProgressTask(best);
-			InProgressTask casTask = this.inProgress.putIfAbsent(best.pos, startedTask);
+			InProgressWorldGenTask startedTask = new InProgressWorldGenTask(best);
+			InProgressWorldGenTask casTask = this.inProgress.putIfAbsent(best.pos, startedTask);
 			boolean worked = this.taskGroups.remove(best.pos, best); // Remove the selected task from the group
 			LodUtil.assertTrue(worked);
 			if (casTask != null)
@@ -516,7 +400,7 @@ public class GenerationQueue implements Closeable
 		this.pollAndStartNext(targetPos);
 	}
 	
-	private void startTaskGroup(InProgressTask task)
+	private void startTaskGroup(InProgressWorldGenTask task)
 	{
 		byte dataDetail = task.group.dataDetail;
 		DhLodPos pos = task.group.pos;
@@ -533,12 +417,12 @@ public class GenerationQueue implements Closeable
 			{
 				if (!UncheckedInterruptedException.isThrowableInterruption(ex))
 					LOGGER.error("Error generating data for section {}", pos, ex);
-				task.group.members.forEach(m -> m.future.complete(false));
+				task.group.generatorTasks.forEach(m -> m.future.complete(false));
 			}
 			else
 			{
 				LOGGER.info("Section generation at {} complated", pos);
-				task.group.members.forEach(m -> m.future.complete(true));
+				task.group.generatorTasks.forEach(m -> m.future.complete(true));
 			}
 			boolean worked = inProgress.remove(pos, task);
 			LodUtil.assertTrue(worked);
@@ -547,7 +431,7 @@ public class GenerationQueue implements Closeable
 	
 	public CompletableFuture<Void> startClosing(boolean cancelCurrentGeneration, boolean alsoInterruptRunning)
 	{
-		this.taskGroups.values().forEach(g -> g.members.forEach(t -> t.future.complete(false)));
+		this.taskGroups.values().forEach(g -> g.generatorTasks.forEach(t -> t.future.complete(false)));
 		this.taskGroups.clear();
 		ArrayList<CompletableFuture<Void>> array = new ArrayList<>(inProgress.size());
 		this.inProgress.values().forEach(runningTask ->
@@ -584,4 +468,36 @@ public class GenerationQueue implements Closeable
 			LOGGER.error("Failed to close generation queue: ", e);
 		}
 	}
+	
+	
+	
+	//================//
+	// helper methods //
+	//================//
+	
+	/**
+	 * Source: <a href="https://stackoverflow.com/questions/3706219/algorithm-for-iterating-over-an-outward-spiral-on-a-discrete-2d-grid-from-the-or">...</a>
+	 * Description: Left-upper semi-diagonal (0-4-16-36-64) contains squared layer number (4 * layer^2).
+	 * External if-statement defines layer and finds (pre-)result for position in corresponding row or
+	 * column of left-upper semi-plane, and internal if-statement corrects result for mirror position.
+	 */
+	private static int gridSpiralIndexing(int X, int Y)
+	{
+		int index = 0;
+		if (X * X >= Y * Y)
+		{
+			index = 4 * X * X - X - Y;
+			if (X < Y)
+				index = index - 2 * (X - Y);
+		}
+		else
+		{
+			index = 4 * Y * Y - X - Y;
+			if (X < Y)
+				index = index + 2 * (X - Y);
+		}
+		
+		return index;
+	}
+	
 }
