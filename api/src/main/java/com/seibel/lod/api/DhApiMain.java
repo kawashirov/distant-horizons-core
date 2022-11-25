@@ -25,47 +25,35 @@ import com.seibel.lod.core.interfaces.dependencyInjection.IOverrideInjector;
  * the concrete object we replaced, there would be issues.
  *
  * @author James Seibel
- * @version 2022-11-20
+ * @version 2022-11-24
  */
 public class DhApiMain
 {
-	// only available after core initialization //
-	
-	/**
-	 * <strong>WARNING:</strong> will be null until after DH initializes for the first time. <br><br>
-	 *
-	 * Use a {@link com.seibel.lod.api.methods.events.abstractEvents.DhApiAfterDhInitEvent DhApiAfterDhInitEvent}
-	 * along with the {@link DhApiMain#events ApiCoreInjectors.events} to be notified when this can
-	 * be safely used. <br><br>
+	/** 
+	 * <strong>WARNING:</strong> 
+	 * All objects in this class will be null until after DH initializes for the first time. <br><br>
 	 * 
-	 * Used to interact with Distant Horizons' Configs.
+	 * Bind a custom {@link com.seibel.lod.api.methods.events.abstractEvents.DhApiAfterDhInitEvent DhApiAfterDhInitEvent}
+	 * to {@link DhApiMain#events ApiCoreInjectors.events} in order to be notified when this class can
+	 * be safely used.
 	 */
-	public static IDhApiConfig configs = null;
-	
-	/**
-	 * <strong>WARNING:</strong> will be null until after DH initializes for the first time. <br><br>
-	 *
-	 * Use a {@link com.seibel.lod.api.methods.events.abstractEvents.DhApiAfterDhInitEvent DhApiAfterDhInitEvent}
-	 * along with the {@link DhApiMain#events ApiCoreInjectors.events} to be notified when this can
-	 * be safely used. <br><br>
-	 *
-	 * Used to interact with Distant Horizons' terrain data.
-	 */
-	public static IDhApiTerrainDataRepo terrainRepo = null;
-	
-	/**
-	 * <strong>WARNING:</strong> will be null until after DH initializes for the first time. <br><br>
-	 * 
-	 * Use a {@link com.seibel.lod.api.methods.events.abstractEvents.DhApiAfterDhInitEvent DhApiAfterDhInitEvent}
-	 * along with the {@link DhApiMain#events ApiCoreInjectors.events} to be notified when this can
-	 * be safely used. <br><br>
-	 * 
-	 * Used to interact with Distant Horizons' currently loaded world and
-	 * get levels to use with the {@link DhApiMain#terrainRepo}.
-	 */
-	public static IDhApiWorldProxy worldProxy = null;
-	
-	
+	public static class Delayed
+	{
+		/** Used to interact with Distant Horizons' Configs. */
+		public static IDhApiConfig configs = null;
+		
+		/** 
+		 * Used to interact with Distant Horizons' terrain data. 
+		 * Designed to be used in conjunction with {@link DhApiMain.Delayed#worldProxy}.
+		 */
+		public static IDhApiTerrainDataRepo terrainRepo = null;
+		
+		/**
+		 * Used to interact with Distant Horizons' currently loaded world.
+		 * Designed to be used in conjunction with {@link DhApiMain.Delayed#terrainRepo}.
+		 */
+		public static IDhApiWorldProxy worldProxy = null;
+	}
 	
 	
 	// always available //
@@ -85,7 +73,11 @@ public class DhApiMain
 	/** This version should be updated whenever new methods are added to the Distant Horizons API. */
 	public static int getApiMinorVersion() { return ModInfo.API_MINOR_VERSION; }
 	
-	/** Returns the mod's version number in the format: Major.Minor.Patch */
+	/** 
+	 * Returns the mod's semantic version number in the format: Major.Minor.Patch 
+	 * with optional extensions "-a" for alpha, "-b" for beta, and -dev for unstable development builds. <br>
+	 * Examples: "1.6.9-a", "1.7.0-a-dev", "2.1.0-b", "3.0.0", "3.1.4-dev"
+	 */
 	public static String getModVersion() { return ModInfo.VERSION; }
 	/** Returns true if the mod is a development version, false if it is a release version. */
 	public static boolean getIsDevVersion() { return ModInfo.IS_DEV_BUILD; }

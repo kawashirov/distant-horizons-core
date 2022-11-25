@@ -25,9 +25,9 @@ public class Initializer
         SpottyDataLoader unused4 = new SpottyDataLoader(); // Auto register
 		
 		// link Core's config to the API
-		DhApiMain.configs = DhApiConfig.INSTANCE;
-		DhApiMain.terrainRepo = DhApiTerrainDataRepo.INSTANCE;
-		DhApiMain.worldProxy = DhApiWorldProxy.INSTANCE;
+		DhApiMain.Delayed.configs = DhApiConfig.INSTANCE;
+		DhApiMain.Delayed.terrainRepo = DhApiTerrainDataRepo.INSTANCE;
+		DhApiMain.Delayed.worldProxy = DhApiWorldProxy.INSTANCE;
 		
     }
 }
