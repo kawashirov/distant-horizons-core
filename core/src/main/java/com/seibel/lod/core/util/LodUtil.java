@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.google.common.net.PercentEscaper;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.api.enums.config.EServerFolderNameMode;
 import com.seibel.lod.api.enums.config.EVanillaOverdraw;
@@ -234,8 +235,9 @@ public class LodUtil
 			folderName = serverName + ", IP " + serverIpCleaned + (serverPortCleaned.length() != 0 ? ("-" + serverPortCleaned) : "") + ", GameVersion " + serverMcVersion;
 			break;
 		}
-		
-		return folderName;
+		// PercentEscaper makes the characters all part of the standard alphameric character set
+		// This fixes some issues when the server is named something in other languages
+		return new PercentEscaper("", true).escape(folderName);
 	}
 	
 	public static int computeOverdrawOffset() {

@@ -1,5 +1,6 @@
 package com.seibel.lod.core.file.structure;
 
+import com.google.common.net.PercentEscaper;
 import com.seibel.lod.core.file.LevelToFileMatcher;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.api.enums.config.EServerFolderNameMode;
@@ -65,7 +66,9 @@ public class ClientOnlySaveStructure extends SaveStructure {
                 folderName = serverName + ", IP " + serverIpCleaned + (serverPortCleaned.length() != 0 ? ("-" + serverPortCleaned) : "") + ", GameVersion " + serverMcVersion;
                 break;
         }
-        return folderName;
+        // PercentEscaper makes the characters all part of the standard alphameric character set
+        // This fixes some issues when the server is named something in other languages
+        return new PercentEscaper("", true).escape(folderName);
     }
 
     LevelToFileMatcher fileMatcher = null;
