@@ -29,7 +29,6 @@ import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
-import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.worldGeneration.AbstractBatchGenerationEnvionmentWrapper;
 import com.seibel.lod.core.wrapperInterfaces.worldGeneration.AbstractBatchGenerationEnvionmentWrapper.Steps;
 import org.apache.logging.log4j.Logger;
@@ -44,26 +43,49 @@ import java.util.function.Consumer;
  */
 public class BatchGenerator implements IChunkGenerator
 {
-	public static final boolean ENABLE_GENERATOR_STATS_LOGGING = false;
-	
-	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	private static final IWrapperFactory FACTORY = SingletonInjector.INSTANCE.get(IWrapperFactory.class);
+	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	
 	public AbstractBatchGenerationEnvionmentWrapper generationGroup;
-	public IDhLevel targetLodLevel;
-	public static final int generationGroupSize = 4;
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+	public IDhLevel targetDhLevel;
 	
 	
 	
-	public BatchGenerator(IDhLevel targetLodLevel)
+	
+	public BatchGenerator(IDhLevel targetDhLevel)
 	{
-		this.targetLodLevel = targetLodLevel;
-		this.generationGroup = FACTORY.createBatchGenerator(targetLodLevel);
+		this.targetDhLevel = targetDhLevel;
+		this.generationGroup = FACTORY.createBatchGenerator(targetDhLevel);
 		LOGGER.info("Batch Chunk Generator initialized");
 	}
 	
 	
 	
+	//======================//
+	// generator parameters //
+	//======================//
+	
+	@Override
+	public byte getMinDataDetailLevel() { return LodUtil.BLOCK_DETAIL_LEVEL; }
+	
+	@Override
+	public byte getMaxDataDetailLevel() { return LodUtil.BLOCK_DETAIL_LEVEL; }
+	
+	@Override
+	public byte getMinGenerationGranularity() { return LodUtil.CHUNK_DETAIL_LEVEL; }
+	
+	@Override
+	public byte getMaxGenerationGranularity() { return LodUtil.CHUNK_DETAIL_LEVEL + 2; }
+	
+	
+	
+	
+	//===================//
+	// generator methods //
+	//===================//
+	
+	@Override
+	public void close() { this.stop(true); }
 	public void stop(boolean blocking)
 	{
 		LOGGER.info("Batch Chunk Generator shutting down...");
@@ -87,7 +109,7 @@ public class BatchGenerator implements IChunkGenerator
 				targetStep = Steps.Empty; // NOTE: Only load in existing chunks. No new chunk generation
 				break;
 			case BIOME_ONLY:
-				targetStep = Steps.Biomes; // NOTE: No block. Require fake height in LodBuilder
+				targetStep = Steps.Biomes; // NOTE: No blocks. Require fake height in LodBuilder
 				break;
 			case BIOME_ONLY_SIMULATE_HEIGHT:
 				targetStep = Steps.Noise; // NOTE: Stone only. Require fake surface
@@ -100,11 +122,10 @@ public class BatchGenerator implements IChunkGenerator
 				targetStep = Steps.Features;
 				break;
 		}
-		;
 		
 		int chunkXMin = chunkPosMin.x;
 		int chunkZMin = chunkPosMin.z;
-		int genChunkSize = BitShiftUtil.powerOfTwo(granularity - 4); // minus 4 for chunk size is equal to dividing by 16
+		int genChunkSize = BitShiftUtil.powerOfTwo(granularity - 4); // minus 4 is equal to dividing by 16 to convert to chunk scale
 		double runTimeRatio = Config.Client.Advanced.Threading.numberOfWorldGenerationThreads.get() > 1 ? 
 				1.0 :
 				Config.Client.Advanced.Threading.numberOfWorldGenerationThreads.get();
@@ -112,23 +133,6 @@ public class BatchGenerator implements IChunkGenerator
 	}
 	
 	@Override
-	public byte getMinDataDetailLevel() { return LodUtil.BLOCK_DETAIL_LEVEL; }
-	
-	@Override
-	public byte getMaxDataDetailLevel() { return LodUtil.BLOCK_DETAIL_LEVEL; }
-	
-	@Override
-	public int getPriority() { return LodUtil.BLOCK_DETAIL_LEVEL; }
-	
-	@Override
-	public byte getMinGenerationGranularity() { return LodUtil.CHUNK_DETAIL_LEVEL; }
-	
-	@Override
-	public byte getMaxGenerationGranularity() { return LodUtil.CHUNK_DETAIL_LEVEL + 2; }
-	
-	@Override
-	public void close() { this.stop(true); }
-	
-	public void update() { this.generationGroup.updateAllFutures(); }
+	public void preGeneratorTaskStart() { this.generationGroup.updateAllFutures(); }
 	
 }

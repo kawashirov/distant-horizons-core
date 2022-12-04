@@ -5,6 +5,7 @@ import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.full.FullDataSource;
 import com.seibel.lod.core.datatype.transform.ChunkToLodBuilder;
 import com.seibel.lod.core.file.datafile.IDataSourceProvider;
+import com.seibel.lod.core.generation.IChunkGenerator;
 import com.seibel.lod.core.generation.WorldGenerationQueue;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
@@ -316,7 +317,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		
 		if (wgs != null)
 		{
-			wgs.batchGenerator.update();
+			wgs.chunkGenerator.preGeneratorTaskStart();
 			wgs.worldGenerationQueue.pollAndStartClosest(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
 		}
 	}
@@ -334,7 +335,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 	// helper classes //
 	//================//
 	
-	class RenderState
+	private class RenderState
 	{
 		final IClientLevelWrapper clientLevel;
 		final LodQuadTree tree;
@@ -362,15 +363,15 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		}
 	}
 	
-	class WorldGenState
+	private class WorldGenState
 	{
-		final BatchGenerator batchGenerator;
-		final WorldGenerationQueue worldGenerationQueue;
+		public final IChunkGenerator chunkGenerator;
+		public final WorldGenerationQueue worldGenerationQueue;
 		
 		WorldGenState()
 		{
-			this.batchGenerator = new BatchGenerator(DhClientServerLevel.this);
-			this.worldGenerationQueue = new WorldGenerationQueue(this.batchGenerator);
+			this.chunkGenerator = new BatchGenerator(DhClientServerLevel.this);
+			this.worldGenerationQueue = new WorldGenerationQueue(this.chunkGenerator);
 			dataFileHandler.setGenerationQueue(this.worldGenerationQueue);
 		}
 		
@@ -382,7 +383,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 									   {
 										   LOGGER.error("Error closing generation queue", ex);
 										   return null;
-									   }).thenRun(this.batchGenerator::close)
+									   }).thenRun(this.chunkGenerator::close)
 											.exceptionally(ex ->
 									   {
 										   LOGGER.error("Error closing world gen", ex);

@@ -410,8 +410,7 @@ public class WorldGenerationQueue implements Closeable
 		
 		DhChunkPos chunkPosMin = new DhChunkPos(pos.getCorner());
 		LOGGER.info("Generating section {} with granularity {} at {}", pos, granularity, chunkPosMin);
-		task.genFuture = this.generator.generate(
-				chunkPosMin, granularity, dataDetail, task.group::accept);
+		task.genFuture = this.generator.generate(chunkPosMin, granularity, dataDetail, task.group::accept);
 		task.genFuture.whenComplete((v, ex) -> {
 			if (ex != null)
 			{
