@@ -46,7 +46,7 @@ import org.apache.logging.log4j.Logger;
  * This class holds methods and constants that may be used in multiple places.
  * 
  * @author James Seibel
- * @version 2022-3-30
+ * @version 2022-12-5
  */
 public class LodUtil
 {
@@ -80,8 +80,6 @@ public class LodUtil
 	public static final int COLOR_DEBUG_BLACK = ColorUtil.rgbToInt(DEBUG_ALPHA, 0, 0, 0);
 	public static final int COLOR_DEBUG_WHITE = ColorUtil.rgbToInt(DEBUG_ALPHA, 255, 255, 255);
 	public static final int COLOR_INVISIBLE = ColorUtil.rgbToInt(0, 0, 0, 0);
-	
-	public static final int CEILED_DIMENSION_MAX_RENDER_DISTANCE = 64; // 0 - 255
 	
 	//FIXME: WE NEED MORE COLORS!!!!
 	/**
