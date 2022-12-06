@@ -96,33 +96,25 @@ public class LodUtil
 			ColorUtil.rgbToInt(255, 255, 255)};
 	
 	
-	public static final byte DETAIL_OPTIONS = 10;
-	
 	/** 512 blocks wide */
-	public static final byte REGION_DETAIL_LEVEL = DETAIL_OPTIONS - 1;
+	public static final byte REGION_DETAIL_LEVEL = 9;
 	/** 16 blocks wide */
 	public static final byte CHUNK_DETAIL_LEVEL = 4;
 	/** 1 block wide */
 	public static final byte BLOCK_DETAIL_LEVEL = 0;
 	
-	//public static final short MAX_VERTICAL_DATA = 4;
-	
 	/**
 	 * measured in Blocks <br>
-	 * detail level max - 1
-	 * 256 blocks
+	 * detail level 9
+	 * 512 x 512 blocks
 	 */
-	public static final short REGION_WIDTH = 1 << REGION_DETAIL_LEVEL;
+	public static final short REGION_WIDTH = 512;
 	/**
 	 * measured in Blocks <br>
 	 * detail level 4
+	 * 16 x 16 blocks
 	 */
 	public static final short CHUNK_WIDTH = 16;
-	/**
-	 * measured in Blocks <br>
-	 * detail level 0
-	 */
-	public static final short BLOCK_WIDTH = 1;
 	
 	
 	/** number of chunks wide */
