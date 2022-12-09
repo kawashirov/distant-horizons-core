@@ -11,34 +11,19 @@ import com.seibel.lod.core.DependencyInjection.OverrideInjector;
  * Dummy test implementation object for world generator injection unit tests.
  *
  * @author James Seibel
- * @version 2022-8-9
+ * @version 2022-12-5
  */
-public class WorldGeneratorTestPrimary implements IDhApiWorldGenerator
+public class WorldGeneratorTestPrimary extends TestWorldGenerator
 {
 	public static int PRIORITY = OverrideInjector.DEFAULT_NON_CORE_OVERRIDE_PRIORITY + 5;
 	public static EDhApiWorldGenThreadMode THREAD_MODE = EDhApiWorldGenThreadMode.MULTI_THREADED;
 	
 
-	//==============//
-	// IOverridable //
-	//==============//
-
+	
 	@Override
 	public int getPriority() { return PRIORITY; }
-
-
-
-	//======================//
-	// IDhApiWorldGenerator //
-	//======================//
-
+	
 	@Override
 	public EDhApiWorldGenThreadMode getThreadingMode() { return THREAD_MODE; }
-	
-	@Override 
-	public IDhApiChunkWrapper generateCoreChunk(int chunkPosX, int chunkPosZ, IDhApiLevelWrapper serverLevelWrapper, EDhApiWorldGenerationStep maxStepToGenerate)
-	{
-		return null;
-	}
 	
 }

@@ -22,6 +22,7 @@ package com.seibel.lod.core.wrapperInterfaces;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
+import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.lod.core.wrapperInterfaces.worldGeneration.AbstractBatchGenerationEnvionmentWrapper;
 
@@ -31,7 +32,7 @@ import java.io.IOException;
  * This handles creating abstract wrapper objects.
  * 
  * @author James Seibel
- * @version 3-5-2022
+ * @version 2022-12-5
  */
 public interface IWrapperFactory extends IBindable 
 {
@@ -39,4 +40,11 @@ public interface IWrapperFactory extends IBindable
 	IBiomeWrapper deserializeBiomeWrapper(String str) throws IOException;
 	IBlockStateWrapper deserializeBlockStateWrapper(String str) throws IOException;
 	IBlockStateWrapper getAirBlockStateWrapper();
+	
+	/** 
+	 * Specifically designed to be used with the API.
+	 * @throws ClassCastException with instructions on expected objects if the object couldn't be cast
+	 */
+	IChunkWrapper createChunkWrapper(Object[] objectArray) throws ClassCastException;
+	
 }

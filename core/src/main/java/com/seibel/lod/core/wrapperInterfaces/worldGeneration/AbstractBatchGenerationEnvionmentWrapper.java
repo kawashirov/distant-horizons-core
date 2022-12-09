@@ -43,4 +43,5 @@ public abstract class AbstractBatchGenerationEnvionmentWrapper
 	public abstract void stop(boolean blocking);
 
 	public abstract CompletableFuture<Void> generateChunks(int minX, int minZ, int genSize, Steps targetStep, double runTimeRatio, Consumer<IChunkWrapper> resultConsumer);
+	
 }

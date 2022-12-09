@@ -1,8 +1,13 @@
 package com.seibel.lod.core.generation;
 
+import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
+import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.transform.LodDataBuilder;
+import com.seibel.lod.core.dependencyInjection.SingletonInjector;
+import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhChunkPos;
+import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 
 import java.io.Closeable;
@@ -10,53 +15,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 /**
+ * Most logic is in {@link IDhApiWorldGenerator}, this mainly contains default
+ * methods that are useful for Core.
+ * 
+ * @author James Seibel 
  * @author Leetom
- * @version 2022-11-25
+ * @version 2022-12-5
  */
-public interface IChunkGenerator extends Closeable
+public interface IChunkGenerator extends IDhApiWorldGenerator
 {
-	//============//
-	// parameters //
-	//============//
-	
-	/**
-	 * What is the detail/resolution of the data? (This will offset the generation granularity)
-	 * (minimum detail is 0, maximum detail is 255) (though that high isn't really... realistic)
-	 * (0 = 1x1 block per data, 1 = 2x2 block per data, 2 = 4x4 block per data, etc. This measured in the same units as LOD Detail Level.)
-	 * TODO: System currently only supports 1x1 block per data.
-	 */
-	byte getMinDataDetailLevel();
-	byte getMaxDataDetailLevel();
-	
-	/**
-	 * What is the min batch size of a single generation call?
-	 * (minimum return value is 4 since that's the MC chunk size)
-	 * (4 -> 16x16 data per call, 5 -> 32x32 data per call, 6 -> 64x64 data per call, etc. This measured in the same units as LOD Detail Level.)
-	 */
-	byte getMinGenerationGranularity();
-	
-	/**
-	 * What is the max batch size of a single generation call? 
-	 * The system will try to group tasks to the max batch size if possible
-	 * (minimum return value is 4 since that's the MC chunk size)
-	 * (4 -> 16x16 data per call, 5 -> 32x32 data per call, 6 -> 64x64 data per call, etc. This measured in the same units as LOD Detail Level.)
-	 */
-	byte getMaxGenerationGranularity();
-	
-	/** Returns whether the generator is unable to accept new generation requests. */
-	boolean isBusy();
-	
-	
-	
-	//=================//
-	// world generator //
-	//=================//
-	
-	CompletableFuture<Void> generateChunks(DhChunkPos chunkPosMin,
-			byte granularity, byte targetDataDetail,
-			Consumer<IChunkWrapper> resultConsumer);
-	
-	
 	/**
 	 * Start a generation event
 	 * (Note that the chunkPos is always aligned to the granularity)
@@ -66,32 +33,19 @@ public interface IChunkGenerator extends Closeable
 			byte granularity, byte targetDataDetail,
 			Consumer<ChunkSizedData> resultConsumer)
 	{
-		return this.generateChunks(chunkPosMin, granularity, targetDataDetail, (chunk) ->
-		{
-			resultConsumer.accept(LodDataBuilder.createChunkData(chunk));
+		return this.generateChunks(chunkPosMin.x, chunkPosMin.z, granularity, targetDataDetail, (objectArray) ->
+		{ 
+			try
+			{
+				IChunkWrapper chunk = SingletonInjector.INSTANCE.get(IWrapperFactory.class).createChunkWrapper(objectArray);
+				resultConsumer.accept(LodDataBuilder.createChunkData(chunk));
+			}
+			catch (ClassCastException e)
+			{
+				DhLoggerBuilder.getLogger().error("World generator return type incorrect. Error: [" + e.getMessage() + "].", e);
+				Config.Client.WorldGenerator.enableDistantGeneration.set(false);
+			}
 		});
 	}
-	
-	
-	//===============//
-	// event methods //
-	//===============//
-	
-	/** 
-	 * Called before a new generator task is started. <br>
-	 * This can be used to run cleanup on existing tasks before new tasks are started.
-	 */
-	void preGeneratorTaskStart();
-	
-	
-	
-	//===========//
-	// overrides //
-	//===========//
-	
-	// This is overridden to remove the "throws IOException" 
-	// that is present in the default Closeable.close() method 
-	@Override
-	void close();
 	
 }

@@ -19,6 +19,7 @@
 
 package com.seibel.lod.core.generation;
 
+import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenThreadMode;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.api.enums.config.EDistanceGenerationMode;
@@ -65,15 +66,16 @@ public class BatchGenerator implements IChunkGenerator
 	// generator parameters //
 	//======================//
 	
+	@Override 
+	public EDhApiWorldGenThreadMode getThreadingMode() { return EDhApiWorldGenThreadMode.MULTI_THREADED; }
+	
 	@Override
 	public byte getMinDataDetailLevel() { return LodUtil.BLOCK_DETAIL_LEVEL; }
-	
 	@Override
 	public byte getMaxDataDetailLevel() { return LodUtil.BLOCK_DETAIL_LEVEL; }
 	
 	@Override
 	public byte getMinGenerationGranularity() { return LodUtil.CHUNK_DETAIL_LEVEL; }
-	
 	@Override
 	public byte getMaxGenerationGranularity() { return LodUtil.CHUNK_DETAIL_LEVEL + 2; }
 	
@@ -99,7 +101,7 @@ public class BatchGenerator implements IChunkGenerator
 	}
 	
 	@Override
-	public CompletableFuture<Void> generateChunks(DhChunkPos chunkPosMin, byte granularity, byte targetDataDetail, Consumer<IChunkWrapper> resultConsumer)
+	public CompletableFuture<Void> generateChunks(int chunkPosMinX, int chunkPosMinZ, byte granularity, byte targetDataDetail, Consumer<Object[]> resultConsumer)
 	{
 		EDistanceGenerationMode mode = Config.Client.WorldGenerator.distanceGenerationMode.get();
 		Steps targetStep = null;
@@ -123,13 +125,15 @@ public class BatchGenerator implements IChunkGenerator
 				break;
 		}
 		
-		int chunkXMin = chunkPosMin.x;
-		int chunkZMin = chunkPosMin.z;
 		int genChunkSize = BitShiftUtil.powerOfTwo(granularity - 4); // minus 4 is equal to dividing by 16 to convert to chunk scale
 		double runTimeRatio = Config.Client.Advanced.Threading.numberOfWorldGenerationThreads.get() > 1 ? 
 				1.0 :
 				Config.Client.Advanced.Threading.numberOfWorldGenerationThreads.get();
-		return this.generationGroup.generateChunks(chunkXMin, chunkZMin, genChunkSize, targetStep, runTimeRatio, resultConsumer);
+		
+		// the consumer needs to be wrapped like this because the API can't use DH core objects (and IChunkWrapper can't be easily put into the API project)
+		Consumer<IChunkWrapper> consumer = (chunkWrapper) -> resultConsumer.accept(new Object[]{ chunkWrapper });
+		
+		return this.generationGroup.generateChunks(chunkPosMinX, chunkPosMinZ, genChunkSize, targetStep, runTimeRatio, consumer);
 	}
 	
 	@Override
