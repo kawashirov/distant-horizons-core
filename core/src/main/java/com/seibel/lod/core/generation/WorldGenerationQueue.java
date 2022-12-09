@@ -25,7 +25,7 @@ public class WorldGenerationQueue implements Closeable
 	
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
-	private final IChunkGenerator generator;
+	private final IWorldGenerator generator;
 	
 	private final ConcurrentLinkedQueue<WorldGenTask> looseTasks = new ConcurrentLinkedQueue<>();
 	// FIXME: Concurrency issue on close!
@@ -57,7 +57,7 @@ public class WorldGenerationQueue implements Closeable
 	
 	
 	
-	public WorldGenerationQueue(IChunkGenerator generator)
+	public WorldGenerationQueue(IWorldGenerator generator)
 	{
 		this.generator = generator;
 		this.maxGranularity = generator.getMaxGenerationGranularity();

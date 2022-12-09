@@ -10,7 +10,6 @@ import com.seibel.lod.core.pos.DhChunkPos;
 import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 
-import java.io.Closeable;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -22,7 +21,7 @@ import java.util.function.Consumer;
  * @author Leetom
  * @version 2022-12-5
  */
-public interface IChunkGenerator extends IDhApiWorldGenerator
+public interface IWorldGenerator extends IDhApiWorldGenerator
 {
 	/**
 	 * Start a generation event

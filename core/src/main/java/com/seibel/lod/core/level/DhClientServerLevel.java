@@ -5,7 +5,7 @@ import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.full.FullDataSource;
 import com.seibel.lod.core.datatype.transform.ChunkToLodBuilder;
 import com.seibel.lod.core.file.datafile.IDataSourceProvider;
-import com.seibel.lod.core.generation.IChunkGenerator;
+import com.seibel.lod.core.generation.IWorldGenerator;
 import com.seibel.lod.core.generation.WorldGenerationQueue;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
@@ -365,7 +365,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 	
 	private class WorldGenState
 	{
-		public final IChunkGenerator chunkGenerator;
+		public final IWorldGenerator chunkGenerator;
 		public final WorldGenerationQueue worldGenerationQueue;
 		
 		WorldGenState()

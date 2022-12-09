@@ -25,7 +25,6 @@ import com.seibel.lod.core.config.Config;
 import com.seibel.lod.api.enums.config.EDistanceGenerationMode;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
-import com.seibel.lod.core.pos.DhChunkPos;
 import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
@@ -34,7 +33,6 @@ import com.seibel.lod.core.wrapperInterfaces.worldGeneration.AbstractBatchGenera
 import com.seibel.lod.core.wrapperInterfaces.worldGeneration.AbstractBatchGenerationEnvionmentWrapper.Steps;
 import org.apache.logging.log4j.Logger;
 
-import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -42,7 +40,7 @@ import java.util.function.Consumer;
  * @author Leetom
  * @version 2022-11-25
  */
-public class BatchGenerator implements IChunkGenerator
+public class BatchGenerator implements IWorldGenerator
 {
 	private static final IWrapperFactory FACTORY = SingletonInjector.INSTANCE.get(IWrapperFactory.class);
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
