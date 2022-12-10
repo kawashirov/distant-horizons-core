@@ -1,7 +1,6 @@
 package com.seibel.lod.core.level;
 
 import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
-import com.seibel.lod.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.lod.core.DependencyInjection.WorldGeneratorInjector;
 import com.seibel.lod.core.config.AppliedConfigState;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
@@ -372,7 +371,17 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		
 		WorldGenState(IDhLevel level)
 		{
-			this.chunkGenerator = new BatchGenerator(level); // WorldGeneratorInjector.INSTANCE.get(level); // 
+			IDhApiWorldGenerator worldGenerator = WorldGeneratorInjector.INSTANCE.get(level.getLevelWrapper());
+			if (worldGenerator == null)
+			{
+				// no override generator is bound, use the Core world generator
+				worldGenerator = new BatchGenerator(level);
+				// binding the core generator won't prevent other mods from binding their own generators 
+				// since core world generator's should have the lowest override priority
+				WorldGeneratorInjector.INSTANCE.bind(level.getLevelWrapper(), worldGenerator);
+			}
+			this.chunkGenerator = worldGenerator;
+			
 			this.worldGenerationQueue = new WorldGenerationQueue(this.chunkGenerator);
 			dataFileHandler.setGenerationQueue(this.worldGenerationQueue);
 		}

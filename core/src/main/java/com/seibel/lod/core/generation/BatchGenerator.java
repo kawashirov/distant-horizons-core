@@ -21,6 +21,7 @@ package com.seibel.lod.core.generation;
 
 import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenThreadMode;
 import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
+import com.seibel.lod.core.interfaces.dependencyInjection.IOverrideInjector;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.api.enums.config.EDistanceGenerationMode;
@@ -39,7 +40,7 @@ import java.util.function.Consumer;
 
 /**
  * @author Leetom
- * @version 2022-11-25
+ * @version 2022-12-10
  */
 public class BatchGenerator implements IDhApiWorldGenerator
 {
@@ -58,6 +59,15 @@ public class BatchGenerator implements IDhApiWorldGenerator
 		this.generationGroup = FACTORY.createBatchGenerator(targetDhLevel);
 		LOGGER.info("Batch Chunk Generator initialized");
 	}
+	
+	
+	
+	//=====================//
+	// override parameters // 
+	//=====================//
+	
+	@Override
+	public int getPriority() { return IOverrideInjector.CORE_PRIORITY; }
 	
 	
 	
@@ -84,20 +94,6 @@ public class BatchGenerator implements IDhApiWorldGenerator
 	//===================//
 	// generator methods //
 	//===================//
-	
-	@Override
-	public void close() { this.stop(true); }
-	public void stop(boolean blocking)
-	{
-		LOGGER.info("Batch Chunk Generator shutting down...");
-		this.generationGroup.stop(blocking);
-	}
-	
-	@Override
-	public boolean isBusy()
-	{
-		return this.generationGroup.getEventCount() > Math.max(Config.Client.Advanced.Threading.numberOfWorldGenerationThreads.get().intValue(), 1) * 1.5;
-	}
 	
 	@Override
 	public CompletableFuture<Void> generateChunks(int chunkPosMinX, int chunkPosMinZ, byte granularity, byte targetDataDetail, Consumer<Object[]> resultConsumer)
@@ -137,5 +133,26 @@ public class BatchGenerator implements IDhApiWorldGenerator
 	
 	@Override
 	public void preGeneratorTaskStart() { this.generationGroup.updateAllFutures(); }
+	
+	@Override
+	public boolean isBusy()
+	{
+		return this.generationGroup.getEventCount() > Math.max(Config.Client.Advanced.Threading.numberOfWorldGenerationThreads.get().intValue(), 1) * 1.5;
+	}
+	
+	
+	
+	//=========//
+	// cleanup //
+	//=========//
+	
+	@Override
+	public void close() { this.stop(true); }
+	public void stop(boolean blocking)
+	{
+		LOGGER.info("Batch Chunk Generator shutting down...");
+		this.generationGroup.stop(blocking);
+	}
+	
 	
 }

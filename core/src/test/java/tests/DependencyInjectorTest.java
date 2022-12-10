@@ -24,7 +24,7 @@ import testItems.worldGeneratorInjection.objects.*;
 
 /**
  * @author James Seibel
- * @version 2022-9-11
+ * @version 2022-12-10
  */
 public class DependencyInjectorTest
 {
@@ -154,114 +154,67 @@ public class DependencyInjectorTest
 	}
 	
 	@Test
-	public void testBackupWorldGeneratorInjection()
+	public void testWorldGeneratorInjection()
 	{
 		WorldGeneratorInjector TEST_INJECTOR = new WorldGeneratorInjector(WorldGeneratorTestAssembly.getPackagePath(2));
-		WorldGeneratorInjector CORE_INJECTOR = new WorldGeneratorInjector();
-
-
-		// pre-dependency setup
-		Assert.assertNull("Nothing should have been bound.", TEST_INJECTOR.get());
-		Assert.assertNull("Nothing should have been bound.", CORE_INJECTOR.get());
-
-
+		
+		
 		// variables to use later
 		IDhApiWorldGenerator generator;
-		WorldGeneratorTestCore coreGenerator = new WorldGeneratorTestCore();
-		WorldGeneratorTestSecondary secondaryGenerator = new WorldGeneratorTestSecondary();
-		WorldGeneratorTestPrimary primaryGenerator = new WorldGeneratorTestPrimary();
-
-
-		// core generator binding
-		try { TEST_INJECTOR.bind(coreGenerator); } catch (IllegalArgumentException e) { Assert.fail("Core generator should be bindable for test package injector."); }
-
-		try
-		{
-			CORE_INJECTOR.bind(coreGenerator);
-			Assert.fail("Core generator should not be bindable for core package injector.");
-		}
-		catch (IllegalArgumentException e) { /* this exception should be thrown */ }
-
-
-		// core override
-		Assert.assertNotNull("Test injector should've bound core override.", TEST_INJECTOR.get());
-		Assert.assertNull("Core injector should not have bound core override.", CORE_INJECTOR.get());
-		// standard get
-		generator = TEST_INJECTOR.get();
-		Assert.assertEquals("Override returned incorrect override type.", generator.getPriority(), OverrideInjector.CORE_PRIORITY);
-		Assert.assertEquals("Incorrect generator returned.", generator.getThreadingMode(), WorldGeneratorTestCore.THREAD_MODE);
-
-
-		// secondary override
-		TEST_INJECTOR.bind(secondaryGenerator);
-		// priority gets
-		generator = TEST_INJECTOR.get();
-		Assert.assertEquals("Override returned incorrect override type.", generator.getPriority(), WorldGeneratorTestSecondary.PRIORITY);
-		Assert.assertEquals("Incorrect override object returned.", generator.getThreadingMode(), WorldGeneratorTestSecondary.THREAD_MODE);
-
-
-		// primary override
-		TEST_INJECTOR.bind(primaryGenerator);
-		// priority gets
-		generator = TEST_INJECTOR.get();
-		Assert.assertEquals("Override returned incorrect override type.", generator.getPriority(), WorldGeneratorTestPrimary.PRIORITY);
-		Assert.assertEquals("Incorrect override object returned.", generator.getThreadingMode(), WorldGeneratorTestPrimary.THREAD_MODE);
-
-
-
-		// in-line get
-		// (make sure the returned type is correct and compiles, the actual value doesn't matter)
-		EDhApiWorldGenThreadMode threadMode = TEST_INJECTOR.get().getThreadingMode();
-
-	}
-
-	@Test
-	public void testSpecificLevelWorldGeneratorInjection()
-	{
-		WorldGeneratorInjector TEST_INJECTOR = new WorldGeneratorInjector(WorldGeneratorTestAssembly.getPackagePath(2));
-
-
-		// pre-dependency setup
-		Assert.assertNull("Nothing should have been bound.", TEST_INJECTOR.get());
-
-
-		// variables to use later
-		IDhApiWorldGenerator generator;
-		WorldGeneratorTestCore backupGenerator = new WorldGeneratorTestCore();
-		WorldGeneratorTestPrimary levelGenerator = new WorldGeneratorTestPrimary();
-
+		WorldGeneratorTestCore coreLevelGenerator = new WorldGeneratorTestCore();
+		WorldGeneratorTestPrimary primaryLevelGenerator = new WorldGeneratorTestPrimary();
+		WorldGeneratorTestSecondary secondaryLevelGenerator = new WorldGeneratorTestSecondary();
+		
 		IDhApiLevelWrapper boundLevel = new LevelWrapperTest();
 		IDhApiLevelWrapper unboundLevel = new LevelWrapperTest();
-
-
-
-		// backup generator binding
-		try { TEST_INJECTOR.bind(backupGenerator); } catch (IllegalArgumentException e) { Assert.fail("Core generator should be bindable for test package injector."); }
-
-
-		// get backup generator
-		generator = TEST_INJECTOR.get();
-		Assert.assertNotNull("Backup generator not bound.", generator);
-		Assert.assertEquals("Incorrect backup generator bound.", generator.getPriority(), OverrideInjector.CORE_PRIORITY);
-		Assert.assertEquals("Incorrect backup generator bound.", generator.getThreadingMode(), WorldGeneratorTestCore.THREAD_MODE);
-
-
-		// bind level specific
-		try { TEST_INJECTOR.bind(boundLevel, levelGenerator); } catch (IllegalArgumentException e) { Assert.fail("Core generator should be bindable for test package injector."); }
-
-
-		// get bound level generator
+		
+		
+		// validate nothing has been bound yet
+		Assert.assertNull("Nothing should have been bound yet.", TEST_INJECTOR.get(boundLevel));
+		
+		
+		
+		// bind the core generator //
+		try { TEST_INJECTOR.bind(boundLevel, coreLevelGenerator); } catch (IllegalArgumentException e) { Assert.fail("[" + coreLevelGenerator.getClass().getSimpleName() + "] should be bindable for test package injector."); }
+		
+		// validate the core generator was bound
+		generator = TEST_INJECTOR.get(boundLevel);
+		Assert.assertNotNull("Level generator not bound.", generator);
+		Assert.assertEquals("Incorrect level generator bound.", generator.getPriority(), WorldGeneratorTestCore.PRIORITY);
+		Assert.assertEquals("Incorrect level generator bound.", generator.getThreadingMode(), WorldGeneratorTestCore.THREAD_MODE);
+		
+		// unbound level should still return null
+		Assert.assertNull("Nothing should have been bound to this level.", TEST_INJECTOR.get(unboundLevel));
+		
+		
+		
+		// bind the secondary generator //
+		try { TEST_INJECTOR.bind(boundLevel, secondaryLevelGenerator); } catch (IllegalArgumentException e) { Assert.fail("[" + secondaryLevelGenerator.getClass().getSimpleName() + "] should be bindable for test package injector."); }
+		
+		// validate the secondary generator overrides the core generator
+		generator = TEST_INJECTOR.get(boundLevel);
+		Assert.assertNotNull("Level generator not bound.", generator);
+		Assert.assertEquals("Incorrect level generator bound.", generator.getPriority(), WorldGeneratorTestSecondary.PRIORITY);
+		Assert.assertEquals("Incorrect level generator bound.", generator.getThreadingMode(), WorldGeneratorTestSecondary.THREAD_MODE);
+		
+		// the unbound level should still return null
+		Assert.assertNull("Nothing should have been bound to this level.", TEST_INJECTOR.get(unboundLevel));
+		
+		
+		
+		// bind the primary generator //
+		try { TEST_INJECTOR.bind(boundLevel, primaryLevelGenerator); } catch (IllegalArgumentException e) { Assert.fail("[" + primaryLevelGenerator.getClass().getSimpleName() + "] should be bindable for test package injector."); }
+		
+		// validate the primary generator overrides both the core and secondary generator
 		generator = TEST_INJECTOR.get(boundLevel);
 		Assert.assertNotNull("Level generator not bound.", generator);
 		Assert.assertEquals("Incorrect level generator bound.", generator.getPriority(), WorldGeneratorTestPrimary.PRIORITY);
 		Assert.assertEquals("Incorrect level generator bound.", generator.getThreadingMode(), WorldGeneratorTestPrimary.THREAD_MODE);
-
-		// get unbound level generator
-		generator = TEST_INJECTOR.get(unboundLevel);
-		Assert.assertNotNull("Backup level generator not bound.", generator);
-		Assert.assertEquals("Incorrect level generator bound.", generator.getPriority(), OverrideInjector.CORE_PRIORITY);
-		Assert.assertEquals("Incorrect level generator bound.", generator.getThreadingMode(), WorldGeneratorTestCore.THREAD_MODE);
-
+		
+		// the unbound level should still return null
+		Assert.assertNull("Nothing should have been bound to this level.", TEST_INJECTOR.get(unboundLevel));
+		
+		
 	}
 	
 }

@@ -10,7 +10,7 @@ import com.seibel.lod.core.DependencyInjection.WorldGeneratorInjector;
  * Handles adding world generator overrides.
  *
  * @author James Seibel
- * @version 2022-9-16
+ * @version 2022-12-10
  */
 public class DhApiWorldGeneratorOverrideRegister implements IDhApiWorldGeneratorOverrideRegister
 {
@@ -19,20 +19,6 @@ public class DhApiWorldGeneratorOverrideRegister implements IDhApiWorldGenerator
 	private DhApiWorldGeneratorOverrideRegister() {  }
 	
 	
-	
-	@Override
-	public DhApiResult<Void> registerWorldGeneratorOverride(IDhApiWorldGenerator worldGenerator)
-	{
-		try
-		{
-			WorldGeneratorInjector.INSTANCE.bind(worldGenerator);
-			return DhApiResult.createSuccess();
-		}
-		catch (Exception e)
-		{
-			return DhApiResult.createFail(e.getMessage());
-		}
-	}
 	
 	@Override
 	public DhApiResult<Void> registerWorldGeneratorOverride(IDhApiLevelWrapper levelWrapper, IDhApiWorldGenerator worldGenerator)

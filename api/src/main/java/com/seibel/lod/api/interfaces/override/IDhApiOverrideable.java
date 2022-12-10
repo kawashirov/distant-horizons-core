@@ -12,7 +12,7 @@ import com.seibel.lod.core.interfaces.dependencyInjection.IOverrideInjector;
 public interface IDhApiOverrideable extends IBindable
 {
 	/**
-	 * Returns when this Override should be used. <br>
+	 * Higher (larger numerical) priorities override lower (smaller numerical) priorities . <br>
 	 * For most developers this can be left at the default.
 	 */
 	default int getPriority() { return IOverrideInjector.DEFAULT_NON_CORE_OVERRIDE_PRIORITY; }
