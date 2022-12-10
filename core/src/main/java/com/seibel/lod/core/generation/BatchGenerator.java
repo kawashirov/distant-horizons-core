@@ -20,6 +20,7 @@
 package com.seibel.lod.core.generation;
 
 import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenThreadMode;
+import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.api.enums.config.EDistanceGenerationMode;
@@ -40,7 +41,7 @@ import java.util.function.Consumer;
  * @author Leetom
  * @version 2022-11-25
  */
-public class BatchGenerator implements IWorldGenerator
+public class BatchGenerator implements IDhApiWorldGenerator
 {
 	private static final IWrapperFactory FACTORY = SingletonInjector.INSTANCE.get(IWrapperFactory.class);
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();

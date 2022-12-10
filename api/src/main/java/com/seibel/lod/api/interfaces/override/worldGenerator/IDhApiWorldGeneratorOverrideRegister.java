@@ -19,7 +19,7 @@ public interface IDhApiWorldGeneratorOverrideRegister
 	 * If another world generator has already been registered, DhApiResult will return
 	 * the name of the previously registered generator and success = false.
 	 */
-	DhApiResult registerWorldGeneratorOverride(IDhApiWorldGenerator worldGenerator);
+	DhApiResult<Void> registerWorldGeneratorOverride(IDhApiWorldGenerator worldGenerator);
 	
 	/**
 	 * Registers the given world generator for the given level. <Br> <Br>
@@ -28,6 +28,6 @@ public interface IDhApiWorldGeneratorOverrideRegister
 	 * If another world generator has already been registered, DhApiResult will return
 	 * the name of the previously registered generator and success = false.
 	 */
-	DhApiResult registerWorldGeneratorOverride(IDhApiLevelWrapper levelWrapper, IDhApiWorldGenerator worldGenerator);
+	DhApiResult<Void> registerWorldGeneratorOverride(IDhApiLevelWrapper levelWrapper, IDhApiWorldGenerator worldGenerator);
 	
 }

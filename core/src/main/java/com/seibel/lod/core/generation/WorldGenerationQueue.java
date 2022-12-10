@@ -1,5 +1,10 @@
 package com.seibel.lod.core.generation;
 
+import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
+import com.seibel.lod.core.config.Config;
+import com.seibel.lod.core.datatype.full.ChunkSizedData;
+import com.seibel.lod.core.datatype.transform.LodDataBuilder;
+import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.generation.tasks.*;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhLodPos;
@@ -8,11 +13,14 @@ import com.seibel.lod.core.util.objects.UncheckedInterruptedException;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhChunkPos;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
+import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import org.apache.logging.log4j.Logger;
 
 import java.io.Closeable;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 
 /**
  * @author Leetom
@@ -25,7 +33,7 @@ public class WorldGenerationQueue implements Closeable
 	
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
-	private final IWorldGenerator generator;
+	private final IDhApiWorldGenerator generator;
 	
 	private final ConcurrentLinkedQueue<WorldGenTask> looseTasks = new ConcurrentLinkedQueue<>();
 	// FIXME: Concurrency issue on close!
@@ -57,7 +65,7 @@ public class WorldGenerationQueue implements Closeable
 	
 	
 	
-	public WorldGenerationQueue(IWorldGenerator generator)
+	public WorldGenerationQueue(IDhApiWorldGenerator generator)
 	{
 		this.generator = generator;
 		this.maxGranularity = generator.getMaxGenerationGranularity();
@@ -73,6 +81,10 @@ public class WorldGenerationQueue implements Closeable
 	
 	
 	
+	//=================//
+	// world generator //
+	// task handling   //
+	//=================//
 	
 	public CompletableFuture<Boolean> submitGenTask(DhLodPos pos, byte requiredDataDetail, AbstractWorldGenTaskTracker tracker)
 	{
@@ -410,7 +422,7 @@ public class WorldGenerationQueue implements Closeable
 		
 		DhChunkPos chunkPosMin = new DhChunkPos(pos.getCorner());
 		LOGGER.info("Generating section {} with granularity {} at {}", pos, granularity, chunkPosMin);
-		task.genFuture = this.generator.generate(chunkPosMin, granularity, dataDetail, task.group::accept);
+		task.genFuture = startGenerationEvent(this.generator, chunkPosMin, granularity, dataDetail, task.group::accept);
 		task.genFuture.whenComplete((v, ex) -> {
 			if (ex != null)
 			{
@@ -427,6 +439,12 @@ public class WorldGenerationQueue implements Closeable
 			LodUtil.assertTrue(worked);
 		});
 	}
+	
+	
+	
+	//==========//
+	// shutdown //
+	//==========//
 	
 	public CompletableFuture<Void> startClosing(boolean cancelCurrentGeneration, boolean alsoInterruptRunning)
 	{
@@ -497,6 +515,31 @@ public class WorldGenerationQueue implements Closeable
 		}
 		
 		return index;
+	}
+	
+	
+	/**
+	 * The chunkPos is always aligned to the granularity.
+	 * For example: if the granularity is 4 (chunk sized) with a data detail level of 0 (block sized), the chunkPos will be aligned to 16x16 blocks.
+	 */
+	private static CompletableFuture<Void> startGenerationEvent(IDhApiWorldGenerator worldGenerator,
+			DhChunkPos chunkPosMin,
+			byte granularity, byte targetDataDetail,
+			Consumer<ChunkSizedData> resultConsumer)
+	{
+		return worldGenerator.generateChunks(chunkPosMin.x, chunkPosMin.z, granularity, targetDataDetail, (objectArray) ->
+		{
+			try
+			{
+				IChunkWrapper chunk = SingletonInjector.INSTANCE.get(IWrapperFactory.class).createChunkWrapper(objectArray);
+				resultConsumer.accept(LodDataBuilder.createChunkData(chunk));
+			}
+			catch (ClassCastException e)
+			{
+				DhLoggerBuilder.getLogger().error("World generator return type incorrect. Error: [" + e.getMessage() + "].", e);
+				Config.Client.WorldGenerator.enableDistantGeneration.set(false);
+			}
+		});
 	}
 	
 }

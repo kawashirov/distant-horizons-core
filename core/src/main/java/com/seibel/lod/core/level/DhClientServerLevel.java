@@ -1,11 +1,14 @@
 package com.seibel.lod.core.level;
 
+import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
+import com.seibel.lod.api.interfaces.world.IDhApiLevelWrapper;
+import com.seibel.lod.core.DependencyInjection.WorldGeneratorInjector;
 import com.seibel.lod.core.config.AppliedConfigState;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.full.FullDataSource;
 import com.seibel.lod.core.datatype.transform.ChunkToLodBuilder;
 import com.seibel.lod.core.file.datafile.IDataSourceProvider;
-import com.seibel.lod.core.generation.IWorldGenerator;
+import com.seibel.lod.core.generation.BatchGenerator;
 import com.seibel.lod.core.generation.WorldGenerationQueue;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
@@ -16,7 +19,6 @@ import com.seibel.lod.core.file.renderfile.RenderFileHandler;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.render.RenderBufferHandler;
 import com.seibel.lod.core.file.structure.LocalSaveStructure;
-import com.seibel.lod.core.generation.BatchGenerator;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
@@ -145,7 +147,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 			this.generatorEnabled.pollNewValue();
 			if (this.generatorEnabled.get() && this.worldGenState.get() == null)
 			{
-				WorldGenState wgs = new WorldGenState();
+				WorldGenState wgs = new WorldGenState(this);
 				if (!this.worldGenState.compareAndSet(null, wgs))
 				{
 					LOGGER.warn("Failed to start world gen due to concurrency");
@@ -296,7 +298,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 			boolean shouldDoWorldGen = this.generatorEnabled.get() && this.renderState.get() != null;
 			if (shouldDoWorldGen && wgs == null)
 			{
-				WorldGenState newWgs = new WorldGenState();
+				WorldGenState newWgs = new WorldGenState(this);
 				if (!this.worldGenState.compareAndSet(null, newWgs))
 				{
 					LOGGER.warn("Failed to start world gen due to concurrency");
@@ -365,12 +367,12 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 	
 	private class WorldGenState
 	{
-		public final IWorldGenerator chunkGenerator;
+		public final IDhApiWorldGenerator chunkGenerator;
 		public final WorldGenerationQueue worldGenerationQueue;
 		
-		WorldGenState()
+		WorldGenState(IDhLevel level)
 		{
-			this.chunkGenerator = new BatchGenerator(DhClientServerLevel.this);
+			this.chunkGenerator = new BatchGenerator(level); // WorldGeneratorInjector.INSTANCE.get(level); // 
 			this.worldGenerationQueue = new WorldGenerationQueue(this.chunkGenerator);
 			dataFileHandler.setGenerationQueue(this.worldGenerationQueue);
 		}
@@ -379,16 +381,16 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		{
 			dataFileHandler.popGenerationQueue();
 			return this.worldGenerationQueue.startClosing(true, doInterrupt)
-											.exceptionally(ex ->
-									   {
-										   LOGGER.error("Error closing generation queue", ex);
-										   return null;
-									   }).thenRun(this.chunkGenerator::close)
-											.exceptionally(ex ->
-									   {
-										   LOGGER.error("Error closing world gen", ex);
-										   return null;
-									   });
+					.exceptionally(ex ->
+					{
+						LOGGER.error("Error closing generation queue", ex);
+						return null;
+					}).thenRun(this.chunkGenerator::close)
+					.exceptionally(ex ->
+					{
+						LOGGER.error("Error closing world gen", ex);
+						return null;
+					});
 		}
 	}
 	
