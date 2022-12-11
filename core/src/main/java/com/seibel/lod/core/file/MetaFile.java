@@ -18,35 +18,41 @@ import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * Used size: 40 bytes <br>
+ * Remaining space: 24 bytes <br>
+ * Total size: 64 bytes <br> <br><br>
+ * 
+ * 
+ * Metadata format: <br> <br>
+ * 
+ * 4 bytes: magic bytes: "DHv0" (in ascii: 0x44 48 76 30) (this also signals the metadata format) <br>
+ * 4 bytes: section X position <br>
+ * 4 bytes: section Y position (Unused, for future proofing) <br>
+ * 4 bytes: section Z position <br> <br>
+ * 
+ * 4 bytes: data checksum <br> //TODO: Implement checksum
+ * 1 byte: section detail level <br>
+ * 1 byte: data detail level // Note: not sure if this is needed <br>
+ * 1 byte: loader version <br>
+ * 1 byte: unused <br> <br>
+ * 
+ * 8 bytes: datatype identifier <br> <br>
+ * 
+ * 8 bytes: data version
+ */
 public class MetaFile
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
-    //Metadata format:
-    //
-    //    4 bytes: magic bytes: "DHv0" (in ascii: 0x44 48 76 30) (this also signal the metadata format)
-    //    4 bytes: section X position
-    //    4 bytes: section Y position (Unused, for future proofing)
-    //    4 bytes: section Z position
-    //
-    //    4 bytes: data checksum //TODO: Implement checksum
-    //    1 byte: section detail level
-    //    1 byte: data detail level // Note: not sure if this is needed
-    //    1 byte: loader version
-    //    1 byte: unused
-    //
-    //    8 bytes: datatype identifier
-    //
-    //    8 bytes: data version
+    
 
-    // Used size: 40 bytes
-    // Remaining space: 24 bytes
-    // Total size: 64 bytes
+    
 
     public static final int METADATA_SIZE = 64;
     public static final int METADATA_RESERVED_SIZE = 24;
     public static final int METADATA_MAGIC_BYTES = 0x44_48_76_30;
 
-    // Currently set to false because for some reason Window is throwing PermissionDeniedException when trying to atomic replace a file...
+    /** Currently set to false because for some reason Window is throwing PermissionDeniedException when trying to atomic replace a file... */
     public static final boolean USE_ATOMIC_MOVE_REPLACE = false;
 
     public final DhSectionPos pos;

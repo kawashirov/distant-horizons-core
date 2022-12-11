@@ -56,12 +56,23 @@ public class PlayerData
 	 * I'm not sure what this will look like for worlds that don't have a spawn point.
 	 */
 	public DhBlockPos worldSpawnPointBlockPos;
+	
+	
+	
 	@Nullable
-	public static PlayerData tryGetPlayerData(IMinecraftClientWrapper mcClient) {
-		if (!mcClient.playerExists()) return null;
-		try {
+	public static PlayerData tryGetPlayerData(IMinecraftClientWrapper mcClient)
+	{
+		if (!mcClient.playerExists())
+		{
+			return null;
+		}
+		
+		try
+		{
 			return new PlayerData(mcClient);
-		} catch (RuntimeException e) {
+		}
+		catch (RuntimeException e)
+		{
 			// Player no longer exists due to concurrency. FIXME: Remember here is called not on main thread!!!
 			return null;
 		}
@@ -125,7 +136,8 @@ public class PlayerData
 	@Override
 	public String toString()
 	{
-		return "PlayerBlockPos: [" + playerBlockPos.getX() + "," + playerBlockPos.getY() + "," + playerBlockPos.getZ() + "]";
+		return "PlayerBlockPos: [" + playerBlockPos.x + "," + playerBlockPos.y + "," + playerBlockPos.z + "]";
 	}
+	
 }
 
