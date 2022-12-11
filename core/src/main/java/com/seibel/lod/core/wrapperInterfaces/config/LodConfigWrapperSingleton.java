@@ -2,6 +2,7 @@ package com.seibel.lod.core.wrapperInterfaces.config;
 
 import com.seibel.lod.api.enums.config.*;
 import com.seibel.lod.api.enums.rendering.*;
+import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.lod.core.config.Config;
 
 /**
@@ -541,14 +542,14 @@ public class LodConfigWrapperSingleton implements ILodConfigWrapperSingleton
 
 
 			@Override
-			public EDistanceGenerationMode getDistanceGenerationMode()
+			public EDhApiDistantGeneratorMode getDistanceGenerationMode()
 			{
-				return Config.Client.WorldGenerator.distanceGenerationMode.get();
+				return Config.Client.WorldGenerator.distantGeneratorMode.get();
 			}
 			@Override
-			public void setDistanceGenerationMode(EDistanceGenerationMode newDistanceGenerationMode)
+			public void setDistanceGenerationMode(EDhApiDistantGeneratorMode newDistanceGenerationMode)
 			{
-				Config.Client.WorldGenerator.distanceGenerationMode.set(newDistanceGenerationMode);
+				Config.Client.WorldGenerator.distantGeneratorMode.set(newDistanceGenerationMode);
 			}
 
 			/*

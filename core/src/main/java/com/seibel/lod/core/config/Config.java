@@ -22,10 +22,8 @@ package com.seibel.lod.core.config;
 
 import com.seibel.lod.api.enums.config.*;
 import com.seibel.lod.api.enums.rendering.*;
+import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.lod.core.config.types.*;
-
-import java.util.HashMap;
-import java.util.Map;
 
 
 /**
@@ -492,8 +490,8 @@ public class Config
                             + "Note that in server, distant generation is always off.")
                     .build();
 
-            public static ConfigEntry<EDistanceGenerationMode> distanceGenerationMode = new ConfigEntry.Builder<EDistanceGenerationMode>()
-                    .set(EDistanceGenerationMode.FEATURES)
+            public static ConfigEntry<EDhApiDistantGeneratorMode> distantGeneratorMode = new ConfigEntry.Builder<EDhApiDistantGeneratorMode>()
+                    .set(EDhApiDistantGeneratorMode.FEATURES)
                     .comment(""
                             + "How detailed should fake chunks be generated outside the vanilla render distance? \n"
                             + "\n"
@@ -501,36 +499,36 @@ public class Config
                             + " one chunk in Minecraft 1.16.5 and may be inaccurate for different Minecraft versions. \n"
                             + "They are included to give a rough estimate as to how the different options \n"
                             + " may perform in comparison to each other. \n"
-                            + "(Note that all modes will load in already existing chunks) \n"
+                            + "(Note that all modes will load in pre-existing chunks) \n"
                             + "\n"
-                            + EDistanceGenerationMode.NONE + " \n"
-                            + "Only run the Generator to load in already existing chunks. \n"
+                            + EDhApiDistantGeneratorMode.PRE_EXISTING_ONLY + " \n"
+                            + "Only create LOD data for already generated chunks. \n"
                             + "\n"
-                            + EDistanceGenerationMode.BIOME_ONLY + " \n"
+                            + EDhApiDistantGeneratorMode.BIOME_ONLY + " \n"
                             + "Only generate the biomes and use the biome's \n"
                             + " grass color, water color, or snow color. \n"
                             + "Doesn't generate height, everything is shown at sea level. \n"
                             + " - Fastest (2-5 ms) \n"
                             + "\n"
-                            + EDistanceGenerationMode.BIOME_ONLY_SIMULATE_HEIGHT + " \n"
-                            + "Same as " + EDistanceGenerationMode.BIOME_ONLY + ", except instead \n"
+                            + EDhApiDistantGeneratorMode.BIOME_ONLY_SIMULATE_HEIGHT + " \n"
+                            + "Same as " + EDhApiDistantGeneratorMode.BIOME_ONLY + ", except instead \n"
                             + " of always using sea level as the LOD height \n"
                             + " different biome types (mountain, ocean, forest, etc.) \n"
                             + " use predetermined heights to simulate having height data. \n"
                             + " - Fastest (2-5 ms) \n"
                             + "\n"
-                            + EDistanceGenerationMode.SURFACE + " \n"
+                            + EDhApiDistantGeneratorMode.SURFACE + " \n"
                             + "Generate the world surface, \n"
                             + " this does NOT include trees, \n"
                             + " or structures. \n"
                             + " - Faster (10-20 ms) \n"
                             + "\n"
-                            + EDistanceGenerationMode.FEATURES + " \n"
+                            + EDhApiDistantGeneratorMode.FEATURES + " \n"
                             + "Generate everything except structures. \n"
                             + "WARNING: This may cause world generation bugs or instability! \n"
                             + " - Fast (15-20 ms) \n"
                             + "\n"
-                            + EDistanceGenerationMode.FULL + " \n"
+                            + EDhApiDistantGeneratorMode.FULL + " \n"
                             + "Ask the local server to generate/load each chunk. \n"
                             + "This will show player made structures, which can \n"
                             + " be useful if you are adding the mod to a pre-existing world. \n"

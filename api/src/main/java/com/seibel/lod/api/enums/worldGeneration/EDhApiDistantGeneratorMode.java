@@ -17,10 +17,10 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.api.enums.config;
+package com.seibel.lod.api.enums.worldGeneration;
 
 /**
- * NONE <br>
+ * PRE_EXISTING_ONLY <br>
  * BIOME_ONLY <br>
  * BIOME_ONLY_SIMULATE_HEIGHT <br>
  * SURFACE <br>
@@ -31,17 +31,17 @@ package com.seibel.lod.api.enums.config;
  * 
  * @author James Seibel
  * @author Leonardo Amato
- * @version 2022-7-1
+ * @version 2022-12-10
  */
-public enum EDistanceGenerationMode
+public enum EDhApiDistantGeneratorMode
 {
 	// Reminder:
 	// when adding items up the API minor version
 	// when removing items up the API major version
 	
 	
-	/** Don't generate anything except already existing chunks */
-	NONE((byte) 1),
+	/** Don't generate any new terrain, just generate LODs for already generated chunks. */
+	PRE_EXISTING_ONLY((byte) 1),
 	
 	/**
 	 * Only generate the biomes and use biome
@@ -85,53 +85,58 @@ public enum EDistanceGenerationMode
 	 */
 	FULL((byte) 6);
 	
-	public static EDistanceGenerationMode RENDERABLE = EDistanceGenerationMode.BIOME_ONLY;
 	
-	/**
-	 * The higher the number the more complete the generation is.
-	 */
+	
+	public static final EDhApiDistantGeneratorMode RENDERABLE = EDhApiDistantGeneratorMode.BIOME_ONLY;
+	
+	/** The higher the number the more complete the generation is. */
 	public final byte complexity;
 	
-	EDistanceGenerationMode(byte complexity)
+	
+	EDhApiDistantGeneratorMode(byte complexity) { this.complexity = complexity; }
+	
+	
+	
+	/** returns null if out of range */
+	public static EDhApiDistantGeneratorMode previous(EDhApiDistantGeneratorMode mode)
 	{
-		this.complexity = complexity;
-	}
-	
-	// Note: return null if out of range
-	public static EDistanceGenerationMode previous(EDistanceGenerationMode mode) {
-		switch (mode) {
-		case FULL:
-			return EDistanceGenerationMode.FEATURES;
-		case FEATURES:
-			return EDistanceGenerationMode.SURFACE;
-		case SURFACE:
-			return EDistanceGenerationMode.BIOME_ONLY_SIMULATE_HEIGHT;
-		case BIOME_ONLY_SIMULATE_HEIGHT:
-			return EDistanceGenerationMode.BIOME_ONLY;
-		case BIOME_ONLY:
-			return EDistanceGenerationMode.NONE;
-		case NONE:
-		default:
-			return null;
+		switch (mode)
+		{
+			case FULL:
+				return EDhApiDistantGeneratorMode.FEATURES;
+			case FEATURES:
+				return EDhApiDistantGeneratorMode.SURFACE;
+			case SURFACE:
+				return EDhApiDistantGeneratorMode.BIOME_ONLY_SIMULATE_HEIGHT;
+			case BIOME_ONLY_SIMULATE_HEIGHT:
+				return EDhApiDistantGeneratorMode.BIOME_ONLY;
+			case BIOME_ONLY:
+				return EDhApiDistantGeneratorMode.PRE_EXISTING_ONLY;
+			case PRE_EXISTING_ONLY:
+			default:
+				return null;
 		}
 	}
 	
-	// Note: return null if out of range
-	public static EDistanceGenerationMode next(EDistanceGenerationMode mode) {
-		switch (mode) {
-		case FEATURES:
-			return EDistanceGenerationMode.FULL;
-		case SURFACE:
-			return EDistanceGenerationMode.FEATURES;
-		case BIOME_ONLY_SIMULATE_HEIGHT:
-			return EDistanceGenerationMode.SURFACE;
-		case BIOME_ONLY:
-			return EDistanceGenerationMode.BIOME_ONLY_SIMULATE_HEIGHT;
-		case NONE:
-			return EDistanceGenerationMode.BIOME_ONLY;
-		case FULL:
-		default:
-			return null;
+	/** returns null if out of range */
+	public static EDhApiDistantGeneratorMode next(EDhApiDistantGeneratorMode mode)
+	{
+		switch (mode)
+		{
+			case FEATURES:
+				return EDhApiDistantGeneratorMode.FULL;
+			case SURFACE:
+				return EDhApiDistantGeneratorMode.FEATURES;
+			case BIOME_ONLY_SIMULATE_HEIGHT:
+				return EDhApiDistantGeneratorMode.SURFACE;
+			case BIOME_ONLY:
+				return EDhApiDistantGeneratorMode.BIOME_ONLY_SIMULATE_HEIGHT;
+			case PRE_EXISTING_ONLY:
+				return EDhApiDistantGeneratorMode.BIOME_ONLY;
+			case FULL:
+			default:
+				return null;
 		}
 	}
+	
 }

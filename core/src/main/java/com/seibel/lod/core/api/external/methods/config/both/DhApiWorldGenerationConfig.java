@@ -24,7 +24,7 @@ import com.seibel.lod.api.interfaces.config.both.IDhApiWorldGenerationConfig;
 import com.seibel.lod.api.objects.config.DhApiConfigValue;
 import com.seibel.lod.core.config.Config.Client.WorldGenerator;
 import com.seibel.lod.api.enums.config.EBlocksToAvoid;
-import com.seibel.lod.api.enums.config.EDistanceGenerationMode;
+import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.lod.api.enums.config.EGenerationPriority;
 import com.seibel.lod.api.enums.config.ELightGenerationMode;
 
@@ -49,8 +49,8 @@ public class DhApiWorldGenerationConfig implements IDhApiWorldGenerationConfig
 	{ return new DhApiConfigValue<>(WorldGenerator.enableDistantGeneration); }
 	
 	@Override
-	public IDhApiConfigValue<EDistanceGenerationMode> getDistantGeneratorDetailLevel()
-	{ return new DhApiConfigValue<>(WorldGenerator.distanceGenerationMode); }
+	public IDhApiConfigValue<EDhApiDistantGeneratorMode> getDistantGeneratorMode()
+	{ return new DhApiConfigValue<>(WorldGenerator.distantGeneratorMode); }
 	
 	@Override
 	public IDhApiConfigValue<ELightGenerationMode> getLightingMode()

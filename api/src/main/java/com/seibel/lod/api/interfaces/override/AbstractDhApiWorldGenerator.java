@@ -1,7 +1,7 @@
 package com.seibel.lod.api.interfaces.override;
 
+import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.lod.api.interfaces.world.IDhApiLevelWrapper;
-import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenThreadMode;
 import com.seibel.lod.api.interfaces.world.IDhApiChunkWrapper;
 
@@ -19,9 +19,9 @@ public abstract class AbstractDhApiWorldGenerator implements IDhApiOverrideable
 		return this.getThreadingMode();
 	}
 	
-	public abstract IDhApiChunkWrapper generateChunk(int chunkPosX, int chunkPosZ, IDhApiLevelWrapper serverLevelWrapper, EDhApiWorldGenerationStep maxStepToGenerate);
+	public abstract IDhApiChunkWrapper generateChunk(int chunkPosX, int chunkPosZ, IDhApiLevelWrapper serverLevelWrapper, EDhApiDistantGeneratorMode maxStepToGenerate);
 	
-	public final IDhApiChunkWrapper generateCoreChunk(int chunkPosX, int chunkPosZ, IDhApiLevelWrapper serverLevelWrapper, EDhApiWorldGenerationStep maxStepToGenerate)
+	public final IDhApiChunkWrapper generateCoreChunk(int chunkPosX, int chunkPosZ, IDhApiLevelWrapper serverLevelWrapper, EDhApiDistantGeneratorMode maxStepToGenerate)
 	{
 		// TODO probably need to change the return type
 		return null; //generateChunk(chunkPosX, chunkPosZ, null, generationStepEnumConverter.convertToApiType(maxStepToGenerate));

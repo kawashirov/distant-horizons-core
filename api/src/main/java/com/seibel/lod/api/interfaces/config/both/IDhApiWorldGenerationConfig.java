@@ -20,7 +20,7 @@
 package com.seibel.lod.api.interfaces.config.both;
 
 import com.seibel.lod.api.enums.config.EBlocksToAvoid;
-import com.seibel.lod.api.enums.config.EDistanceGenerationMode;
+import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.lod.api.enums.config.EGenerationPriority;
 import com.seibel.lod.api.interfaces.config.IDhApiConfigValue;
 import com.seibel.lod.api.enums.config.ELightGenerationMode;
@@ -44,7 +44,7 @@ public interface IDhApiWorldGenerationConfig extends IDhApiConfigGroup
 	IDhApiConfigValue<Boolean> getEnableDistantWorldGeneration();
 	
 	/** Defines to what level fake chunks will be generated. */
-	IDhApiConfigValue<EDistanceGenerationMode> getDistantGeneratorDetailLevel();
+	IDhApiConfigValue<EDhApiDistantGeneratorMode> getDistantGeneratorMode();
 	
 	/** Defines how generated fake chunks will be lit. */
 	IDhApiConfigValue<ELightGenerationMode> getLightingMode();

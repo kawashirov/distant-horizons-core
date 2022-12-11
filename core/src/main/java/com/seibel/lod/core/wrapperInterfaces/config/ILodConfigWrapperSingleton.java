@@ -21,6 +21,7 @@ package com.seibel.lod.core.wrapperInterfaces.config;
 
 import com.seibel.lod.api.enums.config.*;
 import com.seibel.lod.api.enums.rendering.*;
+import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.interfaces.dependencyInjection.IBindable;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
@@ -243,8 +244,8 @@ public interface ILodConfigWrapperSingleton extends IBindable
 			boolean getEnableDistantGeneration();
 			void setEnableDistantGeneration(boolean newEnableDistantGeneration);
 
-			EDistanceGenerationMode getDistanceGenerationMode();
-			void setDistanceGenerationMode(EDistanceGenerationMode newDistanceGenerationMode);
+			EDhApiDistantGeneratorMode getDistanceGenerationMode();
+			void setDistanceGenerationMode(EDhApiDistantGeneratorMode newDistanceGenerationMode);
 
 			ELightGenerationMode getLightGenerationMode();
 			void setLightGenerationMode(ELightGenerationMode newLightGenerationMode);

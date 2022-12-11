@@ -19,15 +19,16 @@
 
 package com.seibel.lod.core.datatype.transform;
 
-import com.seibel.lod.api.enums.config.EDistanceGenerationMode;
+import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 
 /**
  * This is used to easily configure how LodChunks are generated.
  * Generally this will only be used if we want to generate a
- * LodChunk using an incomplete Chunk, otherwise the defaults
- * work best for a fully generated chunk (IE has correct surface blocks).
+ * LodChunk using incomplete data, otherwise the defaults
+ * should work best for a fully generated chunk (IE has correct surface blocks).
+ * 
  * @author James Seibel
- * @version 8-14-2021
+ * @version 2022-12-10
  */
 public class LodBuilderConfig
 {
@@ -37,9 +38,10 @@ public class LodBuilderConfig
 	public boolean useBiomeColors;
 	/** default: true */
 	public boolean useSolidBlocksInColorGen;
-	/** default: server */
-	public EDistanceGenerationMode distanceGenerationMode;
+	/** default: false */
 	public boolean quickFillWithVoid;
+	public EDhApiDistantGeneratorMode distantGeneratorDetailLevel;
+	
 	
 	/**
 	 * default settings for a normal chunk <br>
@@ -47,18 +49,21 @@ public class LodBuilderConfig
 	 * useBiomeColors = false <br>
 	 * useSolidBlocksInColorGen = true <br>
 	 */
-	public LodBuilderConfig(EDistanceGenerationMode newDistanceGenerationMode)
+	public LodBuilderConfig(EDhApiDistantGeneratorMode distantGeneratorDetailLevel)
 	{
-		useHeightmap = false;
-		useBiomeColors = false;
-		useSolidBlocksInColorGen = true;
-		quickFillWithVoid = false;
-		distanceGenerationMode = newDistanceGenerationMode;
+		this.useHeightmap = false;
+		this.useBiomeColors = false;
+		this.useSolidBlocksInColorGen = true;
+		this.quickFillWithVoid = false;
+		this.distantGeneratorDetailLevel = distantGeneratorDetailLevel;
 	}
 	
-	public static LodBuilderConfig getFillVoidConfig() {
-		LodBuilderConfig config = new LodBuilderConfig(EDistanceGenerationMode.NONE);
+	/** Default settings used when generating LODs for pre-generated terrain. */
+	public static LodBuilderConfig getFillVoidConfig()
+	{
+		LodBuilderConfig config = new LodBuilderConfig(EDhApiDistantGeneratorMode.PRE_EXISTING_ONLY);
 		config.quickFillWithVoid = true;
 		return config;
 	}
+	
 }
