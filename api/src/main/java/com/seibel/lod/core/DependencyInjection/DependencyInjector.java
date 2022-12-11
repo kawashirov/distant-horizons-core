@@ -33,7 +33,7 @@ import java.util.Map;
  * @author James Seibel
  * @version 2022-11-24
  */
-public class DependencyInjector<BindableType extends IBindable> implements IDependencyInjector<BindableType>
+public class DependencyInjector<BindableType extends IBindable> implements IDependencyInjector<BindableType> // Note to self: Don't try adding a generic type to IDhApiEvent, the constructor won't accept it
 {
 	protected final Map<Class<? extends BindableType>, ArrayList<BindableType>> dependencies = new HashMap<>();
 	

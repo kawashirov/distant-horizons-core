@@ -35,7 +35,7 @@ import java.util.HashMap;
  * @author James Seibel
  * @version 2022-11-24
  */
-public class ApiEventInjector extends DependencyInjector<IDhApiEvent> implements IDhApiEventInjector // Note to self: Don't try adding a generic type to IDhApiEvent, the consturctor won't accept it
+public class ApiEventInjector extends DependencyInjector<IDhApiEvent> implements IDhApiEventInjector // Note to self: Don't try adding a generic type to IDhApiEvent, the constructor won't accept it
 {
 	public static final ApiEventInjector INSTANCE = new ApiEventInjector();
 	

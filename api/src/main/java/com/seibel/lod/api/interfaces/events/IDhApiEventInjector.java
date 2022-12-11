@@ -20,6 +20,7 @@
 package com.seibel.lod.api.interfaces.events;
 
 import com.seibel.lod.api.methods.events.interfaces.IDhApiEvent;
+import com.seibel.lod.core.interfaces.dependencyInjection.IDependencyInjector;
 
 /**
  * This class takes care of dependency injection for API events.
@@ -27,7 +28,7 @@ import com.seibel.lod.api.methods.events.interfaces.IDhApiEvent;
  * @author James Seibel
  * @version 2022-9-13
  */
-public interface IDhApiEventInjector
+public interface IDhApiEventInjector extends IDependencyInjector<IDhApiEvent>
 {
 	
 	/**
@@ -36,7 +37,7 @@ public interface IDhApiEventInjector
 	 * @throws IllegalArgumentException if the implementation object doesn't implement the interface
 	 * @return true if the handler was unbound, false if the handler wasn't bound.
 	 */
-	// Note to self: Don't try adding a generic type to IDhApiEvent, the consturctor won't accept it
+	// Note to self: Don't try adding a generic type to IDhApiEvent, the constructor won't accept it
 	boolean unbind(Class<? extends IDhApiEvent> dependencyInterface, Class<? extends IDhApiEvent> dependencyClassToRemove) throws IllegalArgumentException;
 	
 	
