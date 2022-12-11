@@ -1,5 +1,6 @@
 package com.seibel.lod.core.generation;
 
+import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
@@ -527,7 +528,8 @@ public class WorldGenerationQueue implements Closeable
 			byte granularity, byte targetDataDetail,
 			Consumer<ChunkSizedData> resultConsumer)
 	{
-		return worldGenerator.generateChunks(chunkPosMin.x, chunkPosMin.z, granularity, targetDataDetail, (objectArray) ->
+		EDhApiDistantGeneratorMode generatorMode = Config.Client.WorldGenerator.distantGeneratorMode.get();
+		return worldGenerator.generateChunks(chunkPosMin.x, chunkPosMin.z, granularity, targetDataDetail, generatorMode, (objectArray) ->
 		{
 			try
 			{

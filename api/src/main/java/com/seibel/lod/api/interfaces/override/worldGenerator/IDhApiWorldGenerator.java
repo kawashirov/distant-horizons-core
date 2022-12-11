@@ -1,6 +1,7 @@
 package com.seibel.lod.api.interfaces.override.worldGenerator;
 
 import com.seibel.lod.api.enums.EDhApiDetailLevel;
+import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenThreadMode;
 import com.seibel.lod.api.interfaces.override.IDhApiOverrideable;
 
@@ -10,7 +11,7 @@ import java.util.function.Consumer;
 
 /**
  * @author James Seibel
- * @version 2022-12-6
+ * @version 2022-12-10
  */
 public interface IDhApiWorldGenerator extends Closeable, IDhApiOverrideable
 {
@@ -20,7 +21,7 @@ public interface IDhApiWorldGenerator extends Closeable, IDhApiOverrideable
 	
 	/** 
 	 * Returns which thread chunk generation requests will be run on. <br>
-	 * TODO: only {@link EDhApiWorldGenThreadMode#MULTI_THREADED} is supported currently
+	 * TODO: only {@link EDhApiWorldGenThreadMode#SINGLE_THREADED} is currently supported
 	 */
 	EDhApiWorldGenThreadMode getThreadingMode();
 	
@@ -95,7 +96,7 @@ public interface IDhApiWorldGenerator extends Closeable, IDhApiOverrideable
 	 * @throws ClassCastException if incompatible objects are passed into the resultConsumer.
 	 */
 	CompletableFuture<Void> generateChunks(int chunkPosMinX, int chunkPosMinZ,
-			byte granularity, byte targetDataDetail,
+			byte granularity, byte targetDataDetail, EDhApiDistantGeneratorMode generatorMode,
 			Consumer<Object[]> resultConsumer) throws ClassCastException;
 	
 	

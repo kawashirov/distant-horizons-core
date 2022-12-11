@@ -24,7 +24,7 @@ import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGenerato
 import com.seibel.lod.core.interfaces.dependencyInjection.IOverrideInjector;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.config.Config;
-import com.seibel.lod.api.enums.config.EDistanceGenerationMode;
+import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.BitShiftUtil;
@@ -96,13 +96,12 @@ public class BatchGenerator implements IDhApiWorldGenerator
 	//===================//
 	
 	@Override
-	public CompletableFuture<Void> generateChunks(int chunkPosMinX, int chunkPosMinZ, byte granularity, byte targetDataDetail, Consumer<Object[]> resultConsumer)
+	public CompletableFuture<Void> generateChunks(int chunkPosMinX, int chunkPosMinZ, byte granularity, byte targetDataDetail, EDhApiDistantGeneratorMode generatorMode, Consumer<Object[]> resultConsumer)
 	{
-		EDistanceGenerationMode mode = Config.Client.WorldGenerator.distanceGenerationMode.get();
 		Steps targetStep = null;
-		switch (mode)
+		switch (generatorMode)
 		{
-			case NONE:
+			case PRE_EXISTING_ONLY:
 				targetStep = Steps.Empty; // NOTE: Only load in existing chunks. No new chunk generation
 				break;
 			case BIOME_ONLY:

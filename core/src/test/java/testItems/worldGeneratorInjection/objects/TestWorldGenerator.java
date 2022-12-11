@@ -1,5 +1,6 @@
 package testItems.worldGeneratorInjection.objects;
 
+import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenThreadMode;
 import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
 import com.seibel.lod.core.DependencyInjection.OverrideInjector;
@@ -60,7 +61,7 @@ public class TestWorldGenerator implements IDhApiWorldGenerator
 	public boolean isBusy() { return false; }
 	
 	@Override
-	public CompletableFuture<Void> generateChunks(int chunkPosMinX, int chunkPosMinZ, byte granularity, byte targetDataDetail, Consumer<Object[]> resultConsumer) { return null; }
+	public CompletableFuture<Void> generateChunks(int chunkPosMinX, int chunkPosMinZ, byte granularity, byte targetDataDetail, EDhApiDistantGeneratorMode maxGenerationStep, Consumer<Object[]> resultConsumer) { return null; }
 	
 	@Override
 	public void preGeneratorTaskStart() {  }
