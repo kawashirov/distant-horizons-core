@@ -17,95 +17,126 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class LevelToFileMatcher implements AutoCloseable {
-    private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
-    public static final ConfigBasedLogger LOGGER = new ConfigBasedLogger(LogManager.getLogger(),
-            () -> Config.Client.Advanced.Debugging.DebugSwitch.logFileSubDimEvent.get());
-
-    private final ExecutorService matcherThread = LodUtil.makeSingleThreadPool("Level-To-File-Matcher");
-
-    private PlayerData playerData = null;
-    private PlayerData firstSeenPlayerData = null;
-
-    /** If true the LodDimensionFileHelper is attempting to determine the folder for this dimension */
-    private final AtomicBoolean determiningWorldFolder = new AtomicBoolean(false);
-    private final ILevelWrapper currentLevel;
-    private volatile File foundLevel = null;
-    private final File[] potentialFiles;
-    private final File levelsFolder;
-
-    public LevelToFileMatcher(ILevelWrapper targetWorld, File levelsFolder, File[] potentialFiles) {
-        this.currentLevel = targetWorld;
-        this.potentialFiles = potentialFiles;
-        this.levelsFolder = levelsFolder;
-        if (potentialFiles.length == 0) {
-            String newId = UUID.randomUUID().toString();
-            LOGGER.info("No potential level files found. Creating a new sub dimension with ID {}...",
-                    LodUtil.shortenString(newId, 8));
-            foundLevel = new File(levelsFolder, newId);
-        }
-    }
-
-    // May return null, where at this moment the level is not yet known
-    public File tryGetLevel() {
-        tick();
-        return foundLevel;
-    }
-
-    public boolean isFindingLevel(ILevelWrapper level) {
-        return Objects.equals(level, currentLevel);
-    }
-
-    private void tick() {
-        if (foundLevel != null) return;
-        // prevent multiple threads running at the same time
-        if (determiningWorldFolder.getAndSet(true)) return;
-        matcherThread.submit(() ->
-        {
-            try {
-                // attempt to get the file handler
-                File saveDir = attemptToDetermineSubDimensionFolder();
-                if (saveDir != null) foundLevel = saveDir;
-            } catch (IOException e) {
-                LOGGER.error("Unable to set the dimension file handler for level [" + currentLevel + "]. Error: ", e);
-            } finally {
-                // make sure we unlock this method
-                determiningWorldFolder.set(false);
-            }
-        });
-    }
-
-    /**
-     * Currently this method checks a single chunk (where the player is)
-     * and compares it against the same chunk position in the other dimension worlds to
-     * guess which world the player is in.
-     *
-     * @throws IOException if the folder doesn't exist or can't be accessed
-     */
-    public File attemptToDetermineSubDimensionFolder() throws IOException
-    {
-        { // Update PlayerData
-            PlayerData data = PlayerData.tryGetPlayerData(MC_CLIENT);
-            if (data != null) {
-                if (firstSeenPlayerData == null) {
-                    firstSeenPlayerData = data;
-                }
-                playerData = data;
-            }
-        }
-
-        // relevant positions
-        DhChunkPos playerChunkPos = new DhChunkPos(playerData.playerBlockPos);
-        int startingBlockPosX = playerChunkPos.getMinBlockX();
-        int startingBlockPosZ = playerChunkPos.getMinBlockZ();
-
-        // chunk from the newly loaded level
-        IChunkWrapper newlyLoadedChunk = MC_CLIENT.getWrappedClientWorld().tryGetChunk(playerChunkPos);
-        // check if this chunk is valid to test
-        if (!CanDetermineLevelFolder(newlyLoadedChunk))
-            return null;
-
-        //TODO: Compute a ChunkData from current chunk.
+/**
+ * Used to support multiple worlds using the same dimension type. <br/>
+ * This is specifically needed for servers running the Multiverse plugin (or similar).
+ */
+public class LevelToFileMatcher implements AutoCloseable
+{
+	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
+	public static final ConfigBasedLogger LOGGER = new ConfigBasedLogger(LogManager.getLogger(),
+			() -> Config.Client.Advanced.Debugging.DebugSwitch.logFileSubDimEvent.get());
+	
+	private final ExecutorService matcherThread = LodUtil.makeSingleThreadPool("Level-To-File-Matcher");
+	
+	private PlayerData playerData = null;
+	private PlayerData firstSeenPlayerData = null;
+	
+	/** If true the LodDimensionFileHelper is attempting to determine the folder for this dimension */
+	private final AtomicBoolean determiningWorldFolder = new AtomicBoolean(false);
+	private final ILevelWrapper currentLevel;
+	private volatile File foundLevel = null;
+	private final File[] potentialFiles;
+	private final File levelsFolder;
+	
+	
+	
+	public LevelToFileMatcher(ILevelWrapper targetWorld, File levelsFolder, File[] potentialFiles)
+	{
+		this.currentLevel = targetWorld;
+		this.potentialFiles = potentialFiles;
+		this.levelsFolder = levelsFolder;
+		
+		if (potentialFiles.length == 0)
+		{
+			String newId = UUID.randomUUID().toString();
+			LOGGER.info("No potential level files found. Creating a new sub dimension with the ID [{}]...",
+					LodUtil.shortenString(newId, 8));
+			this.foundLevel = new File(levelsFolder, newId);
+		}
+	}
+	
+	
+	
+	public boolean isFindingLevel(ILevelWrapper level) { return Objects.equals(level, this.currentLevel); }
+	
+	/** May return null if the level isn't known yet */
+	public File tryGetLevel()
+	{
+		this.tryGetLevelInternal();
+		return this.foundLevel;
+	}
+	private void tryGetLevelInternal()
+	{
+		if (this.foundLevel != null)
+		{
+			return;
+		}
+		
+		// prevent multiple threads running at the same time
+		if (this.determiningWorldFolder.getAndSet(true))
+		{
+			return;
+		}
+		
+		
+		this.matcherThread.submit(() ->
+		{
+			try
+			{
+				// attempt to get the file handler
+				File saveDir = this.attemptToDetermineSubDimensionFolder();
+				if (saveDir != null)
+				{
+					this.foundLevel = saveDir;
+				}
+			}
+			catch (IOException e)
+			{
+				LOGGER.error("Unable to set the dimension file handler for level [" + this.currentLevel + "]. Error: ", e);
+			}
+			finally
+			{
+				// make sure we unlock this method
+				this.determiningWorldFolder.set(false);
+			}
+		});
+	}
+	
+	/**
+	 * Currently this method checks a single chunk (where the player is)
+	 * and compares it against the same chunk position in the other dimension worlds to
+	 * guess which world the player is in.
+	 * @throws IOException if the folder doesn't exist or can't be accessed
+	 */
+	public File attemptToDetermineSubDimensionFolder() throws IOException
+	{
+		{ // Update PlayerData
+			PlayerData data = PlayerData.tryGetPlayerData(MC_CLIENT);
+			if (data != null)
+			{
+				if (this.firstSeenPlayerData == null)
+				{
+					this.firstSeenPlayerData = data;
+				}
+				this.playerData = data;
+			}
+		}
+		
+		// relevant positions
+		DhChunkPos playerChunkPos = new DhChunkPos(this.playerData.playerBlockPos);
+		int startingBlockPosX = playerChunkPos.getMinBlockX();
+		int startingBlockPosZ = playerChunkPos.getMinBlockZ();
+		
+		// chunk from the newly loaded level
+		IChunkWrapper newlyLoadedChunk = MC_CLIENT.getWrappedClientWorld().tryGetChunk(playerChunkPos);
+		// check if this chunk is valid to test
+		if (!this.CanDetermineLevelFolder(newlyLoadedChunk))
+		{
+			return null;
+		}
+		
+		//TODO: Compute a ChunkData from current chunk.
         /*
         // generate a LOD to test against
         boolean lodGenerated = InternalApiShared.lodBuilder.generateLodNodeFromChunk(newlyLoadedDim, newlyLoadedChunk, new LodBuilderConfig(EDistanceGenerationMode.FULL), true, true);
@@ -145,20 +176,20 @@ public class LevelToFileMatcher implements AutoCloseable {
             }
             return null;
         }*/
-
-
-        // compare each world with the newly loaded one
-        SubDimCompare mostSimilarSubDim = null;
-
-        File[] levelFolders = potentialFiles;
-        LOGGER.info("Potential Sub Dimension folders: [" + levelFolders.length + "]");
-        for (File testLevelFolder : levelFolders)
-        {
-            LOGGER.info("Testing level folder: [" + LodUtil.shortenString(testLevelFolder.getName(), 8) + "]");
-            try
-            {
-                // TODO: Try load a data file overlapping the playerChunkPos from ClientOnlySaveStructure,
-                //  and then use it to compare chunk data to current chunk.
+		
+		
+		// compare each world with the newly loaded one
+		SubDimCompare mostSimilarSubDim = null;
+		
+		File[] levelFolders = potentialFiles;
+		LOGGER.info("Potential Sub Dimension folders: [" + levelFolders.length + "]");
+		for (File testLevelFolder : levelFolders)
+		{
+			LOGGER.info("Testing level folder: [" + LodUtil.shortenString(testLevelFolder.getName(), 8) + "]");
+			try
+			{
+				// TODO: Try load a data file overlapping the playerChunkPos from ClientOnlySaveStructure,
+				//  and then use it to compare chunk data to current chunk.
 
                 /*
                 // get a LOD from this dimension folder
@@ -223,51 +254,53 @@ public class LevelToFileMatcher implements AutoCloseable {
 
                 LOGGER.info("Sub dimension [" + LodUtil.shortenString(testLevelFolder.getName(), 8) + "...] is current dimension probability: " + LodUtil.shortenString(subDimCompare.getPercentEqual() + "", 5) + " (" + equalDataPoints + "/" + totalDataPointCount + ")");
 */
-            }
-            catch (Exception e)
-            {
-                // this sub dimension isn't formatted correctly
-                // for now we are just assuming it is an unrelated file
-            }
-        }
-
-        // TODO if two sub dimensions contain the same LODs merge them???
-
-        // the first seen player data is no longer needed, the sub dimension has been determined
-        firstSeenPlayerData = null;
-
-        if (mostSimilarSubDim != null && mostSimilarSubDim.isValidSubDim())
-        {
-            // we found a world folder that is similar, use it
-
-            LOGGER.info("Sub Dimension set to: [" +  LodUtil.shortenString(mostSimilarSubDim.folder.getName(), 8) + "...] with an equality of [" + mostSimilarSubDim.getPercentEqual() + "]");
-            return mostSimilarSubDim.folder;
-        }
-        else
-        {
-            // no world folder was found, create a new one
-
-            double highestEqualityPercent = mostSimilarSubDim != null ? mostSimilarSubDim.getPercentEqual() : 0;
-
-            String newId = UUID.randomUUID().toString();
-            String message = "No suitable sub dimension found. The highest equality was [" + LodUtil.shortenString(highestEqualityPercent + "", 5) + "]. Creating a new sub dimension with ID: " + LodUtil.shortenString(newId, 8) + "...";
-            LOGGER.info(message);
-            File folder = new File(levelsFolder, newId);
-            folder.mkdirs();
-            return folder;
-        }
-    }
-
-    /** Returns true if the given chunk is valid to test */
-    public boolean CanDetermineLevelFolder(IChunkWrapper chunk)
-    {
-        // we can only guess if the given chunk can be converted into a LOD
-        return false; //FIXME: Fix this after LodBUilder is done.
-        //return LodBuilder.canGenerateLodFromChunk(chunk);
-    }
-
-    @Override
-    public void close() {
-        matcherThread.shutdownNow();
-    }
+			}
+			catch (Exception e)
+			{
+				// this sub dimension isn't formatted correctly
+				// for now we are just assuming it is an unrelated file
+			}
+		}
+		
+		// TODO if two sub dimensions contain the same LODs merge them???
+		
+		// the first seen player data is no longer needed, the sub dimension has been determined
+		this.firstSeenPlayerData = null;
+		
+		if (mostSimilarSubDim != null && mostSimilarSubDim.isValidSubDim())
+		{
+			// we found a world folder that is similar, use it
+			
+			LOGGER.info("Sub Dimension set to: [" + LodUtil.shortenString(mostSimilarSubDim.folder.getName(), 8) + "...] with an equality of [" + mostSimilarSubDim.getPercentEqual() + "]");
+			return mostSimilarSubDim.folder;
+		}
+		else
+		{
+			// no world folder was found, create a new one
+			
+			double highestEqualityPercent = mostSimilarSubDim != null ? mostSimilarSubDim.getPercentEqual() : 0;
+			
+			String newId = UUID.randomUUID().toString();
+			String message = "No suitable sub dimension found. The highest equality was [" + LodUtil.shortenString(highestEqualityPercent + "", 5) + "]. Creating a new sub dimension with ID: " + LodUtil.shortenString(newId, 8) + "...";
+			LOGGER.info(message);
+			File folder = new File(this.levelsFolder, newId);
+			folder.mkdirs();
+			return folder;
+		}
+	}
+	
+	/** Returns true if the given chunk is valid to test */
+	public boolean CanDetermineLevelFolder(IChunkWrapper chunk)
+	{
+		// we can only guess if the given chunk can be converted into a LOD
+		return false; //FIXME: Fix this after LodBUilder is done.
+		//return LodBuilder.canGenerateLodFromChunk(chunk);
+	}
+	
+	@Override
+	public void close()
+	{
+		this.matcherThread.shutdownNow();
+	}
+	
 }

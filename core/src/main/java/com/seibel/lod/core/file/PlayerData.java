@@ -39,7 +39,7 @@ public class PlayerData
 {
 	public static final IWrapperFactory FACTORY = SingletonInjector.INSTANCE.get(IWrapperFactory.class);
 	
-	private static final String playerDataFileName = "_playerData.toml";
+	public static final String PLAYER_DATA_FILE_NAME = "_playerData.toml";
 	
 	
 	public static final String PLAYER_BLOCK_POS_X_PATH = "playerBlockPosX";
@@ -80,7 +80,7 @@ public class PlayerData
 	
 	private PlayerData(IMinecraftClientWrapper mc)
 	{
-		updateData(mc);
+		this.updateData(mc);
 	}
 	
 	public PlayerData(File dimensionFolder)
@@ -108,26 +108,27 @@ public class PlayerData
 	
 	
 	
-	public static File getFileForDimensionFolder(File file)
-	{
-		return new File(file.getPath() + File.separatorChar + playerDataFileName);
-	}
+	public static File getFileForDimensionFolder(File file) { return new File(file.getPath() + File.separatorChar + PLAYER_DATA_FILE_NAME); }
 	
 	
 	/** Should be called often to make sure this object is up to date with the player's info */
 	public void updateData(IMinecraftClientWrapper mc)
 	{
 		this.playerBlockPos = mc.getPlayerBlockPos();
-		if (playerBlockPos == null) throw new RuntimeException("No player block pos!");
+		
+		if (this.playerBlockPos == null)
+		{
+			throw new RuntimeException("No player block pos!");
+		}
 	}
 	
 	/** Writes everything from this object to the file given. */
 	public void toTomlFile(CommentedFileConfig toml)
 	{
 		// player block pos
-		toml.add(PLAYER_BLOCK_POS_X_PATH, playerBlockPos.getX());
-		toml.add(PLAYER_BLOCK_POS_Y_PATH, playerBlockPos.getY());
-		toml.add(PLAYER_BLOCK_POS_Z_PATH, playerBlockPos.getZ());
+		toml.add(PLAYER_BLOCK_POS_X_PATH, this.playerBlockPos.getX());
+		toml.add(PLAYER_BLOCK_POS_Y_PATH, this.playerBlockPos.getY());
+		toml.add(PLAYER_BLOCK_POS_Z_PATH, this.playerBlockPos.getZ());
 		
 		toml.save();
 	}
@@ -136,7 +137,7 @@ public class PlayerData
 	@Override
 	public String toString()
 	{
-		return "PlayerBlockPos: [" + playerBlockPos.x + "," + playerBlockPos.y + "," + playerBlockPos.z + "]";
+		return "PlayerBlockPos: [" + this.playerBlockPos.x + "," + this.playerBlockPos.y + "," + this.playerBlockPos.z + "]";
 	}
 	
 }
