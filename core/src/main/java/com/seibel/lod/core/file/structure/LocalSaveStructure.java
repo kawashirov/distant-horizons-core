@@ -5,41 +5,61 @@ import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
 
 import java.io.File;
 
-public class LocalSaveStructure extends SaveStructure {
+/**
+ * Designed for Client_Server & Server_Only environments.
+ * 
+ * @version 2022-12-17
+ */
+public class LocalSaveStructure extends AbstractSaveStructure
+{
+	public static final String SERVER_FOLDER_NAME = "Distant_Horizons";
+	
     private File debugPath = new File("");
 
-    // Fit for Client_Server & Server_Only environment
-    public LocalSaveStructure() {
-    }
-
-    @Override
-    public File tryGetLevelFolder(ILevelWrapper wrapper) {
+	
+	
+    public LocalSaveStructure() {  }
+	
+	
+	
+	//================//
+	// folder methods //
+	//================//
+	
+	@Override
+    public File tryGetOrCreateLevelFolder(ILevelWrapper wrapper)
+	{
         IServerLevelWrapper serverSide = (IServerLevelWrapper) wrapper;
-        debugPath = new File(serverSide.getSaveFolder(), "Distant_Horizons");
+        this.debugPath = new File(serverSide.getSaveFolder(), "Distant_Horizons");
         return new File(serverSide.getSaveFolder(), "Distant_Horizons");
     }
 
     @Override
-    public File getRenderCacheFolder(ILevelWrapper level) {
+    public File getRenderCacheFolder(ILevelWrapper level)
+	{
         IServerLevelWrapper serverSide = (IServerLevelWrapper) level;
-        debugPath = new File(serverSide.getSaveFolder(), "Distant_Horizons");
+        this.debugPath = new File(serverSide.getSaveFolder(), "Distant_Horizons");
         return new File(new File(serverSide.getSaveFolder(), "Distant_Horizons"), RENDER_CACHE_FOLDER);
     }
 
     @Override
-    public File getDataFolder(ILevelWrapper level) {
+    public File getDataFolder(ILevelWrapper level)
+	{
         IServerLevelWrapper serverSide = (IServerLevelWrapper) level;
-        debugPath = new File(serverSide.getSaveFolder(), "Distant_Horizons");
-        return new File(new File(serverSide.getSaveFolder(), "Distant_Horizons"), DATA_FOLDER);
+        this.debugPath = new File(serverSide.getSaveFolder(), SERVER_FOLDER_NAME);
+        return new File(new File(serverSide.getSaveFolder(), SERVER_FOLDER_NAME), DATA_FOLDER);
     }
-
+	
+	
+	
+	//==================//
+	// override methods //
+	//==================//
+	
+	@Override
+    public void close() throws Exception {  }
+	
     @Override
-    public void close() throws Exception {
-
-    }
-
-    @Override
-    public String toString() {
-        return "[LocalSave at ["+debugPath+"] ]";
-    }
+	public String toString() { return "[" + this.getClass().getSimpleName() + "@" + this.debugPath + "]"; }
+	
 }

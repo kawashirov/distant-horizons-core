@@ -2,7 +2,7 @@ package com.seibel.lod.core.util;
 
 import com.seibel.lod.core.file.datafile.IDataSourceProvider;
 import com.seibel.lod.core.file.renderfile.IRenderSourceProvider;
-import com.seibel.lod.core.file.structure.SaveStructure;
+import com.seibel.lod.core.file.structure.AbstractSaveStructure;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import org.apache.logging.log4j.Logger;
@@ -18,7 +18,7 @@ public class FileScanUtil {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     public static final int MAX_SCAN_DEPTH = 5;
     public static final String LOD_FILE_POSTFIX = ".lod";
-    public static void scanFile(SaveStructure save, ILevelWrapper level,
+    public static void scanFile(AbstractSaveStructure save, ILevelWrapper level,
                                       @Nullable IDataSourceProvider dataSource,
                                       @Nullable IRenderSourceProvider renderSource) {
         if (dataSource != null) {

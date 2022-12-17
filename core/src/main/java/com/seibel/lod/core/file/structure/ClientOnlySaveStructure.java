@@ -12,159 +12,232 @@ import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 
 import javax.annotation.Nullable;
 import java.io.File;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
-public class ClientOnlySaveStructure extends SaveStructure {
-    final File folder;
-    private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
-    public static final String INVALID_FILE_CHARACTERS_REGEX = "[\\\\/:*?\"<>|]";
-    private static String getServerFolderName()
-    {
-        // parse the current server's IP
-        ParsedIp parsedIp = new ParsedIp(MC_CLIENT.getCurrentServerIp());
-        String serverIpCleaned = parsedIp.ip.replaceAll(INVALID_FILE_CHARACTERS_REGEX, "");
-        String serverPortCleaned = parsedIp.port != null ? parsedIp.port.replaceAll(INVALID_FILE_CHARACTERS_REGEX, "") : "";
-
-        // determine the format of the folder name
-        EServerFolderNameMode folderNameMode = Config.Client.Multiplayer.serverFolderNameMode.get();
-        if (folderNameMode == EServerFolderNameMode.AUTO)
-        {
-            if (parsedIp.isLan())
-            {
-                // LAN
-                folderNameMode = EServerFolderNameMode.NAME_IP;
-            }
-            else
-            {
-                // normal multiplayer
-                folderNameMode = EServerFolderNameMode.NAME_IP_PORT;
-            }
-        }
-        String serverName = MC_CLIENT.getCurrentServerName().replaceAll(INVALID_FILE_CHARACTERS_REGEX, "");
-        String serverMcVersion = MC_CLIENT.getCurrentServerVersion().replaceAll(INVALID_FILE_CHARACTERS_REGEX, "");
-        // generate the folder name
-        String folderName = "";
-        switch (folderNameMode)
-        {
-            // default and auto shouldn't be used
-            // and are just here to make the compiler happy
-            default:
-            case NAME_ONLY:
-                folderName = serverName;
-                break;
-
-            case NAME_IP:
-                folderName = serverName + ", IP " + serverIpCleaned;
-                break;
-            case NAME_IP_PORT:
-                folderName = serverName + ", IP " + serverIpCleaned + (serverPortCleaned.length() != 0 ? ("-" + serverPortCleaned) : "");
-                break;
-            case NAME_IP_PORT_MC_VERSION:
-                folderName = serverName + ", IP " + serverIpCleaned + (serverPortCleaned.length() != 0 ? ("-" + serverPortCleaned) : "") + ", GameVersion " + serverMcVersion;
-                break;
-        }
-        // PercentEscaper makes the characters all part of the standard alphameric character set
-        // This fixes some issues when the server is named something in other languages
-        return new PercentEscaper("", true).escape(folderName);
-    }
-
-    SubDimensionLevelMatcher fileMatcher = null;
-    final HashMap<ILevelWrapper, File> levelToFileMap = new HashMap<>();
-
-    // Fit for Client_Only environment
-    public ClientOnlySaveStructure() {
-        folder = new File(MC_CLIENT.getGameDirectory().getPath() +
-                File.separatorChar + "Distant_Horizons_server_data" + File.separatorChar + getServerFolderName());
-        if (!folder.exists()) folder.mkdirs(); //TODO: Deal with errors
-    }
-
-    @Override
-    public File tryGetLevelFolder(ILevelWrapper level) {
-        return levelToFileMap.computeIfAbsent(level, (l) -> {
-            if (Config.Client.Multiplayer.multiDimensionRequiredSimilarity.get() == 0) {
-                if (fileMatcher != null) {
-                    fileMatcher.close();
-                    fileMatcher = null;
-                }
-                return getLevelFolderWithoutSimilarityMatching(l);
-            }
-            if (fileMatcher == null || !fileMatcher.isFindingLevel(l)) {
-                LOGGER.info("Loading level for world " + l.getDimensionType().getDimensionName());
-                fileMatcher = new SubDimensionLevelMatcher(l, folder,
-                        (File[]) getMatchingLevelFolders(l).toArray());
-            }
-            File levelFile = fileMatcher.tryGetLevel();
-            if (levelFile != null) {
-                fileMatcher.close();
-                fileMatcher = null;
-            }
-            return levelFile;
-        });
-    }
-
-    private File getLevelFolderWithoutSimilarityMatching(ILevelWrapper level)
-    {
-        Stream<File> folders = getMatchingLevelFolders(level);
-        Optional<File> first = folders.findFirst();
-        if (first.isPresent())
-        {
-            LOGGER.info("Default Sub Dimension set to: [" +  LodUtil.shortenString(first.get().getName(), 8) + "...]");
-            return first.get();
-        } else { // if no valid sub dimension was found, create a new one
-            LOGGER.info("Default Sub Dimension not found. Creating: [" +  level.getDimensionType().getDimensionName() + "]");
-            return new File(folder, level.getDimensionType().getDimensionName());
-        }
-    }
-
-    public Stream<File> getMatchingLevelFolders(@Nullable ILevelWrapper level) {
-        File[] folders = folder.listFiles();
-        if (folders==null) return Stream.empty();
-        return Arrays.stream(folders).filter(
-                (f) -> {
-                    if (!isValidLevelFolder(f)) return false;
-                    return level==null || f.getName().equalsIgnoreCase(level.getDimensionType().getDimensionName());
-                }
-        ).sorted();
-    }
-
-    /** Returns true if the given folder holds valid Lod Dimension data */
-    private static boolean isValidLevelFolder(File potentialFolder)
-    {
-        if (!potentialFolder.isDirectory())
-            // it needs to be a folder
-            return false;
-
-        File[] files = potentialFolder.listFiles((f) -> f.isDirectory() &&
-                (f.getName().equalsIgnoreCase(RENDER_CACHE_FOLDER) || f.getName().equalsIgnoreCase(DATA_FOLDER)));
-        // it needs to have folders with specified names in it
-        return files != null && files.length != 0;
-    }
-
-
-    @Override
-    public File getRenderCacheFolder(ILevelWrapper level) {
-        File levelFolder = levelToFileMap.get(level);
-        if (levelFolder == null) return null;
-        return new File(levelFolder, RENDER_CACHE_FOLDER);
-    }
-
-    @Override
-    public File getDataFolder(ILevelWrapper level) {
-        File levelFolder = levelToFileMap.get(level);
-        if (levelFolder == null) return null;
-        return new File(levelFolder, DATA_FOLDER);
-    }
-
-    @Override
-    public void close() {
-        fileMatcher.close();
-    }
-
-    @Override
-    public String toString() {
-        return "[ClientOnlySave@"+folder.getName()+"]";
-    }
+/**
+ * Designed for the Client_Only environment.
+ * 
+ * @version 12-17-2022
+ */
+public class ClientOnlySaveStructure extends AbstractSaveStructure
+{
+	final File folder;
+	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
+	public static final String INVALID_FILE_CHARACTERS_REGEX = "[\\\\/:*?\"<>|]";
+	
+	SubDimensionLevelMatcher fileMatcher = null;
+	final HashMap<ILevelWrapper, File> levelToFileMap = new HashMap<>();
+	
+	
+	
+	public ClientOnlySaveStructure()
+	{
+		this.folder = new File(MC_CLIENT.getGameDirectory().getPath() +
+				File.separatorChar + "Distant_Horizons_server_data" + File.separatorChar + getServerFolderName());
+		
+		if (!this.folder.exists())
+		{
+			if (!this.folder.mkdirs())
+			{
+				LOGGER.warn("Unable to create folder ["  + this.folder.getPath() + "]");
+				//TODO: Deal with errors
+			}
+		}
+	}
+	
+	
+	
+	//================//
+	// folder methods //
+	//================//
+	
+	@Override
+	public File tryGetOrCreateLevelFolder(ILevelWrapper level)
+	{
+		return this.levelToFileMap.computeIfAbsent(level, (newLevel) ->
+		{
+			if (Config.Client.Multiplayer.multiDimensionRequiredSimilarity.get() == 0)
+			{
+				if (this.fileMatcher != null)
+				{
+					this.fileMatcher.close();
+					this.fileMatcher = null;
+				}
+				return this.getLevelFolderWithoutSimilarityMatching(newLevel);
+			}
+			
+			if (this.fileMatcher == null || !this.fileMatcher.isFindingLevel(newLevel))
+			{
+				LOGGER.info("Loading level for world " + newLevel.getDimensionType().getDimensionName());
+				this.fileMatcher = new SubDimensionLevelMatcher(newLevel, this.folder,
+						this.getMatchingLevelFolders(newLevel).toArray(new File[0] /* surprisingly we don't need to create an array of any specific size for this to work */));
+			}
+			
+			File levelFile = this.fileMatcher.tryGetLevel();
+			if (levelFile != null)
+			{
+				this.fileMatcher.close();
+				this.fileMatcher = null;
+			}
+			return levelFile;
+		});
+	}
+	
+	private File getLevelFolderWithoutSimilarityMatching(ILevelWrapper level)
+	{
+		List<File> folders = this.getMatchingLevelFolders(level);
+		if (folders.size() > 0 && folders.get(0) == null)
+		{
+			LOGGER.info("Default Sub Dimension set to: [" + LodUtil.shortenString(folders.get(0).getName(), 8) + "...]");
+			return folders.get(0);
+		}
+		else
+		{ 
+			// if no valid sub dimension was found, create a new one
+			LOGGER.info("Default Sub Dimension not found. Creating: [" + level.getDimensionType().getDimensionName() + "]");
+			return new File(this.folder, level.getDimensionType().getDimensionName());
+		}
+	}
+	
+	public List<File> getMatchingLevelFolders(@Nullable ILevelWrapper level)
+	{
+		File[] folders = this.folder.listFiles();
+		if (folders == null)
+		{
+			return new ArrayList<>(0);
+		}
+		
+		Stream<File> fileStream = Arrays.stream(folders).filter(
+				(folder) -> 
+				{
+					if (!isValidLevelFolder(folder))
+					{
+						return false;
+					}
+					else
+					{
+						return level == null || folder.getName().equalsIgnoreCase(level.getDimensionType().getDimensionName());
+					}
+				}
+		).sorted();
+		
+		return fileStream.toList();
+	}
+	
+	@Override
+	public File getRenderCacheFolder(ILevelWrapper level)
+	{
+		File levelFolder = this.levelToFileMap.get(level);
+		if (levelFolder == null)
+		{
+			return null;
+		}
+		
+		return new File(levelFolder, RENDER_CACHE_FOLDER);
+	}
+	
+	@Override
+	public File getDataFolder(ILevelWrapper level)
+	{
+		File levelFolder = this.levelToFileMap.get(level);
+		if (levelFolder == null)
+		{
+			return null;
+		}
+		
+		return new File(levelFolder, DATA_FOLDER);
+	}
+	
+	
+	
+	//================//
+	// helper methods //
+	//================//
+	
+	/** Returns true if the given folder holds valid Lod Dimension data */
+	private static boolean isValidLevelFolder(File potentialFolder)
+	{
+		if (!potentialFolder.isDirectory())
+		{
+			// a valid level folder needs to be a folder
+			return false;
+		}
+		
+		// filter out any non-DH folders
+		File[] files = potentialFolder.listFiles((file) ->
+				file.isDirectory() &&
+						(file.getName().equalsIgnoreCase(RENDER_CACHE_FOLDER) || file.getName().equalsIgnoreCase(DATA_FOLDER)));
+		
+		// a valid level folder needs to have DH specific folders in it
+		return files != null && files.length != 0;
+	}
+	
+	/** Generated from the server the client is currently connected to. */
+	private static String getServerFolderName()
+	{
+		// parse the current server's IP
+		ParsedIp parsedIp = new ParsedIp(MC_CLIENT.getCurrentServerIp());
+		String serverIpCleaned = parsedIp.ip.replaceAll(INVALID_FILE_CHARACTERS_REGEX, "");
+		String serverPortCleaned = parsedIp.port != null ? parsedIp.port.replaceAll(INVALID_FILE_CHARACTERS_REGEX, "") : "";
+		
+		
+		// determine the auto folder name format
+		EServerFolderNameMode folderNameMode = Config.Client.Multiplayer.serverFolderNameMode.get();
+		if (folderNameMode == EServerFolderNameMode.AUTO)
+		{
+			if (parsedIp.isLan())
+			{
+				// LAN
+				folderNameMode = EServerFolderNameMode.NAME_IP;
+			}
+			else
+			{
+				// normal multiplayer
+				folderNameMode = EServerFolderNameMode.NAME_IP_PORT;
+			}
+			// TODO can we determine if a server is a Mojang operated Realm based on the IP?
+			// If so we should also default to either NAME_IP or just NAME
+		}
+		String serverName = MC_CLIENT.getCurrentServerName().replaceAll(INVALID_FILE_CHARACTERS_REGEX, "");
+		String serverMcVersion = MC_CLIENT.getCurrentServerVersion().replaceAll(INVALID_FILE_CHARACTERS_REGEX, "");
+		
+		
+		// generate the folder name
+		String folderName;
+		switch (folderNameMode)
+		{
+			default:
+			case NAME_ONLY:
+				folderName = serverName;
+				break;
+			
+			case NAME_IP:
+				folderName = serverName + ", IP " + serverIpCleaned;
+				break;
+			case NAME_IP_PORT:
+				folderName = serverName + ", IP " + serverIpCleaned + (serverPortCleaned.length() != 0 ? ("-" + serverPortCleaned) : "");
+				break;
+			case NAME_IP_PORT_MC_VERSION:
+				folderName = serverName + ", IP " + serverIpCleaned + (serverPortCleaned.length() != 0 ? ("-" + serverPortCleaned) : "") + ", GameVersion " + serverMcVersion;
+				break;
+		}
+		
+		// PercentEscaper makes the characters all part of the standard alphameric character set
+		// This fixes some issues when the server is named something in other languages
+		return new PercentEscaper("", true).escape(folderName);
+	}
+	
+	
+	
+	//==================//
+	// override methods //
+	//==================//
+	
+	@Override
+	public void close() { this.fileMatcher.close(); }
+	
+	@Override
+	public String toString() { return "[" + this.getClass().getSimpleName() + "@" + this.folder.getName() + "]"; }
+	
 }
