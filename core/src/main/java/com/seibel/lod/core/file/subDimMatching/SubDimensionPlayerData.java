@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
  
-package com.seibel.lod.core.file;
+package com.seibel.lod.core.file.subDimMatching;
 
 
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
@@ -35,7 +35,7 @@ import java.io.File;
  * @author James Seibel
  * @version 2022-3-26
  */
-public class PlayerData
+public class SubDimensionPlayerData
 {
 	public static final IWrapperFactory FACTORY = SingletonInjector.INSTANCE.get(IWrapperFactory.class);
 	
@@ -60,7 +60,7 @@ public class PlayerData
 	
 	
 	@Nullable
-	public static PlayerData tryGetPlayerData(IMinecraftClientWrapper mcClient)
+	public static SubDimensionPlayerData tryGetPlayerData(IMinecraftClientWrapper mcClient)
 	{
 		if (!mcClient.playerExists())
 		{
@@ -69,7 +69,7 @@ public class PlayerData
 		
 		try
 		{
-			return new PlayerData(mcClient);
+			return new SubDimensionPlayerData(mcClient);
 		}
 		catch (RuntimeException e)
 		{
@@ -78,12 +78,12 @@ public class PlayerData
 		}
 	}
 	
-	private PlayerData(IMinecraftClientWrapper mc)
+	private SubDimensionPlayerData(IMinecraftClientWrapper mc)
 	{
 		this.updateData(mc);
 	}
 	
-	public PlayerData(File dimensionFolder)
+	public SubDimensionPlayerData(File dimensionFolder)
 	{
 		File file = getFileForDimensionFolder(dimensionFolder);
 		try (CommentedFileConfig toml = CommentedFileConfig.builder(file).build()) {

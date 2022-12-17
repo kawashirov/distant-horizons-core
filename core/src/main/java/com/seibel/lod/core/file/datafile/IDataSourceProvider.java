@@ -2,7 +2,7 @@ package com.seibel.lod.core.file.datafile;
 
 import com.seibel.lod.core.datatype.ILodDataSource;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
-import com.seibel.lod.core.file.MetaFile;
+import com.seibel.lod.core.file.subDimMatching.MetaFile;
 import com.seibel.lod.core.pos.DhSectionPos;
 
 import java.io.File;

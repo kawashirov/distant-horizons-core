@@ -1,4 +1,4 @@
-package com.seibel.lod.core.file;
+package com.seibel.lod.core.file.subDimMatching;
 
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.datatype.ILodDataSource;
@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author James Seibel
  * @version 12-17-2022
  */
-public class LevelToFileMatcher implements AutoCloseable
+public class SubDimensionLevelMatcher implements AutoCloseable
 {
 	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	public static final ConfigBasedLogger LOGGER = new ConfigBasedLogger(LogManager.getLogger(),
@@ -45,8 +45,8 @@ public class LevelToFileMatcher implements AutoCloseable
 	
 	private final ExecutorService matcherThread = LodUtil.makeSingleThreadPool("Level-To-File-Matcher");
 	
-	private PlayerData playerData = null;
-	private PlayerData firstSeenPlayerData = null;
+	private SubDimensionPlayerData playerData = null;
+	private SubDimensionPlayerData firstSeenPlayerData = null;
 	
 	/** If true the LodDimensionFileHelper is attempting to determine the folder for this dimension */
 	private final AtomicBoolean determiningWorldFolder = new AtomicBoolean(false);
@@ -57,7 +57,7 @@ public class LevelToFileMatcher implements AutoCloseable
 	
 	
 	
-	public LevelToFileMatcher(ILevelWrapper targetWorld, File levelsFolder, File[] potentialFiles)
+	public SubDimensionLevelMatcher(ILevelWrapper targetWorld, File levelsFolder, File[] potentialFiles)
 	{
 		this.currentLevel = targetWorld;
 		this.potentialFiles = potentialFiles;
@@ -128,7 +128,7 @@ public class LevelToFileMatcher implements AutoCloseable
 	public File attemptToDetermineSubDimensionFolder() throws IOException
 	{
 		{ // Update PlayerData
-			PlayerData data = PlayerData.tryGetPlayerData(MC_CLIENT);
+			SubDimensionPlayerData data = SubDimensionPlayerData.tryGetPlayerData(MC_CLIENT);
 			if (data != null)
 			{
 				if (this.firstSeenPlayerData == null)
@@ -269,7 +269,7 @@ public class LevelToFileMatcher implements AutoCloseable
 				
 				
 				// get the player data for this dimension folder
-				PlayerData testPlayerData = new PlayerData(testLevelFolder);
+				SubDimensionPlayerData testPlayerData = new SubDimensionPlayerData(testLevelFolder);
 				LOGGER.info("Last known player pos: [" + testPlayerData.playerBlockPos.getX() + "," + testPlayerData.playerBlockPos.getY() + "," + testPlayerData.playerBlockPos.getZ() + "]");
 				
 				// check if the block positions are close

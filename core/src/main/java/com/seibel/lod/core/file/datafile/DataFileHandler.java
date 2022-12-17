@@ -7,7 +7,7 @@ import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.full.FullDataSource;
 import com.seibel.lod.core.datatype.full.SparseDataSource;
 import com.seibel.lod.core.datatype.full.SpottyDataSource;
-import com.seibel.lod.core.file.MetaFile;
+import com.seibel.lod.core.file.subDimMatching.MetaFile;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;

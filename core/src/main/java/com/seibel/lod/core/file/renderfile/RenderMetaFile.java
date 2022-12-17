@@ -7,7 +7,7 @@ import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhLodPos;
-import com.seibel.lod.core.file.MetaFile;
+import com.seibel.lod.core.file.subDimMatching.MetaFile;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;

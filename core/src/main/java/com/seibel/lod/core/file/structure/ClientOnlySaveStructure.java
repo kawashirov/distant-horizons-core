@@ -1,7 +1,7 @@
 package com.seibel.lod.core.file.structure;
 
 import com.google.common.net.PercentEscaper;
-import com.seibel.lod.core.file.LevelToFileMatcher;
+import com.seibel.lod.core.file.subDimMatching.SubDimensionLevelMatcher;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.api.enums.config.EServerFolderNameMode;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
@@ -71,7 +71,7 @@ public class ClientOnlySaveStructure extends SaveStructure {
         return new PercentEscaper("", true).escape(folderName);
     }
 
-    LevelToFileMatcher fileMatcher = null;
+    SubDimensionLevelMatcher fileMatcher = null;
     final HashMap<ILevelWrapper, File> levelToFileMap = new HashMap<>();
 
     // Fit for Client_Only environment
@@ -93,7 +93,7 @@ public class ClientOnlySaveStructure extends SaveStructure {
             }
             if (fileMatcher == null || !fileMatcher.isFindingLevel(l)) {
                 LOGGER.info("Loading level for world " + l.getDimensionType().getDimensionName());
-                fileMatcher = new LevelToFileMatcher(l, folder,
+                fileMatcher = new SubDimensionLevelMatcher(l, folder,
                         (File[]) getMatchingLevelFolders(l).toArray());
             }
             File levelFile = fileMatcher.tryGetLevel();

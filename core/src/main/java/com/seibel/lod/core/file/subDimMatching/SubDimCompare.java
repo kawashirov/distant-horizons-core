@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
  
-package com.seibel.lod.core.file;
+package com.seibel.lod.core.file.subDimMatching;
 
 import com.seibel.lod.core.config.Config;
 import org.jetbrains.annotations.NotNull;

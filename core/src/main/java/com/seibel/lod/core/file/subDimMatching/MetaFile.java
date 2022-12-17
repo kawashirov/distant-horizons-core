@@ -1,4 +1,4 @@
-package com.seibel.lod.core.file;
+package com.seibel.lod.core.file.subDimMatching;
 
 import java.io.*;
 import java.nio.ByteBuffer;
