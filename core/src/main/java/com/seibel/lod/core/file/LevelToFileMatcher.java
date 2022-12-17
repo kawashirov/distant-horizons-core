@@ -1,12 +1,24 @@
 package com.seibel.lod.core.file;
 
 import com.seibel.lod.core.config.Config;
+import com.seibel.lod.core.datatype.ILodDataSource;
+import com.seibel.lod.core.datatype.full.ChunkSizedData;
+import com.seibel.lod.core.datatype.full.FullDataPoint;
+import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;
+import com.seibel.lod.core.datatype.transform.LodDataBuilder;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
+import com.seibel.lod.core.file.datafile.DataFileHandler;
+import com.seibel.lod.core.file.datafile.IDataSourceProvider;
+import com.seibel.lod.core.file.structure.ClientOnlySaveStructure;
+import com.seibel.lod.core.level.DhClientLevel;
+import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.pos.DhChunkPos;
+import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
+import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import org.apache.logging.log4j.LogManager;
 
@@ -14,12 +26,16 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Used to support multiple worlds using the same dimension type. <br/>
+ * Used to allow multiple levels using the same dimension type. <br/>
  * This is specifically needed for servers running the Multiverse plugin (or similar).
+ * 
+ * @author James Seibel
+ * @version 12-17-2022
  */
 public class LevelToFileMatcher implements AutoCloseable
 {
@@ -137,27 +153,31 @@ public class LevelToFileMatcher implements AutoCloseable
 		}
 		
 		//TODO: Compute a ChunkData from current chunk.
-        /*
+        
         // generate a LOD to test against
-        boolean lodGenerated = InternalApiShared.lodBuilder.generateLodNodeFromChunk(newlyLoadedDim, newlyLoadedChunk, new LodBuilderConfig(EDistanceGenerationMode.FULL), true, true);
+        boolean lodGenerated = LodDataBuilder.canGenerateLodFromChunk(newlyLoadedChunk);
         if (!lodGenerated)
             return null;
 
         // log the start of this attempt
-        LOGGER.info("Attempting to determine sub-dimension for [" + MC_CLIENT.getCurrentDimension().getDimensionName() + "]");
+        LOGGER.info("Attempting to determine sub-dimension for [" + MC_CLIENT.getWrappedClientWorld().getDimensionType().getDimensionName() + "]");
         LOGGER.info("Player block pos in dimension: [" + playerData.playerBlockPos.getX() + "," + playerData.playerBlockPos.getY() + "," + playerData.playerBlockPos.getZ() + "]");
 
         // new chunk data
-        long[][][] newChunkData = new long[LodUtil.CHUNK_WIDTH][LodUtil.CHUNK_WIDTH][];
-        for (int x = 0; x < LodUtil.CHUNK_WIDTH; x++)
-        {
-            for (int z = 0; z < LodUtil.CHUNK_WIDTH; z++)
-            {
-                long[] array = newlyLoadedDim.getRegion(playerRegionPos.x, playerRegionPos.z).getAllData(LodUtil.BLOCK_DETAIL_LEVEL, x + startingBlockPosX, z + startingBlockPosZ);
-                newChunkData[x][z] = array;
-            }
-        }
-        boolean newChunkHasData = !isDataEmpty(newChunkData);
+		ChunkSizedData newChunkSizedData = LodDataBuilder.createChunkData(newlyLoadedChunk);
+		long[][][] newChunkData = new long[LodUtil.CHUNK_WIDTH][LodUtil.CHUNK_WIDTH][];
+		if (newChunkSizedData != null)
+		{
+			for (int x = 0; x < LodUtil.CHUNK_WIDTH; x++)
+			{
+				for (int z = 0; z < LodUtil.CHUNK_WIDTH; z++)
+				{
+					long[] array = newChunkSizedData.get(x, z).getRaw();
+					newChunkData[x][z] = array;
+				}
+			}
+		}
+        boolean newChunkHasData = newChunkSizedData != null && newChunkSizedData.nonEmptyCount() != 0;
 
         // check if the chunk is actually empty
         if (!newChunkHasData)
@@ -175,7 +195,7 @@ public class LevelToFileMatcher implements AutoCloseable
                 LOGGER.warn(message);
             }
             return null;
-        }*/
+        }
 		
 		
 		// compare each world with the newly loaded one
@@ -190,70 +210,100 @@ public class LevelToFileMatcher implements AutoCloseable
 			{
 				// TODO: Try load a data file overlapping the playerChunkPos from ClientOnlySaveStructure,
 				//  and then use it to compare chunk data to current chunk.
-
-                /*
-                // get a LOD from this dimension folder
-                LodDimension tempLodDim = new LodDimension(null, 1, null, false);
-                tempLodDim.move(playerRegionPos);
-                LodDimensionFileHandler tempFileHandler = new LodDimensionFileHandler(testLevelFolder, tempLodDim);
-                LodRegion testRegion = tempFileHandler.loadRegionFromFile(LodUtil.BLOCK_DETAIL_LEVEL, playerRegionPos, VERTICAL_QUALITY_TO_TEST_WITH);
-                // get data from this LOD
-                long[][][] testChunkData = new long[LodUtil.CHUNK_WIDTH][LodUtil.CHUNK_WIDTH][];
-                for (int x = 0; x < LodUtil.CHUNK_WIDTH; x++)
-                {
-                    for (int z = 0; z < LodUtil.CHUNK_WIDTH; z++)
-                    {
-                        long[] array = testRegion.getAllData(LodUtil.BLOCK_DETAIL_LEVEL, x + startingBlockPosX, z + startingBlockPosZ);
-                        testChunkData[x][z] = array;
-                    }
-                }
-
-                // get the player data for this dimension folder
-                PlayerData testPlayerData = new PlayerData(testLevelFolder);
-                LOGGER.info("Last known player pos: [" + testPlayerData.playerBlockPos.getX() + "," + testPlayerData.playerBlockPos.getY() + "," + testPlayerData.playerBlockPos.getZ() + "]");
-
-                // check if the block positions are close
-                int playerBlockDist = testPlayerData.playerBlockPos.getManhattanDistance(playerData.playerBlockPos);
-                LOGGER.info("Player block position distance between saved sub dimension and first seen is [" + playerBlockDist + "]");
-
-                // check if the chunk is actually empty
-                if (isDataEmpty(testChunkData))
-                {
-                    String message = "The test chunk for dimension folder [" + LodUtil.shortenString(testLevelFolder.getName(), 8) + "] and chunk pos (" + playerChunkPos.getX() + "," + playerChunkPos.getZ() + ") is empty. This is expected if the position is outside the sub-dimension's generated area.";
-                    LOGGER.info(message);
-                    continue;
-                }
-
-                // compare the two LODs
-                int equalDataPoints = 0;
-                int totalDataPointCount = 0;
-                for (int x = 0; x < LodUtil.CHUNK_WIDTH; x++)
-                {
-                    for (int z = 0; z < LodUtil.CHUNK_WIDTH; z++)
-                    {
-                        for (int y = 0; y < newChunkData[x][z].length; y++)
-                        {
-                            if (newChunkData[x][z][y] == testChunkData[x][z][y])
-                            {
-                                equalDataPoints++;
-                            }
-                            totalDataPointCount++;
-
-                            if (!DataPointUtil.doesItExist(newChunkData[x][z][y]) || !DataPointUtil.doesItExist(testChunkData[x][z][y]))
-                                break;
-                        }
-                    }
-                }
-
-                // determine if this world is closer to the newly loaded world
-                SubDimCompare subDimCompare = new SubDimCompare(equalDataPoints, totalDataPointCount, playerBlockDist, testLevelFolder);
-                if (mostSimilarSubDim == null || subDimCompare.compareTo(mostSimilarSubDim) > 0)
-                {
-                    mostSimilarSubDim = subDimCompare;
-                }
-
-                LOGGER.info("Sub dimension [" + LodUtil.shortenString(testLevelFolder.getName(), 8) + "...] is current dimension probability: " + LodUtil.shortenString(subDimCompare.getPercentEqual() + "", 5) + " (" + equalDataPoints + "/" + totalDataPointCount + ")");
-*/
+				
+				// get a data source for this dimension
+				IClientLevelWrapper clientLevelWrapper = null;
+				if (clientLevelWrapper == null)
+				{
+					// TODO level shouldn't be null, continuing would probably cause a null pointer crash
+					LOGGER.info(this.getClass().getSimpleName() + " implementation incomplete. Unable to get LOD data file from generic folder without [" + IClientLevelWrapper.class.getSimpleName() + "].");
+					break;
+				}
+				IDhLevel tempLevel = new DhClientLevel(new ClientOnlySaveStructure(), clientLevelWrapper);
+				IDataSourceProvider fileHandler = new DataFileHandler(tempLevel, testLevelFolder);
+				CompletableFuture<ILodDataSource> testDataSource = fileHandler.read(new DhSectionPos(playerChunkPos));
+				ILodDataSource lodDataSource = testDataSource.get(); 
+				
+				
+				// convert the data source into a raw LOD data array
+				long[][][] testChunkData = new long[LodUtil.CHUNK_WIDTH][LodUtil.CHUNK_WIDTH][];
+				boolean testLodDataExists = false;
+				for (int x = 0; x < LodUtil.CHUNK_WIDTH; x++)
+				{
+					for (int z = 0; z < LodUtil.CHUNK_WIDTH; z++)
+					{
+						SingleFullArrayView singleDataColumn = lodDataSource.tryGet(x, z);
+						if (singleDataColumn != null)
+						{
+							long[] rawSingleColumn = singleDataColumn.getRaw();
+							testChunkData[x][z] = rawSingleColumn;
+							
+							
+							// does any LOD data exist in this chunk?
+							// if we have found at least one datapoint, don't check again
+							if (!testLodDataExists)
+							{
+								// does any data exist in this column?
+								for (long dataPoint : rawSingleColumn)
+								{
+									if (dataPoint != FullDataPoint.EMPTY_DATA_POINT)
+									{
+										// at least one datapoint exists in this chunk
+										testLodDataExists = true;
+										break;
+									}
+								}
+							}
+						}
+					}
+				}
+				
+				
+				// stop if the test chunk doesn't contain any data
+				if (!testLodDataExists)
+				{
+					String message = "The test chunk for dimension folder [" + LodUtil.shortenString(testLevelFolder.getName(), 8) + "] and chunk pos (" + playerChunkPos.getX() + "," + playerChunkPos.getZ() + ") is empty. This is expected if the position is outside the sub-dimension's generated area.";
+					LOGGER.info(message);
+					continue;
+				}
+				
+				
+				// get the player data for this dimension folder
+				PlayerData testPlayerData = new PlayerData(testLevelFolder);
+				LOGGER.info("Last known player pos: [" + testPlayerData.playerBlockPos.getX() + "," + testPlayerData.playerBlockPos.getY() + "," + testPlayerData.playerBlockPos.getZ() + "]");
+				
+				// check if the block positions are close
+				int playerBlockDist = testPlayerData.playerBlockPos.getManhattanDistance(playerData.playerBlockPos);
+				LOGGER.info("Player block position distance between saved sub dimension and first seen is [" + playerBlockDist + "]");
+				
+				
+				
+				// compare the two LODs
+				int equalDataPoints = 0;
+				int totalDataPointCount = 0;
+				for (int x = 0; x < LodUtil.CHUNK_WIDTH; x++)
+				{
+					for (int z = 0; z < LodUtil.CHUNK_WIDTH; z++)
+					{
+						for (int y = 0; y < newChunkData[x][z].length; y++)
+						{
+							if (newChunkData[x][z][y] == testChunkData[x][z][y])
+							{
+								equalDataPoints++;
+							}
+							totalDataPointCount++;
+						}
+					}
+				}
+				
+				// determine if this world is closer to the newly loaded world
+				SubDimCompare subDimCompare = new SubDimCompare(equalDataPoints, totalDataPointCount, playerBlockDist, testLevelFolder);
+				if (mostSimilarSubDim == null || subDimCompare.compareTo(mostSimilarSubDim) > 0)
+				{
+					mostSimilarSubDim = subDimCompare;
+				}
+				
+				LOGGER.info("Sub dimension [" + LodUtil.shortenString(testLevelFolder.getName(), 8) + "...] is current dimension probability: " + LodUtil.shortenString(subDimCompare.getPercentEqual() + "", 5) + " (" + equalDataPoints + "/" + totalDataPointCount + ")");
 			}
 			catch (Exception e)
 			{
@@ -293,9 +343,9 @@ public class LevelToFileMatcher implements AutoCloseable
 	public boolean CanDetermineLevelFolder(IChunkWrapper chunk)
 	{
 		// we can only guess if the given chunk can be converted into a LOD
-		return false; //FIXME: Fix this after LodBUilder is done.
-		//return LodBuilder.canGenerateLodFromChunk(chunk);
+		return LodDataBuilder.canGenerateLodFromChunk(chunk);
 	}
+	
 	
 	@Override
 	public void close()

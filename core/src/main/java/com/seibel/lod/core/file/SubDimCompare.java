@@ -31,10 +31,16 @@ import java.io.File;
  * is a sub dimension for the server "server_1" in the nether.
  *
  * @author James Seibel
- * @version 2022-3-26
+ * @version 2022-12-17
  */
 public class SubDimCompare implements Comparable<SubDimCompare>
 {
+	/** 
+	 * the maximum distance in blocks a player can be away from the
+	 * given dimension and still be considered in the same place.
+	 */
+	public static int MAX_SIMILAR_PLAYER_POS_DISTANCE_IN_BLOCKS = 3;
+	
 	public int equalDataPoints = 0;
 	public int totalDataPoints = 0;
 	public int playerPosDist = 0;
@@ -50,11 +56,8 @@ public class SubDimCompare implements Comparable<SubDimCompare>
 		this.folder = newSubDimFolder;
 	}
 	
-	/** returns a number between 0 (not equal) and 1 (totally equal) */
-	public double getPercentEqual()
-	{
-		return (double) equalDataPoints / (double) totalDataPoints;
-	}
+	/** returns a number between 0 (no equal datapoint) and 1 (totally equal) */
+	public double getPercentEqual() { return (double) equalDataPoints / (double) totalDataPoints; }
 	
 	
 	@Override
@@ -76,6 +79,7 @@ public class SubDimCompare implements Comparable<SubDimCompare>
 	public boolean isValidSubDim()
 	{
 		double minimumSimilarityRequired = Config.Client.Multiplayer.multiDimensionRequiredSimilarity.get();
-		return this.getPercentEqual() >= minimumSimilarityRequired || this.playerPosDist <= 3;
+		return this.getPercentEqual() >= minimumSimilarityRequired 
+				|| this.playerPosDist <= MAX_SIMILAR_PLAYER_POS_DISTANCE_IN_BLOCKS;
 	}
 }

@@ -33,6 +33,9 @@ import static com.seibel.lod.core.datatype.column.accessor.ColumnFormat.MAX_WORL
  */
 public class FullDataPoint
 {
+	/** Represents the data held by an empty data point */
+	public static final int EMPTY_DATA_POINT = 0;
+	
     public static final int ID_WIDTH = 32;
     public static final int DP_WIDTH = 12;
     public static final int Y_WIDTH = 12;
