@@ -7,7 +7,7 @@ import com.seibel.lod.core.file.metaData.MetaData;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhLodPos;
-import com.seibel.lod.core.file.metaData.MetaDataFile;
+import com.seibel.lod.core.file.metaData.AbstractMetaDataFile;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
@@ -20,7 +20,7 @@ import java.lang.ref.SoftReference;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class RenderMetaDataFile extends MetaDataFile
+public class RenderMetaDataFile extends AbstractMetaDataFile
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	

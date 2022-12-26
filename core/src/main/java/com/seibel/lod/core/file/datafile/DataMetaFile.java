@@ -13,7 +13,7 @@ import com.seibel.lod.core.datatype.AbstractDataSourceLoader;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.file.metaData.MetaData;
 import com.seibel.lod.core.pos.DhLodPos;
-import com.seibel.lod.core.file.metaData.MetaDataFile;
+import com.seibel.lod.core.file.metaData.AbstractMetaDataFile;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
@@ -21,7 +21,7 @@ import com.seibel.lod.core.util.AtomicsUtil;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
-public class DataMetaFile extends MetaDataFile
+public class DataMetaFile extends AbstractMetaDataFile
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger(DataMetaFile.class.getSimpleName());
 	

@@ -8,7 +8,6 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.Adler32;
 import java.util.zip.CheckedOutputStream;
 
@@ -41,7 +40,7 @@ import org.apache.logging.log4j.Logger;
  * 
  * 8 bytes: data version
  */
-public abstract class MetaDataFile
+public abstract class AbstractMetaDataFile
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     
@@ -58,7 +57,7 @@ public abstract class MetaDataFile
 	
 	
 	public volatile MetaData metaData = null;
-	/** also defined in {@link MetaDataFile#metaData} */
+	/** also defined in {@link AbstractMetaDataFile#metaData} */
     public final DhSectionPos pos;
 	
     public File path;
@@ -70,7 +69,7 @@ public abstract class MetaDataFile
 	//==============//
 	
 	/** Create a metaFile in this path. If the path has a file, throws FileAlreadyExistsException */
-	protected MetaDataFile(File path, DhSectionPos pos) throws IOException
+	protected AbstractMetaDataFile(File path, DhSectionPos pos) throws IOException
 	{
 		this.path = path;
 		this.pos = pos;
@@ -81,11 +80,11 @@ public abstract class MetaDataFile
 	}
 	
 	/** 
-	 * Creates a {@link MetaDataFile} with the file at the given path. 
+	 * Creates a {@link AbstractMetaDataFile} with the file at the given path. 
 	 * @throws IOException if the file was formatted incorrectly
 	 * @throws FileNotFoundException if no file exists for the given path
 	 */
-	protected MetaDataFile(File path) throws IOException, FileNotFoundException
+	protected AbstractMetaDataFile(File path) throws IOException, FileNotFoundException
 	{
 		this.path = path;
 		if (!path.exists())
@@ -98,7 +97,7 @@ public abstract class MetaDataFile
 		this.pos = this.metaData.pos;
 	}
 	/**
-	 * Attempts to create a new {@link MetaDataFile} from the given file. 
+	 * Attempts to create a new {@link AbstractMetaDataFile} from the given file. 
 	 * @throws IOException if the file was formatted incorrectly
 	 */
 	private static MetaData readMetaDataFromFile(File file) throws IOException
@@ -148,7 +147,7 @@ public abstract class MetaDataFile
 		if (!file.canWrite()) throw new IOException("File not writable");
 	}
 	
-	/** Sets this object's {@link MetaDataFile#metaData} using the set {@link MetaDataFile#path} */
+	/** Sets this object's {@link AbstractMetaDataFile#metaData} using the set {@link AbstractMetaDataFile#path} */
 	protected void loadMetaData() throws IOException
 	{
 		validateMetaDataFile(this.path);
