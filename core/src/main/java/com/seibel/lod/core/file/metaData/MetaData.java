@@ -5,6 +5,8 @@ import com.seibel.lod.core.pos.DhSectionPos;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
+ * Contains the MetaData used by DataSources. <br><br>
+ * 
  * See {@link AbstractMetaDataFile} for a byte map inorder to see the currently used bytes
  */
 public class MetaData
@@ -13,7 +15,7 @@ public class MetaData
 	public int checksum;
 	public AtomicLong dataVersion;
 	public byte dataLevel;
-	//Loader stuff
+	// Loader stuff
 	public long dataTypeId;
 	public byte loaderVersion;
 	
