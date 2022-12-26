@@ -5,7 +5,7 @@ import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.render.RenderBuffer;
-import com.seibel.lod.core.file.renderfile.RenderMetaFile;
+import com.seibel.lod.core.file.renderfile.RenderMetaDataFile;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -32,7 +32,7 @@ public interface ILodRenderSource
 	 */
 	boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<RenderBuffer> referenceSlot);
 	
-	void saveRender(IDhClientLevel level, RenderMetaFile file, OutputStream dataStream) throws IOException;
+	void saveRender(IDhClientLevel level, RenderMetaDataFile file, OutputStream dataStream) throws IOException;
 	
 	byte getRenderVersion();
 	

@@ -7,7 +7,7 @@ import com.seibel.lod.core.datatype.transform.FullToColumnTransformer;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.RenderBuffer;
-import com.seibel.lod.core.file.renderfile.RenderMetaFile;
+import com.seibel.lod.core.file.renderfile.RenderMetaDataFile;
 import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.level.IDhLevel;
@@ -450,7 +450,7 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 	}
 	
 	@Override
-	public void saveRender(IDhClientLevel level, RenderMetaFile file, OutputStream dataStream) throws IOException
+	public void saveRender(IDhClientLevel level, RenderMetaDataFile file, OutputStream dataStream) throws IOException
 	{
 		DataOutputStream dos = new DataOutputStream(dataStream); // DO NOT CLOSE
 		writeData(dos);

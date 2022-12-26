@@ -7,7 +7,7 @@ import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.full.FullDataSource;
 import com.seibel.lod.core.datatype.full.SparseDataSource;
 import com.seibel.lod.core.datatype.full.SpottyDataSource;
-import com.seibel.lod.core.file.subDimMatching.MetaFile;
+import com.seibel.lod.core.file.metaData.MetaData;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
@@ -316,7 +316,7 @@ public class DataFileHandler implements IDataSourceProvider {
     }
 
     @Override
-    public ILodDataSource onDataFileLoaded(ILodDataSource source, MetaFile.MetaData metaData,
+    public ILodDataSource onDataFileLoaded(ILodDataSource source, MetaData metaData,
                                           Consumer<ILodDataSource> onUpdated, Function<ILodDataSource, Boolean> updater) {
         boolean changed = updater.apply(source);
         if (changed) metaData.dataVersion.incrementAndGet();
@@ -329,7 +329,7 @@ public class DataFileHandler implements IDataSourceProvider {
         return source;
     }
     @Override
-    public CompletableFuture<ILodDataSource> onDataFileRefresh(ILodDataSource source, MetaFile.MetaData metaData, Function<ILodDataSource, Boolean> updater, Consumer<ILodDataSource> onUpdated) {
+    public CompletableFuture<ILodDataSource> onDataFileRefresh(ILodDataSource source, MetaData metaData, Function<ILodDataSource, Boolean> updater, Consumer<ILodDataSource> onUpdated) {
         return CompletableFuture.supplyAsync(() -> {
             ILodDataSource sourceLocal = source;
             boolean changed = updater.apply(sourceLocal);

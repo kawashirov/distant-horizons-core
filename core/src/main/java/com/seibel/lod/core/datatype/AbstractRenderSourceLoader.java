@@ -3,7 +3,7 @@ package com.seibel.lod.core.datatype;
 import com.google.common.collect.HashMultimap;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.level.IDhLevel;
-import com.seibel.lod.core.file.renderfile.RenderMetaFile;
+import com.seibel.lod.core.file.renderfile.RenderMetaDataFile;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -64,7 +64,7 @@ public abstract class AbstractRenderSourceLoader
 	}
 	
 	/** Can return null if the file is out of date or something */
-	public abstract ILodRenderSource loadRender(RenderMetaFile renderFile, InputStream data, IDhLevel level) throws IOException;
+	public abstract ILodRenderSource loadRender(RenderMetaDataFile renderFile, InputStream data, IDhLevel level) throws IOException;
 	public abstract ILodRenderSource createRender(ILodDataSource dataSource, IDhClientLevel level);
 	
 	

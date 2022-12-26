@@ -2,7 +2,7 @@ package com.seibel.lod.core.file.datafile;
 
 import com.seibel.lod.core.datatype.ILodDataSource;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
-import com.seibel.lod.core.file.subDimMatching.MetaFile;
+import com.seibel.lod.core.file.metaData.MetaData;
 import com.seibel.lod.core.pos.DhSectionPos;
 
 import java.io.File;
@@ -23,8 +23,8 @@ public interface IDataSourceProvider extends AutoCloseable {
     boolean isCacheVersionValid(DhSectionPos sectionPos, long cacheVersion);
 
     CompletableFuture<ILodDataSource> onCreateDataFile(DataMetaFile file);
-    ILodDataSource onDataFileLoaded(ILodDataSource source, MetaFile.MetaData metaData, Consumer<ILodDataSource> onUpdated, Function<ILodDataSource, Boolean> updater);
-    CompletableFuture<ILodDataSource> onDataFileRefresh(ILodDataSource source, MetaFile.MetaData metaData, Function<ILodDataSource, Boolean> updater, Consumer<ILodDataSource> onUpdated);
+    ILodDataSource onDataFileLoaded(ILodDataSource source, MetaData metaData, Consumer<ILodDataSource> onUpdated, Function<ILodDataSource, Boolean> updater);
+    CompletableFuture<ILodDataSource> onDataFileRefresh(ILodDataSource source, MetaData metaData, Function<ILodDataSource, Boolean> updater, Consumer<ILodDataSource> onUpdated);
     File computeDataFilePath(DhSectionPos pos);
     Executor getIOExecutor();
 

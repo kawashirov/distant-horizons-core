@@ -8,7 +8,7 @@ import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.datatype.ILodRenderSource;
 import com.seibel.lod.core.datatype.AbstractRenderSourceLoader;
 import com.seibel.lod.core.level.IDhLevel;
-import com.seibel.lod.core.file.renderfile.RenderMetaFile;
+import com.seibel.lod.core.file.renderfile.RenderMetaDataFile;
 import com.seibel.lod.core.util.LodUtil;
 
 import java.io.DataInputStream;
@@ -22,7 +22,7 @@ public class ColumnRenderLoader extends AbstractRenderSourceLoader
     }
 
     @Override
-    public ILodRenderSource loadRender(RenderMetaFile dataFile, InputStream data, IDhLevel level) throws IOException {
+    public ILodRenderSource loadRender(RenderMetaDataFile dataFile, InputStream data, IDhLevel level) throws IOException {
         DataInputStream dis = new DataInputStream(data); // DO NOT CLOSE
         return new ColumnRenderSource(dataFile.pos, dis, dataFile.metaData.loaderVersion, level);
     }

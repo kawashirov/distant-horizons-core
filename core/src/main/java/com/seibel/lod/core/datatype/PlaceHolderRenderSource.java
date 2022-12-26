@@ -5,7 +5,7 @@ import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.render.RenderBuffer;
-import com.seibel.lod.core.file.renderfile.RenderMetaFile;
+import com.seibel.lod.core.file.renderfile.RenderMetaDataFile;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -37,7 +37,7 @@ public class PlaceHolderRenderSource implements ILodRenderSource
 	public boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<RenderBuffer> referenceSlots) { return false; }
 	
 	@Override
-	public void saveRender(IDhClientLevel level, RenderMetaFile file, OutputStream dataStream) throws IOException
+	public void saveRender(IDhClientLevel level, RenderMetaDataFile file, OutputStream dataStream) throws IOException
 	{
 		throw new UnsupportedOperationException("EmptyRenderSource should NEVER be saved!");
 	}
