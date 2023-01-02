@@ -100,9 +100,4 @@ public class DetailDistanceUtil
 		return CONFIG.client().worldGenerator().getDistanceGenerationMode();
 	}*/
 	
-	public static int getMaxVerticalData(int detail)
-	{
-		return Config.Client.Graphics.Quality.verticalQuality.get().maxVerticalData[detail];
-	}
-	
 }

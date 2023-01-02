@@ -28,35 +28,17 @@ package com.seibel.lod.api.enums.config;
  */
 public enum EVerticalQuality
 {
-	LOW(
-			new int[] { 4, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1 },
-			2
-	),
-	
-	MEDIUM(
-			new int[] { 6, 4, 3, 2, 2, 1, 1, 1, 1, 1, 1 },
-			4
-	),
-	
-	HIGH(
-			new int[] { 8, 6, 4, 2, 2, 2, 2, 1, 1, 1, 1 },
-			6
-	),
-	
-	ULTRA(
-			new int[] { 16, 8, 4, 2, 2, 2, 2, 1, 1, 1, 1 },
-			12
-	);
+	//HEIGHT_MAP(new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }), // TODO this needs a localization
+	LOW(new int[] { 4, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1 }),
+	MEDIUM(new int[] { 6, 4, 3, 2, 2, 1, 1, 1, 1, 1, 1 }),
+	HIGH(new int[] { 8, 6, 4, 2, 2, 2, 2, 1, 1, 1, 1 }),
+	ULTRA(new int[] { 16, 8, 4, 2, 2, 2, 2, 1, 1, 1, 1 });
 	
 	public final int[] maxVerticalData;
 	
-	@Deprecated // Will find other ways to optimize
-	public final int maxConnectedLods;
-	
-	EVerticalQuality(int[] maxVerticalData, int maxConnectedLods)
+	EVerticalQuality(int[] maxVerticalData)
 	{
 		this.maxVerticalData = maxVerticalData;
-		this.maxConnectedLods = maxConnectedLods;
 	}
 	
 	/** returns null if out of range */
@@ -93,30 +75,8 @@ public enum EVerticalQuality
 		}
 	}
 	
-	/**
-	 * Returns the value with the given name, case-insensitive. <br>
-	 * Returns null if no enums match the name. <br>
-	 * Similar to valueOf(String value)
-	 */
-	public static EVerticalQuality getByName(String name)
+    public int calculateMaxVerticalData(byte dataDetail)
 	{
-		switch (name.toUpperCase())
-		{
-		case "ULTRA":
-			return EVerticalQuality.ULTRA;
-		case "HIGH":
-			return EVerticalQuality.HIGH;
-		case "MEDIUM":
-			return EVerticalQuality.MEDIUM;
-		case "LOW":
-			return EVerticalQuality.LOW;
-			
-		default:
-			return null;
-		}
-	}
-
-    public int calculateMaxVerticalData(byte dataDetail) {
 		if (dataDetail >= maxVerticalData.length)
 			dataDetail = (byte) (maxVerticalData.length-1);
 		return maxVerticalData[dataDetail];
