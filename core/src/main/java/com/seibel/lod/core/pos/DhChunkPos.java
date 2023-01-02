@@ -21,9 +21,6 @@ package com.seibel.lod.core.pos;
 
 import java.util.Objects;
 
-import com.seibel.lod.core.util.LevelPosUtil;
-import com.seibel.lod.core.util.LodUtil;
-
 public class DhChunkPos {
     public final int x; // Low 32 bits
     public final int z; // High 32 bits
