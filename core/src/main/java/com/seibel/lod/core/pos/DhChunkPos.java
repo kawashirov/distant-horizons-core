@@ -89,18 +89,6 @@ public class DhChunkPos {
         return new DhBlockPos2D(x<<4, z<<4);
     }
 
-    @Deprecated
-    public int getRegionX()
-    {
-    	return LevelPosUtil.convert(LodUtil.CHUNK_DETAIL_LEVEL, x, LodUtil.REGION_DETAIL_LEVEL);
-    }
-
-    @Deprecated
-    public int getRegionZ()
-    {
-    	return LevelPosUtil.convert(LodUtil.CHUNK_DETAIL_LEVEL, z, LodUtil.REGION_DETAIL_LEVEL);
-    }
-
     public long getLong() {
     	return toLong(x, z);
     }

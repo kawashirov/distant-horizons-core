@@ -118,7 +118,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 	private void saveWrites(ChunkSizedData data)
 	{
 		RenderState rs = this.renderState.get();
-		DhLodPos pos = data.getBBoxLodPos().convertUpwardsTo(FullDataSource.SECTION_SIZE_OFFSET);
+		DhLodPos pos = data.getBBoxLodPos().convertToDetailLevel(FullDataSource.SECTION_SIZE_OFFSET);
 		if (rs != null)
 		{
 			rs.renderFileHandler.write(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);

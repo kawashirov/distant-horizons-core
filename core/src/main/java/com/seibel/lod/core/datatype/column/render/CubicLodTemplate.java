@@ -24,15 +24,16 @@ import com.seibel.lod.core.datatype.column.accessor.ColumnFormat;
 import com.seibel.lod.api.enums.rendering.EDebugMode;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.datatype.column.accessor.ColumnArrayView;
+import com.seibel.lod.core.pos.DhLodPos;
+import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.ColorUtil;
-import com.seibel.lod.core.util.LevelPosUtil;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.config.ILodConfigWrapperSingleton;
 
 /**
  * Builds LODs as rectangular prisms.
  * @author James Seibel
- * @version 3-19-2022
+ * @version 2022-1-2
  */
 public class CubicLodTemplate
 {
@@ -42,14 +43,19 @@ public class CubicLodTemplate
 	public static void addLodToBuffer(long data, long topData, long botData, ColumnArrayView[][] adjData,
 									  byte detailLevel, int offsetPosX, int offsetOosZ, LodQuadBuilder quadBuilder, EDebugMode debugging, ColumnRenderSource.DebugSourceFlag debugSource)
 	{
-		short width = (short) (1 << detailLevel);
-		short x = (short) LevelPosUtil.convert(detailLevel, offsetPosX, LodUtil.BLOCK_DETAIL_LEVEL);
+		DhLodPos blockOffsetPos = new DhLodPos(detailLevel, offsetPosX, offsetOosZ).convertToDetailLevel(LodUtil.BLOCK_DETAIL_LEVEL);
+		
+		short width = (short) BitShiftUtil.powerOfTwo(detailLevel);
+		short x = (short) blockOffsetPos.x;
 		short y = ColumnFormat.getDepth(data);
-		short z = (short) LevelPosUtil.convert(detailLevel, offsetOosZ, LodUtil.BLOCK_DETAIL_LEVEL);
+		short z = (short) (short) blockOffsetPos.z;
 		short dy = (short) (ColumnFormat.getHeight(data) - y);
+		
 		if (dy == 0)
+		{
 			return;
-		if (dy < 0)
+		}
+		else if (dy < 0)
 		{
 			throw new IllegalArgumentException("Negative y size for the data! Data: " + ColumnFormat.toString(data));
 		}

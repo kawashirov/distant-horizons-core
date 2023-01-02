@@ -3,7 +3,6 @@ package com.seibel.lod.core.pos;
 import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.LodUtil;
-import com.seibel.lod.core.util.MathUtil;
 
 import java.util.function.Consumer;
 
@@ -50,7 +49,7 @@ public class DhSectionPos
 	public DhSectionPos(DhBlockPos blockPos)
 	{
 		DhLodPos lodPos = new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPos.x, blockPos.z);
-		lodPos = lodPos.convertUpwardsTo(SECTION_BLOCK_DETAIL_LEVEL);
+		lodPos = lodPos.convertToDetailLevel(SECTION_BLOCK_DETAIL_LEVEL);
 		
 		this.sectionDetail = SECTION_BLOCK_DETAIL_LEVEL;
 		this.sectionX = lodPos.x;
@@ -60,7 +59,7 @@ public class DhSectionPos
 	public DhSectionPos(DhChunkPos chunkPos)
 	{
 		DhLodPos lodPos = new DhLodPos(LodUtil.CHUNK_DETAIL_LEVEL, chunkPos.x, chunkPos.z);
-		lodPos = lodPos.convertUpwardsTo(SECTION_CHUNK_DETAIL_LEVEL);
+		lodPos = lodPos.convertToDetailLevel(SECTION_CHUNK_DETAIL_LEVEL);
 		
 		this.sectionDetail = SECTION_CHUNK_DETAIL_LEVEL;
 		this.sectionX = lodPos.x;

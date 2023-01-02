@@ -137,7 +137,7 @@ public class DhLodPos implements Comparable<DhLodPos>
 		}
 		
 		DhLodPos lodPos = new DhLodPos(this.detailLevel, this.x, this.z);
-		lodPos = lodPos.convertUpwardsTo(sectionDetailLevel);
+		lodPos = lodPos.convertToDetailLevel(sectionDetailLevel);
 		return new DhSectionPos(lodPos.detailLevel, lodPos.x, lodPos.z);
 	}
 	
@@ -147,13 +147,21 @@ public class DhLodPos implements Comparable<DhLodPos>
 	// methods //
 	//=========//
 	
-	/** Only works for newDetailLevel's that are greater than or equal to this position's detailLevel */
-	public DhLodPos convertUpwardsTo(byte newDetailLevel)
+	/** Returns a new DhLodPos with the given detail level. */
+	public DhLodPos convertToDetailLevel(byte newDetailLevel)
 	{
-		LodUtil.assertTrue(newDetailLevel >= this.detailLevel);
-		return new DhLodPos(newDetailLevel,
-				Math.floorDiv(this.x, BitShiftUtil.powerOfTwo(newDetailLevel - this.detailLevel)),
-				Math.floorDiv(this.z, BitShiftUtil.powerOfTwo(newDetailLevel - this.detailLevel)));
+		if (newDetailLevel >= this.detailLevel)
+		{
+			return new DhLodPos(newDetailLevel,
+					Math.floorDiv(this.x, BitShiftUtil.powerOfTwo(newDetailLevel - this.detailLevel)),
+					Math.floorDiv(this.z, BitShiftUtil.powerOfTwo(newDetailLevel - this.detailLevel)));
+		}
+		else
+		{
+			return new DhLodPos(newDetailLevel,
+					this.x * BitShiftUtil.powerOfTwo(this.detailLevel - newDetailLevel),
+					this.z * BitShiftUtil.powerOfTwo(this.detailLevel - newDetailLevel));
+		}
 	}
 	
 	public boolean overlaps(DhLodPos other)
@@ -165,11 +173,11 @@ public class DhLodPos implements Comparable<DhLodPos>
 		
 		if (this.detailLevel > other.detailLevel)
 		{
-			return this.equals(other.convertUpwardsTo(this.detailLevel));
+			return this.equals(other.convertToDetailLevel(this.detailLevel));
 		}
 		else
 		{
-			return other.equals(this.convertUpwardsTo(other.detailLevel));
+			return other.equals(this.convertToDetailLevel(other.detailLevel));
 		}
 	}
 	

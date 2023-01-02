@@ -58,7 +58,7 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
             if (data.x % chunkPerFull != 0 || data.z % chunkPerFull != 0) 
 				return;
             DhLodPos baseOffset = this.sectionPos.getCorner(this.getDataDetail());
-            DhLodPos dataOffset = data.getBBoxLodPos().convertUpwardsTo(this.getDataDetail());
+            DhLodPos dataOffset = data.getBBoxLodPos().convertToDetailLevel(this.getDataDetail());
             int offsetX = dataOffset.x - baseOffset.x;
             int offsetZ = dataOffset.z - baseOffset.z;
             LodUtil.assertTrue(offsetX >= 0 && offsetX < SECTION_SIZE && offsetZ >= 0 && offsetZ < SECTION_SIZE);
@@ -269,7 +269,7 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
             if (dataPos.x % lowerSectionsPerData != 0 || dataPos.z % lowerSectionsPerData != 0) return;
 
             DhLodPos basePos = this.sectionPos.getCorner(this.getDataDetail());
-            dataPos = dataPos.convertUpwardsTo(this.getDataDetail());
+            dataPos = dataPos.convertToDetailLevel(this.getDataDetail());
             int offsetX = dataPos.x - basePos.x;
             int offsetZ = dataPos.z - basePos.z;
             SingleFullArrayView column = sparseSource.tryGet(0, 0);
@@ -307,7 +307,7 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
             int lowerSectionsPerData = this.sectionPos.getWidth(dataPos.detailLevel).numberOfLodSectionsWide;
             if (dataPos.x % lowerSectionsPerData != 0 || dataPos.z % lowerSectionsPerData != 0) return;
             DhLodPos basePos = this.sectionPos.getCorner(this.getDataDetail());
-            dataPos = dataPos.convertUpwardsTo(this.getDataDetail());
+            dataPos = dataPos.convertToDetailLevel(this.getDataDetail());
             int offsetX = dataPos.x - basePos.x;
             int offsetZ = dataPos.z - basePos.z;
 			this.isColumnNotEmpty.set(offsetX * SECTION_SIZE + offsetZ, true);

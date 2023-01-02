@@ -149,7 +149,7 @@ public class WorldGenerationQueue implements Closeable
 		{
 			// Too small of a chunk. We'll just over-size the generation.
 			byte parentDetail = (byte) (this.minGranularity + requiredDataDetail);
-			DhLodPos parentPos = pos.convertUpwardsTo(parentDetail);
+			DhLodPos parentPos = pos.convertToDetailLevel(parentDetail);
 			CompletableFuture<Boolean> future = new CompletableFuture<>();
 			this.looseTasks.add(new WorldGenTask(parentPos, requiredDataDetail, tracker, future));
 			if (this.closer != null)
@@ -199,7 +199,7 @@ public class WorldGenerationQueue implements Closeable
 		{ // Obviously, only do so if we aren't at the maxGranularity already
 			// Check for merging and upping the granularity
 			DhLodPos corePos = target.pos;
-			DhLodPos parentPos = corePos.convertUpwardsTo((byte) (corePos.detailLevel + 1));
+			DhLodPos parentPos = corePos.convertToDetailLevel((byte) (corePos.detailLevel + 1));
 			int targetChildId = target.pos.getChildIndexOfParent();
 			boolean allPassed = true;
 			for (int i = 0; i < 4; i++)
@@ -302,7 +302,7 @@ public class WorldGenerationQueue implements Closeable
 				boolean didAnything = false;
 				while (++granularity <= this.maxGranularity)
 				{
-					group = this.taskGroups.get(task.pos.convertUpwardsTo((byte) (taskDataDetail + granularity)));
+					group = this.taskGroups.get(task.pos.convertToDetailLevel((byte) (taskDataDetail + granularity)));
 					if (group != null && group.dataDetail == taskDataDetail)
 					{
 						// We can just append to the higher granularity group one

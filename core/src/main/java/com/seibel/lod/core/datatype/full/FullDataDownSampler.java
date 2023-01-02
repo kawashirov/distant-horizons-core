@@ -77,7 +77,7 @@ public class FullDataDownSampler {
                 return;
             }
             DhLodPos trgOffset = trgPos.getCorner(target.getDataDetail());
-            DhLodPos srcOffset = srcPos.getSectionBBoxPos().convertUpwardsTo(target.getDataDetail());
+            DhLodPos srcOffset = srcPos.getSectionBBoxPos().convertToDetailLevel(target.getDataDetail());
             int offsetX = trgOffset.x - srcOffset.x;
             int offsetZ = trgOffset.z - srcOffset.z;
             LodUtil.assertTrue(offsetX >= 0 && offsetX < FullDataSource.SECTION_SIZE

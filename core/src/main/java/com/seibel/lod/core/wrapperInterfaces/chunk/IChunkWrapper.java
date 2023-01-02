@@ -40,15 +40,7 @@ public interface IChunkWrapper extends IBindable
 	// FIXME: getHeightMapValue & getMaxY is the same! Which one to keep?
 	int getHeightMapValue(int xRel, int zRel);
 	int getMaxY(int x, int z);
-
-	@Deprecated
-	int getChunkPosX();
-	@Deprecated
-	int getChunkPosZ();
-	@Deprecated
-	int getRegionPosX();
-	@Deprecated
-	int getRegionPosZ();
+	
 	int getMaxX();
 	int getMaxZ();
 	int getMinX();

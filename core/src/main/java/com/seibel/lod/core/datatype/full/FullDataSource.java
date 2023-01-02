@@ -106,7 +106,7 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 			if (data.x % chunkPerFull != 0 || data.z % chunkPerFull != 0)
 				return;
 			DhLodPos baseOffset = this.sectionPos.getCorner(this.getDataDetail());
-			DhLodPos dataOffset = data.getBBoxLodPos().convertUpwardsTo(this.getDataDetail());
+			DhLodPos dataOffset = data.getBBoxLodPos().convertToDetailLevel(this.getDataDetail());
 			int offsetX = dataOffset.x - baseOffset.x;
 			int offsetZ = dataOffset.z - baseOffset.z;
 			LodUtil.assertTrue(offsetX >= 0 && offsetX < SECTION_SIZE && offsetZ >= 0 && offsetZ < SECTION_SIZE);
@@ -273,7 +273,7 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 		else
 		{
 			// Count == 1
-			DhLodPos subDataPos = lowerSectPos.getSectionBBoxPos().convertUpwardsTo(targetDataDetail);
+			DhLodPos subDataPos = lowerSectPos.getSectionBBoxPos().convertToDetailLevel(targetDataDetail);
 			int dataOffsetX = subDataPos.x - minDataPos.x;
 			int dataOffsetZ = subDataPos.z - minDataPos.z;
 			LodUtil.assertTrue(dataOffsetX >= 0 && dataOffsetX < SECTION_SIZE && dataOffsetZ >= 0 && dataOffsetZ < SECTION_SIZE);

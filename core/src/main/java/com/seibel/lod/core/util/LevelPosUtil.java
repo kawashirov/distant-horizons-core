@@ -58,21 +58,6 @@ public class LevelPosUtil
 		return new int[] { detailLevel, posX, posZ };
 	}
 	
-	public static int convert(byte detailLevel, int pos, byte newDetailLevel)
-	{
-		int width;
-		if (newDetailLevel >= detailLevel)
-		{
-			width = 1 << (newDetailLevel - detailLevel);
-			return Math.floorDiv(pos, width);
-		}
-		else
-		{
-			width = 1 << (detailLevel - newDetailLevel);
-			return pos * width;
-		}
-	}
-	
 	public static int getRegion(byte detailLevel, int pos)
 	{
 		return Math.floorDiv(pos, 1 << (LodUtil.REGION_DETAIL_LEVEL - detailLevel));
@@ -145,11 +130,6 @@ public class LevelPosUtil
 		return Math.floorDiv(getPosZ(levelPos), width);
 	}
 	
-	public static int getChunkPos(byte detailLevel, int pos)
-	{
-		return convert(detailLevel, pos, LodUtil.CHUNK_DETAIL_LEVEL);
-	}
-
 	public static double centerDistance(byte detailLevel, int posX, int posZ, int playerPosX, int playerPosZ) {
 		int width = 1 << detailLevel;
 		double cPosX = posX * width + width/2.;

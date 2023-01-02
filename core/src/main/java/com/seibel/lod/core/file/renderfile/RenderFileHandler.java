@@ -191,7 +191,7 @@ public class RenderFileHandler implements IRenderSourceProvider
     public void write(DhSectionPos sectionPos, ChunkSizedData chunkData)
 	{
 		// can be used for debugging
-        if (chunkData.getBBoxLodPos().convertUpwardsTo((byte)6).equals(new DhLodPos((byte)6, 10, -11)))
+        if (chunkData.getBBoxLodPos().convertToDetailLevel((byte)6).equals(new DhLodPos((byte)6, 10, -11)))
 		{
             int doNothing = 0;
         }

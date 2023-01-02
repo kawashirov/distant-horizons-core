@@ -236,7 +236,7 @@ public class DataFileHandler implements IDataSourceProvider {
 	{
         DhLodPos chunkPos = new DhLodPos((byte) (chunkData.dataDetail+4), chunkData.x, chunkData.z);
         LodUtil.assertTrue(chunkPos.overlaps(sectionPos.getSectionBBoxPos()), "Chunk {} does not overlap section {}", chunkPos, sectionPos);
-        chunkPos = chunkPos.convertUpwardsTo((byte) this.minDetailLevel); // TODO: Handle if chunkData has higher detail than lowestDetail.
+        chunkPos = chunkPos.convertToDetailLevel((byte) this.minDetailLevel);
 		this.recursiveWrite(new DhSectionPos(chunkPos.detailLevel, chunkPos.x, chunkPos.z), chunkData);
     }
     private void recursiveWrite(DhSectionPos sectionPos, ChunkSizedData chunkData)
