@@ -23,5 +23,5 @@ https://github.com/TheElectronWill/night-config
 SVG Salamander for SVG's\
 https://github.com/blackears/svgSalamander
 
-FlatLaf for theming (Tempory to test stuff)\
+FlatLaf for theming (for development testing)\
 https://www.formdev.com/flatlaf/
