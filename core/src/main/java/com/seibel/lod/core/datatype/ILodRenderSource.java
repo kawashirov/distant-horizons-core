@@ -4,7 +4,7 @@ import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.LodQuadTree;
-import com.seibel.lod.core.render.RenderBuffer;
+import com.seibel.lod.core.render.AbstractRenderBuffer;
 import com.seibel.lod.core.file.renderfile.RenderMetaDataFile;
 
 import java.io.IOException;
@@ -30,7 +30,7 @@ public interface ILodRenderSource
 	 * @param referenceSlot The slot for swapping in the new buffer.
 	 * @return True if the swap was successful. False if swap is not needed or if it is in progress.
 	 */
-	boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<RenderBuffer> referenceSlot);
+	boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<AbstractRenderBuffer> referenceSlot);
 	
 	void saveRender(IDhClientLevel level, RenderMetaDataFile file, OutputStream dataStream) throws IOException;
 	

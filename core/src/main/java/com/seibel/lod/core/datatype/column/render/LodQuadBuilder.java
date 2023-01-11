@@ -26,7 +26,7 @@ import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.Objects;
 
-import com.seibel.lod.core.render.RenderBuffer;
+import com.seibel.lod.core.render.AbstractRenderBuffer;
 import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.enums.ELodDirection.Axis;
 import com.seibel.lod.api.enums.config.EGpuUploadMethod;
@@ -315,7 +315,7 @@ public class LodQuadBuilder
 	{
 		return new Iterator<ByteBuffer>()
 		{
-			final ByteBuffer bb = ByteBuffer.allocateDirect(RenderBuffer.FULL_SIZED_BUFFER)
+			final ByteBuffer bb = ByteBuffer.allocateDirect(AbstractRenderBuffer.FULL_SIZED_BUFFER)
 					.order(ByteOrder.nativeOrder());
 			int dir = skipEmpty(0);
 			int quad = 0;
@@ -341,7 +341,7 @@ public class LodQuadBuilder
 					return null;
 				}
 				bb.clear();
-				bb.limit(RenderBuffer.FULL_SIZED_BUFFER);
+				bb.limit(AbstractRenderBuffer.FULL_SIZED_BUFFER);
 				while (bb.hasRemaining() && dir < 6)
 				{
 					writeData();
@@ -381,7 +381,7 @@ public class LodQuadBuilder
 	{
 		return new Iterator<ByteBuffer>()
 		{
-			final ByteBuffer bb = ByteBuffer.allocateDirect(RenderBuffer.FULL_SIZED_BUFFER)
+			final ByteBuffer bb = ByteBuffer.allocateDirect(AbstractRenderBuffer.FULL_SIZED_BUFFER)
 					.order(ByteOrder.nativeOrder());
 			int dir = skipEmpty(0);
 			int quad = 0;
@@ -407,7 +407,7 @@ public class LodQuadBuilder
 					return null;
 				}
 				bb.clear();
-				bb.limit(RenderBuffer.FULL_SIZED_BUFFER);
+				bb.limit(AbstractRenderBuffer.FULL_SIZED_BUFFER);
 				while (bb.hasRemaining() && dir < 6)
 				{
 					writeData();
@@ -464,19 +464,19 @@ public class LodQuadBuilder
 				}
 				
 				int numOfQuads = _countRemainingQuads();
-				if (numOfQuads > RenderBuffer.MAX_QUADS_PER_BUFFER)
-					numOfQuads = RenderBuffer.MAX_QUADS_PER_BUFFER;
+				if (numOfQuads > AbstractRenderBuffer.MAX_QUADS_PER_BUFFER)
+					numOfQuads = AbstractRenderBuffer.MAX_QUADS_PER_BUFFER;
 				if (numOfQuads == 0)
 				{
 					vbo.setVertexCount(0);
 					return false;
 				}
-				ByteBuffer bb = vbo.mapBuffer(numOfQuads * RenderBuffer.QUADS_BYTE_SIZE, method,
-						RenderBuffer.FULL_SIZED_BUFFER);
+				ByteBuffer bb = vbo.mapBuffer(numOfQuads * AbstractRenderBuffer.QUADS_BYTE_SIZE, method,
+						AbstractRenderBuffer.FULL_SIZED_BUFFER);
 				if (bb == null)
 					throw new NullPointerException("mapBuffer returned null");
 				bb.clear();
-				bb.limit(numOfQuads * RenderBuffer.QUADS_BYTE_SIZE);
+				bb.limit(numOfQuads * AbstractRenderBuffer.QUADS_BYTE_SIZE);
 				while (bb.hasRemaining() && dir < 6)
 				{
 					writeData(bb);
@@ -542,19 +542,19 @@ public class LodQuadBuilder
 				}
 
 				int numOfQuads = _countRemainingQuads();
-				if (numOfQuads > RenderBuffer.MAX_QUADS_PER_BUFFER)
-					numOfQuads = RenderBuffer.MAX_QUADS_PER_BUFFER;
+				if (numOfQuads > AbstractRenderBuffer.MAX_QUADS_PER_BUFFER)
+					numOfQuads = AbstractRenderBuffer.MAX_QUADS_PER_BUFFER;
 				if (numOfQuads == 0)
 				{
 					vbo.setVertexCount(0);
 					return false;
 				}
-				ByteBuffer bb = vbo.mapBuffer(numOfQuads * RenderBuffer.QUADS_BYTE_SIZE, method,
-						RenderBuffer.FULL_SIZED_BUFFER);
+				ByteBuffer bb = vbo.mapBuffer(numOfQuads * AbstractRenderBuffer.QUADS_BYTE_SIZE, method,
+						AbstractRenderBuffer.FULL_SIZED_BUFFER);
 				if (bb == null)
 					throw new NullPointerException("mapBuffer returned null");
 				bb.clear();
-				bb.limit(numOfQuads * RenderBuffer.QUADS_BYTE_SIZE);
+				bb.limit(numOfQuads * AbstractRenderBuffer.QUADS_BYTE_SIZE);
 				while (bb.hasRemaining() && dir < 6)
 				{
 					writeData(bb);
@@ -625,12 +625,12 @@ public class LodQuadBuilder
 	/** Returns how many Buffers will be needed to render opaque quads in this builder. */
 	public int getCurrentNeededOpaqueVertexBufferCount()
 	{
-		return MathUtil.ceilDiv(getCurrentOpaqueQuadsCount(), RenderBuffer.MAX_QUADS_PER_BUFFER);
+		return MathUtil.ceilDiv(getCurrentOpaqueQuadsCount(), AbstractRenderBuffer.MAX_QUADS_PER_BUFFER);
 	}
 	/** Returns how many Buffers will be needed to render transparent quads in this builder. */
 	public int getCurrentNeededTransparentVertexBufferCount()
 	{
 		if (!doTransparency) return 0;
-		return MathUtil.ceilDiv(getCurrentTransparentQuadsCount(), RenderBuffer.MAX_QUADS_PER_BUFFER);
+		return MathUtil.ceilDiv(getCurrentTransparentQuadsCount(), AbstractRenderBuffer.MAX_QUADS_PER_BUFFER);
 	}
 }

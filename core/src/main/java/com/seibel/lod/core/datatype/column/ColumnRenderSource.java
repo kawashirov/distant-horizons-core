@@ -6,7 +6,7 @@ import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.transform.FullToColumnTransformer;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
-import com.seibel.lod.core.render.RenderBuffer;
+import com.seibel.lod.core.render.AbstractRenderBuffer;
 import com.seibel.lod.core.file.renderfile.RenderMetaDataFile;
 import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
@@ -408,7 +408,7 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 	public void dispose() { cancelBuildBuffer(); }
 	
 	@Override
-	public boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<RenderBuffer> referenceSlot)
+	public boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<AbstractRenderBuffer> referenceSlot)
 	{
 		if (this.lastNs != -1 && System.nanoTime() - this.lastNs < SWAP_TIMEOUT)
 		{
@@ -421,8 +421,8 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 			{
 				this.lastNs = System.nanoTime();
 				//LOGGER.info("Swapping render buffer for {}", sectionPos);
-				RenderBuffer newBuffer = this.inBuildRenderBuffer.join();
-				RenderBuffer oldBuffer = referenceSlot.getAndSet(newBuffer);
+				AbstractRenderBuffer newBuffer = this.inBuildRenderBuffer.join();
+				AbstractRenderBuffer oldBuffer = referenceSlot.getAndSet(newBuffer);
 				if (oldBuffer instanceof ColumnRenderBuffer)
 				{
 					ColumnRenderBuffer swapped = this.usedBuffer.swap((ColumnRenderBuffer) oldBuffer);

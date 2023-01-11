@@ -18,9 +18,9 @@ public class RenderBufferHandler {
     private final MovableGridRingList<RenderBufferNode> renderBufferNodes;
 
     private static class LoadedRenderBuffer {
-        public final RenderBuffer buffer;
+        public final AbstractRenderBuffer buffer;
         public final DhSectionPos pos;
-        LoadedRenderBuffer(RenderBuffer buffer, DhSectionPos pos) {
+        LoadedRenderBuffer(AbstractRenderBuffer buffer, DhSectionPos pos) {
             this.buffer = buffer;
             this.pos = pos;
         }
@@ -103,14 +103,14 @@ public class RenderBufferHandler {
         public volatile RenderBufferNode[] children = null;
 
         //FIXME: The multiple Atomics will cause race conditions between them!
-        public final AtomicReference<RenderBuffer> renderBufferSlot = new AtomicReference<>();
+        public final AtomicReference<AbstractRenderBuffer> renderBufferSlot = new AtomicReference<>();
 
         public RenderBufferNode(DhSectionPos pos) {
             this.pos = pos;
         }
 
         public void collect(SortedArraySet<LoadedRenderBuffer> sortedSet) {
-            RenderBuffer buff;
+            AbstractRenderBuffer buff;
             buff = renderBufferSlot.get();
             if (buff != null) {
                 sortedSet.add(new LoadedRenderBuffer(buff, pos));
@@ -138,7 +138,7 @@ public class RenderBufferHandler {
             boolean shouldRender = section.canRender();
             if (!shouldRender) {
                 //TODO: Does this really need to force the old buffer to not be rendered?
-                RenderBuffer buff = renderBufferSlot.getAndSet(null);
+                AbstractRenderBuffer buff = renderBufferSlot.getAndSet(null);
                 if (buff != null) {
                     buff.close();
                 }
@@ -184,7 +184,7 @@ public class RenderBufferHandler {
                     child.close();
                 }
             }
-            RenderBuffer buff;
+            AbstractRenderBuffer buff;
             buff = renderBufferSlot.getAndSet(null);
             if (buff != null) {
                 buff.close();

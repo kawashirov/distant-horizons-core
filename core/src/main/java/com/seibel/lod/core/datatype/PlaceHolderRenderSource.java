@@ -4,7 +4,7 @@ import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.LodQuadTree;
-import com.seibel.lod.core.render.RenderBuffer;
+import com.seibel.lod.core.render.AbstractRenderBuffer;
 import com.seibel.lod.core.file.renderfile.RenderMetaDataFile;
 
 import java.io.IOException;
@@ -34,7 +34,7 @@ public class PlaceHolderRenderSource implements ILodRenderSource
 	public void dispose() { /* TODO */ }
 	
 	@Override
-	public boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<RenderBuffer> referenceSlots) { return false; }
+	public boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<AbstractRenderBuffer> referenceSlots) { return false; }
 	
 	@Override
 	public void saveRender(IDhClientLevel level, RenderMetaDataFile file, OutputStream dataStream) throws IOException

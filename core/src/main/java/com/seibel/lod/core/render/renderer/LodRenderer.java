@@ -27,7 +27,7 @@ import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.logging.ConfigBasedSpamLogger;
 import com.seibel.lod.core.pos.DhBlockPos;
-import com.seibel.lod.core.render.RenderBuffer;
+import com.seibel.lod.core.render.AbstractRenderBuffer;
 import com.seibel.lod.core.render.RenderBufferHandler;
 import com.seibel.lod.core.util.RenderUtil;
 import com.seibel.lod.core.render.fog.LodFogConfig;
@@ -293,7 +293,7 @@ public class LodRenderer
 		shaderProgram = new LodRenderProgram(LodFogConfig.generateFogConfig());
 		if (ENABLE_IBO) {
 			quadIBO = new QuadElementBuffer();
-			quadIBO.reserve(RenderBuffer.MAX_QUADS_PER_BUFFER);
+			quadIBO.reserve(AbstractRenderBuffer.MAX_QUADS_PER_BUFFER);
 		}
 		EVENT_LOGGER.info("Renderer setup complete");
 	}

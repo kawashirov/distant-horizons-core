@@ -6,7 +6,7 @@ import com.seibel.lod.core.datatype.column.accessor.ColumnFormat;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.render.renderer.LodRenderer;
 import com.seibel.lod.core.util.objects.UncheckedInterruptedException;
-import com.seibel.lod.core.render.RenderBuffer;
+import com.seibel.lod.core.render.AbstractRenderBuffer;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.api.enums.config.EGpuUploadMethod;
@@ -31,7 +31,8 @@ import java.util.concurrent.*;
 import static com.seibel.lod.core.render.glObject.GLProxy.GL_LOGGER;
 
 
-public class ColumnRenderBuffer extends RenderBuffer {
+public class ColumnRenderBuffer extends AbstractRenderBuffer
+{
     //TODO: Make the pool use configurable number of threads
     public static final ExecutorService BUFFER_BUILDERS = LodUtil.makeThreadPool(4, "BufferBuilder");
     public static final ExecutorService BUFFER_UPLOADER = LodUtil.makeSingleThreadPool("ColumnBufferUploader");

@@ -23,7 +23,7 @@ import com.seibel.lod.core.render.renderer.LodRenderer;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.objects.StatsMap;
 
-public abstract class RenderBuffer implements AutoCloseable
+public abstract class AbstractRenderBuffer implements AutoCloseable
 {
 	// ======================================================================
 	// ====================== Methods for implementations ===================
