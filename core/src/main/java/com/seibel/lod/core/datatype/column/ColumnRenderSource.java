@@ -29,6 +29,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
+ * Stores the color data used when generating OpenGL buffers.
+ * 
  * @author Leetom
  * @version 2022-10-5
  */
@@ -77,10 +79,10 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 	 */
 	public ColumnRenderSource(DhSectionPos sectionPos, int maxVerticalSize, int yOffset)
 	{
-		verticalSize = maxVerticalSize;
-		dataContainer = new long[SECTION_SIZE * SECTION_SIZE * verticalSize];
-		airDataContainer = new int[AIR_SECTION_SIZE * AIR_SECTION_SIZE * verticalSize];
-		debugSourceFlags = new DebugSourceFlag[SECTION_SIZE * SECTION_SIZE];
+		this.verticalSize = maxVerticalSize;
+		this.dataContainer = new long[SECTION_SIZE * SECTION_SIZE * verticalSize];
+		this.airDataContainer = new int[AIR_SECTION_SIZE * AIR_SECTION_SIZE * verticalSize];
+		this.debugSourceFlags = new DebugSourceFlag[SECTION_SIZE * SECTION_SIZE];
 		this.sectionPos = sectionPos;
 		this.yOffset = yOffset;
 	}
@@ -116,7 +118,8 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 	//========================//
 	
 	/** 
-	 * Attempts to parse and load the given DataInputStream.
+	 * Attempts to parse and load the given DataInputStream based on its
+	 * render data version
 	 * 
 	 * @throws IOException if the version isn't supported
 	 */
@@ -125,13 +128,13 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 		switch (version)
 		{
 		case 1:
-			return readDataV1(inputData, verticalSize);
+			return this.readDataV1(inputData, verticalSize);
 		default:
 			throw new IOException("Invalid Data: The data version [" + version + "] is not supported");
 		}
 	}
 	
-	private long[] readDataV1(DataInputStream inputData, int tempMaxVerticalData) throws IOException
+	private static long[] readDataV1(DataInputStream inputData, int tempMaxVerticalData) throws IOException
 	{
 		int maxNumberOfDataPoints = SECTION_SIZE * SECTION_SIZE * tempMaxVerticalData;
 		
@@ -246,10 +249,10 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 	/** @return true if this object had data written in every column */
 	boolean writeData(DataOutputStream outputStream) throws IOException
 	{
-		outputStream.writeByte(getDataDetail());
+		outputStream.writeByte(this.getDataDetail());
 		outputStream.writeByte((byte) this.verticalSize);
 		
-		if (isEmpty)
+		if (this.isEmpty)
 		{
 			outputStream.writeByte(Short.MAX_VALUE & 0xFF);
 			outputStream.writeByte((Short.MAX_VALUE >> 8) & 0xFF);
@@ -266,9 +269,9 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 			boolean allGenerated = true;
 			for (int x = 0; x < SECTION_SIZE * SECTION_SIZE; x++)
 			{
-				for (int z = 0; z < verticalSize; z++)
+				for (int z = 0; z < this.verticalSize; z++)
 				{
-					long currentDatapoint = dataContainer[x * verticalSize + z];
+					long currentDatapoint = this.dataContainer[x * this.verticalSize + z];
 					if (ColumnFormat.doesDataPointExist(currentDatapoint))
 					{
 						// TODO: the "1" is a placeholder debug line
@@ -277,7 +280,7 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 					outputStream.writeLong(Long.reverseBytes(currentDatapoint));
 				}
 				
-				if (!ColumnFormat.doesDataPointExist(dataContainer[x]))
+				if (!ColumnFormat.doesDataPointExist(this.dataContainer[x]))
 				{
 					allGenerated = false;	
 				}
@@ -453,7 +456,7 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 	public void saveRender(IDhClientLevel level, RenderMetaDataFile file, OutputStream dataStream) throws IOException
 	{
 		DataOutputStream dos = new DataOutputStream(dataStream); // DO NOT CLOSE
-		writeData(dos);
+		this.writeData(dos);
 	}
 	
 	@Override
@@ -479,7 +482,7 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 		{
 			for (int z = startZ; z < startZ + height; z++)
 			{
-				debugSourceFlags[x * SECTION_SIZE + z] = flag;
+				this.debugSourceFlags[x * SECTION_SIZE + z] = flag;
 			}
 		}
 	}
@@ -500,19 +503,19 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 		String SUBDATA_DELIMITER = ",";
 		StringBuilder stringBuilder = new StringBuilder();
 		
-		stringBuilder.append(sectionPos);
+		stringBuilder.append(this.sectionPos);
 		stringBuilder.append(LINE_DELIMITER);
 		
-		int size = sectionPos.getWidth().numberOfLodSectionsWide;
+		int size = this.sectionPos.getWidth().numberOfLodSectionsWide;
 		for (int z = 0; z < size; z++)
 		{
 			for (int x = 0; x < size; x++)
 			{
-				for (int y = 0; y < verticalSize; y++)
+				for (int y = 0; y < this.verticalSize; y++)
 				{
 					//Converting the dataToHex
 					stringBuilder.append(Long.toHexString(getDataPoint(x, z, y)));
-					if (y != verticalSize - 1)
+					if (y != this.verticalSize - 1)
 						stringBuilder.append(SUBDATA_DELIMITER);
 				}
 				

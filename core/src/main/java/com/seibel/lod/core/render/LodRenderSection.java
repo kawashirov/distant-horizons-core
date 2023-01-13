@@ -1,5 +1,7 @@
 package com.seibel.lod.core.render;
 
+import com.seibel.lod.api.enums.config.EVerticalQuality;
+import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.datatype.ILodRenderSource;
@@ -7,7 +9,8 @@ import com.seibel.lod.core.file.renderfile.IRenderSourceProvider;
 
 import java.util.concurrent.CompletableFuture;
 
-public class LodRenderSection {
+public class LodRenderSection
+{
     public final DhSectionPos pos;
 
     /* Following used for LodQuadTree tick() method, and ONLY for that method! */
@@ -45,8 +48,10 @@ public class LodRenderSection {
         isRenderEnabled = false;
     }
 
-    public void load(IRenderSourceProvider renderDataProvider) {
+    public void load(IRenderSourceProvider renderDataProvider)
+	{
         provider = renderDataProvider;
+		this.previousQualitySetting = Config.Client.Graphics.Quality.verticalQuality.get();
     }
     public void reload(IRenderSourceProvider renderDataProvider) {
         if (loadFuture != null) {
@@ -58,18 +63,24 @@ public class LodRenderSection {
             lodRenderSource = null;
         }
         loadFuture = renderDataProvider.read(pos);
+		this.previousQualitySetting = Config.Client.Graphics.Quality.verticalQuality.get();
     }
 
-    public void tick(LodQuadTree quadTree, IDhClientLevel level) {
-        if (loadFuture != null && loadFuture.isDone()) {
-            lodRenderSource = loadFuture.join();
-            loadFuture = null;
-            if (isRenderEnabled) {
-                lodRenderSource.enableRender(level, quadTree);
+    public void tick(LodQuadTree quadTree, IDhClientLevel level)
+	{
+        if (this.loadFuture != null && this.loadFuture.isDone())
+		{
+			this.lodRenderSource = this.loadFuture.join();
+			this.loadFuture = null;
+            if (this.isRenderEnabled)
+			{
+				this.lodRenderSource.enableRender(level, quadTree);
             }
         }
-        if (lodRenderSource != null) {
-            provider.refreshRenderSource(lodRenderSource);
+		
+        if (this.lodRenderSource != null)
+		{
+			this.provider.refreshRenderSource(this.lodRenderSource);
         }
     }
 
@@ -97,9 +108,12 @@ public class LodRenderSection {
     public boolean isLoading() {
         return false;
     }
-
-    public boolean isOutdated() {
-        return lodRenderSource != null && !lodRenderSource.isValid();
+	
+	private EVerticalQuality previousQualitySetting = null;
+	
+    public boolean isOutdated()
+	{
+        return this.previousQualitySetting != Config.Client.Graphics.Quality.verticalQuality.get() || (lodRenderSource != null && !lodRenderSource.isValid());
     }
 
     public ILodRenderSource getRenderSource() {

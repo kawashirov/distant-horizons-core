@@ -15,28 +15,38 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * Can load {@link ColumnRenderSource}'s for the {@link ColumnRenderSource#LATEST_VERSION}
+ */
 public class ColumnRenderLoader extends AbstractRenderSourceLoader
 {
-    public ColumnRenderLoader() {
-        super(ColumnRenderSource.class, ColumnRenderSource.TYPE_ID, new byte[]{ColumnRenderSource.LATEST_VERSION}, ColumnRenderSource.SECTION_SIZE_OFFSET);
+    public ColumnRenderLoader()
+	{
+        super(ColumnRenderSource.class, ColumnRenderSource.TYPE_ID, new byte[]{ ColumnRenderSource.LATEST_VERSION }, ColumnRenderSource.SECTION_SIZE_OFFSET);
     }
-
+	
+	
+	
     @Override
-    public ILodRenderSource loadRender(RenderMetaDataFile dataFile, InputStream data, IDhLevel level) throws IOException {
-        DataInputStream dis = new DataInputStream(data); // DO NOT CLOSE
-        return new ColumnRenderSource(dataFile.pos, dis, dataFile.metaData.loaderVersion, level);
+    public ILodRenderSource loadRenderSource(RenderMetaDataFile dataFile, InputStream data, IDhLevel level) throws IOException
+	{
+        DataInputStream inputStream = new DataInputStream(data); // DO NOT CLOSE
+        return new ColumnRenderSource(dataFile.pos, inputStream, dataFile.metaData.loaderVersion, level);
     }
-
+	
     @Override
-    public ILodRenderSource createRender(ILodDataSource dataSource, IDhClientLevel level) {
-        if (dataSource instanceof FullDataSource) {
-            return FullToColumnTransformer.transformFullDataToColumnData(level, (FullDataSource) dataSource);
-        } else if (dataSource instanceof IIncompleteDataSource) {
-            return FullToColumnTransformer.transformIncompleteDataToColumnData(level, (IIncompleteDataSource) dataSource);
-        }
-        LodUtil.assertNotReach();
-        return null;
+    public ILodRenderSource createRenderSource(ILodDataSource dataSource, IDhClientLevel level)
+	{
+		if (dataSource instanceof FullDataSource) // TODO replace with Java 7 method
+		{
+			return FullToColumnTransformer.transformFullDataToColumnData(level, (FullDataSource) dataSource);
+		}
+		else if (dataSource instanceof IIncompleteDataSource)
+		{
+			return FullToColumnTransformer.transformIncompleteDataToColumnData(level, (IIncompleteDataSource) dataSource);
+		}
+		LodUtil.assertNotReach();
+		return null;
     }
-
-
+	
 }

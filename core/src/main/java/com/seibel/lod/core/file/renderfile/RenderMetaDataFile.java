@@ -71,7 +71,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 			throw new IOException("Invalid file: Data type loader not found: "
 					+ this.metaData.dataTypeId + "(v" + this.metaData.loaderVersion + ")");
 		}
-		this.dataType = this.loader.clazz;
+		this.dataType = this.loader.renderSourceClass;
 		this.doesFileExist = true;
 	}
 	
@@ -203,7 +203,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 						{
 							try (FileInputStream fio = getDataContent())
 							{
-								data = this.loader.loadRender(this, fio, level);
+								data = this.loader.loadRenderSource(this, fio, level);
 							}
 							catch (IOException e)
 							{
