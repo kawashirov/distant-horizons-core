@@ -93,7 +93,12 @@ public abstract class AbstractRenderSourceLoader
 		LOADER_BY_SOURCE_TYPE.put(renderSourceClass, this);
 	}
 	
-	/** Can return null if the file is out of date or something */
+	/** 
+	 * Can return null if the file is out of date. 
+	 *
+	 * @throws IOException if the file uses a unsupported data version 
+	 * 					   or there was an issue reading the file
+	 */
 	public abstract ILodRenderSource loadRenderSource(RenderMetaDataFile renderFile, InputStream data, IDhLevel level) throws IOException;
 	/** Should not return null */
 	public abstract ILodRenderSource createRenderSource(ILodDataSource dataSource, IDhClientLevel level);

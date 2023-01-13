@@ -19,12 +19,9 @@ import com.seibel.lod.core.util.objects.Reference;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -88,23 +85,21 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 	}
 	
 	/**
-	 * Creates a new ColumnRenderSource with data from the given DataInputStream.
+	 * Creates a new ColumnRenderSource from the parsedColumnData.
 	 * 
-	 * @param inputData Expected format: 1st byte: detail level, 2nd byte: vertical size, 3rd byte on: column data
 	 * @throws IOException if the DataInputStream's detail level isn't what was expected
 	 */
-	public ColumnRenderSource(DhSectionPos sectionPos, DataInputStream inputData, int version, IDhLevel level) throws IOException
+	public ColumnRenderSource(DhSectionPos sectionPos, ColumnRenderLoader.ParsedColumnData parsedColumnData, IDhLevel level) throws IOException
 	{
-		byte detailLevel = inputData.readByte();
-		if (sectionPos.sectionDetail - SECTION_SIZE_OFFSET != detailLevel)
+		if (sectionPos.sectionDetail - SECTION_SIZE_OFFSET != parsedColumnData.detailLevel)
 		{
 			throw new IOException("Invalid data: detail level does not match");
 		}
 		
 		this.sectionPos = sectionPos;
 		this.yOffset = level.getMinY();
-		this.verticalSize = inputData.readByte() & 0b01111111;
-		this.dataContainer = this.loadData(inputData, version, this.verticalSize);
+		this.verticalSize = parsedColumnData.verticalSize;
+		this.dataContainer = parsedColumnData.dataContainer;
 		this.airDataContainer = new int[AIR_SECTION_SIZE * AIR_SECTION_SIZE * this.verticalSize];
 		
 		this.debugSourceFlags = new DebugSourceFlag[SECTION_SIZE * SECTION_SIZE];
@@ -116,50 +111,6 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 	//========================//
 	// datapoint manipulation //
 	//========================//
-	
-	/** 
-	 * Attempts to parse and load the given DataInputStream based on its
-	 * render data version
-	 * 
-	 * @throws IOException if the version isn't supported
-	 */
-	private long[] loadData(DataInputStream inputData, int version, int verticalSize) throws IOException
-	{
-		switch (version)
-		{
-		case 1:
-			return this.readDataV1(inputData, verticalSize);
-		default:
-			throw new IOException("Invalid Data: The data version [" + version + "] is not supported");
-		}
-	}
-	
-	private static long[] readDataV1(DataInputStream inputData, int tempMaxVerticalData) throws IOException
-	{
-		int maxNumberOfDataPoints = SECTION_SIZE * SECTION_SIZE * tempMaxVerticalData;
-		
-		short tempMinHeight = Short.reverseBytes(inputData.readShort());
-		if (tempMinHeight == Short.MAX_VALUE)
-		{ //FIXME: Temp hack flag for marking a empty section
-			return new long[maxNumberOfDataPoints];
-		}
-		
-		this.isEmpty = false;
-		byte[] data = new byte[maxNumberOfDataPoints * Long.BYTES];
-		ByteBuffer byteBuffer = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
-		inputData.readFully(data);
-		
-		long[] result = new long[maxNumberOfDataPoints];
-		byteBuffer.asLongBuffer().get(result);
-		if (tempMinHeight != this.yOffset)
-		{
-			for (int i = 0; i < result.length; i++)
-			{
-				result[i] = ColumnFormat.shiftHeightAndDepth(result[i], (short) (tempMinHeight - this.yOffset));
-			}
-		}
-		return result;
-	}
 	
 	@Override
 	public void clearDataPoint(int posX, int posZ)
