@@ -262,6 +262,7 @@ public class RenderFileHandler implements IRenderSourceProvider
 	{
 		final int vertSize = Config.Client.Graphics.Quality.verticalQuality
 				.get().calculateMaxVerticalData((byte) (file.pos.sectionDetail - ColumnRenderSource.SECTION_SIZE_OFFSET));
+		
 		return CompletableFuture.completedFuture(
 				new ColumnRenderSource(file.pos, vertSize, this.level.getMinY()));
 	}
@@ -280,7 +281,9 @@ public class RenderFileHandler implements IRenderSourceProvider
 		dataFuture = dataFuture.thenApply((dataSource) -> 
 		{
 			if (dataRef.get() == null)
+			{
 				throw new UncheckedInterruptedException();
+			}
 			LodUtil.assertTrue(dataSource != null);
 			return dataSource;
 		}).exceptionally((ex) -> 
@@ -296,9 +299,12 @@ public class RenderFileHandler implements IRenderSourceProvider
 		LOGGER.info("Recreating cache for {}", data.getSectionPos());
 		DataRenderTransformer.asyncTransformDataSource(dataFuture, this.level)
 				.thenAccept((newRenderDataSource) -> this.write(dataRef.get(), file, newRenderDataSource, this.dataSourceProvider.getCacheVersion(data.getSectionPos())))
-				.exceptionally((ex) -> {
+				.exceptionally((ex) -> 
+				{
 					if (!UncheckedInterruptedException.isThrowableInterruption(ex))
+					{
 						LOGGER.error("Exception when updating render file using data source: ", ex);
+					}
 					return null;
 				}).thenRun(() -> this.cacheRecreationGuards.remove(file.pos));
 	}
@@ -312,10 +318,7 @@ public class RenderFileHandler implements IRenderSourceProvider
         return data;
     }
 	
-    public ILodRenderSource onLoadingRenderFile(RenderMetaDataFile file)
-	{
-        return null; // Default behavior: do nothing
-    }
+    public ILodRenderSource onLoadingRenderFile(RenderMetaDataFile file) { return null; /* Default behavior: do nothing */ }
 	
     private void write(ILodRenderSource target, RenderMetaDataFile file,
                        ILodRenderSource newData, long newDataVersion)

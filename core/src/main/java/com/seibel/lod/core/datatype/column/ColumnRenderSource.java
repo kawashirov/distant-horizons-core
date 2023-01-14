@@ -146,12 +146,16 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 		if (overwriteDataWithSameGenerationMode)
 		{
 			if (compare < 0)
+			{
 				return false;
+			}
 		}
 		else
 		{
 			if (compare <= 0)
+			{
 				return false;
+			}
 		}
 		
 		// copy the newData into this column's data
@@ -184,7 +188,7 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 	}
 	
 	@Override
-	public ColumnQuadView getFullQuadView() { return getQuadViewOverRange(0, 0, SECTION_SIZE, SECTION_SIZE); }
+	public ColumnQuadView getFullQuadView() { return this.getQuadViewOverRange(0, 0, SECTION_SIZE, SECTION_SIZE); }
 	@Override
 	public ColumnQuadView getQuadViewOverRange(int quadX, int quadZ, int quadXSize, int quadZSize) { return new ColumnQuadView(this.dataContainer, SECTION_SIZE, this.verticalSize, quadX, quadZ, quadXSize, quadZSize); }
 	
@@ -255,8 +259,11 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 		
 		
 		if (src.isEmpty)
+		{
 			// the source is empty, don't attempt to update anything
 			return;
+		}
+		
 		// the source isn't empty, this object won't be empty after the method finishes
 		this.isEmpty = false;
 		
@@ -356,10 +363,10 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 	}
 	
 	@Override
-	public void disableRender() { cancelBuildBuffer(); }
+	public void disableRender() { this.cancelBuildBuffer(); }
 	
 	@Override
-	public void dispose() { cancelBuildBuffer(); }
+	public void dispose() { this.cancelBuildBuffer(); }
 	
 	@Override
 	public boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<AbstractRenderBuffer> referenceSlot)
@@ -465,7 +472,7 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 				for (int y = 0; y < this.verticalSize; y++)
 				{
 					//Converting the dataToHex
-					stringBuilder.append(Long.toHexString(getDataPoint(x, z, y)));
+					stringBuilder.append(Long.toHexString(this.getDataPoint(x, z, y)));
 					if (y != this.verticalSize - 1)
 						stringBuilder.append(SUBDATA_DELIMITER);
 				}
