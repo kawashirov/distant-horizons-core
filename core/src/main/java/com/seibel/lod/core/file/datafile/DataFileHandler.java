@@ -29,7 +29,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class DataFileHandler implements IDataSourceProvider {
+public class DataFileHandler implements IDataSourceProvider
+{
     // Note: Single main thread only for now. May make it multi-thread later, depending on the usage.
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     final ExecutorService fileReaderThread = LodUtil.makeThreadPool(4, "FileReaderThread");
@@ -39,7 +40,8 @@ public class DataFileHandler implements IDataSourceProvider {
     AtomicInteger topDetailLevel = new AtomicInteger(-1);
     final int minDetailLevel = FullDataSource.SECTION_SIZE_OFFSET;
 
-    public DataFileHandler(IDhLevel level, File saveRootDir) {
+    public DataFileHandler(IDhLevel level, File saveRootDir)
+	{
         this.saveDir = saveRootDir;
         this.level = level;
     }
@@ -49,41 +51,63 @@ public class DataFileHandler implements IDataSourceProvider {
     *  and that this object is not used before this method is called.
      */
     @Override
-    public void addScannedFile(Collection<File> detectedFiles) {
+    public void addScannedFile(Collection<File> detectedFiles)
+	{
         HashMultimap<DhSectionPos, DataMetaFile> filesByPos = HashMultimap.create();
-        LOGGER.info("Detected {} valid files in {}", detectedFiles.size(), saveDir);
+        LOGGER.info("Detected {} valid files in {}", detectedFiles.size(), this.saveDir);
 
         { // Sort files by pos.
-            for (File file : detectedFiles) {
-                try {
-                    DataMetaFile metaFile = new DataMetaFile(this, level, file);
+            for (File file : detectedFiles)
+			{
+                try
+				{
+                    DataMetaFile metaFile = new DataMetaFile(this, this.level, file);
                     filesByPos.put(metaFile.pos, metaFile);
-                } catch (IOException e) {
+                }
+				catch (IOException e)
+				{
                     LOGGER.error("Failed to read data meta file at {}: ", file, e);
                     File corruptedFile = new File(file.getParentFile(), file.getName() + ".corrupted");
-                    if (corruptedFile.exists()) corruptedFile.delete();
-                    if (file.renameTo(corruptedFile)) {
+                    
+					if (corruptedFile.exists())
+					{
+						if (!corruptedFile.delete())
+						{
+							LOGGER.error("Failed to delete corrupted meta data file at {}: ", corruptedFile, e);
+						}
+					}
+					
+                    if (file.renameTo(corruptedFile))
+					{
                         LOGGER.error("Renamed corrupted file to {}", file.getName() + ".corrupted");
-                    } else {
+                    }
+					else
+					{
                         LOGGER.error("Failed to rename corrupted file to {}. Will try and delete file", file.getName() + ".corrupted");
-                        file.delete();
+                        if (file.delete())
+						{
+							LOGGER.error("Failed to delete corrupted meta data file at {}: ", file, e);
+						}
                     }
                 }
             }
         }
 
         // Warn for multiple files with the same pos, and then select the one with latest timestamp.
-        for (DhSectionPos pos : filesByPos.keySet()) {
+        for (DhSectionPos pos : filesByPos.keySet())
+		{
             Collection<DataMetaFile> metaFiles = filesByPos.get(pos);
             DataMetaFile fileToUse;
-            if (metaFiles.size() > 1) {
+            if (metaFiles.size() > 1)
+			{
                 fileToUse = Collections.max(metaFiles, Comparator.comparingLong(a -> a.metaData.dataVersion.get()));
                 {
                     StringBuilder sb = new StringBuilder();
                     sb.append("Multiple files with the same pos: ");
                     sb.append(pos);
                     sb.append("\n");
-                    for (DataMetaFile metaFile : metaFiles) {
+                    for (DataMetaFile metaFile : metaFiles)
+					{
                         sb.append("\t");
                         sb.append(metaFile.path);
                         sb.append("\n");
@@ -95,50 +119,74 @@ public class DataFileHandler implements IDataSourceProvider {
                     LOGGER.warn(sb.toString());
 
                     // Rename all other files with the same pos to .old
-                    for (DataMetaFile metaFile : metaFiles) {
-                        if (metaFile == fileToUse) continue;
+                    for (DataMetaFile metaFile : metaFiles)
+					{
+                        if (metaFile == fileToUse)
+						{
+							continue;
+						}
                         File oldFile = new File(metaFile.path + ".old");
-                        try {
-                            if (!metaFile.path.renameTo(oldFile)) throw new RuntimeException("Renaming failed");
-                        } catch (Exception e) {
+                        try
+						{
+                            if (!metaFile.path.renameTo(oldFile))
+							{
+								throw new RuntimeException("Renaming failed");
+							}
+                        }
+						catch (Exception e)
+						{
                             LOGGER.error("Failed to rename file: " + metaFile.path + " to " + oldFile, e);
                         }
                     }
                 }
-            } else {
+            }
+			else
+			{
                 fileToUse = metaFiles.iterator().next();
             }
             // Add file to the list of files.
-            topDetailLevel.updateAndGet(v -> Math.max(v, fileToUse.pos.sectionDetail));
-            files.put(pos, fileToUse);
+			this.topDetailLevel.updateAndGet(v -> Math.max(v, fileToUse.pos.sectionDetail));
+			this.files.put(pos, fileToUse);
         }
     }
-
-    protected DataMetaFile atomicGetOrMakeFile(DhSectionPos pos) {
-        DataMetaFile metaFile = files.get(pos);
-        if (metaFile == null) {
+	
+    protected DataMetaFile atomicGetOrMakeFile(DhSectionPos pos)
+	{
+        DataMetaFile metaFile = this.files.get(pos);
+        if (metaFile == null)
+		{
             DataMetaFile newMetaFile;
-            try {
-                newMetaFile = new DataMetaFile(this, level, pos);
-            } catch (IOException e) {
+            try
+			{
+                newMetaFile = new DataMetaFile(this, this.level, pos);
+            }
+			catch (IOException e)
+			{
                 LOGGER.error("IOException on creating new data file at {}", pos, e);
                 return null;
             }
-            metaFile = files.putIfAbsent(pos, newMetaFile); // This is a CAS with expected null value.
-            if (metaFile == null) metaFile = newMetaFile;
+            metaFile = this.files.putIfAbsent(pos, newMetaFile); // This is a CAS with expected null value.
+            if (metaFile == null) 
+			{
+				metaFile = newMetaFile;
+			}
         }
         return metaFile;
     }
-
-    protected void selfSearch(DhSectionPos basePos, DhSectionPos pos, ArrayList<DataMetaFile> existFiles, ArrayList<DhSectionPos> missing) {
+	
+    protected void selfSearch(DhSectionPos basePos, DhSectionPos pos, ArrayList<DataMetaFile> existFiles, ArrayList<DhSectionPos> missing)
+	{
         byte detail = pos.sectionDetail;
         boolean allEmpty = true;
         outerLoop:
-        while (--detail >= minDetailLevel) {
+        while (--detail >= this.minDetailLevel)
+		{
             DhLodPos min = pos.getCorner().getCorner(detail);
             int count = pos.getSectionBBoxPos().getBlockWidth(detail);
-            for (int ox = 0; ox<count; ox++) {
-                for (int oz = 0; oz<count; oz++) {
+            for (int ox = 0; ox<count; ox++)
+			{
+                for (int oz = 0; oz<count; oz++)
+				{
                     DhSectionPos subPos = new DhSectionPos(detail, ox+min.x, oz+min.z);
                     LodUtil.assertTrue(pos.overlaps(basePos) && subPos.overlaps(pos));
 
@@ -146,66 +194,96 @@ public class DataFileHandler implements IDataSourceProvider {
                     // on a very different level, we may not need the entire section at all.
                     if (!FullDataSource.neededForPosition(basePos, subPos)) continue;
 
-                    if (files.containsKey(subPos)) {
+                    if (this.files.containsKey(subPos))
+					{
                         allEmpty = false;
                         break outerLoop;
                     }
                 }
             }
         }
-
-        if (allEmpty) {
+		
+        if (allEmpty)
+		{
             missing.add(pos);
-        } else {
+        }
+		else 
+		{
             {
                 DhSectionPos childPos = pos.getChildByIndex(0);
-                if (FullDataSource.neededForPosition(basePos, childPos)) {
-                    DataMetaFile metaFile = files.get(childPos);
-                    if (metaFile != null) {
+                if (FullDataSource.neededForPosition(basePos, childPos))
+				{
+                    DataMetaFile metaFile = this.files.get(childPos);
+                    if (metaFile != null)
+					{
                         existFiles.add(metaFile);
-                    } else if (childPos.sectionDetail == minDetailLevel) {
+                    }
+					else if (childPos.sectionDetail == this.minDetailLevel)
+					{
                         missing.add(childPos);
-                    } else {
-                        selfSearch(basePos, childPos, existFiles, missing);
+                    }
+					else
+					{
+						this.selfSearch(basePos, childPos, existFiles, missing);
                     }
                 }
             }
+			
             {
                 DhSectionPos childPos = pos.getChildByIndex(1);
-                if (FullDataSource.neededForPosition(basePos, childPos)) {
-                    DataMetaFile metaFile = files.get(childPos);
-                    if (metaFile != null) {
+                if (FullDataSource.neededForPosition(basePos, childPos))
+				{
+                    DataMetaFile metaFile = this.files.get(childPos);
+                    if (metaFile != null)
+					{
                         existFiles.add(metaFile);
-                    } else if (childPos.sectionDetail == minDetailLevel) {
+                    } else if (childPos.sectionDetail == this.minDetailLevel)
+					{
                         missing.add(childPos);
-                    } else {
-                        selfSearch(basePos, childPos, existFiles, missing);
+                    }
+					else
+					{
+						this.selfSearch(basePos, childPos, existFiles, missing);
                     }
                 }
             }
+			
             {
                 DhSectionPos childPos = pos.getChildByIndex(2);
-                if (FullDataSource.neededForPosition(basePos, childPos)) {
-                    DataMetaFile metaFile = files.get(childPos);
-                    if (metaFile != null) {
+                if (FullDataSource.neededForPosition(basePos, childPos))
+				{
+                    DataMetaFile metaFile = this.files.get(childPos);
+                    if (metaFile != null)
+					{
                         existFiles.add(metaFile);
-                    } else if (childPos.sectionDetail == minDetailLevel) {
+                    }
+					else if (childPos.sectionDetail == this.minDetailLevel)
+					{
                         missing.add(childPos);
-                    } else {
-                        selfSearch(basePos, childPos, existFiles, missing);
+                    }
+					else
+					{
+						this.selfSearch(basePos, childPos, existFiles, missing);
                     }
                 }
             }
+			
             {
                 DhSectionPos childPos = pos.getChildByIndex(3);
-                if (FullDataSource.neededForPosition(basePos, childPos)) {
-                    DataMetaFile metaFile = files.get(childPos);
-                    if (metaFile != null) {
+                if (FullDataSource.neededForPosition(basePos, childPos))
+				{
+                    DataMetaFile metaFile = this.files.get(childPos);
+                    if (metaFile != null)
+					{
                         existFiles.add(metaFile);
-                    } else if (childPos.sectionDetail == minDetailLevel) {
+                    }
+					else if (childPos.sectionDetail == this.minDetailLevel)
+					{
                         missing.add(childPos);
-                    } else {
-                        selfSearch(basePos, childPos, existFiles, missing);
+                    }
+					else
+					{
+						this.selfSearch(basePos, childPos, existFiles, missing);
                     }
                 }
             }
@@ -225,11 +303,13 @@ public class DataFileHandler implements IDataSourceProvider {
 	{
 		this.topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetail));
         DataMetaFile metaFile = this.atomicGetOrMakeFile(pos);
-        if (metaFile == null) 
+        if (metaFile == null)
+		{
 			return CompletableFuture.completedFuture(null);
+		}
         return metaFile.loadOrGetCached();
     }
-
+	
     /** This call is concurrent. I.e. it supports being called by multiple threads at the same time. */
     @Override
     public void write(DhSectionPos sectionPos, ChunkSizedData chunkData)
@@ -253,57 +333,79 @@ public class DataFileHandler implements IDataSourceProvider {
 			this.recursiveWrite(sectionPos.getParentPos(), chunkData);
         }
     }
-
+	
     /** This call is concurrent. I.e. it supports multiple threads calling this method at the same time. */
     @Override
-    public CompletableFuture<Void> flushAndSave() {
+    public CompletableFuture<Void> flushAndSave()
+	{
         ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
-        for (DataMetaFile metaFile : files.values()) {
+        for (DataMetaFile metaFile : this.files.values())
+		{
             futures.add(metaFile.flushAndSave());
         }
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
-
+	
     @Override
-    public long getCacheVersion(DhSectionPos sectionPos) {
-        DataMetaFile file = files.get(sectionPos);
-        if (file == null) return 0;
+    public long getCacheVersion(DhSectionPos sectionPos)
+	{
+        DataMetaFile file = this.files.get(sectionPos);
+        if (file == null)
+		{
+			return 0;
+		}
         return file.getCacheVersion();
     }
-
+	
     @Override
-    public boolean isCacheVersionValid(DhSectionPos sectionPos, long cacheVersion) {
-        DataMetaFile file = files.get(sectionPos);
-        if (file == null) return cacheVersion >= 0;
+    public boolean isCacheVersionValid(DhSectionPos sectionPos, long cacheVersion)
+	{
+        DataMetaFile file = this.files.get(sectionPos);
+        if (file == null)
+		 {
+			return cacheVersion >= 0;
+		}
         return file.isCacheVersionValid(cacheVersion);
     }
-
+	
     @Override
-    public CompletableFuture<ILodDataSource> onCreateDataFile(DataMetaFile file) {
+    public CompletableFuture<ILodDataSource> onCreateDataFile(DataMetaFile file)
+	{
         DhSectionPos pos = file.pos;
         ArrayList<DataMetaFile> existFiles = new ArrayList<>();
         ArrayList<DhSectionPos> missing = new ArrayList<>();
-        selfSearch(pos, pos, existFiles, missing);
+		this.selfSearch(pos, pos, existFiles, missing);
         LodUtil.assertTrue(!missing.isEmpty() || !existFiles.isEmpty());
-        if (missing.size() == 1 && existFiles.isEmpty() && missing.get(0).equals(pos)) {
+        if (missing.size() == 1 && existFiles.isEmpty() && missing.get(0).equals(pos))
+		{
             // None exist.
             IIncompleteDataSource incompleteDataSource = pos.sectionDetail <= SparseDataSource.MAX_SECTION_DETAIL ?
                     SparseDataSource.createEmpty(pos) : SpottyDataSource.createEmpty(pos);
             return CompletableFuture.completedFuture(incompleteDataSource);
-        } else {
-            for (DhSectionPos missingPos : missing) {
-                DataMetaFile newfile = atomicGetOrMakeFile(missingPos);
-                if (newfile != null) existFiles.add(newfile);
+        }
+		else
+		{
+            for (DhSectionPos missingPos : missing)
+			{
+                DataMetaFile newFile = this.atomicGetOrMakeFile(missingPos);
+                if (newFile != null)
+				{
+					existFiles.add(newFile);
+				}
             }
             final ArrayList<CompletableFuture<Void>> futures = new ArrayList<>(existFiles.size());
             final IIncompleteDataSource dataSource = pos.sectionDetail <= SparseDataSource.MAX_SECTION_DETAIL ?
-                    SparseDataSource.createEmpty(pos) : SpottyDataSource.createEmpty(pos);
+                    SparseDataSource.createEmpty(pos) : 
+					SpottyDataSource.createEmpty(pos);
 
-            for (DataMetaFile f : existFiles) {
+            for (DataMetaFile f : existFiles)
+			{
                 futures.add(f.loadOrGetCached()
                         .exceptionally((ex) -> null)
-                        .thenAccept((data) -> {
-                            if (data != null) {
+                        .thenAccept((data) ->
+						{
+                            if (data != null)
+							{
                                 LOGGER.info("Merging data from {} into {}", data.getSectionPos(), pos);
                                 dataSource.sampleFrom(data);
                             }
@@ -314,49 +416,68 @@ public class DataFileHandler implements IDataSourceProvider {
                     .thenApply((v) -> dataSource.trySelfPromote());
         }
     }
-
+	
     @Override
     public ILodDataSource onDataFileLoaded(ILodDataSource source, MetaData metaData,
-                                          Consumer<ILodDataSource> onUpdated, Function<ILodDataSource, Boolean> updater) {
+                                          Consumer<ILodDataSource> onUpdated, Function<ILodDataSource, Boolean> updater)
+	{
         boolean changed = updater.apply(source);
-        if (changed) metaData.dataVersion.incrementAndGet();
-        if (source instanceof IIncompleteDataSource) {
+        if (changed)
+		{
+			metaData.dataVersion.incrementAndGet();
+		}
+		
+        if (source instanceof IIncompleteDataSource)
+		{
             ILodDataSource newSource = ((IIncompleteDataSource) source).trySelfPromote();
             changed |= newSource != source;
             source = newSource;
         }
-        if (changed) onUpdated.accept(source);
+		
+        if (changed) 
+		{
+			onUpdated.accept(source);
+		}
         return source;
     }
     @Override
-    public CompletableFuture<ILodDataSource> onDataFileRefresh(ILodDataSource source, MetaData metaData, Function<ILodDataSource, Boolean> updater, Consumer<ILodDataSource> onUpdated) {
-        return CompletableFuture.supplyAsync(() -> {
+    public CompletableFuture<ILodDataSource> onDataFileRefresh(ILodDataSource source, MetaData metaData, Function<ILodDataSource, Boolean> updater, Consumer<ILodDataSource> onUpdated)
+	{
+        return CompletableFuture.supplyAsync(() ->
+		{
             ILodDataSource sourceLocal = source;
             boolean changed = updater.apply(sourceLocal);
             if (changed) metaData.dataVersion.incrementAndGet();
-            if (sourceLocal instanceof IIncompleteDataSource) {
+            if (sourceLocal instanceof IIncompleteDataSource)
+			{
                 ILodDataSource newSource = ((IIncompleteDataSource) sourceLocal).trySelfPromote();
                 changed |= newSource != sourceLocal;
                 sourceLocal = newSource;
             }
-            if (changed) onUpdated.accept(sourceLocal);
+            if (changed)
+			{
+				onUpdated.accept(sourceLocal);
+			}
             return sourceLocal;
-        }, fileReaderThread);
+        }, this.fileReaderThread);
     }
-
+	
     @Override
-    public File computeDataFilePath(DhSectionPos pos) {
-        return new File(saveDir, pos.serialize() + ".lod");
+    public File computeDataFilePath(DhSectionPos pos)
+	{
+        return new File(this.saveDir, pos.serialize() + ".lod");
     }
-
+	
     @Override
-    public Executor getIOExecutor() {
-        return fileReaderThread;
+    public Executor getIOExecutor()
+	{
+        return this.fileReaderThread;
     }
-
-
+	
+	
     @Override
-    public void close() {
+    public void close()
+	{
         DataMetaFile.debugCheck();
          //TODO
     }
