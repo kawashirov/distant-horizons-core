@@ -24,9 +24,7 @@ public class GeneratedDataFileHandler extends DataFileHandler
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
-    private AtomicReference<WorldGenerationQueue> worldGenQueueRef = new AtomicReference<>(null);
-    // TODO: Should I include a lib that impl weak concurrent hash map?
-    private final Map<ILodDataSource, GenTask> worldGenTaskQueue = Collections.synchronizedMap(new WeakHashMap<>());
+    private final AtomicReference<WorldGenerationQueue> worldGenQueueRef = new AtomicReference<>(null);
 	
 	
 	
@@ -34,38 +32,16 @@ public class GeneratedDataFileHandler extends DataFileHandler
 	
 	
 	
-	/**
-	 * Assumes there isn't a pre-existing queue.
-	 */
+	/** Assumes there isn't a pre-existing queue. */
     public void setGenerationQueue(WorldGenerationQueue newQueue)
 	{
-		// this is outside the synchronized block to allow for the assertTrue to catch if the method is incorrectly called twice
         boolean oldQueueExists = this.worldGenQueueRef.compareAndSet(null, newQueue);
         LodUtil.assertTrue(oldQueueExists, "previous queue is still here!");
-		
-		
-        synchronized (this.worldGenTaskQueue)
-		{
-            for (Map.Entry<ILodDataSource, GenTask> genTaskEntry : this.worldGenTaskQueue.entrySet())
-			{
-                ILodDataSource source = genTaskEntry.getKey();
-				
-                DhSectionPos taskPos = source.getSectionPos();
-                GenTask task = genTaskEntry.getValue();
-				
-				this.worldGenQueueRef.get().submitGenTask(taskPos.getSectionBBoxPos(), source.getDataDetail(), task)
-                        .whenComplete( (genTaskCompleted, ex) -> this.onWorldGenTaskComplete(genTaskCompleted, ex, task, taskPos) );
-            }
-        }
     }
 	
+	public void clearGenerationQueue() { this.worldGenQueueRef.set(null); }
 	
-    public WorldGenerationQueue popGenerationQueue()
-	{
-        WorldGenerationQueue cas = this.worldGenQueueRef.getAndSet(null);
-        LodUtil.assertTrue(cas != null, "there is no previous live generation queue!");
-        return cas;
-    }
+	
 	
     @Override
     public CompletableFuture<ILodDataSource> onCreateDataFile(DataMetaFile file)
@@ -84,7 +60,6 @@ public class GeneratedDataFileHandler extends DataFileHandler
 			
             WorldGenerationQueue queue = this.worldGenQueueRef.get();
             GenTask task = new GenTask(pos, new WeakReference<>(dataSource));
-			this.worldGenTaskQueue.put(dataSource, task);
             if (queue != null)
 			{
                 queue.submitGenTask(dataSource.getSectionPos().getSectionBBoxPos(),
@@ -137,13 +112,9 @@ public class GeneratedDataFileHandler extends DataFileHandler
 			LOGGER.error("Uncaught Gen Task Exception at {}:", pos, exception);
 		}
 		
-		ILodDataSource taskSource = task.targetData.get();
 		if (exception == null && genTaskCompleted)
 		{
 			this.files.get(task.pos).metaData.dataVersion.incrementAndGet();
-			
-			// remove the completed task
-			this.worldGenTaskQueue.remove(taskSource, task);
 			return;
 		}
 		task.releaseStrongReference();

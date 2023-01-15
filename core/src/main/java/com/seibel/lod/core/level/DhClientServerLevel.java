@@ -409,7 +409,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		
 		CompletableFuture<Void> close(boolean doInterrupt)
 		{
-			DhClientServerLevel.this.dataFileHandler.popGenerationQueue();
+			DhClientServerLevel.this.dataFileHandler.clearGenerationQueue();
 			return this.worldGenerationQueue.startClosing(true, doInterrupt)
 					.exceptionally(ex ->
 					{
