@@ -61,7 +61,9 @@ public class WorldGenerationQueue implements Closeable
 	
 	private final byte maxDataDetail;
 	private final byte minDataDetail;
-	private volatile CompletableFuture<Void> closer = null;
+	
+	/** If not null this generator is in the process of shutting down */
+	private volatile CompletableFuture<Void> generatorClosingFuture = null;
 	
 	
 	
@@ -74,10 +76,15 @@ public class WorldGenerationQueue implements Closeable
 		this.maxDataDetail = generator.getMaxDataDetailLevel();
 		this.minDataDetail = generator.getMinDataDetailLevel();
 		
-		if (this.minGranularity < 4)
-			throw new IllegalArgumentException("DH-IGenerator: min granularity must be at least 4!");
+		
+		if (this.minGranularity < LodUtil.CHUNK_DETAIL_LEVEL)
+		{
+			throw new IllegalArgumentException(IDhApiWorldGenerator.class.getSimpleName() + ": min granularity must be at least 4 (Chunk sized)!");
+		}
 		if (this.maxGranularity < this.minGranularity)
-			throw new IllegalArgumentException("DH-IGenerator: max granularity smaller than min granularity!");
+		{
+			throw new IllegalArgumentException(IDhApiWorldGenerator.class.getSimpleName() + ": max granularity smaller than min granularity!");
+		}
 	}
 	
 	
@@ -89,45 +96,64 @@ public class WorldGenerationQueue implements Closeable
 	
 	public CompletableFuture<Boolean> submitGenTask(DhLodPos pos, byte requiredDataDetail, AbstractWorldGenTaskTracker tracker)
 	{
-		if (this.closer != null)
+		// if the generator is shutting down, don't add new tasks
+		if (this.generatorClosingFuture != null)
+		{
 			return CompletableFuture.completedFuture(false);
+		}
 		
 		if (requiredDataDetail < this.minDataDetail)
 		{
 			throw new UnsupportedOperationException("Current generator does not meet requiredDataDetail level");
 		}
 		if (requiredDataDetail > this.maxDataDetail)
+		{
 			requiredDataDetail = this.maxDataDetail;
+		}
+		
 		
 		LodUtil.assertTrue(pos.detailLevel > requiredDataDetail + 4);
 		byte granularity = (byte) (pos.detailLevel - requiredDataDetail);
 		
+		
+		
+		
 		if (granularity > this.maxGranularity)
 		{
-			// Too big of a chunk. We need to split it up
+			// The generation section is too big, split it up
+			
 			byte subDetail = (byte) (this.maxGranularity + requiredDataDetail);
-			int subPosCount = pos.getBlockWidth(subDetail);
+			int subPosWidthCount = pos.getBlockWidth(subDetail);
+			
 			DhLodPos cornerSubPos = pos.getCorner(subDetail);
-			CompletableFuture<Boolean>[] subFutures = new CompletableFuture[subPosCount * subPosCount];
-			ArrayList<WorldGenTask> subTasks = new ArrayList<>(subPosCount * subPosCount);
+			CompletableFuture<Boolean>[] subFutures = new CompletableFuture[subPosWidthCount * subPosWidthCount];
+			ArrayList<WorldGenTask> subTasks = new ArrayList<>(subPosWidthCount * subPosWidthCount);
 			SplitTaskTracker splitTaskTracker = new SplitTaskTracker(tracker, new CompletableFuture<>());
+			
+			// create the new sub-futures
+			int subFutureIndex = 0;
+			for (int xOffset = 0; xOffset < subPosWidthCount; xOffset++)
 			{
-				int i = 0;
-				for (int ox = 0; ox < subPosCount; ox++)
+				for (int zOffset = 0; zOffset < subPosWidthCount; zOffset++)
 				{
-					for (int oz = 0; oz < subPosCount; oz++)
-					{
-						CompletableFuture<Boolean> subFuture = new CompletableFuture<>();
-						subFutures[i++] = subFuture;
-						subTasks.add(new WorldGenTask(cornerSubPos.addOffset(ox, oz), requiredDataDetail, splitTaskTracker, subFuture));
-					}
+					CompletableFuture<Boolean> subFuture = new CompletableFuture<>();
+					subFutures[subFutureIndex++] = subFuture;
+					subTasks.add(new WorldGenTask(cornerSubPos.addOffset(xOffset, zOffset), requiredDataDetail, splitTaskTracker, subFuture));
 				}
 			}
-			CompletableFuture.allOf(subFutures).whenComplete((v, ex) -> {
+			
+			CompletableFuture.allOf(subFutures).whenComplete((v, ex) -> 
+			{
 				if (ex != null)
+				{
 					splitTaskTracker.parentFuture.completeExceptionally(ex);
-				if (!splitTaskTracker.recheckState())
+				}
+				
+				if (!splitTaskTracker.recalculateIsValid())
+				{
 					return; // Auto join future
+				}
+				
 				for (CompletableFuture<Boolean> subFuture : subFutures)
 				{
 					boolean successful = subFuture.join();
@@ -139,11 +165,9 @@ public class WorldGenerationQueue implements Closeable
 				}
 				splitTaskTracker.parentFuture.complete(true);
 			});
+			
 			this.looseTasks.addAll(subTasks);
-			if (this.closer != null)
-				return CompletableFuture.completedFuture(false);
-			else
-				return splitTaskTracker.parentFuture;
+			return splitTaskTracker.parentFuture;
 		}
 		else if (granularity < this.minGranularity)
 		{
@@ -152,19 +176,17 @@ public class WorldGenerationQueue implements Closeable
 			DhLodPos parentPos = pos.convertToDetailLevel(parentDetail);
 			CompletableFuture<Boolean> future = new CompletableFuture<>();
 			this.looseTasks.add(new WorldGenTask(parentPos, requiredDataDetail, tracker, future));
-			if (this.closer != null)
-				return CompletableFuture.completedFuture(false);
-			else
-				return future;
+			
+			return future;
 		}
 		else
 		{
+			// the requested granularity is within the min and max granularity provided by the world generator,
+			// no additional task changes are necessary
+			
 			CompletableFuture<Boolean> future = new CompletableFuture<>();
 			this.looseTasks.add(new WorldGenTask(pos, requiredDataDetail, tracker, future));
-			if (this.closer != null)
-				return CompletableFuture.completedFuture(false);
-			else
-				return future;
+			return future;
 		}
 	}
 	
@@ -273,7 +295,7 @@ public class WorldGenerationQueue implements Closeable
 			taskProcessed++;
 			byte taskDataDetail = task.dataDetailLevel;
 			byte taskGranularity = (byte) (task.pos.detailLevel - taskDataDetail);
-			LodUtil.assertTrue(taskGranularity >= 4 && taskGranularity >= this.minGranularity && taskGranularity <= this.maxGranularity);
+			LodUtil.assertTrue(taskGranularity >= LodUtil.CHUNK_DETAIL_LEVEL && taskGranularity >= this.minGranularity && taskGranularity <= this.maxGranularity);
 			
 			// Check existing one
 			TaskGroup group = this.taskGroups.get(task.pos);
@@ -311,6 +333,7 @@ public class WorldGenerationQueue implements Closeable
 						break;
 					}
 				}
+				
 				if (!didAnything)
 				{
 					group = new TaskGroup(task.pos, taskDataDetail);
@@ -331,8 +354,11 @@ public class WorldGenerationQueue implements Closeable
 	{
 		// Remove all invalid genTasks and groups
 		Iterator<TaskGroup> groupIter = this.taskGroups.values().iterator();
+		
+		// go through each TaskGroup
 		while (groupIter.hasNext())
 		{
+			// go through each WorldGenTask in the TaskGroup
 			TaskGroup group = groupIter.next();
 			Iterator<WorldGenTask> taskIter = group.generatorTasks.iterator();
 			while (taskIter.hasNext())
@@ -405,9 +431,15 @@ public class WorldGenerationQueue implements Closeable
 	public void pollAndStartClosest(DhBlockPos2D targetPos)
 	{
 		if (this.generator == null)
+		{
 			throw new IllegalStateException("generator is null");
+		}
 		if (this.generator.isBusy())
+		{
+			// don't accept new requests if busy
 			return;
+		}
+		
 		this.removeOutdatedGroups();
 		this.processLooseTasks();
 		this.pollAndStartNext(targetPos);
@@ -451,7 +483,7 @@ public class WorldGenerationQueue implements Closeable
 	{
 		this.taskGroups.values().forEach(g -> g.generatorTasks.forEach(t -> t.future.complete(false)));
 		this.taskGroups.clear();
-		ArrayList<CompletableFuture<Void>> array = new ArrayList<>(inProgress.size());
+		ArrayList<CompletableFuture<Void>> array = new ArrayList<>(this.inProgress.size());
 		this.inProgress.values().forEach(runningTask ->
 									{
 										CompletableFuture<Void> genFuture = runningTask.genFuture; // Do this to prevent it getting swapped out
@@ -465,21 +497,24 @@ public class WorldGenerationQueue implements Closeable
 											return null;
 										}));
 									});
-		this.closer = CompletableFuture.allOf(array.toArray(CompletableFuture[]::new)); //FIXME: Closer threading issues with pollAndStartClosest
+		this.generatorClosingFuture = CompletableFuture.allOf(array.toArray(CompletableFuture[]::new)); //FIXME: Closer threading issues with pollAndStartClosest
 		this.looseTasks.forEach(t -> t.future.complete(false));
 		this.looseTasks.clear();
-		return this.closer;
+		return this.generatorClosingFuture;
 	}
 	
 	@Override
 	public void close()
 	{
-		if (this.closer == null)
+		if (this.generatorClosingFuture == null)
+		{
 			this.startClosing(true, true);
-		LodUtil.assertTrue(this.closer != null);
+		}
+		LodUtil.assertTrue(this.generatorClosingFuture != null);
+		
 		try
 		{
-			this.closer.orTimeout(SHUTDOWN_TIMEOUT_SEC, TimeUnit.SECONDS).join();
+			this.generatorClosingFuture.orTimeout(SHUTDOWN_TIMEOUT_SEC, TimeUnit.SECONDS).join();
 		}
 		catch (Throwable e)
 		{

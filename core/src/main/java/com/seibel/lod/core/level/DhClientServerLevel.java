@@ -35,6 +35,7 @@ import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
 import org.apache.logging.log4j.Logger;
+import org.lwjgl.system.CallbackI;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
@@ -44,14 +45,16 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
+	
 	public final LocalSaveStructure save;
 	public final GeneratedDataFileHandler dataFileHandler;
 	public final ChunkToLodBuilder chunkToLodBuilder;
 	public final IServerLevelWrapper serverLevel;
 	private final AppliedConfigState<Boolean> generatorEnabled;
 	public F3Screen.NestedMessage f3Msg;
-	public final AtomicReference<RenderState> renderState = new AtomicReference<>();
-	public final AtomicReference<WorldGenState> worldGenState = new AtomicReference<>();
+	
+	private final AtomicReference<RenderState> renderState = new AtomicReference<>();
+	private final AtomicReference<WorldGenState> worldGenState = new AtomicReference<>();
 	
 	
 	
@@ -269,7 +272,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 				if (rs == null)
 					return;
 			}
-			rs.close().join(); //TODO: Make it async.
+			rs.close().join(); //TODO: Make this async.
 		}
 		
 		WorldGenState wgs = this.worldGenState.get();
@@ -292,11 +295,14 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 	public void doWorldGen()
 	{
 		WorldGenState wgs = this.worldGenState.get();
+		
+		// if the world generator config changes, add/remove the world generator
 		if (this.generatorEnabled.pollNewValue())
 		{
 			boolean shouldDoWorldGen = this.generatorEnabled.get() && this.renderState.get() != null;
 			if (shouldDoWorldGen && wgs == null)
 			{
+				// create the new world generator
 				WorldGenState newWgs = new WorldGenState(this);
 				if (!this.worldGenState.compareAndSet(null, newWgs))
 				{
@@ -306,18 +312,23 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 			}
 			else if (!shouldDoWorldGen && wgs != null)
 			{
+				// shut down the world generator
 				while (!this.worldGenState.compareAndSet(wgs, null))
 				{
 					wgs = this.worldGenState.get();
 					if (wgs == null)
+					{
 						return;
+					}
 				}
 				wgs.close(true).join(); //TODO: Make it async.
 			}
 		}
 		
+		
 		if (wgs != null)
 		{
+			// queue new world generation requests
 			wgs.chunkGenerator.preGeneratorTaskStart();
 			wgs.worldGenerationQueue.pollAndStartClosest(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
 		}
@@ -344,16 +355,22 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		final RenderBufferHandler renderBufferHandler; //TODO: Should this be owned by renderer?
 		final LodRenderer renderer;
 		
+		
+		
 		RenderState(IClientLevelWrapper clientLevel)
 		{
+			DhClientServerLevel thisParent = DhClientServerLevel.this;
+			
 			this.clientLevel = clientLevel;
-			this.renderFileHandler = new RenderFileHandler(dataFileHandler, DhClientServerLevel.this, save.getRenderCacheFolder(serverLevel));
+			this.renderFileHandler = new RenderFileHandler(thisParent.dataFileHandler, thisParent, thisParent.save.getRenderCacheFolder(thisParent.serverLevel));
 			this.tree = new LodQuadTree(DhClientServerLevel.this, Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * 16,
 					MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, this.renderFileHandler);
-			this.renderBufferHandler = new RenderBufferHandler(tree);
-			FileScanUtil.scanFile(save, serverLevel, null, this.renderFileHandler);
+			this.renderBufferHandler = new RenderBufferHandler(this.tree);
+			FileScanUtil.scanFile(thisParent.save, thisParent.serverLevel, null, this.renderFileHandler);
 			this.renderer = new LodRenderer(this.renderBufferHandler);
 		}
+		
+		
 		
 		CompletableFuture<Void> close()
 		{
@@ -369,6 +386,8 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		public final IDhApiWorldGenerator chunkGenerator;
 		public final WorldGenerationQueue worldGenerationQueue;
 		
+		
+		
 		WorldGenState(IDhLevel level)
 		{
 			IDhApiWorldGenerator worldGenerator = WorldGeneratorInjector.INSTANCE.get(level.getLevelWrapper());
@@ -383,12 +402,14 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 			this.chunkGenerator = worldGenerator;
 			
 			this.worldGenerationQueue = new WorldGenerationQueue(this.chunkGenerator);
-			dataFileHandler.setGenerationQueue(this.worldGenerationQueue);
+			DhClientServerLevel.this.dataFileHandler.setGenerationQueue(this.worldGenerationQueue);
 		}
+		
+		
 		
 		CompletableFuture<Void> close(boolean doInterrupt)
 		{
-			dataFileHandler.popGenerationQueue();
+			DhClientServerLevel.this.dataFileHandler.popGenerationQueue();
 			return this.worldGenerationQueue.startClosing(true, doInterrupt)
 					.exceptionally(ex ->
 					{

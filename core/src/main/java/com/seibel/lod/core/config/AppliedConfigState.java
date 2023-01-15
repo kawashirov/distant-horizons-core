@@ -3,25 +3,33 @@ package com.seibel.lod.core.config;
 import com.seibel.lod.core.config.types.ConfigEntry;
 
 // TODO: Make this intergrate with the config system
-public class AppliedConfigState<T> {
+public class AppliedConfigState<T>
+{
     final ConfigEntry<T> entry;
     T activeValue;
-
-    public AppliedConfigState(ConfigEntry<T> entryToWatch) {
+	
+	
+	
+    public AppliedConfigState(ConfigEntry<T> entryToWatch)
+	{
         this.entry = entryToWatch;
-        activeValue = entryToWatch.get();
+        this.activeValue = entryToWatch.get();
     }
-
-    public boolean pollNewValue() {
-        T newValue = entry.get();
-        if (newValue.equals(activeValue)) {
+	
+	
+	
+	/** Returns true if the value was changed */
+    public boolean pollNewValue()
+	{
+        T newValue = this.entry.get();
+        if (newValue.equals(this.activeValue))
+		{
             return false;
         }
-        activeValue = newValue;
+		this.activeValue = newValue;
         return true;
     }
-
-    public T get() {
-        return activeValue;
-    }
+	
+    public T get() { return this.activeValue; }
+	
 }
