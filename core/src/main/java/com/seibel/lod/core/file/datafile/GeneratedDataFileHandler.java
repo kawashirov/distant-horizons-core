@@ -54,7 +54,7 @@ public class GeneratedDataFileHandler extends DataFileHandler
         if (missing.size() == 1 && existingFiles.isEmpty() && missing.get(0).equals(pos))
 		{
             // None exist.
-            IIncompleteDataSource dataSource = pos.sectionDetail <= SparseDataSource.MAX_SECTION_DETAIL ?
+            IIncompleteDataSource dataSource = pos.sectionDetailLevel <= SparseDataSource.MAX_SECTION_DETAIL ?
                     SparseDataSource.createEmpty(pos) : 
 					SpottyDataSource.createEmpty(pos);
 			
@@ -80,7 +80,7 @@ public class GeneratedDataFileHandler extends DataFileHandler
             }
 			
             final ArrayList<CompletableFuture<Void>> futures = new ArrayList<>(existingFiles.size());
-            final IIncompleteDataSource dataSource = pos.sectionDetail <= SparseDataSource.MAX_SECTION_DETAIL ?
+            final IIncompleteDataSource dataSource = pos.sectionDetailLevel <= SparseDataSource.MAX_SECTION_DETAIL ?
                     SparseDataSource.createEmpty(pos) : SpottyDataSource.createEmpty(pos);
             LOGGER.debug("Creating {} from sampling {} files: {}", pos, existingFiles.size(), existingFiles);
 

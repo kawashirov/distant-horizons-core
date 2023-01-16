@@ -88,7 +88,7 @@ public class RenderBufferHandler {
                 }
                 return abDiff;
             }
-            return a.pos.sectionDetail - b.pos.sectionDetail; // If all else fails, sort by detail
+            return a.pos.sectionDetailLevel - b.pos.sectionDetailLevel; // If all else fails, sort by detail
         };
         Comparator<LoadedRenderBuffer> sortNearToFar = (a, b) -> -sortFarToNear.compare(a, b);
         // Build the sorted list

@@ -91,7 +91,7 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 	 */
 	public ColumnRenderSource(DhSectionPos sectionPos, ColumnRenderLoader.ParsedColumnData parsedColumnData, IDhLevel level) throws IOException
 	{
-		if (sectionPos.sectionDetail - SECTION_SIZE_OFFSET != parsedColumnData.detailLevel)
+		if (sectionPos.sectionDetailLevel - SECTION_SIZE_OFFSET != parsedColumnData.detailLevel)
 		{
 			throw new IOException("Invalid data: detail level does not match");
 		}
@@ -317,7 +317,7 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 	
 	public DhSectionPos getSectionPos() { return this.sectionPos; }
 	
-	public byte getDataDetail() { return (byte) (this.sectionPos.sectionDetail - SECTION_SIZE_OFFSET); }
+	public byte getDataDetail() { return (byte) (this.sectionPos.sectionDetailLevel - SECTION_SIZE_OFFSET); }
 	
 	@Override
 	public byte getDetailOffset() { return SECTION_SIZE_OFFSET; }

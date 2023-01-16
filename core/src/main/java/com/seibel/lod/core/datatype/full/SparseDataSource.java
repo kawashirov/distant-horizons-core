@@ -40,10 +40,10 @@ public class SparseDataSource implements IIncompleteDataSource
 
     protected SparseDataSource(DhSectionPos sectionPos)
 	{
-        LodUtil.assertTrue(sectionPos.sectionDetail > SPARSE_UNIT_DETAIL);
-        LodUtil.assertTrue(sectionPos.sectionDetail <= MAX_SECTION_DETAIL);
+        LodUtil.assertTrue(sectionPos.sectionDetailLevel > SPARSE_UNIT_DETAIL);
+        LodUtil.assertTrue(sectionPos.sectionDetailLevel <= MAX_SECTION_DETAIL);
         this.sectionPos = sectionPos;
-		this.chunks = 1 << (byte) (sectionPos.sectionDetail - SPARSE_UNIT_DETAIL);
+		this.chunks = 1 << (byte) (sectionPos.sectionDetailLevel - SPARSE_UNIT_DETAIL);
 		this.dataPerChunk = SECTION_SIZE / this.chunks;
 		this.sparseData = new FullArrayView[this.chunks * this.chunks];
 		this.chunkPos = sectionPos.getCorner(SPARSE_UNIT_DETAIL);
@@ -51,10 +51,10 @@ public class SparseDataSource implements IIncompleteDataSource
     }
     protected SparseDataSource(DhSectionPos sectionPos, FullDataPointIdMap mapping, FullArrayView[] data)
 	{
-        LodUtil.assertTrue(sectionPos.sectionDetail > SPARSE_UNIT_DETAIL);
-        LodUtil.assertTrue(sectionPos.sectionDetail <= MAX_SECTION_DETAIL);
+        LodUtil.assertTrue(sectionPos.sectionDetailLevel > SPARSE_UNIT_DETAIL);
+        LodUtil.assertTrue(sectionPos.sectionDetailLevel <= MAX_SECTION_DETAIL);
         this.sectionPos = sectionPos;
-		this.chunks = 1 << (byte) (sectionPos.sectionDetail - SPARSE_UNIT_DETAIL);
+		this.chunks = 1 << (byte) (sectionPos.sectionDetailLevel - SPARSE_UNIT_DETAIL);
 		this.dataPerChunk = SECTION_SIZE / this.chunks;
 		LodUtil.assertTrue(this.chunks * this.chunks == data.length);
 		this.sparseData = data;
@@ -68,7 +68,7 @@ public class SparseDataSource implements IIncompleteDataSource
     @Override
     public DhSectionPos getSectionPos() { return this.sectionPos; }
     @Override
-    public byte getDataDetail() { return (byte) (this.sectionPos.sectionDetail-SECTION_SIZE_OFFSET); }
+    public byte getDataDetail() { return (byte) (this.sectionPos.sectionDetailLevel -SECTION_SIZE_OFFSET); }
 
     @Override
     public byte getDataVersion() { return LATEST_VERSION; }
@@ -126,7 +126,7 @@ public class SparseDataSource implements IIncompleteDataSource
 	public void sampleFrom(ILodDataSource source)
 	{
 		DhSectionPos pos = source.getSectionPos();
-		LodUtil.assertTrue(pos.sectionDetail < this.sectionPos.sectionDetail);
+		LodUtil.assertTrue(pos.sectionDetailLevel < this.sectionPos.sectionDetailLevel);
 		LodUtil.assertTrue(pos.overlaps(this.sectionPos));
 		if (source.isEmpty())
 			return;
@@ -259,8 +259,8 @@ public class SparseDataSource implements IIncompleteDataSource
 
     public static SparseDataSource loadData(DataMetaFile dataFile, InputStream dataStream, IDhLevel level) throws IOException
 	{
-        LodUtil.assertTrue(dataFile.pos.sectionDetail > SPARSE_UNIT_DETAIL);
-        LodUtil.assertTrue(dataFile.pos.sectionDetail <= MAX_SECTION_DETAIL);
+        LodUtil.assertTrue(dataFile.pos.sectionDetailLevel > SPARSE_UNIT_DETAIL);
+        LodUtil.assertTrue(dataFile.pos.sectionDetailLevel <= MAX_SECTION_DETAIL);
 		
         DataInputStream dos = new DataInputStream(dataStream); // DO NOT CLOSE! It would close all related streams
         {
@@ -282,7 +282,7 @@ public class SparseDataSource implements IIncompleteDataSource
 						"Section size mismatch: {} != {} (Currently only 1 section size is supported)", size, SECTION_SIZE));
 			}
 			
-            int chunks = 1 << (byte) (dataFile.pos.sectionDetail - sparseDetail);
+            int chunks = 1 << (byte) (dataFile.pos.sectionDetailLevel - sparseDetail);
             int dataPerChunk = size / chunks;
 			
             int minY = dos.readInt();

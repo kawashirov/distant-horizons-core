@@ -33,7 +33,7 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
     protected SpottyDataSource(DhSectionPos sectionPos)
 	{
         super(new FullDataPointIdMap(), new long[SECTION_SIZE*SECTION_SIZE][0], SECTION_SIZE);
-        LodUtil.assertTrue(sectionPos.sectionDetail > SparseDataSource.MAX_SECTION_DETAIL);
+        LodUtil.assertTrue(sectionPos.sectionDetailLevel > SparseDataSource.MAX_SECTION_DETAIL);
         this.sectionPos = sectionPos;
 		this.isColumnNotEmpty = new BitSet(SECTION_SIZE*SECTION_SIZE);
     }
@@ -41,7 +41,7 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
     @Override
     public DhSectionPos getSectionPos() { return this.sectionPos;  }
     @Override
-    public byte getDataDetail() { return (byte) (this.sectionPos.sectionDetail-SECTION_SIZE_OFFSET); }
+    public byte getDataDetail() { return (byte) (this.sectionPos.sectionDetailLevel -SECTION_SIZE_OFFSET); }
 
     @Override
     public byte getDataVersion() { return LATEST_VERSION;  }
@@ -201,11 +201,11 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
 	{
         if (!posToWrite.overlaps(posToTest)) 
 			return false;
-        if (posToTest.sectionDetail > posToWrite.sectionDetail) 
+        if (posToTest.sectionDetailLevel > posToWrite.sectionDetailLevel) 
 			return false;
-        if (posToWrite.sectionDetail - posToTest.sectionDetail <= SECTION_SIZE_OFFSET) 
+        if (posToWrite.sectionDetailLevel - posToTest.sectionDetailLevel <= SECTION_SIZE_OFFSET) 
 			return true;
-        byte sectPerData = (byte) (1 << (posToWrite.sectionDetail - posToTest.sectionDetail - SECTION_SIZE_OFFSET));
+        byte sectPerData = (byte) (1 << (posToWrite.sectionDetailLevel - posToTest.sectionDetailLevel - SECTION_SIZE_OFFSET));
         return posToTest.sectionX % sectPerData == 0 && posToTest.sectionZ % sectPerData == 0;
     }
 
@@ -213,7 +213,7 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
     public void sampleFrom(ILodDataSource source)
 	{
         DhSectionPos pos = source.getSectionPos();
-        LodUtil.assertTrue(pos.sectionDetail < this.sectionPos.sectionDetail);
+        LodUtil.assertTrue(pos.sectionDetailLevel < this.sectionPos.sectionDetailLevel);
         LodUtil.assertTrue(pos.overlaps(this.sectionPos));
         if (source.isEmpty()) 
 			return;
@@ -237,7 +237,7 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
         DhSectionPos pos = sparseSource.getSectionPos();
 		this.isEmpty = false;
 
-        if (this.getDataDetail() > this.sectionPos.sectionDetail)
+        if (this.getDataDetail() > this.sectionPos.sectionDetailLevel)
 		{
             DhLodPos basePos = this.sectionPos.getCorner(this.getDataDetail());
             DhLodPos dataPos = pos.getCorner(this.getDataDetail());
@@ -286,7 +286,7 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
 		this.isEmpty = false;
 		this.downsampleFrom(fullSource);
 		
-		if (this.getDataDetail() > this.sectionPos.sectionDetail)
+		if (this.getDataDetail() > this.sectionPos.sectionDetailLevel)
 		{
 			DhLodPos basePos = this.sectionPos.getCorner(this.getDataDetail());
 			DhLodPos dataPos = pos.getCorner(this.getDataDetail());

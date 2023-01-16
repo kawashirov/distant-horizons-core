@@ -50,7 +50,7 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
     @Override
     public DhSectionPos getSectionPos() {  return this.sectionPos; }
     @Override
-    public byte getDataDetail() { return (byte) (this.sectionPos.sectionDetail-SECTION_SIZE_OFFSET); }
+    public byte getDataDetail() { return (byte) (this.sectionPos.sectionDetailLevel -SECTION_SIZE_OFFSET); }
 
     @Override
     public byte getDataVersion() { return LATEST_VERSION; }
@@ -234,22 +234,22 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 	{
 		if (!posToWrite.overlaps(posToTest))
 			return false;
-		if (posToTest.sectionDetail > posToWrite.sectionDetail)
+		if (posToTest.sectionDetailLevel > posToWrite.sectionDetailLevel)
 			return false;
-		if (posToWrite.sectionDetail - posToTest.sectionDetail <= SECTION_SIZE_OFFSET)
+		if (posToWrite.sectionDetailLevel - posToTest.sectionDetailLevel <= SECTION_SIZE_OFFSET)
 			return true;
-		byte sectPerData = (byte) (1 << (posToWrite.sectionDetail - posToTest.sectionDetail - SECTION_SIZE_OFFSET));
+		byte sectPerData = (byte) (1 << (posToWrite.sectionDetailLevel - posToTest.sectionDetailLevel - SECTION_SIZE_OFFSET));
 		return posToTest.sectionX % sectPerData == 0 && posToTest.sectionZ % sectPerData == 0;
 	}
 	
 	public void writeFromLower(FullDataSource subData)
 	{
 		LodUtil.assertTrue(this.sectionPos.overlaps(subData.sectionPos));
-		LodUtil.assertTrue(subData.sectionPos.sectionDetail < this.sectionPos.sectionDetail);
+		LodUtil.assertTrue(subData.sectionPos.sectionDetailLevel < this.sectionPos.sectionDetailLevel);
 		if (!neededForPosition(this.sectionPos, subData.sectionPos))
 			return;
 		DhSectionPos lowerSectPos = subData.sectionPos;
-		byte detailDiff = (byte) (this.sectionPos.sectionDetail - subData.sectionPos.sectionDetail);
+		byte detailDiff = (byte) (this.sectionPos.sectionDetailLevel - subData.sectionPos.sectionDetailLevel);
 		byte targetDataDetail = this.getDataDetail();
 		DhLodPos minDataPos = this.sectionPos.getCorner(targetDataDetail);
 		if (detailDiff <= SECTION_SIZE_OFFSET)

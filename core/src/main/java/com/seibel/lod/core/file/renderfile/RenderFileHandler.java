@@ -208,7 +208,7 @@ public class RenderFileHandler implements IRenderSourceProvider
 		}
 		
 		
-		if (sectPos.sectionDetail > ColumnRenderSource.SECTION_SIZE_OFFSET)
+		if (sectPos.sectionDetailLevel > ColumnRenderSource.SECTION_SIZE_OFFSET)
 		{
 			this.writeRecursively(sectPos.getChildByIndex(0), chunkData);
 			this.writeRecursively(sectPos.getChildByIndex(1), chunkData);
@@ -261,7 +261,7 @@ public class RenderFileHandler implements IRenderSourceProvider
     public CompletableFuture<ILodRenderSource> onCreateRenderFile(RenderMetaDataFile file)
 	{
 		final int vertSize = Config.Client.Graphics.Quality.verticalQuality
-				.get().calculateMaxVerticalData((byte) (file.pos.sectionDetail - ColumnRenderSource.SECTION_SIZE_OFFSET));
+				.get().calculateMaxVerticalData((byte) (file.pos.sectionDetailLevel - ColumnRenderSource.SECTION_SIZE_OFFSET));
 		
 		return CompletableFuture.completedFuture(
 				new ColumnRenderSource(file.pos, vertSize, this.level.getMinY()));

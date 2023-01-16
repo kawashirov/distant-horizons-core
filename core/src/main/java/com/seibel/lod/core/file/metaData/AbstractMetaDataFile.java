@@ -199,7 +199,7 @@ public abstract class AbstractMetaDataFile
 				buff.putInt(Integer.MIN_VALUE); // Unused
 				buff.putInt(this.pos.sectionZ);
 				buff.putInt(checksum);
-				buff.put(this.pos.sectionDetail);
+				buff.put(this.pos.sectionDetailLevel);
 				buff.put(this.metaData.dataLevel);
 				buff.put(this.metaData.loaderVersion);
 				buff.put(Byte.MIN_VALUE); // Unused

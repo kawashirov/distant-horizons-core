@@ -145,7 +145,7 @@ public class DataFileHandler implements IDataSourceProvider
                 fileToUse = metaFiles.iterator().next();
             }
             // Add file to the list of files.
-			this.topDetailLevel.updateAndGet(v -> Math.max(v, fileToUse.pos.sectionDetail));
+			this.topDetailLevel.updateAndGet(v -> Math.max(v, fileToUse.pos.sectionDetailLevel));
 			this.files.put(pos, fileToUse);
         }
     }
@@ -176,7 +176,7 @@ public class DataFileHandler implements IDataSourceProvider
 	
     protected void selfSearch(DhSectionPos basePos, DhSectionPos pos, ArrayList<DataMetaFile> existFiles, ArrayList<DhSectionPos> missing)
 	{
-        byte detail = pos.sectionDetail;
+        byte detail = pos.sectionDetailLevel;
         boolean allEmpty = true;
         outerLoop:
         while (--detail >= this.minDetailLevel)
@@ -218,7 +218,7 @@ public class DataFileHandler implements IDataSourceProvider
 					{
                         existFiles.add(metaFile);
                     }
-					else if (childPos.sectionDetail == this.minDetailLevel)
+					else if (childPos.sectionDetailLevel == this.minDetailLevel)
 					{
                         missing.add(childPos);
                     }
@@ -237,7 +237,7 @@ public class DataFileHandler implements IDataSourceProvider
                     if (metaFile != null)
 					{
                         existFiles.add(metaFile);
-                    } else if (childPos.sectionDetail == this.minDetailLevel)
+                    } else if (childPos.sectionDetailLevel == this.minDetailLevel)
 					{
                         missing.add(childPos);
                     }
@@ -257,7 +257,7 @@ public class DataFileHandler implements IDataSourceProvider
 					{
                         existFiles.add(metaFile);
                     }
-					else if (childPos.sectionDetail == this.minDetailLevel)
+					else if (childPos.sectionDetailLevel == this.minDetailLevel)
 					{
                         missing.add(childPos);
                     }
@@ -277,7 +277,7 @@ public class DataFileHandler implements IDataSourceProvider
 					{
                         existFiles.add(metaFile);
                     }
-					else if (childPos.sectionDetail == this.minDetailLevel)
+					else if (childPos.sectionDetailLevel == this.minDetailLevel)
 					{
                         missing.add(childPos);
                     }
@@ -301,7 +301,7 @@ public class DataFileHandler implements IDataSourceProvider
 	@Override
     public CompletableFuture<ILodDataSource> read(DhSectionPos pos)
 	{
-		this.topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetail));
+		this.topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetailLevel));
         DataMetaFile metaFile = this.atomicGetOrMakeFile(pos);
         if (metaFile == null)
 		{
@@ -328,7 +328,7 @@ public class DataFileHandler implements IDataSourceProvider
             metaFile.addToWriteQueue(chunkData);
         }
 		
-        if (sectionPos.sectionDetail <= this.topDetailLevel.get())
+        if (sectionPos.sectionDetailLevel <= this.topDetailLevel.get())
 		{
 			this.recursiveWrite(sectionPos.getParentPos(), chunkData);
         }
@@ -379,7 +379,7 @@ public class DataFileHandler implements IDataSourceProvider
         if (missing.size() == 1 && existFiles.isEmpty() && missing.get(0).equals(pos))
 		{
             // None exist.
-            IIncompleteDataSource incompleteDataSource = pos.sectionDetail <= SparseDataSource.MAX_SECTION_DETAIL ?
+            IIncompleteDataSource incompleteDataSource = pos.sectionDetailLevel <= SparseDataSource.MAX_SECTION_DETAIL ?
                     SparseDataSource.createEmpty(pos) : SpottyDataSource.createEmpty(pos);
             return CompletableFuture.completedFuture(incompleteDataSource);
         }
@@ -394,7 +394,7 @@ public class DataFileHandler implements IDataSourceProvider
 				}
             }
             final ArrayList<CompletableFuture<Void>> futures = new ArrayList<>(existFiles.size());
-            final IIncompleteDataSource dataSource = pos.sectionDetail <= SparseDataSource.MAX_SECTION_DETAIL ?
+            final IIncompleteDataSource dataSource = pos.sectionDetailLevel <= SparseDataSource.MAX_SECTION_DETAIL ?
                     SparseDataSource.createEmpty(pos) : 
 					SpottyDataSource.createEmpty(pos);
 

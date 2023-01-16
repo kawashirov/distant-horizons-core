@@ -30,18 +30,18 @@ public class DhSectionPos
 	public final static byte SECTION_REGION_DETAIL_LEVEL = SECTION_MINIMUM_DETAIL_LEVEL + LodUtil.REGION_DETAIL_LEVEL;
 	
 	
-	public final byte sectionDetail;
+	public final byte sectionDetailLevel;
 	
-	/** in sectionDetail level grid */
+	/** in a sectionDetailLevel grid */
 	public final int sectionX;
-	/** in sectionDetail level grid */
+	/** in a sectionDetailLevel grid */
 	public final int sectionZ;
 	
 	
 	
-	public DhSectionPos(byte sectionDetail, int sectionX, int sectionZ)
+	public DhSectionPos(byte sectionDetailLevel, int sectionX, int sectionZ)
 	{
-		this.sectionDetail = sectionDetail;
+		this.sectionDetailLevel = sectionDetailLevel;
 		this.sectionX = sectionX;
 		this.sectionZ = sectionZ;
 	}
@@ -51,7 +51,7 @@ public class DhSectionPos
 		DhLodPos lodPos = new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPos.x, blockPos.z);
 		lodPos = lodPos.convertToDetailLevel(SECTION_BLOCK_DETAIL_LEVEL);
 		
-		this.sectionDetail = SECTION_BLOCK_DETAIL_LEVEL;
+		this.sectionDetailLevel = SECTION_BLOCK_DETAIL_LEVEL;
 		this.sectionX = lodPos.x;
 		this.sectionZ = lodPos.z;
 	}
@@ -61,7 +61,7 @@ public class DhSectionPos
 		DhLodPos lodPos = new DhLodPos(LodUtil.CHUNK_DETAIL_LEVEL, chunkPos.x, chunkPos.z);
 		lodPos = lodPos.convertToDetailLevel(SECTION_CHUNK_DETAIL_LEVEL);
 		
-		this.sectionDetail = SECTION_CHUNK_DETAIL_LEVEL;
+		this.sectionDetailLevel = SECTION_CHUNK_DETAIL_LEVEL;
 		this.sectionX = lodPos.x;
 		this.sectionZ = lodPos.z;
 	}
@@ -72,35 +72,35 @@ public class DhSectionPos
 	public DhLodPos getCenter() { return this.getCenter((byte) 0); }
 	public DhLodPos getCenter(byte returnDetailLevel)
 	{
-		LodUtil.assertTrue(returnDetailLevel <= this.sectionDetail, "returnDetailLevel must be less than sectionDetail");
+		LodUtil.assertTrue(returnDetailLevel <= this.sectionDetailLevel, "returnDetailLevel must be less than sectionDetail");
 		
-		if (returnDetailLevel == this.sectionDetail)
-			return new DhLodPos(this.sectionDetail, this.sectionX, this.sectionZ);
+		if (returnDetailLevel == this.sectionDetailLevel)
+			return new DhLodPos(this.sectionDetailLevel, this.sectionX, this.sectionZ);
 		
-		byte offset = (byte) (this.sectionDetail - returnDetailLevel);
+		byte offset = (byte) (this.sectionDetailLevel - returnDetailLevel);
 		return new DhLodPos(returnDetailLevel,
 				(this.sectionX * BitShiftUtil.powerOfTwo(offset)) + BitShiftUtil.powerOfTwo(offset - 1),
 				(this.sectionZ * BitShiftUtil.powerOfTwo(offset)) + BitShiftUtil.powerOfTwo(offset - 1));
 	}
 	
 	/** @return the corner with the smallest X and Z coordinate */
-	public DhLodPos getCorner() { return this.getCorner((byte) (this.sectionDetail - 1)); }
+	public DhLodPos getCorner() { return this.getCorner((byte) (this.sectionDetailLevel - 1)); }
 	/** @return the corner with the smallest X and Z coordinate */
 	public DhLodPos getCorner(byte returnDetailLevel)
 	{
-		LodUtil.assertTrue(returnDetailLevel <= this.sectionDetail, "returnDetailLevel must be less than sectionDetail");
-		byte offset = (byte) (this.sectionDetail - returnDetailLevel);
+		LodUtil.assertTrue(returnDetailLevel <= this.sectionDetailLevel, "returnDetailLevel must be less than sectionDetail");
+		byte offset = (byte) (this.sectionDetailLevel - returnDetailLevel);
 		return new DhLodPos(returnDetailLevel,
 				this.sectionX * BitShiftUtil.powerOfTwo(offset),
 				this.sectionZ * BitShiftUtil.powerOfTwo(offset));
 	}
 	
-	public DhLodUnit getWidth() { return this.getWidth(this.sectionDetail);  }
+	public DhLodUnit getWidth() { return this.getWidth(this.sectionDetailLevel);  }
 	public DhLodUnit getWidth(byte returnDetailLevel)
 	{
-		LodUtil.assertTrue(returnDetailLevel <= this.sectionDetail, "returnDetailLevel must be less than sectionDetail");
-		byte offset = (byte) (this.sectionDetail - returnDetailLevel);
-		return new DhLodUnit(this.sectionDetail, BitShiftUtil.powerOfTwo(offset));
+		LodUtil.assertTrue(returnDetailLevel <= this.sectionDetailLevel, "returnDetailLevel must be less than sectionDetail");
+		byte offset = (byte) (this.sectionDetailLevel - returnDetailLevel);
+		return new DhLodUnit(this.sectionDetailLevel, BitShiftUtil.powerOfTwo(offset));
 	}
 	
 	
@@ -119,10 +119,10 @@ public class DhSectionPos
 	{
 		if (child0to3 < 0 || child0to3 > 3)
 			throw new IllegalArgumentException("child0to3 must be between 0 and 3");
-		if (this.sectionDetail <= 0)
+		if (this.sectionDetailLevel <= 0)
 			throw new IllegalStateException("section detail must be greater than 0");
 		
-		return new DhSectionPos((byte) (this.sectionDetail - 1),
+		return new DhSectionPos((byte) (this.sectionDetailLevel - 1),
 				this.sectionX * 2 + (child0to3 & 1),
 				this.sectionZ * 2 + BitShiftUtil.half(child0to3 & 2));
 	}
@@ -138,27 +138,27 @@ public class DhSectionPos
 		}
 	}
 	
-	public DhSectionPos getParentPos() { return new DhSectionPos((byte) (this.sectionDetail + 1), BitShiftUtil.half(this.sectionX), BitShiftUtil.half(this.sectionZ)); }
+	public DhSectionPos getParentPos() { return new DhSectionPos((byte) (this.sectionDetailLevel + 1), BitShiftUtil.half(this.sectionX), BitShiftUtil.half(this.sectionZ)); }
 	
 	public DhSectionPos getAdjacentPos(ELodDirection dir)
 	{
-		return new DhSectionPos(this.sectionDetail,
+		return new DhSectionPos(this.sectionDetailLevel,
 				this.sectionX + dir.getNormal().x,
 				this.sectionZ + dir.getNormal().z);
 	}
 	
-	public DhLodPos getSectionBBoxPos() { return new DhLodPos(this.sectionDetail, this.sectionX, this.sectionZ); }
+	public DhLodPos getSectionBBoxPos() { return new DhLodPos(this.sectionDetailLevel, this.sectionX, this.sectionZ); }
 	
 	/** NOTE: This does not consider yOffset! */
 	public boolean overlaps(DhSectionPos other) { return this.getSectionBBoxPos().overlaps(other.getSectionBBoxPos()); }
 	
 	/** Serialize() is different from toString() as it must NEVER be changed, and should be in a short format */
-	public String serialize() { return "[" + this.sectionDetail + ',' + this.sectionX + ',' + this.sectionZ + ']'; }
+	public String serialize() { return "[" + this.sectionDetailLevel + ',' + this.sectionX + ',' + this.sectionZ + ']'; }
 	
 	
 	
 	@Override
-	public String toString() { return "{" + this.sectionDetail + "*" + this.sectionX + "," + this.sectionZ + "}"; }
+	public String toString() { return "{" + this.sectionDetailLevel + "*" + this.sectionX + "," + this.sectionZ + "}"; }
 	
 	@Override
 	public boolean equals(Object obj)
@@ -169,7 +169,7 @@ public class DhSectionPos
 			return false;
 		
 		DhSectionPos that = (DhSectionPos) obj;
-		return this.sectionDetail == that.sectionDetail &&
+		return this.sectionDetailLevel == that.sectionDetailLevel &&
 				this.sectionX == that.sectionX &&
 				this.sectionZ == that.sectionZ;
 	}
@@ -177,7 +177,7 @@ public class DhSectionPos
 	@Override
 	public int hashCode()
 	{
-		return Integer.hashCode(this.sectionDetail) ^ // XOR
+		return Integer.hashCode(this.sectionDetailLevel) ^ // XOR
 				Integer.hashCode(this.sectionX) ^ // XOR
 				Integer.hashCode(this.sectionZ);
 	}

@@ -102,7 +102,7 @@ public class LodQuadTree implements AutoCloseable {
      * @return the LodSection
      */
     public LodRenderSection getSection(DhSectionPos pos) {
-        return getSection(pos.sectionDetail, pos.sectionX, pos.sectionZ);
+        return getSection(pos.sectionDetailLevel, pos.sectionX, pos.sectionZ);
     }
 
     /**
@@ -304,7 +304,7 @@ public class LodQuadTree implements AutoCloseable {
                     section.childCount = 4;
                 } else {
                     final DhSectionPos sectPos = section != null ? section.pos : new DhSectionPos(f_sectLevel, pos.x, pos.y);
-                    LodUtil.assertTrue(sectPos.sectionDetail == f_sectLevel
+                    LodUtil.assertTrue(sectPos.sectionDetailLevel == f_sectLevel
                     && sectPos.sectionX == pos.x && sectPos.sectionZ == pos.y,
                             "sectPos {} != {} @ {}", sectPos, pos, f_sectLevel);
 
@@ -349,7 +349,7 @@ public class LodQuadTree implements AutoCloseable {
                 }
                 // Final quick assert to insure section pos is correct.
                 if (section != null) {
-                    LodUtil.assertTrue(section.pos.sectionDetail == f_sectLevel, "section.pos: " + section.pos + " vs level: " + f_sectLevel);
+                    LodUtil.assertTrue(section.pos.sectionDetailLevel == f_sectLevel, "section.pos: " + section.pos + " vs level: " + f_sectLevel);
                     LodUtil.assertTrue(section.pos.sectionX == pos.x, "section.pos: " + section.pos + " vs pos: " + pos);
                     LodUtil.assertTrue(section.pos.sectionZ == pos.y, "section.pos: " + section.pos + " vs pos: " + pos);
                 }
@@ -402,7 +402,7 @@ public class LodQuadTree implements AutoCloseable {
 
                 // Call load on new sections, and tick on existing ones, and dispose old sections
                 if (section.childCount == -1) {
-                    if (section.pos.sectionDetail < numbersOfSectionLevels-1)
+                    if (section.pos.sectionDetailLevel < numbersOfSectionLevels-1)
                         LodUtil.assertTrue(getParentSection(section.pos).childCount == 0);
                     ringList.set(pos.x, pos.y, null);
                     section.dispose();
@@ -420,8 +420,8 @@ public class LodQuadTree implements AutoCloseable {
 
                 // Assertion steps
                 LodUtil.assertTrue(section.childCount == 4 || section.childCount == 0);
-                if (section.pos.sectionDetail == LAYER_BEGINNING_OFFSET) LodUtil.assertTrue(section.childCount == 0);
-                if (section.pos.sectionDetail != LAYER_BEGINNING_OFFSET) {
+                if (section.pos.sectionDetailLevel == LAYER_BEGINNING_OFFSET) LodUtil.assertTrue(section.childCount == 0);
+                if (section.pos.sectionDetailLevel != LAYER_BEGINNING_OFFSET) {
                     LodRenderSection child0 = getChildSection(section.pos, 0);
                     LodRenderSection child1 = getChildSection(section.pos, 1);
                     LodRenderSection child2 = getChildSection(section.pos, 2);
