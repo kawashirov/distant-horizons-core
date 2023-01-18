@@ -8,6 +8,7 @@ import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.file.datafile.DataMetaFile;
 import com.seibel.lod.core.datatype.ILodDataSource;
 import com.seibel.lod.core.pos.DhSectionPos;
+import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.objects.UnclosableInputStream;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
@@ -230,23 +231,43 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 	
     public static FullDataSource createEmpty(DhSectionPos pos) { return new FullDataSource(pos); }
 	
-	public static boolean neededForPosition(DhSectionPos posToWrite, DhSectionPos posToTest)
+	/** Returns whether data at the given posToWrite can effect the target region file at posToTest. */
+	public static boolean firstDataPosCanAffectSecond(DhSectionPos posToWrite, DhSectionPos posToTest)
 	{
 		if (!posToWrite.overlaps(posToTest))
+		{
+			// the testPosition is outside the writePosition
 			return false;
-		if (posToTest.sectionDetailLevel > posToWrite.sectionDetailLevel)
+		}
+		else if (posToTest.sectionDetailLevel > posToWrite.sectionDetailLevel)
+		{
+			// the testPosition is larger (aka is less detailed) than the writePosition,
+			// more detailed sections shouldn't be updated by lower detail sections
 			return false;
-		if (posToWrite.sectionDetailLevel - posToTest.sectionDetailLevel <= SECTION_SIZE_OFFSET)
+		}
+		else if (posToWrite.sectionDetailLevel - posToTest.sectionDetailLevel <= SECTION_SIZE_OFFSET)
+		{
+			// if the difference in detail levels is very large, the posToWrite
+			// may be skipped, due to how we sample large detail levels by only
+			// getting the corners.
+			 
+			// In this case the difference isn't very large, so return true
 			return true;
-		byte sectPerData = (byte) (1 << (posToWrite.sectionDetailLevel - posToTest.sectionDetailLevel - SECTION_SIZE_OFFSET));
-		return posToTest.sectionX % sectPerData == 0 && posToTest.sectionZ % sectPerData == 0;
+		}
+		else
+		{
+			// the difference in detail levels is very large,
+			// check if the posToWrite is in a corner of posToTest
+			byte sectPerData = (byte) BitShiftUtil.powerOfTwo(posToWrite.sectionDetailLevel - posToTest.sectionDetailLevel - SECTION_SIZE_OFFSET);
+			return posToTest.sectionX % sectPerData == 0 && posToTest.sectionZ % sectPerData == 0;	
+		}
 	}
 	
 	public void writeFromLower(FullDataSource subData)
 	{
 		LodUtil.assertTrue(this.sectionPos.overlaps(subData.sectionPos));
 		LodUtil.assertTrue(subData.sectionPos.sectionDetailLevel < this.sectionPos.sectionDetailLevel);
-		if (!neededForPosition(this.sectionPos, subData.sectionPos))
+		if (!firstDataPosCanAffectSecond(this.sectionPos, subData.sectionPos))
 			return;
 		DhSectionPos lowerSectPos = subData.sectionPos;
 		byte detailDiff = (byte) (this.sectionPos.sectionDetailLevel - subData.sectionPos.sectionDetailLevel);

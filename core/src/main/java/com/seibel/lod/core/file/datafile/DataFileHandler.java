@@ -201,7 +201,7 @@ public class DataFileHandler implements IDataSourceProvider
 
                     //TODO: The following check is temporary as we only sample corner points, which means
                     // on a very different level, we may not need the entire section at all.
-                    if (!FullDataSource.neededForPosition(basePos, subPos))
+                    if (!FullDataSource.firstDataPosCanAffectSecond(basePos, subPos))
 					{
 						continue;
 					}
@@ -233,7 +233,7 @@ public class DataFileHandler implements IDataSourceProvider
 	private void recursiveGetDataFilesForPosition(int childIndex, DhSectionPos basePos, DhSectionPos pos, ArrayList<DataMetaFile> preexistingFiles, ArrayList<DhSectionPos> missingFilePositions)
 	{
 		DhSectionPos childPos = pos.getChildByIndex(childIndex);
-		if (FullDataSource.neededForPosition(basePos, childPos))
+		if (FullDataSource.firstDataPosCanAffectSecond(basePos, childPos))
 		{
 			DataMetaFile metaFile = this.files.get(childPos);
 			if (metaFile != null)
