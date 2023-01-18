@@ -440,9 +440,14 @@ public class WorldGenerationQueue implements Closeable
 			return;
 		}
 		
-		this.removeOutdatedGroups();
-		this.processLooseTasks();
-		this.pollAndStartNext(targetPos);
+		
+		// generate terrain until the generator is asked to stop (if the while loop wasn't done the world generator wouldn't have enough tasks`)
+		while (!this.generator.isBusy())
+		{
+			this.removeOutdatedGroups();
+			this.processLooseTasks();
+			this.pollAndStartNext(targetPos);
+		}
 	}
 	
 	private void startTaskGroup(InProgressWorldGenTask task)
