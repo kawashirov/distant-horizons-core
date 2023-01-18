@@ -47,30 +47,43 @@ public class GeneratedDataFileHandler extends DataFileHandler
     public CompletableFuture<ILodDataSource> onCreateDataFile(DataMetaFile file)
 	{
         DhSectionPos pos = file.pos;
-        ArrayList<DataMetaFile> existingFiles = new ArrayList<>();
-        ArrayList<DhSectionPos> missing = new ArrayList<>();
-		this.selfSearch(pos, pos, existingFiles, missing);
-        LodUtil.assertTrue(!missing.isEmpty() || !existingFiles.isEmpty());
-        if (missing.size() == 1 && existingFiles.isEmpty() && missing.get(0).equals(pos))
+        
+		ArrayList<DataMetaFile> existingFiles = new ArrayList<>();
+        ArrayList<DhSectionPos> missingPositions = new ArrayList<>();
+		this.getDataFilesForPosition(pos, pos, existingFiles, missingPositions);
+		
+		// confirm the quad tree has at least one node in it
+        LodUtil.assertTrue(!missingPositions.isEmpty() || !existingFiles.isEmpty());
+		
+		// determine the type of dataSource that should be used for this position
+		IIncompleteDataSource dataSource = pos.sectionDetailLevel <= SparseDataSource.MAX_SECTION_DETAIL ?
+				SparseDataSource.createEmpty(pos) :
+				SpottyDataSource.createEmpty(pos);
+		
+		
+        if (missingPositions.size() == 1 && existingFiles.isEmpty() && missingPositions.get(0).equals(pos))
 		{
-            // None exist.
-            IIncompleteDataSource dataSource = pos.sectionDetailLevel <= SparseDataSource.MAX_SECTION_DETAIL ?
-                    SparseDataSource.createEmpty(pos) : 
-					SpottyDataSource.createEmpty(pos);
+            // No LOD data exists for this position yet
 			
             WorldGenerationQueue queue = this.worldGenQueueRef.get();
-            GenTask task = new GenTask(pos, new WeakReference<>(dataSource));
             if (queue != null)
 			{
+				// queue this section to be generated
+				GenTask task = new GenTask(pos, new WeakReference<>(dataSource));
                 queue.submitGenTask(dataSource.getSectionPos().getSectionBBoxPos(),
                         dataSource.getDataDetail(), task)
 						.whenComplete( (genTaskCompleted, ex) -> this.onWorldGenTaskComplete(genTaskCompleted, ex, task, pos) );
             }
+			
+			// return the empty dataSource (it will be populated later)
             return CompletableFuture.completedFuture(dataSource);
         }
 		else
 		{
-            for (DhSectionPos missingPos : missing)
+			// LOD data exists for this position
+			
+			// create the missing metaData files
+            for (DhSectionPos missingPos : missingPositions)
 			{
                 DataMetaFile newFile = this.atomicGetOrMakeFile(missingPos);
                 if (newFile != null)
@@ -79,15 +92,14 @@ public class GeneratedDataFileHandler extends DataFileHandler
 				}
             }
 			
-            final ArrayList<CompletableFuture<Void>> futures = new ArrayList<>(existingFiles.size());
-            final IIncompleteDataSource dataSource = pos.sectionDetailLevel <= SparseDataSource.MAX_SECTION_DETAIL ?
-                    SparseDataSource.createEmpty(pos) : SpottyDataSource.createEmpty(pos);
             LOGGER.debug("Creating {} from sampling {} files: {}", pos, existingFiles.size(), existingFiles);
-
+			
+			// read in the existing data
+			final ArrayList<CompletableFuture<Void>> futures = new ArrayList<>(existingFiles.size());
             for (DataMetaFile existingFile : existingFiles)
 			{
                 futures.add(existingFile.loadOrGetCached()
-                        .exceptionally((ex) -> null)
+                        .exceptionally((ex) -> /*Ignore file read errors*/null)
                         .thenAccept((data) ->
 						{
                             if (data != null)
@@ -99,7 +111,7 @@ public class GeneratedDataFileHandler extends DataFileHandler
                 );
             }
             return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
-                    .thenApply((v) -> dataSource.trySelfPromote());
+                    .thenApply((voidValue) -> dataSource.trySelfPromote());
         }
     }
 	
