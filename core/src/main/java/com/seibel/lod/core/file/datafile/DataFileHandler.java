@@ -93,7 +93,7 @@ public class DataFileHandler implements IDataSourceProvider
             }
         }
 
-        // Warn for multiple files with the same pos, and then select the one with latest timestamp.
+        // Warn for multiple files with the same pos, and then select the one with the latest timestamp.
         for (DhSectionPos pos : filesByPos.keySet())
 		{
             Collection<DataMetaFile> metaFiles = filesByPos.get(pos);
@@ -174,26 +174,38 @@ public class DataFileHandler implements IDataSourceProvider
         return metaFile;
     }
 	
-    protected void selfSearch(DhSectionPos basePos, DhSectionPos pos, ArrayList<DataMetaFile> existFiles, ArrayList<DhSectionPos> missing)
+	/**
+	 * Populates the preexistingFiles and missingFilePositions ArrayLists.
+	 * 
+	 * @param preexistingFiles the list of {@link DataMetaFile}'s that have been created for the given position.
+	 * @param missingFilePositions the list of {@link DhSectionPos}'s that don't have {@link DataMetaFile} created for them yet.
+	 */
+    protected void getDataFilesForPosition(DhSectionPos basePos, DhSectionPos pos, 
+			ArrayList<DataMetaFile> preexistingFiles, ArrayList<DhSectionPos> missingFilePositions)
 	{
-        byte detail = pos.sectionDetailLevel;
+        byte sectionDetail = pos.sectionDetailLevel;
         boolean allEmpty = true;
+		
         outerLoop:
-        while (--detail >= this.minDetailLevel)
+        while (--sectionDetail >= this.minDetailLevel)
 		{
-            DhLodPos min = pos.getCorner().getCorner(detail);
-            int count = pos.getSectionBBoxPos().getBlockWidth(detail);
-            for (int ox = 0; ox<count; ox++)
+            DhLodPos minPos = pos.getCorner().getCorner(sectionDetail);
+            int count = pos.getSectionBBoxPos().getBlockWidth(sectionDetail);
+			
+            for (int xOffset = 0; xOffset < count; xOffset++)
 			{
-                for (int oz = 0; oz<count; oz++)
+                for (int zOffset = 0; zOffset < count; zOffset++)
 				{
-                    DhSectionPos subPos = new DhSectionPos(detail, ox+min.x, oz+min.z);
+                    DhSectionPos subPos = new DhSectionPos(sectionDetail, xOffset+minPos.x, zOffset+minPos.z);
                     LodUtil.assertTrue(pos.overlaps(basePos) && subPos.overlaps(pos));
 
-                    //TODO: The following check is temp as we only samples corner points per data, which means
+                    //TODO: The following check is temporary as we only sample corner points, which means
                     // on a very different level, we may not need the entire section at all.
-                    if (!FullDataSource.neededForPosition(basePos, subPos)) continue;
-
+                    if (!FullDataSource.neededForPosition(basePos, subPos))
+					{
+						continue;
+					}
+					
                     if (this.files.containsKey(subPos))
 					{
                         allEmpty = false;
@@ -205,90 +217,42 @@ public class DataFileHandler implements IDataSourceProvider
 		
         if (allEmpty)
 		{
-            missing.add(pos);
+			// there are no children to this quad tree,
+			// add this leaf's position
+            missingFilePositions.add(pos);
         }
 		else 
 		{
-            {
-                DhSectionPos childPos = pos.getChildByIndex(0);
-                if (FullDataSource.neededForPosition(basePos, childPos))
-				{
-                    DataMetaFile metaFile = this.files.get(childPos);
-                    if (metaFile != null)
-					{
-                        existFiles.add(metaFile);
-                    }
-					else if (childPos.sectionDetailLevel == this.minDetailLevel)
-					{
-                        missing.add(childPos);
-                    }
-					else
-					{
-						this.selfSearch(basePos, childPos, existFiles, missing);
-                    }
-                }
-            }
-			
-            {
-                DhSectionPos childPos = pos.getChildByIndex(1);
-                if (FullDataSource.neededForPosition(basePos, childPos))
-				{
-                    DataMetaFile metaFile = this.files.get(childPos);
-                    if (metaFile != null)
-					{
-                        existFiles.add(metaFile);
-                    } else if (childPos.sectionDetailLevel == this.minDetailLevel)
-					{
-                        missing.add(childPos);
-                    }
-					else
-					{
-						this.selfSearch(basePos, childPos, existFiles, missing);
-                    }
-                }
-            }
-			
-            {
-                DhSectionPos childPos = pos.getChildByIndex(2);
-                if (FullDataSource.neededForPosition(basePos, childPos))
-				{
-                    DataMetaFile metaFile = this.files.get(childPos);
-                    if (metaFile != null)
-					{
-                        existFiles.add(metaFile);
-                    }
-					else if (childPos.sectionDetailLevel == this.minDetailLevel)
-					{
-                        missing.add(childPos);
-                    }
-					else
-					{
-						this.selfSearch(basePos, childPos, existFiles, missing);
-                    }
-                }
-            }
-			
-            {
-                DhSectionPos childPos = pos.getChildByIndex(3);
-                if (FullDataSource.neededForPosition(basePos, childPos))
-				{
-                    DataMetaFile metaFile = this.files.get(childPos);
-                    if (metaFile != null)
-					{
-                        existFiles.add(metaFile);
-                    }
-					else if (childPos.sectionDetailLevel == this.minDetailLevel)
-					{
-                        missing.add(childPos);
-                    }
-					else
-					{
-						this.selfSearch(basePos, childPos, existFiles, missing);
-                    }
-                }
-            }
+			// there are children in this quad tree, search them
+			this.recursiveGetDataFilesForPosition(0, basePos, pos, preexistingFiles, missingFilePositions);
+			this.recursiveGetDataFilesForPosition(1, basePos, pos, preexistingFiles, missingFilePositions);
+			this.recursiveGetDataFilesForPosition(2, basePos, pos, preexistingFiles, missingFilePositions);
+			this.recursiveGetDataFilesForPosition(3, basePos, pos, preexistingFiles, missingFilePositions);
         }
     }
+	private void recursiveGetDataFilesForPosition(int childIndex, DhSectionPos basePos, DhSectionPos pos, ArrayList<DataMetaFile> preexistingFiles, ArrayList<DhSectionPos> missingFilePositions)
+	{
+		DhSectionPos childPos = pos.getChildByIndex(childIndex);
+		if (FullDataSource.neededForPosition(basePos, childPos))
+		{
+			DataMetaFile metaFile = this.files.get(childPos);
+			if (metaFile != null)
+			{
+				// we have reached a populated leaf node in the quad tree
+				preexistingFiles.add(metaFile);
+			}
+			else if (childPos.sectionDetailLevel == this.minDetailLevel)
+			{
+				// we have reached an empty leaf node in the quad tree
+				missingFilePositions.add(childPos);
+			}
+			else
+			{
+				// recursively traverse down the tree
+				this.getDataFilesForPosition(basePos, childPos, preexistingFiles, missingFilePositions);
+			}
+		}
+	}
 	
 	
 	/**
@@ -374,7 +338,7 @@ public class DataFileHandler implements IDataSourceProvider
         DhSectionPos pos = file.pos;
         ArrayList<DataMetaFile> existFiles = new ArrayList<>();
         ArrayList<DhSectionPos> missing = new ArrayList<>();
-		this.selfSearch(pos, pos, existFiles, missing);
+		this.getDataFilesForPosition(pos, pos, existFiles, missing);
         LodUtil.assertTrue(!missing.isEmpty() || !existFiles.isEmpty());
         if (missing.size() == 1 && existFiles.isEmpty() && missing.get(0).equals(pos))
 		{
