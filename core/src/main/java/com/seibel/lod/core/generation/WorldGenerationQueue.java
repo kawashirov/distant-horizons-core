@@ -289,9 +289,10 @@ public class WorldGenerationQueue implements Closeable
 	private void processLooseTasks()
 	{
 		int taskProcessed = 0;
-		while (!this.looseTasks.isEmpty() && taskProcessed < MAX_TASKS_PROCESSED_PER_TICK)
+		
+		WorldGenTask task = this.looseTasks.poll(); // using poll prevents concurrency issues where the list is cleared after asking if it was empty
+		while (task != null && taskProcessed < MAX_TASKS_PROCESSED_PER_TICK)
 		{
-			WorldGenTask task = this.looseTasks.poll();
 			taskProcessed++;
 			byte taskDataDetail = task.dataDetailLevel;
 			byte taskGranularity = (byte) (task.pos.detailLevel - taskDataDetail);
@@ -341,6 +342,9 @@ public class WorldGenerationQueue implements Closeable
 					this.addAndCombineGroup(group);
 				}
 			}
+			
+			// get the next task to process (will be null if the list is empty)
+			task = this.looseTasks.poll();
 		}
 		
 		if (taskProcessed != 0)
