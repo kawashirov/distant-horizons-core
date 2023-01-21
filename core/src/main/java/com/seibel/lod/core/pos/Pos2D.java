@@ -24,49 +24,47 @@ import com.seibel.lod.core.util.MathUtil;
 
 import java.util.Objects;
 
-public class Pos2D {
-    public static final Pos2D ZERO = new Pos2D(0, 0);
-    public final int x;
-    public final int y;
-    public Pos2D(int x, int y) {
-        this.x = x;
-        this.y = y;
-    }
-
-    public Pos2D add(Pos2D other) {
-        return new Pos2D(x + other.x, y + other.y);
-    }
-    public Pos2D subtract(Pos2D other) {
-        return new Pos2D(x - other.x, y - other.y);
-    }
-    public Pos2D subtract(int v) {
-        return new Pos2D(x - v, y - v);
-    }
-
-    public double dist(Pos2D other) {
-        return Math.sqrt(Math.pow(x - other.x, 2) + Math.pow(y - other.y, 2));
-    }
-    public long distSquared(Pos2D other) {
-        return MathUtil.pow2((long)x - other.x) + MathUtil.pow2((long)y - other.y);
-    }
-    public int chebyshevDist(Pos2D o) {
-        return Math.max(Math.abs(x - o.x), Math.abs(y - o.y));
-    }
-    public int manhattanDist(Pos2D o) {
-        return Math.abs(x - o.x) + Math.abs(y - o.y);
-    }
-    public int hashCode() {
-        return Objects.hash(x, y);
-    }
-    public String toString() {
-        return "[" + x + ", " + y + "]";
-    }
-    public boolean equals(Object other) {
-        if (other == this) return true;
-        if (other instanceof Pos2D) {
-            Pos2D o = (Pos2D)other;
-            return x == o.x && y == o.y;
-        }
-        return false;
-    }
+public class Pos2D
+{
+	public static final Pos2D ZERO = new Pos2D(0, 0);
+	public final int x;
+	public final int y;
+	
+	
+	
+	public Pos2D(int x, int y)
+	{
+		this.x = x;
+		this.y = y;
+	}
+	
+	
+	
+	public Pos2D add(Pos2D other) { return new Pos2D(this.x + other.x, this.y + other.y); }
+	public Pos2D subtract(Pos2D other) { return new Pos2D(this.x - other.x, this.y - other.y); }
+	public Pos2D subtract(int value) { return new Pos2D(this.x - value, this.y - value); }
+	
+	public double dist(Pos2D other) { return Math.sqrt(Math.pow(this.x - other.x, 2) + Math.pow(this.y - other.y, 2)); }
+	public long distSquared(Pos2D other) { return MathUtil.pow2((long) this.x - other.x) + MathUtil.pow2((long) this.y - other.y); }
+	public int chebyshevDist(Pos2D other) { return Math.max(Math.abs(this.x - other.x), Math.abs(this.y - other.y)); }
+	public int manhattanDist(Pos2D o) { return Math.abs(this.x - o.x) + Math.abs(this.y - o.y); }
+	
+	
+	
+	public int hashCode() { return Objects.hash(this.x, this.y); }
+	
+	public String toString() { return "[" + this.x + ", " + this.y + "]"; }
+	
+	public boolean equals(Object otherObj)
+	{
+		if (otherObj == this)
+			return true;
+		if (otherObj instanceof Pos2D)
+		{
+			Pos2D otherPos = (Pos2D) otherObj;
+			return this.x == otherPos.x && this.y == otherPos.y;
+		}
+		return false;
+	}
+	
 }
