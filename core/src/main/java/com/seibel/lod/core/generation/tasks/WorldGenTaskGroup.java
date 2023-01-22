@@ -11,7 +11,7 @@ import java.util.function.Consumer;
  * @author Leetom
  * @version 2022-11-25
  */
-public final class TaskGroup
+public final class WorldGenTaskGroup
 {
 	public final DhLodPos pos;
 	public byte dataDetail;
@@ -20,7 +20,7 @@ public final class TaskGroup
 	
 	
 	
-	public TaskGroup(DhLodPos pos, byte dataDetail)
+	public WorldGenTaskGroup(DhLodPos pos, byte dataDetail)
 	{
 		this.pos = pos;
 		this.dataDetail = dataDetail;

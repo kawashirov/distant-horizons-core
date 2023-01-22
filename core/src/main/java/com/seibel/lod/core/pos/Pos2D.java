@@ -27,6 +27,7 @@ import java.util.Objects;
 public class Pos2D
 {
 	public static final Pos2D ZERO = new Pos2D(0, 0);
+	
 	public final int x;
 	public final int y;
 	

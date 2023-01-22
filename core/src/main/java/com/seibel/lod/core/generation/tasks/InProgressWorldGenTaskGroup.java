@@ -6,13 +6,13 @@ import java.util.concurrent.CompletableFuture;
  * @author Leetom
  * @version 2022-11-25
  */
-public final class InProgressWorldGenTask
+public final class InProgressWorldGenTaskGroup
 {
-	public final TaskGroup group;
+	public final WorldGenTaskGroup group;
 	public CompletableFuture<Void> genFuture = null;
 	
 	
-	public InProgressWorldGenTask(TaskGroup group)
+	public InProgressWorldGenTaskGroup(WorldGenTaskGroup group)
 	{
 		this.group = group;
 	}

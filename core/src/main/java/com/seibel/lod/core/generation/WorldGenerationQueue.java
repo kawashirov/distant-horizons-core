@@ -39,7 +39,7 @@ public class WorldGenerationQueue implements Closeable
 	private final ConcurrentLinkedQueue<WorldGenTask> looseTasks = new ConcurrentLinkedQueue<>();
 	// FIXME: Concurrency issue on close!
 	// FIXME: This is using up a TONS of time to process!
-	private final ConcurrentSkipListMap<DhLodPos, TaskGroup> taskGroups = new ConcurrentSkipListMap<>(
+	private final ConcurrentSkipListMap<DhLodPos, WorldGenTaskGroup> taskGroups = new ConcurrentSkipListMap<>(
 			(a, b) -> {
 				if (a.detailLevel != b.detailLevel)
 					return a.detailLevel - b.detailLevel;
@@ -53,7 +53,7 @@ public class WorldGenerationQueue implements Closeable
 			}
 	); // Accessed by poller only
 	
-	private final ConcurrentHashMap<DhLodPos, InProgressWorldGenTask> inProgress = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<DhLodPos, InProgressWorldGenTaskGroup> inProgress = new ConcurrentHashMap<>();
 	
 	// granularity is the detail level for batching world generator requests together
 	private final byte maxGranularity;
@@ -190,7 +190,7 @@ public class WorldGenerationQueue implements Closeable
 		}
 	}
 	
-	private void addAndCombineGroup(TaskGroup target)
+	private void addAndCombineGroup(WorldGenTaskGroup target)
 	{
 		byte granularity = (byte) (target.pos.detailLevel - target.dataDetail);
 		LodUtil.assertTrue(granularity <= this.maxGranularity && granularity >= this.minGranularity);
@@ -200,10 +200,10 @@ public class WorldGenerationQueue implements Closeable
 		if (granularity > this.minGranularity)
 		{
 			// TODO: Optimize this check
-			Iterator<TaskGroup> groupIter = this.taskGroups.values().iterator();
+			Iterator<WorldGenTaskGroup> groupIter = this.taskGroups.values().iterator();
 			while (groupIter.hasNext())
 			{
-				TaskGroup group = groupIter.next();
+				WorldGenTaskGroup group = groupIter.next();
 				if (group.dataDetail != target.dataDetail)
 					continue;
 				if (!group.pos.overlaps(target.pos))
@@ -228,7 +228,7 @@ public class WorldGenerationQueue implements Closeable
 			{
 				if (i == targetChildId)
 					continue;
-				TaskGroup group = this.taskGroups.get(parentPos.getChildByIndex(i));
+				WorldGenTaskGroup group = this.taskGroups.get(parentPos.getChildByIndex(i));
 				if (group == null || group.dataDetail != target.dataDetail)
 				{
 					allPassed = false;
@@ -238,7 +238,7 @@ public class WorldGenerationQueue implements Closeable
 			if (allPassed)
 			{
 				LodUtil.assertTrue(!this.taskGroups.containsKey(parentPos) || this.taskGroups.get(parentPos).dataDetail != target.dataDetail);
-				TaskGroup[] groups = new TaskGroup[4];
+				WorldGenTaskGroup[] groups = new WorldGenTaskGroup[4];
 				for (int i = 0; i < 4; i++)
 				{
 					if (i == targetChildId)
@@ -248,14 +248,14 @@ public class WorldGenerationQueue implements Closeable
 					LodUtil.assertTrue(groups[i] != null && groups[i].dataDetail == target.dataDetail);
 				}
 				
-				TaskGroup newGroup = this.taskGroups.get(parentPos);
+				WorldGenTaskGroup newGroup = this.taskGroups.get(parentPos);
 				if (newGroup != null)
 				{
 					LodUtil.assertTrue(newGroup.dataDetail != target.dataDetail); // if it is equal, we should have been merged ages ago
 					if (newGroup.dataDetail < target.dataDetail)
 					{
 						// We can just append us into the existing list.
-						for (TaskGroup g : groups)
+						for (WorldGenTaskGroup g : groups)
 							newGroup.generatorTasks.addAll(g.generatorTasks);
 					}
 					else
@@ -264,7 +264,7 @@ public class WorldGenerationQueue implements Closeable
 						newGroup.dataDetail = target.dataDetail;
 						boolean worked = this.taskGroups.remove(parentPos, newGroup); // Pop it off for later proper merge check
 						LodUtil.assertTrue(worked);
-						for (TaskGroup g : groups)
+						for (WorldGenTaskGroup g : groups)
 							newGroup.generatorTasks.addAll(g.generatorTasks);
 						this.addAndCombineGroup(newGroup); // Recursive check the new group
 					}
@@ -272,8 +272,8 @@ public class WorldGenerationQueue implements Closeable
 				else
 				{
 					// There should not be any higher granularity to check, as otherwise we would have merged ages ago
-					newGroup = new TaskGroup(parentPos, target.dataDetail);
-					for (TaskGroup g : groups)
+					newGroup = new WorldGenTaskGroup(parentPos, target.dataDetail);
+					for (WorldGenTaskGroup g : groups)
 						newGroup.generatorTasks.addAll(g.generatorTasks);
 					this.addAndCombineGroup(newGroup); // Recursive check the new group
 				}
@@ -282,7 +282,7 @@ public class WorldGenerationQueue implements Closeable
 		}
 		
 		// Finally, we should be safe to add the target group into the list
-		TaskGroup v = this.taskGroups.put(target.pos, target);
+		WorldGenTaskGroup v = this.taskGroups.put(target.pos, target);
 		LodUtil.assertTrue(v == null); // should never be replacing other things
 	}
 	
@@ -299,7 +299,7 @@ public class WorldGenerationQueue implements Closeable
 			LodUtil.assertTrue(taskGranularity >= LodUtil.CHUNK_DETAIL_LEVEL && taskGranularity >= this.minGranularity && taskGranularity <= this.maxGranularity);
 			
 			// Check existing one
-			TaskGroup group = this.taskGroups.get(task.pos);
+			WorldGenTaskGroup group = this.taskGroups.get(task.pos);
 			if (group != null)
 			{
 				if (group.dataDetail <= taskDataDetail)
@@ -337,7 +337,7 @@ public class WorldGenerationQueue implements Closeable
 				
 				if (!didAnything)
 				{
-					group = new TaskGroup(task.pos, taskDataDetail);
+					group = new WorldGenTaskGroup(task.pos, taskDataDetail);
 					group.generatorTasks.add(task);
 					this.addAndCombineGroup(group);
 				}
@@ -357,13 +357,13 @@ public class WorldGenerationQueue implements Closeable
 	private void removeOutdatedGroups()
 	{
 		// Remove all invalid genTasks and groups
-		Iterator<TaskGroup> groupIter = this.taskGroups.values().iterator();
+		Iterator<WorldGenTaskGroup> groupIter = this.taskGroups.values().iterator();
 		
 		// go through each TaskGroup
 		while (groupIter.hasNext())
 		{
 			// go through each WorldGenTask in the TaskGroup
-			TaskGroup group = groupIter.next();
+			WorldGenTaskGroup group = groupIter.next();
 			Iterator<WorldGenTask> taskIter = group.generatorTasks.iterator();
 			while (taskIter.hasNext())
 			{
@@ -383,13 +383,13 @@ public class WorldGenerationQueue implements Closeable
 	private void pollAndStartNext(DhBlockPos2D targetPos)
 	{
 		// Select the one with the highest data detail level and closest to the target pos
-		TaskGroup best = null;
+		WorldGenTaskGroup best = null;
 		long cachedDist = Long.MAX_VALUE;
 		int lastChebDist = Integer.MIN_VALUE;
 		boolean continueNextRound = true;
 		byte currentDetailChecking = -1;
 		
-		for (TaskGroup group : this.taskGroups.values())
+		for (WorldGenTaskGroup group : this.taskGroups.values())
 		{
 			if (currentDetailChecking == -1)
 				currentDetailChecking = group.dataDetail;
@@ -412,8 +412,8 @@ public class WorldGenerationQueue implements Closeable
 		
 		if (best != null)
 		{
-			InProgressWorldGenTask startedTask = new InProgressWorldGenTask(best);
-			InProgressWorldGenTask casTask = this.inProgress.putIfAbsent(best.pos, startedTask);
+			InProgressWorldGenTaskGroup startedTask = new InProgressWorldGenTaskGroup(best);
+			InProgressWorldGenTaskGroup casTask = this.inProgress.putIfAbsent(best.pos, startedTask);
 			boolean worked = this.taskGroups.remove(best.pos, best); // Remove the selected task from the group
 			LodUtil.assertTrue(worked);
 			if (casTask != null)
@@ -421,7 +421,7 @@ public class WorldGenerationQueue implements Closeable
 				// Note: Due to concurrency reasons, even if the currently running task is compatible with selected task,
 				//         we cannot use it, as some chunks may have already been written into.
 				this.pollAndStartNext(targetPos); // Poll next one.
-				TaskGroup exchange = this.taskGroups.put(best.pos, best); // put back the task.
+				WorldGenTaskGroup exchange = this.taskGroups.put(best.pos, best); // put back the task.
 				LodUtil.assertTrue(exchange == null);
 			}
 			else
@@ -454,7 +454,7 @@ public class WorldGenerationQueue implements Closeable
 		}
 	}
 	
-	private void startTaskGroup(InProgressWorldGenTask task)
+	private void startTaskGroup(InProgressWorldGenTaskGroup task)
 	{
 		byte dataDetail = task.group.dataDetail;
 		DhLodPos pos = task.group.pos;
