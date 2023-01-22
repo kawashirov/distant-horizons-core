@@ -316,7 +316,7 @@ public class DataMetaFile extends AbstractMetaDataFile
 	private boolean applyWriteQueue(ILodDataSource data) {
 		// Poll the write queue
 		// First check if write queue is empty, then swap the write queue.
-		// Must be done in this order to ensure isValid work properly. See isValid() for details.
+		// Must be done in this order to ensure isMemoryAddressValid work properly. See isMemoryAddressValid() for details.
 		boolean isEmpty = writeQueue.get().queue.isEmpty();
 		if (!isEmpty) {
 			swapWriteQueue();

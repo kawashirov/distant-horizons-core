@@ -39,7 +39,7 @@ public class SplitTaskTracker extends AbstractWorldGenTaskTracker
 			return false;
 		}
 		
-		this.isValid = this.parentTracker.isValid();
+		this.isValid = this.parentTracker.isMemoryAddressValid();
 		if (!this.isValid)
 		{
 			this.parentFuture.complete(false);
@@ -49,7 +49,7 @@ public class SplitTaskTracker extends AbstractWorldGenTaskTracker
 	}
 	
 	@Override
-	public boolean isValid() { return this.isValid; }
+	public boolean isMemoryAddressValid() { return this.isValid; }
 	
 	@Override
 	public Consumer<ChunkSizedData> getConsumer() { return this.parentTracker.getConsumer(); }

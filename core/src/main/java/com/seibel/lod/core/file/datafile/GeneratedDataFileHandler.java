@@ -155,7 +155,7 @@ public class GeneratedDataFileHandler extends DataFileHandler
 		
 		
 		@Override
-		public boolean isValid() { return this.targetData.get() != null; }
+		public boolean isMemoryAddressValid() { return this.targetData.get() != null; }
 		
 		@Override
 		public Consumer<ChunkSizedData> getConsumer()

@@ -14,7 +14,7 @@ public abstract class AbstractWorldGenTaskTracker
 	 * Returns true if the task hasn't been garbage collected. <br> 
 	 * TODO rename to fit the above description better
 	 */
-	public abstract boolean isValid();
+	public abstract boolean isMemoryAddressValid();
 	
 	public abstract Consumer<ChunkSizedData> getConsumer();
 	

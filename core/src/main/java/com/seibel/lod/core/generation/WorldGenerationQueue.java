@@ -368,7 +368,7 @@ public class WorldGenerationQueue implements Closeable
 			while (taskIter.hasNext())
 			{
 				WorldGenTask task = taskIter.next();
-				if (!task.taskTracker.isValid())
+				if (!task.taskTracker.isMemoryAddressValid())
 				{
 					taskIter.remove();
 					task.future.complete(false);
