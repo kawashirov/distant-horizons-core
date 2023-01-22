@@ -148,7 +148,7 @@ public class LodQuadTree implements AutoCloseable {
      */
     public byte calculateExpectedDetailLevel(DhBlockPos2D playerPos, DhSectionPos sectionPos) {
         return DetailDistanceUtil.getDetailLevelFromDistance(
-                playerPos.dist(sectionPos.getCenter().getCenter()));
+                playerPos.dist(sectionPos.getCenter().getCenterBlockPos()));
     }
 
     /**

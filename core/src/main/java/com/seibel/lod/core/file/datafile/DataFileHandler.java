@@ -189,7 +189,7 @@ public class DataFileHandler implements IDataSourceProvider
         outerLoop:
         while (--sectionDetail >= this.minDetailLevel)
 		{
-            DhLodPos minPos = pos.getCorner().getCorner(sectionDetail);
+            DhLodPos minPos = pos.getCorner().getCornerLodPos(sectionDetail);
             int count = pos.getSectionBBoxPos().getBlockWidth(sectionDetail);
 			
             for (int xOffset = 0; xOffset < count; xOffset++)

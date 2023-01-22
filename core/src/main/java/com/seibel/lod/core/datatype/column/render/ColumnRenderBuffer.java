@@ -254,7 +254,7 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 
                         if (buffer == null)
                             buffer = new ColumnRenderBuffer(
-                                new DhBlockPos(data.sectionPos.getCorner().getCorner(), clientLevel.getMinY())
+                                new DhBlockPos(data.sectionPos.getCorner().getCornerBlockPos(), clientLevel.getMinY())
                             );
                         try {
                             buffer.uploadBuffer(builder, method);

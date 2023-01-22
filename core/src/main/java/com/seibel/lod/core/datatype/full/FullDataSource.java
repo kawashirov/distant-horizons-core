@@ -66,7 +66,7 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 		if (data.dataDetail == 0 && this.getDataDetail() == 0)
 		{
 			DhBlockPos2D chunkBlockPos = new DhBlockPos2D(data.x * 16, data.z * 16);
-			DhBlockPos2D blockOffset = chunkBlockPos.subtract(this.sectionPos.getCorner().getCorner());
+			DhBlockPos2D blockOffset = chunkBlockPos.subtract(this.sectionPos.getCorner().getCornerBlockPos());
 			LodUtil.assertTrue(blockOffset.x >= 0 && blockOffset.x < SECTION_SIZE && blockOffset.z >= 0 && blockOffset.z < SECTION_SIZE);
 			this.isEmpty = false;
 			data.shadowCopyTo(this.subView(16, blockOffset.x, blockOffset.z));
@@ -85,7 +85,7 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 		{
 			int dataPerFull = 1 << this.getDataDetail();
 			int fullSize = 16 / dataPerFull;
-			DhLodPos dataOffset = data.getBBoxLodPos().getCorner(this.getDataDetail());
+			DhLodPos dataOffset = data.getBBoxLodPos().getCornerLodPos(this.getDataDetail());
 			DhLodPos baseOffset = this.sectionPos.getCorner(this.getDataDetail());
 			int offsetX = dataOffset.x - baseOffset.x;
 			int offsetZ = dataOffset.z - baseOffset.z;
@@ -277,7 +277,7 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 		{
 			int count = 1 << detailDiff;
 			int dataPerCount = SECTION_SIZE / count;
-			DhLodPos subDataPos = lowerSectPos.getSectionBBoxPos().getCorner(targetDataDetail);
+			DhLodPos subDataPos = lowerSectPos.getSectionBBoxPos().getCornerLodPos(targetDataDetail);
 			int dataOffsetX = subDataPos.x - minDataPos.x;
 			int dataOffsetZ = subDataPos.z - minDataPos.z;
 			LodUtil.assertTrue(dataOffsetX >= 0 && dataOffsetX < SECTION_SIZE && dataOffsetZ >= 0 && dataOffsetZ < SECTION_SIZE);

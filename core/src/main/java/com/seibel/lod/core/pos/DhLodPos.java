@@ -16,6 +16,7 @@ import java.util.Objects;
 public class DhLodPos implements Comparable<DhLodPos>
 {
 	public final byte detailLevel;
+	
 	public final int x;
 	public final int z;
 	
@@ -44,16 +45,16 @@ public class DhLodPos implements Comparable<DhLodPos>
 		return BitShiftUtil.powerOfTwo(this.detailLevel - detailLevel);
 	}
 	
-	public DhBlockPos2D getCenter() 
+	public DhBlockPos2D getCenterBlockPos() 
 	{ 
 		return new DhBlockPos2D(
 				this.getX().toBlockWidth() + BitShiftUtil.half(this.getBlockWidth()),
 				this.getZ().toBlockWidth() + BitShiftUtil.half(this.getBlockWidth())); 
 	}
-	public DhBlockPos2D getCorner() { return new DhBlockPos2D(this.getX().toBlockWidth(), this.getZ().toBlockWidth()); }
+	public DhBlockPos2D getCornerBlockPos() { return new DhBlockPos2D(this.getX().toBlockWidth(), this.getZ().toBlockWidth()); }
 	
 	/** converts this position to a lower detail level, angled towards the corner position. */
-	public DhLodPos getCorner(byte newDetail)
+	public DhLodPos getCornerLodPos(byte newDetail)
 	{
 		LodUtil.assertTrue(newDetail <= this.detailLevel);
 		return new DhLodPos(newDetail,
@@ -72,7 +73,7 @@ public class DhLodPos implements Comparable<DhLodPos>
 	 * 
 	 * @param child0to3 must be an int between 0 and 3
 	 */
-	public DhLodPos getChildByIndex(int child0to3) throws IllegalArgumentException, IllegalStateException
+	public DhLodPos getChildPosByIndex(int child0to3) throws IllegalArgumentException, IllegalStateException
 	{
 		if (child0to3 < 0 || child0to3 > 3)
 			throw new IllegalArgumentException("child0to3 must be between 0 and 3");

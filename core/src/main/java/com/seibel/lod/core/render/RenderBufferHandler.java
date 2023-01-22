@@ -72,8 +72,8 @@ public class RenderBufferHandler {
 
         // Now that we have the axis directions, we can sort the render list
         Comparator<LoadedRenderBuffer> sortFarToNear = (a, b) -> {
-            Pos2D aPos = a.pos.getCenter().getCenter().toPos2D();
-            Pos2D bPos = b.pos.getCenter().getCenter().toPos2D();
+            Pos2D aPos = a.pos.getCenter().getCenterBlockPos().toPos2D();
+            Pos2D bPos = b.pos.getCenter().getCenterBlockPos().toPos2D();
             for (ELodDirection axisDirection : axisDirections) {
                 if (axisDirection.getAxis().isVertical()) continue; // We works on the horizontal plane only for section sorting
                 int abDiff;
@@ -218,7 +218,7 @@ public class RenderBufferHandler {
         byte topDetail = (byte) (target.getNumbersOfSectionLevels() - 1);
         MovableGridRingList<LodRenderSection> referenceList = target.getRingList(topDetail);
         Pos2D center = referenceList.getCenter();
-        //boolean moved = renderBufferNodes.getCenter().x != center.x || renderBufferNodes.getCenter().y != center.y;
+        //boolean moved = renderBufferNodes.getCenterBlockPos().x != center.x || renderBufferNodes.getCenterBlockPos().y != center.y;
         renderBufferNodes.move(center.x, center.y, RenderBufferNode::close); // Note: may lock the list
 
 

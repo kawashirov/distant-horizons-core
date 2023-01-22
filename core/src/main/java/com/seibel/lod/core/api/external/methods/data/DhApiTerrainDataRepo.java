@@ -129,7 +129,7 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 	 */
 	private static DhApiResult<DhApiTerrainDataPoint[][][]> getTerrainDataOverAreaForPositionDetailLevel(IDhApiLevelWrapper levelWrapper, DhLodPos requestedAreaPos)
 	{
-		DhLodPos startingBlockPos = requestedAreaPos.getCorner(LodUtil.BLOCK_DETAIL_LEVEL);
+		DhLodPos startingBlockPos = requestedAreaPos.getCornerLodPos(LodUtil.BLOCK_DETAIL_LEVEL);
 		int widthOfAreaInBlocks = BitShiftUtil.powerOfTwo(requestedAreaPos.detailLevel);
 		
 		DhApiTerrainDataPoint[][][] returnArray = new DhApiTerrainDataPoint[widthOfAreaInBlocks][widthOfAreaInBlocks][];

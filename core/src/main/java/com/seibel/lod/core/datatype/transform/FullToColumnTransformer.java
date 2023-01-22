@@ -35,8 +35,8 @@ public class FullToColumnTransformer {
         columnSource.markNotEmpty();
 
         if (dataDetail == columnSource.getDataDetail()) {
-            int baseX = pos.getCorner().getCorner().x;
-            int baseZ = pos.getCorner().getCorner().z;
+            int baseX = pos.getCorner().getCornerBlockPos().x;
+            int baseZ = pos.getCorner().getCornerBlockPos().z;
             for (int x = 0; x < pos.getWidth(dataDetail).numberOfLodSectionsWide; x++) {
                 for (int z = 0; z < pos.getWidth(dataDetail).numberOfLodSectionsWide; z++) {
                     ColumnArrayView columnArrayView = columnSource.getVerticalDataPointView(x, z);
@@ -75,8 +75,8 @@ public class FullToColumnTransformer {
         columnSource.markNotEmpty();
 
         if (dataDetail == columnSource.getDataDetail()) {
-            int baseX = pos.getCorner().getCorner().x;
-            int baseZ = pos.getCorner().getCorner().z;
+            int baseX = pos.getCorner().getCornerBlockPos().x;
+            int baseZ = pos.getCorner().getCornerBlockPos().z;
             for (int x = 0; x < pos.getWidth(dataDetail).numberOfLodSectionsWide; x++) {
                 for (int z = 0; z < pos.getWidth(dataDetail).numberOfLodSectionsWide; z++) {
                     SingleFullArrayView fullArrayView = data.tryGet(x, z);
@@ -99,10 +99,10 @@ public class FullToColumnTransformer {
             throw new UnsupportedOperationException("To be implemented");
 
         final DhSectionPos pos = render.getSectionPos();
-        final int renderOffsetX = (data.x*16) - pos.getCorner().getCorner().x;
-        final int renderOffsetZ = (data.z*16) - pos.getCorner().getCorner().z;
-        final int blockX = pos.getCorner().getCorner().x;
-        final int blockZ = pos.getCorner().getCorner().z;
+        final int renderOffsetX = (data.x*16) - pos.getCorner().getCornerBlockPos().x;
+        final int renderOffsetZ = (data.z*16) - pos.getCorner().getCornerBlockPos().z;
+        final int blockX = pos.getCorner().getCornerBlockPos().x;
+        final int blockZ = pos.getCorner().getCornerBlockPos().z;
         final int perRenderWidth = 1 << render.getDataDetail();
         final int perDataWidth = 1 << data.dataDetail;
         render.markNotEmpty();

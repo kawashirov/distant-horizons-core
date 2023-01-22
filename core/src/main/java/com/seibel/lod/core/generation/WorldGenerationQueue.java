@@ -43,8 +43,8 @@ public class WorldGenerationQueue implements Closeable
 			(a, b) -> {
 				if (a.detailLevel != b.detailLevel)
 					return a.detailLevel - b.detailLevel;
-				int aDist = a.getCenter().toPos2D().chebyshevDist(Pos2D.ZERO);
-				int bDist = b.getCenter().toPos2D().chebyshevDist(Pos2D.ZERO);
+				int aDist = a.getCenterBlockPos().toPos2D().chebyshevDist(Pos2D.ZERO);
+				int bDist = b.getCenterBlockPos().toPos2D().chebyshevDist(Pos2D.ZERO);
 				if (aDist != bDist)
 					return aDist - bDist;
 				if (a.x != b.x)
@@ -125,7 +125,7 @@ public class WorldGenerationQueue implements Closeable
 			byte subDetail = (byte) (this.maxGranularity + requiredDataDetail);
 			int subPosWidthCount = pos.getBlockWidth(subDetail);
 			
-			DhLodPos cornerSubPos = pos.getCorner(subDetail);
+			DhLodPos cornerSubPos = pos.getCornerLodPos(subDetail);
 			CompletableFuture<Boolean>[] subFutures = new CompletableFuture[subPosWidthCount * subPosWidthCount];
 			ArrayList<WorldGenTask> subTasks = new ArrayList<>(subPosWidthCount * subPosWidthCount);
 			SplitTaskTracker splitTaskTracker = new SplitTaskTracker(tracker, new CompletableFuture<>());
@@ -228,7 +228,7 @@ public class WorldGenerationQueue implements Closeable
 			{
 				if (i == targetChildId)
 					continue;
-				WorldGenTaskGroup group = this.taskGroups.get(parentPos.getChildByIndex(i));
+				WorldGenTaskGroup group = this.taskGroups.get(parentPos.getChildPosByIndex(i));
 				if (group == null || group.dataDetail != target.dataDetail)
 				{
 					allPassed = false;
@@ -244,7 +244,7 @@ public class WorldGenerationQueue implements Closeable
 					if (i == targetChildId)
 						groups[i] = target;
 					else
-						groups[i] = this.taskGroups.remove(parentPos.getChildByIndex(i));
+						groups[i] = this.taskGroups.remove(parentPos.getChildPosByIndex(i));
 					LodUtil.assertTrue(groups[i] != null && groups[i].dataDetail == target.dataDetail);
 				}
 				
@@ -394,7 +394,7 @@ public class WorldGenerationQueue implements Closeable
 			if (currentDetailChecking == -1)
 				currentDetailChecking = group.dataDetail;
 			LodUtil.assertTrue(currentDetailChecking == group.dataDetail);
-			int chebDistToOrigin = group.pos.getCenter().toPos2D().chebyshevDist(Pos2D.ZERO);
+			int chebDistToOrigin = group.pos.getCenterBlockPos().toPos2D().chebyshevDist(Pos2D.ZERO);
 			if (chebDistToOrigin > lastChebDist)
 			{
 				if (!continueNextRound)
@@ -402,7 +402,7 @@ public class WorldGenerationQueue implements Closeable
 				continueNextRound = false;
 				lastChebDist = chebDistToOrigin;
 			}
-			long dist = group.pos.getCenter().distSquared(targetPos);
+			long dist = group.pos.getCenterBlockPos().distSquared(targetPos);
 			if (best != null && dist >= cachedDist)
 				continue;
 			cachedDist = dist;
@@ -462,7 +462,7 @@ public class WorldGenerationQueue implements Closeable
 		LodUtil.assertTrue(granularity >= this.minGranularity && granularity <= this.maxGranularity);
 		LodUtil.assertTrue(dataDetail >= this.minDataDetail && dataDetail <= this.maxDataDetail);
 		
-		DhChunkPos chunkPosMin = new DhChunkPos(pos.getCorner());
+		DhChunkPos chunkPosMin = new DhChunkPos(pos.getCornerBlockPos());
 		LOGGER.info("Generating section {} with granularity {} at {}", pos, granularity, chunkPosMin);
 		task.genFuture = startGenerationEvent(this.generator, chunkPosMin, granularity, dataDetail, task.group::accept);
 		task.genFuture.whenComplete((v, ex) -> {

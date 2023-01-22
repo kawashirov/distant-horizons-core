@@ -23,7 +23,7 @@ public class FullDataDownSampler {
         int sectionSizeNeeded = 1 << target.getDataDetail();
 
         ArrayList<CompletableFuture<ILodDataSource>> futures;
-        DhLodPos basePos = target.getSectionPos().getSectionBBoxPos().getCorner(FullDataSource.SECTION_SIZE_OFFSET);
+        DhLodPos basePos = target.getSectionPos().getSectionBBoxPos().getCornerLodPos(FullDataSource.SECTION_SIZE_OFFSET);
         if (sectionSizeNeeded <= FullDataSource.SECTION_SIZE_OFFSET) {
             futures = new ArrayList<>(sectionSizeNeeded * sectionSizeNeeded);
             for (int ox = 0; ox < sectionSizeNeeded; ox++) {
@@ -91,7 +91,7 @@ public class FullDataDownSampler {
             int overlappedTrgDataSize = FullDataSource.SECTION_SIZE / srcDataPerTrgData;
 
             DhLodPos trgOffset = trgPos.getCorner(target.getDataDetail());
-            DhLodPos srcOffset = srcPos.getSectionBBoxPos().getCorner(target.getDataDetail());
+            DhLodPos srcOffset = srcPos.getSectionBBoxPos().getCornerLodPos(target.getDataDetail());
             int offsetX = trgOffset.x - srcOffset.x;
             int offsetZ = trgOffset.z - srcOffset.z;
             LodUtil.assertTrue(offsetX >= 0 && offsetX < FullDataSource.SECTION_SIZE
