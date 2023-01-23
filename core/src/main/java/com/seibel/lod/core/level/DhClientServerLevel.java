@@ -329,7 +329,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		{
 			// queue new world generation requests
 			wgs.chunkGenerator.preGeneratorTaskStart();
-			wgs.worldGenerationQueue.pollAndStartClosest(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
+			wgs.worldGenerationQueue.runCurrentGenTasksUntilBusy(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
 		}
 	}
 	
