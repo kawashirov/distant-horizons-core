@@ -114,7 +114,14 @@ public class DhBlockPos {
     {
         return new DhBlockPos(this.x + x, this.y + y, this.z + z);
     }
-
+	
+	/**
+	 * Can be used to quickly determine the rough distance between two points<Br>
+	 * or determine the taxi cab (manhattan) distance between two points. <Br><Br> 
+	 *
+	 * Manhattan distance is equivalent to determining the distance between two street intersections, 
+	 * where you can only drive along each street, instead of directly to the other point.
+	 */
     public int getManhattanDistance(DhBlockPos otherPos)
     {
         return Math.abs(this.getX() - otherPos.getX()) + Math.abs(this.getY() - otherPos.getY()) + Math.abs(this.getZ() - otherPos.getZ());
