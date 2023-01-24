@@ -1,6 +1,7 @@
 #version 150 core
 
 in uvec4 vPosition;
+out vec4 vPos;
 in vec4 color;
 
 out vec4 vertexColor;
@@ -27,6 +28,8 @@ uniform float mircoOffset;
  */
 void main()
 {
+    vPos = vec4(vPosition.x, vPosition.y, vPosition.z, vPosition.w); // This is so it can be passed to the fragment shader
+
     vertexWorldPos = vPosition.xyz + modelOffset;
 
     vertexYPos = vPosition.y + worldYOffset;

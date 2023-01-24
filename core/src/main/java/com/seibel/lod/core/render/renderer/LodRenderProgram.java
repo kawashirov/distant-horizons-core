@@ -21,6 +21,7 @@ package com.seibel.lod.core.render.renderer;
 
 import java.awt.Color;
 
+import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.render.fog.LodFogConfig;
 import com.seibel.lod.core.render.glObject.GLProxy;
@@ -60,6 +61,11 @@ public class LodRenderProgram extends ShaderProgram {
 	public final int nearFogLengthUniform;;
 	public final int fullFogModeUniform;
 
+	// Noise Uniforms
+	public final int noiseEnabledUniform;
+	public final int noiseStepsUniform;
+	public final int noiseIntensityUniform;
+
 	public final LodFogConfig fogConfig;
 
 	// This will bind  VertexAttribute
@@ -87,6 +93,11 @@ public class LodRenderProgram extends ShaderProgram {
 		nearFogStartUniform = tryGetUniformLocation("nearFogStart");
 		nearFogLengthUniform = tryGetUniformLocation("nearFogLength");
 
+		// Noise uniforms
+		noiseEnabledUniform = getUniformLocation("noiseEnabled");
+		noiseStepsUniform = getUniformLocation("noiseSteps");
+		noiseIntensityUniform = getUniformLocation("noiseIntensity");
+
 		// TODO: Add better use of the LODFormat thing
 		int vertexByteCount = LodUtil.LOD_VERTEX_FORMAT.getByteSize();
 		if (GLProxy.getInstance().VertexAttributeBufferBindingSupported)
@@ -100,7 +111,7 @@ public class LodRenderProgram extends ShaderProgram {
 		vao.setVertexAttribute(0, 1, VertexAttribute.VertexPointer.addUnsignedBytesPointer(4, true, false)); // +4
 		//vao.setVertexAttribute(0, lightAttrib, VertexAttribute.VertexPointer.addUnsignedBytesPointer(2, false)); // +4 due to how it aligns
 		try {
-		vao.completeAndCheck(vertexByteCount);
+			vao.completeAndCheck(vertexByteCount);
 		} catch (RuntimeException e) {
 			System.out.println(LodUtil.LOD_VERTEX_FORMAT);
 			throw e;
@@ -108,6 +119,10 @@ public class LodRenderProgram extends ShaderProgram {
 
 		if (earthRadiusUniform != -1) setUniform(earthRadiusUniform,
 				/*6371KM*/ 6371000.0f / fogConfig.earthCurveRatio);
+
+		setUniform(noiseEnabledUniform, Config.Client.Graphics.AdvancedGraphics.NoiseSettings.noiseEnable.get());
+		setUniform(noiseStepsUniform, Config.Client.Graphics.AdvancedGraphics.NoiseSettings.noiseSteps.get());
+		setUniform(noiseIntensityUniform, Config.Client.Graphics.AdvancedGraphics.NoiseSettings.noiseIntensity.get().floatValue());
 	}
 
 	// If not usable, return a new LodFogConfig to be constructed

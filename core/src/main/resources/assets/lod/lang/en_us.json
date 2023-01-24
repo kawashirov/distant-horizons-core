@@ -192,8 +192,21 @@
     "At what Y value should cave culling start? \n\n§6NOTE§r: This feature is under development and \n it is VERY experimental! Please don't report \nany issues related to this feature.",
   "lod.config.client.graphics.advancedGraphics.earthCurveRatio":
     "Earth Curve Ratio §6(EXPERIMENTAL)§r",
+  "lod.config.client.graphics.advancedGraphics.noiseSettings":
+    "Noise Settings",
+  "lod.config.client.graphics.advancedGraphics.noiseSettings.noiseEnable":
+    "Enable Noise",
+  "lod.config.client.graphics.advancedGraphics.noiseSettings.noiseSteps":
+    "Noise Steps",
+  "lod.config.client.graphics.advancedGraphics.noiseSettings.noiseSteps.@tooltip":
+    "How many steps of noise are on each lod\nNo performance impact",
+  "lod.config.client.graphics.advancedGraphics.noiseSettings.noiseIntensity":
+    "Noise Intensity",
+  "lod.config.client.graphics.advancedGraphics.noiseSettings.noiseIntensity.@tooltip":
+    "How clearly you can see the noise on the lod's",
   "lod.config.client.graphics.advancedGraphics.earthCurveRatio.@tooltip":
     "This is the earth size ratio when applying the curvature shader effect. \n\n§6NOTE§r: This feature is just for fun and is VERY experimental! \nPlease don't report any issues related to this feature. \n\n0 = flat/disabled \n1 = 1 to 1 (6,371,000 blocks) \n100 = 1 to 100 (63,710 blocks) \n10000 = 1 to 10000 (637.1 blocks) \n\n§6NOTE§r: due to current limitations, the min value is 50 \n and the max value is 5000. Any values outside this range \n will be set to 0(disabled).",
+
   "lod.config.client.worldGenerator":
     "World generator",
   "lod.config.client.worldGenerator.enableDistantGeneration":

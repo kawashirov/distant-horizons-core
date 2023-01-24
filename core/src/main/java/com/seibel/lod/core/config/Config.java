@@ -467,12 +467,28 @@ public class Config
                                 + " will be set to 0(disabled).")
                         .build();
 
-				/*
-				@ConfigAnnotations.FileComment
-				public static String _backsideCullingRange = IAdvancedGraphics.VANILLA_CULLING_RANGE_DESC;
-				@ConfigAnnotations.Entry(minValue = 0, maxValue = 512)
-				public static int backsideCullingRange = IAdvancedGraphics.VANILLA_CULLING_RANGE_MIN_DEFAULT_MAX.defaultValue;
-				*/
+
+
+                public static ConfigCategory noiseSettings = new ConfigCategory.Builder().set(NoiseSettings.class).build();
+
+
+                public static class NoiseSettings
+                {
+                    public static ConfigEntry<Boolean> noiseEnable = new ConfigEntry.Builder<Boolean>()
+                            .set(true)
+                            .comment("If noise on the lod's should be enabled")
+                            .build();
+
+                    public static ConfigEntry<Integer> noiseSteps = new ConfigEntry.Builder<Integer>()
+                            .setMinDefaultMax(0, 5, null)
+                            .comment("How many steps of noise should be on each block")
+                            .build();
+
+                    public static ConfigEntry<Double> noiseIntensity = new ConfigEntry.Builder<Double>() // TODO: Make this a float (the ClassicConfigGUI dosnt support floats)
+                            .set(15d)
+                            .comment("How intense the noise should be")
+                            .build();
+                }
             }
         }
 
