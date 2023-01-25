@@ -21,6 +21,9 @@ package com.seibel.lod.core.render.glObject.shader;
 
 import java.awt.Color;
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Supplier;
 
 import org.lwjgl.opengl.GL32;
@@ -50,32 +53,45 @@ public class ShaderProgram
 	  * This will bind ShaderProgram */
 	public ShaderProgram(String vert, String frag, String fragDataOutputName, String[] attributes)
 	{
-		this(() -> Shader.loadFile(vert, false, new StringBuilder()).toString(),
+		this(
+				() -> Shader.loadFile(vert, false, new StringBuilder()).toString(),
 				() -> Shader.loadFile(frag, false, new StringBuilder()).toString(),
-	fragDataOutputName, attributes);
+				fragDataOutputName, attributes
+		);
 	}
 
-	public ShaderProgram(Supplier<String> vert, Supplier<String> frag, String fragDataOutputName, String[] attributes)
-	{
-		Shader vertShader = new Shader(GL32.GL_VERTEX_SHADER, vert.get());
-		Shader fragShader = new Shader(GL32.GL_FRAGMENT_SHADER, frag.get());
+	public ShaderProgram(Supplier<String> vert, Supplier<String> frag, String fragDataOutputName, String[] attributes) {
+		this(
+				new ArrayList<>(Arrays.asList(vert)),
+				new ArrayList<>(Arrays.asList(frag)),
+				attributes
+		);
+	}
 
+
+	public ShaderProgram(List<Supplier<String>> vert, List<Supplier<String>> frag, String[] attributes) {
 		id = GL32.glCreateProgram();
 
-		GL32.glAttachShader(this.id, vertShader.id);
-		GL32.glAttachShader(this.id, fragShader.id);
-		//GL32.glBindFragDataLocation(id, 0, fragDataOutputName);
+		for (Supplier<String> v : vert) {
+			Shader vertShader = new Shader(GL32.GL_VERTEX_SHADER, v.get());
+			GL32.glAttachShader(this.id, vertShader.id);
+			vertShader.free(); // important!
+		}
+
+		for (Supplier<String> f : frag) {
+			Shader fragShader = new Shader(GL32.GL_FRAGMENT_SHADER, f.get());
+			GL32.glAttachShader(this.id, fragShader.id);
+			fragShader.free(); // important!
+		}
+
 		for (int i = 0; i < attributes.length; i++) {
 			GL32.glBindAttribLocation(id, i, attributes[i]);
 		}
 		GL32.glLinkProgram(this.id);
 
-		vertShader.free(); // important!
-		fragShader.free(); // important!
-
 		int status = GL32.glGetProgrami(this.id, GL32.GL_LINK_STATUS);
 		if (status != GL32.GL_TRUE) {
-			String message = "Shader Link Error. Details: "+GL32.glGetProgramInfoLog(this.id);
+			String message = "Shader Link Error. Details: " + GL32.glGetProgramInfoLog(this.id);
 			free(); // important!
 			throw new RuntimeException(message);
 		}
