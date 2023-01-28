@@ -42,6 +42,7 @@ import static com.seibel.lod.core.render.glObject.GLProxy.GL_LOGGER;
  * @author James Seibel
  * @version 2022-11-24
  */
+// TODO: Move lots out of here, there should be a listener hooked onto the config to update the shader
 public class LodFogConfig
 {
 	private static final IOptifineAccessor OPTIFINE = ModAccessorInjector.INSTANCE.get(IOptifineAccessor.class);
@@ -57,7 +58,12 @@ public class LodFogConfig
 	
 	final boolean drawNearFog;
 
-	public final int earthCurveRatio; // FIXME: Move this out of here
+	// TODO: Move these out of here
+	public final int earthCurveRatio;
+
+	public final boolean noiseEnable;
+	public final int noiseSteps;
+	public final float noiseIntensity;
 
 	
 	public static LodFogConfig generateFogConfig()
@@ -73,7 +79,13 @@ public class LodFogConfig
 	/** sets all fog options from the config */
 	private LodFogConfig(EFogDrawMode fogDrawMode)
 	{
-		earthCurveRatio = Config.Client.Graphics.AdvancedGraphics.earthCurveRatio.get(); //FIXME: Move this out of here
+		// TODO: Move these out of here
+		earthCurveRatio = Config.Client.Graphics.AdvancedGraphics.earthCurveRatio.get();
+
+		noiseEnable = Config.Client.Graphics.AdvancedGraphics.NoiseSettings.noiseEnable.get();
+		noiseSteps = Config.Client.Graphics.AdvancedGraphics.NoiseSettings.noiseSteps.get();
+		noiseIntensity = Config.Client.Graphics.AdvancedGraphics.NoiseSettings.noiseIntensity.get().floatValue();
+
 
 		if (fogDrawMode != EFogDrawMode.FOG_DISABLED)
 		{
@@ -425,12 +437,15 @@ public class LodFogConfig
 		return Float.compare(that.heightFogHeight, heightFogHeight) == 0 &&
 				drawNearFog == that.drawNearFog && Objects.equals(farFogSetting, that.farFogSetting) &&
 				Objects.equals(heightFogSetting, that.heightFogSetting) && heightFogMixMode == that.heightFogMixMode &&
-				heightFogMode == that.heightFogMode && earthCurveRatio == that.earthCurveRatio;
+				heightFogMode == that.heightFogMode
+				// TODO: Move these out of here
+				&& earthCurveRatio == that.earthCurveRatio
+				&& noiseEnable == that.noiseEnable && noiseSteps == that.noiseSteps && noiseIntensity == that.noiseIntensity;
 	}
 	
 	@Override
 	public int hashCode()
 	{
-		return Objects.hash(farFogSetting, heightFogSetting, heightFogMixMode, heightFogMode, heightFogHeight, drawNearFog, earthCurveRatio);
+		return Objects.hash(farFogSetting, heightFogSetting, heightFogMixMode, heightFogMode, heightFogHeight, drawNearFog, earthCurveRatio, noiseEnable, noiseSteps, noiseIntensity);
 	}
 }

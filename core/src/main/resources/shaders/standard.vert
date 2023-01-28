@@ -21,10 +21,9 @@ uniform float mircoOffset;
  * Vertex Shader
  * 
  * author: James Seibel
- * version: 12-8-2021
- *
  * updated: TomTheFurry
- * version: 15-2-2022
+ * updated: coolGi
+ * version: 24-1-2023
  */
 void main()
 {

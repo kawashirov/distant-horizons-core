@@ -85,7 +85,8 @@ vec3 HSV2RGB(vec3 c) {
  * Fragment Shader
  * 
  * author: James Seibel
- * version: 11-26-2021
+ * author: coolGi
+ * version: 24-1-2023
  */
 void main()
 {

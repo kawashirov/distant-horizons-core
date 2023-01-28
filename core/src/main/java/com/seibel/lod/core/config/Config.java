@@ -485,7 +485,7 @@ public class Config
                             .build();
 
                     public static ConfigEntry<Double> noiseIntensity = new ConfigEntry.Builder<Double>() // TODO: Make this a float (the ClassicConfigGUI dosnt support floats)
-                            .set(15d)
+                            .set(12.5d)
                             .comment("How intense the noise should be")
                             .build();
                 }

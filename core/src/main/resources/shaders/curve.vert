@@ -24,7 +24,8 @@ uniform float earthRadius;
  * author: James Seibel
  * author: TomTheFurry
  * author: stduhpf
- * version: 2022-8-13
+ * updated: coolGi
+ * version: 24-1-2023
  */
 void main()
 {

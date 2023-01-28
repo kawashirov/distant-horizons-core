@@ -21,7 +21,6 @@ package com.seibel.lod.core.render.renderer;
 
 import java.awt.Color;
 
-import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.render.fog.LodFogConfig;
 import com.seibel.lod.core.render.glObject.GLProxy;
@@ -120,9 +119,9 @@ public class LodRenderProgram extends ShaderProgram {
 		if (earthRadiusUniform != -1) setUniform(earthRadiusUniform,
 				/*6371KM*/ 6371000.0f / fogConfig.earthCurveRatio);
 
-		setUniform(noiseEnabledUniform, Config.Client.Graphics.AdvancedGraphics.NoiseSettings.noiseEnable.get());
-		setUniform(noiseStepsUniform, Config.Client.Graphics.AdvancedGraphics.NoiseSettings.noiseSteps.get());
-		setUniform(noiseIntensityUniform, Config.Client.Graphics.AdvancedGraphics.NoiseSettings.noiseIntensity.get().floatValue());
+		setUniform(noiseEnabledUniform, fogConfig.noiseEnable);
+		setUniform(noiseStepsUniform, fogConfig.noiseSteps);
+		setUniform(noiseIntensityUniform, fogConfig.noiseIntensity);
 	}
 
 	// If not usable, return a new LodFogConfig to be constructed
