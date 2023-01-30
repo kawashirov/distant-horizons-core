@@ -116,7 +116,6 @@ void main()
 	}
 
     if (noiseEnabled) {
-
         // This bit of code is required to fix the vertex position problem cus of floats in the verted world position varuable
         vec3 vertexNormal = normalize(cross(dFdx(vPos.xyz), dFdy(vPos.xyz)));
         vec3 fixedVPos = vec3(
