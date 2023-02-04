@@ -219,7 +219,7 @@ public class RenderBufferHandler {
         MovableGridRingList<LodRenderSection> referenceList = target.getRingList(topDetail);
         Pos2D center = referenceList.getCenter();
         //boolean moved = renderBufferNodes.getCenterBlockPos().x != center.x || renderBufferNodes.getCenterBlockPos().y != center.y;
-        renderBufferNodes.move(center.x, center.y, RenderBufferNode::close); // Note: may lock the list
+        renderBufferNodes.moveTo(center.x, center.y, RenderBufferNode::close); // Note: may lock the list
 
 
 
