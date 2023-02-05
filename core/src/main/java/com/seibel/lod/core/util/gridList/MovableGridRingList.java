@@ -358,7 +358,7 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 	
 	
 	/**
-	 * TODO: Use MutablePos2D in the future
+	 * TODO: Use MutablePos2D in the future <br>
 	 * Will pass in null entries
 	 */
 	public void forEachPos(BiConsumer<? super T, Pos2D> consumer)
@@ -383,7 +383,7 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 	}
 	
 	/**
-	 * TODO: Use MutablePos2D in the future
+	 * TODO: Use MutablePos2D in the future <br>
 	 * Will skip null entries
 	 */
 	public void forEachOrdered(Consumer<? super T> consumer)
@@ -414,7 +414,7 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 	}
 	
 	/**
-	 * TODO: Use MutablePos2D in the future
+	 * TODO: Use MutablePos2D in the future <br>
 	 * Will pass in null entries
 	 */
 	public void forEachPosOrdered(BiConsumer<? super T, Pos2D> consumer)
@@ -432,8 +432,8 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 			for (Pos2D offset : this.ringIteratorList)
 			{
 				LodUtil.assertTrue(this._inRangeAcquired(min.x + offset.x, min.y + offset.y, min));
-				T t = this._getUnsafe(min.x + offset.x, min.y + offset.y);
-				consumer.accept(t, new Pos2D(min.x + offset.x, min.y + offset.y));
+				T item = this._getUnsafe(min.x + offset.x, min.y + offset.y);
+				consumer.accept(item, new Pos2D(min.x + offset.x, min.y + offset.y));
 			}
 		}
 		finally

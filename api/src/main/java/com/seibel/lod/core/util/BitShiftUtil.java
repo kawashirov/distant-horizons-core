@@ -34,6 +34,15 @@ public class BitShiftUtil
 	
 	/**
 	 * Equivalent to: <br>
+	 * value >> power, <br>
+	 * value / 2^power <br><br>
+	 * 
+	 * Note: value / 2^power isn't identical for negative values
+	 */
+	public static int divideByPowerOfTwo(int value, int power) { return value >> power; }
+	
+	/**
+	 * Equivalent to: <br>
 	 * value << 1, <br>
 	 * value^2, <br>
 	 * Math.pow(value, 2) <br><br>

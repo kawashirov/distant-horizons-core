@@ -63,11 +63,11 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
     }
 
     private void _clientTick() {
-        int newViewDistance = Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * 16;
+        int newViewDistance = Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH;
         Iterator<DhClientLevel> iterator = levels.values().iterator();
         while (iterator.hasNext()) {
             DhClientLevel level = iterator.next();
-            if (level.tree.viewDistance != newViewDistance) {
+            if (level.tree.blockViewDistance != newViewDistance) {
                 level.close();
                 iterator.remove();
             }
