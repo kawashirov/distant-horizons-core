@@ -34,19 +34,21 @@ public class LodQuadTree implements AutoCloseable
     private static final byte TREE_LOWEST_DETAIL_LEVEL = ColumnRenderSource.SECTION_SIZE_OFFSET;
     private static final boolean SUPER_VERBOSE_LOGGING = false;
 	
+	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
-    public final byte getLayerDataDetailOffset() { return ColumnRenderSource.SECTION_SIZE_OFFSET; }
+	
+	public final byte getLayerDataDetailOffset() { return ColumnRenderSource.SECTION_SIZE_OFFSET; }
 	public final byte getLayerDataDetail(byte sectionDetailLevel) { return (byte) (sectionDetailLevel - this.getLayerDataDetailOffset()); }
 	
     public final byte getLayerSectionDetailOffset() { return ColumnRenderSource.SECTION_SIZE_OFFSET; }
     public final byte getLayerSectionDetail(byte dataDetail) { return (byte) (dataDetail + this.getLayerSectionDetailOffset()); }
 	
 	
-    private static final Logger LOGGER = DhLoggerBuilder.getLogger();
-	
-	/** AKA number of section layers? - TODO James */
+	/** AKA how many detail levels are in this quad tree, adding this to the {@link LodQuadTree#TREE_LOWEST_DETAIL_LEVEL} is equivalent to the maximum detail level in this tree */
     public final byte numbersOfSectionDetailLevels;
+	
     private final MovableGridRingList<LodRenderSection>[] renderSectionRingLists;
+	
     public final int blockViewDistance;
     private final ILodRenderSourceProvider renderSourceProvider;
 	
