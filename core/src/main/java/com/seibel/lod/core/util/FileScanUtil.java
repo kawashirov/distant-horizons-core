@@ -1,7 +1,7 @@
 package com.seibel.lod.core.util;
 
 import com.seibel.lod.core.file.datafile.IDataSourceProvider;
-import com.seibel.lod.core.file.renderfile.IRenderSourceProvider;
+import com.seibel.lod.core.file.renderfile.ILodRenderSourceProvider;
 import com.seibel.lod.core.file.structure.AbstractSaveStructure;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
@@ -20,7 +20,7 @@ public class FileScanUtil {
     public static final String LOD_FILE_POSTFIX = ".lod";
     public static void scanFile(AbstractSaveStructure save, ILevelWrapper level,
                                       @Nullable IDataSourceProvider dataSource,
-                                      @Nullable IRenderSourceProvider renderSource) {
+                                      @Nullable ILodRenderSourceProvider renderSource) {
         if (dataSource != null) {
             try (Stream<Path> pathStream = Files.walk(save.getDataFolder(level).toPath(), MAX_SCAN_DEPTH)) {
                 dataSource.addScannedFile(pathStream.filter(

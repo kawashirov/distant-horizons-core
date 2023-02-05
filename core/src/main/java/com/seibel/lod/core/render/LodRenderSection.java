@@ -5,7 +5,7 @@ import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.datatype.ILodRenderSource;
-import com.seibel.lod.core.file.renderfile.IRenderSourceProvider;
+import com.seibel.lod.core.file.renderfile.ILodRenderSourceProvider;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -25,8 +25,8 @@ public class LodRenderSection
     private boolean isRenderEnabled = false;
 	
 	// TODO: Should I provide a way to change the render source?
-	private ILodRenderSource lodRenderSource;
-	private IRenderSourceProvider renderSourceProvider = null; // TODO: rename these two interfaces to make it more obvious what each one does
+	private ILodRenderSource renderSource;
+	private ILodRenderSourceProvider renderSourceProvider = null;
 	
 	private EVerticalQuality previousVerticalQualitySetting = null;
 	
@@ -60,11 +60,11 @@ public class LodRenderSection
 		}
 		
 		
-        if (this.lodRenderSource != null)
+        if (this.renderSource != null)
 		{
-			this.lodRenderSource.disableRender();
-			this.lodRenderSource.dispose();
-			this.lodRenderSource = null;
+			this.renderSource.disableRender();
+			this.renderSource.dispose();
+			this.renderSource = null;
         }
         if (this.loadFuture != null)
 		{
@@ -77,16 +77,16 @@ public class LodRenderSection
 	
 	
 	
-	//
-	//
-	//
+	//==============//
+	// LOD provider //
+	//==============//
 	
-    public void load(IRenderSourceProvider renderDataProvider)
+    public void load(ILodRenderSourceProvider renderDataProvider)
 	{
 		this.renderSourceProvider = renderDataProvider;
 		this.previousVerticalQualitySetting = Config.Client.Graphics.Quality.verticalQuality.get();
     }
-    public void reload(IRenderSourceProvider renderDataProvider)
+    public void reload(ILodRenderSourceProvider renderDataProvider)
 	{
         if (this.loadFuture != null)
 		{
@@ -94,10 +94,10 @@ public class LodRenderSection
 			this.loadFuture = null;
         }
 		
-        if (this.lodRenderSource != null)
+        if (this.renderSource != null)
 		{
-			this.lodRenderSource.dispose();
-			this.lodRenderSource = null;
+			this.renderSource.dispose();
+			this.renderSource = null;
         }
 		
 		this.loadFuture = renderDataProvider.read(this.pos);
@@ -106,32 +106,34 @@ public class LodRenderSection
 	
 	
 	
+	//================//
+	// update methods //
+	//================//
 	
     public void tick(LodQuadTree quadTree, IDhClientLevel level)
 	{
         if (this.loadFuture != null && this.loadFuture.isDone())
 		{
-			this.lodRenderSource = this.loadFuture.join();
+			this.renderSource = this.loadFuture.join();
 			this.loadFuture = null;
 			
             if (this.isRenderEnabled)
 			{
-				this.lodRenderSource.enableRender(level, quadTree);
+				this.renderSource.enableRender(level, quadTree);
             }
         }
 		
-        if (this.lodRenderSource != null)
+        if (this.renderSource != null)
 		{
-			this.renderSourceProvider.refreshRenderSource(this.lodRenderSource);
+			this.renderSourceProvider.refreshRenderSource(this.renderSource);
         }
     }
 	
-	
     public void dispose()
 	{
-		if (this.lodRenderSource != null)
+		if (this.renderSource != null)
 		{
-			this.lodRenderSource.dispose();
+			this.renderSource.dispose();
 		}
 		else if (this.loadFuture != null)
 		{
@@ -141,7 +143,11 @@ public class LodRenderSection
 
 	
 	
-    public boolean canRender() { return this.isLoaded() && this.isRenderEnabled && this.lodRenderSource != null; }
+	//========================//
+	// getters and properties //
+	//========================//
+	
+    public boolean canRender() { return this.isLoaded() && this.isRenderEnabled && this.renderSource != null; }
 
     public boolean isLoaded() { return this.renderSourceProvider != null; }
 	public boolean isLoading() { return false; }
@@ -149,19 +155,21 @@ public class LodRenderSection
     //FIXME: Used by RenderBufferHandler
     public int FIXME_BYPASS_DONT_USE_getChildCount() { return this.childCount; }
 	
-    public boolean isOutdated() { return this.previousVerticalQualitySetting != Config.Client.Graphics.Quality.verticalQuality.get() || (this.lodRenderSource != null && !this.lodRenderSource.isValid()); }
+    public boolean isOutdated() { return this.previousVerticalQualitySetting != Config.Client.Graphics.Quality.verticalQuality.get() || (this.renderSource != null && !this.renderSource.isValid()); }
 
-    public ILodRenderSource getRenderSource() { return this.lodRenderSource; }
+    public ILodRenderSource getRenderSource() { return this.renderSource; }
 	
 	
 	
-	
+	//==============//
+	// base methods //
+	//==============//
 	
     public String toString() {
         return "LodRenderSection{" +
                 "pos=" + this.pos +
                 ", childCount=" + this.childCount +
-                ", lodRenderSource=" + this.lodRenderSource +
+                ", lodRenderSource=" + this.renderSource +
                 ", loadFuture=" + this.loadFuture +
                 ", isRenderEnabled=" + this.isRenderEnabled +
                 '}';
