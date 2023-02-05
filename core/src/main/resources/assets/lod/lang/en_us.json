@@ -332,6 +332,8 @@
     "Half a chunk",
   "lod.config.enum.EHorizontalResolution.CHUNK":
     "Chunk",
+  "lod.config.enum.EVerticalQuality.HEIGHT_MAP":
+    "Height Map",
   "lod.config.enum.EVerticalQuality.LOW":
     "Low",
   "lod.config.enum.EVerticalQuality.MEDIUM":

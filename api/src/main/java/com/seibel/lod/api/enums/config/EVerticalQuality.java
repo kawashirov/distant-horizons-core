@@ -24,11 +24,11 @@ package com.seibel.lod.api.enums.config;
  * multi_lod <br>
  *
  * @author Leonardo Amato
- * @version 2022-3-26
+ * @version 2023-2-5
  */
 public enum EVerticalQuality
 {
-	//HEIGHT_MAP(new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }), // TODO this needs a localization
+	HEIGHT_MAP(new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }),
 	LOW(new int[] { 4, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1 }),
 	MEDIUM(new int[] { 6, 4, 3, 2, 2, 1, 1, 1, 1, 1, 1 }),
 	HIGH(new int[] { 8, 6, 4, 2, 2, 2, 2, 1, 1, 1, 1 }),
@@ -36,10 +36,11 @@ public enum EVerticalQuality
 	
 	public final int[] maxVerticalData;
 	
-	EVerticalQuality(int[] maxVerticalData)
-	{
-		this.maxVerticalData = maxVerticalData;
-	}
+	
+	
+	EVerticalQuality(int[] maxVerticalData) { this.maxVerticalData = maxVerticalData; }
+	
+	
 	
 	/** returns null if out of range */
 	public static EVerticalQuality previous(EVerticalQuality mode)
@@ -77,8 +78,11 @@ public enum EVerticalQuality
 	
     public int calculateMaxVerticalData(byte dataDetail)
 	{
-		if (dataDetail >= maxVerticalData.length)
-			dataDetail = (byte) (maxVerticalData.length-1);
-		return maxVerticalData[dataDetail];
+		if (dataDetail >= this.maxVerticalData.length)
+		{
+			dataDetail = (byte) (this.maxVerticalData.length - 1);
+		}
+		return this.maxVerticalData[dataDetail];
     }
+	
 }
