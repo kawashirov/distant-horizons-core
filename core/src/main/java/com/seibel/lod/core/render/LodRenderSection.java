@@ -14,7 +14,7 @@ public class LodRenderSection
     public final DhSectionPos pos;
 	
 	// TODO create an enum to represent the section's state instead of using magic numbers in the childCount
-	//      states: loaded (childCount 4), unloaded (childCount 0), markedForDeletion/markedForFreeing (childCount -1)
+	//      states (may not be a complete or correct list): loaded (childCount 4), unloaded (childCount 0), markedForDeletion/markedForFreeing (childCount -1)
 	
     /* Following used for LodQuadTree tick() method, and ONLY for that method! */
     // the number of children of this section
