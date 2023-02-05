@@ -414,17 +414,19 @@
     "Dynamic",
   "lod.config.enum.EVanillaOverdraw.ALWAYS":
     "Always",
-  "lod.config.enum.EDistanceGenerationMode.NONE":
+  "lod.config.enum.EDhApiDistantGeneratorMode.NONE":
     "Existing Only",
-  "lod.config.enum.EDistanceGenerationMode.BIOME_ONLY":
+  "lod.config.enum.EDhApiDistantGeneratorMode.PRE_EXISTING_ONLY":
+    "Pre-Existing Chunks only",
+  "lod.config.enum.EDhApiDistantGeneratorMode.BIOME_ONLY":
     "Biome only",
-  "lod.config.enum.EDistanceGenerationMode.BIOME_ONLY_SIMULATE_HEIGHT":
+  "lod.config.enum.EDhApiDistantGeneratorMode.BIOME_ONLY_SIMULATE_HEIGHT":
     "Biome only simulate height",
-  "lod.config.enum.EDistanceGenerationMode.SURFACE":
+  "lod.config.enum.EDhApiDistantGeneratorMode.SURFACE":
     "Surface",
-  "lod.config.enum.EDistanceGenerationMode.FEATURES":
+  "lod.config.enum.EDhApiDistantGeneratorMode.FEATURES":
     "Features",
-  "lod.config.enum.EDistanceGenerationMode.FULL":
+  "lod.config.enum.EDhApiDistantGeneratorMode.FULL":
     "Full",
   "lod.config.enum.ELightGenerationMode.FAST":
     "Fast",
