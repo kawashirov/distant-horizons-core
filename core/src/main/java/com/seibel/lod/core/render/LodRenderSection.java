@@ -3,14 +3,18 @@ package com.seibel.lod.core.render;
 import com.seibel.lod.api.enums.config.EVerticalQuality;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.level.IDhClientLevel;
+import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.datatype.ILodRenderSource;
 import com.seibel.lod.core.file.renderfile.ILodRenderSourceProvider;
+import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
 
 public class LodRenderSection
 {
+	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	
     public final DhSectionPos pos;
 	
 	// TODO create an enum to represent the section's state instead of using magic numbers in the childCount

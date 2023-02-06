@@ -108,8 +108,7 @@ public class DataMetaFile extends AbstractMetaDataFile
 
 	public long getCacheVersion() {
 		debugCheck();
-		MetaData getData = metaData;
-		return getData == null ? 0 : metaData.dataVersion.get();
+		return (this.metaData == null) ? 0 : this.metaData.dataVersion.get();
 	}
 
 	public boolean isCacheVersionValid(long cacheVersion) {
