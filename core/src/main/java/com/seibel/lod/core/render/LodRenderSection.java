@@ -5,129 +5,174 @@ import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.datatype.ILodRenderSource;
-import com.seibel.lod.core.file.renderfile.IRenderSourceProvider;
+import com.seibel.lod.core.file.renderfile.ILodRenderSourceProvider;
 
 import java.util.concurrent.CompletableFuture;
 
 public class LodRenderSection
 {
     public final DhSectionPos pos;
-
+	
+	// TODO create an enum to represent the section's state instead of using magic numbers in the childCount
+	//      states (may not be a complete or correct list): loaded (childCount 4), unloaded (childCount 0), markedForDeletion/markedForFreeing (childCount -1)
+	
     /* Following used for LodQuadTree tick() method, and ONLY for that method! */
     // the number of children of this section
     // (Should always be 4 after tick() is done, or 0 only if this is an unloaded node)
     public byte childCount = 0;
-
-    // TODO: Should I provide a way to change the render source?
-    private ILodRenderSource lodRenderSource;
+	
     private CompletableFuture<ILodRenderSource> loadFuture;
     private boolean isRenderEnabled = false;
-    private IRenderSourceProvider provider = null;
-
-    // Create sub region
-    public LodRenderSection(DhSectionPos pos) {
-        this.pos = pos;
-    }
-
-    public void enableRender(IDhClientLevel level, LodQuadTree quadTree) {
-        if (isRenderEnabled) return;
-        loadFuture = provider.read(pos);
-        isRenderEnabled = true;
-    }
-    public void disableRender() {
-        if (!isRenderEnabled) return;
-        if (lodRenderSource != null) {
-            lodRenderSource.disableRender();
-            lodRenderSource.dispose();
-            lodRenderSource = null;
-        }
-        if (loadFuture != null) {
-            loadFuture.cancel(true);
-            loadFuture = null;
-        }
-        isRenderEnabled = false;
-    }
-
-    public void load(IRenderSourceProvider renderDataProvider)
+	
+	// TODO: Should I provide a way to change the render source?
+	private ILodRenderSource renderSource;
+	private ILodRenderSourceProvider renderSourceProvider = null;
+	
+	private EVerticalQuality previousVerticalQualitySetting = null;
+	
+	
+	
+	// Create sub region
+    public LodRenderSection(DhSectionPos pos) { this.pos = pos; }
+	
+	
+	
+	//===========//
+	// rendering //
+	//===========//
+	
+    public void enableRender(IDhClientLevel level, LodQuadTree quadTree)
 	{
-        provider = renderDataProvider;
-		this.previousQualitySetting = Config.Client.Graphics.Quality.verticalQuality.get();
+        if (this.isRenderEnabled)
+		{
+			return;
+		}
+		
+		
+		this.loadFuture = this.renderSourceProvider.read(this.pos);
+		this.isRenderEnabled = true;
     }
-    public void reload(IRenderSourceProvider renderDataProvider) {
-        if (loadFuture != null) {
-            loadFuture.cancel(true);
-            loadFuture = null;
+    public void disableRender()
+	{
+        if (!this.isRenderEnabled)
+		{
+			return;
+		}
+		
+		
+        if (this.renderSource != null)
+		{
+			this.renderSource.disableRender();
+			this.renderSource.dispose();
+			this.renderSource = null;
         }
-        if (lodRenderSource != null) {
-            lodRenderSource.dispose();
-            lodRenderSource = null;
+        if (this.loadFuture != null)
+		{
+			this.loadFuture.cancel(true);
+			this.loadFuture = null;
         }
-        loadFuture = renderDataProvider.read(pos);
-		this.previousQualitySetting = Config.Client.Graphics.Quality.verticalQuality.get();
+		
+		this.isRenderEnabled = false;
     }
-
+	
+	
+	
+	//==============//
+	// LOD provider //
+	//==============//
+	
+    public void load(ILodRenderSourceProvider renderDataProvider)
+	{
+		this.renderSourceProvider = renderDataProvider;
+		this.previousVerticalQualitySetting = Config.Client.Graphics.Quality.verticalQuality.get();
+    }
+    public void reload(ILodRenderSourceProvider renderDataProvider)
+	{
+        if (this.loadFuture != null)
+		{
+			this.loadFuture.cancel(true);
+			this.loadFuture = null;
+        }
+		
+        if (this.renderSource != null)
+		{
+			this.renderSource.dispose();
+			this.renderSource = null;
+        }
+		
+		this.loadFuture = renderDataProvider.read(this.pos);
+		this.previousVerticalQualitySetting = Config.Client.Graphics.Quality.verticalQuality.get();
+    }
+	
+	
+	
+	//================//
+	// update methods //
+	//================//
+	
     public void tick(LodQuadTree quadTree, IDhClientLevel level)
 	{
         if (this.loadFuture != null && this.loadFuture.isDone())
 		{
-			this.lodRenderSource = this.loadFuture.join();
+			this.renderSource = this.loadFuture.join();
 			this.loadFuture = null;
+			
             if (this.isRenderEnabled)
 			{
-				this.lodRenderSource.enableRender(level, quadTree);
+				this.renderSource.enableRender(level, quadTree);
             }
         }
 		
-        if (this.lodRenderSource != null)
+        if (this.renderSource != null)
 		{
-			this.provider.refreshRenderSource(this.lodRenderSource);
+			this.renderSourceProvider.refreshRenderSource(this.renderSource);
         }
     }
-
-    public void dispose() {
-        if (lodRenderSource != null) {
-            lodRenderSource.dispose();
-        } else if (loadFuture != null) {
-            loadFuture.cancel(true);
-        }
-    }
-
-    public boolean canRender() {
-        return isLoaded() && isRenderEnabled && lodRenderSource != null;
-    }
-
-    public boolean isLoaded() {
-        return provider != null;
-    }
-
-    //FIXME: Used by RenderBufferHandler
-    public int FIXME_BYPASS_DONT_USE_getChildCount() {
-        return childCount;
-    }
-
-    public boolean isLoading() {
-        return false;
-    }
 	
-	private EVerticalQuality previousQualitySetting = null;
-	
-    public boolean isOutdated()
+    public void dispose()
 	{
-        return this.previousQualitySetting != Config.Client.Graphics.Quality.verticalQuality.get() || (lodRenderSource != null && !lodRenderSource.isValid());
-    }
+		if (this.renderSource != null)
+		{
+			this.renderSource.dispose();
+		}
+		else if (this.loadFuture != null)
+		{
+			this.loadFuture.cancel(true);
+		}
+	}
 
-    public ILodRenderSource getRenderSource() {
-        return lodRenderSource;
-    }
+	
+	
+	//========================//
+	// getters and properties //
+	//========================//
+	
+    public boolean canRender() { return this.isLoaded() && this.isRenderEnabled && this.renderSource != null; }
 
+    public boolean isLoaded() { return this.renderSourceProvider != null; }
+	public boolean isLoading() { return false; }
+	
+    //FIXME: Used by RenderBufferHandler
+    public int FIXME_BYPASS_DONT_USE_getChildCount() { return this.childCount; }
+	
+    public boolean isOutdated() { return this.previousVerticalQualitySetting != Config.Client.Graphics.Quality.verticalQuality.get() || (this.renderSource != null && !this.renderSource.isValid()); }
 
+    public ILodRenderSource getRenderSource() { return this.renderSource; }
+	
+	
+	
+	//==============//
+	// base methods //
+	//==============//
+	
     public String toString() {
         return "LodRenderSection{" +
-                "pos=" + pos +
-                ", childCount=" + childCount +
-                ", lodRenderSource=" + lodRenderSource +
-                ", loadFuture=" + loadFuture +
-                ", isRenderEnabled=" + isRenderEnabled +
+                "pos=" + this.pos +
+                ", childCount=" + this.childCount +
+                ", lodRenderSource=" + this.renderSource +
+                ", loadFuture=" + this.loadFuture +
+                ", isRenderEnabled=" + this.isRenderEnabled +
                 '}';
     }
+	
 }

@@ -26,7 +26,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
-public class RenderFileHandler implements IRenderSourceProvider
+public class RenderFileHandler implements ILodRenderSourceProvider
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     

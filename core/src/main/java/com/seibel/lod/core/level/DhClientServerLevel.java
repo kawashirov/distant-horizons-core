@@ -96,7 +96,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		if (rs == null)
 			return;
 		
-		if (rs.tree.viewDistance != Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH)
+		if (rs.tree.blockViewDistance != Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH)
 		{
 			if (!this.renderState.compareAndSet(rs, null))
 				return; //If we fail, we'll just wait for the next tick

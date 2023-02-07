@@ -8,7 +8,13 @@ import java.io.File;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
-public interface IRenderSourceProvider extends AutoCloseable
+/**
+ * This represents LOD data that is stored in long term storage (IE LOD files stored on the hard drive) <br>
+ * Example: {@link RenderFileHandler RenderFileHandler} <br><br>
+ * 
+ * This is used to create {@link ILodRenderSource}'s 
+ */
+public interface ILodRenderSourceProvider extends AutoCloseable
 {
     CompletableFuture<ILodRenderSource> read(DhSectionPos pos);
     void addScannedFile(Collection<File> detectedFiles);

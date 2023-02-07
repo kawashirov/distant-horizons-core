@@ -194,7 +194,7 @@ public class RenderBufferHandler {
 
     public RenderBufferHandler(LodQuadTree target) {
         this.target = target;
-        MovableGridRingList<LodRenderSection> referenceList = target.getRingList((byte) (target.getNumbersOfSectionLevels() - 1));
+        MovableGridRingList<LodRenderSection> referenceList = target.getRingList((byte) (target.getNumbersOfSectionDetailLevels() - 1));
         Pos2D center = referenceList.getCenter();
         renderBufferNodes = new MovableGridRingList<>(referenceList.getHalfSize(), center);
     }
@@ -215,11 +215,11 @@ public class RenderBufferHandler {
     }
 
     public void update() {
-        byte topDetail = (byte) (target.getNumbersOfSectionLevels() - 1);
+        byte topDetail = (byte) (target.getNumbersOfSectionDetailLevels() - 1);
         MovableGridRingList<LodRenderSection> referenceList = target.getRingList(topDetail);
         Pos2D center = referenceList.getCenter();
         //boolean moved = renderBufferNodes.getCenterBlockPos().x != center.x || renderBufferNodes.getCenterBlockPos().y != center.y;
-        renderBufferNodes.move(center.x, center.y, RenderBufferNode::close); // Note: may lock the list
+        renderBufferNodes.moveTo(center.x, center.y, RenderBufferNode::close); // Note: may lock the list
 
 
 

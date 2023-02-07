@@ -11,6 +11,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * This represents LOD data that is stored in system memory <br>
+ * Example: {@link com.seibel.lod.core.datatype.column.ColumnRenderSource ColumnRenderSource} <br><br>
+ * 
+ * These are created via {@link com.seibel.lod.core.file.renderfile.ILodRenderSourceProvider ILodRenderSourceProvider}'s
+ */
 public interface ILodRenderSource
 {
 	DhSectionPos getSectionPos();
