@@ -15,6 +15,7 @@ uniform int fullFogMode;
 uniform bool noiseEnabled;
 uniform int noiseSteps;
 uniform float noiseIntensity;
+uniform float noiseDropoff;
 
 /* ========MARCO DEFINED BY RUNTIME CODE GEN=========
 
@@ -60,9 +61,11 @@ float quantize(float val, int stepSize) {
 }
 
 // The modulus function dosnt exist in GLSL so I made my own
-float mod(float x, float y) {
+// To speed up the mod function, this only accepts full numbers for y
+float mod(float x, int y) {
     return x - y * floor(x/y);
 }
+
 
 // Some HSV functions I stole somewhere online
 vec3 RGB2HSV(vec3 c) {
@@ -86,11 +89,12 @@ vec3 HSV2RGB(vec3 c) {
  * 
  * author: James Seibel
  * author: coolGi
- * version: 24-1-2023
+ * version: 7-2-2023
  */
 void main()
 {
 	vec4 returnColor;
+
 
     if (fullFogMode != 0) {
         returnColor = vec4(fogColor.rgb, 1.0);
@@ -112,7 +116,6 @@ void main()
             nearFogThickness, farFogThickness, heightFogThickness), 0.0, 1.0);
 
         returnColor = mix(vertexColor, vec4(fogColor.rgb, 1.0), mixedFogThickness);
-
 	}
 
     if (noiseEnabled) {
@@ -125,47 +128,49 @@ void main()
         );
 
 
+        float noiseAmplification = noiseIntensity / 100;
+        noiseAmplification = (returnColor.x + returnColor.y + returnColor.z) / 3 * noiseAmplification; // Lessen the effect on depending on how dark the object is
+//        noiseAmplification *= returnColor.w; // The effect would lessen on transparent objects
+
         // Random value for each position
         float randomValue = rand(vec3(
             quantize(fixedVPos.x, noiseSteps),
             quantize(fixedVPos.y, noiseSteps),
             quantize(fixedVPos.z, noiseSteps)
-        ));
-        float randomHue = rand(randomValue); // Dont bother with the larger random function, just use its value to get a new random value
+        ))
+            * 2. * noiseAmplification - noiseAmplification;
 
-        float noiseAmplification = (2. - (returnColor.x + returnColor.y + returnColor.z) / 3) * noiseIntensity;
 
-//        noiseAmplification *= returnColor.w; // The effect would lessen on transparent objects
+        // Modifies the color
+        // A value of 0 on the randomValue will result in the original color, while a value of 1 will result in a fully bright color
+        vec3 newCol = returnColor.rgb + (vec3(1.0) - returnColor.rgb) * randomValue;
 
-        randomValue  = (randomValue  - 0.5) / noiseAmplification;
-        randomHue = (randomHue - 0.5) / noiseAmplification / 2;
-
-        vec3 returnHSV = RGB2HSV(returnColor.rgb); // HSV has some control which makes it easier to do some stuff like change the brightness
-        returnHSV.z += randomValue; // Change the val (which controlls the brightness)
-        returnHSV.z = clamp(returnHSV.z, 0., 1.);
-
-        returnHSV.x += randomHue; // Changes the hue (which controlls the color)
-        returnHSV.x = clamp(returnHSV.x, 0., 1.);
-
-        vec3 returnRGB = HSV2RGB(returnHSV); // Change it back to rgb
-
-        returnColor = vec4(
-            returnRGB.r,
-            returnRGB.g,
-            returnRGB.b,
-        returnColor.w);
+        // Clamps it and turns it back into a vec4
+        returnColor = mix(
+            vec4(
+                clamp(newCol.r, 0., 1.),
+                clamp(newCol.g, 0., 1.),
+                clamp(newCol.b, 0., 1.),
+                returnColor.w
+            ), returnColor,
+            clamp(length(vertexWorldPos) * fogScale * noiseDropoff, 0., 1.) // The further away it gets, the less noise gets applied
+        );
 
         // For testing
-//        returnColor = vec4(
-//            mod(fixedVPos.x, 1.),
-//            mod(fixedVPos.y, 1.),
-//            mod(fixedVPos.z, 1.),
-//        returnColor.w);
+//        if (returnColor.r != 69420.) {
+//            returnColor = vec4(
+//                mod(fixedVPos.x, 1),
+//                mod(fixedVPos.y, 1),
+//                mod(fixedVPos.z, 1),
+//            returnColor.w);
+//        }
     }
 
-    // If "w" is just set to just 1 then it would crash
+    // If "w" is just set to just 1. then it would crash
 	fragColor = returnColor;
 }
+
+
 
 float linearFog(float x, float fogStart, float fogLength, float fogMin, float fogRange) {
     x = clamp((x-fogStart)/fogLength, 0.0, 1.0);

@@ -41,6 +41,7 @@ public class Config
     //		|		|-> Quality
     //		|		|-> FogQuality
     //		|		|-> AdvancedGraphics
+    //      |       		|-> NoiseSettings
     //		|
     //		|-> World Generation
     //		|
@@ -205,7 +206,7 @@ public class Config
 
 
                 public static class AdvancedFog {
-                    // TODO: Make some of the option here floats rather than doubles (the ClassicConfigGUI dosnt support floats)
+                    // TODO: Make some of the option here floats rather than doubles (the ClassicConfigGUI doesnt support floats)
                     private static final Double FOG_RANGE_MIN = 0.0;
                     private static final Double FOG_RANGE_MAX = Math.sqrt(2.0);
 
@@ -410,7 +411,7 @@ public class Config
                         .setPerformance(ConfigEntryPerformance.NONE)
                         .build();
 
-                public static ConfigEntry<Double> brightnessMultiplier = new ConfigEntry.Builder<Double>() // TODO: Make this a float (the ClassicConfigGUI dosnt support floats)
+                public static ConfigEntry<Double> brightnessMultiplier = new ConfigEntry.Builder<Double>() // TODO: Make this a float (the ClassicConfigGUI doesnt support floats)
                         .set(1.0)
                         .comment(""
                                 + "How bright fake chunk colors are. \n"
@@ -420,7 +421,7 @@ public class Config
                                 + " 2 = near white")
                         .build();
 
-                public static ConfigEntry<Double> saturationMultiplier = new ConfigEntry.Builder<Double>() // TODO: Make this a float (the ClassicConfigGUI dosnt support floats)
+                public static ConfigEntry<Double> saturationMultiplier = new ConfigEntry.Builder<Double>() // TODO: Make this a float (the ClassicConfigGUI doesnt support floats)
                         .set(1.0)
                         .comment(""
                                 + "How saturated fake chunk colors are. \n"
@@ -484,9 +485,16 @@ public class Config
                             .comment("How many steps of noise should be on each block")
                             .build();
 
-                    public static ConfigEntry<Double> noiseIntensity = new ConfigEntry.Builder<Double>() // TODO: Make this a float (the ClassicConfigGUI dosnt support floats)
-                            .set(12.5d)
+                    public static ConfigEntry<Double> noiseIntensity = new ConfigEntry.Builder<Double>()    // TODO: Make this a float (the ClassicConfigGUI doesnt support floats)
+                            .setMinDefaultMax(0d, 20d, 100d)                    // TODO: Once this becomes a float make it 0-1 instead of 0-100 (I did this cus doubles only allow 2 decimal places)
                             .comment("How intense the noise should be")
+                            .build();
+
+                    public static ConfigEntry<Double> noiseDropoff = new ConfigEntry.Builder<Double>()    // TODO: Make this a float (the ClassicConfigGUI doesnt support floats)
+                            .setMinDefaultMax(0d, 1d, null)
+                            .comment(""
+                                    + "How fast the noise should drop off to no noise based upon your lod render distance \n"
+                                    + "Eg, if you set it to 3, then the noise effect would completely go away after 1/3 of your render distance")
                             .build();
                 }
             }

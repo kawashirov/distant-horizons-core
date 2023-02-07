@@ -64,6 +64,7 @@ public class LodFogConfig
 	public final boolean noiseEnable;
 	public final int noiseSteps;
 	public final float noiseIntensity;
+	public final float noiseDropoff;
 
 	
 	public static LodFogConfig generateFogConfig()
@@ -85,6 +86,7 @@ public class LodFogConfig
 		noiseEnable = Config.Client.Graphics.AdvancedGraphics.NoiseSettings.noiseEnable.get();
 		noiseSteps = Config.Client.Graphics.AdvancedGraphics.NoiseSettings.noiseSteps.get();
 		noiseIntensity = Config.Client.Graphics.AdvancedGraphics.NoiseSettings.noiseIntensity.get().floatValue();
+		noiseDropoff = Config.Client.Graphics.AdvancedGraphics.NoiseSettings.noiseDropoff.get().floatValue();
 
 
 		if (fogDrawMode != EFogDrawMode.FOG_DISABLED)
@@ -440,12 +442,12 @@ public class LodFogConfig
 				heightFogMode == that.heightFogMode
 				// TODO: Move these out of here
 				&& earthCurveRatio == that.earthCurveRatio
-				&& noiseEnable == that.noiseEnable && noiseSteps == that.noiseSteps && noiseIntensity == that.noiseIntensity;
+				&& noiseEnable == that.noiseEnable && noiseSteps == that.noiseSteps && noiseIntensity == that.noiseIntensity && noiseDropoff == that.noiseDropoff;
 	}
 	
 	@Override
 	public int hashCode()
 	{
-		return Objects.hash(farFogSetting, heightFogSetting, heightFogMixMode, heightFogMode, heightFogHeight, drawNearFog, earthCurveRatio, noiseEnable, noiseSteps, noiseIntensity);
+		return Objects.hash(farFogSetting, heightFogSetting, heightFogMixMode, heightFogMode, heightFogHeight, drawNearFog, earthCurveRatio, noiseEnable, noiseSteps, noiseIntensity, noiseDropoff);
 	}
 }

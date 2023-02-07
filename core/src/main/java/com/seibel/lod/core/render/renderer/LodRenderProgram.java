@@ -64,6 +64,7 @@ public class LodRenderProgram extends ShaderProgram {
 	public final int noiseEnabledUniform;
 	public final int noiseStepsUniform;
 	public final int noiseIntensityUniform;
+	public final int noiseDropoffUniform;
 
 	public final LodFogConfig fogConfig;
 
@@ -96,6 +97,7 @@ public class LodRenderProgram extends ShaderProgram {
 		noiseEnabledUniform = getUniformLocation("noiseEnabled");
 		noiseStepsUniform = getUniformLocation("noiseSteps");
 		noiseIntensityUniform = getUniformLocation("noiseIntensity");
+		noiseDropoffUniform = getUniformLocation("noiseDropoff");
 
 		// TODO: Add better use of the LODFormat thing
 		int vertexByteCount = LodUtil.LOD_VERTEX_FORMAT.getByteSize();
@@ -122,6 +124,7 @@ public class LodRenderProgram extends ShaderProgram {
 		setUniform(noiseEnabledUniform, fogConfig.noiseEnable);
 		setUniform(noiseStepsUniform, fogConfig.noiseSteps);
 		setUniform(noiseIntensityUniform, fogConfig.noiseIntensity);
+		setUniform(noiseDropoffUniform, fogConfig.noiseDropoff);
 	}
 
 	// If not usable, return a new LodFogConfig to be constructed
