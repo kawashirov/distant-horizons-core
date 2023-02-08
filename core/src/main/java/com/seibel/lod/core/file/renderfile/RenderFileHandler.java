@@ -31,14 +31,18 @@ public class RenderFileHandler implements ILodRenderSourceProvider
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     
 	private final ExecutorService renderCacheThread = LodUtil.makeSingleThreadPool("RenderCacheThread");
-	private final ConcurrentHashMap<DhSectionPos, RenderMetaDataFile> files = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<DhSectionPos, RenderMetaDataFile> filesBySectionPos = new ConcurrentHashMap<>();
+	
 	private final IDhClientLevel level;
 	private final File saveDir;
 	private final IDataSourceProvider dataSourceProvider;
 	
+	private final ConcurrentHashMap<DhSectionPos, Object> cacheUpdateLockBySectionPos = new ConcurrentHashMap<>();
 	
 	
-    public RenderFileHandler(IDataSourceProvider sourceProvider, IDhClientLevel level, File saveRootDir)
+	
+	
+	public RenderFileHandler(IDataSourceProvider sourceProvider, IDhClientLevel level, File saveRootDir)
 	{
         this.dataSourceProvider = sourceProvider;
         this.level = level;
@@ -144,7 +148,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 			}
 			
 			// Add this file to the list of files.
-			this.files.put(pos, fileToUse);
+			this.filesBySectionPos.put(pos, fileToUse);
 		}
 	}
 	
@@ -152,7 +156,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
     @Override
     public CompletableFuture<ILodRenderSource> read(DhSectionPos pos)
 	{
-        RenderMetaDataFile metaFile = this.files.get(pos);
+        RenderMetaDataFile metaFile = this.filesBySectionPos.get(pos);
 		if (metaFile == null)
 		{
 			RenderMetaDataFile newMetaFile;
@@ -166,7 +170,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 				return null;
 			}
 			
-			metaFile = this.files.putIfAbsent(pos, newMetaFile); // This is a CAS with expected null value.
+			metaFile = this.filesBySectionPos.putIfAbsent(pos, newMetaFile); // This is a CAS with expected null value.
 			if (metaFile == null)
 			{
 				metaFile = newMetaFile;
@@ -216,7 +220,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 			this.writeRecursively(sectPos.getChildByIndex(3), chunkData);
 		}
 		
-		RenderMetaDataFile metaFile = this.files.get(sectPos);
+		RenderMetaDataFile metaFile = this.filesBySectionPos.get(sectPos);
 		// Fast path: if there is a file for this section, just write to it.
 		if (metaFile != null)
 		{
@@ -229,7 +233,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 	public CompletableFuture<Void> flushAndSave()
 	{
 		ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
-		for (RenderMetaDataFile metaFile : this.files.values())
+		for (RenderMetaDataFile metaFile : this.filesBySectionPos.values())
 		{
 			futures.add(metaFile.flushAndSave(this.renderCacheThread));
 		}
@@ -246,7 +250,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
     public void close()
 	{
         ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
-        for (RenderMetaDataFile metaFile : this.files.values())
+        for (RenderMetaDataFile metaFile : this.filesBySectionPos.values())
 		{
             futures.add(metaFile.flushAndSave(this.renderCacheThread));
         }
@@ -267,11 +271,9 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 				new ColumnRenderSource(file.pos, vertSize, this.level.getMinY()));
 	}
 
-    private final ConcurrentHashMap<DhSectionPos, Object> cacheRecreationGuards = new ConcurrentHashMap<>();
-
     private void updateCache(ILodRenderSource data, RenderMetaDataFile file)
 	{
-		if (this.cacheRecreationGuards.putIfAbsent(file.pos, new Object()) != null)
+		if (this.cacheUpdateLockBySectionPos.putIfAbsent(file.pos, new Object()) != null)
 		{
 			return;
 		}
@@ -306,7 +308,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 						LOGGER.error("Exception when updating render file using data source: ", ex);
 					}
 					return null;
-				}).thenRun(() -> this.cacheRecreationGuards.remove(file.pos));
+				}).thenRun(() -> this.cacheUpdateLockBySectionPos.remove(file.pos));
 	}
 
     public ILodRenderSource onRenderFileLoaded(ILodRenderSource data, RenderMetaDataFile file)
@@ -348,7 +350,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 	
     public boolean refreshRenderSource(ILodRenderSource source)
 	{
-        RenderMetaDataFile file = this.files.get(source.getSectionPos());
+        RenderMetaDataFile file = this.filesBySectionPos.get(source.getSectionPos());
         if (source instanceof PlaceHolderRenderSource)
 		{
             if (file == null || file.metaData == null)
@@ -367,5 +369,25 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 		
         return false;
     }
+	
+	
+	public void deleteRenderCache()
+	{
+		// delete each file in the cache directory
+		File[] renderFiles = this.saveDir.listFiles();
+		if (renderFiles != null)
+		{
+			for (File renderFile : renderFiles)
+			{
+				if (!renderFile.delete())
+				{
+					LOGGER.error("Unable to delete render file: " + renderFile.getPath());
+				}
+			}
+		}
+		
+		// clear the cached files
+		this.filesBySectionPos.clear();
+	}
 	
 }

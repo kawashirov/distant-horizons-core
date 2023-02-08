@@ -32,8 +32,6 @@ public class LodRenderSection
 	private ILodRenderSource renderSource;
 	private ILodRenderSourceProvider renderSourceProvider = null;
 	
-	private EVerticalQuality previousVerticalQualitySetting = null;
-	
 	
 	
 	// Create sub region
@@ -85,11 +83,7 @@ public class LodRenderSection
 	// LOD provider //
 	//==============//
 	
-    public void load(ILodRenderSourceProvider renderDataProvider)
-	{
-		this.renderSourceProvider = renderDataProvider;
-		this.previousVerticalQualitySetting = Config.Client.Graphics.Quality.verticalQuality.get();
-    }
+    public void load(ILodRenderSourceProvider renderDataProvider) { this.renderSourceProvider = renderDataProvider; }
     public void reload(ILodRenderSourceProvider renderDataProvider)
 	{
         if (this.loadFuture != null)
@@ -105,7 +99,6 @@ public class LodRenderSection
         }
 		
 		this.loadFuture = renderDataProvider.read(this.pos);
-		this.previousVerticalQualitySetting = Config.Client.Graphics.Quality.verticalQuality.get();
     }
 	
 	
@@ -159,7 +152,7 @@ public class LodRenderSection
     //FIXME: Used by RenderBufferHandler
     public int FIXME_BYPASS_DONT_USE_getChildCount() { return this.childCount; }
 	
-    public boolean isOutdated() { return this.previousVerticalQualitySetting != Config.Client.Graphics.Quality.verticalQuality.get() || (this.renderSource != null && !this.renderSource.isValid()); }
+    public boolean isOutdated() { return this.renderSource != null && !this.renderSource.isValid(); }
 
     public ILodRenderSource getRenderSource() { return this.renderSource; }
 	

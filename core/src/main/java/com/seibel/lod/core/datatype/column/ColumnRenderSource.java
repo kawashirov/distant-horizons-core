@@ -1,5 +1,6 @@
 package com.seibel.lod.core.datatype.column;
 
+import com.seibel.lod.core.ModInfo;
 import com.seibel.lod.core.datatype.column.accessor.*;
 import com.seibel.lod.core.datatype.column.render.ColumnRenderBuffer;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
@@ -29,12 +30,13 @@ import java.util.concurrent.atomic.AtomicReference;
  * Stores the color data used when generating OpenGL buffers.
  * 
  * @author Leetom
- * @version 2022-10-5
+ * @version 2022-2-7
  */
 public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
-	public static final boolean DO_SAFETY_CHECKS = true; // TODO: this could potentially be replaced with "ModInfo.IS_DEV_BUILD"
+	
+	public static final boolean DO_SAFETY_CHECKS = ModInfo.IS_DEV_BUILD;
 	public static final byte SECTION_SIZE_OFFSET = 6;
 	public static final int SECTION_SIZE = 1 << SECTION_SIZE_OFFSET;
 	public static final byte LATEST_VERSION = 1;
@@ -42,12 +44,12 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 	public static final int AIR_LODS_SIZE = 16;
 	public static final int AIR_SECTION_SIZE = SECTION_SIZE / AIR_LODS_SIZE;
 	
-	public final int verticalSize;
+	public int verticalSize;
 	public final DhSectionPos sectionPos;
 	public final int yOffset;
 	
-	public final long[] dataContainer;
-	public final int[] airDataContainer;
+	public long[] dataContainer;
+	public int[] airDataContainer;
 	
 	public final DebugSourceFlag[] debugSourceFlags;
 	
@@ -58,9 +60,9 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 	//FIXME: Temp Hack
 	private long lastNs = -1;
 	/** 10 sec */
-	private static final long SWAP_TIMEOUT = 10_000_000_000L;
+	private static final long SWAP_TIMEOUT = 10_000000000L;
 	/** 1 sec */
-	private static final long SWAP_BUSY_COLLISION_TIMEOUT = 1_000_000_000L;
+	private static final long SWAP_BUSY_COLLISION_TIMEOUT = 1_000000000L;
 	
 	private CompletableFuture<ColumnRenderBuffer> inBuildRenderBuffer = null;
 	private final Reference<ColumnRenderBuffer> usedBuffer = new Reference<>();
@@ -77,8 +79,8 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 	public ColumnRenderSource(DhSectionPos sectionPos, int maxVerticalSize, int yOffset)
 	{
 		this.verticalSize = maxVerticalSize;
-		this.dataContainer = new long[SECTION_SIZE * SECTION_SIZE * verticalSize];
-		this.airDataContainer = new int[AIR_SECTION_SIZE * AIR_SECTION_SIZE * verticalSize];
+		this.dataContainer = new long[SECTION_SIZE * SECTION_SIZE * this.verticalSize];
+		this.airDataContainer = new int[AIR_SECTION_SIZE * AIR_SECTION_SIZE * this.verticalSize];
 		this.debugSourceFlags = new DebugSourceFlag[SECTION_SIZE * SECTION_SIZE];
 		this.sectionPos = sectionPos;
 		this.yOffset = yOffset;
@@ -254,6 +256,9 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 		
 		// validate we are writing for the same location
 		LodUtil.assertTrue(src.sectionPos.equals(this.sectionPos));
+		
+		// change the vertical size if necessary (this can happen if the vertical quality was changed in the config) 
+		this.clearAndChangeVerticalSize(src.verticalSize);
 		// validate both objects have the same number of dataPoints
 		LodUtil.assertTrue(src.verticalSize == this.verticalSize);
 		
@@ -274,8 +279,10 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 			int srcGenMode = ColumnFormat.getGenerationMode(src.dataContainer[i]);
 			
 			if (srcGenMode == 0)
+			{
 				// the source hasn't been generated, don't write it
 				continue;
+			}
 			
 			// this object's column is older than the source's column, update it
 			if (thisGenMode <= srcGenMode)
@@ -286,6 +293,20 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 				
 				this.debugSourceFlags[i / this.verticalSize] = src.debugSourceFlags[i / this.verticalSize];
 			}
+		}
+	}
+	/** 
+	 * If the newVerticalSize is different than the current verticalSize,
+	 * this will delete any data currently in this object and re-size it. <Br>
+	 * Otherwise this method will do nothing.
+	 */
+	private void clearAndChangeVerticalSize(int newVerticalSize)
+	{
+		if (newVerticalSize != this.verticalSize)
+		{
+			this.verticalSize = newVerticalSize;
+			this.dataContainer = new long[SECTION_SIZE * SECTION_SIZE * this.verticalSize];
+			this.airDataContainer = new int[AIR_SECTION_SIZE * AIR_SECTION_SIZE * this.verticalSize];
 		}
 	}
 	
@@ -310,7 +331,7 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 	}
 	
 	@Override
-	public int getMaxLodCount() { return SECTION_SIZE * SECTION_SIZE * getVerticalSize(); }
+	public int getMaxLodCount() { return SECTION_SIZE * SECTION_SIZE * this.getVerticalSize(); }
 	
 	@Override
 	public long getRoughRamUsageInBytes() { return (long) this.dataContainer.length * Long.BYTES; }
@@ -445,7 +466,7 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 		}
 	}
 	
-	public DebugSourceFlag debugGetFlag(int ox, int oz) { return debugSourceFlags[ox * SECTION_SIZE + oz]; }
+	public DebugSourceFlag debugGetFlag(int ox, int oz) { return this.debugSourceFlags[ox * SECTION_SIZE + oz]; }
 	
 	
 	

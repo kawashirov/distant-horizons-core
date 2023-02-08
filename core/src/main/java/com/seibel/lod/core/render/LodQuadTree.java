@@ -1,5 +1,7 @@
 package com.seibel.lod.core.render;
 
+import com.seibel.lod.api.enums.config.EVerticalQuality;
+import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.datatype.column.ColumnRenderSource;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhBlockPos2D;
@@ -55,8 +57,14 @@ public class LodQuadTree implements AutoCloseable
     private final IDhClientLevel level; //FIXME: Proper hierarchy to remove this reference!
 	
 	
+	// used to determine if the render data needs to be regenerated
+	// TODO there should be a better way of determining when the render data should be regenerated
+	private EVerticalQuality previousVerticalQualitySetting = null;
 	
-    /**
+	
+	
+	
+	/**
      * Constructor of the quadTree
      * @param viewDistance View distance in blocks
      * @param initialPlayerX player x block coordinate
@@ -216,7 +224,7 @@ public class LodQuadTree implements AutoCloseable
         for (int sectionDetailLevel = TREE_LOWEST_DETAIL_LEVEL; sectionDetailLevel < this.numbersOfSectionDetailLevels; sectionDetailLevel++)
 		{
 			Pos2D expectedCenterPos = new Pos2D(BitShiftUtil.divideByPowerOfTwo(playerPos.x, sectionDetailLevel), BitShiftUtil.divideByPowerOfTwo(playerPos.z, sectionDetailLevel));
-			MovableGridRingList<LodRenderSection> gridList = this.renderSectionRingLists[sectionDetailLevel- TREE_LOWEST_DETAIL_LEVEL];
+			MovableGridRingList<LodRenderSection> gridList = this.renderSectionRingLists[sectionDetailLevel-TREE_LOWEST_DETAIL_LEVEL];
 			
 			if (!gridList.getCenter().equals(expectedCenterPos))
 			{
@@ -224,6 +232,26 @@ public class LodQuadTree implements AutoCloseable
 				gridList.moveTo(expectedCenterPos.x, expectedCenterPos.y, LodRenderSection::dispose);
 			}
 		}
+		
+		
+		
+		// determine if the render data should be regenerated
+		// TODO this should be replaced with an API method call that is fired by modified config values 
+		boolean invalidateRenderCaches = false;
+		if (this.previousVerticalQualitySetting == null)
+		{
+			this.previousVerticalQualitySetting = Config.Client.Graphics.Quality.verticalQuality.get();
+		}
+		else if (this.previousVerticalQualitySetting != Config.Client.Graphics.Quality.verticalQuality.get())
+		{
+			invalidateRenderCaches = true;
+		}
+		
+		if (invalidateRenderCaches)
+		{
+			this.invalidateRenderCache();
+		}
+		
 		
 		
 		// TODO: inline comments should be added everywhere for this tick pass, so this comment block should be removed (having duplicate comments in two places is a bad idea) 
@@ -616,6 +644,37 @@ public class LodQuadTree implements AutoCloseable
 			});
 		}
     }
+	
+	/** 
+	 * Re-creates the color, render data. 
+	 * This method should be called after resource packs are changed or LOD settings are modified.
+	 */
+	private void invalidateRenderCache()
+	{
+		// TODO add a delay between the method being fired and any data getting cleared,
+		//      this would be to prevent clearing the same data 5 times in rapid succession 
+		//      when the user is switching through settings in the config
+		
+		LOGGER.info("Render cache invalidated");
+		
+		// clear each ring list
+		for (byte sectionDetailLevel = TREE_LOWEST_DETAIL_LEVEL; sectionDetailLevel < this.numbersOfSectionDetailLevels; sectionDetailLevel++)
+		{
+			MovableGridRingList<LodRenderSection> ringList = this.renderSectionRingLists[sectionDetailLevel-TREE_LOWEST_DETAIL_LEVEL];
+			if (ringList != null)
+			{
+				ringList.clear((section) -> section.dispose());
+				
+				LOGGER.info("Finished deleting render files for detail level ["+sectionDetailLevel+"]...");
+			}
+		}
+		
+		// delete the cache files
+		this.renderSourceProvider.deleteRenderCache();
+		
+		// update the previous quality setting
+		this.previousVerticalQualitySetting = Config.Client.Graphics.Quality.verticalQuality.get();
+	}
 	
 	
 	

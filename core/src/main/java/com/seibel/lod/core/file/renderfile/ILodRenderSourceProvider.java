@@ -24,4 +24,7 @@ public interface ILodRenderSourceProvider extends AutoCloseable
 	/** Returns true if the data was refreshed, false otherwise */
     boolean refreshRenderSource(ILodRenderSource source);
 	
+	/** Deletes any data stored in the render cache so it can be re-created */
+	void deleteRenderCache();
+	
 }
