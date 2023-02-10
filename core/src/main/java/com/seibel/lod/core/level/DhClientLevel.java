@@ -91,6 +91,15 @@ public class DhClientLevel implements IDhClientLevel
 	@Override
 	public IDataSourceProvider getFileHandler() { return this.dataFileHandler; }
 	
+	@Override 
+	public void clearRenderDataCache()
+	{
+		if (this.tree != null)
+		{
+			this.tree.clearRenderDataCache();
+		}
+	}
+	
 	@Override
 	public void updateChunk(IChunkWrapper chunk)
 	{

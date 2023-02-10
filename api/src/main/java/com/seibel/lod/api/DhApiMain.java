@@ -3,6 +3,7 @@ package com.seibel.lod.api;
 import com.seibel.lod.api.interfaces.config.IDhApiConfig;
 import com.seibel.lod.api.interfaces.override.IDhApiOverrideable;
 import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGeneratorOverrideRegister;
+import com.seibel.lod.api.interfaces.render.IDhApiRenderProxy;
 import com.seibel.lod.api.interfaces.world.IDhApiWorldProxy;
 import com.seibel.lod.api.methods.override.DhApiWorldGeneratorOverrideRegister;
 import com.seibel.lod.core.DependencyInjection.ApiEventInjector;
@@ -25,7 +26,7 @@ import com.seibel.lod.core.interfaces.dependencyInjection.IOverrideInjector;
  * the concrete object we replaced, there would be issues.
  *
  * @author James Seibel
- * @version 2022-11-24
+ * @version 2023-2-9
  */
 public class DhApiMain
 {
@@ -53,6 +54,10 @@ public class DhApiMain
 		 * Designed to be used in conjunction with {@link DhApiMain.Delayed#terrainRepo}.
 		 */
 		public static IDhApiWorldProxy worldProxy = null;
+		
+		/** Used to interact with Distant Horizons' rendering system. */
+		public static IDhApiRenderProxy renderProxy = null;
+		
 	}
 	
 	

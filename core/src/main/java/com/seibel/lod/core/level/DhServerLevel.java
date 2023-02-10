@@ -69,6 +69,12 @@ public class DhServerLevel implements IDhServerLevel
 	@Override
 	public IDataSourceProvider getFileHandler() { return this.dataFileHandler; }
 	
+	@Override 
+	public void clearRenderDataCache()
+	{
+		// Do nothing, there is no render data on the server
+	}
+	
 	@Override
 	public void updateChunk(IChunkWrapper chunk)
 	{

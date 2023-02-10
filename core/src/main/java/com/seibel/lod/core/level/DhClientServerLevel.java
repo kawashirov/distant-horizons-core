@@ -339,6 +339,16 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 	@Override
 	public IDataSourceProvider getFileHandler() { return this.dataFileHandler; }
 	
+	@Override
+	public void clearRenderDataCache()
+	{
+		RenderState renderState = this.renderState.get();
+		if (renderState != null && renderState.tree != null)
+		{
+			renderState.tree.clearRenderDataCache();
+		}
+	}
+	
 	
 	
 	

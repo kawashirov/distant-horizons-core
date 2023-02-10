@@ -23,6 +23,7 @@ package com.seibel.lod.core.config;
 import com.seibel.lod.api.enums.config.*;
 import com.seibel.lod.api.enums.rendering.*;
 import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
+import com.seibel.lod.core.config.eventHandlers.RenderCacheConfigEventHandler;
 import com.seibel.lod.core.config.types.*;
 
 
@@ -124,6 +125,7 @@ public class Config
                                 + "\n"
                                 + "Lowest Quality: " + EVerticalQuality.LOW + "\n"
                                 + "Highest Quality: " + EVerticalQuality.HIGH)
+						.addListener(RenderCacheConfigEventHandler.INSTANCE)
                         .build();
 
                 public static ConfigEntry<Integer> horizontalScale = new ConfigEntry.Builder<Integer>()

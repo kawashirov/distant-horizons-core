@@ -1,7 +1,5 @@
 package com.seibel.lod.core.render;
 
-import com.seibel.lod.api.enums.config.EVerticalQuality;
-import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.datatype.column.ColumnRenderSource;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhBlockPos2D;
@@ -17,7 +15,8 @@ import com.seibel.lod.core.util.gridList.MovableGridRingList;
 import org.apache.logging.log4j.Logger;
 
 /**
- * This quadTree structure is the core of the DH mod. <br><br>
+ * This quadTree structure is our core data structure and holds
+ * all rendering data. <br><br>
  * 
  * This class represent a circular quadTree of lodSections. <br>
  * Each section at level n is populated in one or more ways: <br> 
@@ -55,11 +54,6 @@ public class LodQuadTree implements AutoCloseable
     private final ILodRenderSourceProvider renderSourceProvider;
 	
     private final IDhClientLevel level; //FIXME: Proper hierarchy to remove this reference!
-	
-	
-	// used to determine if the render data needs to be regenerated
-	// TODO there should be a better way of determining when the render data should be regenerated
-	private EVerticalQuality previousVerticalQualitySetting = null;
 	
 	
 	
@@ -233,24 +227,6 @@ public class LodQuadTree implements AutoCloseable
 			}
 		}
 		
-		
-		
-		// determine if the render data should be regenerated
-		// TODO this should be replaced with an API method call that is fired by modified config values 
-		boolean invalidateRenderCaches = false;
-		if (this.previousVerticalQualitySetting == null)
-		{
-			this.previousVerticalQualitySetting = Config.Client.Graphics.Quality.verticalQuality.get();
-		}
-		else if (this.previousVerticalQualitySetting != Config.Client.Graphics.Quality.verticalQuality.get())
-		{
-			invalidateRenderCaches = true;
-		}
-		
-		if (invalidateRenderCaches)
-		{
-			this.invalidateRenderCache();
-		}
 		
 		
 		
@@ -649,13 +625,9 @@ public class LodQuadTree implements AutoCloseable
 	 * Re-creates the color, render data. 
 	 * This method should be called after resource packs are changed or LOD settings are modified.
 	 */
-	private void invalidateRenderCache()
+	public void clearRenderDataCache()
 	{
-		// TODO add a delay between the method being fired and any data getting cleared,
-		//      this would be to prevent clearing the same data 5 times in rapid succession 
-		//      when the user is switching through settings in the config
-		
-		LOGGER.info("Render cache invalidated");
+		LOGGER.info("Clearing render cache...");
 		
 		// clear each ring list
 		for (byte sectionDetailLevel = TREE_LOWEST_DETAIL_LEVEL; sectionDetailLevel < this.numbersOfSectionDetailLevels; sectionDetailLevel++)
@@ -672,8 +644,7 @@ public class LodQuadTree implements AutoCloseable
 		// delete the cache files
 		this.renderSourceProvider.deleteRenderCache();
 		
-		// update the previous quality setting
-		this.previousVerticalQualitySetting = Config.Client.Graphics.Quality.verticalQuality.get();
+		LOGGER.info("Render cache invalidated");
 	}
 	
 	

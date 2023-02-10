@@ -7,13 +7,14 @@ import com.seibel.lod.core.datatype.full.FullDataLoader;
 import com.seibel.lod.core.datatype.full.SparseDataLoader;
 import com.seibel.lod.api.DhApiMain;
 import com.seibel.lod.core.datatype.full.SpottyDataLoader;
+import com.seibel.lod.core.render.DhApiRenderProxy;
 import com.seibel.lod.core.world.DhApiWorldProxy;
 
 /**
  * Handles first time Core setup.
  * 
  * @author Leetom
- * @version 2022-11-20
+ * @version 2023-2-8
  */
 public class Initializer
 {
@@ -28,6 +29,7 @@ public class Initializer
 		DhApiMain.Delayed.configs = DhApiConfig.INSTANCE;
 		DhApiMain.Delayed.terrainRepo = DhApiTerrainDataRepo.INSTANCE;
 		DhApiMain.Delayed.worldProxy = DhApiWorldProxy.INSTANCE;
+		DhApiMain.Delayed.renderProxy = DhApiRenderProxy.INSTANCE;
 		
     }
 }

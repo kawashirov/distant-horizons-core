@@ -1,6 +1,5 @@
 package com.seibel.lod.core.level;
 
-import com.seibel.lod.core.file.datafile.DataFileHandler;
 import com.seibel.lod.core.file.datafile.IDataSourceProvider;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
@@ -20,5 +19,11 @@ public interface IDhLevel extends AutoCloseable
     void updateChunk(IChunkWrapper chunk);
 	
 	IDataSourceProvider getFileHandler();
+	
+	/**
+	 * Re-creates the color, render data. 
+	 * This method should be called after resource packs are changed or LOD settings are modified.
+	 */
+	void clearRenderDataCache(); // TODO make all methods in this stack named the same
 	
 }
