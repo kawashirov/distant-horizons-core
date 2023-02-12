@@ -9,24 +9,37 @@ import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.file.datafile.DataMetaFile;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
+import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.util.BitSet;
 
+/**
+ * Handles full data with the detail level {@link SparseDataSource#SPARSE_UNIT_DETAIL}
+ */
 public class SparseDataSource implements IIncompleteDataSource
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     public static final byte SPARSE_UNIT_DETAIL = 4;
-    public static final byte SPARSE_UNIT_SIZE = 1 << SPARSE_UNIT_DETAIL;
+    public static final byte SPARSE_UNIT_SIZE = (byte) BitShiftUtil.powerOfTwo(SPARSE_UNIT_DETAIL);
 
     public static final byte SECTION_SIZE_OFFSET = 6;
-    public static final int SECTION_SIZE = 1 << SECTION_SIZE_OFFSET;
+    public static final int SECTION_SIZE = (byte) BitShiftUtil.powerOfTwo(SECTION_SIZE_OFFSET);
     public static final byte MAX_SECTION_DETAIL = SECTION_SIZE_OFFSET + SPARSE_UNIT_DETAIL;
     public static final byte LATEST_VERSION = 0;
     public static final long TYPE_ID = "SparseDataSource".hashCode();
-    protected final FullDataPointIdMap mapping;
+	
+	/**
+	 * This is the byte put between different sections in the binary save file.
+	 * The presence and absence of this byte indicates if the file is correctly formatted.  
+	 */
+	private static final int DATA_GUARD_BYTE = 0xFFFFFFFF;
+	/** indicates the binary save file represents an empty data source */
+	private static final int NO_DATA_FLAG_BYTE = 0x00000001;
+	
+	protected final FullDataPointIdMap mapping;
     private final DhSectionPos sectionPos;
     private final FullArrayView[] sparseData;
     final int chunks;
@@ -195,7 +208,7 @@ public class SparseDataSource implements IIncompleteDataSource
 			}
 		}
     }
-
+	
     @Override
     public void saveData(IDhLevel level, DataMetaFile file, OutputStream dataStream) throws IOException
 	{
@@ -207,22 +220,28 @@ public class SparseDataSource implements IIncompleteDataSource
             dos.writeInt(level.getMinY());
             if (this.isEmpty)
 			{
-                dos.writeInt(0x00000001);
+                dos.writeInt(NO_DATA_FLAG_BYTE);
                 return;
             }
 			
-            dos.writeInt(0xFFFFFFFF);
+            dos.writeInt(DATA_GUARD_BYTE);
             // sparse array existence bitset
-            BitSet set = new BitSet(this.sparseData.length);
-            for (int i = 0; i < this.sparseData.length; i++) set.set(i, this.sparseData[i] != null);
-            byte[] bytes = set.toByteArray();
+            BitSet dataArrayIndexHasData = new BitSet(this.sparseData.length);
+            for (int i = 0; i < this.sparseData.length; i++)
+			{
+				dataArrayIndexHasData.set(i, this.sparseData[i] != null);
+			}
+            byte[] bytes = dataArrayIndexHasData.toByteArray();
             dos.writeInt(bytes.length);
             dos.write(bytes);
 
             // Data array content (only on non-empty stuff)
-            dos.writeInt(0xFFFFFFFF);
-            for (int i = set.nextSetBit(0); i >= 0; i = set.nextSetBit(i + 1))
+            dos.writeInt(DATA_GUARD_BYTE);
+            for (int i = dataArrayIndexHasData.nextSetBit(0); 
+				 i >= 0; 
+				 i = dataArrayIndexHasData.nextSetBit(i+1))
 			{
+				// column data length
                 FullArrayView array = this.sparseData[i];
                 LodUtil.assertTrue(array != null);
 				for (int x = 0; x < array.width(); x++)
@@ -233,27 +252,30 @@ public class SparseDataSource implements IIncompleteDataSource
 					}
 				}
 				
+				// column data
 				for (int x = 0; x < array.width(); x++)
 				{
 					for (int z = 0; z < array.width(); z++)
 					{
 						SingleFullArrayView column = array.get(x, z);
-						LodUtil.assertTrue(column.getMapping() == this.mapping); //MUST be exact equal!
-						if (!column.doesItExist())
-							continue;
-						long[] raw = column.getRaw();
-						for (long l : raw)
+						LodUtil.assertTrue(column.getMapping() == this.mapping); // the mappings must be exactly equal!
+						
+						if (column.doesItExist())
 						{
-							dos.writeLong(l);
+							long[] raw = column.getRaw();
+							for (long l : raw)
+							{
+								dos.writeLong(l);
+							}
 						}
 					}
 				}
             }
 			
             // Id mapping
-            dos.writeInt(0xFFFFFFFF);
+            dos.writeInt(DATA_GUARD_BYTE);
 			this.mapping.serialize(dos);
-            dos.writeInt(0xFFFFFFFF);
+			dos.writeInt(DATA_GUARD_BYTE);
         }
     }
 
@@ -262,96 +284,160 @@ public class SparseDataSource implements IIncompleteDataSource
         LodUtil.assertTrue(dataFile.pos.sectionDetailLevel > SPARSE_UNIT_DETAIL);
         LodUtil.assertTrue(dataFile.pos.sectionDetailLevel <= MAX_SECTION_DETAIL);
 		
-        DataInputStream dos = new DataInputStream(dataStream); // DO NOT CLOSE! It would close all related streams
+        DataInputStream inputStream = new DataInputStream(dataStream); // DO NOT CLOSE! It would close all related streams
         {
-            int dataDetail = dos.readShort();
+			// TODO what is a data detail?
+            int dataDetail = inputStream.readShort();
             if(dataDetail != dataFile.metaData.dataLevel)
-                throw new IOException(LodUtil.formatLog("Data level mismatch: {} != {}", dataDetail, dataFile.metaData.dataLevel));
+			{
+				throw new IOException(LodUtil.formatLog("Data level mismatch: {} != {}", dataDetail, dataFile.metaData.dataLevel));
+			}
 			
-            int sparseDetail = dos.readShort();
+			// confirm that the detail level is correct
+            int sparseDetail = inputStream.readShort();
             if (sparseDetail != SPARSE_UNIT_DETAIL)
 			{
 				throw new IOException((LodUtil.formatLog("Unexpected sparse detail level: {} != {}",
 						sparseDetail, SPARSE_UNIT_DETAIL)));
 			}
 			
-            int size = dos.readInt();
-            if (size != SECTION_SIZE)
+			// confirm the scale of the data points is correct
+            int sectionSize = inputStream.readInt();
+            if (sectionSize != SECTION_SIZE)
 			{
 				throw new IOException(LodUtil.formatLog(
-						"Section size mismatch: {} != {} (Currently only 1 section size is supported)", size, SECTION_SIZE));
+						"Section size mismatch: {} != {} (Currently only 1 section size is supported)", sectionSize, SECTION_SIZE));
 			}
 			
-            int chunks = 1 << (byte) (dataFile.pos.sectionDetailLevel - sparseDetail);
-            int dataPerChunk = size / chunks;
 			
-            int minY = dos.readInt();
-            if (minY != level.getMinY())
-                LOGGER.warn("Data minY mismatch: {} != {}. Will ignore data's y level", minY, level.getMinY());
-            int end = dos.readInt();
-            // Data array length
-            if (end == 0x00000001)
+			// calculate the number of chunks and dataPoints based on the sparseDetail and sectionSize
+			// TODO these values should be constant, should we still be calculating them like this?
+			int chunks = BitShiftUtil.powerOfTwo(dataFile.pos.sectionDetailLevel - sparseDetail);
+			int dataPointsPerChunk = sectionSize / chunks;
+			
+			
+			// get the data's starting Y-level
+			int minY = inputStream.readInt();
+			if (minY != level.getMinY())
 			{
-                // Section is empty
+				LOGGER.warn("Data minY mismatch: {} != {}. Will ignore data's y level", minY, level.getMinY());
+			}
+			
+			
+			// check if this file has any data
+            int hasDataFlag = inputStream.readInt();
+            if (hasDataFlag == NO_DATA_FLAG_BYTE)
+			{
+                // this file is empty
                 return createEmpty(dataFile.pos);
             }
-
-            // Non-empty section
-            if (end != 0xFFFFFFFF) 
-				throw new IOException("invalid header end guard");
-            int length = dos.readInt();
-	
-			if (length < 0 || length > (chunks * chunks / 8 + 64) * 2)
-                throw new IOException(LodUtil.formatLog("Sparse Flag BitSet size outside reasonable range: {} (expects {} to {})",
-                        length, 1, chunks*chunks/8+63));
-            byte[] bytes = dos.readNBytes(length);
-            BitSet set = BitSet.valueOf(bytes);
-
-            long[][][] dataChunks = new long[chunks*chunks][][];
-
-            // Data array content (only on non-empty columns)
-            end = dos.readInt();
-            if (end != 0xFFFFFFFF)
-				throw new IOException("invalid data length end guard");
-			
-			for (int i = set.nextSetBit(0); i >= 0 && i < dataChunks.length; i = set.nextSetBit(i + 1))
+            else if (hasDataFlag != DATA_GUARD_BYTE)
 			{
-				long[][] dataColumns = new long[dataPerChunk * dataPerChunk][];
-				dataChunks[i] = dataColumns;
-				for (int i2 = 0; i2 < dataColumns.length; i2++)
+				// the file format is incorrect
+				throw new IOException("invalid header end guard");
+			}
+			else
+			{
+				// this file has data
+				
+				
+				// get the number of columns (IE the bitSet from before)
+				int numberOfDataColumns = inputStream.readInt();
+				// validate the number of data columns
+				int maxNumberOfDataColumns = (chunks * chunks / 8 + 64) * 2; // TODO what do these values represent?
+				if (numberOfDataColumns < 0 || numberOfDataColumns > maxNumberOfDataColumns)
 				{
-					dataColumns[i2] = new long[dos.readByte()];
+					throw new IOException(LodUtil.formatLog("Sparse Flag BitSet size outside reasonable range: {} (expects {} to {})",
+							numberOfDataColumns, 1, maxNumberOfDataColumns));
 				}
-				for (int k = 0; k < dataColumns.length; k++)
+				
+				// read in the presence of each data column
+				byte[] bytes = inputStream.readNBytes(numberOfDataColumns);
+				BitSet dataArrayIndexHasData = BitSet.valueOf(bytes);
+				
+				
+				
+				//====================//
+				// Data array content //
+				//====================//
+				
+				//  (only on non-empty columns)
+				int dataArrayStartByte = inputStream.readInt();
+				// confirm the column data is starting
+				if (dataArrayStartByte != DATA_GUARD_BYTE)
 				{
-					if (dataColumns[k].length == 0)
-						continue;
-					for (int o = 0; o < dataColumns[k].length; o++)
+					// the file format is incorrect
+					throw new IOException("invalid data length end guard");
+				}
+				
+				
+				// read in each column that has data written to it
+				long[][][] rawFullDataArrays = new long[chunks * chunks][][];
+				for (int fullDataIndex = dataArrayIndexHasData.nextSetBit(0);
+					 fullDataIndex >= 0 && // TODO why does this happen? 
+							 fullDataIndex < rawFullDataArrays.length;
+					 fullDataIndex = dataArrayIndexHasData.nextSetBit(fullDataIndex + 1))
+				{
+					long[][] dataColumn = new long[dataPointsPerChunk * dataPointsPerChunk][];
+					
+					// get the column data lengths
+					rawFullDataArrays[fullDataIndex] = dataColumn;
+					for (int x = 0; x < dataColumn.length; x++)
 					{
-						dataColumns[k][o] = dos.readLong();
+						// this should be zero if the column doesn't have any data
+						byte dataColumnLength = inputStream.readByte();
+						dataColumn[x] = new long[dataColumnLength];
+					}
+					
+					// get the column data
+					for (int x = 0; x < dataColumn.length; x++)
+					{
+						
+						if (dataColumn[x].length != 0)
+						{
+							// read in the data columns
+							for (int z = 0; z < dataColumn[x].length; z++)
+							{
+								dataColumn[x][z] = inputStream.readLong();
+							}
+						}
 					}
 				}
+				
+				
+				
+				//============//
+				// ID mapping //
+				//============//
+				
+				// mark the start of the ID data
+				int idMappingStartByte = inputStream.readInt();
+				if (idMappingStartByte != DATA_GUARD_BYTE)
+				{
+					// the file format is incorrect
+					throw new IOException("invalid data content end guard");
+				}
+				
+				// deserialize the ID data
+				FullDataPointIdMap mapping = FullDataPointIdMap.deserialize(inputStream);
+				int idMappingEndByte = inputStream.readInt();
+				if (idMappingEndByte != DATA_GUARD_BYTE)
+				{
+					// the file format is incorrect
+					throw new IOException("invalid id mapping end guard");
+				}
+				
+				FullArrayView[] fullDataArrays = new FullArrayView[chunks * chunks];
+				for (int i = 0; i < rawFullDataArrays.length; i++)
+				{
+					if (rawFullDataArrays[i] != null)
+					{
+						fullDataArrays[i] = new FullArrayView(mapping, rawFullDataArrays[i], dataPointsPerChunk);
+					}
+				}
+				
+				return new SparseDataSource(dataFile.pos, mapping, fullDataArrays);
 			}
-
-            // Id mapping
-            end = dos.readInt();
-            if (end != 0xFFFFFFFF) 
-				throw new IOException("invalid data content end guard");
-			
-            FullDataPointIdMap mapping = FullDataPointIdMap.deserialize(dos);
-            end = dos.readInt();
-            if (end != 0xFFFFFFFF) 
-				throw new IOException("invalid id mapping end guard");
-
-            FullArrayView[] objectChunks = new FullArrayView[chunks*chunks];
-			for (int i = 0; i < dataChunks.length; i++)
-			{
-				if (dataChunks[i] == null)
-					continue;
-				objectChunks[i] = new FullArrayView(mapping, dataChunks[i], dataPerChunk);
-			}
-
-            return new SparseDataSource(dataFile.pos, mapping, objectChunks);
         }
     }
 
@@ -377,8 +463,11 @@ public class SparseDataSource implements IIncompleteDataSource
 
     public ILodDataSource trySelfPromote()
 	{
-        if (this.isEmpty) 
+        if (this.isEmpty)
+		{
 			return this;
+		}
+		
         for (FullArrayView array : this.sparseData)
 		{
             if (array == null) return this;
@@ -394,8 +483,10 @@ public class SparseDataSource implements IIncompleteDataSource
         int chunkX = x / this.dataPerChunk;
         int chunkZ = z / this.dataPerChunk;
         FullArrayView chunk = this.sparseData[chunkX * this.chunks + chunkZ];
-        if (chunk == null) 
+        if (chunk == null)
+		{
 			return null;
+		}
         return chunk.get(x % this.dataPerChunk, z % this.dataPerChunk);
     }
 	
