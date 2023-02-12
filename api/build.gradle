@@ -1,4 +1,4 @@
-version = "API-" + rootProject.versionStr
+version = "API-" + rootProject.mod_version
 
 configurations {
 
