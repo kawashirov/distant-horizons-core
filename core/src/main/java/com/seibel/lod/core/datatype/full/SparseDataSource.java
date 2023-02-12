@@ -248,7 +248,7 @@ public class SparseDataSource implements IIncompleteDataSource
 				{
 					for (int z = 0; z < array.width(); z++)
 					{
-						dos.writeByte(array.get(x, z).getSingleLength());
+						dos.writeInt(array.get(x, z).getSingleLength());
 					}
 				}
 				
@@ -385,7 +385,7 @@ public class SparseDataSource implements IIncompleteDataSource
 					for (int x = 0; x < dataColumn.length; x++)
 					{
 						// this should be zero if the column doesn't have any data
-						byte dataColumnLength = inputStream.readByte();
+						int dataColumnLength = inputStream.readInt();
 						dataColumn[x] = new long[dataColumnLength];
 					}
 					
