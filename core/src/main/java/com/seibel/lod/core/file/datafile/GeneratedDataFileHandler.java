@@ -85,7 +85,7 @@ public class GeneratedDataFileHandler extends DataFileHandler
 			// create the missing metaData files
             for (DhSectionPos missingPos : missingPositions)
 			{
-                DataMetaFile newFile = this.atomicGetOrMakeFile(missingPos);
+                DataMetaFile newFile = this.getOrMakeFile(missingPos);
                 if (newFile != null)
 				{
 					existingFiles.add(newFile);
@@ -98,7 +98,7 @@ public class GeneratedDataFileHandler extends DataFileHandler
 			final ArrayList<CompletableFuture<Void>> futures = new ArrayList<>(existingFiles.size());
             for (DataMetaFile existingFile : existingFiles)
 			{
-                futures.add(existingFile.loadOrGetCached()
+                futures.add(existingFile.loadOrGetCachedAsync()
                         .exceptionally((ex) -> /*Ignore file read errors*/null)
                         .thenAccept((data) ->
 						{

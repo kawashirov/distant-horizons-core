@@ -7,6 +7,7 @@ import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.full.FullDataSource;
 import com.seibel.lod.core.datatype.full.SparseDataSource;
 import com.seibel.lod.core.datatype.full.SpottyDataSource;
+import com.seibel.lod.core.file.FileUtil;
 import com.seibel.lod.core.file.metaData.MetaData;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhLodPos;
@@ -17,14 +18,12 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -150,7 +149,7 @@ public class DataFileHandler implements IDataSourceProvider
         }
     }
 	
-    protected DataMetaFile atomicGetOrMakeFile(DhSectionPos pos)
+    protected DataMetaFile getOrMakeFile(DhSectionPos pos)
 	{
         DataMetaFile metaFile = this.files.get(pos);
         if (metaFile == null)
@@ -266,7 +265,7 @@ public class DataFileHandler implements IDataSourceProvider
     public CompletableFuture<ILodDataSource> read(DhSectionPos pos)
 	{
 		this.topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetailLevel));
-        DataMetaFile metaFile = this.atomicGetOrMakeFile(pos);
+        DataMetaFile metaFile = this.getOrMakeFile(pos);
         if (metaFile == null)
 		{
 			return CompletableFuture.completedFuture(null);
@@ -351,7 +350,7 @@ public class DataFileHandler implements IDataSourceProvider
 		{
             for (DhSectionPos missingPos : missing)
 			{
-                DataMetaFile newFile = this.atomicGetOrMakeFile(missingPos);
+                DataMetaFile newFile = this.getOrMakeFile(missingPos);
                 if (newFile != null)
 				{
 					existFiles.add(newFile);
@@ -362,7 +361,7 @@ public class DataFileHandler implements IDataSourceProvider
                     SparseDataSource.createEmpty(pos) : 
 					SpottyDataSource.createEmpty(pos);
 
-            for (DataMetaFile f : existFiles)
+            for (DataMetaFile metaFile : existFiles)
 			{
                 futures.add(f.loadOrGetCached()
                         .exceptionally((ex) -> null)
@@ -445,4 +444,5 @@ public class DataFileHandler implements IDataSourceProvider
         DataMetaFile.debugCheck();
          //TODO
     }
+	
 }

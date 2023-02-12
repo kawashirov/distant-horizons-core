@@ -10,12 +10,14 @@ import java.io.InputStream;
 
 public class SparseDataLoader extends AbstractDataSourceLoader
 {
-    public SparseDataLoader() {
-        super(SparseDataSource.class, SparseDataSource.TYPE_ID, new byte[]{SparseDataSource.LATEST_VERSION});
-    }
+	public SparseDataLoader()
+	{
+		super(SparseDataSource.class, SparseDataSource.TYPE_ID, new byte[] { SparseDataSource.LATEST_VERSION });
+	}
 
     @Override
-    public ILodDataSource loadData(DataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException {
-        return SparseDataSource.loadData(dataFile, data, level);
-    }
+	public ILodDataSource loadData(DataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException
+	{
+		return SparseDataSource.loadData(dataFile, data, level);
+	}
 }
