@@ -11,6 +11,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import com.seibel.lod.core.datatype.IFullDataSource;
 import com.seibel.lod.core.datatype.AbstractDataSourceLoader;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
+import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.file.metaData.MetaData;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.file.metaData.AbstractMetaDataFile;
@@ -19,6 +20,7 @@ import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.AtomicsUtil;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import org.apache.logging.log4j.Logger;
 
 /**
@@ -27,6 +29,7 @@ import org.apache.logging.log4j.Logger;
 public class FullDataMetaFile extends AbstractMetaDataFile
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger(FullDataMetaFile.class.getSimpleName());
+	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	
 	private final IDhLevel level;
 	private final IFullDataSourceProvider handler;
@@ -102,12 +105,16 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 		doesFileExist = true;
 	}
 
-	public CompletableFuture<Void> flushAndSave() {
+	public CompletableFuture<Void> flushAndSave()
+	{
 		debugCheck();
-		boolean isEmpty = writeQueue.get().queue.isEmpty();
-		if (!isEmpty) {
-			return loadOrGetCachedAsync().thenApply((unused) -> null); // This will flush the data to disk.
-		} else {
+		boolean isEmpty = this.writeQueue.get().queue.isEmpty();
+		if (!isEmpty)
+		{
+			return this.loadOrGetCachedAsync().thenApply((unused) -> null); // This will flush the data to disk.
+		}
+		else
+		{
 			return CompletableFuture.completedFuture(null);
 		}
 	}

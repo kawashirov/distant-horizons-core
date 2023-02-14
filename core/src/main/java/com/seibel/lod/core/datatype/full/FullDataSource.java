@@ -140,6 +140,7 @@ public class FullDataSource extends FullArrayView implements IFullDataSource
 				return;
 			}
 			dos.writeInt(0xFFFFFFFF);
+			
 			// Data array length
 			for (int x = 0; x < this.size; x++)
 			{
@@ -148,6 +149,7 @@ public class FullDataSource extends FullArrayView implements IFullDataSource
 					dos.writeInt(this.get(x, z).getSingleLength());
 				}
 			}
+			
 			// Data array content (only on non-empty columns)
 			dos.writeInt(0xFFFFFFFF);
 			for (int x = 0; x < this.size; x++)
@@ -157,6 +159,7 @@ public class FullDataSource extends FullArrayView implements IFullDataSource
 					SingleFullArrayView column = this.get(x, z);
 					if (!column.doesItExist())
 						continue;
+					
 					long[] raw = column.getRaw();
 					for (long l : raw)
 					{
@@ -164,6 +167,7 @@ public class FullDataSource extends FullArrayView implements IFullDataSource
 					}
 				}
 			}
+			
 			// Id mapping
 			dos.writeInt(0xFFFFFFFF);
 			this.mapping.serialize(dos);
@@ -178,15 +182,24 @@ public class FullDataSource extends FullArrayView implements IFullDataSource
 		{
 			int dataDetail = dos.readInt();
 			if (dataDetail != dataFile.metaData.dataLevel)
+			{
 				throw new IOException(LodUtil.formatLog("Data level mismatch: {} != {}", dataDetail, dataFile.metaData.dataLevel));
+			}
+			
 			int size = dos.readInt();
 			if (size != SECTION_SIZE)
+			{
 				throw new IOException(LodUtil.formatLog(
 						"Section size mismatch: {} != {} (Currently only 1 section size is supported)", size, SECTION_SIZE));
+			}
+			
 			int minY = dos.readInt();
 			if (minY != level.getMinY())
+			{
 				LOGGER.warn("Data minY mismatch: {} != {}. Will ignore data's y level", minY, level.getMinY());
+			}
 			int end = dos.readInt();
+			
 			// Data array length
 			if (end == 0x00000001)
 			{
@@ -195,7 +208,10 @@ public class FullDataSource extends FullArrayView implements IFullDataSource
 			}
 			// Non-empty section
 			if (end != 0xFFFFFFFF)
+			{
 				throw new IOException("invalid header end guard");
+			}
+			
 			long[][] data = new long[size * size][];
 			for (int x = 0; x < size; x++)
 			{
@@ -207,7 +223,10 @@ public class FullDataSource extends FullArrayView implements IFullDataSource
 			// Data array content (only on non-empty columns)
 			end = dos.readInt();
 			if (end != 0xFFFFFFFF)
+			{
 				throw new IOException("invalid data length end guard");
+			}
+			
 			for (int i = 0; i < data.length; i++)
 			{
 				if (data[i].length == 0)
@@ -220,11 +239,17 @@ public class FullDataSource extends FullArrayView implements IFullDataSource
 			// Id mapping
 			end = dos.readInt();
 			if (end != 0xFFFFFFFF)
+			{
 				throw new IOException("invalid data content end guard");
+			}
+			
 			FullDataPointIdMap mapping = FullDataPointIdMap.deserialize(new UnclosableInputStream(dos));
 			end = dos.readInt();
 			if (end != 0xFFFFFFFF)
+			{
 				throw new IOException("invalid id mapping end guard");
+			}
+			
 			return new FullDataSource(dataFile.pos, mapping, data);
 		}
 	}
