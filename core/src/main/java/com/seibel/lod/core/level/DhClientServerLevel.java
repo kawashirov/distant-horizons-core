@@ -64,7 +64,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		save.getDataFolder(level).mkdirs();
 		save.getRenderCacheFolder(level).mkdirs();
 		this.dataFileHandler = new GeneratedFullDataFileHandler(this, save.getDataFolder(level));
-		FileScanUtil.scanFile(save, this.serverLevel, this.dataFileHandler, null);
+		FileScanUtil.scanFiles(save, this.serverLevel, this.dataFileHandler, null);
 		LOGGER.info("Started DHLevel for {} with saves at {}", level, save);
 		this.f3Msg = new F3Screen.NestedMessage(this::f3Log);
 		this.chunkToLodBuilder = new ChunkToLodBuilder();
@@ -375,7 +375,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 			this.tree = new LodQuadTree(DhClientServerLevel.this, Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * 16,
 					MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, this.renderFileHandler);
 			this.renderBufferHandler = new RenderBufferHandler(this.tree);
-			FileScanUtil.scanFile(thisParent.save, thisParent.serverLevel, null, this.renderFileHandler);
+			FileScanUtil.scanFiles(thisParent.save, thisParent.serverLevel, null, this.renderFileHandler);
 			this.renderer = new LodRenderer(this.renderBufferHandler);
 		}
 		

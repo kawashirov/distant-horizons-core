@@ -10,7 +10,7 @@ import java.io.InputStream;
 import java.util.*;
 
 /**
- * Abstract for loading and creating {@link ILodRenderSource} objects 
+ * Abstract for loading and creating {@link IRenderSource} objects 
  * from {@link RenderMetaDataFile}'s and {@link IFullDataSource}'s. <br><Br>
  * 
  * Also holds all {@link AbstractRenderSourceLoader}'s
@@ -18,8 +18,8 @@ import java.util.*;
  */
 public abstract class AbstractRenderSourceLoader
 {
-	public static final HashMultimap<Class<? extends ILodRenderSource>, AbstractRenderSourceLoader> LOADER_BY_SOURCE_TYPE = HashMultimap.create();
-	public static final HashMap<Long, Class<? extends ILodRenderSource>> SOURCE_TYPE_BY_METADATA_VERSION = new HashMap<>();
+	public static final HashMultimap<Class<? extends IRenderSource>, AbstractRenderSourceLoader> LOADER_BY_SOURCE_TYPE = HashMultimap.create();
+	public static final HashMap<Long, Class<? extends IRenderSource>> SOURCE_TYPE_BY_METADATA_VERSION = new HashMap<>();
 	
 	public static AbstractRenderSourceLoader getLoader(long renderTypeId, byte loaderVersion)
 	{
@@ -28,7 +28,7 @@ public abstract class AbstractRenderSourceLoader
 				.findFirst().orElse(null);
 	}
 	
-	public static AbstractRenderSourceLoader getLoader(Class<? extends ILodRenderSource> clazz, byte loaderVersion)
+	public static AbstractRenderSourceLoader getLoader(Class<? extends IRenderSource> clazz, byte loaderVersion)
 	{
 		return LOADER_BY_SOURCE_TYPE.get(clazz).stream()
 				.filter(l -> Arrays.binarySearch(l.loaderSupportedRenderDataVersions, loaderVersion) >= 0)
@@ -37,7 +37,7 @@ public abstract class AbstractRenderSourceLoader
 	
 	
 	
-	public final Class<? extends ILodRenderSource> renderSourceClass;
+	public final Class<? extends IRenderSource> renderSourceClass;
 	public final long renderTypeId;
 	public final byte[] loaderSupportedRenderDataVersions;
 	public final byte detailOffset;
@@ -50,7 +50,7 @@ public abstract class AbstractRenderSourceLoader
 	 * 
 	 * @throws IllegalArgumentException if another render source already exists for the given renderTypeId or supported render data versions
 	 */
-	public AbstractRenderSourceLoader(Class<? extends ILodRenderSource> renderSourceClass, long renderTypeId, byte[] loaderSupportedRenderDataVersions, byte detailOffset) throws IllegalArgumentException
+	public AbstractRenderSourceLoader(Class<? extends IRenderSource> renderSourceClass, long renderTypeId, byte[] loaderSupportedRenderDataVersions, byte detailOffset) throws IllegalArgumentException
 	{
 		this.renderTypeId = renderTypeId;
 		this.loaderSupportedRenderDataVersions = loaderSupportedRenderDataVersions;
@@ -99,8 +99,8 @@ public abstract class AbstractRenderSourceLoader
 	 * @throws IOException if the file uses a unsupported data version 
 	 * 					   or there was an issue reading the file
 	 */
-	public abstract ILodRenderSource loadRenderSource(RenderMetaDataFile renderFile, InputStream data, IDhLevel level) throws IOException;
+	public abstract IRenderSource loadRenderSource(RenderMetaDataFile renderFile, InputStream data, IDhLevel level) throws IOException;
 	/** Should not return null */
-	public abstract ILodRenderSource createRenderSource(IFullDataSource dataSource, IDhClientLevel level);
+	public abstract IRenderSource createRenderSource(IFullDataSource dataSource, IDhClientLevel level);
 	
 }

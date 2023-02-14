@@ -3,7 +3,7 @@ package com.seibel.lod.core.file.renderfile;
 import com.google.common.collect.HashMultimap;
 import com.seibel.lod.core.datatype.IFullDataSource;
 import com.seibel.lod.core.datatype.PlaceHolderRenderSource;
-import com.seibel.lod.core.datatype.ILodRenderSource;
+import com.seibel.lod.core.datatype.IRenderSource;
 import com.seibel.lod.core.datatype.AbstractRenderSourceLoader;
 import com.seibel.lod.core.datatype.column.ColumnRenderSource;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
@@ -35,7 +35,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 	
 	private final IDhClientLevel level;
 	private final File saveDir;
-	private final IFullDataSourceProvider dataSourceProvider;
+	private final IFullDataSourceProvider fullDataSourceProvider;
 	
 	private final ConcurrentHashMap<DhSectionPos, Object> cacheUpdateLockBySectionPos = new ConcurrentHashMap<>();
 	
@@ -44,7 +44,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 	
 	public RenderFileHandler(IFullDataSourceProvider sourceProvider, IDhClientLevel level, File saveRootDir)
 	{
-        this.dataSourceProvider = sourceProvider;
+        this.fullDataSourceProvider = sourceProvider;
         this.level = level;
         this.saveDir = saveRootDir;
     }
@@ -154,7 +154,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 	
     /** This call is concurrent. I.e. it supports multiple threads calling this method at the same time. */
     @Override
-    public CompletableFuture<ILodRenderSource> read(DhSectionPos pos)
+    public CompletableFuture<IRenderSource> read(DhSectionPos pos)
 	{
         RenderMetaDataFile metaFile = this.filesBySectionPos.get(pos);
 		if (metaFile == null)
@@ -201,7 +201,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
         }
 
         this.writeRecursively(sectionPos,chunkData);
-		this.dataSourceProvider.write(sectionPos, chunkData);
+		this.fullDataSourceProvider.write(sectionPos, chunkData);
     }
 	
     private void writeRecursively(DhSectionPos sectPos, ChunkSizedData chunkData)
@@ -262,7 +262,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
         return new File(this.saveDir, pos.serialize() + ".lod");
     }
 
-    public CompletableFuture<ILodRenderSource> onCreateRenderFile(RenderMetaDataFile file)
+    public CompletableFuture<IRenderSource> onCreateRenderFile(RenderMetaDataFile file)
 	{
 		final int vertSize = Config.Client.Graphics.Quality.verticalQuality
 				.get().calculateMaxVerticalData((byte) (file.pos.sectionDetailLevel - ColumnRenderSource.SECTION_SIZE_OFFSET));
@@ -271,18 +271,18 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 				new ColumnRenderSource(file.pos, vertSize, this.level.getMinY()));
 	}
 
-    private void updateCache(ILodRenderSource data, RenderMetaDataFile file)
+    private void updateCache(IRenderSource data, RenderMetaDataFile file)
 	{
 		if (this.cacheUpdateLockBySectionPos.putIfAbsent(file.pos, new Object()) != null)
 		{
 			return;
 		}
 		
-		final WeakReference<ILodRenderSource> dataRef = new WeakReference<>(data);
-		CompletableFuture<IFullDataSource> fullDataSourceFuture = this.dataSourceProvider.read(data.getSectionPos());
+		final WeakReference<IRenderSource> renderSourceReference = new WeakReference<>(data);
+		CompletableFuture<IFullDataSource> fullDataSourceFuture = this.fullDataSourceProvider.read(data.getSectionPos());
 		fullDataSourceFuture = fullDataSourceFuture.thenApply((dataSource) -> 
 		{
-			if (dataRef.get() == null)
+			if (renderSourceReference.get() == null)
 			{
 				throw new UncheckedInterruptedException();
 			}
@@ -294,9 +294,9 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 			return null;
 		});
 		
-		LOGGER.info("Recreating cache for {}", data.getSectionPos());
+		//LOGGER.info("Recreating cache for {}", data.getSectionPos());
 		DataRenderTransformer.asyncTransformDataSource(fullDataSourceFuture, this.level)
-				.thenAccept((newRenderDataSource) -> this.write(dataRef.get(), file, newRenderDataSource, this.dataSourceProvider.getCacheVersion(data.getSectionPos())))
+				.thenAccept((newRenderDataSource) -> this.write(renderSourceReference.get(), file, newRenderDataSource, this.fullDataSourceProvider.getCacheVersion(data.getSectionPos())))
 				.exceptionally((ex) -> 
 				{
 					if (!UncheckedInterruptedException.isThrowableInterruption(ex))
@@ -307,19 +307,19 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 				}).thenRun(() -> this.cacheUpdateLockBySectionPos.remove(file.pos));
 	}
 	
-    public ILodRenderSource onRenderFileLoaded(ILodRenderSource data, RenderMetaDataFile file)
+    public IRenderSource onRenderFileLoaded(IRenderSource data, RenderMetaDataFile file)
 	{
-        if (!this.dataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get()))
+        if (!this.fullDataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get()))
 		{
 			this.updateCache(data, file);
         }
         return data;
     }
 	
-    public ILodRenderSource onLoadingRenderFile(RenderMetaDataFile file) { return null; /* Default behavior: do nothing */ }
+    public IRenderSource onLoadingRenderFile(RenderMetaDataFile file) { return null; /* Default behavior: do nothing */ }
 	
-    private void write(ILodRenderSource target, RenderMetaDataFile file,
-                       ILodRenderSource newData, long newDataVersion)
+    private void write(IRenderSource target, RenderMetaDataFile file,
+                       IRenderSource newData, long newDataVersion)
 	{
         if (target == null || newData == null)
 		{
@@ -336,15 +336,15 @@ public class RenderFileHandler implements ILodRenderSourceProvider
         file.save(target, this.level);
     }
 	
-    public void onReadRenderSourceFromCache(RenderMetaDataFile file, ILodRenderSource data)
+    public void onReadRenderSourceFromCache(RenderMetaDataFile file, IRenderSource data)
 	{
-        if (!this.dataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get()))
+        if (!this.fullDataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get()))
 		{
 			this.updateCache(data, file);
         }
     }
 	
-    public boolean refreshRenderSource(ILodRenderSource source)
+    public boolean refreshRenderSource(IRenderSource source)
 	{
         RenderMetaDataFile file = this.filesBySectionPos.get(source.getSectionPos());
         if (source instanceof PlaceHolderRenderSource)
@@ -357,7 +357,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 		
         LodUtil.assertTrue(file != null);
         LodUtil.assertTrue(file.metaData != null);
-        if (!this.dataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get()))
+        if (!this.fullDataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get()))
 		{
 			this.updateCache(source, file);
             return true;

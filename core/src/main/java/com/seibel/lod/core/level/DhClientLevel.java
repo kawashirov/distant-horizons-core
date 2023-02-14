@@ -50,7 +50,7 @@ public class DhClientLevel implements IDhClientLevel
 				MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, this.renderFileHandler);
 		this.renderBufferHandler = new RenderBufferHandler(this.tree);
 		this.level = level;
-		FileScanUtil.scanFile(save, level, this.dataFileHandler, this.renderFileHandler);
+		FileScanUtil.scanFiles(save, level, this.dataFileHandler, this.renderFileHandler);
 		LOGGER.info("Started DHLevel for {} with saves at {}", level, save);
 	}
 	

@@ -1,7 +1,7 @@
 package com.seibel.lod.core.datatype.transform;
 
 import com.seibel.lod.core.datatype.IFullDataSource;
-import com.seibel.lod.core.datatype.ILodRenderSource;
+import com.seibel.lod.core.datatype.IRenderSource;
 import com.seibel.lod.core.datatype.column.ColumnRenderLoader;
 import com.seibel.lod.core.datatype.column.ColumnRenderSource;
 import com.seibel.lod.core.level.IDhClientLevel;
@@ -16,17 +16,17 @@ public class DataRenderTransformer
     public static final ExecutorService TRANSFORMER_THREADS
             = LodUtil.makeThreadPool(4, "Data/Render Transformer");
 	
-    public static CompletableFuture<ILodRenderSource> transformDataSource(IFullDataSource data, IDhClientLevel level)
+    public static CompletableFuture<IRenderSource> transformDataSource(IFullDataSource data, IDhClientLevel level)
 	{
         return CompletableFuture.supplyAsync(() -> transform(data, level), TRANSFORMER_THREADS);
     }
 	
-    public static CompletableFuture<ILodRenderSource> asyncTransformDataSource(CompletableFuture<IFullDataSource> data, IDhClientLevel level)
+    public static CompletableFuture<IRenderSource> asyncTransformDataSource(CompletableFuture<IFullDataSource> data, IDhClientLevel level)
 	{
         return data.thenApplyAsync((d) -> transform(d, level), TRANSFORMER_THREADS);
     }
 	
-    private static ILodRenderSource transform(IFullDataSource dataSource, IDhClientLevel level)
+    private static IRenderSource transform(IFullDataSource dataSource, IDhClientLevel level)
 	{
         if (dataSource == null)
 		{

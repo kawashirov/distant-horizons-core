@@ -1,6 +1,6 @@
 package com.seibel.lod.core.render;
 
-import com.seibel.lod.core.datatype.ILodRenderSource;
+import com.seibel.lod.core.datatype.IRenderSource;
 import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.pos.Pos2D;
 import com.seibel.lod.core.pos.DhSectionPos;
@@ -132,7 +132,7 @@ public class RenderBufferHandler {
             // If this fails, there may be concurrent modification of the quad tree
             //  (as this update() should be called from the same thread that calls update() on the quad tree)
             LodUtil.assertTrue(section != null);
-            ILodRenderSource container = section.getRenderSource();
+            IRenderSource container = section.getRenderSource();
 
             // Update self's render buffer state
             boolean shouldRender = section.canRender();

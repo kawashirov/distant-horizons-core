@@ -6,7 +6,7 @@ import com.seibel.lod.core.datatype.column.accessor.ColumnFormat;
 import com.seibel.lod.core.datatype.full.FullDataSource;
 import com.seibel.lod.core.datatype.transform.FullToColumnTransformer;
 import com.seibel.lod.core.level.IDhClientLevel;
-import com.seibel.lod.core.datatype.ILodRenderSource;
+import com.seibel.lod.core.datatype.IRenderSource;
 import com.seibel.lod.core.datatype.AbstractRenderSourceLoader;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.file.renderfile.RenderMetaDataFile;
@@ -34,7 +34,7 @@ public class ColumnRenderLoader extends AbstractRenderSourceLoader
 	
 	
     @Override
-    public ILodRenderSource loadRenderSource(RenderMetaDataFile dataFile, InputStream data, IDhLevel level) throws IOException
+    public IRenderSource loadRenderSource(RenderMetaDataFile dataFile, InputStream data, IDhLevel level) throws IOException
 	{
 		DataInputStream inputStream = new DataInputStream(data); // DO NOT CLOSE
 		int dataFileVersion = dataFile.metaData.loaderVersion;
@@ -49,7 +49,7 @@ public class ColumnRenderLoader extends AbstractRenderSourceLoader
     }
 	
     @Override
-    public ILodRenderSource createRenderSource(IFullDataSource dataSource, IDhClientLevel level)
+    public IRenderSource createRenderSource(IFullDataSource dataSource, IDhClientLevel level)
 	{
 		if (dataSource instanceof FullDataSource) // TODO replace with Java 7 method
 		{

@@ -14,7 +14,7 @@ import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.render.LodRenderSection;
-import com.seibel.lod.core.datatype.ILodRenderSource;
+import com.seibel.lod.core.datatype.IRenderSource;
 import com.seibel.lod.core.util.ColorUtil;
 import com.seibel.lod.core.util.objects.Reference;
 import com.seibel.lod.core.util.LodUtil;
@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Leetom
  * @version 2022-2-7
  */
-public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
+public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
@@ -248,7 +248,7 @@ public class ColumnRenderSource implements ILodRenderSource, IColumnDatatype
 	}
 	
 	@Override
-	public void updateFromRenderSource(ILodRenderSource source)
+	public void updateFromRenderSource(IRenderSource source)
 	{
 		// TODO if we can only write this one type of data isn't it dangerous to have it in the interface?
 		LodUtil.assertTrue(source instanceof ColumnRenderSource);

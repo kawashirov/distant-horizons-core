@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * 
  * These are created via {@link com.seibel.lod.core.file.renderfile.ILodRenderSourceProvider ILodRenderSourceProvider}'s
  */
-public interface ILodRenderSource
+public interface IRenderSource
 {
 	DhSectionPos getSectionPos();
 	
@@ -50,6 +50,6 @@ public interface ILodRenderSource
 	void fastWrite(ChunkSizedData chunkData, IDhClientLevel level);
 	
 	/** Overrides any data that has not been written directly using write(). Skips empty source dataPoints. */ 
-	void updateFromRenderSource(ILodRenderSource source);
+	void updateFromRenderSource(IRenderSource source);
 	
 }

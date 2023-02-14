@@ -117,15 +117,19 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 		return (this.metaData == null) ? 0 : this.metaData.dataVersion.get();
 	}
 
-	public boolean isCacheVersionValid(long cacheVersion) {
+	public boolean isCacheVersionValid(long cacheVersion)
+	{
 		debugCheck();
-		boolean noWrite = writeQueue.get().queue.isEmpty();
-		if (!noWrite) {
+		boolean noWrite = this.writeQueue.get().queue.isEmpty();
+		if (!noWrite)
+		{
 			return false;
-		} else {
-			MetaData getData = metaData;
-			//NOTE: Do this instead of direct compare so values that wrapped around still works correctly.
-			return (getData == null ? 0 : metaData.dataVersion.get()) - cacheVersion <= 0;
+		}
+		else
+		{
+			MetaData getData = this.metaData;
+			//NOTE: Do this instead of direct compare so values that wrapped around still work correctly.
+			return (getData == null ? 0 : this.metaData.dataVersion.get()) - cacheVersion <= 0;
 		}
 	}
 
@@ -354,31 +358,31 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 			}
 		}
 	}
-
+	
 	// Return whether any write has happened to the data
 	private boolean applyWriteQueue(IFullDataSource data)
 	{
 		// Poll the write queue
 		// First check if write queue is empty, then swap the write queue.
 		// Must be done in this order to ensure isMemoryAddressValid work properly. See isMemoryAddressValid() for details.
-		boolean isEmpty = writeQueue.get().queue.isEmpty();
+		boolean isEmpty = this.writeQueue.get().queue.isEmpty();
 		if (!isEmpty)
 		{
-			swapWriteQueue();
-			int count = _backQueue.queue.size();
-			for (ChunkSizedData chunk : _backQueue.queue)
+			this.swapWriteQueue();
+			int count = this._backQueue.queue.size();
+			for (ChunkSizedData chunk : this._backQueue.queue)
 			{
 				data.update(chunk);
 			}
-			_backQueue.queue.clear();
-			LOGGER.info("Updated Data file at {} for sect {} with {} chunk writes.", path, pos, count);
+			this._backQueue.queue.clear();
+			//LOGGER.info("Updated Data file at {} for sect {} with {} chunk writes.", path, pos, count);
 		}
 		return !isEmpty;
 	}
-
+	
 	private FileInputStream getDataContent() throws IOException
 	{
-		FileInputStream fin = new FileInputStream(path);
+		FileInputStream fin = new FileInputStream(this.path);
 		int toSkip = METADATA_SIZE;
 		while (toSkip > 0)
 		{

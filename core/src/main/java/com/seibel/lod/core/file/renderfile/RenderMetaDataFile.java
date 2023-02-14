@@ -1,6 +1,6 @@
 package com.seibel.lod.core.file.renderfile;
 
-import com.seibel.lod.core.datatype.ILodRenderSource;
+import com.seibel.lod.core.datatype.IRenderSource;
 import com.seibel.lod.core.datatype.AbstractRenderSourceLoader;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.file.metaData.MetaData;
@@ -25,7 +25,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
     public AbstractRenderSourceLoader loader;
-    public Class<? extends ILodRenderSource> dataType;
+    public Class<? extends IRenderSource> dataType;
 	
     // The '?' type should either be:
     //    SoftReference<LodRenderSource>, or	- File that may still be loaded
@@ -84,7 +84,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 		DhLodPos chunkPos = new DhLodPos((byte) (chunkData.dataDetail + 4), chunkData.x, chunkData.z);
 		LodUtil.assertTrue(this.pos.getSectionBBoxPos().overlaps(chunkPos), "Chunk pos {} doesn't overlap with section {}", chunkPos, pos);
 			
-		CompletableFuture<ILodRenderSource> source = this._readCached(this.data.get());
+		CompletableFuture<IRenderSource> source = this._readCached(this.data.get());
 		if (source == null)
 		{
 			return;
@@ -100,7 +100,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 			return CompletableFuture.completedFuture(null); // No need to save if the file doesn't exist.
 		}
 		
-		CompletableFuture<ILodRenderSource> source = this._readCached(this.data.get());
+		CompletableFuture<IRenderSource> source = this._readCached(this.data.get());
 		if (source == null)
 		{
 			return CompletableFuture.completedFuture(null); // If there is no cached data, there is no need to save.
@@ -111,7 +111,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 	
     // Suppress casting of CompletableFuture<?> to CompletableFuture<LodRenderSource>
     @SuppressWarnings("unchecked")
-	private CompletableFuture<ILodRenderSource> _readCached(Object obj)
+	private CompletableFuture<IRenderSource> _readCached(Object obj)
 	{
 		// Has file cached in RAM and not freed yet.
 		if ((obj instanceof SoftReference<?>))
@@ -119,9 +119,9 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 			Object inner = ((SoftReference<?>) obj).get();
 			if (inner != null)
 			{
-				LodUtil.assertTrue(inner instanceof ILodRenderSource);
-				fileHandler.onReadRenderSourceFromCache(this, (ILodRenderSource) inner);
-				return CompletableFuture.completedFuture((ILodRenderSource) inner);
+				LodUtil.assertTrue(inner instanceof IRenderSource);
+				fileHandler.onReadRenderSourceFromCache(this, (IRenderSource) inner);
+				return CompletableFuture.completedFuture((IRenderSource) inner);
 			}
 		}
 		
@@ -129,18 +129,18 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 		// Someone is already trying to complete it. so just return the obj.
 		if ((obj instanceof CompletableFuture<?>))
 		{
-			return (CompletableFuture<ILodRenderSource>) obj;
+			return (CompletableFuture<IRenderSource>) obj;
 		}
 		return null;
 	}
 	
     // Cause: Generic Type runtime casting cannot safety check it.
 	// However, the Union type ensures the 'data' should only contain the listed type.
-	public CompletableFuture<ILodRenderSource> loadOrGetCached(Executor fileReaderThreads, IDhLevel level)
+	public CompletableFuture<IRenderSource> loadOrGetCached(Executor fileReaderThreads, IDhLevel level)
 	{
 		Object obj = this.data.get();
 	
-		CompletableFuture<ILodRenderSource> cached = this._readCached(obj);
+		CompletableFuture<IRenderSource> cached = this._readCached(obj);
 		if (cached != null)
 		{
 			return cached;
@@ -149,7 +149,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 		// Create an empty and non-completed future.
 		// Note: I do this before actually filling in the future so that I can ensure only
 		//   one task is submitted to the thread pool.
-		CompletableFuture<ILodRenderSource> future = new CompletableFuture<>();
+		CompletableFuture<IRenderSource> future = new CompletableFuture<>();
 	
 		// Would use faster and non-nesting Compare and exchange. But java 8 doesn't have it! :(
 		boolean worked = this.data.compareAndSet(obj, future);
@@ -197,7 +197,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 						}
 						
 						// Load the file.
-						ILodRenderSource data;
+						IRenderSource data;
 						data = this.fileHandler.onLoadingRenderFile(this);
 						if (data == null)
 						{
@@ -231,7 +231,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 		return future;
 	}
 	
-    private static MetaData makeMetaData(ILodRenderSource data)
+    private static MetaData makeMetaData(IRenderSource data)
 	{
 		AbstractRenderSourceLoader loader = AbstractRenderSourceLoader.getLoader(data.getClass(), data.getRenderVersion());
 		return new MetaData(data.getSectionPos(), -1, -1,
@@ -258,7 +258,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 		return fin;
 	}
 	
-    public void save(ILodRenderSource data, IDhClientLevel level)
+    public void save(IRenderSource data, IDhClientLevel level)
 	{
 		if (data.isEmpty())
 		{
@@ -273,7 +273,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 		}
 		else
 		{
-			LOGGER.info("Saving updated render file v[{}] at sect {}", this.metaData.dataVersion.get(), this.pos);
+			//LOGGER.info("Saving updated render file v[{}] at sect {}", this.metaData.dataVersion.get(), this.pos);
 			try
 			{
 				super.writeData((out) -> data.saveRender(level, this, out));
