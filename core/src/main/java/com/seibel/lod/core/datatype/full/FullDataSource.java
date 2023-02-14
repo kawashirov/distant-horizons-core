@@ -145,7 +145,7 @@ public class FullDataSource extends FullArrayView implements IFullDataSource
 			{
 				for (int z = 0; z < this.size; z++)
 				{
-					dos.writeByte(this.get(x, z).getSingleLength());
+					dos.writeInt(this.get(x, z).getSingleLength());
 				}
 			}
 			// Data array content (only on non-empty columns)
@@ -201,7 +201,7 @@ public class FullDataSource extends FullArrayView implements IFullDataSource
 			{
 				for (int z = 0; z < size; z++)
 				{
-					data[x * size + z] = new long[dos.readByte()];
+					data[x * size + z] = new long[dos.readInt()];
 				}
 			}
 			// Data array content (only on non-empty columns)
