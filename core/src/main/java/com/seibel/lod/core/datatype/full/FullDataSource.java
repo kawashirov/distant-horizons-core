@@ -5,7 +5,7 @@ import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhLodPos;
-import com.seibel.lod.core.file.datafile.DataMetaFile;
+import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.datatype.ILodDataSource;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.BitShiftUtil;
@@ -127,7 +127,7 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
     public void markNotEmpty() { this.isEmpty = false; }
 	
 	@Override
-	public void saveData(IDhLevel level, DataMetaFile file, OutputStream dataStream) throws IOException
+	public void saveData(IDhLevel level, FullDataMetaFile file, OutputStream dataStream) throws IOException
 	{
 		DataOutputStream dos = new DataOutputStream(dataStream); // DO NOT CLOSE
 		{
@@ -172,7 +172,7 @@ public class FullDataSource extends FullArrayView implements ILodDataSource
 	}
 	
 	
-	public static FullDataSource loadData(DataMetaFile dataFile, InputStream dataStream, IDhLevel level) throws IOException
+	public static FullDataSource loadData(FullDataMetaFile dataFile, InputStream dataStream, IDhLevel level) throws IOException
 	{
 		DataInputStream dos = new DataInputStream(dataStream); // DO NOT CLOSE
 		{

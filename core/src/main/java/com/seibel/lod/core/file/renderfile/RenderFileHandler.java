@@ -8,7 +8,7 @@ import com.seibel.lod.core.datatype.AbstractRenderSourceLoader;
 import com.seibel.lod.core.datatype.column.ColumnRenderSource;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.transform.DataRenderTransformer;
-import com.seibel.lod.core.file.datafile.IDataSourceProvider;
+import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
@@ -35,14 +35,14 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 	
 	private final IDhClientLevel level;
 	private final File saveDir;
-	private final IDataSourceProvider dataSourceProvider;
+	private final IFullDataSourceProvider dataSourceProvider;
 	
 	private final ConcurrentHashMap<DhSectionPos, Object> cacheUpdateLockBySectionPos = new ConcurrentHashMap<>();
 	
 	
 	
 	
-	public RenderFileHandler(IDataSourceProvider sourceProvider, IDhClientLevel level, File saveRootDir)
+	public RenderFileHandler(IFullDataSourceProvider sourceProvider, IDhClientLevel level, File saveRootDir)
 	{
         this.dataSourceProvider = sourceProvider;
         this.level = level;

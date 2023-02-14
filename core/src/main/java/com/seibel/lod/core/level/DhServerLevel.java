@@ -1,8 +1,8 @@
 package com.seibel.lod.core.level;
 
-import com.seibel.lod.core.file.datafile.IDataSourceProvider;
+import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.lod.core.util.FileScanUtil;
-import com.seibel.lod.core.file.datafile.DataFileHandler;
+import com.seibel.lod.core.file.fullDatafile.FullDataFileHandler;
 import com.seibel.lod.core.file.structure.LocalSaveStructure;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
@@ -17,7 +17,7 @@ public class DhServerLevel implements IDhServerLevel
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
 	public final LocalSaveStructure save;
-	public final DataFileHandler dataFileHandler;
+	public final FullDataFileHandler dataFileHandler;
 	public final IServerLevelWrapper level;
 	
 	public DhServerLevel(LocalSaveStructure save, IServerLevelWrapper level)
@@ -25,7 +25,7 @@ public class DhServerLevel implements IDhServerLevel
 		this.save = save;
 		this.level = level;
 		save.getDataFolder(level).mkdirs();
-		this.dataFileHandler = new DataFileHandler(this, save.getDataFolder(level)); //FIXME: GenerationQueue
+		this.dataFileHandler = new FullDataFileHandler(this, save.getDataFolder(level)); //FIXME: GenerationQueue
 		FileScanUtil.scanFile(save, level, this.dataFileHandler, null);
 		LOGGER.info("Started DHLevel for {} with saves at {}", level, save);
 	}
@@ -67,7 +67,7 @@ public class DhServerLevel implements IDhServerLevel
 	public ILevelWrapper getLevelWrapper() { return this.level; }
 	
 	@Override
-	public IDataSourceProvider getFileHandler() { return this.dataFileHandler; }
+	public IFullDataSourceProvider getFileHandler() { return this.dataFileHandler; }
 	
 	@Override 
 	public void clearRenderDataCache()

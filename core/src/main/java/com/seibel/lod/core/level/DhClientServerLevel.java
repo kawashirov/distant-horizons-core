@@ -6,13 +6,13 @@ import com.seibel.lod.core.config.AppliedConfigState;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.full.FullDataSource;
 import com.seibel.lod.core.datatype.transform.ChunkToLodBuilder;
-import com.seibel.lod.core.file.datafile.IDataSourceProvider;
+import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.lod.core.generation.BatchGenerator;
 import com.seibel.lod.core.generation.WorldGenerationQueue;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.LodQuadTree;
-import com.seibel.lod.core.file.datafile.GeneratedDataFileHandler;
+import com.seibel.lod.core.file.fullDatafile.GeneratedFullDataFileHandler;
 import com.seibel.lod.core.util.FileScanUtil;
 import com.seibel.lod.core.file.renderfile.RenderFileHandler;
 import com.seibel.lod.core.pos.DhBlockPos2D;
@@ -46,7 +46,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	
 	public final LocalSaveStructure save;
-	public final GeneratedDataFileHandler dataFileHandler;
+	public final GeneratedFullDataFileHandler dataFileHandler;
 	public final ChunkToLodBuilder chunkToLodBuilder;
 	public final IServerLevelWrapper serverLevel;
 	private final AppliedConfigState<Boolean> generatorEnabled;
@@ -63,7 +63,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		this.save = save;
 		save.getDataFolder(level).mkdirs();
 		save.getRenderCacheFolder(level).mkdirs();
-		this.dataFileHandler = new GeneratedDataFileHandler(this, save.getDataFolder(level));
+		this.dataFileHandler = new GeneratedFullDataFileHandler(this, save.getDataFolder(level));
 		FileScanUtil.scanFile(save, this.serverLevel, this.dataFileHandler, null);
 		LOGGER.info("Started DHLevel for {} with saves at {}", level, save);
 		this.f3Msg = new F3Screen.NestedMessage(this::f3Log);
@@ -337,7 +337,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 	public IServerLevelWrapper getServerLevelWrapper() { return this.serverLevel; }
 	
 	@Override
-	public IDataSourceProvider getFileHandler() { return this.dataFileHandler; }
+	public IFullDataSourceProvider getFileHandler() { return this.dataFileHandler; }
 	
 	@Override
 	public void clearRenderDataCache()

@@ -4,7 +4,7 @@ import com.seibel.lod.core.datatype.IIncompleteDataSource;
 import com.seibel.lod.core.datatype.ILodDataSource;
 import com.seibel.lod.core.datatype.full.accessor.FullArrayView;
 import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;
-import com.seibel.lod.core.file.datafile.DataMetaFile;
+import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhLodPos;
@@ -79,7 +79,7 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
     public void markNotEmpty() { this.isEmpty = false;  }
 
     @Override
-    public void saveData(IDhLevel level, DataMetaFile file, OutputStream dataStream) throws IOException
+    public void saveData(IDhLevel level, FullDataMetaFile file, OutputStream dataStream) throws IOException
 	{
         DataOutputStream dos = new DataOutputStream(dataStream); // DO NOT CLOSE
         {
@@ -118,7 +118,7 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
     }
 
 
-    public static SpottyDataSource loadData(DataMetaFile dataFile, InputStream dataStream, IDhLevel level) throws IOException
+    public static SpottyDataSource loadData(FullDataMetaFile dataFile, InputStream dataStream, IDhLevel level) throws IOException
 	{
         DataInputStream dos = new DataInputStream(dataStream); // DO NOT CLOSE
         {

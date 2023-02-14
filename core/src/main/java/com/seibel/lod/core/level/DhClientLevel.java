@@ -1,9 +1,9 @@
 package com.seibel.lod.core.level;
 
-import com.seibel.lod.core.file.datafile.IDataSourceProvider;
+import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.util.FileScanUtil;
-import com.seibel.lod.core.file.datafile.RemoteDataFileHandler;
+import com.seibel.lod.core.file.fullDatafile.RemoteFullDataFileHandler;
 import com.seibel.lod.core.file.renderfile.RenderFileHandler;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.render.RenderBufferHandler;
@@ -30,7 +30,7 @@ public class DhClientLevel implements IDhClientLevel
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	public final ClientOnlySaveStructure save;
-	public final RemoteDataFileHandler dataFileHandler;
+	public final RemoteFullDataFileHandler dataFileHandler;
 	public final RenderFileHandler renderFileHandler;
 	public final RenderBufferHandler renderBufferHandler; //TODO: Should this be owned by renderer?
 	public final IClientLevelWrapper level;
@@ -44,7 +44,7 @@ public class DhClientLevel implements IDhClientLevel
 		this.save = save;
 		save.getDataFolder(level).mkdirs();
 		save.getRenderCacheFolder(level).mkdirs();
-		this.dataFileHandler = new RemoteDataFileHandler(this, save.getDataFolder(level));
+		this.dataFileHandler = new RemoteFullDataFileHandler(this, save.getDataFolder(level));
 		this.renderFileHandler = new RenderFileHandler(this.dataFileHandler, this, save.getRenderCacheFolder(level));
 		this.tree = new LodQuadTree(this, Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * 16,
 				MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, this.renderFileHandler);
@@ -89,7 +89,7 @@ public class DhClientLevel implements IDhClientLevel
 	public ILevelWrapper getLevelWrapper() { return this.level; }
 	
 	@Override
-	public IDataSourceProvider getFileHandler() { return this.dataFileHandler; }
+	public IFullDataSourceProvider getFileHandler() { return this.dataFileHandler; }
 	
 	@Override 
 	public void clearRenderDataCache()

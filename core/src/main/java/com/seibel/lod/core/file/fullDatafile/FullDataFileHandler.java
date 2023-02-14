@@ -1,4 +1,4 @@
-package com.seibel.lod.core.file.datafile;
+package com.seibel.lod.core.file.fullDatafile;
 
 import com.google.common.collect.HashMultimap;
 import com.seibel.lod.core.datatype.IIncompleteDataSource;
@@ -18,7 +18,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,18 +27,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class DataFileHandler implements IDataSourceProvider
+public class FullDataFileHandler implements IFullDataSourceProvider
 {
     // Note: Single main thread only for now. May make it multi-thread later, depending on the usage.
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     final ExecutorService fileReaderThread = LodUtil.makeThreadPool(4, "FileReaderThread");
-    final ConcurrentHashMap<DhSectionPos, DataMetaFile> files = new ConcurrentHashMap<>();
+    final ConcurrentHashMap<DhSectionPos, FullDataMetaFile> files = new ConcurrentHashMap<>();
     final IDhLevel level;
     final File saveDir;
     AtomicInteger topDetailLevel = new AtomicInteger(-1);
     final int minDetailLevel = FullDataSource.SECTION_SIZE_OFFSET;
 
-    public DataFileHandler(IDhLevel level, File saveRootDir)
+    public FullDataFileHandler(IDhLevel level, File saveRootDir)
 	{
         this.saveDir = saveRootDir;
         this.level = level;
@@ -52,7 +51,7 @@ public class DataFileHandler implements IDataSourceProvider
     @Override
     public void addScannedFile(Collection<File> detectedFiles)
 	{
-        HashMultimap<DhSectionPos, DataMetaFile> filesByPos = HashMultimap.create();
+        HashMultimap<DhSectionPos, FullDataMetaFile> filesByPos = HashMultimap.create();
         LOGGER.info("Detected {} valid files in {}", detectedFiles.size(), this.saveDir);
 
         { // Sort files by pos.
@@ -60,7 +59,7 @@ public class DataFileHandler implements IDataSourceProvider
 			{
                 try
 				{
-                    DataMetaFile metaFile = new DataMetaFile(this, this.level, file);
+                    FullDataMetaFile metaFile = new FullDataMetaFile(this, this.level, file);
                     filesByPos.put(metaFile.pos, metaFile);
                 }
 				catch (IOException e)
@@ -95,8 +94,8 @@ public class DataFileHandler implements IDataSourceProvider
         // Warn for multiple files with the same pos, and then select the one with the latest timestamp.
         for (DhSectionPos pos : filesByPos.keySet())
 		{
-            Collection<DataMetaFile> metaFiles = filesByPos.get(pos);
-            DataMetaFile fileToUse;
+            Collection<FullDataMetaFile> metaFiles = filesByPos.get(pos);
+            FullDataMetaFile fileToUse;
             if (metaFiles.size() > 1)
 			{
                 fileToUse = Collections.max(metaFiles, Comparator.comparingLong(a -> a.metaData.dataVersion.get()));
@@ -105,7 +104,7 @@ public class DataFileHandler implements IDataSourceProvider
                     sb.append("Multiple files with the same pos: ");
                     sb.append(pos);
                     sb.append("\n");
-                    for (DataMetaFile metaFile : metaFiles)
+                    for (FullDataMetaFile metaFile : metaFiles)
 					{
                         sb.append("\t");
                         sb.append(metaFile.path);
@@ -118,7 +117,7 @@ public class DataFileHandler implements IDataSourceProvider
                     LOGGER.warn(sb.toString());
 
                     // Rename all other files with the same pos to .old
-                    for (DataMetaFile metaFile : metaFiles)
+                    for (FullDataMetaFile metaFile : metaFiles)
 					{
                         if (metaFile == fileToUse)
 						{
@@ -149,15 +148,15 @@ public class DataFileHandler implements IDataSourceProvider
         }
     }
 	
-    protected DataMetaFile getOrMakeFile(DhSectionPos pos)
+    protected FullDataMetaFile getOrMakeFile(DhSectionPos pos)
 	{
-        DataMetaFile metaFile = this.files.get(pos);
+        FullDataMetaFile metaFile = this.files.get(pos);
         if (metaFile == null)
 		{
-            DataMetaFile newMetaFile;
+            FullDataMetaFile newMetaFile;
             try
 			{
-                newMetaFile = new DataMetaFile(this, this.level, pos);
+                newMetaFile = new FullDataMetaFile(this, this.level, pos);
             }
 			catch (IOException e)
 			{
@@ -176,11 +175,11 @@ public class DataFileHandler implements IDataSourceProvider
 	/**
 	 * Populates the preexistingFiles and missingFilePositions ArrayLists.
 	 * 
-	 * @param preexistingFiles the list of {@link DataMetaFile}'s that have been created for the given position.
-	 * @param missingFilePositions the list of {@link DhSectionPos}'s that don't have {@link DataMetaFile} created for them yet.
+	 * @param preexistingFiles the list of {@link FullDataMetaFile}'s that have been created for the given position.
+	 * @param missingFilePositions the list of {@link DhSectionPos}'s that don't have {@link FullDataMetaFile} created for them yet.
 	 */
     protected void getDataFilesForPosition(DhSectionPos basePos, DhSectionPos pos, 
-			ArrayList<DataMetaFile> preexistingFiles, ArrayList<DhSectionPos> missingFilePositions)
+			ArrayList<FullDataMetaFile> preexistingFiles, ArrayList<DhSectionPos> missingFilePositions)
 	{
         byte sectionDetail = pos.sectionDetailLevel;
         boolean allEmpty = true;
@@ -229,12 +228,12 @@ public class DataFileHandler implements IDataSourceProvider
 			this.recursiveGetDataFilesForPosition(3, basePos, pos, preexistingFiles, missingFilePositions);
         }
     }
-	private void recursiveGetDataFilesForPosition(int childIndex, DhSectionPos basePos, DhSectionPos pos, ArrayList<DataMetaFile> preexistingFiles, ArrayList<DhSectionPos> missingFilePositions)
+	private void recursiveGetDataFilesForPosition(int childIndex, DhSectionPos basePos, DhSectionPos pos, ArrayList<FullDataMetaFile> preexistingFiles, ArrayList<DhSectionPos> missingFilePositions)
 	{
 		DhSectionPos childPos = pos.getChildByIndex(childIndex);
 		if (FullDataSource.firstDataPosCanAffectSecond(basePos, childPos))
 		{
-			DataMetaFile metaFile = this.files.get(childPos);
+			FullDataMetaFile metaFile = this.files.get(childPos);
 			if (metaFile != null)
 			{
 				// we have reached a populated leaf node in the quad tree
@@ -265,7 +264,7 @@ public class DataFileHandler implements IDataSourceProvider
     public CompletableFuture<ILodDataSource> read(DhSectionPos pos)
 	{
 		this.topDetailLevel.updateAndGet(intVal -> Math.max(intVal, pos.sectionDetailLevel));
-        DataMetaFile metaFile = this.getOrMakeFile(pos);
+        FullDataMetaFile metaFile = this.getOrMakeFile(pos);
         if (metaFile == null)
 		{
 			return CompletableFuture.completedFuture(null);
@@ -276,7 +275,7 @@ public class DataFileHandler implements IDataSourceProvider
 		CompletableFuture<ILodDataSource> futureWrapper = new CompletableFuture<>();
 		metaFile.loadOrGetCachedAsync().exceptionally((e) ->
 			{
-				DataMetaFile newMetaFile = this.removeCorruptedFile(pos, metaFile, e);
+				FullDataMetaFile newMetaFile = this.removeCorruptedFile(pos, metaFile, e);
 				
 				futureWrapper.completeExceptionally(e);
 				return null; // return value doesn't matter
@@ -300,7 +299,7 @@ public class DataFileHandler implements IDataSourceProvider
     }
     private void recursiveWrite(DhSectionPos sectionPos, ChunkSizedData chunkData)
 	{
-        DataMetaFile metaFile = this.files.get(sectionPos);
+        FullDataMetaFile metaFile = this.files.get(sectionPos);
         if (metaFile != null)
 		{ 
 			// Fast path: if there is a file for this section, just write to it.
@@ -318,7 +317,7 @@ public class DataFileHandler implements IDataSourceProvider
     public CompletableFuture<Void> flushAndSave()
 	{
         ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
-        for (DataMetaFile metaFile : this.files.values())
+        for (FullDataMetaFile metaFile : this.files.values())
 		{
             futures.add(metaFile.flushAndSave());
         }
@@ -328,7 +327,7 @@ public class DataFileHandler implements IDataSourceProvider
     @Override
     public long getCacheVersion(DhSectionPos sectionPos)
 	{
-        DataMetaFile file = this.files.get(sectionPos);
+        FullDataMetaFile file = this.files.get(sectionPos);
         if (file == null)
 		{
 			return 0;
@@ -339,7 +338,7 @@ public class DataFileHandler implements IDataSourceProvider
     @Override
     public boolean isCacheVersionValid(DhSectionPos sectionPos, long cacheVersion)
 	{
-        DataMetaFile file = this.files.get(sectionPos);
+        FullDataMetaFile file = this.files.get(sectionPos);
         if (file == null)
 		 {
 			return cacheVersion >= 0;
@@ -348,10 +347,10 @@ public class DataFileHandler implements IDataSourceProvider
     }
 	
     @Override
-    public CompletableFuture<ILodDataSource> onCreateDataFile(DataMetaFile file)
+    public CompletableFuture<ILodDataSource> onCreateDataFile(FullDataMetaFile file)
 	{
         DhSectionPos pos = file.pos;
-        ArrayList<DataMetaFile> existFiles = new ArrayList<>();
+        ArrayList<FullDataMetaFile> existFiles = new ArrayList<>();
         ArrayList<DhSectionPos> missing = new ArrayList<>();
 		this.getDataFilesForPosition(pos, pos, existFiles, missing);
         LodUtil.assertTrue(!missing.isEmpty() || !existFiles.isEmpty());
@@ -366,7 +365,7 @@ public class DataFileHandler implements IDataSourceProvider
 		{
             for (DhSectionPos missingPos : missing)
 			{
-                DataMetaFile newFile = this.getOrMakeFile(missingPos);
+                FullDataMetaFile newFile = this.getOrMakeFile(missingPos);
                 if (newFile != null)
 				{
 					existFiles.add(newFile);
@@ -377,7 +376,7 @@ public class DataFileHandler implements IDataSourceProvider
                     SparseDataSource.createEmpty(pos) : 
 					SpottyDataSource.createEmpty(pos);
 
-            for (DataMetaFile metaFile : existFiles)
+            for (FullDataMetaFile metaFile : existFiles)
 			{
                 futures.add(metaFile.loadOrGetCachedAsync()
                         .thenAccept((data) ->
@@ -390,7 +389,7 @@ public class DataFileHandler implements IDataSourceProvider
                         })
 						.exceptionally((e) ->
 						{
-							DataMetaFile newMetaFile = this.removeCorruptedFile(pos, metaFile, e);
+							FullDataMetaFile newMetaFile = this.removeCorruptedFile(pos, metaFile, e);
 							return null;
 						})
                 );
@@ -400,14 +399,14 @@ public class DataFileHandler implements IDataSourceProvider
      
         }
     }
-	private DataMetaFile removeCorruptedFile(DhSectionPos pos, DataMetaFile metaFile, Throwable exception)
+	private FullDataMetaFile removeCorruptedFile(DhSectionPos pos, FullDataMetaFile metaFile, Throwable exception)
 	{
 		LOGGER.error("Error reading Data file ["+pos+"]", exception);
 		
 		FileUtil.renameCorruptedFile(metaFile.path);
-		// remove the DataMetaFile since the old one was corrupted
+		// remove the FullDataMetaFile since the old one was corrupted
 		this.files.remove(pos);
-		// create a new DataMetaFile to write new data to
+		// create a new FullDataMetaFile to write new data to
 		return this.getOrMakeFile(pos);
 	}
 	
@@ -465,7 +464,7 @@ public class DataFileHandler implements IDataSourceProvider
     @Override
     public void close()
 	{
-        DataMetaFile.debugCheck();
+        FullDataMetaFile.debugCheck();
          //TODO
     }
 	

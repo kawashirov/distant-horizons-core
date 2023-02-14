@@ -2,9 +2,9 @@ package com.seibel.lod.core.datatype.full;
 
 import com.seibel.lod.core.datatype.ILodDataSource;
 import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;
+import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
-import com.seibel.lod.core.file.datafile.IDataSourceProvider;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
@@ -14,12 +14,12 @@ import java.util.concurrent.CompletableFuture;
 
 public class FullDataDownSampler {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
-    public static CompletableFuture<ILodDataSource> createDownSamplingFuture(DhSectionPos newTarget, IDataSourceProvider provider) {
+    public static CompletableFuture<ILodDataSource> createDownSamplingFuture(DhSectionPos newTarget, IFullDataSourceProvider provider) {
         // TODO: Make this future somehow run with lowest priority (to ensure ram usage stays low)
         return createDownSamplingFuture(FullDataSource.createEmpty(newTarget), provider);
     }
 
-    public static CompletableFuture<ILodDataSource> createDownSamplingFuture(FullDataSource target, IDataSourceProvider provider) {
+    public static CompletableFuture<ILodDataSource> createDownSamplingFuture(FullDataSource target, IFullDataSourceProvider provider) {
         int sectionSizeNeeded = 1 << target.getDataDetail();
 
         ArrayList<CompletableFuture<ILodDataSource>> futures;

@@ -2,7 +2,7 @@ package com.seibel.lod.core.datatype.full;
 
 import com.seibel.lod.core.datatype.AbstractDataSourceLoader;
 import com.seibel.lod.core.datatype.ILodDataSource;
-import com.seibel.lod.core.file.datafile.DataMetaFile;
+import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.level.IDhLevel;
 
 import java.io.IOException;
@@ -15,7 +15,7 @@ public class SpottyDataLoader extends AbstractDataSourceLoader
     }
 
     @Override
-    public ILodDataSource loadData(DataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException {
+    public ILodDataSource loadData(FullDataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException {
         return SpottyDataSource.loadData(dataFile, data, level);
     }
 }

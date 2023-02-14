@@ -7,8 +7,8 @@ import com.seibel.lod.core.datatype.full.FullDataPoint;
 import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;
 import com.seibel.lod.core.datatype.transform.LodDataBuilder;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
-import com.seibel.lod.core.file.datafile.DataFileHandler;
-import com.seibel.lod.core.file.datafile.IDataSourceProvider;
+import com.seibel.lod.core.file.fullDatafile.FullDataFileHandler;
+import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.lod.core.file.structure.ClientOnlySaveStructure;
 import com.seibel.lod.core.level.DhClientLevel;
 import com.seibel.lod.core.level.IDhLevel;
@@ -220,7 +220,7 @@ public class SubDimensionLevelMatcher implements AutoCloseable
 					break;
 				}
 				IDhLevel tempLevel = new DhClientLevel(new ClientOnlySaveStructure(), clientLevelWrapper);
-				IDataSourceProvider fileHandler = new DataFileHandler(tempLevel, testLevelFolder);
+				IFullDataSourceProvider fileHandler = new FullDataFileHandler(tempLevel, testLevelFolder);
 				CompletableFuture<ILodDataSource> testDataSource = fileHandler.read(new DhSectionPos(playerChunkPos));
 				ILodDataSource lodDataSource = testDataSource.get(); 
 				

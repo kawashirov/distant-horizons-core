@@ -1,4 +1,4 @@
-package com.seibel.lod.core.file.datafile;
+package com.seibel.lod.core.file.fullDatafile;
 
 import java.io.*;
 import java.lang.ref.*;
@@ -21,12 +21,15 @@ import com.seibel.lod.core.util.AtomicsUtil;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
-public class DataMetaFile extends AbstractMetaDataFile
+/**
+ * Related to the stored Blockstate/Biome ID data. 
+ */
+public class FullDataMetaFile extends AbstractMetaDataFile
 {
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger(DataMetaFile.class.getSimpleName());
+	private static final Logger LOGGER = DhLoggerBuilder.getLogger(FullDataMetaFile.class.getSimpleName());
 	
 	private final IDhLevel level;
-	private final IDataSourceProvider handler;
+	private final IFullDataSourceProvider handler;
 	private boolean doesFileExist;
 
 	public AbstractDataSourceLoader loader;
@@ -75,7 +78,7 @@ public class DataMetaFile extends AbstractMetaDataFile
 
 
 	// Create a new metaFile
-	public DataMetaFile(IDataSourceProvider handler, IDhLevel level, DhSectionPos pos) throws IOException {
+	public FullDataMetaFile(IFullDataSourceProvider handler, IDhLevel level, DhSectionPos pos) throws IOException {
 		super(handler.computeDataFilePath(pos), pos);
 		debugCheck();
 		this.handler = handler;
@@ -84,7 +87,7 @@ public class DataMetaFile extends AbstractMetaDataFile
 		doesFileExist = false;
 	}
 
-	public DataMetaFile(IDataSourceProvider handler, IDhLevel level, File path) throws IOException {
+	public FullDataMetaFile(IFullDataSourceProvider handler, IDhLevel level, File path) throws IOException {
 		super(path);
 		debugCheck();
 		this.handler = handler;

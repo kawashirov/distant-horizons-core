@@ -1,4 +1,4 @@
-package com.seibel.lod.core.file.datafile;
+package com.seibel.lod.core.file.fullDatafile;
 
 import com.seibel.lod.core.datatype.ILodDataSource;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
@@ -12,7 +12,7 @@ import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public interface IDataSourceProvider extends AutoCloseable {
+public interface IFullDataSourceProvider extends AutoCloseable {
     void addScannedFile(Collection<File> detectedFiles);
 
     CompletableFuture<ILodDataSource> read(DhSectionPos pos);
@@ -22,7 +22,7 @@ public interface IDataSourceProvider extends AutoCloseable {
     long getCacheVersion(DhSectionPos sectionPos);
     boolean isCacheVersionValid(DhSectionPos sectionPos, long cacheVersion);
 
-    CompletableFuture<ILodDataSource> onCreateDataFile(DataMetaFile file);
+    CompletableFuture<ILodDataSource> onCreateDataFile(FullDataMetaFile file);
     ILodDataSource onDataFileLoaded(ILodDataSource source, MetaData metaData, Consumer<ILodDataSource> onUpdated, Function<ILodDataSource, Boolean> updater);
     CompletableFuture<ILodDataSource> onDataFileRefresh(ILodDataSource source, MetaData metaData, Function<ILodDataSource, Boolean> updater, Consumer<ILodDataSource> onUpdated);
     File computeDataFilePath(DhSectionPos pos);

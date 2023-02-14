@@ -4,10 +4,10 @@ import com.seibel.lod.core.datatype.IIncompleteDataSource;
 import com.seibel.lod.core.datatype.ILodDataSource;
 import com.seibel.lod.core.datatype.full.accessor.FullArrayView;
 import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;
+import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
-import com.seibel.lod.core.file.datafile.DataMetaFile;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.LodUtil;
@@ -210,7 +210,7 @@ public class SparseDataSource implements IIncompleteDataSource
     }
 	
     @Override
-    public void saveData(IDhLevel level, DataMetaFile file, OutputStream dataStream) throws IOException
+    public void saveData(IDhLevel level, FullDataMetaFile file, OutputStream dataStream) throws IOException
 	{
         try (DataOutputStream dos = new DataOutputStream(dataStream))
 		{
@@ -279,7 +279,7 @@ public class SparseDataSource implements IIncompleteDataSource
         }
     }
 
-    public static SparseDataSource loadData(DataMetaFile dataFile, InputStream dataStream, IDhLevel level) throws IOException
+    public static SparseDataSource loadData(FullDataMetaFile dataFile, InputStream dataStream, IDhLevel level) throws IOException
 	{
         LodUtil.assertTrue(dataFile.pos.sectionDetailLevel > SPARSE_UNIT_DETAIL);
         LodUtil.assertTrue(dataFile.pos.sectionDetailLevel <= MAX_SECTION_DETAIL);

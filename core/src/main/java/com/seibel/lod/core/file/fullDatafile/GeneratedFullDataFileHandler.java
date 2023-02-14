@@ -1,4 +1,4 @@
-package com.seibel.lod.core.file.datafile;
+package com.seibel.lod.core.file.fullDatafile;
 
 import com.seibel.lod.core.datatype.IIncompleteDataSource;
 import com.seibel.lod.core.datatype.ILodDataSource;
@@ -20,7 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-public class GeneratedDataFileHandler extends DataFileHandler
+public class GeneratedFullDataFileHandler extends FullDataFileHandler
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
@@ -28,7 +28,7 @@ public class GeneratedDataFileHandler extends DataFileHandler
 	
 	
 	
-    public GeneratedDataFileHandler(IDhServerLevel level, File saveRootDir) { super(level, saveRootDir); }
+    public GeneratedFullDataFileHandler(IDhServerLevel level, File saveRootDir) { super(level, saveRootDir); }
 	
 	
 	
@@ -44,11 +44,11 @@ public class GeneratedDataFileHandler extends DataFileHandler
 	
 	
     @Override
-    public CompletableFuture<ILodDataSource> onCreateDataFile(DataMetaFile file)
+    public CompletableFuture<ILodDataSource> onCreateDataFile(FullDataMetaFile file)
 	{
         DhSectionPos pos = file.pos;
         
-		ArrayList<DataMetaFile> existingFiles = new ArrayList<>();
+		ArrayList<FullDataMetaFile> existingFiles = new ArrayList<>();
         ArrayList<DhSectionPos> missingPositions = new ArrayList<>();
 		this.getDataFilesForPosition(pos, pos, existingFiles, missingPositions);
 		
@@ -85,7 +85,7 @@ public class GeneratedDataFileHandler extends DataFileHandler
 			// create the missing metaData files
             for (DhSectionPos missingPos : missingPositions)
 			{
-                DataMetaFile newFile = this.getOrMakeFile(missingPos);
+                FullDataMetaFile newFile = this.getOrMakeFile(missingPos);
                 if (newFile != null)
 				{
 					existingFiles.add(newFile);
@@ -96,7 +96,7 @@ public class GeneratedDataFileHandler extends DataFileHandler
 			
 			// read in the existing data
 			final ArrayList<CompletableFuture<Void>> futures = new ArrayList<>(existingFiles.size());
-            for (DataMetaFile existingFile : existingFiles)
+            for (FullDataMetaFile existingFile : existingFiles)
 			{
                 futures.add(existingFile.loadOrGetCachedAsync()
                         .exceptionally((ex) -> /*Ignore file read errors*/null)
@@ -173,7 +173,7 @@ public class GeneratedDataFileHandler extends DataFileHandler
 			{
 				if (chunk.getBBoxLodPos().overlaps(this.loadedTargetData.getSectionPos().getSectionBBoxPos()))
 				{
-					GeneratedDataFileHandler.this.write(this.loadedTargetData.getSectionPos(), chunk);
+					GeneratedFullDataFileHandler.this.write(this.loadedTargetData.getSectionPos(), chunk);
 				}
 			};
 		}
