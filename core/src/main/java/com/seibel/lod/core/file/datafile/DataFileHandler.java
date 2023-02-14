@@ -264,13 +264,29 @@ public class DataFileHandler implements IDataSourceProvider
 	@Override
     public CompletableFuture<ILodDataSource> read(DhSectionPos pos)
 	{
-		this.topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetailLevel));
+		this.topDetailLevel.updateAndGet(intVal -> Math.max(intVal, pos.sectionDetailLevel));
         DataMetaFile metaFile = this.getOrMakeFile(pos);
         if (metaFile == null)
 		{
 			return CompletableFuture.completedFuture(null);
 		}
-        return metaFile.loadOrGetCached();
+		
+		
+		// future wrapper necessary in order to handle file read errors
+		CompletableFuture<ILodDataSource> futureWrapper = new CompletableFuture<>();
+		metaFile.loadOrGetCachedAsync().exceptionally((e) ->
+			{
+				DataMetaFile newMetaFile = this.removeCorruptedFile(pos, metaFile, e);
+				
+				futureWrapper.completeExceptionally(e);
+				return null; // return value doesn't matter
+			})
+			.whenComplete((dataSource, e) ->
+			{
+				futureWrapper.complete(dataSource);
+			});
+		
+		return futureWrapper;
     }
 	
     /** This call is concurrent. I.e. it supports being called by multiple threads at the same time. */
@@ -363,8 +379,7 @@ public class DataFileHandler implements IDataSourceProvider
 
             for (DataMetaFile metaFile : existFiles)
 			{
-                futures.add(f.loadOrGetCached()
-                        .exceptionally((ex) -> null)
+                futures.add(metaFile.loadOrGetCachedAsync()
                         .thenAccept((data) ->
 						{
                             if (data != null)
@@ -373,14 +388,30 @@ public class DataFileHandler implements IDataSourceProvider
                                 dataSource.sampleFrom(data);
                             }
                         })
+						.exceptionally((e) ->
+						{
+							DataMetaFile newMetaFile = this.removeCorruptedFile(pos, metaFile, e);
+							return null;
+						})
                 );
             }
             return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
                     .thenApply((v) -> dataSource.trySelfPromote());
+     
         }
     }
+	private DataMetaFile removeCorruptedFile(DhSectionPos pos, DataMetaFile metaFile, Throwable exception)
+	{
+		LOGGER.error("Error reading Data file ["+pos+"]", exception);
+		
+		FileUtil.renameCorruptedFile(metaFile.path);
+		// remove the DataMetaFile since the old one was corrupted
+		this.files.remove(pos);
+		// create a new DataMetaFile to write new data to
+		return this.getOrMakeFile(pos);
+	}
 	
-    @Override
+	@Override
     public ILodDataSource onDataFileLoaded(ILodDataSource source, MetaData metaData,
                                           Consumer<ILodDataSource> onUpdated, Function<ILodDataSource, Boolean> updater)
 	{
@@ -426,17 +457,10 @@ public class DataFileHandler implements IDataSourceProvider
     }
 	
     @Override
-    public File computeDataFilePath(DhSectionPos pos)
-	{
-        return new File(this.saveDir, pos.serialize() + ".lod");
-    }
+    public File computeDataFilePath(DhSectionPos pos) { return new File(this.saveDir, pos.serialize() + ".lod"); }
 	
     @Override
-    public Executor getIOExecutor()
-	{
-        return this.fileReaderThread;
-    }
-	
+    public Executor getIOExecutor() { return this.fileReaderThread; }
 	
     @Override
     public void close()

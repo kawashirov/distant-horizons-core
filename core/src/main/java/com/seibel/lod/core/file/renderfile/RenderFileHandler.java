@@ -290,14 +290,10 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 			return dataSource;
 		}).exceptionally((ex) -> 
 		{
-			if (ex != null)
-			{
-				LOGGER.error("Uncaught exception when getting data for updateCache()", ex);
-			}
-			
+			LOGGER.error("Exception when getting data for updateCache()", ex);
 			return null;
 		});
-	
+		
 		LOGGER.info("Recreating cache for {}", data.getSectionPos());
 		DataRenderTransformer.asyncTransformDataSource(dataFuture, this.level)
 				.thenAccept((newRenderDataSource) -> this.write(dataRef.get(), file, newRenderDataSource, this.dataSourceProvider.getCacheVersion(data.getSectionPos())))
@@ -310,7 +306,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 					return null;
 				}).thenRun(() -> this.cacheUpdateLockBySectionPos.remove(file.pos));
 	}
-
+	
     public ILodRenderSource onRenderFileLoaded(ILodRenderSource data, RenderMetaDataFile file)
 	{
         if (!this.dataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get()))

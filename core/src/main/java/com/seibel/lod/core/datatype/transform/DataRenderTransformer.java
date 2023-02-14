@@ -28,7 +28,11 @@ public class DataRenderTransformer
 	
     private static ILodRenderSource transform(ILodDataSource dataSource, IDhClientLevel level)
 	{
-        if (dataSource == null) return null;
+        if (dataSource == null)
+		{
+			return null;
+		}
+		
         return ColumnRenderLoader.LOADER_BY_SOURCE_TYPE.get(ColumnRenderSource.class)
                 .stream().findFirst().get().createRenderSource(dataSource, level);
     }

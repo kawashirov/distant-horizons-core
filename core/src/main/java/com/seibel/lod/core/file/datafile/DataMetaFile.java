@@ -151,22 +151,22 @@ public class DataMetaFile extends AbstractMetaDataFile
 	{
 		debugCheck();
 		Object obj = this.data.get();
-
+		
 		CompletableFuture<ILodDataSource> cached = this._readCachedAsync(obj);
 		if (cached != null)
 		{
 			return cached;
 		}
-
+		
 		CompletableFuture<ILodDataSource> future = new CompletableFuture<>();
-
+		
 		// Would use faster and non-nesting Compare and exchange. But java 8 doesn't have it! :(
-		boolean worked = this.data.compareAndSet(obj, future);
+		boolean worked = this.data.compareAndSet(obj, future); // TODO obj and future are different object types, would this ever return true?
 		if (!worked)
 		{
 			return this.loadOrGetCachedAsync();
 		}
-
+		
 		// After cas. We are in exclusive control.
 		if (!this.doesFileExist)
 		{
@@ -181,6 +181,7 @@ public class DataMetaFile extends AbstractMetaDataFile
 					{
 						if (e != null)
 						{
+							LOGGER.error("Uncaught error on creation {}: ", this.path, e);
 							future.complete(null);
 							this.data.set(null);
 						}
@@ -198,7 +199,7 @@ public class DataMetaFile extends AbstractMetaDataFile
 					{
 						if (this.metaData == null)
 						{
-							throw new IllegalStateException("Meta data not loaded!");
+							throw new IllegalStateException("Meta data not loaded!"); // TODO should this be a CompletionException?
 						}
 						
 						// Load the file.
@@ -207,10 +208,12 @@ public class DataMetaFile extends AbstractMetaDataFile
 						{
 							data = this.loader.loadData(this, fio, this.level);
 						}
-						catch (IOException e)
+						catch (Exception e)
 						{
+							// can happen if there is a missing file or the file was incorrectly formatted
 							throw new CompletionException(e);
 						}
+						
 						// Apply the write queue
 						LodUtil.assertTrue(this.inCacheWriteAccessFuture.get() == null,
 								"No one should be writing to the cache while we are in the process of " +
@@ -218,17 +221,20 @@ public class DataMetaFile extends AbstractMetaDataFile
 						
 						data = this.handler.onDataFileLoaded(data, this.metaData, this::saveChanges, this::applyWriteQueue);
 						return data;
-					}, handler.getIOExecutor())
-					.whenComplete((f, e) -> {
-						if (e != null) {
-							LOGGER.error("Error loading file {}: ", path, e);
-							future.complete(null);
-							data.set(null);
-						} else {
-							future.complete(f);
-							new DataObjTracker(f);
-							this.data.set(new SoftReference<>(f));
-						}
+					}, this.handler.getIOExecutor())
+					.exceptionally((e) ->
+					{
+						LOGGER.error("Error loading file {}: ", this.path, e);
+						this.data.set(null);
+						
+						future.completeExceptionally(e);
+						return null; // the return value here doesn't matter
+					})
+					.whenComplete((dataSource, e) -> 
+					{
+						future.complete(dataSource);
+						new DataObjTracker(dataSource);
+						this.data.set(new SoftReference<>(dataSource));
 					});
 		}
 		
