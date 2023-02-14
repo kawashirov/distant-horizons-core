@@ -1,7 +1,7 @@
 package com.seibel.lod.core.file.renderfile;
 
 import com.google.common.collect.HashMultimap;
-import com.seibel.lod.core.datatype.ILodDataSource;
+import com.seibel.lod.core.datatype.IFullDataSource;
 import com.seibel.lod.core.datatype.PlaceHolderRenderSource;
 import com.seibel.lod.core.datatype.ILodRenderSource;
 import com.seibel.lod.core.datatype.AbstractRenderSourceLoader;
@@ -279,8 +279,8 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 		}
 		
 		final WeakReference<ILodRenderSource> dataRef = new WeakReference<>(data);
-		CompletableFuture<ILodDataSource> dataFuture = this.dataSourceProvider.read(data.getSectionPos());
-		dataFuture = dataFuture.thenApply((dataSource) -> 
+		CompletableFuture<IFullDataSource> fullDataSourceFuture = this.dataSourceProvider.read(data.getSectionPos());
+		fullDataSourceFuture = fullDataSourceFuture.thenApply((dataSource) -> 
 		{
 			if (dataRef.get() == null)
 			{
@@ -295,7 +295,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 		});
 		
 		LOGGER.info("Recreating cache for {}", data.getSectionPos());
-		DataRenderTransformer.asyncTransformDataSource(dataFuture, this.level)
+		DataRenderTransformer.asyncTransformDataSource(fullDataSourceFuture, this.level)
 				.thenAccept((newRenderDataSource) -> this.write(dataRef.get(), file, newRenderDataSource, this.dataSourceProvider.getCacheVersion(data.getSectionPos())))
 				.exceptionally((ex) -> 
 				{

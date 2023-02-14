@@ -11,9 +11,9 @@ import java.util.*;
 public abstract class AbstractDataSourceLoader
 {
 	
-	public static final HashMultimap<Class<? extends ILodDataSource>, AbstractDataSourceLoader> loaderRegistry = HashMultimap.create();
-	public final Class<? extends ILodDataSource> clazz;
-	public static final HashMap<Long, Class<? extends ILodDataSource>> datatypeIdRegistry = new HashMap<>();
+	public static final HashMultimap<Class<? extends IFullDataSource>, AbstractDataSourceLoader> loaderRegistry = HashMultimap.create();
+	public final Class<? extends IFullDataSource> clazz;
+	public static final HashMap<Long, Class<? extends IFullDataSource>> datatypeIdRegistry = new HashMap<>();
 	
 	public static AbstractDataSourceLoader getLoader(long dataTypeId, byte dataVersion)
 	{
@@ -22,7 +22,7 @@ public abstract class AbstractDataSourceLoader
 				.findFirst().orElse(null);
 	}
 	
-	public static AbstractDataSourceLoader getLoader(Class<? extends ILodDataSource> clazz, byte dataVersion)
+	public static AbstractDataSourceLoader getLoader(Class<? extends IFullDataSource> clazz, byte dataVersion)
 	{
 		return loaderRegistry.get(clazz).stream()
 				.filter(l -> Arrays.binarySearch(l.loaderSupportedVersions, dataVersion) >= 0)
@@ -32,7 +32,7 @@ public abstract class AbstractDataSourceLoader
 	public final long datatypeId;
 	public final byte[] loaderSupportedVersions;
 	
-	public AbstractDataSourceLoader(Class<? extends ILodDataSource> clazz, long datatypeId, byte[] loaderSupportedVersions)
+	public AbstractDataSourceLoader(Class<? extends IFullDataSource> clazz, long datatypeId, byte[] loaderSupportedVersions)
 	{
 		this.datatypeId = datatypeId;
 		this.loaderSupportedVersions = loaderSupportedVersions;
@@ -62,7 +62,7 @@ public abstract class AbstractDataSourceLoader
 	}
 	
 	/** Can return null as meaning the requirement is not met */
-	public abstract ILodDataSource loadData(FullDataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException;
+	public abstract IFullDataSource loadData(FullDataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException;
 	
 	
 }

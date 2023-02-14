@@ -1,7 +1,7 @@
 package com.seibel.lod.core.datatype.full;
 
-import com.seibel.lod.core.datatype.IIncompleteDataSource;
-import com.seibel.lod.core.datatype.ILodDataSource;
+import com.seibel.lod.core.datatype.IFullDataSource;
+import com.seibel.lod.core.datatype.IIncompleteFullDataSource;
 import com.seibel.lod.core.datatype.full.accessor.FullArrayView;
 import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
@@ -17,29 +17,29 @@ import java.io.*;
 import java.util.BitSet;
 
 /**
- * 1 chunk
+ * 1 chunk of full data (formerly SpottyDataSource)
  */
-public class SpottyDataSource extends FullArrayView implements IIncompleteDataSource
+public class SingleChunkFullDataSource extends FullArrayView implements IIncompleteFullDataSource
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     public static final byte SECTION_SIZE_OFFSET = 6;
     public static final int SECTION_SIZE = 1 << SECTION_SIZE_OFFSET;
     public static final byte LATEST_VERSION = 0;
-    public static final long TYPE_ID = "SpottyDataSource".hashCode();
+    public static final long TYPE_ID = "SingleChunkFullDataSource".hashCode();
     private final DhSectionPos sectionPos;
     private boolean isEmpty = true;
     private final BitSet isColumnNotEmpty;
 
-    protected SpottyDataSource(DhSectionPos sectionPos)
+    protected SingleChunkFullDataSource(DhSectionPos sectionPos)
 	{
         super(new FullDataPointIdMap(), new long[SECTION_SIZE*SECTION_SIZE][0], SECTION_SIZE);
-        LodUtil.assertTrue(sectionPos.sectionDetailLevel > SparseDataSource.MAX_SECTION_DETAIL);
+        LodUtil.assertTrue(sectionPos.sectionDetailLevel > SparseFullDataSource.MAX_SECTION_DETAIL);
         this.sectionPos = sectionPos;
 		this.isColumnNotEmpty = new BitSet(SECTION_SIZE*SECTION_SIZE);
     }
 
     @Override
-    public DhSectionPos getSectionPos() { return this.sectionPos;  }
+    public DhSectionPos getSectionPos() { return this.sectionPos; }
     @Override
     public byte getDataDetail() { return (byte) (this.sectionPos.sectionDetailLevel -SECTION_SIZE_OFFSET); }
 
@@ -118,7 +118,7 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
     }
 
 
-    public static SpottyDataSource loadData(FullDataMetaFile dataFile, InputStream dataStream, IDhLevel level) throws IOException
+    public static SingleChunkFullDataSource loadData(FullDataMetaFile dataFile, InputStream dataStream, IDhLevel level) throws IOException
 	{
         DataInputStream dos = new DataInputStream(dataStream); // DO NOT CLOSE
         {
@@ -140,7 +140,7 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
             if (end == 0x00000001)
 			{
                 // Section is empty
-                return new SpottyDataSource(dataFile.pos);
+                return new SingleChunkFullDataSource(dataFile.pos);
             }
 
             // Is column not empty
@@ -182,11 +182,11 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
             if (end != 0xFFFFFFFF)
 				throw new IOException("invalid id mapping end guard");
 			
-            return new SpottyDataSource(dataFile.pos, mapping, isColumnNotEmpty, data);
+            return new SingleChunkFullDataSource(dataFile.pos, mapping, isColumnNotEmpty, data);
         }
     }
 
-    private SpottyDataSource(DhSectionPos pos, FullDataPointIdMap mapping, BitSet isColumnNotEmpty, long[][] data)
+    private SingleChunkFullDataSource(DhSectionPos pos, FullDataPointIdMap mapping, BitSet isColumnNotEmpty, long[][] data)
 	{
         super(mapping, data, SECTION_SIZE);
         LodUtil.assertTrue(data.length == SECTION_SIZE*SECTION_SIZE);
@@ -195,7 +195,7 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
 		this.isEmpty = false;
     }
 
-    public static SpottyDataSource createEmpty(DhSectionPos pos) { return new SpottyDataSource(pos); }
+    public static SingleChunkFullDataSource createEmpty(DhSectionPos pos) { return new SingleChunkFullDataSource(pos); }
 
     public static boolean neededForPosition(DhSectionPos posToWrite, DhSectionPos posToTest)
 	{
@@ -210,7 +210,7 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
     }
 
     @Override
-    public void sampleFrom(ILodDataSource source)
+    public void sampleFrom(IFullDataSource source)
 	{
         DhSectionPos pos = source.getSectionPos();
         LodUtil.assertTrue(pos.sectionDetailLevel < this.sectionPos.sectionDetailLevel);
@@ -218,9 +218,9 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
         if (source.isEmpty()) 
 			return;
 		
-        if (source instanceof SparseDataSource)
+        if (source instanceof SparseFullDataSource)
 		{
-			this.sampleFrom((SparseDataSource) source);
+			this.sampleFrom((SparseFullDataSource) source);
         }
 		else if (source instanceof FullDataSource)
 		{
@@ -232,7 +232,7 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
         }
     }
 
-    private void sampleFrom(SparseDataSource sparseSource)
+    private void sampleFrom(SparseFullDataSource sparseSource)
 	{
         DhSectionPos pos = sparseSource.getSectionPos();
 		this.isEmpty = false;
@@ -244,7 +244,7 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
             int offsetX = dataPos.x - basePos.x;
             int offsetZ = dataPos.z - basePos.z;
             LodUtil.assertTrue(offsetX >= 0 && offsetX < SECTION_SIZE && offsetZ >= 0 && offsetZ < SECTION_SIZE);
-            int chunksPerData = 1 << (this.getDataDetail() - SparseDataSource.SPARSE_UNIT_DETAIL);
+            int chunksPerData = 1 << (this.getDataDetail() - SparseFullDataSource.SPARSE_UNIT_DETAIL);
             int dataSpan = this.sectionPos.getWidth(this.getDataDetail()).numberOfLodSectionsWide;
 
             for (int ox = 0; ox < dataSpan; ox++)
@@ -316,7 +316,7 @@ public class SpottyDataSource extends FullArrayView implements IIncompleteDataSo
     }
 
     @Override
-    public ILodDataSource trySelfPromote()
+    public IFullDataSource trySelfPromote()
 	{
         if (this.isEmpty) 
 			return this;

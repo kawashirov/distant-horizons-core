@@ -1,7 +1,7 @@
 package com.seibel.lod.core.file.subDimMatching;
 
 import com.seibel.lod.core.config.Config;
-import com.seibel.lod.core.datatype.ILodDataSource;
+import com.seibel.lod.core.datatype.IFullDataSource;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.datatype.full.FullDataPoint;
 import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;
@@ -221,8 +221,8 @@ public class SubDimensionLevelMatcher implements AutoCloseable
 				}
 				IDhLevel tempLevel = new DhClientLevel(new ClientOnlySaveStructure(), clientLevelWrapper);
 				IFullDataSourceProvider fileHandler = new FullDataFileHandler(tempLevel, testLevelFolder);
-				CompletableFuture<ILodDataSource> testDataSource = fileHandler.read(new DhSectionPos(playerChunkPos));
-				ILodDataSource lodDataSource = testDataSource.get(); 
+				CompletableFuture<IFullDataSource> testDataSource = fileHandler.read(new DhSectionPos(playerChunkPos));
+				IFullDataSource lodDataSource = testDataSource.get(); 
 				
 				
 				// convert the data source into a raw LOD data array

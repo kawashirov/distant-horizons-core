@@ -11,7 +11,7 @@ import java.util.*;
 
 /**
  * Abstract for loading and creating {@link ILodRenderSource} objects 
- * from {@link RenderMetaDataFile}'s and {@link ILodDataSource}'s. <br><Br>
+ * from {@link RenderMetaDataFile}'s and {@link IFullDataSource}'s. <br><Br>
  * 
  * Also holds all {@link AbstractRenderSourceLoader}'s
  * that have been created to allow for migrating old render data formats.
@@ -101,6 +101,6 @@ public abstract class AbstractRenderSourceLoader
 	 */
 	public abstract ILodRenderSource loadRenderSource(RenderMetaDataFile renderFile, InputStream data, IDhLevel level) throws IOException;
 	/** Should not return null */
-	public abstract ILodRenderSource createRenderSource(ILodDataSource dataSource, IDhClientLevel level);
+	public abstract ILodRenderSource createRenderSource(IFullDataSource dataSource, IDhClientLevel level);
 	
 }

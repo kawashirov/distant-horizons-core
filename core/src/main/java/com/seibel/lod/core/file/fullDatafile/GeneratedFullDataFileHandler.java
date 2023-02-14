@@ -1,10 +1,10 @@
 package com.seibel.lod.core.file.fullDatafile;
 
-import com.seibel.lod.core.datatype.IIncompleteDataSource;
-import com.seibel.lod.core.datatype.ILodDataSource;
+import com.seibel.lod.core.datatype.IFullDataSource;
+import com.seibel.lod.core.datatype.IIncompleteFullDataSource;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
-import com.seibel.lod.core.datatype.full.SparseDataSource;
-import com.seibel.lod.core.datatype.full.SpottyDataSource;
+import com.seibel.lod.core.datatype.full.SparseFullDataSource;
+import com.seibel.lod.core.datatype.full.SingleChunkFullDataSource;
 import com.seibel.lod.core.generation.tasks.AbstractWorldGenTaskTracker;
 import com.seibel.lod.core.generation.WorldGenerationQueue;
 import com.seibel.lod.core.level.IDhServerLevel;
@@ -44,7 +44,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	
 	
     @Override
-    public CompletableFuture<ILodDataSource> onCreateDataFile(FullDataMetaFile file)
+    public CompletableFuture<IFullDataSource> onCreateDataFile(FullDataMetaFile file)
 	{
         DhSectionPos pos = file.pos;
         
@@ -56,9 +56,9 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
         LodUtil.assertTrue(!missingPositions.isEmpty() || !existingFiles.isEmpty());
 		
 		// determine the type of dataSource that should be used for this position
-		IIncompleteDataSource dataSource = pos.sectionDetailLevel <= SparseDataSource.MAX_SECTION_DETAIL ?
-				SparseDataSource.createEmpty(pos) :
-				SpottyDataSource.createEmpty(pos);
+		IIncompleteFullDataSource dataSource = pos.sectionDetailLevel <= SparseFullDataSource.MAX_SECTION_DETAIL ?
+				SparseFullDataSource.createEmpty(pos) :
+				SingleChunkFullDataSource.createEmpty(pos);
 		
 		
         if (missingPositions.size() == 1 && existingFiles.isEmpty() && missingPositions.get(0).equals(pos))
@@ -141,12 +141,12 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	class GenTask extends AbstractWorldGenTaskTracker
 	{
 		private final DhSectionPos pos;
-		private final WeakReference<ILodDataSource> targetData;
-		private ILodDataSource loadedTargetData = null;
+		private final WeakReference<IFullDataSource> targetData;
+		private IFullDataSource loadedTargetData = null;
 		
 		
 		
-		GenTask(DhSectionPos pos, WeakReference<ILodDataSource> targetData)
+		GenTask(DhSectionPos pos, WeakReference<IFullDataSource> targetData)
 		{
 			this.pos = pos;
 			this.targetData = targetData;

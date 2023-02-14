@@ -1,6 +1,6 @@
 package com.seibel.lod.core.datatype.full;
 
-import com.seibel.lod.core.datatype.ILodDataSource;
+import com.seibel.lod.core.datatype.IFullDataSource;
 import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;
 import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.lod.core.pos.DhLodPos;
@@ -14,21 +14,21 @@ import java.util.concurrent.CompletableFuture;
 
 public class FullDataDownSampler {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
-    public static CompletableFuture<ILodDataSource> createDownSamplingFuture(DhSectionPos newTarget, IFullDataSourceProvider provider) {
+    public static CompletableFuture<IFullDataSource> createDownSamplingFuture(DhSectionPos newTarget, IFullDataSourceProvider provider) {
         // TODO: Make this future somehow run with lowest priority (to ensure ram usage stays low)
         return createDownSamplingFuture(FullDataSource.createEmpty(newTarget), provider);
     }
 
-    public static CompletableFuture<ILodDataSource> createDownSamplingFuture(FullDataSource target, IFullDataSourceProvider provider) {
+    public static CompletableFuture<IFullDataSource> createDownSamplingFuture(FullDataSource target, IFullDataSourceProvider provider) {
         int sectionSizeNeeded = 1 << target.getDataDetail();
 
-        ArrayList<CompletableFuture<ILodDataSource>> futures;
+        ArrayList<CompletableFuture<IFullDataSource>> futures;
         DhLodPos basePos = target.getSectionPos().getSectionBBoxPos().getCornerLodPos(FullDataSource.SECTION_SIZE_OFFSET);
         if (sectionSizeNeeded <= FullDataSource.SECTION_SIZE_OFFSET) {
             futures = new ArrayList<>(sectionSizeNeeded * sectionSizeNeeded);
             for (int ox = 0; ox < sectionSizeNeeded; ox++) {
                 for (int oz = 0; oz < sectionSizeNeeded; oz++) {
-                    CompletableFuture<ILodDataSource> future = provider.read(new DhSectionPos(
+                    CompletableFuture<IFullDataSource> future = provider.read(new DhSectionPos(
                             FullDataSource.SECTION_SIZE_OFFSET, basePos.x + ox, basePos.z + oz));
                     future = future.whenComplete((source, ex) -> {
                         if (ex == null && source != null && source instanceof FullDataSource) {
@@ -45,7 +45,7 @@ public class FullDataDownSampler {
             int multiplier = sectionSizeNeeded / FullDataSource.SECTION_SIZE;
             for (int ox = 0; ox < FullDataSource.SECTION_SIZE; ox++) {
                 for (int oz = 0; oz < FullDataSource.SECTION_SIZE; oz++) {
-                    CompletableFuture<ILodDataSource> future = provider.read(new DhSectionPos(
+                    CompletableFuture<IFullDataSource> future = provider.read(new DhSectionPos(
                             FullDataSource.SECTION_SIZE_OFFSET, basePos.x + ox * multiplier, basePos.z + oz * multiplier));
                     future = future.whenComplete((source, ex) -> {
                         if (ex == null && source != null && source instanceof FullDataSource) {

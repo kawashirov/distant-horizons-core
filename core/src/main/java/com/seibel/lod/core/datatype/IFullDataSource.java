@@ -10,7 +10,7 @@ import com.seibel.lod.core.pos.DhSectionPos;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public interface ILodDataSource
+public interface IFullDataSource
 {
 	DhSectionPos getSectionPos();
 	

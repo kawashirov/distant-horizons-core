@@ -1,7 +1,7 @@
 package com.seibel.lod.core.datatype.column;
 
-import com.seibel.lod.core.datatype.IIncompleteDataSource;
-import com.seibel.lod.core.datatype.ILodDataSource;
+import com.seibel.lod.core.datatype.IIncompleteFullDataSource;
+import com.seibel.lod.core.datatype.IFullDataSource;
 import com.seibel.lod.core.datatype.column.accessor.ColumnFormat;
 import com.seibel.lod.core.datatype.full.FullDataSource;
 import com.seibel.lod.core.datatype.transform.FullToColumnTransformer;
@@ -49,15 +49,15 @@ public class ColumnRenderLoader extends AbstractRenderSourceLoader
     }
 	
     @Override
-    public ILodRenderSource createRenderSource(ILodDataSource dataSource, IDhClientLevel level)
+    public ILodRenderSource createRenderSource(IFullDataSource dataSource, IDhClientLevel level)
 	{
 		if (dataSource instanceof FullDataSource) // TODO replace with Java 7 method
 		{
 			return FullToColumnTransformer.transformFullDataToColumnData(level, (FullDataSource) dataSource);
 		}
-		else if (dataSource instanceof IIncompleteDataSource)
+		else if (dataSource instanceof IIncompleteFullDataSource)
 		{
-			return FullToColumnTransformer.transformIncompleteDataToColumnData(level, (IIncompleteDataSource) dataSource);
+			return FullToColumnTransformer.transformIncompleteDataToColumnData(level, (IIncompleteFullDataSource) dataSource);
 		}
 		LodUtil.assertNotReach();
 		return null;

@@ -1,7 +1,7 @@
 package com.seibel.lod.core.datatype.full;
 
 import com.seibel.lod.core.datatype.AbstractDataSourceLoader;
-import com.seibel.lod.core.datatype.ILodDataSource;
+import com.seibel.lod.core.datatype.IFullDataSource;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.level.IDhLevel;
 
@@ -11,11 +11,11 @@ import java.io.InputStream;
 public class SpottyDataLoader extends AbstractDataSourceLoader
 {
     public SpottyDataLoader() {
-        super(SpottyDataSource.class, SpottyDataSource.TYPE_ID, new byte[]{SpottyDataSource.LATEST_VERSION});
+        super(SingleChunkFullDataSource.class, SingleChunkFullDataSource.TYPE_ID, new byte[]{ SingleChunkFullDataSource.LATEST_VERSION});
     }
 
     @Override
-    public ILodDataSource loadData(FullDataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException {
-        return SpottyDataSource.loadData(dataFile, data, level);
+    public IFullDataSource loadData(FullDataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException {
+        return SingleChunkFullDataSource.loadData(dataFile, data, level);
     }
 }

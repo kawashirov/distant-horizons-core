@@ -1,6 +1,6 @@
 package com.seibel.lod.core.file.fullDatafile;
 
-import com.seibel.lod.core.datatype.ILodDataSource;
+import com.seibel.lod.core.datatype.IFullDataSource;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.file.metaData.MetaData;
 import com.seibel.lod.core.pos.DhSectionPos;
@@ -15,16 +15,16 @@ import java.util.function.Function;
 public interface IFullDataSourceProvider extends AutoCloseable {
     void addScannedFile(Collection<File> detectedFiles);
 
-    CompletableFuture<ILodDataSource> read(DhSectionPos pos);
+    CompletableFuture<IFullDataSource> read(DhSectionPos pos);
     void write(DhSectionPos sectionPos, ChunkSizedData chunkData);
     CompletableFuture<Void> flushAndSave();
 
     long getCacheVersion(DhSectionPos sectionPos);
     boolean isCacheVersionValid(DhSectionPos sectionPos, long cacheVersion);
 
-    CompletableFuture<ILodDataSource> onCreateDataFile(FullDataMetaFile file);
-    ILodDataSource onDataFileLoaded(ILodDataSource source, MetaData metaData, Consumer<ILodDataSource> onUpdated, Function<ILodDataSource, Boolean> updater);
-    CompletableFuture<ILodDataSource> onDataFileRefresh(ILodDataSource source, MetaData metaData, Function<ILodDataSource, Boolean> updater, Consumer<ILodDataSource> onUpdated);
+    CompletableFuture<IFullDataSource> onCreateDataFile(FullDataMetaFile file);
+    IFullDataSource onDataFileLoaded(IFullDataSource source, MetaData metaData, Consumer<IFullDataSource> onUpdated, Function<IFullDataSource, Boolean> updater);
+    CompletableFuture<IFullDataSource> onDataFileRefresh(IFullDataSource source, MetaData metaData, Function<IFullDataSource, Boolean> updater, Consumer<IFullDataSource> onUpdated);
     File computeDataFilePath(DhSectionPos pos);
     Executor getIOExecutor();
 

@@ -1,6 +1,6 @@
 package com.seibel.lod.core.pos;
 
-import com.seibel.lod.core.datatype.ILodDataSource;
+import com.seibel.lod.core.datatype.IFullDataSource;
 import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.LodUtil;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +91,7 @@ public class DhLodPos implements Comparable<DhLodPos>
 	public DhLodPos getDhSectionRelativePositionForDetailLevel() throws IllegalArgumentException { return this.getDhSectionRelativePositionForDetailLevel(this.detailLevel); }
 	/** 
 	 * Returns a DhLodPos with the given detail level and an X/Z position somewhere between (0,0) and (63,63).
-	 * This is done to access specific sections from a {@link ILodDataSource} where LOD columns are stored
+	 * This is done to access specific sections from a {@link IFullDataSource} where LOD columns are stored
 	 * in 64 x 64 blocks.
 	 * 
 	 * @throws IllegalArgumentException if this position's detail level is lower than the output detail level

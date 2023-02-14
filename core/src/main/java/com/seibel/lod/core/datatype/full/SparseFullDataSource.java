@@ -1,7 +1,7 @@
 package com.seibel.lod.core.datatype.full;
 
-import com.seibel.lod.core.datatype.IIncompleteDataSource;
-import com.seibel.lod.core.datatype.ILodDataSource;
+import com.seibel.lod.core.datatype.IIncompleteFullDataSource;
+import com.seibel.lod.core.datatype.IFullDataSource;
 import com.seibel.lod.core.datatype.full.accessor.FullArrayView;
 import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
@@ -17,9 +17,9 @@ import java.io.*;
 import java.util.BitSet;
 
 /**
- * Handles full data with the detail level {@link SparseDataSource#SPARSE_UNIT_DETAIL}
+ * Handles full data with the detail level {@link SparseFullDataSource#SPARSE_UNIT_DETAIL}
  */
-public class SparseDataSource implements IIncompleteDataSource
+public class SparseFullDataSource implements IIncompleteFullDataSource
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     public static final byte SPARSE_UNIT_DETAIL = 4;
@@ -29,7 +29,7 @@ public class SparseDataSource implements IIncompleteDataSource
     public static final int SECTION_SIZE = (byte) BitShiftUtil.powerOfTwo(SECTION_SIZE_OFFSET);
     public static final byte MAX_SECTION_DETAIL = SECTION_SIZE_OFFSET + SPARSE_UNIT_DETAIL;
     public static final byte LATEST_VERSION = 0;
-    public static final long TYPE_ID = "SparseDataSource".hashCode();
+    public static final long TYPE_ID = "SparseFullDataSource".hashCode();
 	
 	/**
 	 * This is the byte put between different sections in the binary save file.
@@ -49,9 +49,9 @@ public class SparseDataSource implements IIncompleteDataSource
 	
 	
 	
-    public static SparseDataSource createEmpty(DhSectionPos pos) { return new SparseDataSource(pos); }
+    public static SparseFullDataSource createEmpty(DhSectionPos pos) { return new SparseFullDataSource(pos); }
 
-    protected SparseDataSource(DhSectionPos sectionPos)
+    protected SparseFullDataSource(DhSectionPos sectionPos)
 	{
         LodUtil.assertTrue(sectionPos.sectionDetailLevel > SPARSE_UNIT_DETAIL);
         LodUtil.assertTrue(sectionPos.sectionDetailLevel <= MAX_SECTION_DETAIL);
@@ -62,7 +62,7 @@ public class SparseDataSource implements IIncompleteDataSource
 		this.chunkPos = sectionPos.getCorner(SPARSE_UNIT_DETAIL);
 		this.mapping = new FullDataPointIdMap();
     }
-    protected SparseDataSource(DhSectionPos sectionPos, FullDataPointIdMap mapping, FullArrayView[] data)
+    protected SparseFullDataSource(DhSectionPos sectionPos, FullDataPointIdMap mapping, FullArrayView[] data)
 	{
         LodUtil.assertTrue(sectionPos.sectionDetailLevel > SPARSE_UNIT_DETAIL);
         LodUtil.assertTrue(sectionPos.sectionDetailLevel <= MAX_SECTION_DETAIL);
@@ -104,7 +104,7 @@ public class SparseDataSource implements IIncompleteDataSource
 		if (data.dataDetail != 0)
 		{
 			//TODO: Disable the throw and instead just ignore the data.
-			throw new IllegalArgumentException("SparseDataSource only supports dataDetail 0!");
+			throw new IllegalArgumentException("SparseFullDataSource only supports dataDetail 0!");
 		}
 		
 		int arrayOffset = this.calculateOffset(data.x, data.z);
@@ -136,7 +136,7 @@ public class SparseDataSource implements IIncompleteDataSource
 	
 	
     @Override
-	public void sampleFrom(ILodDataSource source)
+	public void sampleFrom(IFullDataSource source)
 	{
 		DhSectionPos pos = source.getSectionPos();
 		LodUtil.assertTrue(pos.sectionDetailLevel < this.sectionPos.sectionDetailLevel);
@@ -144,9 +144,9 @@ public class SparseDataSource implements IIncompleteDataSource
 		if (source.isEmpty())
 			return;
 		
-		if (source instanceof SparseDataSource)
+		if (source instanceof SparseFullDataSource)
 		{
-			this.sampleFrom((SparseDataSource) source);
+			this.sampleFrom((SparseFullDataSource) source);
 		}
 		else if (source instanceof FullDataSource)
 		{
@@ -158,7 +158,7 @@ public class SparseDataSource implements IIncompleteDataSource
 		}
 	}
 
-    private void sampleFrom(SparseDataSource sparseSource)
+    private void sampleFrom(SparseFullDataSource sparseSource)
 	{
         DhSectionPos pos = sparseSource.getSectionPos();
 		this.isEmpty = false;
@@ -279,7 +279,7 @@ public class SparseDataSource implements IIncompleteDataSource
         }
     }
 
-    public static SparseDataSource loadData(FullDataMetaFile dataFile, InputStream dataStream, IDhLevel level) throws IOException
+    public static SparseFullDataSource loadData(FullDataMetaFile dataFile, InputStream dataStream, IDhLevel level) throws IOException
 	{
         LodUtil.assertTrue(dataFile.pos.sectionDetailLevel > SPARSE_UNIT_DETAIL);
         LodUtil.assertTrue(dataFile.pos.sectionDetailLevel <= MAX_SECTION_DETAIL);
@@ -436,7 +436,7 @@ public class SparseDataSource implements IIncompleteDataSource
 					}
 				}
 				
-				return new SparseDataSource(dataFile.pos, mapping, fullDataArrays);
+				return new SparseFullDataSource(dataFile.pos, mapping, fullDataArrays);
 			}
         }
     }
@@ -461,7 +461,7 @@ public class SparseDataSource implements IIncompleteDataSource
 		}
     }
 
-    public ILodDataSource trySelfPromote()
+    public IFullDataSource trySelfPromote()
 	{
         if (this.isEmpty)
 		{

@@ -1,7 +1,7 @@
 package com.seibel.lod.core.datatype.full;
 
 import com.seibel.lod.core.datatype.AbstractDataSourceLoader;
-import com.seibel.lod.core.datatype.ILodDataSource;
+import com.seibel.lod.core.datatype.IFullDataSource;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.level.IDhLevel;
 
@@ -16,7 +16,7 @@ public class FullDataLoader extends AbstractDataSourceLoader
     }
 	
     @Override
-    public ILodDataSource loadData(FullDataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException
+    public IFullDataSource loadData(FullDataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException
 	{
         //TODO: Add decompressor here
         return FullDataSource.loadData(dataFile, data, level);

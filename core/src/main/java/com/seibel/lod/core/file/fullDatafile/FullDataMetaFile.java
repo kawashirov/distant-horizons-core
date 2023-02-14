@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import com.seibel.lod.core.datatype.ILodDataSource;
+import com.seibel.lod.core.datatype.IFullDataSource;
 import com.seibel.lod.core.datatype.AbstractDataSourceLoader;
 import com.seibel.lod.core.datatype.full.ChunkSizedData;
 import com.seibel.lod.core.file.metaData.MetaData;
@@ -33,7 +33,7 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 	private boolean doesFileExist;
 
 	public AbstractDataSourceLoader loader;
-	public Class<? extends ILodDataSource> dataType;
+	public Class<? extends IFullDataSource> dataType;
 	// The '?' type should either be:
 	//    SoftReference<LodDataSource>, or		    - Non-dirty file that can be GCed
 	//    CompletableFuture<LodDataSource>, or      - File that is being loaded. No guarantee that the type is promotable or not
@@ -52,16 +52,16 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 	GuardedMultiAppendQueue _backQueue = new GuardedMultiAppendQueue();
 	// ===========================
 
-	private AtomicReference<CompletableFuture<ILodDataSource>> inCacheWriteAccessFuture = new AtomicReference<>(null);
+	private AtomicReference<CompletableFuture<IFullDataSource>> inCacheWriteAccessFuture = new AtomicReference<>(null);
 
 	// ===Object lifetime stuff===
-	private static final ReferenceQueue<ILodDataSource> lifeCycleDebugQueue = new ReferenceQueue<>();
+	private static final ReferenceQueue<IFullDataSource> lifeCycleDebugQueue = new ReferenceQueue<>();
 	private static final Set<DataObjTracker> lifeCycleDebugSet = ConcurrentHashMap.newKeySet();
-	private static class DataObjTracker extends PhantomReference<ILodDataSource> implements Closeable
+	private static class DataObjTracker extends PhantomReference<IFullDataSource> implements Closeable
 	{
 		private final DhSectionPos pos;
 		
-		DataObjTracker(ILodDataSource data)
+		DataObjTracker(IFullDataSource data)
 		{
 			super(data, lifeCycleDebugQueue);
 			//LOGGER.info("Phantom created on {}! count: {}", data.getSectionPos(), lifeCycleDebugSet.size());
@@ -150,18 +150,18 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 
 	// Cause: Generic Type runtime casting cannot safety check it.
 	// However, the Union type ensures the 'data' should only contain the listed type.
-	public CompletableFuture<ILodDataSource> loadOrGetCachedAsync()
+	public CompletableFuture<IFullDataSource> loadOrGetCachedAsync()
 	{
 		debugCheck();
 		Object obj = this.data.get();
 		
-		CompletableFuture<ILodDataSource> cached = this._readCachedAsync(obj);
+		CompletableFuture<IFullDataSource> cached = this._readCachedAsync(obj);
 		if (cached != null)
 		{
 			return cached;
 		}
 		
-		CompletableFuture<ILodDataSource> future = new CompletableFuture<>();
+		CompletableFuture<IFullDataSource> future = new CompletableFuture<>();
 		
 		// Would use faster and non-nesting Compare and exchange. But java 8 doesn't have it! :(
 		boolean worked = this.data.compareAndSet(obj, future); // TODO obj and future are different object types, would this ever return true?
@@ -206,7 +206,7 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 						}
 						
 						// Load the file.
-						ILodDataSource data;
+						IFullDataSource data;
 						try (FileInputStream fio = this.getDataContent())
 						{
 							data = this.loader.loadData(this, fio, this.level);
@@ -246,7 +246,7 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 		return future;
 	}
 
-	private static MetaData makeMetaData(ILodDataSource data) {
+	private static MetaData makeMetaData(IFullDataSource data) {
 		AbstractDataSourceLoader loader = AbstractDataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
 		return new MetaData(data.getSectionPos(), -1, 1,
 				data.getDataDetail(), loader == null ? 0 : loader.datatypeId, data.getDataVersion());
@@ -255,24 +255,24 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 	// "unchecked": Suppress casting of CompletableFuture<?> to CompletableFuture<LodDataSource>
 	// "PointlessBooleanExpression": Suppress explicit (boolean == false) check for more understandable CAS operation code.
 	@SuppressWarnings({"unchecked"})
-	private CompletableFuture<ILodDataSource> _readCachedAsync(Object obj) {
+	private CompletableFuture<IFullDataSource> _readCachedAsync(Object obj) {
 		// Has file cached in RAM and not freed yet.
 		if ((obj instanceof SoftReference<?>)) {
 			Object inner = ((SoftReference<?>)obj).get();
 			if (inner != null) {
-				LodUtil.assertTrue(inner instanceof ILodDataSource);
+				LodUtil.assertTrue(inner instanceof IFullDataSource);
 				boolean isEmpty = writeQueue.get().queue.isEmpty();
 				// If the queue is empty, and the CAS on inCacheWriteLock succeeds, then we are the thread
 				// that will be applying the changes to the cache.
 				if (!isEmpty) {
 					// Do a CAS on inCacheWriteLock to ensure that we are the only thread that is writing to the cache,
 					// or if we fail, then that means someone else is already doing it, and we can just return the future
-					CompletableFuture<ILodDataSource> future = new CompletableFuture<>();
-					CompletableFuture<ILodDataSource> cas = AtomicsUtil.compareAndExchange(inCacheWriteAccessFuture, null, future);
+					CompletableFuture<IFullDataSource> future = new CompletableFuture<>();
+					CompletableFuture<IFullDataSource> cas = AtomicsUtil.compareAndExchange(inCacheWriteAccessFuture, null, future);
 					if (cas == null) {
 						try {
 							data.set(future);
-							handler.onDataFileRefresh((ILodDataSource) inner, metaData, this::applyWriteQueue, this::saveChanges).handle((v, e) -> {
+							handler.onDataFileRefresh((IFullDataSource) inner, metaData, this::applyWriteQueue, this::saveChanges).handle((v, e) -> {
 								if (e != null) {
 									LOGGER.error("Error refreshing data {}: ", pos, e);
 									future.complete(null);
@@ -288,7 +288,7 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 							return future;
 						} catch (Exception e) {
 							LOGGER.error("Error while doing refreshes to LodDataSource at {}: ", pos, e);
-							return CompletableFuture.completedFuture((ILodDataSource) inner);
+							return CompletableFuture.completedFuture((IFullDataSource) inner);
 						}
 					} else {
 						// or, return the future that will be completed when the write is done.
@@ -296,7 +296,7 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 					}
 				} else {
 					// or, return the cached data.
-					return CompletableFuture.completedFuture((ILodDataSource) inner);
+					return CompletableFuture.completedFuture((IFullDataSource) inner);
 				}
 			}
 		}
@@ -304,7 +304,7 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 		//==== Cached file out of scrope. ====
 		// Someone is already trying to complete it. so just return the obj.
 		if ((obj instanceof CompletableFuture<?>)) {
-			return (CompletableFuture<ILodDataSource>)obj;
+			return (CompletableFuture<IFullDataSource>)obj;
 		}
 		return null;
 	}
@@ -321,14 +321,22 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 		queue.appendLock.writeLock().unlock();
 		_backQueue = queue;
 	}
-
-	private void saveChanges(ILodDataSource data) {
-		if (data.isEmpty()) {
-			if (path.exists()) if (!path.delete()) LOGGER.warn("Failed to delete data file at {}", path);
+	
+	private void saveChanges(IFullDataSource data)
+	{
+		if (data.isEmpty())
+		{
+			if (path.exists() && !path.delete())
+			{
+					LOGGER.warn("Failed to delete data file at {}", path);
+			}
 			doesFileExist = false;
-		} else {
-			LOGGER.info("Saving data file of {}", data.getSectionPos());
-			try {
+		}
+		else
+		{
+			//LOGGER.info("Saving data file of {}", data.getSectionPos());
+			try
+			{
 				// Write/Update data
 				LodUtil.assertTrue(metaData != null);
 				metaData.dataLevel = data.getDataDetail();
@@ -339,22 +347,27 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 				metaData.loaderVersion = data.getDataVersion();
 				super.writeData((out) -> data.saveData(level, this, out));
 				doesFileExist = true;
-			} catch (IOException e) {
+			}
+			catch (IOException e)
+			{
 				LOGGER.error("Failed to save updated data file at {} for sect {}", path, pos, e);
 			}
 		}
 	}
 
 	// Return whether any write has happened to the data
-	private boolean applyWriteQueue(ILodDataSource data) {
+	private boolean applyWriteQueue(IFullDataSource data)
+	{
 		// Poll the write queue
 		// First check if write queue is empty, then swap the write queue.
 		// Must be done in this order to ensure isMemoryAddressValid work properly. See isMemoryAddressValid() for details.
 		boolean isEmpty = writeQueue.get().queue.isEmpty();
-		if (!isEmpty) {
+		if (!isEmpty)
+		{
 			swapWriteQueue();
 			int count = _backQueue.queue.size();
-			for (ChunkSizedData chunk : _backQueue.queue) {
+			for (ChunkSizedData chunk : _backQueue.queue)
+			{
 				data.update(chunk);
 			}
 			_backQueue.queue.clear();

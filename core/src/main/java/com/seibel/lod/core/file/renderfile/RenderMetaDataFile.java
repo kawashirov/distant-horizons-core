@@ -41,7 +41,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 //	@FunctionalInterface
 //	public interface CacheSourceProducer
 //	{
-//		CompletableFuture<ILodDataSource> getSourceFuture(DhSectionPos sectionPos);
+//		CompletableFuture<IFullDataSource> getSourceFuture(DhSectionPos sectionPos);
 //	}
 //	CacheValidator validator;
 //	CacheSourceProducer source;
