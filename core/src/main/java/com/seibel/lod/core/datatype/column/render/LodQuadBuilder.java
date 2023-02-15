@@ -105,6 +105,8 @@ public class LodQuadBuilder
 	
 	private int premergeCount = 0;
 
+	
+	
 	public LodQuadBuilder(boolean enableSkylightCulling, short skyLightCullingBelow, boolean doTransparency)
 	{
 		this.doTransparency = doTransparency;
@@ -115,6 +117,8 @@ public class LodQuadBuilder
 		this.skipQuadsWithZeroSkylight = enableSkylightCulling;
 		this.skyLightCullingBelow = skyLightCullingBelow;
 	}
+	
+	
 	
 	public void addQuadAdj(ELodDirection dir, short x, short y, short z,
 			short widthEastWest, short widthNorthSouthOrUpDown,

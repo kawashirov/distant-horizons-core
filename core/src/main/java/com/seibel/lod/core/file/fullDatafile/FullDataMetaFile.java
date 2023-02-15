@@ -218,9 +218,9 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 						
 						// Load the file.
 						IFullDataSource data;
-						try (FileInputStream fio = this.getDataContent())
+						try (FileInputStream inputStream = this.getDataContent())
 						{
-							data = this.loader.loadData(this, fio, this.level);
+							data = this.loader.loadData(this, inputStream, this.level);
 						}
 						catch (Exception e)
 						{
