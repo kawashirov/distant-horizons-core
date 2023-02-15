@@ -33,8 +33,8 @@ import static com.seibel.lod.core.render.glObject.GLProxy.GL_LOGGER;
 
 public class ColumnRenderBuffer extends AbstractRenderBuffer
 {
-    //TODO: Make the pool use configurable number of threads
-    public static final ExecutorService BUFFER_BUILDERS = LodUtil.makeThreadPool(4, "BufferBuilder");
+    //TODO: Make the pool change thread count after the config value is changed
+    public static final ExecutorService BUFFER_BUILDERS = LodUtil.makeThreadPool(Config.Client.Advanced.Threading.numberOfBufferBuilderThreads.get(), "BufferBuilder");
     public static final ExecutorService BUFFER_UPLOADER = LodUtil.makeSingleThreadPool("ColumnBufferUploader");
     public static final int MAX_CONCURRENT_CALL = 8;
 
