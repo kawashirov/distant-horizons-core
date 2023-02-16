@@ -29,7 +29,7 @@ import java.util.concurrent.ExecutorService;
 public class RenderFileHandler implements ILodRenderSourceProvider
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
-    
+	
 	private final ExecutorService renderCacheThread = LodUtil.makeSingleThreadPool("RenderCacheThread");
 	private final ConcurrentHashMap<DhSectionPos, RenderMetaDataFile> filesBySectionPos = new ConcurrentHashMap<>();
 	
@@ -152,6 +152,12 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 		}
 	}
 	
+	
+	
+	//===============//
+	// file handling //
+	//===============//
+	
     /** This call is concurrent. I.e. it supports multiple threads calling this method at the same time. */
     @Override
     public CompletableFuture<IRenderSource> read(DhSectionPos pos)
@@ -194,16 +200,9 @@ public class RenderFileHandler implements ILodRenderSourceProvider
     @Override
     public void write(DhSectionPos sectionPos, ChunkSizedData chunkData)
 	{
-		// can be used for debugging
-        if (chunkData.getBBoxLodPos().convertToDetailLevel((byte)6).equals(new DhLodPos((byte)6, 10, -11)))
-		{
-            int doNothing = 0;
-        }
-
         this.writeRecursively(sectionPos,chunkData);
-		this.fullDataSourceProvider.write(sectionPos, chunkData);
+		this.fullDataSourceProvider.write(sectionPos, chunkData); // TODO why is there fullData handling in the render file handler?
     }
-	
     private void writeRecursively(DhSectionPos sectPos, ChunkSizedData chunkData)
 	{
 		if (!sectPos.getSectionBBoxPos().overlaps(new DhLodPos((byte) (4 + chunkData.dataDetail), chunkData.x, chunkData.z)))

@@ -222,21 +222,21 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
         return getCurrentJobsCount() > MAX_CONCURRENT_CALL;
     }
 	
-	public static CompletableFuture<ColumnRenderBuffer> build(IDhClientLevel clientLevel, Reference<ColumnRenderBuffer> usedBufferSlot, ColumnRenderSource data, ColumnRenderSource[] adjData)
+	public static CompletableFuture<ColumnRenderBuffer> build(IDhClientLevel clientLevel, Reference<ColumnRenderBuffer> usedBufferSlot, ColumnRenderSource renderSource, ColumnRenderSource[] adjData)
 	{
 		if (isBusy())
 		{
 			return null;
 		}
 		
-		//LOGGER.info("RenderRegion startBuild @ {}", data.sectionPos);
+		//LOGGER.info("RenderRegion startBuild @ {}", renderSource.sectionPos);
 		return CompletableFuture.supplyAsync(() -> 
 			{
 				try
 				{
 					boolean enableTransparency = Config.Client.Graphics.Quality.transparency.get().tranparencyEnabled;
 					
-					EVENT_LOGGER.trace("RenderRegion start QuadBuild @ {}", data.sectionPos);
+					EVENT_LOGGER.trace("RenderRegion start QuadBuild @ {}", renderSource.sectionPos);
 					boolean enableSkyLightCulling = Config.Client.Graphics.AdvancedGraphics.enableCaveCulling.get();
 					
 					int skyLightCullingBelow = Config.Client.Graphics.AdvancedGraphics.caveCullingHeight.get();
@@ -246,8 +246,8 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 					LodQuadBuilder builder = new LodQuadBuilder(enableSkyLightCulling,
 							(short) (skyLightCullingBelow - clientLevel.getMinY()), enableTransparency);
 					
-					makeLodRenderData(builder, data, adjData);
-					EVENT_LOGGER.trace("RenderRegion end QuadBuild @ {}", data.sectionPos);
+					makeLodRenderData(builder, renderSource, adjData);
+					EVENT_LOGGER.trace("RenderRegion end QuadBuild @ {}", renderSource.sectionPos);
 					return builder;
 				}
 				catch (UncheckedInterruptedException e)
@@ -265,7 +265,7 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 			{
 				try
 				{
-					EVENT_LOGGER.trace("RenderRegion start Upload @ {}", data.sectionPos);
+					EVENT_LOGGER.trace("RenderRegion start Upload @ {}", renderSource.sectionPos);
 					GLProxy glProxy = GLProxy.getInstance();
 					EGpuUploadMethod method = GLProxy.getInstance().getGpuUploadMethod();
 					EGLProxyContext oldContext = glProxy.getGlContext();
@@ -274,12 +274,12 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 					
 					if (buffer == null)
 						buffer = new ColumnRenderBuffer(
-								new DhBlockPos(data.sectionPos.getCorner().getCornerBlockPos(), clientLevel.getMinY())
+								new DhBlockPos(renderSource.sectionPos.getCorner().getCornerBlockPos(), clientLevel.getMinY())
 						);
 					try
 					{
 						buffer.uploadBuffer(quadBuilder, method);
-						EVENT_LOGGER.trace("RenderRegion end Upload @ {}", data.sectionPos);
+						EVENT_LOGGER.trace("RenderRegion end Upload @ {}", renderSource.sectionPos);
 						return buffer;
 					}
 					catch (Exception e)
@@ -302,7 +302,7 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 					throw e3;
 				}
 			}, BUFFER_UPLOADER).handle((v, e) -> {
-				//LOGGER.info("RenderRegion endBuild @ {}", data.sectionPos);
+				//LOGGER.info("RenderRegion endBuild @ {}", renderSource.sectionPos);
 				if (e != null)
 				{
 					ColumnRenderBuffer buffer;

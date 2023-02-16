@@ -201,7 +201,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 						data = this.fileHandler.onLoadingRenderFile(this);
 						if (data == null)
 						{
-							try (FileInputStream fio = getDataContent())
+							try (FileInputStream fio = this.getDataContent())
 							{
 								data = this.loader.loadRenderSource(this, fio, level);
 							}
