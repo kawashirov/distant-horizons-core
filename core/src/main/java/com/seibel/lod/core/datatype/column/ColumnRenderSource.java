@@ -373,7 +373,7 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 	public void enableRender(IDhClientLevel level, LodQuadTree quadTree)
 	{
 		this.level = level;
-		//tryBuildBuffer(level, quadTree);
+		//tryBuildBuffer(level, quadTree); // FIXME why was this commented out?
 	}
 	
 	@Override
