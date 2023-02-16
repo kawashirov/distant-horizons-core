@@ -44,7 +44,7 @@ public class ColumnRenderLoader extends AbstractRenderSourceLoader
 			case 1:
 				return new ColumnRenderSource(dataFile.pos, readDataV1(inputStream, level.getMinY()), level);
 			default:
-				throw new IOException("Invalid Data: The data version [" + dataFileVersion + "] is not supported");
+				throw new IOException("Invalid Data: The data version ["+dataFileVersion+"] is not supported");
 		}
     }
 	
@@ -70,42 +70,54 @@ public class ColumnRenderLoader extends AbstractRenderSourceLoader
 	//========================//
 	
 	/**
-	 * @param inputData Expected format: 1st byte: detail level, 2nd byte: vertical size, 3rd byte on: column data
+	 * @param inputStream Expected format: 1st byte: detail level, 2nd byte: vertical size, 3rd byte on: column data
 	 * 
 	 * @throws IOException if there was an issue reading the stream 
 	 */
-	private static ParsedColumnData readDataV1(DataInputStream inputData, int yOffset) throws IOException
+	private static ParsedColumnData readDataV1(DataInputStream inputStream, int expectedYOffset) throws IOException
 	{
-		byte detailLevel = inputData.readByte();
-		int verticalDataCount = inputData.readByte() & 0b01111111;
+		byte detailLevel = inputStream.readByte();
+		
+		int verticalDataCount = inputStream.readInt();
+		if (verticalDataCount <= 0)
+		{
+			throw new IOException("Invalid data: vertical size must be 0 or greater");
+		}
 		
 		int maxNumberOfDataPoints = ColumnRenderSource.SECTION_SIZE * ColumnRenderSource.SECTION_SIZE * verticalDataCount;
 		
 		
-		//FIXME: Temp hack flag for marking a empty section
-		short tempMinHeight = Short.reverseBytes(inputData.readShort());
-		if (tempMinHeight == Short.MAX_VALUE)
+		byte dataPresentFlag = inputStream.readByte();
+		if (dataPresentFlag != ColumnRenderSource.NO_DATA_FLAG_BYTE && dataPresentFlag != ColumnRenderSource.DATA_GUARD_BYTE)
 		{
+			throw new IOException("Incorrect render file format. Expected either: NO_DATA_FLAG_BYTE ["+ColumnRenderSource.NO_DATA_FLAG_BYTE+"] or DATA_GUARD_BYTE ["+ColumnRenderSource.DATA_GUARD_BYTE+"], Found: ["+dataPresentFlag+"]");
+		}
+		else if (dataPresentFlag == ColumnRenderSource.NO_DATA_FLAG_BYTE)
+		{
+			// no data is present
 			return new ParsedColumnData(detailLevel, verticalDataCount, new long[maxNumberOfDataPoints], true);
 		}
-		
-		
-		// isEmpty = false
-		byte[] data = new byte[maxNumberOfDataPoints * Long.BYTES];
-		ByteBuffer byteBuffer = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
-		inputData.readFully(data);
-		
-		long[] dataPoints = new long[maxNumberOfDataPoints];
-		byteBuffer.asLongBuffer().get(dataPoints);
-		if (tempMinHeight != yOffset)
+		else
 		{
-			for (int i = 0; i < dataPoints.length; i++)
+			// data is present
+			
+			int fileYOffset = inputStream.readInt();
+			if (fileYOffset != expectedYOffset)
 			{
-				dataPoints[i] = ColumnFormat.shiftHeightAndDepth(dataPoints[i], (short) (tempMinHeight - yOffset));
+				throw new IOException("Invalid data: yOffset is incorrect. Expected: ["+expectedYOffset+"], found: ["+fileYOffset+"].");
 			}
+			
+			// read the column data
+			byte[] rawByteData = new byte[maxNumberOfDataPoints * Long.BYTES];
+			ByteBuffer columnDataByteBuffer = ByteBuffer.wrap(rawByteData).order(ByteOrder.LITTLE_ENDIAN);
+			inputStream.readFully(rawByteData);
+			
+			// parse the column data
+			long[] dataPoints = new long[maxNumberOfDataPoints];
+			columnDataByteBuffer.asLongBuffer().get(dataPoints);
+			
+			return new ParsedColumnData(detailLevel, verticalDataCount, dataPoints, false);
 		}
-		
-		return new ParsedColumnData(detailLevel, verticalDataCount, dataPoints, false);
 	}
 	
 	public static class ParsedColumnData

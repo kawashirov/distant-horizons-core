@@ -20,9 +20,7 @@ import com.seibel.lod.core.util.objects.Reference;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -44,7 +42,17 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 	public static final int AIR_LODS_SIZE = 16;
 	public static final int AIR_SECTION_SIZE = SECTION_SIZE / AIR_LODS_SIZE;
 	
-	public int verticalSize;
+	/**
+	 * This is the byte put between different sections in the binary save file.
+	 * The presence and absence of this byte indicates if the file is correctly formatted.  
+	 */
+	public static final int DATA_GUARD_BYTE = 0xFFFFFFFF;
+	/** indicates the binary save file represents an empty data source */
+	public static final int NO_DATA_FLAG_BYTE = 0x00000001;
+	
+	
+	
+	public int verticalDataCount;
 	public final DhSectionPos sectionPos;
 	public final int yOffset;
 	
@@ -78,9 +86,9 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 	 */
 	public ColumnRenderSource(DhSectionPos sectionPos, int maxVerticalSize, int yOffset)
 	{
-		this.verticalSize = maxVerticalSize;
-		this.dataContainer = new long[SECTION_SIZE * SECTION_SIZE * this.verticalSize];
-		this.airDataContainer = new int[AIR_SECTION_SIZE * AIR_SECTION_SIZE * this.verticalSize];
+		this.verticalDataCount = maxVerticalSize;
+		this.dataContainer = new long[SECTION_SIZE * SECTION_SIZE * this.verticalDataCount];
+		this.airDataContainer = new int[AIR_SECTION_SIZE * AIR_SECTION_SIZE * this.verticalDataCount];
 		this.debugSourceFlags = new DebugSourceFlag[SECTION_SIZE * SECTION_SIZE];
 		this.sectionPos = sectionPos;
 		this.yOffset = yOffset;
@@ -100,9 +108,9 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 		
 		this.sectionPos = sectionPos;
 		this.yOffset = level.getMinY();
-		this.verticalSize = parsedColumnData.verticalSize;
+		this.verticalDataCount = parsedColumnData.verticalSize;
 		this.dataContainer = parsedColumnData.dataContainer;
-		this.airDataContainer = new int[AIR_SECTION_SIZE * AIR_SECTION_SIZE * this.verticalSize];
+		this.airDataContainer = new int[AIR_SECTION_SIZE * AIR_SECTION_SIZE * this.verticalDataCount];
 		
 		this.debugSourceFlags = new DebugSourceFlag[SECTION_SIZE * SECTION_SIZE];
 		this.fillDebugFlag(0, 0, SECTION_SIZE, SECTION_SIZE, DebugSourceFlag.FILE);
@@ -117,16 +125,16 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 	@Override
 	public void clearDataPoint(int posX, int posZ)
 	{
-		for (int verticalIndex = 0; verticalIndex < this.verticalSize; verticalIndex++)
+		for (int verticalIndex = 0; verticalIndex < this.verticalDataCount; verticalIndex++)
 		{
-			this.dataContainer[posX * SECTION_SIZE * this.verticalSize + posZ * this.verticalSize + verticalIndex] = ColumnFormat.EMPTY_DATA;
+			this.dataContainer[posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount + verticalIndex] = ColumnFormat.EMPTY_DATA;
 		}
 	}
 	
 	@Override
 	public boolean setDataPoint(long data, int posX, int posZ, int verticalIndex)
 	{
-		this.dataContainer[posX * SECTION_SIZE * this.verticalSize + posZ * this.verticalSize + verticalIndex] = data;
+		this.dataContainer[posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount + verticalIndex] = data;
 		return true;
 	}
 	
@@ -135,7 +143,7 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 	{
 		if (DO_SAFETY_CHECKS)
 		{
-			if (newData.size() != this.verticalSize)
+			if (newData.size() != this.verticalDataCount)
 				throw new IllegalArgumentException("newData size not the same as this column's vertical size");
 			if (posX < 0 || posX >= SECTION_SIZE)
 				throw new IllegalArgumentException("X position is out of bounds");
@@ -143,7 +151,7 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 				throw new IllegalArgumentException("Z position is out of bounds");
 		}
 		
-		int dataOffset = posX * SECTION_SIZE * this.verticalSize + posZ * this.verticalSize;
+		int dataOffset = posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount;
 		int compare = ColumnFormat.compareDatapointPriority(newData.get(0), this.dataContainer[dataOffset]);
 		if (overwriteDataWithSameGenerationMode)
 		{
@@ -170,32 +178,32 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 	// TODO:
 	
 	@Override
-	public long getDataPoint(int posX, int posZ, int verticalIndex) { return this.dataContainer[posX * SECTION_SIZE * this.verticalSize + posZ * this.verticalSize + verticalIndex]; }
+	public long getDataPoint(int posX, int posZ, int verticalIndex) { return this.dataContainer[posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount + verticalIndex]; }
 	
 	@Override
 	public long[] getVerticalDataPointArray(int posX, int posZ)
 	{
-		long[] result = new long[this.verticalSize];
-		int index = posX * SECTION_SIZE * this.verticalSize + posZ * this.verticalSize;
-		System.arraycopy(this.dataContainer, index, result, 0, this.verticalSize);
+		long[] result = new long[this.verticalDataCount];
+		int index = posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount;
+		System.arraycopy(this.dataContainer, index, result, 0, this.verticalDataCount);
 		return result;
 	}
 	
 	@Override
 	public ColumnArrayView getVerticalDataPointView(int posX, int posZ)
 	{
-		return new ColumnArrayView(this.dataContainer, this.verticalSize,
-				posX * SECTION_SIZE * this.verticalSize + posZ * this.verticalSize,
-				this.verticalSize);
+		return new ColumnArrayView(this.dataContainer, this.verticalDataCount,
+				posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount,
+				this.verticalDataCount);
 	}
 	
 	@Override
 	public ColumnQuadView getFullQuadView() { return this.getQuadViewOverRange(0, 0, SECTION_SIZE, SECTION_SIZE); }
 	@Override
-	public ColumnQuadView getQuadViewOverRange(int quadX, int quadZ, int quadXSize, int quadZSize) { return new ColumnQuadView(this.dataContainer, SECTION_SIZE, this.verticalSize, quadX, quadZ, quadXSize, quadZSize); }
+	public ColumnQuadView getQuadViewOverRange(int quadX, int quadZ, int quadXSize, int quadZSize) { return new ColumnQuadView(this.dataContainer, SECTION_SIZE, this.verticalDataCount, quadX, quadZ, quadXSize, quadZSize); }
 	
 	@Override
-	public int getVerticalSize() { return this.verticalSize; }
+	public int getVerticalSize() { return this.verticalDataCount; }
 	
 	
 	
@@ -203,47 +211,32 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 	// data update and output //
 	//========================//
 	
-	/** @return true if this object had data written in every column */
-	boolean writeData(DataOutputStream outputStream) throws IOException
+	void writeData(DataOutputStream outputStream) throws IOException
 	{
 		outputStream.writeByte(this.getDataDetail());
-		outputStream.writeByte((byte) this.verticalSize);
+		outputStream.writeInt(this.verticalDataCount);
 		
 		if (this.isEmpty)
 		{
-			outputStream.writeByte(Short.MAX_VALUE & 0xFF);
-			outputStream.writeByte((Short.MAX_VALUE >> 8) & 0xFF);
-			
-			return false;
+			// no data is present
+			outputStream.writeByte(NO_DATA_FLAG_BYTE);
 		}
 		else
 		{
-			// FIXME: yOffset is a int, but we only are writing a short.
-			outputStream.writeByte((byte) (this.yOffset & 0xFF));
-			outputStream.writeByte((byte) ((this.yOffset >> 8) & 0xFF));
+			// data is present
+			outputStream.writeByte(DATA_GUARD_BYTE);
+			
+			outputStream.writeInt(this.yOffset);
 			
 			// write the data for each column
-			boolean allGenerated = true;
-			for (int x = 0; x < SECTION_SIZE * SECTION_SIZE; x++)
+			for (int xz = 0; xz < SECTION_SIZE * SECTION_SIZE; xz++)
 			{
-				for (int z = 0; z < this.verticalSize; z++)
+				for (int y = 0; y < this.verticalDataCount; y++)
 				{
-					long currentDatapoint = this.dataContainer[x * this.verticalSize + z];
-					if (ColumnFormat.doesDataPointExist(currentDatapoint))
-					{
-						// TODO: the "1" is a placeholder debug line
-						currentDatapoint = ColumnFormat.overrideGenerationMode(currentDatapoint, (byte) 1);
-					}
-					outputStream.writeLong(Long.reverseBytes(currentDatapoint));
-				}
-				
-				if (!ColumnFormat.doesDataPointExist(this.dataContainer[x]))
-				{
-					allGenerated = false;	
+					long currentDatapoint = this.dataContainer[xz * this.verticalDataCount + y];
+					outputStream.writeLong(Long.reverseBytes(currentDatapoint)); // the reverse bytes is necessary to ensure the data is read in correctly
 				}
 			}
-			
-			return allGenerated;
 		}
 	}
 	
@@ -258,9 +251,9 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 		LodUtil.assertTrue(src.sectionPos.equals(this.sectionPos));
 		
 		// change the vertical size if necessary (this can happen if the vertical quality was changed in the config) 
-		this.clearAndChangeVerticalSize(src.verticalSize);
+		this.clearAndChangeVerticalSize(src.verticalDataCount);
 		// validate both objects have the same number of dataPoints
-		LodUtil.assertTrue(src.verticalSize == this.verticalSize);
+		LodUtil.assertTrue(src.verticalDataCount == this.verticalDataCount);
 		
 		
 		if (src.isEmpty)
@@ -273,7 +266,7 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 		this.isEmpty = false;
 		
 		
-		for (int i = 0; i < this.dataContainer.length; i += this.verticalSize)
+		for (int i = 0; i < this.dataContainer.length; i += this.verticalDataCount)
 		{
 			int thisGenMode = ColumnFormat.getGenerationMode(this.dataContainer[i]);
 			int srcGenMode = ColumnFormat.getGenerationMode(src.dataContainer[i]);
@@ -287,11 +280,11 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 			// this object's column is older than the source's column, update it
 			if (thisGenMode <= srcGenMode)
 			{
-				ColumnArrayView thisColumnArrayView = new ColumnArrayView(this.dataContainer, this.verticalSize, i, this.verticalSize);
-				ColumnArrayView srcColumnArrayView = new ColumnArrayView(src.dataContainer, src.verticalSize, i, src.verticalSize);
+				ColumnArrayView thisColumnArrayView = new ColumnArrayView(this.dataContainer, this.verticalDataCount, i, this.verticalDataCount);
+				ColumnArrayView srcColumnArrayView = new ColumnArrayView(src.dataContainer, src.verticalDataCount, i, src.verticalDataCount);
 				thisColumnArrayView.copyFrom(srcColumnArrayView);
 				
-				this.debugSourceFlags[i / this.verticalSize] = src.debugSourceFlags[i / this.verticalSize];
+				this.debugSourceFlags[i / this.verticalDataCount] = src.debugSourceFlags[i / this.verticalDataCount];
 			}
 		}
 	}
@@ -302,11 +295,11 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 	 */
 	private void clearAndChangeVerticalSize(int newVerticalSize)
 	{
-		if (newVerticalSize != this.verticalSize)
+		if (newVerticalSize != this.verticalDataCount)
 		{
-			this.verticalSize = newVerticalSize;
-			this.dataContainer = new long[SECTION_SIZE * SECTION_SIZE * this.verticalSize];
-			this.airDataContainer = new int[AIR_SECTION_SIZE * AIR_SECTION_SIZE * this.verticalSize];
+			this.verticalDataCount = newVerticalSize;
+			this.dataContainer = new long[SECTION_SIZE * SECTION_SIZE * this.verticalDataCount];
+			this.airDataContainer = new int[AIR_SECTION_SIZE * AIR_SECTION_SIZE * this.verticalDataCount];
 		}
 	}
 	
@@ -490,11 +483,11 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 		{
 			for (int x = 0; x < size; x++)
 			{
-				for (int y = 0; y < this.verticalSize; y++)
+				for (int y = 0; y < this.verticalDataCount; y++)
 				{
 					//Converting the dataToHex
 					stringBuilder.append(Long.toHexString(this.getDataPoint(x, z, y)));
-					if (y != this.verticalSize - 1)
+					if (y != this.verticalDataCount - 1)
 						stringBuilder.append(SUBDATA_DELIMITER);
 				}
 				
