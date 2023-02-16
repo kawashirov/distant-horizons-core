@@ -9,8 +9,13 @@ public class SharedApi
 {
     public static IMinecraftSharedWrapper MC;
     public static AbstractDhWorld currentWorld;
-    public static EWorldEnvironment getEnvironment() { return currentWorld==null ? null : currentWorld.environment; }
-
+	
+	
+	
     public static void init() { Initializer.init(); }
+	
+	
+	
+	public static EWorldEnvironment getEnvironment() { return (currentWorld == null) ? null : currentWorld.environment; }
 	
 }

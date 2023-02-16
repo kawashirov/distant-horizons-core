@@ -61,7 +61,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class ClientApi
 {
-	private static final Logger LOGGER = LogManager.getLogger(ClientApi.class.getSimpleName());
+	private static final Logger LOGGER = LogManager.getLogger();
 	public static final boolean ENABLE_EVENT_LOGGING = true;
 	public static boolean prefLoggerEnabled = false;
 	
@@ -70,15 +70,12 @@ public class ClientApi
 	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	
-	public static final boolean ENABLE_LAG_SPIKE_LOGGING = false;
-	public static final long LAG_SPIKE_THRESHOLD_NS = TimeUnit.NANOSECONDS.convert(16, TimeUnit.MILLISECONDS);
-	
 	public static final long SPAM_LOGGER_FLUSH_NS = TimeUnit.NANOSECONDS.convert(1, TimeUnit.SECONDS);
 	
 	private boolean configOverrideReminderPrinted = false;
 	public boolean rendererDisabledBecauseOfExceptions = false;
 	
-	private long lastFlush = 0;
+	private long lastFlushNanoTime = 0;
 	
 	
 	
@@ -100,14 +97,20 @@ public class ClientApi
 	public void onClientOnlyConnected()
 	{
 		if (ENABLE_EVENT_LOGGING)
+		{
 			LOGGER.info("Client on ClientOnly mode connecting.");
+		}
+		
 		SharedApi.currentWorld = new DhClientWorld();
 	}
 	
 	public void onClientOnlyDisconnected()
 	{
 		if (ENABLE_EVENT_LOGGING)
+		{
 			LOGGER.info("Client on ClientOnly mode disconnecting.");
+		}
+		
 		SharedApi.currentWorld.close();
 		SharedApi.currentWorld = null;
 	}
@@ -138,7 +141,10 @@ public class ClientApi
 	public void clientLevelUnloadEvent(IClientLevelWrapper level)
 	{
 		if (ENABLE_EVENT_LOGGING)
-			LOGGER.info("Client level {} unloading.", level);
+		{
+			LOGGER.info("Client level "+level+" unloading.");
+		}
+		
 		if (SharedApi.currentWorld != null)
 		{
 			SharedApi.currentWorld.unloadLevel(level);
@@ -149,7 +155,10 @@ public class ClientApi
 	public void clientLevelLoadEvent(IClientLevelWrapper level)
 	{
 		if (ENABLE_EVENT_LOGGING)
-			LOGGER.info("Client level {} loading.", level);
+		{
+			LOGGER.info("Client level "+level+" loading.");
+		}
+		
 		if (SharedApi.currentWorld != null)
 		{
 			SharedApi.currentWorld.getOrLoadLevel(level);
@@ -160,7 +169,10 @@ public class ClientApi
 	public void rendererShutdownEvent()
 	{
 		if (ENABLE_EVENT_LOGGING)
+		{
 			LOGGER.info("Renderer shutting down.");
+		}
+		
 		IProfilerWrapper profiler = MC.getProfiler();
 		profiler.push("DH-RendererShutdown");
 		
@@ -170,9 +182,13 @@ public class ClientApi
 	public void rendererStartupEvent()
 	{
 		if (ENABLE_EVENT_LOGGING)
+		{
 			LOGGER.info("Renderer starting up.");
+		}
+		
 		IProfilerWrapper profiler = MC.getProfiler();
 		profiler.push("DH-RendererStartup");
+		
 		// make sure the GLProxy is created before the LodBufferBuilder needs it
 		GLProxy.getInstance();
 		profiler.pop();
@@ -183,10 +199,10 @@ public class ClientApi
 		IProfilerWrapper profiler = MC.getProfiler();
 		profiler.push("DH-ClientTick");
 		
-		boolean doFlush = System.nanoTime() - lastFlush >= SPAM_LOGGER_FLUSH_NS;
+		boolean doFlush = System.nanoTime() - this.lastFlushNanoTime >= SPAM_LOGGER_FLUSH_NS;
 		if (doFlush)
 		{
-			lastFlush = System.nanoTime();
+			this.lastFlushNanoTime = System.nanoTime();
 			SpamReducedLogger.flushAll();
 		}
 		ConfigBasedLogger.updateAll();
@@ -207,13 +223,13 @@ public class ClientApi
 	
 	public void renderLods(IClientLevelWrapper levelWrapper, Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, float partialTicks)
 	{
-		if (ModInfo.IS_DEV_BUILD && !configOverrideReminderPrinted && MC.playerExists())
+		if (ModInfo.IS_DEV_BUILD && !this.configOverrideReminderPrinted && MC.playerExists())
 		{
 			// remind the user that this is a development build
 			MC.sendChatMessage(ModInfo.READABLE_NAME + " experimental build " + ModInfo.VERSION);
 			MC.sendChatMessage("You are running an unsupported version of Distant Horizons!");
 			MC.sendChatMessage("Here be dragons!");
-			configOverrideReminderPrinted = true;
+			this.configOverrideReminderPrinted = true;
 		}
 		
 		
@@ -223,7 +239,10 @@ public class ClientApi
 		try
 		{
 			if (!RenderUtil.shouldLodsRender(levelWrapper))
+			{
 				return;
+			}
+			
 			
 			//FIXME: Improve class hierarchy of DhWorld, IClientWorld, IServerWorld to fix all this hard casting
 			// (also in RenderUtil)
@@ -237,7 +256,7 @@ public class ClientApi
 			
 			
 			
-			profiler.push("Render" + ( Config.Client.Advanced.Debugging.rendererMode.get() == ERendererMode.DEFAULT ? "-lods" : "-debug"));
+			profiler.push("Render" + (Config.Client.Advanced.Debugging.rendererMode.get() == ERendererMode.DEFAULT ? "-lods" : "-debug"));
 			try
 			{
 				if (Config.Client.Advanced.Debugging.rendererMode.get() == ERendererMode.DEFAULT)
@@ -248,7 +267,7 @@ public class ClientApi
 								RenderUtil.createLodModelViewMatrix(mcModelViewMatrix), partialTicks);
 					
 					boolean renderingCanceled = ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeRenderEvent.class, new DhApiBeforeRenderEvent.EventParam(renderEventParam));
-					if (!rendererDisabledBecauseOfExceptions && !renderingCanceled)
+					if (!this.rendererDisabledBecauseOfExceptions && !renderingCanceled)
 					{
 						level.render(mcModelViewMatrix, mcProjectionMatrix, partialTicks, profiler);
 						ApiEventInjector.INSTANCE.fireAllEvents(DhApiAfterRenderEvent.class, new DhApiAfterRenderEvent.EventParam(renderEventParam));
@@ -262,7 +281,7 @@ public class ClientApi
 			}
 			catch (RuntimeException e)
 			{
-				rendererDisabledBecauseOfExceptions = true;
+				this.rendererDisabledBecauseOfExceptions = true;
 				LOGGER.error("Renderer thrown an uncaught exception: ", e);
 				
 				MC.sendChatMessage("\u00A74\u00A7l\u00A7uERROR: Distant Horizons"
@@ -293,19 +312,23 @@ public class ClientApi
 	public void keyPressedEvent(int glfwKey)
 	{
 		if (!Config.Client.Advanced.Debugging.enableDebugKeybindings.get())
+		{
+			// keybindings are disabled
 			return;
+		}
+		
 		
 		if (glfwKey == GLFW.GLFW_KEY_F8)
 		{
 			Config.Client.Advanced.Debugging.debugMode.set(EDebugMode.next(Config.Client.Advanced.Debugging.debugMode.get()));
 			MC.sendChatMessage("F8: Set debug mode to " + Config.Client.Advanced.Debugging.debugMode.get());
 		}
-		if (glfwKey == GLFW.GLFW_KEY_F6)
+		else if (glfwKey == GLFW.GLFW_KEY_F6)
 		{
 			Config.Client.Advanced.Debugging.rendererMode.set(ERendererMode.next(Config.Client.Advanced.Debugging.rendererMode.get()));
 			MC.sendChatMessage("F6: Set rendering to " + Config.Client.Advanced.Debugging.rendererMode.get());
 		}
-		if (glfwKey == GLFW.GLFW_KEY_P)
+		else if (glfwKey == GLFW.GLFW_KEY_P)
 		{
 			prefLoggerEnabled = !prefLoggerEnabled;
 			MC.sendChatMessage("P: Debug Pref Logger is " + (prefLoggerEnabled ? "enabled" : "disabled"));
