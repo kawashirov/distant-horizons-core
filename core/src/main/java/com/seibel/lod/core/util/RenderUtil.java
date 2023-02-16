@@ -179,17 +179,23 @@ public class RenderUtil
 		int vanillaBlockRenderedDistance = MC_RENDER.getRenderDistance() * LodUtil.CHUNK_WIDTH;
 		
 		float nearClipPlane;
-		if (Config.Client.Advanced.lodOnlyMode.get()) {
+		if (Config.Client.Advanced.lodOnlyMode.get())
+		{
 			nearClipPlane = 0.1f;
-		} else if (Config.Client.Graphics.AdvancedGraphics.useExtendedNearClipPlane.get()) {
+		}
+		else if (Config.Client.Graphics.AdvancedGraphics.useExtendedNearClipPlane.get())
+		{
 			nearClipPlane = Math.min(vanillaBlockRenderedDistance - LodUtil.CHUNK_WIDTH, (float) 8 * LodUtil.CHUNK_WIDTH); // allow a max near clip plane of 8 chunks
-		} else {
+		}
+		else
+		{
 			nearClipPlane = 16f;
 		}
 		
 		// modify the based on the player's FOV
 		double fov = MC_RENDER.getFov(partialTicks);
 		double aspectRatio = (double) MC_RENDER.getScreenWidth() / MC_RENDER.getScreenHeight();
+		
 		return (float) (nearClipPlane
 				/ Math.sqrt(1d + MathUtil.pow2(Math.tan(fov / 180d * Math.PI / 2d))
 				* (MathUtil.pow2(aspectRatio) + 1d)));
@@ -204,23 +210,26 @@ public class RenderUtil
 	public static boolean shouldLodsRender(ILevelWrapper levelWrapper)
 	{
 		if (!MC.playerExists())
+		{
 			return false;
+		}
 		
 		if (levelWrapper == null)
+		{
 			return false;
+		}
 		
-		AbstractDhWorld dhWorld = SharedApi.currentWorld;
-		if (dhWorld == null)
+		IDhClientWorld clientWorld = SharedApi.getIDhClientWorld();
+		if (clientWorld == null)
+		{
 			return false;
+		}
 		
-		if (!(SharedApi.currentWorld instanceof IDhClientWorld))
-			return false; // don't attempt to render server worlds
-		
-		//FIXME: Improve class hierarchy of DhWorld, IClientWorld, IServerWorld to fix all this hard casting
-		// (also in ClientApi)
-		IDhClientLevel level = (IDhClientLevel) dhWorld.getOrLoadLevel(levelWrapper);
+		IDhClientLevel level = clientWorld.getOrLoadClientLevel(levelWrapper);
 		if (level == null)
+		{
 			return false; //Level is not ready yet.
+		}
 		
 		if (MC_RENDER.playerHasBlindnessEffect())
 		{
@@ -231,7 +240,9 @@ public class RenderUtil
 		}
 		
 		if (MC_RENDER.getLightmapWrapper() == null)
+		{
 			return false;
+		}
 		
 		return true;
 	}

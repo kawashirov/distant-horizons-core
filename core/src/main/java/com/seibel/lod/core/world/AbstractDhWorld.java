@@ -16,24 +16,19 @@ import java.util.concurrent.CompletableFuture;
  * Represents an entire world (aka server) and 
  * contains every level in that world.
  */
-public abstract class AbstractDhWorld implements Closeable
+public abstract class AbstractDhWorld implements IDhWorld, Closeable
 {
     protected static final Logger LOGGER = DhLoggerBuilder.getLogger();
-
+	
     public final EWorldEnvironment environment;
-
-    protected AbstractDhWorld(EWorldEnvironment environment) {
-        this.environment = environment;
-    }
-    public abstract IDhLevel getOrLoadLevel(ILevelWrapper wrapper);
-
-    public abstract IDhLevel getLevel(ILevelWrapper wrapper);
-    public abstract Iterable<? extends IDhLevel> getAllLoadedLevels();
-    
-    public abstract void unloadLevel(ILevelWrapper wrapper);
-    public abstract CompletableFuture<Void> saveAndFlush();
-
-    @Override
-    public abstract void close();
+	
+	
+	
+    protected AbstractDhWorld(EWorldEnvironment environment) { this.environment = environment; }
+	
+	
+	// remove the "throws IOException"
+	@Override
+	public abstract void close();
 	
 }

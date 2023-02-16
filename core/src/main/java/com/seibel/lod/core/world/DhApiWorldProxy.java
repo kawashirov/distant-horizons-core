@@ -38,12 +38,12 @@ public class DhApiWorldProxy implements IDhApiWorldProxy
 	
 	
 	@Override 
-	public boolean worldLoaded() { return SharedApi.currentWorld != null; }
+	public boolean worldLoaded() { return SharedApi.getAbstractDhWorld() != null; }
 	
 	@Override
 	public IDhApiLevelWrapper getSinglePlayerLevel() 
 	{
-		if (SharedApi.currentWorld == null)
+		if (SharedApi.getAbstractDhWorld() == null)
 		{
 			throw new IllegalStateException(NO_WORLD_EXCEPTION_STRING);
 		}
@@ -63,14 +63,14 @@ public class DhApiWorldProxy implements IDhApiWorldProxy
 	@Override
 	public Iterable<IDhApiLevelWrapper> getAllLoadedLevelWrappers()
 	{
-		if (SharedApi.currentWorld == null)
+		AbstractDhWorld world = SharedApi.getAbstractDhWorld();
+		if (world == null)
 		{
 			throw new IllegalStateException(NO_WORLD_EXCEPTION_STRING);
 		}
 		
-		
 		ArrayList<IDhApiLevelWrapper> returnList = new ArrayList<>();
-		for (IDhLevel dhLevel : SharedApi.currentWorld.getAllLoadedLevels())
+		for (IDhLevel dhLevel : world.getAllLoadedLevels())
 		{
 			returnList.add(dhLevel.getLevelWrapper());
 		}
@@ -80,14 +80,14 @@ public class DhApiWorldProxy implements IDhApiWorldProxy
 	@Override
 	public Iterable<IDhApiLevelWrapper> getAllLoadedLevelsForDimensionType(IDhApiDimensionTypeWrapper dimensionTypeWrapper)
 	{
-		if (SharedApi.currentWorld == null)
+		AbstractDhWorld world = SharedApi.getAbstractDhWorld();
+		if (world == null)
 		{
 			throw new IllegalStateException(NO_WORLD_EXCEPTION_STRING);
 		}
 		
-		
 		ArrayList<IDhApiLevelWrapper> returnList = new ArrayList<>();
-		for (IDhLevel dhLevel : SharedApi.currentWorld.getAllLoadedLevels())
+		for (IDhLevel dhLevel : world.getAllLoadedLevels())
 		{
 			ILevelWrapper levelWrapper = dhLevel.getLevelWrapper();
 			if (levelWrapper.getDimensionType().equals(dimensionTypeWrapper))
@@ -101,16 +101,16 @@ public class DhApiWorldProxy implements IDhApiWorldProxy
 	@Override
 	public Iterable<IDhApiLevelWrapper> getAllLoadedLevelsWithDimensionNameLike(String dimensionName)
 	{
-		if (SharedApi.currentWorld == null)
+		AbstractDhWorld world = SharedApi.getAbstractDhWorld();
+		if (world == null)
 		{
 			throw new IllegalStateException(NO_WORLD_EXCEPTION_STRING);
 		}
 		
-		
 		String soughtDimName = dimensionName.toLowerCase();
 		
 		ArrayList<IDhApiLevelWrapper> returnList = new ArrayList<>();
-		for (IDhLevel dhLevel : SharedApi.currentWorld.getAllLoadedLevels())
+		for (IDhLevel dhLevel : world.getAllLoadedLevels())
 		{
 			ILevelWrapper levelWrapper = dhLevel.getLevelWrapper();
 			String levelDimName = levelWrapper.getDimensionType().getDimensionName().toLowerCase();

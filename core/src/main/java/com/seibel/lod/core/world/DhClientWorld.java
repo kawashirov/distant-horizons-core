@@ -20,80 +20,111 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 {
     private final HashMap<IClientLevelWrapper, DhClientLevel> levels;
     public final ClientOnlySaveStructure saveStructure;
+	
     public ExecutorService dhTickerThread = LodUtil.makeSingleThreadPool("DHTickerThread", 2);
-    public EventLoop eventLoop = new EventLoop(dhTickerThread, this::_clientTick);
-
-    public DhClientWorld() {
-        super(EWorldEnvironment.Client_Only);
-        saveStructure = new ClientOnlySaveStructure();
-        levels = new HashMap<>();
-        LOGGER.info("Started DhWorld of type {}", environment);
-    }
-
+    public EventLoop eventLoop = new EventLoop(this.dhTickerThread, this::_clientTick);
+	
+	
+	
+    public DhClientWorld()
+	{
+		super(EWorldEnvironment.Client_Only);
+		this.saveStructure = new ClientOnlySaveStructure();
+		this.levels = new HashMap<>();
+		LOGGER.info("Started DhWorld of type "+this.environment);
+	}
+	
+	
+	
     @Override
-    public DhClientLevel getOrLoadLevel(ILevelWrapper wrapper) {
-        if (!(wrapper instanceof IClientLevelWrapper)) return null;
+    public DhClientLevel getOrLoadLevel(ILevelWrapper wrapper)
+	{
+        if (!(wrapper instanceof IClientLevelWrapper))
+		{
+			return null;
+		}
 
-        return levels.computeIfAbsent((IClientLevelWrapper) wrapper, (w) -> {
-            File level = saveStructure.tryGetOrCreateLevelFolder(wrapper);
-            if (level == null) return null;
-            return new DhClientLevel(saveStructure, w);
+        return this.levels.computeIfAbsent((IClientLevelWrapper) wrapper, (clientLevelWrapper) ->
+		{
+            File level = this.saveStructure.tryGetOrCreateLevelFolder(wrapper);
+            if (level == null)
+			{
+				return null;
+			}
+			
+            return new DhClientLevel(this.saveStructure, clientLevelWrapper);
         });
     }
 
     @Override
-    public DhClientLevel getLevel(ILevelWrapper wrapper) {
-        if (!(wrapper instanceof IClientLevelWrapper)) return null;
-        return levels.get(wrapper);
+    public DhClientLevel getLevel(ILevelWrapper wrapper)
+	{
+        if (!(wrapper instanceof IClientLevelWrapper))
+		{
+			return null;
+		}
+		
+        return this.levels.get(wrapper);
     }
     
     @Override
-    public Iterable<? extends IDhLevel> getAllLoadedLevels()
-    {
-        return levels.values();
-    }
+    public Iterable<? extends IDhLevel> getAllLoadedLevels() { return this.levels.values(); }
 
     @Override
-    public void unloadLevel(ILevelWrapper wrapper) {
-        if (!(wrapper instanceof IClientLevelWrapper)) return;
-        if (levels.containsKey(wrapper)) {
-            LOGGER.info("Unloading level {} ", levels.get(wrapper));
-            levels.remove(wrapper).close();
+    public void unloadLevel(ILevelWrapper wrapper)
+	{
+        if (!(wrapper instanceof IClientLevelWrapper))
+		{
+			return;
+		}
+		
+        if (this.levels.containsKey(wrapper))
+		{
+            LOGGER.info("Unloading level "+this.levels.get(wrapper));
+			this.levels.remove(wrapper).close();
         }
     }
 
-    private void _clientTick() {
-        int newViewDistance = Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH;
-        Iterator<DhClientLevel> iterator = levels.values().iterator();
-        while (iterator.hasNext()) {
-            DhClientLevel level = iterator.next();
-            if (level.tree.blockViewDistance != newViewDistance) {
-                level.close();
-                iterator.remove();
-            }
-        }
-        DetailDistanceUtil.updateSettings();
-        levels.values().forEach(DhClientLevel::clientTick);
-    }
+    private void _clientTick()
+	{
+		int newBlockRenderDistance = Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH;
+		
+		Iterator<DhClientLevel> iterator = this.levels.values().iterator();
+		while (iterator.hasNext())
+		{
+			DhClientLevel level = iterator.next();
+			if (level.tree.blockRenderDistance != newBlockRenderDistance)
+			{
+				level.close();
+				iterator.remove();
+			}
+		}
+		
+		DetailDistanceUtil.updateSettings();
+		this.levels.values().forEach(DhClientLevel::clientTick);
+	}
 
-    public void clientTick() {
-        eventLoop.tick();
+    public void clientTick() { this.eventLoop.tick(); }
+
+    @Override
+    public CompletableFuture<Void> saveAndFlush()
+	{
+        return CompletableFuture.allOf(this.levels.values().stream().map(DhClientLevel::save).toArray(CompletableFuture[]::new));
     }
 
     @Override
-    public CompletableFuture<Void> saveAndFlush() {
-        return CompletableFuture.allOf(levels.values().stream().map(DhClientLevel::save).toArray(CompletableFuture[]::new));
-    }
-
-    @Override
-    public void close() {
-        saveAndFlush().join();
-        for (DhClientLevel level : levels.values()) {
+    public void close()
+	{
+		this.saveAndFlush().join();
+        for (DhClientLevel level : this.levels.values())
+		{
             LOGGER.info("Unloading level " + level.level.getDimensionType().getDimensionName());
             level.close();
         }
-        levels.clear();
-        eventLoop.close();
-        LOGGER.info("Closed DhWorld of type {}", environment);
+		
+		this.levels.clear();
+		this.eventLoop.close();
+        LOGGER.info("Closed DhWorld of type "+this.environment);
     }
+	
 }

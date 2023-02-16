@@ -101,7 +101,7 @@ public class ClientApi
 			LOGGER.info("Client on ClientOnly mode connecting.");
 		}
 		
-		SharedApi.currentWorld = new DhClientWorld();
+		SharedApi.setDhWorld(new DhClientWorld());
 	}
 	
 	public void onClientOnlyDisconnected()
@@ -111,15 +111,15 @@ public class ClientApi
 			LOGGER.info("Client on ClientOnly mode disconnecting.");
 		}
 		
-		SharedApi.currentWorld.close();
-		SharedApi.currentWorld = null;
+		SharedApi.getAbstractDhWorld().close();
+		SharedApi.setDhWorld(null);
 	}
 	
 	public void clientChunkLoadEvent(IChunkWrapper chunk, IClientLevelWrapper level)
 	{
 		if (SharedApi.getEnvironment() == EWorldEnvironment.Client_Only)
 		{
-			IDhLevel dhLevel = SharedApi.currentWorld.getLevel(level);
+			IDhLevel dhLevel = SharedApi.getAbstractDhWorld().getLevel(level);
 			if (dhLevel != null)
 			{
 				dhLevel.updateChunk(chunk);
@@ -145,9 +145,10 @@ public class ClientApi
 			LOGGER.info("Client level "+level+" unloading.");
 		}
 		
-		if (SharedApi.currentWorld != null)
+		AbstractDhWorld world = SharedApi.getAbstractDhWorld();
+		if (world != null)
 		{
-			SharedApi.currentWorld.unloadLevel(level);
+			world.unloadLevel(level);
 			ApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelUnloadEvent.class, new DhApiLevelUnloadEvent.EventParam(level));
 		}
 	}
@@ -159,9 +160,10 @@ public class ClientApi
 			LOGGER.info("Client level "+level+" loading.");
 		}
 		
-		if (SharedApi.currentWorld != null)
+		AbstractDhWorld world = SharedApi.getAbstractDhWorld();
+		if (world != null)
 		{
-			SharedApi.currentWorld.getOrLoadLevel(level);
+			world.getOrLoadLevel(level);
 			ApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelLoadEvent.class, new DhApiLevelLoadEvent.EventParam(level));
 		}
 	}
@@ -208,9 +210,10 @@ public class ClientApi
 		ConfigBasedLogger.updateAll();
 		ConfigBasedSpamLogger.updateAll(doFlush);
 		
-		if (SharedApi.currentWorld instanceof IDhClientWorld)
+		IDhClientWorld clientWorld = SharedApi.getIDhClientWorld();
+		if (clientWorld != null)
 		{
-			((IDhClientWorld) SharedApi.currentWorld).clientTick();
+			clientWorld.clientTick();
 		}
 		profiler.pop();
 	}
@@ -246,8 +249,8 @@ public class ClientApi
 			
 			//FIXME: Improve class hierarchy of DhWorld, IClientWorld, IServerWorld to fix all this hard casting
 			// (also in RenderUtil)
-			AbstractDhWorld dhWorld = SharedApi.currentWorld;
-			IDhClientLevel level = (IDhClientLevel) dhWorld.getOrLoadLevel(levelWrapper);
+			IDhClientWorld dhClientWorld = SharedApi.getIDhClientWorld();
+			IDhClientLevel level = dhClientWorld.getOrLoadClientLevel(levelWrapper);
 			
 			if (prefLoggerEnabled)
 			{

@@ -24,18 +24,15 @@ import com.seibel.lod.api.methods.events.abstractEvents.DhApiLevelSaveEvent;
 import com.seibel.lod.api.methods.events.abstractEvents.DhApiLevelUnloadEvent;
 import com.seibel.lod.core.DependencyInjection.ApiEventInjector;
 import com.seibel.lod.core.level.IDhLevel;
+import com.seibel.lod.core.world.AbstractDhWorld;
 import com.seibel.lod.core.world.DhClientServerWorld;
 import com.seibel.lod.core.world.DhServerWorld;
 import com.seibel.lod.core.world.IDhServerWorld;
-import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
-import com.seibel.lod.core.wrapperInterfaces.IVersionConstants;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
 import org.apache.logging.log4j.Logger;
-
-import java.lang.invoke.MethodHandles;
 
 /**
  * This holds the methods that should be called by the host mod loader (Fabric,
@@ -65,9 +62,9 @@ public class ServerApi
 	
 	public void serverTickEvent()
 	{
-		if (SharedApi.currentWorld instanceof IDhServerWorld)
+		IDhServerWorld serverWorld = SharedApi.getIDhServerWorld();
+		if (serverWorld != null)
 		{
-			IDhServerWorld serverWorld = (IDhServerWorld) SharedApi.currentWorld;
 			serverWorld.serverTick();
 			this.lastWorldGenTickDelta--;
 			if (this.lastWorldGenTickDelta <= 0)
@@ -89,25 +86,18 @@ public class ServerApi
 			LOGGER.info("Server World loading with (dedicated?:{})", isDedicatedEnvironment);
 		}
 		
-		if (isDedicatedEnvironment)
-		{
-			SharedApi.currentWorld = new DhServerWorld();
-		}
-		else
-		{
-			SharedApi.currentWorld = new DhClientServerWorld();
-		}
+		SharedApi.setDhWorld(isDedicatedEnvironment ? new DhServerWorld() : new DhClientServerWorld());
 	}
 	
 	public void serverUnloadEvent()
 	{
 		if (ENABLE_EVENT_LOGGING)
 		{
-			LOGGER.info("Server World "+SharedApi.currentWorld+" unloading");
+			LOGGER.info("Server World "+SharedApi.getAbstractDhWorld()+" unloading");
 		}
 		
-		SharedApi.currentWorld.close();
-		SharedApi.currentWorld = null;
+		SharedApi.getAbstractDhWorld().close();
+		SharedApi.setDhWorld(null);
 	}
 	
 	public void serverLevelLoadEvent(IServerLevelWrapper level)
@@ -117,9 +107,10 @@ public class ServerApi
 			LOGGER.info("Server Level {} loading", level);
 		}
 		
-		if (SharedApi.currentWorld != null)
+		AbstractDhWorld serverWorld = SharedApi.getAbstractDhWorld();
+		if (serverWorld != null)
 		{
-			SharedApi.currentWorld.getOrLoadLevel(level);
+			serverWorld.getOrLoadLevel(level);
 			ApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelLoadEvent.class, new DhApiLevelLoadEvent.EventParam(level));
 		}
 	}
@@ -130,9 +121,10 @@ public class ServerApi
 			LOGGER.info("Server Level {} unloading", level);
 		}
 		
-		if (SharedApi.currentWorld != null)
+		AbstractDhWorld serverWorld = SharedApi.getAbstractDhWorld();
+		if (serverWorld != null)
 		{
-			SharedApi.currentWorld.unloadLevel(level);
+			serverWorld.unloadLevel(level);
 			ApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelUnloadEvent.class, new DhApiLevelUnloadEvent.EventParam(level));
 		}
 	}
@@ -142,14 +134,15 @@ public class ServerApi
 	{
 		if (ENABLE_EVENT_LOGGING)
 		{
-			LOGGER.info("Server world {} saving", SharedApi.currentWorld);
+			LOGGER.info("Server world "+SharedApi.getAbstractDhWorld()+" saving");
 		}
 		
-		if (SharedApi.currentWorld instanceof IDhServerWorld)
+		AbstractDhWorld serverWorld = SharedApi.getAbstractDhWorld();
+		if (serverWorld != null)
 		{
-			SharedApi.currentWorld.saveAndFlush();
+			serverWorld.saveAndFlush();
 			
-			for (IDhLevel level : SharedApi.currentWorld.getAllLoadedLevels())
+			for (IDhLevel level : serverWorld.getAllLoadedLevels())
 			{
 				ApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelSaveEvent.class, new DhApiLevelSaveEvent.EventParam(level.getLevelWrapper()));
 			}
@@ -158,7 +151,7 @@ public class ServerApi
 
 	public void serverChunkLoadEvent(IChunkWrapper chunk, ILevelWrapper level)
 	{
-		IDhLevel dhLevel = SharedApi.currentWorld.getLevel(level);
+		IDhLevel dhLevel = SharedApi.getAbstractDhWorld().getLevel(level);
 		if (dhLevel != null)
 		{
 			dhLevel.updateChunk(chunk);
@@ -166,7 +159,7 @@ public class ServerApi
 	}
 	public void serverChunkSaveEvent(IChunkWrapper chunk, ILevelWrapper level)
 	{
-		IDhLevel dhLevel = SharedApi.currentWorld.getLevel(level);
+		IDhLevel dhLevel = SharedApi.getAbstractDhWorld().getLevel(level);
 		if (dhLevel != null)
 		{
 			dhLevel.updateChunk(chunk);

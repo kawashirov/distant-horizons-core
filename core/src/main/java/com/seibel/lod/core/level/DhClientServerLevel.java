@@ -101,7 +101,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 			return;
 		}
 		
-		if (renderState.quadtree.blockViewDistance != Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH)
+		if (renderState.quadtree.blockRenderDistance != Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH)
 		{
 			if (!this.renderStateRef.compareAndSet(renderState, null))
 			{

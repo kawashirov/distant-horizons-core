@@ -21,20 +21,28 @@ public class DhClientServerWorld extends AbstractDhWorld implements IDhClientWor
     private final HashMap<ILevelWrapper, DhClientServerLevel> levelObjMap;
     private final HashSet<DhClientServerLevel> dhLevels;
     public final LocalSaveStructure saveStructure;
+	
     public ExecutorService dhTickerThread = LodUtil.makeSingleThreadPool("DHTickerThread", 2);
-    public EventLoop eventLoop = new EventLoop(dhTickerThread, this::_clientTick); //TODO: Rate-limit the loop
-    public F3Screen.DynamicMessage f3Msg;
-
-    public DhClientServerWorld() {
+    public EventLoop eventLoop = new EventLoop(this.dhTickerThread, this::_clientTick); //TODO: Rate-limit the loop
+	
+    public F3Screen.DynamicMessage f3Message;
+	
+	
+	
+    public DhClientServerWorld()
+	{
         super(EWorldEnvironment.Client_Server);
-        saveStructure = new LocalSaveStructure();
-        levelObjMap = new HashMap<>();
-        dhLevels = new HashSet<>();
-        LOGGER.info("Started DhWorld of type {}", environment);
-        f3Msg = new F3Screen.DynamicMessage(() ->
-                LodUtil.formatLog("{} World with {} levels", environment, dhLevels.size()));
+        this.saveStructure = new LocalSaveStructure();
+		this.levelObjMap = new HashMap<>();
+		this.dhLevels = new HashSet<>();
+		
+        LOGGER.info("Started DhWorld of type "+this.environment);
+		
+		this.f3Message = new F3Screen.DynamicMessage(() -> LodUtil.formatLog(this.environment+" World with "+this.dhLevels.size()+" levels"));
     }
-
+	
+	
+	
     @Override
 	public DhClientServerLevel getOrLoadLevel(ILevelWrapper wrapper)
 	{
@@ -56,9 +64,13 @@ public class DhClientServerWorld extends AbstractDhWorld implements IDhClientWor
 				IClientLevelWrapper clientSide = (IClientLevelWrapper) levelWrapper;
 				IServerLevelWrapper serverSide = clientSide.tryGetServerSideWrapper();
 				LodUtil.assertTrue(serverSide != null);
+				
 				DhClientServerLevel level = this.levelObjMap.get(serverSide);
 				if (level == null)
+				{
 					return null;
+				}
+				
 				level.startRenderer(clientSide);
 				return level;
 			});
@@ -90,38 +102,42 @@ public class DhClientServerWorld extends AbstractDhWorld implements IDhClientWor
 		}
 	}
 
-    private void _clientTick() {
+    private void _clientTick()
+	{
         //LOGGER.info("Client world tick with {} levels", levels.size());
-        dhLevels.forEach(DhClientServerLevel::clientTick);
+        this.dhLevels.forEach(DhClientServerLevel::clientTick);
     }
 
-    public void clientTick() {
+    public void clientTick()
+	{
         //LOGGER.info("Client world tick");
-        eventLoop.tick();
+		this.eventLoop.tick();
     }
 
-    public void serverTick() {
-        dhLevels.forEach(DhClientServerLevel::serverTick);
-    }
+    public void serverTick() { this.dhLevels.forEach(DhClientServerLevel::serverTick); }
 
-    public void doWorldGen() {
-        dhLevels.forEach(DhClientServerLevel::doWorldGen);
-    }
+    public void doWorldGen() { this.dhLevels.forEach(DhClientServerLevel::doWorldGen); }
 
     @Override
-    public CompletableFuture<Void> saveAndFlush() {
-        return CompletableFuture.allOf(dhLevels.stream().map(DhClientServerLevel::save).toArray(CompletableFuture[]::new));
-    }
+    public CompletableFuture<Void> saveAndFlush() 
+	{ 
+		return CompletableFuture.allOf(this.dhLevels.stream().map(DhClientServerLevel::save).toArray(CompletableFuture[]::new)); 
+	}
 
     @Override
-    public void close() {
-        saveAndFlush().join();
-        for (DhClientServerLevel level : dhLevels) {
-            LOGGER.info("Unloading level " + level.serverLevel.getDimensionType().getDimensionName());
-            level.close();
-        }
-        levelObjMap.clear();
-        eventLoop.close();
-        LOGGER.info("Closed DhWorld of type {}", environment);
-    }
+    public void close()
+	{
+		this.saveAndFlush().join();
+		
+		for (DhClientServerLevel level : this.dhLevels)
+		{
+			LOGGER.info("Unloading level " + level.serverLevel.getDimensionType().getDimensionName());
+			level.close();
+		}
+		
+		this.levelObjMap.clear();
+		this.eventLoop.close();
+		LOGGER.info("Closed DhWorld of type "+this.environment);
+	}
+	
 }

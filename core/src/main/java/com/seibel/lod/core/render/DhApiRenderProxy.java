@@ -4,6 +4,7 @@ import com.seibel.lod.api.interfaces.render.IDhApiRenderProxy;
 import com.seibel.lod.api.objects.DhApiResult;
 import com.seibel.lod.core.api.internal.SharedApi;
 import com.seibel.lod.core.level.IDhLevel;
+import com.seibel.lod.core.world.AbstractDhWorld;
 
 /**
  * Used to interact with Distant Horizons' rendering systems.
@@ -24,14 +25,15 @@ public class DhApiRenderProxy implements IDhApiRenderProxy
 	public DhApiResult<Boolean> clearRenderDataCache()
 	{
 		// make sure this is a valid time to run the method
-		if (SharedApi.currentWorld == null)
+		AbstractDhWorld world = SharedApi.getAbstractDhWorld();
+		if (world == null)
 		{
 			return DhApiResult.createFail("No world loaded");			
 		}
 		
 		
 		// clear the render caches for each level
-		Iterable<? extends IDhLevel> loadedLevels = SharedApi.currentWorld.getAllLoadedLevels();
+		Iterable<? extends IDhLevel> loadedLevels = world.getAllLoadedLevels();
 		for (IDhLevel level : loadedLevels)
 		{
 			if (level != null)

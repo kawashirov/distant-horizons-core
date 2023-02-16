@@ -18,6 +18,7 @@ import com.seibel.lod.core.util.*;
 import com.seibel.lod.core.util.math.Vec3d;
 import com.seibel.lod.core.util.math.Vec3f;
 import com.seibel.lod.core.util.math.Vec3i;
+import com.seibel.lod.core.world.AbstractDhWorld;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
@@ -166,18 +167,22 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 	 */
 	private static DhApiResult<DhApiTerrainDataPoint[]> getTerrainDataColumnArray(IDhApiLevelWrapper levelWrapper, DhLodPos requestedColumnPos, Integer nullableBlockYPos)
 	{
-		if (SharedApi.currentWorld == null)
+		AbstractDhWorld currentWorld = SharedApi.getAbstractDhWorld();
+		if (currentWorld == null)
 		{
 			return DhApiResult.createFail("Unable to get terrain data before the world has loaded.");
 		}
-		if (!(levelWrapper instanceof ILevelWrapper coreLevelWrapper))
+		
+		if (!ILevelWrapper.class.isInstance(levelWrapper))
 		{
 			// custom level wrappers aren't supported,
 			// the API user must get a level wrapper from our code somewhere
-			return DhApiResult.createFail("Unsupported [" + IDhApiLevelWrapper.class.getSimpleName() + "] implementation, only the core class [" + IDhLevel.class.getSimpleName() + "] is a valid parameter.");
+			return DhApiResult.createFail("Unsupported ["+IDhApiLevelWrapper.class.getSimpleName()+"] implementation, only the core class ["+IDhLevel.class.getSimpleName()+"] is a valid parameter.");
 		}
+		ILevelWrapper coreLevelWrapper = (ILevelWrapper) levelWrapper;
 		
-		IDhLevel level = SharedApi.currentWorld.getLevel(coreLevelWrapper);
+		
+		IDhLevel level = currentWorld.getLevel(coreLevelWrapper);
 		if (level == null)
 		{
 			return DhApiResult.createFail("Unable to get terrain data before the world has loaded.");

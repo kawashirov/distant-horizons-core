@@ -50,7 +50,7 @@ public class LodQuadTree implements AutoCloseable
 	
     private final MovableGridRingList<LodRenderSection>[] renderSectionRingLists;
 	
-    public final int blockViewDistance;
+    public final int blockRenderDistance;
     private final ILodRenderSourceProvider renderSourceProvider;
 	
     private final IDhClientLevel level; //FIXME: Proper hierarchy to remove this reference!
@@ -72,7 +72,7 @@ public class LodQuadTree implements AutoCloseable
         DetailDistanceUtil.updateSettings(); //TODO: Move this to somewhere else
         this.level = level;
 		this.renderSourceProvider = provider;
-        this.blockViewDistance = viewDistance;
+        this.blockRenderDistance = viewDistance;
 		
 		
 		
