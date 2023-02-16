@@ -109,13 +109,13 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 			}
 			
 			IClientLevelWrapper levelWrapper = renderState.clientLevel;
-			renderState.close().join(); //TODO: Make it async.
+			renderState.closeAsync().join(); //TODO: Make it async.
 			renderState = new RenderState(levelWrapper);
 			if (!this.renderStateRef.compareAndSet(null, renderState))
 			{
 				//FIXME: How to handle this?
 				LOGGER.warn("Failed to set render state due to concurrency after changing view distance");
-				renderState.close();
+				renderState.closeAsync();
 				return;
 			}
 		}
@@ -143,12 +143,12 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 	
 	public void startRenderer(IClientLevelWrapper clientLevel)
 	{
-		LOGGER.info("Starting renderer for {}", this);
+		LOGGER.info("Starting renderer for "+this);
 		RenderState renderState = new RenderState(clientLevel);
 		if (!this.renderStateRef.compareAndSet(null, renderState))
 		{
 			LOGGER.warn("Failed to start renderer due to concurrency");
-			renderState.close();
+			renderState.closeAsync();
 		}
 		else
 		{
@@ -159,7 +159,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 				if (!this.worldGenStateRef.compareAndSet(null, worldGenState))
 				{
 					LOGGER.warn("Failed to start world gen due to concurrency");
-					worldGenState.close(false);
+					worldGenState.closeAsync(false);
 				}
 			}
 			
@@ -172,7 +172,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		RenderState renderState = this.renderStateRef.get();
 		if (renderState == null)
 		{
-			LOGGER.error("Tried to call render() on {} when renderer has not been started!", this);
+			LOGGER.error("Tried to call render() on "+this+" when renderer has not been started!");
 			return;
 		}
 		renderState.renderer.drawLODs(mcModelViewMatrix, mcProjectionMatrix, partialTicks, profiler);
@@ -180,22 +180,26 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 	
 	public void stopRenderer()
 	{
-		LOGGER.info("Stopping renderer for {}", this);
+		LOGGER.info("Stopping renderer for "+this);
 		RenderState renderState = this.renderStateRef.get();
 		if (renderState == null)
 		{
-			LOGGER.warn("Tried to stop renderer for {} when it was not started!", this);
+			LOGGER.warn("Tried to stop renderer for "+this+" when it was not started!");
 			return;
 		}
 		
-		while (!this.renderStateRef.compareAndSet(renderState, null))
+		// stop the render state
+		while (!this.renderStateRef.compareAndSet(renderState, null)) // TODO why is there a while loop here?
 		{
 			renderState = this.renderStateRef.get();
 			if (renderState == null)
+			{
 				return;
+			}
 		}
+		renderState.closeAsync().join(); //TODO: Make it async.
 		
-		renderState.close().join(); //TODO: Make it async.
+		// stop the world generator
 		WorldGenState worldGenState = this.worldGenStateRef.get();
 		if (worldGenState != null)
 		{
@@ -203,9 +207,11 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 			{
 				worldGenState = this.worldGenStateRef.get();
 				if (worldGenState == null)
+				{
 					return;
+				}
 			}
-			worldGenState.close(true).join(); //TODO: Make it async.
+			worldGenState.closeAsync(true).join(); //TODO: Make it async.
 		}
 	}
 	
@@ -234,7 +240,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 	public ILevelWrapper getLevelWrapper() { return this.serverLevel; }
 	
 	@Override
-	public void updateChunk(IChunkWrapper chunk)
+	public void updateChunkAsync(IChunkWrapper chunk)
 	{
 		CompletableFuture<ChunkSizedData> future = this.chunkToLodBuilder.tryGenerateData(chunk);
 		if (future != null)
@@ -253,12 +259,12 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 	public int getMinY() { return this.serverLevel.getMinHeight(); }
 	
 	@Override
-	public CompletableFuture<Void> save()
+	public CompletableFuture<Void> saveAsync()
 	{
 		RenderState renderState = this.renderStateRef.get();
 		if (renderState != null)
 		{
-			return renderState.renderFileHandler.flushAndSave().thenCombine(this.dataFileHandler.flushAndSave(), (a, b) -> null);
+			return renderState.renderFileHandler.flushAndSave().thenCombine(this.dataFileHandler.flushAndSave(), (voidA, voidB) -> null);
 		}
 		else
 		{
@@ -280,7 +286,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 					return;
 				}
 			}
-			renderState.close().join(); //TODO: Make this async.
+			renderState.closeAsync().join(); //TODO: Make this async.
 		}
 		
 		WorldGenState wgs = this.worldGenStateRef.get();
@@ -294,10 +300,10 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 					return;
 				}
 			}
-			wgs.close(true).join(); //TODO: Make it async.
+			wgs.closeAsync(true).join(); //TODO: Make it async.
 		}
 		
-		LOGGER.info("Closed {}", this);
+		LOGGER.info("Closed "+this);
 	}
 	
 	
@@ -317,7 +323,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 				if (!this.worldGenStateRef.compareAndSet(null, newWgs))
 				{
 					LOGGER.warn("Failed to start world gen due to concurrency");
-					newWgs.close(false);
+					newWgs.closeAsync(false);
 				}
 			}
 			else if (!shouldDoWorldGen && wgs != null)
@@ -331,7 +337,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 						return;
 					}
 				}
-				wgs.close(true).join(); //TODO: Make it async.
+				wgs.closeAsync(true).join(); //TODO: Make it async.
 			}
 		}
 		
@@ -384,7 +390,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 			this.clientLevel = clientLevel;
 			this.renderFileHandler = new RenderFileHandler(thisParent.dataFileHandler, thisParent, thisParent.saveStructure.getRenderCacheFolder(thisParent.serverLevel));
 			
-			this.quadtree = new LodQuadTree(DhClientServerLevel.this, Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * 16,
+			this.quadtree = new LodQuadTree(DhClientServerLevel.this, Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH,
 					MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, this.renderFileHandler);
 			
 			this.renderBufferHandler = new RenderBufferHandler(this.quadtree);
@@ -394,7 +400,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		
 		
 		
-		CompletableFuture<Void> close()
+		CompletableFuture<Void> closeAsync()
 		{
 			this.renderer.close();
 			this.renderBufferHandler.close();
@@ -429,7 +435,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		
 		
 		
-		CompletableFuture<Void> close(boolean doInterrupt)
+		CompletableFuture<Void> closeAsync(boolean doInterrupt)
 		{
 			DhClientServerLevel.this.dataFileHandler.clearGenerationQueue();
 			return this.worldGenerationQueue.startClosing(true, doInterrupt)

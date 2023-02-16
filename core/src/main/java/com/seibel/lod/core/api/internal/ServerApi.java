@@ -154,7 +154,7 @@ public class ServerApi
 		IDhLevel dhLevel = SharedApi.getAbstractDhWorld().getLevel(level);
 		if (dhLevel != null)
 		{
-			dhLevel.updateChunk(chunk);
+			dhLevel.updateChunkAsync(chunk);
 		}
 	}
 	public void serverChunkSaveEvent(IChunkWrapper chunk, ILevelWrapper level)
@@ -162,7 +162,7 @@ public class ServerApi
 		IDhLevel dhLevel = SharedApi.getAbstractDhWorld().getLevel(level);
 		if (dhLevel != null)
 		{
-			dhLevel.updateChunk(chunk);
+			dhLevel.updateChunkAsync(chunk);
 		}
 	}
 	

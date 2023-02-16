@@ -109,7 +109,7 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
     @Override
     public CompletableFuture<Void> saveAndFlush()
 	{
-        return CompletableFuture.allOf(this.levels.values().stream().map(DhClientLevel::save).toArray(CompletableFuture[]::new));
+        return CompletableFuture.allOf(this.levels.values().stream().map(DhClientLevel::saveAsync).toArray(CompletableFuture[]::new));
     }
 
     @Override

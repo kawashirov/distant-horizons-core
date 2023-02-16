@@ -3,7 +3,6 @@ package com.seibel.lod.core.world;
 import com.seibel.lod.core.level.DhServerLevel;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.file.structure.LocalSaveStructure;
-import com.seibel.lod.core.level.IDhServerLevel;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
@@ -83,7 +82,7 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 	@Override
 	public CompletableFuture<Void> saveAndFlush()
 	{
-		return CompletableFuture.allOf(this.levels.values().stream().map(DhServerLevel::save).toArray(CompletableFuture[]::new));
+		return CompletableFuture.allOf(this.levels.values().stream().map(DhServerLevel::saveAsync).toArray(CompletableFuture[]::new));
 	}
 	
 	@Override

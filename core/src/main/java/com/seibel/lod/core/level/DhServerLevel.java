@@ -52,7 +52,7 @@ public class DhServerLevel implements IDhServerLevel
 	}
 	
 	@Override
-	public CompletableFuture<Void> save() { return this.dataFileHandler.flushAndSave(); }
+	public CompletableFuture<Void> saveAsync() { return this.dataFileHandler.flushAndSave(); }
 	
 	@Override
 	public void doWorldGen()
@@ -76,7 +76,7 @@ public class DhServerLevel implements IDhServerLevel
 	}
 	
 	@Override
-	public void updateChunk(IChunkWrapper chunk)
+	public void updateChunkAsync(IChunkWrapper chunk)
 	{
 		//TODO
 	}

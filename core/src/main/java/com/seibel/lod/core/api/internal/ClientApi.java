@@ -122,7 +122,7 @@ public class ClientApi
 			IDhLevel dhLevel = SharedApi.getAbstractDhWorld().getLevel(level);
 			if (dhLevel != null)
 			{
-				dhLevel.updateChunk(chunk);
+				dhLevel.updateChunkAsync(chunk);
 			}
 		}
 	}

@@ -9,14 +9,14 @@ import java.util.concurrent.CompletableFuture;
 public interface IDhLevel extends AutoCloseable
 {
     int getMinY();
-    CompletableFuture<Void> save();
+    CompletableFuture<Void> saveAsync();
 	
     void dumpRamUsage();
 	
     /** May return either a client or server level wrapper. */
     ILevelWrapper getLevelWrapper();
 	
-    void updateChunk(IChunkWrapper chunk);
+    void updateChunkAsync(IChunkWrapper chunk);
 	
 	IFullDataSourceProvider getFileHandler();
 	

@@ -101,7 +101,7 @@ public class DhClientLevel implements IDhClientLevel
 	}
 	
 	@Override
-	public void updateChunk(IChunkWrapper chunk)
+	public void updateChunkAsync(IChunkWrapper chunk)
 	{
 		//TODO
 	}
@@ -110,7 +110,7 @@ public class DhClientLevel implements IDhClientLevel
 	public int getMinY() { return this.level.getMinHeight(); }
 	
 	@Override
-	public CompletableFuture<Void> save() { return this.renderFileHandler.flushAndSave(); }
+	public CompletableFuture<Void> saveAsync() { return this.renderFileHandler.flushAndSave(); }
 	
 	@Override
 	public void close()
