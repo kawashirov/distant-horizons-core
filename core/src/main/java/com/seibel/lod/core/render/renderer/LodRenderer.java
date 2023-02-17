@@ -118,13 +118,18 @@ public class LodRenderer
 	}
 
 	private boolean closeCalled = false;
-	public void close() {
-		if (closeCalled) {
+	
+	public void close()
+	{
+		if (this.closeCalled)
+		{
 			EVENT_LOGGER.warn("close() called twice!");
 			return;
 		}
-		closeCalled = true;
+		
+		this.closeCalled = true;
 		GLProxy.getInstance().recordOpenGlCall(this::cleanup);
+		this.bufferHandler.close();
 	}
 
 	public void drawLODs(Mat4f baseModelViewMatrix, Mat4f baseProjectionMatrix, float partialTicks, IProfilerWrapper profiler)
@@ -219,7 +224,7 @@ public class LodRenderer
 		//GL32.glEnable( GL32.GL_POLYGON_OFFSET_FILL );
 		//GL32.glPolygonOffset( 1f, 1f );
 
-		bufferHandler.prepare(this);
+		bufferHandler.buildRenderList(this.getLookVector());
 
 		//===========//
 		// rendering //
