@@ -66,6 +66,7 @@ public class LodRenderSection
 			this.renderSource.dispose();
 			this.renderSource = null;
         }
+		
         if (this.loadFuture != null)
 		{
 			this.loadFuture.cancel(true);
@@ -81,9 +82,12 @@ public class LodRenderSection
 	// LOD provider //
 	//==============//
 	
+	// TODO why does this just set the sourceProvider?
     public void load(ILodRenderSourceProvider renderDataProvider) { this.renderSourceProvider = renderDataProvider; }
     public void reload(ILodRenderSourceProvider renderDataProvider)
 	{
+		this.renderSourceProvider = renderDataProvider;
+		
         if (this.loadFuture != null)
 		{
 			this.loadFuture.cancel(true);
@@ -96,7 +100,7 @@ public class LodRenderSection
 			this.renderSource = null;
         }
 		
-		this.loadFuture = renderDataProvider.read(this.pos);
+		this.loadFuture = this.renderSourceProvider.read(this.pos);
     }
 	
 	
@@ -142,10 +146,10 @@ public class LodRenderSection
 	// getters and properties //
 	//========================//
 	
-    public boolean canRender() { return this.isLoaded() && this.isRenderEnabled && this.renderSource != null; }
+    public boolean shouldRender() { return this.isLoaded() && this.isRenderEnabled; }
 
-    public boolean isLoaded() { return this.renderSourceProvider != null; }
-	public boolean isLoading() { return false; }
+    public boolean isLoaded() { return this.renderSource != null; }
+	public boolean isLoading() { return this.loadFuture != null; }
 	
     //FIXME: Used by RenderBufferHandler
     public int FIXME_BYPASS_DONT_USE_getChildCount() { return this.childCount; }
