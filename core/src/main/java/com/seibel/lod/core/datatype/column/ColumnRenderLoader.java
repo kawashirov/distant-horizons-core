@@ -10,7 +10,9 @@ import com.seibel.lod.core.datatype.IRenderSource;
 import com.seibel.lod.core.datatype.AbstractRenderSourceLoader;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.file.renderfile.RenderMetaDataFile;
+import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
+import org.apache.logging.log4j.Logger;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -26,7 +28,11 @@ import java.nio.ByteOrder;
  */
 public class ColumnRenderLoader extends AbstractRenderSourceLoader
 {
-    public ColumnRenderLoader()
+	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	
+	
+	
+	public ColumnRenderLoader()
 	{
         super(ColumnRenderSource.class, ColumnRenderSource.TYPE_ID, new byte[]{ ColumnRenderSource.LATEST_VERSION }, ColumnRenderSource.SECTION_SIZE_OFFSET);
     }
@@ -34,15 +40,23 @@ public class ColumnRenderLoader extends AbstractRenderSourceLoader
 	
 	
     @Override
-    public IRenderSource loadRenderSource(RenderMetaDataFile dataFile, InputStream data, IDhLevel level) throws IOException
+    public IRenderSource loadRenderSource(RenderMetaDataFile dataFile, InputStream inputStream, IDhLevel level) throws IOException
 	{
-		DataInputStream inputStream = new DataInputStream(data); // DO NOT CLOSE
+		DataInputStream inputDataStream = new DataInputStream(inputStream); // DO NOT CLOSE
 		int dataFileVersion = dataFile.metaData.loaderVersion;
 		
 		switch (dataFileVersion)
 		{
 			case 1:
-				return new ColumnRenderSource(dataFile.pos, readDataV1(inputStream, level.getMinY()), level);
+				LOGGER.info("loading render source "+dataFile.pos);
+				
+				ParsedColumnData parsedColumnData = readDataV1(inputDataStream, level.getMinY());
+				if (parsedColumnData.isEmpty)
+				{
+					LOGGER.warn("Empty render file "+dataFile.pos);
+				}
+				
+				return new ColumnRenderSource(dataFile.pos, parsedColumnData, level);
 			default:
 				throw new IOException("Invalid Data: The data version ["+dataFileVersion+"] is not supported");
 		}
@@ -116,7 +130,17 @@ public class ColumnRenderLoader extends AbstractRenderSourceLoader
 			long[] dataPoints = new long[maxNumberOfDataPoints];
 			columnDataByteBuffer.asLongBuffer().get(dataPoints);
 			
-			return new ParsedColumnData(detailLevel, verticalDataCount, dataPoints, false);
+			boolean isEmpty = true;
+			for (long dataPoint : dataPoints)
+			{
+				if (dataPoint != 0)
+				{
+					isEmpty = false;
+					break;
+				}
+			}
+			
+			return new ParsedColumnData(detailLevel, verticalDataCount, dataPoints, isEmpty);
 		}
 	}
 	
