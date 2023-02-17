@@ -121,7 +121,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		}
 		
 		renderState.quadtree.tick(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
-		renderState.renderBufferHandler.update();
+		renderState.renderer.bufferHandler.update();
 	}
 	
 	private void saveWrites(ChunkSizedData data)
@@ -378,7 +378,6 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		public final IClientLevelWrapper clientLevel;
 		public final LodQuadTree quadtree;
 		public final RenderFileHandler renderFileHandler;
-		public final RenderBufferHandler renderBufferHandler; //TODO: Should this be owned by renderer?
 		public final LodRenderer renderer;
 		
 		
@@ -393,9 +392,9 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 			this.quadtree = new LodQuadTree(DhClientServerLevel.this, Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH,
 					MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, this.renderFileHandler);
 			
-			this.renderBufferHandler = new RenderBufferHandler(this.quadtree);
+			RenderBufferHandler renderBufferHandler = new RenderBufferHandler(this.quadtree);
 			FileScanUtil.scanFiles(thisParent.saveStructure, thisParent.serverLevel, null, this.renderFileHandler);
-			this.renderer = new LodRenderer(this.renderBufferHandler);
+			this.renderer = new LodRenderer(renderBufferHandler);
 		}
 		
 		
@@ -403,7 +402,6 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		CompletableFuture<Void> closeAsync()
 		{
 			this.renderer.close();
-			this.renderBufferHandler.close();
 			this.quadtree.close();
 			return this.renderFileHandler.flushAndSave();
 		}

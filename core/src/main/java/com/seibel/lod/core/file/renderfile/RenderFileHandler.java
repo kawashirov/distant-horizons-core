@@ -263,39 +263,40 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 
     public CompletableFuture<IRenderSource> onCreateRenderFile(RenderMetaDataFile file)
 	{
-		final int vertSize = Config.Client.Graphics.Quality.verticalQuality
-				.get().calculateMaxVerticalData((byte) (file.pos.sectionDetailLevel - ColumnRenderSource.SECTION_SIZE_OFFSET));
+		final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get()
+				.calculateMaxVerticalData((byte) (file.pos.sectionDetailLevel - ColumnRenderSource.SECTION_SIZE_OFFSET));
 		
 		return CompletableFuture.completedFuture(
 				new ColumnRenderSource(file.pos, vertSize, this.level.getMinY()));
 	}
 
-    private void updateCache(IRenderSource data, RenderMetaDataFile file)
+    private void updateCache(IRenderSource renderSource, RenderMetaDataFile file)
 	{
 		if (this.cacheUpdateLockBySectionPos.putIfAbsent(file.pos, new Object()) != null)
 		{
 			return;
 		}
 		
-		final WeakReference<IRenderSource> renderSourceReference = new WeakReference<>(data);
-		CompletableFuture<IFullDataSource> fullDataSourceFuture = this.fullDataSourceProvider.read(data.getSectionPos());
+		final WeakReference<IRenderSource> renderSourceReference = new WeakReference<>(renderSource); // TODO why is this a week reference?
+		CompletableFuture<IFullDataSource> fullDataSourceFuture = this.fullDataSourceProvider.read(renderSource.getSectionPos());
 		fullDataSourceFuture = fullDataSourceFuture.thenApply((dataSource) -> 
-		{
-			if (renderSourceReference.get() == null)
 			{
-				throw new UncheckedInterruptedException();
+				if (renderSourceReference.get() == null)
+				{
+					throw new UncheckedInterruptedException();
+				}
+				LodUtil.assertTrue(dataSource != null);
+				return dataSource;
 			}
-			LodUtil.assertTrue(dataSource != null);
-			return dataSource;
-		}).exceptionally((ex) -> 
-		{
-			LOGGER.error("Exception when getting data for updateCache()", ex);
-			return null;
-		});
+			).exceptionally((ex) -> 
+			{
+				LOGGER.error("Exception when getting data for updateCache()", ex);
+				return null;
+			});
 		
 		//LOGGER.info("Recreating cache for {}", data.getSectionPos());
 		DataRenderTransformer.asyncTransformDataSource(fullDataSourceFuture, this.level)
-				.thenAccept((newRenderDataSource) -> this.write(renderSourceReference.get(), file, newRenderDataSource, this.fullDataSourceProvider.getCacheVersion(data.getSectionPos())))
+				.thenAccept((newRenderSource) -> this.write(renderSourceReference.get(), file, newRenderSource, this.fullDataSourceProvider.getCacheVersion(renderSource.getSectionPos())))
 				.exceptionally((ex) -> 
 				{
 					if (!UncheckedInterruptedException.isThrowableInterruption(ex))
@@ -303,7 +304,8 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 						LOGGER.error("Exception when updating render file using data source: ", ex);
 					}
 					return null;
-				}).thenRun(() -> this.cacheUpdateLockBySectionPos.remove(file.pos));
+				}
+				).thenRun(() -> this.cacheUpdateLockBySectionPos.remove(file.pos));
 	}
 	
     public IRenderSource onRenderFileLoaded(IRenderSource data, RenderMetaDataFile file)
@@ -315,24 +317,23 @@ public class RenderFileHandler implements ILodRenderSourceProvider
         return data;
     }
 	
-    public IRenderSource onLoadingRenderFile(RenderMetaDataFile file) { return null; /* Default behavior: do nothing */ }
-	
-    private void write(IRenderSource target, RenderMetaDataFile file,
-                       IRenderSource newData, long newDataVersion)
+    private void write(IRenderSource currentRenderSource, RenderMetaDataFile file,
+                       IRenderSource newRenderSource, long newDataVersion)
 	{
-        if (target == null || newData == null)
+        if (currentRenderSource == null || newRenderSource == null)
 		{
 			return;
 		}
 		
-        target.updateFromRenderSource(newData);
+        currentRenderSource.updateFromRenderSource(newRenderSource);
+		
         file.metaData.dataVersion.set(newDataVersion);
-        file.metaData.dataLevel = target.getDataDetail();
-        file.loader = AbstractRenderSourceLoader.getLoader(target.getClass(), target.getRenderVersion());
-        file.dataType = target.getClass();
+        file.metaData.dataLevel = currentRenderSource.getDataDetail();
+        file.loader = AbstractRenderSourceLoader.getLoader(currentRenderSource.getClass(), currentRenderSource.getRenderVersion());
+        file.dataType = currentRenderSource.getClass();
         file.metaData.dataTypeId = file.loader.renderTypeId;
-        file.metaData.loaderVersion = target.getRenderVersion();
-        file.save(target, this.level);
+        file.metaData.loaderVersion = currentRenderSource.getRenderVersion();
+        file.save(currentRenderSource, this.level);
     }
 	
     public void onReadRenderSourceFromCache(RenderMetaDataFile file, IRenderSource data)

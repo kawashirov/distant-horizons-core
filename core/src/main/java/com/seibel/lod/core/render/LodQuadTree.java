@@ -359,8 +359,7 @@ public class LodQuadTree implements AutoCloseable
 				}
 				else
 				{
-					// this render section is a fully loaded leaf node,
-					// TODO now what?
+					// this render section is either a leaf node, or null
 					
 					final DhSectionPos sectPos = (section != null) ? section.pos : new DhSectionPos(sectionDetailLevel, pos.x, pos.y);
 					
@@ -508,8 +507,9 @@ public class LodQuadTree implements AutoCloseable
 		for (byte sectLevel = (byte) (this.numbersOfSectionDetailLevels - 1); sectLevel >= TREE_LOWEST_DETAIL_LEVEL; sectLevel--)
 		{
 			final MovableGridRingList<LodRenderSection> ringList = this.renderSectionRingLists[sectLevel - TREE_LOWEST_DETAIL_LEVEL];
-			final MovableGridRingList<LodRenderSection> childRingList = sectLevel == TREE_LOWEST_DETAIL_LEVEL ? null : this.renderSectionRingLists[sectLevel - TREE_LOWEST_DETAIL_LEVEL - 1];
-			final boolean doCascade = false; // TODO: Utilize this cascade mode or at least expose this option
+			//final MovableGridRingList<LodRenderSection> childRingList = sectLevel == TREE_LOWEST_DETAIL_LEVEL ? null : this.renderSectionRingLists[sectLevel - TREE_LOWEST_DETAIL_LEVEL - 1];
+			//final boolean doCascade = false; // TODO: Utilize this cascade mode or at least expose this option
+			
 			ringList.forEachPosOrdered((section, pos) ->
 			{
 				if (section == null)

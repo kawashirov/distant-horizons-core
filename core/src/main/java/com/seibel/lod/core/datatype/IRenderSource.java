@@ -36,7 +36,7 @@ public interface IRenderSource
 	 * @param referenceSlot The slot for swapping in the new buffer.
 	 * @return True if the swap was successful. False if swap is not needed or if it is in progress.
 	 */
-	boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<AbstractRenderBuffer> referenceSlot);
+	boolean trySwapRenderBufferAsync(LodQuadTree quadTree, AtomicReference<AbstractRenderBuffer> referenceSlot);
 	
 	void saveRender(IDhClientLevel level, RenderMetaDataFile file, OutputStream dataStream) throws IOException;
 	

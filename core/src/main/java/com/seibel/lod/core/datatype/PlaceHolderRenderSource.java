@@ -34,7 +34,7 @@ public class PlaceHolderRenderSource implements IRenderSource
 	public void dispose() { /* TODO */ }
 	
 	@Override
-	public boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<AbstractRenderBuffer> referenceSlots) { return false; }
+	public boolean trySwapRenderBufferAsync(LodQuadTree quadTree, AtomicReference<AbstractRenderBuffer> referenceSlots) { return false; }
 	
 	@Override
 	public void saveRender(IDhClientLevel level, RenderMetaDataFile file, OutputStream dataStream) throws IOException

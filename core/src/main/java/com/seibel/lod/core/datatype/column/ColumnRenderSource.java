@@ -72,8 +72,8 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 	/** 1 sec */
 	private static final long SWAP_BUSY_COLLISION_TIMEOUT = 1_000000000L;
 	
-	private CompletableFuture<ColumnRenderBuffer> inBuildRenderBuffer = null;
-	private final Reference<ColumnRenderBuffer> usedBuffer = new Reference<>();
+	private CompletableFuture<ColumnRenderBuffer> buildRenderBufferFuture = null;
+	private final Reference<ColumnRenderBuffer> columnRenderBufferRef = new Reference<>();
 	
 	
 	
@@ -344,28 +344,29 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 	
 	private void tryBuildBuffer(IDhClientLevel level, LodQuadTree quadTree)
 	{
-		if (this.inBuildRenderBuffer == null && !ColumnRenderBuffer.isBusy() && !this.isEmpty)
+		if (this.buildRenderBufferFuture == null && !ColumnRenderBuffer.isBusy() && !this.isEmpty)
 		{
-			ColumnRenderSource[] data = new ColumnRenderSource[ELodDirection.ADJ_DIRECTIONS.length];
+			ColumnRenderSource[] columnRenderSources = new ColumnRenderSource[ELodDirection.ADJ_DIRECTIONS.length];
 			for (ELodDirection direction : ELodDirection.ADJ_DIRECTIONS)
 			{
-				LodRenderSection section = quadTree.getSection(this.sectionPos.getAdjacentPos(direction)); //FIXME: Handle traveling through different detail levels
-				if (section != null && section.getRenderSource() != null && section.getRenderSource() instanceof ColumnRenderSource)
+				LodRenderSection renderSection = quadTree.getSection(this.sectionPos.getAdjacentPos(direction)); //FIXME: Handle traveling through different detail levels
+				if (renderSection != null && renderSection.getRenderSource() != null && renderSection.getRenderSource() instanceof ColumnRenderSource)
 				{
-					data[direction.ordinal() - 2] = ((ColumnRenderSource) section.getRenderSource());
+					columnRenderSources[direction.ordinal() - 2] = ((ColumnRenderSource) renderSection.getRenderSource());
+					//LOGGER.info("attempting to build buffer for: "+renderSection.pos);
 				}
 			}
-			this.inBuildRenderBuffer = ColumnRenderBuffer.build(level, this.usedBuffer, this, data);
+			this.buildRenderBufferFuture = ColumnRenderBuffer.build(level, this.columnRenderBufferRef, this, columnRenderSources);
 		}
 	}
 	
 	private void cancelBuildBuffer()
 	{
-		if (this.inBuildRenderBuffer != null)
+		if (this.buildRenderBufferFuture != null)
 		{
 			//LOGGER.info("Cancelling build of render buffer for {}", sectionPos);
-			this.inBuildRenderBuffer.cancel(true);
-			this.inBuildRenderBuffer = null;
+			this.buildRenderBufferFuture.cancel(true);
+			this.buildRenderBufferFuture = null;
 		}
 	}
 	
@@ -373,7 +374,7 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 	public void enableRender(IDhClientLevel level, LodQuadTree quadTree)
 	{
 		this.level = level;
-		//tryBuildBuffer(level, quadTree); // FIXME why was this commented out?
+		//this.tryBuildBuffer(level, quadTree); // FIXME why was this commented out?
 	}
 	
 	@Override
@@ -383,27 +384,35 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 	public void dispose() { this.cancelBuildBuffer(); }
 	
 	@Override
-	public boolean trySwapRenderBuffer(LodQuadTree quadTree, AtomicReference<AbstractRenderBuffer> referenceSlot)
+	public boolean trySwapRenderBufferAsync(LodQuadTree quadTree, AtomicReference<AbstractRenderBuffer> renderBufferToSwap)
 	{
+		// prevent swapping the buffer to quickly
 		if (this.lastNs != -1 && System.nanoTime() - this.lastNs < SWAP_TIMEOUT)
 		{
 			return false;
 		}
 		
-		if (this.inBuildRenderBuffer != null)
+		
+		if (this.buildRenderBufferFuture != null)
 		{
-			if (this.inBuildRenderBuffer.isDone())
+			if (this.buildRenderBufferFuture.isDone())
 			{
 				this.lastNs = System.nanoTime();
 				//LOGGER.info("Swapping render buffer for {}", sectionPos);
-				AbstractRenderBuffer newBuffer = this.inBuildRenderBuffer.join();
-				AbstractRenderBuffer oldBuffer = referenceSlot.getAndSet(newBuffer);
+				
+				AbstractRenderBuffer newBuffer = this.buildRenderBufferFuture.join();
+				AbstractRenderBuffer oldBuffer = renderBufferToSwap.getAndSet(newBuffer);
 				if (oldBuffer instanceof ColumnRenderBuffer)
 				{
-					ColumnRenderBuffer swapped = this.usedBuffer.swap((ColumnRenderBuffer) oldBuffer);
+					ColumnRenderBuffer swapped = this.columnRenderBufferRef.swap((ColumnRenderBuffer) oldBuffer);
 					LodUtil.assertTrue(swapped == null);
 				}
-				this.inBuildRenderBuffer = null;
+				else if (oldBuffer != null)
+				{
+					throw new UnsupportedOperationException("swap buffer fail, Expected "+AbstractRenderBuffer.class.getSimpleName()+" of type: "+ColumnRenderBuffer.class.getSimpleName()+" class given: "+oldBuffer.getClass().getSimpleName());
+				}
+				
+				this.buildRenderBufferFuture = null;
 				return true;
 			}
 		}
@@ -421,6 +430,7 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 				}
 			}
 		}
+		
 		return false;
 	}
 	
