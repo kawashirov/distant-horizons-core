@@ -308,13 +308,14 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 				).thenRun(() -> this.cacheUpdateLockBySectionPos.remove(file.pos));
 	}
 	
-    public IRenderSource onRenderFileLoaded(IRenderSource data, RenderMetaDataFile file)
+    public IRenderSource onRenderFileLoaded(IRenderSource renderSource, RenderMetaDataFile file)
 	{
         if (!this.fullDataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get()))
 		{
-			this.updateCache(data, file);
+			this.updateCache(renderSource, file);
         }
-        return data;
+		
+        return renderSource;
     }
 	
     private void write(IRenderSource currentRenderSource, RenderMetaDataFile file,

@@ -56,7 +56,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 		super(fileHandler.computeRenderFilePath(pos), pos);
 		this.fileHandler = fileHandler;
 		LodUtil.assertTrue(this.metaData == null);
-		this.doesFileExist = false;
+		this.doesFileExist = this.path.exists();
 	}
 	
 	/** Uses the existing metaFile */
@@ -72,7 +72,8 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 					+ this.metaData.dataTypeId + "(v" + this.metaData.loaderVersion + ")");
 		}
 		this.dataType = this.loader.renderSourceClass;
-		this.doesFileExist = true;
+		
+		this.doesFileExist = this.path.exists();
 	}
 	
 	
@@ -170,20 +171,20 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 						this.metaData = makeMetaData(data);
 						return data;
 					})
-					.thenApply((d) -> this.fileHandler.onRenderFileLoaded(d, this))
-					.whenComplete((v, e) -> 
+					.thenApply((renderSource) -> this.fileHandler.onRenderFileLoaded(renderSource, this))
+					.whenComplete((renderSource, exception) -> 
 					{
-						if (e != null)
+						if (exception != null)
 						{
-							LOGGER.error("Uncaught error on creation {}: ", this.path, e);
+							LOGGER.error("Uncaught error on creation {}: ", this.path, exception);
 							future.complete(null);
 							this.data.set(null);
 						}
 						else
 						{
-							future.complete(v);
+							future.complete(renderSource);
 							//new DataObjTracker(v); //TODO: Obj Tracker??? For debug?
-							this.data.set(new SoftReference<>(v));
+							this.data.set(new SoftReference<>(renderSource));
 						}
 					});
 		}
@@ -197,21 +198,18 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 						}
 						
 						// Load the file.
-						IRenderSource data;
-						data = this.fileHandler.onLoadingRenderFile(this);
-						if (data == null)
+						IRenderSource renderSource;
+						try (FileInputStream fio = this.getDataContent())
 						{
-							try (FileInputStream fio = this.getDataContent())
-							{
-								data = this.loader.loadRenderSource(this, fio, level);
-							}
-							catch (IOException e)
-							{
-								throw new CompletionException(e);
-							}
+							renderSource = this.loader.loadRenderSource(this, fio, level);
 						}
-						data = this.fileHandler.onRenderFileLoaded(data, this);
-						return data;
+						catch (IOException e)
+						{
+							throw new CompletionException(e);
+						}
+						
+						renderSource = this.fileHandler.onRenderFileLoaded(renderSource, this);
+						return renderSource;
 					}, fileReaderThreads)
 					.whenComplete((f, e) -> 
 					{
