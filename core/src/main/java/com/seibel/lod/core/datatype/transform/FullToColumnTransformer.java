@@ -94,7 +94,7 @@ public class FullToColumnTransformer {
         return columnSource;
     }
 
-    public static void writeFullDataChunkToColumnData(ColumnRenderSource render, IDhClientLevel level, ChunkSizedFullData data) {
+    public static void writeFullDataChunkToColumnData(ColumnRenderSource render, IDhClientLevel level, ChunkSizedFullDataSource data) {
         if (data.dataDetail != 0)
             throw new UnsupportedOperationException("To be implemented");
 

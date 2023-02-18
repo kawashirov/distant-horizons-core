@@ -1,6 +1,6 @@
 package com.seibel.lod.core.datatype;
 
-import com.seibel.lod.core.datatype.full.ChunkSizedFullData;
+import com.seibel.lod.core.datatype.full.ChunkSizedFullDataSource;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.LodQuadTree;
@@ -54,7 +54,7 @@ public class PlaceHolderRenderSource implements IRenderSource
 	public boolean isEmpty() { return true; }
 	
 	@Override
-	public void fastWrite(ChunkSizedFullData chunkData, IDhClientLevel level) { /* TODO */ }
+	public void fastWrite(ChunkSizedFullDataSource chunkData, IDhClientLevel level) { /* TODO */ }
 	
 	@Override
 	public void updateFromRenderSource(IRenderSource source) { /* TODO */ }

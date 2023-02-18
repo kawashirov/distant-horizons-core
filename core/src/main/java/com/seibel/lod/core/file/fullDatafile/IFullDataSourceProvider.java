@@ -1,7 +1,7 @@
 package com.seibel.lod.core.file.fullDatafile;
 
 import com.seibel.lod.core.datatype.IFullDataSource;
-import com.seibel.lod.core.datatype.full.ChunkSizedFullData;
+import com.seibel.lod.core.datatype.full.ChunkSizedFullDataSource;
 import com.seibel.lod.core.file.metaData.MetaData;
 import com.seibel.lod.core.pos.DhSectionPos;
 
@@ -16,7 +16,7 @@ public interface IFullDataSourceProvider extends AutoCloseable {
     void addScannedFile(Collection<File> detectedFiles);
 
     CompletableFuture<IFullDataSource> read(DhSectionPos pos);
-    void write(DhSectionPos sectionPos, ChunkSizedFullData chunkData);
+    void write(DhSectionPos sectionPos, ChunkSizedFullDataSource chunkData);
     CompletableFuture<Void> flushAndSave();
 
     //long getCacheVersion(DhSectionPos sectionPos);

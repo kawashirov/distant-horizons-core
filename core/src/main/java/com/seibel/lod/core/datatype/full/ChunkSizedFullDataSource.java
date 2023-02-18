@@ -3,13 +3,13 @@ package com.seibel.lod.core.datatype.full;
 import com.seibel.lod.core.datatype.full.accessor.FullArrayView;
 import com.seibel.lod.core.pos.DhLodPos;
 
-public class ChunkSizedFullData extends FullArrayView
+public class ChunkSizedFullDataSource extends FullArrayView
 {
 	public final byte dataDetail;
 	public final int x;
 	public final int z;
 	
-	public ChunkSizedFullData(byte dataDetail, int x, int z)
+	public ChunkSizedFullDataSource(byte dataDetail, int x, int z)
 	{
 		super(new FullDataPointIdMap(), new long[16 * 16][0], 16);
 		this.dataDetail = dataDetail;

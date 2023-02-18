@@ -103,7 +103,7 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 	
 	
     @Override
-    public void update(ChunkSizedFullData data)
+    public void update(ChunkSizedFullDataSource data)
 	{
 		if (data.dataDetail != 0)
 		{

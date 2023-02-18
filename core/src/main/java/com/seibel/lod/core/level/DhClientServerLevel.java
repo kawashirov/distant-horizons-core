@@ -3,7 +3,7 @@ package com.seibel.lod.core.level;
 import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
 import com.seibel.lod.core.DependencyInjection.WorldGeneratorInjector;
 import com.seibel.lod.core.config.AppliedConfigState;
-import com.seibel.lod.core.datatype.full.ChunkSizedFullData;
+import com.seibel.lod.core.datatype.full.ChunkSizedFullDataSource;
 import com.seibel.lod.core.datatype.full.FullDataSource;
 import com.seibel.lod.core.datatype.transform.ChunkToLodBuilder;
 import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
@@ -124,7 +124,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		renderState.renderer.bufferHandler.update();
 	}
 	
-	private void saveWrites(ChunkSizedFullData data)
+	private void saveWrites(ChunkSizedFullDataSource data)
 	{
 		RenderState renderState = this.renderStateRef.get();
 		DhLodPos pos = data.getBBoxLodPos().convertToDetailLevel(FullDataSource.SECTION_SIZE_OFFSET);
@@ -242,7 +242,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 	@Override
 	public void updateChunkAsync(IChunkWrapper chunk)
 	{
-		CompletableFuture<ChunkSizedFullData> future = this.chunkToLodBuilder.tryGenerateData(chunk);
+		CompletableFuture<ChunkSizedFullDataSource> future = this.chunkToLodBuilder.tryGenerateData(chunk);
 		if (future != null)
 		{
 			future.thenAccept(this::saveWrites);

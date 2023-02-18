@@ -3,7 +3,7 @@ package com.seibel.lod.core.datatype.transform;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.seibel.lod.core.datatype.full.ChunkSizedFullData;
+import com.seibel.lod.core.datatype.full.ChunkSizedFullDataSource;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.pos.DhChunkPos;
@@ -21,9 +21,9 @@ public class ChunkToLodBuilder
     private static class Task
 	{
         final DhChunkPos chunkPos;
-        final CompletableFuture<ChunkSizedFullData> future;
+        final CompletableFuture<ChunkSizedFullDataSource> future;
 		
-        Task(DhChunkPos chunkPos, CompletableFuture<ChunkSizedFullData> future)
+        Task(DhChunkPos chunkPos, CompletableFuture<ChunkSizedFullDataSource> future)
 		{
             this.chunkPos = chunkPos;
             this.future = future;
@@ -36,7 +36,7 @@ public class ChunkToLodBuilder
 	
 	
 	
-    public CompletableFuture<ChunkSizedFullData> tryGenerateData(IChunkWrapper chunk)
+    public CompletableFuture<ChunkSizedFullDataSource> tryGenerateData(IChunkWrapper chunk)
 	{
         if (chunk == null) 
 			throw new NullPointerException("ChunkWrapper cannot be null!");
@@ -49,7 +49,7 @@ public class ChunkToLodBuilder
 			return null;
 		
         // Otherwise, it means we're the first to do so. Lets submit our task to this entry.
-        CompletableFuture<ChunkSizedFullData> future = new CompletableFuture<>();
+        CompletableFuture<ChunkSizedFullDataSource> future = new CompletableFuture<>();
         taskToBuild.addLast(new Task(chunk.getChunkPos(), future));
         return future;
     }
@@ -105,7 +105,7 @@ public class ChunkToLodBuilder
 			{
                 if (LodDataBuilder.canGenerateLodFromChunk(latestChunk))
 				{
-                    ChunkSizedFullData data = LodDataBuilder.createChunkData(latestChunk);
+                    ChunkSizedFullDataSource data = LodDataBuilder.createChunkData(latestChunk);
                     if (data != null)
 					{
                         task.future.complete(data);

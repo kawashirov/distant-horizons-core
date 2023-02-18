@@ -3,7 +3,7 @@ package com.seibel.lod.core.generation;
 import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
 import com.seibel.lod.core.config.Config;
-import com.seibel.lod.core.datatype.full.ChunkSizedFullData;
+import com.seibel.lod.core.datatype.full.ChunkSizedFullDataSource;
 import com.seibel.lod.core.datatype.transform.LodDataBuilder;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.generation.tasks.*;
@@ -674,7 +674,7 @@ public class WorldGenerationQueue implements Closeable
 	private static CompletableFuture<Void> startGenerationEvent(IDhApiWorldGenerator worldGenerator,
 			DhChunkPos chunkPosMin,
 			byte granularity, byte targetDataDetail,
-			Consumer<ChunkSizedFullData> resultConsumer)
+			Consumer<ChunkSizedFullDataSource> resultConsumer)
 	{
 		EDhApiDistantGeneratorMode generatorMode = Config.Client.WorldGenerator.distantGeneratorMode.get();
 		return worldGenerator.generateChunks(chunkPosMin.x, chunkPosMin.z, granularity, targetDataDetail, generatorMode, (objectArray) ->

@@ -1,6 +1,6 @@
 package com.seibel.lod.core.generation.tasks;
 
-import com.seibel.lod.core.datatype.full.ChunkSizedFullData;
+import com.seibel.lod.core.datatype.full.ChunkSizedFullDataSource;
 
 import java.util.function.Consumer;
 
@@ -16,6 +16,6 @@ public abstract class AbstractWorldGenTaskTracker
 	 */
 	public abstract boolean isMemoryAddressValid();
 	
-	public abstract Consumer<ChunkSizedFullData> getConsumer();
+	public abstract Consumer<ChunkSizedFullDataSource> getConsumer();
 	
 }
