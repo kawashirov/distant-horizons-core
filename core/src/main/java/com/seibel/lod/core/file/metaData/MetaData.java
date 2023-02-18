@@ -15,9 +15,13 @@ public class MetaData
 	public int checksum;
 //	public AtomicLong dataVersion; // currently broken
 	public byte dataLevel;
-	// Loader stuff
+	
+	// Loader stuff //
+	/** indicates what data is held in this file, is generally a hash of the data's name */
 	public long dataTypeId;
 	public byte loaderVersion;
+	
+	
 	
 	public MetaData(DhSectionPos pos, int checksum, byte dataLevel, long dataTypeId, byte loaderVersion)
 	{

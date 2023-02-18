@@ -20,9 +20,9 @@ public class DataRenderTransformer
         return CompletableFuture.supplyAsync(() -> transform(data, level), TRANSFORMER_THREADS);
     }
 	
-    public static CompletableFuture<ColumnRenderSource> asyncTransformDataSource(CompletableFuture<IFullDataSource> data, IDhClientLevel level)
+    public static CompletableFuture<ColumnRenderSource> asyncTransformDataSource(CompletableFuture<IFullDataSource> fullDataSourceFuture, IDhClientLevel level)
 	{
-        return data.thenApplyAsync((d) -> transform(d, level), TRANSFORMER_THREADS);
+        return fullDataSourceFuture.thenApplyAsync((fullDataSource) -> transform(fullDataSource, level), TRANSFORMER_THREADS);
     }
 	
     private static ColumnRenderSource transform(IFullDataSource dataSource, IDhClientLevel level)
@@ -32,8 +32,7 @@ public class DataRenderTransformer
 			return null;
 		}
 		
-        return ColumnRenderLoader.LOADER_BY_SOURCE_TYPE.get(ColumnRenderSource.class)
-                .stream().findFirst().get().createRenderSource(dataSource, level);
+        return ColumnRenderLoader.INSTANCE.createRenderSource(dataSource, level);
     }
 	
 }

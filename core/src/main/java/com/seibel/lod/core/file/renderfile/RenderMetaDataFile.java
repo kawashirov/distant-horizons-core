@@ -2,7 +2,6 @@ package com.seibel.lod.core.file.renderfile;
 
 import com.seibel.lod.core.datatype.render.ColumnRenderLoader;
 import com.seibel.lod.core.datatype.render.ColumnRenderSource;
-import com.seibel.lod.core.datatype.render.AbstractRenderSourceLoader;
 import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.file.metaData.MetaData;
 import com.seibel.lod.core.level.IDhClientLevel;
@@ -24,9 +23,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class RenderMetaDataFile extends AbstractMetaDataFile
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
-	
-    public AbstractRenderSourceLoader loader;
-    public Class<? extends ColumnRenderSource> dataType;
 	
     // The '?' type should either be:
     //    SoftReference<LodRenderSource>, or	- File that may still be loaded
@@ -72,13 +68,6 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 		super(path);
 		this.fileHandler = fileHandler;
 		LodUtil.assertTrue(this.metaData != null);
-		this.loader = AbstractRenderSourceLoader.getLoader(this.metaData.dataTypeId, this.metaData.loaderVersion);
-		if (this.loader == null)
-		{
-			throw new IOException("Invalid file: Data type loader not found: "
-					+ this.metaData.dataTypeId + "(v" + this.metaData.loaderVersion + ")");
-		}
-		this.dataType = this.loader.renderSourceClass;
 		
 		this.doesFileExist = this.path.exists();
 	}
@@ -207,7 +196,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 					ColumnRenderSource renderSource;
 					try (FileInputStream fio = this.getDataContent())
 					{
-						renderSource = this.loader.loadRenderSource(this, fio, level);
+						renderSource = ColumnRenderLoader.INSTANCE.loadRenderSource(this, fio, level);
 					}
 					catch (IOException e)
 					{
@@ -237,9 +226,8 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 	
     private static MetaData makeMetaData(ColumnRenderSource renderSource)
 	{
-		AbstractRenderSourceLoader loader = AbstractRenderSourceLoader.getLoader(renderSource.getClass(), renderSource.getRenderVersion());
 		return new MetaData(renderSource.getSectionPos(), -1,
-				renderSource.getDataDetail(), loader == null ? 0 : loader.renderTypeId, renderSource.getRenderVersion());
+				renderSource.getDataDetail(), RenderSourceFileHandler.RENDER_SOURCE_TYPE_ID, renderSource.getRenderVersion());
 	}
 	
     private FileInputStream getDataContent() throws IOException
@@ -255,11 +243,15 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 			}
 			toSkip -= skipped;
 		}
+		
 		if (toSkip != 0)
 		{
 			throw new IOException("File IO Error: Failed to skip metadata.");
 		}
-		return fin;
+		else
+		{
+			return fin;	
+		}
 	}
 	
     public void save(ColumnRenderSource renderSource, IDhClientLevel level)

@@ -23,20 +23,18 @@ import java.nio.ByteOrder;
  * Please see the {@link ColumnRenderLoader#loadRenderSource} method to see what
  * file versions this class can handle.
  */
-public class ColumnRenderLoader extends AbstractRenderSourceLoader
+public class ColumnRenderLoader
 {
+	public static ColumnRenderLoader INSTANCE = new ColumnRenderLoader();
+	
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
 	
 	
-	public ColumnRenderLoader()
-	{
-        super(ColumnRenderSource.class, ColumnRenderSource.TYPE_ID, new byte[]{ ColumnRenderSource.DATA_FORMAT_VERSION }, ColumnRenderSource.SECTION_SIZE_OFFSET);
-    }
+	private ColumnRenderLoader() { }
 	
 	
 	
-    @Override
     public ColumnRenderSource loadRenderSource(RenderMetaDataFile dataFile, InputStream inputStream, IDhLevel level) throws IOException
 	{
 		DataInputStream inputDataStream = new DataInputStream(inputStream); // DO NOT CLOSE
@@ -59,7 +57,6 @@ public class ColumnRenderLoader extends AbstractRenderSourceLoader
 		}
     }
 	
-    @Override
     public ColumnRenderSource createRenderSource(IFullDataSource dataSource, IDhClientLevel level)
 	{
 		if (dataSource instanceof FullDataSource) // TODO replace with Java 7 method
