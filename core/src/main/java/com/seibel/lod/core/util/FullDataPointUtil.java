@@ -7,17 +7,21 @@ import org.jetbrains.annotations.Contract;
 import static com.seibel.lod.core.util.RenderDataPointUtil.MAX_WORLD_Y_SIZE;
 
 /**
- * <code>
- * Static class used to format the full binary Distant Horizons data format. <br>
- * Contains all the data we save.
+ * A helper class that is used to access the data from a long
+ * formatted as a full data point. <br>
+ * A full data point contains the most information and is the 
+ * base truth used when creating render data. <br><br>
  * 
- * <br> <br>
+ * To access data from a long formatted as a render data point see: {@link RenderDataPointUtil} <br><br>
+ *
+ * <strong>DataPoint Format: </strong><br>
+ * <code>
  * ID: blockState id <br>
  * Y: Height(signed) <br>
- * DP: Depth(signed?) (Depth means the length of the block!) <br>
+ * DP: Depth (Depth means the length of the block!) <br>
  * BL: Block light <br>
  * SL: Sky light <br><br>
- * 
+ *
  * =======Bit layout=======	<br>
  * BL BL BL BL  SL SL SL SL <-- Top bits <br>
  * YY YY YY YY  YY YY YY YY	<br>
@@ -28,7 +32,8 @@ import static com.seibel.lod.core.util.RenderDataPointUtil.MAX_WORLD_Y_SIZE;
  * ID ID ID ID  ID ID IO ID	<br>
  * ID ID ID ID  ID ID IO ID <-- Bottom bits	<br>
  * </code>
- * 
+ *
+ * @see RenderDataPointUtil
  */
 public class FullDataPointUtil
 {

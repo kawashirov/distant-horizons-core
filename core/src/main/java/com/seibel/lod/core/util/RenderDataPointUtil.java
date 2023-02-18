@@ -27,25 +27,39 @@ import java.util.Arrays;
 
 
 /**
- * A helper class that is used to access the data in a RenderColumn
- * long datapoint.
+ * A helper class that is used to access the data from a long
+ * formatted as a render data point. <br><br>
+ * 
+ * To access data from a long formatted as a full data point see: {@link FullDataPointUtil}
+ *
+ * <strong>DataPoint Format: </strong><br>
+ * <code>
+ * GM: generation mode <br>
+ * A: color alpha <br>
+ * R: color red <br>
+ * G: color green <br>
+ * B: color blue <br>
+ * H: column height <br>
+ * D: column depth (what Y value the column starts at) <br>
+ * BL: block light <br>
+ * SL: sky light <br>
+ *
+ * =======Bit layout=======	<br>
+ *  _  GM GM GM A  A  A  A  |	<br>
+ * 	R  R  R  R  R  R  R  R  |	<br>
+ * 	G  G  G  G  G  G  G  G  |	<br>
+ * 	B  B  B  B  B  B  B  B  |	<br><br>
+ *
+ * 	H  H  H  H  H  H  H  H  |	<br>
+ * 	H  H  H  H  D  D  D  D  |	<br>
+ * 	D  D  D  D  D  D  D  D  |	<br>
+ * 	BL BL BL BL SL SL SL SL |	<br>
+ * </code>
+ * 
+ * @see FullDataPointUtil
  */
 public class RenderDataPointUtil
 {
-	/*
-	
-	|_  |g  |g  |g  |a  |a  |a  |a  |
-	|r  |r  |r  |r  |r  |r  |r  |r  |
-	|g  |g  |g  |g  |g  |g  |g  |g  |
-	|b  |b  |b  |b  |b  |b  |b  |b  |
-	
-	|h  |h  |h  |h  |h  |h  |h  |h  |
-	|h  |h  |h  |h  |d  |d  |d  |d  |
-	|d  |d  |d  |d  |d  |d  |d  |d  |
-	|bl |bl |bl |bl |sl |sl |sl |sl |
-	
-	*/
-	
     // Reminder: bytes have range of [-128, 127].
     // When converting to or from an int a 128 should be added or removed.
     // If there is a bug with color then it's probably caused by this.
