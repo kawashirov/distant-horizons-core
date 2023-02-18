@@ -67,7 +67,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 		{
 			try
 			{
-				RenderMetaDataFile metaFile = new RenderMetaDataFile(this, file);
+				RenderMetaDataFile metaFile = RenderMetaDataFile.createFromExistingFile(this, file);
 				filesByPos.put(metaFile.pos, metaFile);
 			}
 			catch (IOException e)
@@ -107,8 +107,14 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 			RenderMetaDataFile fileToUse;
 			if (metaFiles.size() > 1)
 			{
+				//fileToUse = metaFiles.stream().findFirst().orElse(null); // use the first file in the list
+				
+				// use the file's last modified date
 				fileToUse = Collections.max(metaFiles, Comparator.comparingLong(renderMetaDataFile -> 
-						renderMetaDataFile.metaData.dataVersion.get()));
+						renderMetaDataFile.path.lastModified()));
+				
+//				fileToUse = Collections.max(metaFiles, Comparator.comparingLong(renderMetaDataFile -> 
+//						renderMetaDataFile.metaData.dataVersion.get()));
 				{
 					StringBuilder sb = new StringBuilder();
 					sb.append("Multiple files with the same pos: ");
@@ -301,7 +307,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 		
 		//LOGGER.info("Recreating cache for {}", data.getSectionPos());
 		DataRenderTransformer.asyncTransformDataSource(fullDataSourceFuture, this.level)
-				.thenAccept((newRenderSource) -> this.write(renderSourceReference.get(), file, newRenderSource, this.fullDataSourceProvider.getCacheVersion(renderSource.getSectionPos())))
+				.thenAccept((newRenderSource) -> this.write(renderSourceReference.get(), file, newRenderSource))
 				.exceptionally((ex) -> 
 				{
 					if (!UncheckedInterruptedException.isThrowableInterruption(ex))
@@ -315,16 +321,18 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 	
     public IRenderSource onRenderFileLoaded(IRenderSource renderSource, RenderMetaDataFile file)
 	{
-        if (!this.fullDataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get()))
-		{
+		// TODO
+		
+//		if (!this.fullDataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get()))
+//		{
 			this.updateCache(renderSource, file);
-        }
+//		}
 		
         return renderSource;
     }
 	
     private void write(IRenderSource currentRenderSource, RenderMetaDataFile file,
-                       IRenderSource newRenderSource, long newDataVersion)
+                       IRenderSource newRenderSource)
 	{
         if (currentRenderSource == null || newRenderSource == null)
 		{
@@ -333,7 +341,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 		
         currentRenderSource.updateFromRenderSource(newRenderSource);
 		
-        file.metaData.dataVersion.set(newDataVersion);
+        //file.metaData.dataVersion.set(newDataVersion);
         file.metaData.dataLevel = currentRenderSource.getDataDetail();
         file.loader = AbstractRenderSourceLoader.getLoader(currentRenderSource.getClass(), currentRenderSource.getRenderVersion());
         file.dataType = currentRenderSource.getClass();
@@ -344,10 +352,10 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 	
     public void onReadRenderSourceFromCache(RenderMetaDataFile file, IRenderSource data)
 	{
-        if (!this.fullDataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get()))
-		{
+//        if (!this.fullDataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get()))
+//		{
 			this.updateCache(data, file);
-        }
+//        }
     }
 	
     public boolean refreshRenderSource(IRenderSource source)
@@ -363,13 +371,13 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 		
         LodUtil.assertTrue(file != null);
         LodUtil.assertTrue(file.metaData != null);
-        if (!this.fullDataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get()))
-		{
+//        if (!this.fullDataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get()))
+//		{
 			this.updateCache(source, file);
             return true;
-        }
+//        }
 		
-        return false;
+//        return false;
     }
 	
 	

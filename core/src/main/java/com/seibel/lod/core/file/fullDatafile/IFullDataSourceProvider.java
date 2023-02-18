@@ -19,8 +19,8 @@ public interface IFullDataSourceProvider extends AutoCloseable {
     void write(DhSectionPos sectionPos, ChunkSizedData chunkData);
     CompletableFuture<Void> flushAndSave();
 
-    long getCacheVersion(DhSectionPos sectionPos);
-    boolean isCacheVersionValid(DhSectionPos sectionPos, long cacheVersion);
+    //long getCacheVersion(DhSectionPos sectionPos);
+    //boolean isCacheVersionValid(DhSectionPos sectionPos, long cacheVersion);
 
     CompletableFuture<IFullDataSource> onCreateDataFile(FullDataMetaFile file);
     IFullDataSource onDataFileLoaded(IFullDataSource source, MetaData metaData, Consumer<IFullDataSource> onUpdated, Function<IFullDataSource, Boolean> updater);

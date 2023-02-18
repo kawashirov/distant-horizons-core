@@ -33,18 +33,6 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
     //    null									- Nothing is loaded or being loaded
     AtomicReference<Object> data = new AtomicReference<>(null);
 	
-//	@FunctionalInterface
-//	public interface CacheValidator
-//	{
-//		boolean isCacheValid(DhSectionPos sectionPos, long timestamp);
-//	}
-//	@FunctionalInterface
-//	public interface CacheSourceProducer
-//	{
-//		CompletableFuture<IFullDataSource> getSourceFuture(DhSectionPos sectionPos);
-//	}
-//	CacheValidator validator;
-//	CacheSourceProducer source;
 	private final RenderFileHandler fileHandler;
 	private boolean doesFileExist;
 	
@@ -250,7 +238,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
     private static MetaData makeMetaData(IRenderSource data)
 	{
 		AbstractRenderSourceLoader loader = AbstractRenderSourceLoader.getLoader(data.getClass(), data.getRenderVersion());
-		return new MetaData(data.getSectionPos(), -1, -1,
+		return new MetaData(data.getSectionPos(), -1,
 				data.getDataDetail(), loader == null ? 0 : loader.renderTypeId, data.getRenderVersion());
 	}
 	

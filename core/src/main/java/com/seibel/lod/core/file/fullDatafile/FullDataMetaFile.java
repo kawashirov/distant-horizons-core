@@ -119,26 +119,26 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 		}
 	}
 
-	public long getCacheVersion() {
-		debugCheck();
-		return (this.metaData == null) ? 0 : this.metaData.dataVersion.get();
-	}
+//	public long getCacheVersion() {
+//		debugCheck();
+//		return (this.metaData == null) ? 0 : this.metaData.dataVersion.get();
+//	}
 
-	public boolean isCacheVersionValid(long cacheVersion)
-	{
-		debugCheck();
-		boolean noWrite = this.writeQueue.get().queue.isEmpty();
-		if (!noWrite)
-		{
-			return false;
-		}
-		else
-		{
-			MetaData getData = this.metaData;
-			//NOTE: Do this instead of direct compare so values that wrapped around still work correctly.
-			return (getData == null ? 0 : this.metaData.dataVersion.get()) - cacheVersion <= 0;
-		}
-	}
+//	public boolean isCacheVersionValid(long cacheVersion)
+//	{
+//		debugCheck();
+//		boolean noWrite = this.writeQueue.get().queue.isEmpty();
+//		if (!noWrite)
+//		{
+//			return false;
+//		}
+//		else
+//		{
+//			MetaData getData = this.metaData;
+//			//NOTE: Do this instead of direct compare so values that wrapped around still work correctly.
+//			return (getData == null ? 0 : this.metaData.dataVersion.get()) - cacheVersion <= 0;
+//		}
+//	}
 
 	public void addToWriteQueue(ChunkSizedData datatype) {
 		debugCheck();
@@ -259,7 +259,7 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 
 	private static MetaData makeMetaData(IFullDataSource data) {
 		AbstractDataSourceLoader loader = AbstractDataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
-		return new MetaData(data.getSectionPos(), -1, 1,
+		return new MetaData(data.getSectionPos(), -1,
 				data.getDataDetail(), loader == null ? 0 : loader.datatypeId, data.getDataVersion());
 	}
 

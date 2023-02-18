@@ -126,7 +126,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		
 		if (exception == null && genTaskCompleted)
 		{
-			this.files.get(task.pos).metaData.dataVersion.incrementAndGet();
+//			this.files.get(task.pos).metaData.dataVersion.incrementAndGet();
 			return;
 		}
 		task.releaseStrongReference();

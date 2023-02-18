@@ -98,7 +98,9 @@ public class FullDataFileHandler implements IFullDataSourceProvider
             FullDataMetaFile fileToUse;
             if (metaFiles.size() > 1)
 			{
-                fileToUse = Collections.max(metaFiles, Comparator.comparingLong(a -> a.metaData.dataVersion.get()));
+//                fileToUse = Collections.max(metaFiles, Comparator.comparingLong(a -> a.metaData.dataVersion.get()));
+				
+                fileToUse = Collections.max(metaFiles, Comparator.comparingLong(fullDataMetaFile -> fullDataMetaFile.path.lastModified()));
                 {
                     StringBuilder sb = new StringBuilder();
                     sb.append("Multiple files with the same pos: ");
@@ -324,27 +326,27 @@ public class FullDataFileHandler implements IFullDataSourceProvider
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
 	
-    @Override
-    public long getCacheVersion(DhSectionPos sectionPos)
-	{
-        FullDataMetaFile file = this.files.get(sectionPos);
-        if (file == null)
-		{
-			return 0;
-		}
-        return file.getCacheVersion();
-    }
+//    @Override
+//    public long getCacheVersion(DhSectionPos sectionPos)
+//	{
+//        FullDataMetaFile file = this.files.get(sectionPos);
+//        if (file == null)
+//		{
+//			return 0;
+//		}
+//        return file.getCacheVersion();
+//    }
 	
-    @Override
-    public boolean isCacheVersionValid(DhSectionPos sectionPos, long cacheVersion)
-	{
-        FullDataMetaFile file = this.files.get(sectionPos);
-        if (file == null)
-		 {
-			return cacheVersion >= 0;
-		}
-        return file.isCacheVersionValid(cacheVersion);
-    }
+//    @Override
+//    public boolean isCacheVersionValid(DhSectionPos sectionPos, long cacheVersion)
+//	{
+//        FullDataMetaFile file = this.files.get(sectionPos);
+//        if (file == null)
+//		 {
+//			return cacheVersion >= 0;
+//		}
+//        return file.isCacheVersionValid(cacheVersion);
+//    }
 	
     @Override
     public CompletableFuture<IFullDataSource> onCreateDataFile(FullDataMetaFile file)
@@ -415,10 +417,10 @@ public class FullDataFileHandler implements IFullDataSourceProvider
                                           Consumer<IFullDataSource> onUpdated, Function<IFullDataSource, Boolean> updater)
 	{
         boolean changed = updater.apply(source);
-        if (changed)
-		{
-			metaData.dataVersion.incrementAndGet();
-		}
+//        if (changed)
+//		{
+//			metaData.dataVersion.incrementAndGet();
+//		}
 		
         if (source instanceof IIncompleteFullDataSource)
 		{
@@ -439,8 +441,14 @@ public class FullDataFileHandler implements IFullDataSourceProvider
         return CompletableFuture.supplyAsync(() ->
 		{
             IFullDataSource sourceLocal = source;
+			
             boolean changed = updater.apply(sourceLocal);
-            if (changed) metaData.dataVersion.incrementAndGet();
+//            if (changed)
+//			{
+//				metaData.dataVersion.incrementAndGet();
+//			}
+			
+			
             if (sourceLocal instanceof IIncompleteFullDataSource)
 			{
                 IFullDataSource newSource = ((IIncompleteFullDataSource) sourceLocal).trySelfPromote();

@@ -13,17 +13,17 @@ public class MetaData
 {
 	public DhSectionPos pos;
 	public int checksum;
-	public AtomicLong dataVersion;
+//	public AtomicLong dataVersion; // currently broken
 	public byte dataLevel;
 	// Loader stuff
 	public long dataTypeId;
 	public byte loaderVersion;
 	
-	public MetaData(DhSectionPos pos, int checksum, long dataVersion, byte dataLevel, long dataTypeId, byte loaderVersion)
+	public MetaData(DhSectionPos pos, int checksum, byte dataLevel, long dataTypeId, byte loaderVersion)
 	{
 		this.pos = pos;
 		this.checksum = checksum;
-		this.dataVersion = new AtomicLong(dataVersion);
+//		this.dataVersion = new AtomicLong(dataVersion);
 		this.dataLevel = dataLevel;
 		this.dataTypeId = dataTypeId;
 		this.loaderVersion = loaderVersion;

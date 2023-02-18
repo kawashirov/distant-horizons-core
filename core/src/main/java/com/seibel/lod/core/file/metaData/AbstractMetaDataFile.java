@@ -104,31 +104,31 @@ public abstract class AbstractMetaDataFile
 	{
         try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.READ))
 		{
-            ByteBuffer buffer = ByteBuffer.allocate(METADATA_SIZE);
-            channel.read(buffer, 0);
+            ByteBuffer byteBuffer = ByteBuffer.allocate(METADATA_SIZE);
+            channel.read(byteBuffer, 0);
             channel.close();
-            buffer.flip();
+            byteBuffer.flip();
 
-            int idBytes = buffer.getInt();
+            int idBytes = byteBuffer.getInt();
             if (idBytes != METADATA_IDENTITY_BYTES)
 			{
                 throw new IOException("Invalid file format: Metadata Identity byte check failed. Expected: [" + METADATA_IDENTITY_BYTES + "], Actual: [" + idBytes + "].");
             }
 			
-            int x = buffer.getInt();
-            int y = buffer.getInt(); // Unused
-            int z = buffer.getInt();
-            int checksum = buffer.getInt();
-            byte detailLevel = buffer.get();
-            byte dataLevel = buffer.get();
-            byte loaderVersion = buffer.get();
-            byte unused = buffer.get();
-            long dataTypeId = buffer.getLong();
-            long timestamp = buffer.getLong();
-            LodUtil.assertTrue(buffer.remaining() == METADATA_RESERVED_SIZE);
+            int x = byteBuffer.getInt();
+            int y = byteBuffer.getInt(); // Unused
+            int z = byteBuffer.getInt();
+            int checksum = byteBuffer.getInt();
+            byte detailLevel = byteBuffer.get();
+            byte dataLevel = byteBuffer.get();
+            byte loaderVersion = byteBuffer.get();
+            byte unused = byteBuffer.get();
+            long dataTypeId = byteBuffer.getLong();
+            long unusedTimestamp = byteBuffer.getLong(); // not currently implemented
+            LodUtil.assertTrue(byteBuffer.remaining() == METADATA_RESERVED_SIZE);
             DhSectionPos dataPos = new DhSectionPos(detailLevel, x, z);
 			
-            return new MetaData(dataPos, checksum, timestamp, dataLevel, dataTypeId, loaderVersion);
+            return new MetaData(dataPos, checksum, dataLevel, dataTypeId, loaderVersion);
         }
     }
 	
@@ -204,7 +204,7 @@ public abstract class AbstractMetaDataFile
 				buff.put(this.metaData.loaderVersion);
 				buff.put(Byte.MIN_VALUE); // Unused
 				buff.putLong(this.metaData.dataTypeId);
-				buff.putLong(this.metaData.dataVersion.get());
+				buff.putLong(Long.MAX_VALUE); //buff.putLong(this.metaData.dataVersion.get()); // not currently implemented
 				LodUtil.assertTrue(buff.remaining() == METADATA_RESERVED_SIZE);
 				buff.flip();
 				file.write(buff);
