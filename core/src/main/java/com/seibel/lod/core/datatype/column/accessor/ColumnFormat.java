@@ -106,7 +106,7 @@ public class ColumnFormat
 		
 		return (generationMode & GEN_TYPE_MASK) << GEN_TYPE_SHIFT;
 	}
-
+	
     public static long createDataPoint(int height, int depth, int color, int lightSky, int lightBlock, int generationMode)
 	{
 		return createDataPoint(
@@ -158,49 +158,13 @@ public class ColumnFormat
 				| (generationMode & GEN_TYPE_MASK) << GEN_TYPE_SHIFT
 				;
 	}
-
+	
     public static long shiftHeightAndDepth(long dataPoint, short offset)
 	{
 		long height = (dataPoint + ((long) offset << HEIGHT_SHIFT)) & HEIGHT_SHIFTED_MASK;
 		long depth = (dataPoint + (offset << DEPTH_SHIFT)) & DEPTH_SHIFTED_MASK;
 		
 		return dataPoint & ~(HEIGHT_SHIFTED_MASK | DEPTH_SHIFTED_MASK) | height | depth;
-	}
-	
-	public static long version9Reorder(long dataPoint)
-	{
-		/*
-		|a  |a  |a  |a  |r  |r  |r  |r   |
-		|r  |r  |r  |r  |g  |g  |g  |g  |
-		|g  |g  |g  |g  |b  |b  |b  |b  |
-		|b  |b  |b  |b  |h  |h  |h  |h  |
-		|h  |h  |h  |h  |h  |h  |d  |d  |
-		|d  |d  |d  |d  |d  |d  |d  |d  |
-		|bl |bl |bl |bl |sl |sl |sl |sl |
-		|l  |l  |f  |g  |g  |g  |v  |e  |
-		*/
-		
-		if ((dataPoint & 1) == 0)
-		{
-			return 0;
-		}
-		
-		long height = (dataPoint >>> 26) & 0x3FF;
-		long depth = (dataPoint >>> 16) & 0x3FF;
-		
-		if (height == depth || (dataPoint & 0b10) == 0b10)
-		{
-			return createVoidDataPoint((byte) (((dataPoint >>> 2) & 0b111) + 1));
-		}
-		
-		return ((dataPoint >>> 60) & 0xF) << ALPHA_SHIFT
-				| ((dataPoint >>> 52) & 0xFF) << RED_SHIFT
-				| ((dataPoint >>> 44) & 0xFF) << GREEN_SHIFT
-				| ((dataPoint >>> 36) & 0xFF) << BLUE_SHIFT
-				| ((dataPoint >>> 26) & 0x3FF) << HEIGHT_SHIFT
-				| ((dataPoint >>> 16) & 0x3FF) << DEPTH_SHIFT
-				| ((dataPoint >>> 8) & 0xFF) << SKY_LIGHT_SHIFT
-				| (((dataPoint >>> 2) & 0xFF) + 1) << GEN_TYPE_SHIFT;
 	}
 	
     public static short getHeight(long dataPoint) { return (short) ((dataPoint >>> HEIGHT_SHIFT) & HEIGHT_MASK); }
@@ -237,28 +201,6 @@ public class ColumnFormat
         long alpha = getAlpha(dataPoint);
         return (int) (((dataPoint >>> COLOR_SHIFT) & COLOR_MASK) | (alpha << (ALPHA_SHIFT - COLOR_SHIFT)));
     }
-	
-    private static void shrinkArray(short[] array, int packetSize, int start, int length, int arraySize)
-	{
-        start *= packetSize;
-        length *= packetSize;
-        arraySize *= packetSize;
-        //remove comment to not leave garbage at the end
-        //array[start + packetSize + i] = 0;
-        if (arraySize - start >= 0) System.arraycopy(array, start + length, array, start, arraySize - start);
-    }
-	
-	private static void extendArray(short[] array, int packetSize, int start, int length, int arraySize)
-	{
-		start *= packetSize;
-		length *= packetSize;
-		arraySize *= packetSize;
-		for (int i = arraySize - start - 1; i >= 0; i--)
-		{
-			array[start + length + i] = array[start + i];
-			array[start + i] = 0;
-		}
-	}
 	
     /** Return (>0) if dataA should replace dataB, (0) if equal, (<0) if dataB should replace dataA */
     public static int compareDatapointPriority(long dataA, long dataB) { return (int) ((dataA >> COMPARE_SHIFT) - (dataB >> COMPARE_SHIFT)); }
