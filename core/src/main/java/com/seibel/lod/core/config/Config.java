@@ -470,6 +470,14 @@ public class Config
                                 + " will be set to 0(disabled).")
                         .build();
 
+                public static ConfigEntry<Double> lodBias = new ConfigEntry.Builder<Double>()    // TODO: Make this a float (the ClassicConfigGUI doesnt support floats)
+                        .setMinDefaultMax(0d, 0.5d, null)
+                        .comment(""
+                                + "What the value of vanilla's LodBias should be \n"
+                                + "If set to 0 the mod wont overwrite vanilla's default (which so happens to also be 0)")
+                        .build();
+
+
 
 
                 public static ConfigCategory noiseSettings = new ConfigCategory.Builder().set(NoiseSettings.class).build();
@@ -483,12 +491,12 @@ public class Config
                             .build();
 
                     public static ConfigEntry<Integer> noiseSteps = new ConfigEntry.Builder<Integer>()
-                            .setMinDefaultMax(0, 5, null)
+                            .setMinDefaultMax(0, 4, null)
                             .comment("How many steps of noise should be on each block")
                             .build();
 
                     public static ConfigEntry<Double> noiseIntensity = new ConfigEntry.Builder<Double>()    // TODO: Make this a float (the ClassicConfigGUI doesnt support floats)
-                            .setMinDefaultMax(0d, 20d, 100d)                    // TODO: Once this becomes a float make it 0-1 instead of 0-100 (I did this cus doubles only allow 2 decimal places)
+                            .setMinDefaultMax(0d, 10d, 100d)                    // TODO: Once this becomes a float make it 0-1 instead of 0-100 (I did this cus doubles only allow 2 decimal places)
                             .comment("How intense the noise should be")
                             .build();
 
