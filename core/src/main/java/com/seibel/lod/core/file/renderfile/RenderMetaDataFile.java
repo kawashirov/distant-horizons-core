@@ -2,7 +2,7 @@ package com.seibel.lod.core.file.renderfile;
 
 import com.seibel.lod.core.datatype.IRenderSource;
 import com.seibel.lod.core.datatype.AbstractRenderSourceLoader;
-import com.seibel.lod.core.datatype.full.ChunkSizedFullDataSource;
+import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.file.metaData.MetaData;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.level.IDhLevel;

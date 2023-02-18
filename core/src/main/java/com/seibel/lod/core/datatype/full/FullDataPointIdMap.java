@@ -60,7 +60,7 @@ public class FullDataPointIdMap
 	}
 	
 	/** Serializes all contained entries into the given stream, formatted in UTF */
-	void serialize(OutputStream outputStream) throws IOException
+	public void serialize(OutputStream outputStream) throws IOException
 	{
 		DataOutputStream dataStream = new DataOutputStream(outputStream); // DO NOT CLOSE! It would close all related streams
 		dataStream.writeInt(this.entries.size());
@@ -71,7 +71,7 @@ public class FullDataPointIdMap
 	}
 	
 	/** Creates a new IdBiomeBlockStateMap from the given UTF formatted stream */
-	static FullDataPointIdMap deserialize(InputStream inputStream) throws IOException
+	public static FullDataPointIdMap deserialize(InputStream inputStream) throws IOException
 	{
 		DataInputStream dataStream = new DataInputStream(inputStream); // DO NOT CLOSE! It would close all related streams
 		int entityCount = dataStream.readInt();

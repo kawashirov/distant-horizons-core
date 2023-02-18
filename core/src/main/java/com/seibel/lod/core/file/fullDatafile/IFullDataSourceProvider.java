@@ -1,7 +1,7 @@
 package com.seibel.lod.core.file.fullDatafile;
 
 import com.seibel.lod.core.datatype.IFullDataSource;
-import com.seibel.lod.core.datatype.full.ChunkSizedFullDataSource;
+import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.file.metaData.MetaData;
 import com.seibel.lod.core.pos.DhSectionPos;
 

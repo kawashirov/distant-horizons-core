@@ -1,6 +1,7 @@
-package com.seibel.lod.core.datatype.full;
+package com.seibel.lod.core.datatype.full.sources;
 
 import com.seibel.lod.core.datatype.IFullDataSource;
+import com.seibel.lod.core.datatype.full.FullDataPointIdMap;
 import com.seibel.lod.core.datatype.full.accessor.FullArrayView;
 import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;
 import com.seibel.lod.core.level.IDhLevel;
@@ -32,13 +33,14 @@ public class FullDataSource extends FullArrayView implements IFullDataSource
 	
 	
 	
+	// TODO why is this protected?
     protected FullDataSource(DhSectionPos sectionPos)
 	{
         super(new FullDataPointIdMap(), new long[SECTION_SIZE*SECTION_SIZE][0], SECTION_SIZE);
         this.sectionPos = sectionPos;
     }
 	
-	FullDataSource(DhSectionPos pos, FullDataPointIdMap mapping, long[][] data)
+	public FullDataSource(DhSectionPos pos, FullDataPointIdMap mapping, long[][] data)
 	{
 		super(mapping, data, SECTION_SIZE);
 		LodUtil.assertTrue(data.length == SECTION_SIZE * SECTION_SIZE);

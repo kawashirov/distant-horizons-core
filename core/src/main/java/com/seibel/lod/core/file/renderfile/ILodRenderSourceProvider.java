@@ -1,7 +1,7 @@
 package com.seibel.lod.core.file.renderfile;
 
 import com.seibel.lod.core.datatype.IRenderSource;
-import com.seibel.lod.core.datatype.full.ChunkSizedFullDataSource;
+import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.pos.DhSectionPos;
 
 import java.io.File;

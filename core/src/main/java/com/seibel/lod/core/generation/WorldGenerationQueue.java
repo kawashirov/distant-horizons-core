@@ -3,7 +3,7 @@ package com.seibel.lod.core.generation;
 import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
 import com.seibel.lod.core.config.Config;
-import com.seibel.lod.core.datatype.full.ChunkSizedFullDataSource;
+import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.datatype.transform.LodDataBuilder;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.generation.tasks.*;

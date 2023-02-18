@@ -2,8 +2,7 @@ package com.seibel.lod.core.datatype.column;
 
 import com.seibel.lod.core.datatype.IIncompleteFullDataSource;
 import com.seibel.lod.core.datatype.IFullDataSource;
-import com.seibel.lod.core.datatype.column.accessor.ColumnFormat;
-import com.seibel.lod.core.datatype.full.FullDataSource;
+import com.seibel.lod.core.datatype.full.sources.FullDataSource;
 import com.seibel.lod.core.datatype.transform.FullToColumnTransformer;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.datatype.IRenderSource;

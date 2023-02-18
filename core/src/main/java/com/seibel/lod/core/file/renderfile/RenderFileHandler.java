@@ -6,7 +6,7 @@ import com.seibel.lod.core.datatype.PlaceHolderRenderSource;
 import com.seibel.lod.core.datatype.IRenderSource;
 import com.seibel.lod.core.datatype.AbstractRenderSourceLoader;
 import com.seibel.lod.core.datatype.column.ColumnRenderSource;
-import com.seibel.lod.core.datatype.full.ChunkSizedFullDataSource;
+import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.datatype.transform.DataRenderTransformer;
 import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.lod.core.level.IDhClientLevel;

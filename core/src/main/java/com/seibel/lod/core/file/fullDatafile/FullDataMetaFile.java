@@ -10,7 +10,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.seibel.lod.core.datatype.IFullDataSource;
 import com.seibel.lod.core.datatype.AbstractDataSourceLoader;
-import com.seibel.lod.core.datatype.full.ChunkSizedFullDataSource;
+import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.file.metaData.MetaData;
 import com.seibel.lod.core.pos.DhLodPos;

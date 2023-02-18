@@ -2,7 +2,7 @@ package com.seibel.lod.core.file.subDimMatching;
 
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.datatype.IFullDataSource;
-import com.seibel.lod.core.datatype.full.ChunkSizedFullDataSource;
+import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.datatype.full.FullDataPoint;
 import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;
 import com.seibel.lod.core.datatype.transform.LodDataBuilder;

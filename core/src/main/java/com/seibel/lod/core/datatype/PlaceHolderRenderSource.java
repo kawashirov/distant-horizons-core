@@ -1,6 +1,6 @@
 package com.seibel.lod.core.datatype;
 
-import com.seibel.lod.core.datatype.full.ChunkSizedFullDataSource;
+import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.LodQuadTree;

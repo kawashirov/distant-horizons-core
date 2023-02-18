@@ -3,7 +3,7 @@ package com.seibel.lod.core.datatype.column;
 import com.seibel.lod.core.ModInfo;
 import com.seibel.lod.core.datatype.column.accessor.*;
 import com.seibel.lod.core.datatype.column.render.ColumnRenderBuffer;
-import com.seibel.lod.core.datatype.full.ChunkSizedFullDataSource;
+import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.datatype.transform.FullToColumnTransformer;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;

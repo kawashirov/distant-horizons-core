@@ -3,7 +3,7 @@ package com.seibel.lod.core.datatype.transform;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.seibel.lod.core.datatype.full.ChunkSizedFullDataSource;
+import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.pos.DhChunkPos;

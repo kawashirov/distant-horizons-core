@@ -2,6 +2,7 @@ package com.seibel.lod.core.datatype.full;
 
 import com.seibel.lod.core.datatype.IFullDataSource;
 import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;
+import com.seibel.lod.core.datatype.full.sources.FullDataSource;
 import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
