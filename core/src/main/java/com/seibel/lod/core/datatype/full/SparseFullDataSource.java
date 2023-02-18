@@ -49,6 +49,10 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 	
 	
 	
+	//==============//
+	// constructors //
+	//==============//
+	
     public static SparseFullDataSource createEmpty(DhSectionPos pos) { return new SparseFullDataSource(pos); }
 
     protected SparseFullDataSource(DhSectionPos sectionPos)
@@ -89,17 +93,17 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 	@Override
 	public FullDataPointIdMap getMapping() { return this.mapping; }
 	
-    private int calculateOffset(int cx, int cz)
+    private int calculateOffset(int chunkX, int chunkZ)
 	{
-        int ox = cx - this.chunkPos.x;
-        int oz = cz - this.chunkPos.z;
-        LodUtil.assertTrue(ox >= 0 && oz >= 0 && ox < this.chunks && oz < this.chunks);
-        return ox * this.chunks + oz;
+        int offsetX = chunkX - this.chunkPos.x;
+        int offsetZ = chunkZ - this.chunkPos.z;
+        LodUtil.assertTrue(offsetX >= 0 && offsetZ >= 0 && offsetX < this.chunks && offsetZ < this.chunks);
+        return offsetX * this.chunks + offsetZ;
     }
 	
 	
     @Override
-    public void update(ChunkSizedData data)
+    public void update(ChunkSizedFullData data)
 	{
 		if (data.dataDetail != 0)
 		{
@@ -208,6 +212,12 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 			}
 		}
     }
+	
+	
+	
+	//===============//
+	// file handling //
+	//===============//
 	
     @Override
     public void saveData(IDhLevel level, FullDataMetaFile file, OutputStream dataStream) throws IOException
@@ -440,7 +450,9 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 			}
         }
     }
-
+	
+	
+	
     private void applyToFullDataSource(FullDataSource dataSource)
 	{
         LodUtil.assertTrue(dataSource.getSectionPos().equals(this.sectionPos));
