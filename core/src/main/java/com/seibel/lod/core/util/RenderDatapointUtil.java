@@ -17,11 +17,11 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.datatype.column.accessor;
+package com.seibel.lod.core.util;
 
+import com.seibel.lod.core.datatype.column.accessor.ColumnArrayView;
+import com.seibel.lod.core.datatype.column.accessor.IColumnDataView;
 import com.seibel.lod.core.logging.SpamReducedLogger;
-import com.seibel.lod.core.util.ColorUtil;
-import com.seibel.lod.core.util.LodUtil;
 
 import java.util.Arrays;
 
@@ -30,7 +30,7 @@ import java.util.Arrays;
  * A helper class that is used to access the data in a RenderColumn
  * long datapoint.
  */
-public class ColumnFormatUtil
+public class RenderDatapointUtil
 {
 	/*
 	
@@ -319,8 +319,8 @@ public class ColumnFormatUtil
 		for (int index = 0; index < dataCount; index++)
 		{
 			tempData = sourceData.get(index * inputVerticalSize);
-			allVoid = allVoid && ColumnFormatUtil.isVoid(tempData);
-			allEmpty = allEmpty && !ColumnFormatUtil.doesDataPointExist(tempData);
+			allVoid = allVoid && RenderDatapointUtil.isVoid(tempData);
+			allEmpty = allEmpty && !RenderDatapointUtil.doesDataPointExist(tempData);
 		}
 		
 		//We check if there is any data that's not empty or void
@@ -354,10 +354,10 @@ public class ColumnFormatUtil
 					if (indices[index] < inputVerticalSize)
 					{
 						tempData = sourceData.get(index * inputVerticalSize + indices[index]);
-						if (!ColumnFormatUtil.isVoid(tempData) && ColumnFormatUtil.doesDataPointExist(tempData))
+						if (!RenderDatapointUtil.isVoid(tempData) && RenderDatapointUtil.doesDataPointExist(tempData))
 						{
-							tempHeight = ColumnFormatUtil.getHeight(tempData);
-							tempDepth = ColumnFormatUtil.getDepth(tempData);
+							tempHeight = RenderDatapointUtil.getHeight(tempData);
+							tempDepth = RenderDatapointUtil.getDepth(tempData);
 							if (tempDepth >= newHeight)
 							{
 								//First case
@@ -452,7 +452,7 @@ public class ColumnFormatUtil
 				if (indices[index] < inputVerticalSize)
 				{
 					tempData = sourceData.get(index * inputVerticalSize + indices[index]);
-					stillHasDataToCheck |= !ColumnFormatUtil.isVoid(tempData) && ColumnFormatUtil.doesDataPointExist(tempData);
+					stillHasDataToCheck |= !RenderDatapointUtil.isVoid(tempData) && RenderDatapointUtil.doesDataPointExist(tempData);
 				}
 			}
 		}

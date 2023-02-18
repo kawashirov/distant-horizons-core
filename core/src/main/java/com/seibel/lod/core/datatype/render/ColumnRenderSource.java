@@ -15,6 +15,7 @@ import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.render.LodRenderSection;
 import com.seibel.lod.core.util.ColorUtil;
+import com.seibel.lod.core.util.RenderDatapointUtil;
 import com.seibel.lod.core.util.objects.Reference;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
@@ -155,7 +156,7 @@ public class ColumnRenderSource implements IColumnDatatype
 		}
 		
 		int dataOffset = posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount;
-		int compare = ColumnFormatUtil.compareDatapointPriority(newData.get(0), this.dataContainer[dataOffset]);
+		int compare = RenderDatapointUtil.compareDatapointPriority(newData.get(0), this.dataContainer[dataOffset]);
 		if (overwriteDataWithSameGenerationMode)
 		{
 			if (compare < 0)
@@ -268,8 +269,8 @@ public class ColumnRenderSource implements IColumnDatatype
 		
 		for (int i = 0; i < this.dataContainer.length; i += this.verticalDataCount)
 		{
-			int thisGenMode = ColumnFormatUtil.getGenerationMode(this.dataContainer[i]);
-			int srcGenMode = ColumnFormatUtil.getGenerationMode(renderSource.dataContainer[i]);
+			int thisGenMode = RenderDatapointUtil.getGenerationMode(this.dataContainer[i]);
+			int srcGenMode = RenderDatapointUtil.getGenerationMode(renderSource.dataContainer[i]);
 			
 			if (srcGenMode == 0)
 			{

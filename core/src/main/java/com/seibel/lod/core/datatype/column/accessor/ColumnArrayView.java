@@ -1,14 +1,16 @@
 package com.seibel.lod.core.datatype.column.accessor;
 
 
+import com.seibel.lod.core.util.RenderDatapointUtil;
+
 import java.util.Arrays;
 
 public final class ColumnArrayView implements IColumnDataView
 {
-	final long[] data;
-	final int size;
-	final int offset; // offset in longs
-	final int vertSize; // vertical size in longs
+	public final long[] data;
+	public final int size;
+	public final int offset; // offset in longs
+	public final int vertSize; // vertical size in longs
 	
 	
 	
@@ -89,7 +91,7 @@ public final class ColumnArrayView implements IColumnDataView
 		{
 			if (override)
 			{
-				if (ColumnFormatUtil.compareDatapointPriority(source.get(o), get(o)) >= 0)
+				if (RenderDatapointUtil.compareDatapointPriority(source.get(o), get(o)) >= 0)
 				{
 					anyChange = true;
 					System.arraycopy(source.data, source.offset + o, data, offset + o, vertSize);
@@ -97,7 +99,7 @@ public final class ColumnArrayView implements IColumnDataView
 			}
 			else
 			{
-				if (ColumnFormatUtil.compareDatapointPriority(source.get(o), get(o)) > 0)
+				if (RenderDatapointUtil.compareDatapointPriority(source.get(o), get(o)) > 0)
 				{
 					anyChange = true;
 					System.arraycopy(source.data, source.offset + o, data, offset + o, vertSize);
@@ -121,7 +123,7 @@ public final class ColumnArrayView implements IColumnDataView
 		{
 			for (int i = 0; i < dataCount(); i++)
 			{
-				ColumnFormatUtil.mergeMultiData(source.subView(i, 1), subView(i, 1));
+				RenderDatapointUtil.mergeMultiData(source.subView(i, 1), subView(i, 1));
 			}
 		}
 	}
@@ -133,7 +135,7 @@ public final class ColumnArrayView implements IColumnDataView
 			throw new IllegalArgumentException("output dataCount must be 1");
 		}
 		
-		ColumnFormatUtil.mergeMultiData(source, this);
+		RenderDatapointUtil.mergeMultiData(source, this);
 	}
 	
 	@Override
@@ -147,7 +149,7 @@ public final class ColumnArrayView implements IColumnDataView
 		sb.append(" [");
 		for (int i = 0; i < size; i++)
 		{
-			sb.append(ColumnFormatUtil.toString(data[offset + i]));
+			sb.append(RenderDatapointUtil.toString(data[offset + i]));
 			if (i < size - 1)
 			{
 				sb.append(",\n");
