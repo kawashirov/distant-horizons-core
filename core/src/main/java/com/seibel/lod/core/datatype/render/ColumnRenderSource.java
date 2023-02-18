@@ -26,10 +26,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Stores the color data used when generating OpenGL buffers.
- * 
- * @author Leetom
- * @version 2022-2-7
+ * Stores the render data used to generate OpenGL buffers.
+ *
+ * @see	RenderDataPointUtil
  */
 public class ColumnRenderSource
 {
@@ -38,10 +37,9 @@ public class ColumnRenderSource
 	public static final boolean DO_SAFETY_CHECKS = ModInfo.IS_DEV_BUILD;
 	public static final byte SECTION_SIZE_OFFSET = DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL;
 	public static final int SECTION_SIZE = BitShiftUtil.powerOfTwo(SECTION_SIZE_OFFSET);
+	
 	public static final byte DATA_FORMAT_VERSION = 1;
 	public static final long TYPE_ID = "ColumnRenderSource".hashCode();
-	public static final int AIR_LOD_SIZE = 16;
-	public static final int AIR_SECTION_SIZE = SECTION_SIZE / AIR_LOD_SIZE;
 	
 	/**
 	 * This is the byte put between different sections in the binary save file.
@@ -57,8 +55,7 @@ public class ColumnRenderSource
 	public final DhSectionPos sectionPos;
 	public final int yOffset;
 	
-	public long[] dataContainer;
-	public int[] airDataContainer;
+	public long[] renderDataContainer;
 	
 	public final DebugSourceFlag[] debugSourceFlags;
 	
@@ -69,9 +66,9 @@ public class ColumnRenderSource
 	//FIXME: Temp Hack to prevent swapping buffers too quickly
 	private long lastNs = -1;
 	/** 10 sec */
-	private static final long SWAP_TIMEOUT = 10_000000000L;
+	private static final long SWAP_TIMEOUT_IN_NS = 10_000000000L;
 	/** 1 sec */
-	private static final long SWAP_BUSY_COLLISION_TIMEOUT = 1_000000000L;
+	private static final long SWAP_BUSY_COLLISION_TIMEOUT_IN_NS = 1_000000000L;
 	
 	private CompletableFuture<ColumnRenderBuffer> buildRenderBufferFuture = null;
 	private final Reference<ColumnRenderBuffer> columnRenderBufferRef = new Reference<>();
@@ -92,8 +89,7 @@ public class ColumnRenderSource
 	public ColumnRenderSource(DhSectionPos sectionPos, int maxVerticalSize, int yOffset)
 	{
 		this.verticalDataCount = maxVerticalSize;
-		this.dataContainer = new long[SECTION_SIZE * SECTION_SIZE * this.verticalDataCount];
-		this.airDataContainer = new int[AIR_SECTION_SIZE * AIR_SECTION_SIZE * this.verticalDataCount];
+		this.renderDataContainer = new long[SECTION_SIZE * SECTION_SIZE * this.verticalDataCount];
 		this.debugSourceFlags = new DebugSourceFlag[SECTION_SIZE * SECTION_SIZE];
 		this.sectionPos = sectionPos;
 		this.yOffset = yOffset;
@@ -114,8 +110,7 @@ public class ColumnRenderSource
 		this.sectionPos = sectionPos;
 		this.yOffset = level.getMinY();
 		this.verticalDataCount = parsedColumnData.verticalSize;
-		this.dataContainer = parsedColumnData.dataContainer;
-		this.airDataContainer = new int[AIR_SECTION_SIZE * AIR_SECTION_SIZE * this.verticalDataCount];
+		this.renderDataContainer = parsedColumnData.dataContainer;
 		
 		this.debugSourceFlags = new DebugSourceFlag[SECTION_SIZE * SECTION_SIZE];
 		this.fillDebugFlag(0, 0, SECTION_SIZE, SECTION_SIZE, DebugSourceFlag.FILE);
@@ -131,13 +126,13 @@ public class ColumnRenderSource
 	{
 		for (int verticalIndex = 0; verticalIndex < this.verticalDataCount; verticalIndex++)
 		{
-			this.dataContainer[posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount + verticalIndex] = RenderDataPointUtil.EMPTY_DATA;
+			this.renderDataContainer[posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount + verticalIndex] = RenderDataPointUtil.EMPTY_DATA;
 		}
 	}
 	
 	public boolean setDataPoint(long data, int posX, int posZ, int verticalIndex)
 	{
-		this.dataContainer[posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount + verticalIndex] = data;
+		this.renderDataContainer[posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount + verticalIndex] = data;
 		return true;
 	}
 	
@@ -154,7 +149,7 @@ public class ColumnRenderSource
 		}
 		
 		int dataOffset = posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount;
-		int compare = RenderDataPointUtil.compareDatapointPriority(newData.get(0), this.dataContainer[dataOffset]);
+		int compare = RenderDataPointUtil.compareDatapointPriority(newData.get(0), this.renderDataContainer[dataOffset]);
 		if (overwriteDataWithSameGenerationMode)
 		{
 			if (compare < 0)
@@ -171,31 +166,31 @@ public class ColumnRenderSource
 		}
 		
 		// copy the newData into this column's data
-		newData.copyTo(this.dataContainer, dataOffset, newData.size());
+		newData.copyTo(this.renderDataContainer, dataOffset, newData.size());
 		return true;
 	}
 	
 	
 	public long getFirstDataPoint(int posX, int posZ) { return getDataPoint(posX, posZ, 0); }
-	public long getDataPoint(int posX, int posZ, int verticalIndex) { return this.dataContainer[posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount + verticalIndex]; }
+	public long getDataPoint(int posX, int posZ, int verticalIndex) { return this.renderDataContainer[posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount + verticalIndex]; }
 	
 	public long[] getVerticalDataPointArray(int posX, int posZ)
 	{
 		long[] result = new long[this.verticalDataCount];
 		int index = posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount;
-		System.arraycopy(this.dataContainer, index, result, 0, this.verticalDataCount);
+		System.arraycopy(this.renderDataContainer, index, result, 0, this.verticalDataCount);
 		return result;
 	}
 	
 	public ColumnArrayView getVerticalDataPointView(int posX, int posZ)
 	{
-		return new ColumnArrayView(this.dataContainer, this.verticalDataCount,
+		return new ColumnArrayView(this.renderDataContainer, this.verticalDataCount,
 				posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount,
 				this.verticalDataCount);
 	}
 	
 	public ColumnQuadView getFullQuadView() { return this.getQuadViewOverRange(0, 0, SECTION_SIZE, SECTION_SIZE); }
-	public ColumnQuadView getQuadViewOverRange(int quadX, int quadZ, int quadXSize, int quadZSize) { return new ColumnQuadView(this.dataContainer, SECTION_SIZE, this.verticalDataCount, quadX, quadZ, quadXSize, quadZSize); }
+	public ColumnQuadView getQuadViewOverRange(int quadX, int quadZ, int quadXSize, int quadZSize) { return new ColumnQuadView(this.renderDataContainer, SECTION_SIZE, this.verticalDataCount, quadX, quadZ, quadXSize, quadZSize); }
 	
 	public int getVerticalSize() { return this.verticalDataCount; }
 	
@@ -227,7 +222,7 @@ public class ColumnRenderSource
 			{
 				for (int y = 0; y < this.verticalDataCount; y++)
 				{
-					long currentDatapoint = this.dataContainer[xz * this.verticalDataCount + y];
+					long currentDatapoint = this.renderDataContainer[xz * this.verticalDataCount + y];
 					outputStream.writeLong(Long.reverseBytes(currentDatapoint)); // the reverse bytes is necessary to ensure the data is read in correctly
 				}
 			}
@@ -257,10 +252,10 @@ public class ColumnRenderSource
 		this.isEmpty = false;
 		
 		
-		for (int i = 0; i < this.dataContainer.length; i += this.verticalDataCount)
+		for (int i = 0; i < this.renderDataContainer.length; i += this.verticalDataCount)
 		{
-			int thisGenMode = RenderDataPointUtil.getGenerationMode(this.dataContainer[i]);
-			int srcGenMode = RenderDataPointUtil.getGenerationMode(renderSource.dataContainer[i]);
+			int thisGenMode = RenderDataPointUtil.getGenerationMode(this.renderDataContainer[i]);
+			int srcGenMode = RenderDataPointUtil.getGenerationMode(renderSource.renderDataContainer[i]);
 			
 			if (srcGenMode == 0)
 			{
@@ -271,8 +266,8 @@ public class ColumnRenderSource
 			// this object's column is older than the source's column, update it
 			if (thisGenMode <= srcGenMode)
 			{
-				ColumnArrayView thisColumnArrayView = new ColumnArrayView(this.dataContainer, this.verticalDataCount, i, this.verticalDataCount);
-				ColumnArrayView srcColumnArrayView = new ColumnArrayView(renderSource.dataContainer, renderSource.verticalDataCount, i, renderSource.verticalDataCount);
+				ColumnArrayView thisColumnArrayView = new ColumnArrayView(this.renderDataContainer, this.verticalDataCount, i, this.verticalDataCount);
+				ColumnArrayView srcColumnArrayView = new ColumnArrayView(renderSource.renderDataContainer, renderSource.verticalDataCount, i, renderSource.verticalDataCount);
 				thisColumnArrayView.copyFrom(srcColumnArrayView);
 				
 				this.debugSourceFlags[i / this.verticalDataCount] = renderSource.debugSourceFlags[i / this.verticalDataCount];
@@ -289,8 +284,7 @@ public class ColumnRenderSource
 		if (newVerticalSize != this.verticalDataCount)
 		{
 			this.verticalDataCount = newVerticalSize;
-			this.dataContainer = new long[SECTION_SIZE * SECTION_SIZE * this.verticalDataCount];
-			this.airDataContainer = new int[AIR_SECTION_SIZE * AIR_SECTION_SIZE * this.verticalDataCount];
+			this.renderDataContainer = new long[SECTION_SIZE * SECTION_SIZE * this.verticalDataCount];
 		}
 	}
 	
@@ -313,7 +307,7 @@ public class ColumnRenderSource
 	
 	public int getMaxLodCount() { return SECTION_SIZE * SECTION_SIZE * this.getVerticalSize(); }
 	
-	public long getRoughRamUsageInBytes() { return (long) this.dataContainer.length * Long.BYTES; }
+	public long getRoughRamUsageInBytes() { return (long) this.renderDataContainer.length * Long.BYTES; }
 	
 	public DhSectionPos getSectionPos() { return this.sectionPos; }
 	
@@ -375,7 +369,7 @@ public class ColumnRenderSource
 	public boolean trySwapRenderBufferAsync(LodQuadTree quadTree, AtomicReference<AbstractRenderBuffer> renderBufferToSwap)
 	{
 		// prevent swapping the buffer to quickly
-		if (this.lastNs != -1 && System.nanoTime() - this.lastNs < SWAP_TIMEOUT)
+		if (this.lastNs != -1 && System.nanoTime() - this.lastNs < SWAP_TIMEOUT_IN_NS)
 		{
 			return false;
 		}
@@ -410,7 +404,7 @@ public class ColumnRenderSource
 			{
 				if (ColumnRenderBuffer.isBusy())
 				{
-					this.lastNs += (long) (SWAP_BUSY_COLLISION_TIMEOUT * Math.random());
+					this.lastNs += (long) (SWAP_BUSY_COLLISION_TIMEOUT_IN_NS * Math.random());
 				}
 				else
 				{
