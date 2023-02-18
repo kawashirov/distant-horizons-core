@@ -31,7 +31,7 @@ public class ColumnRenderLoader extends AbstractRenderSourceLoader
 	
 	public ColumnRenderLoader()
 	{
-        super(ColumnRenderSource.class, ColumnRenderSource.TYPE_ID, new byte[]{ ColumnRenderSource.LATEST_VERSION }, ColumnRenderSource.SECTION_SIZE_OFFSET);
+        super(ColumnRenderSource.class, ColumnRenderSource.TYPE_ID, new byte[]{ ColumnRenderSource.DATA_FORMAT_VERSION }, ColumnRenderSource.SECTION_SIZE_OFFSET);
     }
 	
 	

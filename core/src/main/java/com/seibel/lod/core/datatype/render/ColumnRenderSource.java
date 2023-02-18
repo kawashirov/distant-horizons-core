@@ -14,6 +14,7 @@ import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.render.LodRenderSection;
+import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.ColorUtil;
 import com.seibel.lod.core.util.RenderDataPointUtil;
 import com.seibel.lod.core.util.objects.Reference;
@@ -30,17 +31,17 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Leetom
  * @version 2022-2-7
  */
-public class ColumnRenderSource implements IColumnDatatype
+public class ColumnRenderSource
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
 	public static final boolean DO_SAFETY_CHECKS = ModInfo.IS_DEV_BUILD;
-	public static final byte SECTION_SIZE_OFFSET = 6;
-	public static final int SECTION_SIZE = 1 << SECTION_SIZE_OFFSET;
-	public static final byte LATEST_VERSION = 1;
+	public static final byte SECTION_SIZE_OFFSET = DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL;
+	public static final int SECTION_SIZE = BitShiftUtil.powerOfTwo(SECTION_SIZE_OFFSET);
+	public static final byte DATA_FORMAT_VERSION = 1;
 	public static final long TYPE_ID = "ColumnRenderSource".hashCode();
-	public static final int AIR_LODS_SIZE = 16;
-	public static final int AIR_SECTION_SIZE = SECTION_SIZE / AIR_LODS_SIZE;
+	public static final int AIR_LOD_SIZE = 16;
+	public static final int AIR_SECTION_SIZE = SECTION_SIZE / AIR_LOD_SIZE;
 	
 	/**
 	 * This is the byte put between different sections in the binary save file.
@@ -65,7 +66,7 @@ public class ColumnRenderSource implements IColumnDatatype
 	
 	private IDhClientLevel level = null; //FIXME: hack to pass level into tryBuildBuffer
 	
-	//FIXME: Temp Hack
+	//FIXME: Temp Hack to prevent swapping buffers too quickly
 	private long lastNs = -1;
 	/** 10 sec */
 	private static final long SWAP_TIMEOUT = 10_000000000L;
@@ -126,23 +127,20 @@ public class ColumnRenderSource implements IColumnDatatype
 	// datapoint manipulation //
 	//========================//
 	
-	@Override
 	public void clearDataPoint(int posX, int posZ)
 	{
 		for (int verticalIndex = 0; verticalIndex < this.verticalDataCount; verticalIndex++)
 		{
-			this.dataContainer[posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount + verticalIndex] = ColumnFormatUtil.EMPTY_DATA;
+			this.dataContainer[posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount + verticalIndex] = RenderDataPointUtil.EMPTY_DATA;
 		}
 	}
 	
-	@Override
 	public boolean setDataPoint(long data, int posX, int posZ, int verticalIndex)
 	{
 		this.dataContainer[posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount + verticalIndex] = data;
 		return true;
 	}
 	
-	@Override
 	public boolean copyVerticalData(IColumnDataView newData, int posX, int posZ, boolean overwriteDataWithSameGenerationMode)
 	{
 		if (DO_SAFETY_CHECKS)
@@ -178,13 +176,9 @@ public class ColumnRenderSource implements IColumnDatatype
 	}
 	
 	
-	
-	// TODO:
-	
-	@Override
+	public long getFirstDataPoint(int posX, int posZ) { return getDataPoint(posX, posZ, 0); }
 	public long getDataPoint(int posX, int posZ, int verticalIndex) { return this.dataContainer[posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount + verticalIndex]; }
 	
-	@Override
 	public long[] getVerticalDataPointArray(int posX, int posZ)
 	{
 		long[] result = new long[this.verticalDataCount];
@@ -193,7 +187,6 @@ public class ColumnRenderSource implements IColumnDatatype
 		return result;
 	}
 	
-	@Override
 	public ColumnArrayView getVerticalDataPointView(int posX, int posZ)
 	{
 		return new ColumnArrayView(this.dataContainer, this.verticalDataCount,
@@ -201,12 +194,9 @@ public class ColumnRenderSource implements IColumnDatatype
 				this.verticalDataCount);
 	}
 	
-	@Override
 	public ColumnQuadView getFullQuadView() { return this.getQuadViewOverRange(0, 0, SECTION_SIZE, SECTION_SIZE); }
-	@Override
 	public ColumnQuadView getQuadViewOverRange(int quadX, int quadZ, int quadXSize, int quadZSize) { return new ColumnQuadView(this.dataContainer, SECTION_SIZE, this.verticalDataCount, quadX, quadZ, quadXSize, quadZSize); }
 	
-	@Override
 	public int getVerticalSize() { return this.verticalDataCount; }
 	
 	
@@ -312,28 +302,24 @@ public class ColumnRenderSource implements IColumnDatatype
 	// data helper methods //
 	//=====================//
 	
-	@Override
-	public boolean doesDataPointExist(int posX, int posZ) { return ColumnFormatUtil.doesDataPointExist(this.getFirstDataPoint(posX, posZ)); }
+	public boolean doesDataPointExist(int posX, int posZ) { return RenderDataPointUtil.doesDataPointExist(this.getFirstDataPoint(posX, posZ)); }
 	
-	@Override
-	public void generateData(IColumnDatatype lowerDataContainer, int posX, int posZ)
+	public void generateData(ColumnRenderSource lowerDataContainer, int posX, int posZ)
 	{
 		ColumnArrayView outputView = this.getVerticalDataPointView(posX, posZ);
 		ColumnQuadView quadView = lowerDataContainer.getQuadViewOverRange(posX * 2, posZ * 2, 2, 2);
 		outputView.mergeMultiDataFrom(quadView);
 	}
 	
-	@Override
 	public int getMaxLodCount() { return SECTION_SIZE * SECTION_SIZE * this.getVerticalSize(); }
 	
-	@Override
 	public long getRoughRamUsageInBytes() { return (long) this.dataContainer.length * Long.BYTES; }
 	
 	public DhSectionPos getSectionPos() { return this.sectionPos; }
 	
 	public byte getDataDetail() { return (byte) (this.sectionPos.sectionDetailLevel - SECTION_SIZE_OFFSET); }
 	
-	@Override
+	public int getDataSize() { return BitShiftUtil.powerOfTwo(this.getDetailOffset()); }
 	public byte getDetailOffset() { return SECTION_SIZE_OFFSET; }
 	
 	
@@ -442,7 +428,7 @@ public class ColumnRenderSource implements IColumnDatatype
 		this.writeData(dos);
 	}
 	
-	public byte getRenderVersion() { return LATEST_VERSION; }
+	public byte getRenderVersion() { return DATA_FORMAT_VERSION; }
 	
 	/** Whether this object is still valid. If not, a new one should be created. */
 	public boolean isValid() { return true; }
