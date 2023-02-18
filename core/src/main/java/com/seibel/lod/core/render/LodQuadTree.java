@@ -1,6 +1,6 @@
 package com.seibel.lod.core.render;
 
-import com.seibel.lod.core.datatype.render.ColumnRenderSource;
+import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhSectionPos;

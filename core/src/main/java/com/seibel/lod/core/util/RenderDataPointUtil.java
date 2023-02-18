@@ -19,8 +19,8 @@
 
 package com.seibel.lod.core.util;
 
-import com.seibel.lod.core.datatype.column.accessor.ColumnArrayView;
-import com.seibel.lod.core.datatype.column.accessor.IColumnDataView;
+import com.seibel.lod.core.dataObjects.render.columnViews.ColumnArrayView;
+import com.seibel.lod.core.dataObjects.render.columnViews.IColumnDataView;
 import com.seibel.lod.core.logging.SpamReducedLogger;
 
 import java.util.Arrays;

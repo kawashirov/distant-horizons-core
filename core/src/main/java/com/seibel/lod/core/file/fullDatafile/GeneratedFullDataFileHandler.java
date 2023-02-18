@@ -1,10 +1,10 @@
 package com.seibel.lod.core.file.fullDatafile;
 
-import com.seibel.lod.core.datatype.full.IFullDataSource;
-import com.seibel.lod.core.datatype.full.IIncompleteFullDataSource;
-import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
-import com.seibel.lod.core.datatype.full.sources.SparseFullDataSource;
-import com.seibel.lod.core.datatype.full.sources.SingleChunkFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.IFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.IIncompleteFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.SparseFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.SingleChunkFullDataSource;
 import com.seibel.lod.core.generation.tasks.AbstractWorldGenTaskTracker;
 import com.seibel.lod.core.generation.WorldGenerationQueue;
 import com.seibel.lod.core.level.IDhServerLevel;

@@ -2,10 +2,10 @@ package com.seibel.lod.core;
 
 import com.seibel.lod.core.api.external.methods.config.DhApiConfig;
 import com.seibel.lod.core.api.external.methods.data.DhApiTerrainDataRepo;
-import com.seibel.lod.core.datatype.full.FullDataLoader;
-import com.seibel.lod.core.datatype.full.SparseFullDataLoader;
+import com.seibel.lod.core.dataObjects.fullData.FullDataLoader;
+import com.seibel.lod.core.dataObjects.fullData.SparseFullDataLoader;
 import com.seibel.lod.api.DhApiMain;
-import com.seibel.lod.core.datatype.full.SingleChunkFullDataLoader;
+import com.seibel.lod.core.dataObjects.fullData.SingleChunkFullDataLoader;
 import com.seibel.lod.core.render.DhApiRenderProxy;
 import com.seibel.lod.core.world.DhApiWorldProxy;
 

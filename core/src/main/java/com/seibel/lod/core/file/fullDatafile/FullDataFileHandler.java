@@ -1,12 +1,12 @@
 package com.seibel.lod.core.file.fullDatafile;
 
 import com.google.common.collect.HashMultimap;
-import com.seibel.lod.core.datatype.full.IFullDataSource;
-import com.seibel.lod.core.datatype.full.IIncompleteFullDataSource;
-import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
-import com.seibel.lod.core.datatype.full.sources.FullDataSource;
-import com.seibel.lod.core.datatype.full.sources.SingleChunkFullDataSource;
-import com.seibel.lod.core.datatype.full.sources.SparseFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.IFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.IIncompleteFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.FullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.SingleChunkFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.SparseFullDataSource;
 import com.seibel.lod.core.file.FileUtil;
 import com.seibel.lod.core.file.metaData.MetaData;
 import com.seibel.lod.core.level.IDhLevel;

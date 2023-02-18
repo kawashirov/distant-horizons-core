@@ -1,6 +1,6 @@
 package com.seibel.lod.core.generation.tasks;
 
-import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
