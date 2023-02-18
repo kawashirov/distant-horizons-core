@@ -30,7 +30,7 @@ import java.util.Arrays;
  * A helper class that is used to access the data in a RenderColumn
  * long datapoint.
  */
-public class ColumnFormat
+public class ColumnFormatUtil
 {
 	/*
 	
@@ -319,8 +319,8 @@ public class ColumnFormat
 		for (int index = 0; index < dataCount; index++)
 		{
 			tempData = sourceData.get(index * inputVerticalSize);
-			allVoid = allVoid && ColumnFormat.isVoid(tempData);
-			allEmpty = allEmpty && !ColumnFormat.doesDataPointExist(tempData);
+			allVoid = allVoid && ColumnFormatUtil.isVoid(tempData);
+			allEmpty = allEmpty && !ColumnFormatUtil.doesDataPointExist(tempData);
 		}
 		
 		//We check if there is any data that's not empty or void
@@ -354,10 +354,10 @@ public class ColumnFormat
 					if (indices[index] < inputVerticalSize)
 					{
 						tempData = sourceData.get(index * inputVerticalSize + indices[index]);
-						if (!ColumnFormat.isVoid(tempData) && ColumnFormat.doesDataPointExist(tempData))
+						if (!ColumnFormatUtil.isVoid(tempData) && ColumnFormatUtil.doesDataPointExist(tempData))
 						{
-							tempHeight = ColumnFormat.getHeight(tempData);
-							tempDepth = ColumnFormat.getDepth(tempData);
+							tempHeight = ColumnFormatUtil.getHeight(tempData);
+							tempDepth = ColumnFormatUtil.getDepth(tempData);
 							if (tempDepth >= newHeight)
 							{
 								//First case
@@ -452,7 +452,7 @@ public class ColumnFormat
 				if (indices[index] < inputVerticalSize)
 				{
 					tempData = sourceData.get(index * inputVerticalSize + indices[index]);
-					stillHasDataToCheck |= !ColumnFormat.isVoid(tempData) && ColumnFormat.doesDataPointExist(tempData);
+					stillHasDataToCheck |= !ColumnFormatUtil.isVoid(tempData) && ColumnFormatUtil.doesDataPointExist(tempData);
 				}
 			}
 		}

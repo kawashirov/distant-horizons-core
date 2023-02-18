@@ -1,7 +1,7 @@
 package com.seibel.lod.core.datatype.transform;
 
 import com.seibel.lod.core.datatype.full.IIncompleteFullDataSource;
-import com.seibel.lod.core.datatype.column.accessor.ColumnFormat;
+import com.seibel.lod.core.datatype.column.accessor.ColumnFormatUtil;
 import com.seibel.lod.core.datatype.render.ColumnRenderSource;
 import com.seibel.lod.core.datatype.column.accessor.ColumnArrayView;
 import com.seibel.lod.core.datatype.column.accessor.ColumnQuadView;
@@ -179,12 +179,12 @@ public class FullToColumnTransformer {
             if (block.equals(AIR)) continue;
             isVoid = false;
             int color = level.computeBaseColor(new DhBlockPos(blockX, bottomY + level.getMinY(), blockZ), biome, block);
-            long columnData = ColumnFormat.createDataPoint(bottomY + blockHeight, bottomY, color, light, genMode);
+            long columnData = ColumnFormatUtil.createDataPoint(bottomY + blockHeight, bottomY, color, light, genMode);
             column.set(offset, columnData);
             offset++;
         }
         if (isVoid) {
-            column.set(0, ColumnFormat.createVoidDataPoint((byte) genMode));
+            column.set(0, ColumnFormatUtil.createVoidDataPoint((byte) genMode));
         }
     }
 

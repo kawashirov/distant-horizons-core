@@ -20,7 +20,7 @@
 package com.seibel.lod.core.datatype.render.bufferBuilding;
 
 import com.seibel.lod.core.datatype.render.ColumnRenderSource;
-import com.seibel.lod.core.datatype.column.accessor.ColumnFormat;
+import com.seibel.lod.core.datatype.column.accessor.ColumnFormatUtil;
 import com.seibel.lod.api.enums.rendering.EDebugMode;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.datatype.column.accessor.ColumnArrayView;
@@ -47,9 +47,9 @@ public class CubicLodTemplate
 		
 		short width = (short) BitShiftUtil.powerOfTwo(detailLevel);
 		short x = (short) blockOffsetPos.x;
-		short y = ColumnFormat.getDepth(data);
+		short y = ColumnFormatUtil.getDepth(data);
 		short z = (short) (short) blockOffsetPos.z;
-		short dy = (short) (ColumnFormat.getHeight(data) - y);
+		short dy = (short) (ColumnFormatUtil.getHeight(data) - y);
 		
 		if (dy == 0)
 		{
@@ -57,7 +57,7 @@ public class CubicLodTemplate
 		}
 		else if (dy < 0)
 		{
-			throw new IllegalArgumentException("Negative y size for the data! Data: " + ColumnFormat.toString(data));
+			throw new IllegalArgumentException("Negative y size for the data! Data: " + ColumnFormatUtil.toString(data));
 		}
 
 		int color;
@@ -69,9 +69,9 @@ public class CubicLodTemplate
 				float saturationMultiplier = (float)CONFIG.client().graphics().advancedGraphics().getSaturationMultiplier();
 				float brightnessMultiplier = (float)CONFIG.client().graphics().advancedGraphics().getBrightnessMultiplier();
 				if (saturationMultiplier == 1.0 && brightnessMultiplier == 1.0) {
-					color = ColumnFormat.getColor(data);
+					color = ColumnFormatUtil.getColor(data);
 				} else {
-					float[] ahsv = ColorUtil.argbToAhsv(ColumnFormat.getColor(data));
+					float[] ahsv = ColorUtil.argbToAhsv(ColumnFormatUtil.getColor(data));
 					color = ColorUtil.ahsvToArgb(ahsv[0], ahsv[1], ahsv[2] * saturationMultiplier, ahsv[3] * brightnessMultiplier);
 					//ApiShared.LOGGER.info("Raw color:[{}], AHSV:{}, Out color:[{}]",
 					//		ColorUtil.toString(DataPointUtil.getColor(data)),
@@ -89,7 +89,7 @@ public class CubicLodTemplate
 			case SHOW_GENMODE:
 			case SHOW_GENMODE_WIREFRAME:
 			{
-				color = LodUtil.DEBUG_DETAIL_LEVEL_COLORS[ColumnFormat.getGenerationMode(data)];
+				color = LodUtil.DEBUG_DETAIL_LEVEL_COLORS[ColumnFormatUtil.getGenerationMode(data)];
 				fullBright = true;
 				break;
 			}
@@ -114,8 +114,8 @@ public class CubicLodTemplate
 				width, dy, width, // setWidth
 				x, y, z, // setOffset
 				color, // setColor
-				ColumnFormat.getLightSky(data), // setSkyLights
-				fullBright ? 15 : ColumnFormat.getLightBlock(data), // setBlockLights
+				ColumnFormatUtil.getLightSky(data), // setSkyLights
+				fullBright ? 15 : ColumnFormatUtil.getLightBlock(data), // setBlockLights
 				topData, botData, adjData); // setAdjData
 	}
 }

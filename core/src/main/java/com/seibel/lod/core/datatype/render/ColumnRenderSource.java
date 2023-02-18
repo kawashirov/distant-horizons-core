@@ -130,7 +130,7 @@ public class ColumnRenderSource implements IColumnDatatype
 	{
 		for (int verticalIndex = 0; verticalIndex < this.verticalDataCount; verticalIndex++)
 		{
-			this.dataContainer[posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount + verticalIndex] = ColumnFormat.EMPTY_DATA;
+			this.dataContainer[posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount + verticalIndex] = ColumnFormatUtil.EMPTY_DATA;
 		}
 	}
 	
@@ -155,7 +155,7 @@ public class ColumnRenderSource implements IColumnDatatype
 		}
 		
 		int dataOffset = posX * SECTION_SIZE * this.verticalDataCount + posZ * this.verticalDataCount;
-		int compare = ColumnFormat.compareDatapointPriority(newData.get(0), this.dataContainer[dataOffset]);
+		int compare = ColumnFormatUtil.compareDatapointPriority(newData.get(0), this.dataContainer[dataOffset]);
 		if (overwriteDataWithSameGenerationMode)
 		{
 			if (compare < 0)
@@ -268,8 +268,8 @@ public class ColumnRenderSource implements IColumnDatatype
 		
 		for (int i = 0; i < this.dataContainer.length; i += this.verticalDataCount)
 		{
-			int thisGenMode = ColumnFormat.getGenerationMode(this.dataContainer[i]);
-			int srcGenMode = ColumnFormat.getGenerationMode(renderSource.dataContainer[i]);
+			int thisGenMode = ColumnFormatUtil.getGenerationMode(this.dataContainer[i]);
+			int srcGenMode = ColumnFormatUtil.getGenerationMode(renderSource.dataContainer[i]);
 			
 			if (srcGenMode == 0)
 			{
@@ -312,7 +312,7 @@ public class ColumnRenderSource implements IColumnDatatype
 	//=====================//
 	
 	@Override
-	public boolean doesDataPointExist(int posX, int posZ) { return ColumnFormat.doesDataPointExist(this.getFirstDataPoint(posX, posZ)); }
+	public boolean doesDataPointExist(int posX, int posZ) { return ColumnFormatUtil.doesDataPointExist(this.getFirstDataPoint(posX, posZ)); }
 	
 	@Override
 	public void generateData(IColumnDatatype lowerDataContainer, int posX, int posZ)

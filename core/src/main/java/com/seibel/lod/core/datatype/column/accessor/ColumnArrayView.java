@@ -89,7 +89,7 @@ public final class ColumnArrayView implements IColumnDataView
 		{
 			if (override)
 			{
-				if (ColumnFormat.compareDatapointPriority(source.get(o), get(o)) >= 0)
+				if (ColumnFormatUtil.compareDatapointPriority(source.get(o), get(o)) >= 0)
 				{
 					anyChange = true;
 					System.arraycopy(source.data, source.offset + o, data, offset + o, vertSize);
@@ -97,7 +97,7 @@ public final class ColumnArrayView implements IColumnDataView
 			}
 			else
 			{
-				if (ColumnFormat.compareDatapointPriority(source.get(o), get(o)) > 0)
+				if (ColumnFormatUtil.compareDatapointPriority(source.get(o), get(o)) > 0)
 				{
 					anyChange = true;
 					System.arraycopy(source.data, source.offset + o, data, offset + o, vertSize);
@@ -121,7 +121,7 @@ public final class ColumnArrayView implements IColumnDataView
 		{
 			for (int i = 0; i < dataCount(); i++)
 			{
-				ColumnFormat.mergeMultiData(source.subView(i, 1), subView(i, 1));
+				ColumnFormatUtil.mergeMultiData(source.subView(i, 1), subView(i, 1));
 			}
 		}
 	}
@@ -133,7 +133,7 @@ public final class ColumnArrayView implements IColumnDataView
 			throw new IllegalArgumentException("output dataCount must be 1");
 		}
 		
-		ColumnFormat.mergeMultiData(source, this);
+		ColumnFormatUtil.mergeMultiData(source, this);
 	}
 	
 	@Override
@@ -147,7 +147,7 @@ public final class ColumnArrayView implements IColumnDataView
 		sb.append(" [");
 		for (int i = 0; i < size; i++)
 		{
-			sb.append(ColumnFormat.toString(data[offset + i]));
+			sb.append(ColumnFormatUtil.toString(data[offset + i]));
 			if (i < size - 1)
 			{
 				sb.append(",\n");
