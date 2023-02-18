@@ -173,7 +173,17 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 			RenderMetaDataFile newMetaFile;
 			try
 			{
-				newMetaFile = new RenderMetaDataFile(this, pos);
+				File renderMetaFile = this.computeRenderFilePath(pos);
+				boolean renderFileExists = renderMetaFile.exists();
+				
+				if (renderFileExists)
+				{
+					newMetaFile = RenderMetaDataFile.createFromExistingFile(this, renderMetaFile);
+				}
+				else
+				{
+					newMetaFile = RenderMetaDataFile.createNewFileForPos(this, pos);
+				}
 			}
 			catch (IOException e)
 			{
