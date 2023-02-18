@@ -22,6 +22,9 @@ public class BitShiftUtil
 	 * multiplier * powerOfTwo(value);
 	 */
 	public static int powerOfTwo(int value) { return 1 << value; }
+	/** see {@link BitShiftUtil#powerOfTwo(int)} for documentation */
+	public static long powerOfTwo(long value) { return 1 << value; }
+	
 	
 	/**
 	 * Equivalent to: <br>
@@ -31,6 +34,9 @@ public class BitShiftUtil
 	 * Note: value / 2 isn't identical for negative values
 	 */
 	public static int half(int value) { return value >> 1; }
+	/** see {@link BitShiftUtil#half(int)} for documentation */
+	public static long half(long value) { return value >> 1; }
+	
 	
 	/**
 	 * Equivalent to: <br>
@@ -40,6 +46,9 @@ public class BitShiftUtil
 	 * Note: value / 2^power isn't identical for negative values
 	 */
 	public static int divideByPowerOfTwo(int value, int power) { return value >> power; }
+	/** see {@link BitShiftUtil#divideByPowerOfTwo(int, int)} for documentation */
+	public static long divideByPowerOfTwo(long value, long power) { return value >> power; }
+	
 	
 	/**
 	 * Equivalent to: <br>
@@ -50,6 +59,9 @@ public class BitShiftUtil
 	 * Note: Math.pow() isn't identical for large values where bits would be lost in the shift, however for medium to small values they function the same.
 	 */
 	public static int square(int value) { return value << 1; }
+	/** see {@link BitShiftUtil#square(int)} for documentation */
+	public static long square(long value) { return value << 1; }
+	
 	
 	/**
 	 * Equivalent to: <br>
@@ -60,5 +72,7 @@ public class BitShiftUtil
 	 * Note: Math.pow() isn't identical for large values where bits would be lost in the shift, however for medium to small values they function the same.
 	 */
 	public static int pow(int value, int power) { return value << power; }
+	/** see {@link BitShiftUtil#pow(int, int)} for documentation */
+	public static long pow(long value, long power) { return value << power; }
 	
 }
