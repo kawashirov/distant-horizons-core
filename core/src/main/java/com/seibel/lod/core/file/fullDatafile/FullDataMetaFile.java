@@ -9,7 +9,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.seibel.lod.core.datatype.IFullDataSource;
-import com.seibel.lod.core.datatype.AbstractDataSourceLoader;
+import com.seibel.lod.core.datatype.AbstractFullDataSourceLoader;
 import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.file.metaData.MetaData;
@@ -35,7 +35,7 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 	private final IFullDataSourceProvider handler;
 	private boolean doesFileExist;
 
-	public AbstractDataSourceLoader loader;
+	public AbstractFullDataSourceLoader loader;
 	public Class<? extends IFullDataSource> dataType;
 	// The '?' type should either be:
 	//    SoftReference<LodDataSource>, or		    - Non-dirty file that can be GCed
@@ -96,7 +96,7 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 		this.handler = handler;
 		this.level = level;
 		LodUtil.assertTrue(metaData != null);
-		loader = AbstractDataSourceLoader.getLoader(metaData.dataTypeId, metaData.loaderVersion);
+		loader = AbstractFullDataSourceLoader.getLoader(metaData.dataTypeId, metaData.loaderVersion);
 		if (loader == null) {
 			throw new IOException("Invalid file: Data type loader not found: "
 					+ metaData.dataTypeId + "(v" + metaData.loaderVersion + ")");
@@ -258,7 +258,7 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 	}
 
 	private static MetaData makeMetaData(IFullDataSource data) {
-		AbstractDataSourceLoader loader = AbstractDataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
+		AbstractFullDataSourceLoader loader = AbstractFullDataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
 		return new MetaData(data.getSectionPos(), -1,
 				data.getDataDetail(), loader == null ? 0 : loader.datatypeId, data.getDataVersion());
 	}
@@ -351,7 +351,7 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 				// Write/Update data
 				LodUtil.assertTrue(metaData != null);
 				metaData.dataLevel = data.getDataDetail();
-				loader = AbstractDataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
+				loader = AbstractFullDataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
 				LodUtil.assertTrue(loader != null, "No loader for {} (v{})", data.getClass(), data.getDataVersion());
 				dataType = data.getClass();
 				metaData.dataTypeId = loader == null ? 0 : loader.datatypeId;

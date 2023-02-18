@@ -1,6 +1,6 @@
 package com.seibel.lod.core.datatype.full;
 
-import com.seibel.lod.core.datatype.AbstractDataSourceLoader;
+import com.seibel.lod.core.datatype.AbstractFullDataSourceLoader;
 import com.seibel.lod.core.datatype.IFullDataSource;
 import com.seibel.lod.core.datatype.full.sources.SparseFullDataSource;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
@@ -9,9 +9,9 @@ import com.seibel.lod.core.level.IDhLevel;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class SparseDataLoader extends AbstractDataSourceLoader
+public class SparseFullDataLoader extends AbstractFullDataSourceLoader
 {
-	public SparseDataLoader()
+	public SparseFullDataLoader()
 	{
 		super(SparseFullDataSource.class, SparseFullDataSource.TYPE_ID, new byte[] { SparseFullDataSource.LATEST_VERSION });
 	}

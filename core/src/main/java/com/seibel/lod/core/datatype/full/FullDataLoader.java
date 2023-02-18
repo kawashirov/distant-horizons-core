@@ -1,6 +1,6 @@
 package com.seibel.lod.core.datatype.full;
 
-import com.seibel.lod.core.datatype.AbstractDataSourceLoader;
+import com.seibel.lod.core.datatype.AbstractFullDataSourceLoader;
 import com.seibel.lod.core.datatype.IFullDataSource;
 import com.seibel.lod.core.datatype.full.sources.FullDataSource;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
@@ -9,7 +9,7 @@ import com.seibel.lod.core.level.IDhLevel;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class FullDataLoader extends AbstractDataSourceLoader
+public class FullDataLoader extends AbstractFullDataSourceLoader
 {
     public FullDataLoader()
 	{

@@ -4,7 +4,7 @@ import com.seibel.lod.core.api.external.methods.config.DhApiConfig;
 import com.seibel.lod.core.api.external.methods.data.DhApiTerrainDataRepo;
 import com.seibel.lod.core.datatype.column.ColumnRenderLoader;
 import com.seibel.lod.core.datatype.full.FullDataLoader;
-import com.seibel.lod.core.datatype.full.SparseDataLoader;
+import com.seibel.lod.core.datatype.full.SparseFullDataLoader;
 import com.seibel.lod.api.DhApiMain;
 import com.seibel.lod.core.datatype.full.SingleChunkFullDataLoader;
 import com.seibel.lod.core.render.DhApiRenderProxy;
@@ -22,7 +22,7 @@ public class Initializer
 	{
         ColumnRenderLoader unused = new ColumnRenderLoader(); // Auto register into the loader system
         FullDataLoader unused2 = new FullDataLoader(); // Auto register into the loader system
-        SparseDataLoader unused3 = new SparseDataLoader(); // Auto register
+        SparseFullDataLoader unused3 = new SparseFullDataLoader(); // Auto register
         SingleChunkFullDataLoader unused4 = new SingleChunkFullDataLoader(); // Auto register
 		
 		// link Core's config to the API

@@ -1,6 +1,6 @@
 package com.seibel.lod.core.datatype.full;
 
-import com.seibel.lod.core.datatype.AbstractDataSourceLoader;
+import com.seibel.lod.core.datatype.AbstractFullDataSourceLoader;
 import com.seibel.lod.core.datatype.IFullDataSource;
 import com.seibel.lod.core.datatype.full.sources.SingleChunkFullDataSource;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
@@ -9,7 +9,7 @@ import com.seibel.lod.core.level.IDhLevel;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class SingleChunkFullDataLoader extends AbstractDataSourceLoader
+public class SingleChunkFullDataLoader extends AbstractFullDataSourceLoader
 {
     public SingleChunkFullDataLoader() {
         super(SingleChunkFullDataSource.class, SingleChunkFullDataSource.TYPE_ID, new byte[]{ SingleChunkFullDataSource.LATEST_VERSION});
