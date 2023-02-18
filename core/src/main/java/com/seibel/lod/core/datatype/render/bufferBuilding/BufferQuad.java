@@ -17,16 +17,12 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.datatype.column.render;
+package com.seibel.lod.core.datatype.render.bufferBuilding;
 
 import com.seibel.lod.core.enums.ELodDirection;
 
 /**
- * Represents a renderable quad.
- *
- * @author James Seibel
- * @author ?
- * @version 4-9-2022
+ * Represents a render-able quad.
  */
 public final class BufferQuad
 {
@@ -42,6 +38,8 @@ public final class BufferQuad
 	final ELodDirection direction;
 
 	boolean hasError = false;
+	
+	
 	
 	BufferQuad(short x, short y, short z, short widthEastWest, short widthNorthSouthOrUpDown,
 			int color, byte skylight, byte blocklight,
@@ -62,7 +60,9 @@ public final class BufferQuad
 		this.blockLight = blocklight;
 		this.direction = direction;
 	}
-
+	
+	
+	
 	/** a rough but fast calculation */
 	double calculateDistance(double relativeX, double relativeY, double relativeZ)
 	{

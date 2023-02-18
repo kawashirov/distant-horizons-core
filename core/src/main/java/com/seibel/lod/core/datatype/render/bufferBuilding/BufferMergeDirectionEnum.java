@@ -17,19 +17,14 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.datatype.column.render;
+package com.seibel.lod.core.datatype.render.bufferBuilding;
 
 /**
  * EastWest <Br>
  * NorthSouthOrUpDown
- *
- * @author James Seibel
- * @version 2022-4-9
  */
 public enum BufferMergeDirectionEnum
 {
 	EastWest,
-	
-	/** NorthSouth and UpDown are merged since  */
 	NorthSouthOrUpDown
 }

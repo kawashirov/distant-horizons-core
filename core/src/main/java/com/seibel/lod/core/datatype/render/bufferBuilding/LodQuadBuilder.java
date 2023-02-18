@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.datatype.column.render;
+package com.seibel.lod.core.datatype.render.bufferBuilding;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
