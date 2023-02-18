@@ -1,11 +1,10 @@
-package com.seibel.lod.core.datatype.full;
+package com.seibel.lod.core.util;
 
 // 
 
-import com.seibel.lod.core.util.LodUtil;
 import org.jetbrains.annotations.Contract;
 
-import static com.seibel.lod.core.datatype.column.accessor.ColumnFormatUtil.MAX_WORLD_Y_SIZE;
+import static com.seibel.lod.core.util.RenderDatapointUtil.MAX_WORLD_Y_SIZE;
 
 /**
  * <code>
@@ -31,7 +30,7 @@ import static com.seibel.lod.core.datatype.column.accessor.ColumnFormatUtil.MAX_
  * </code>
  * 
  */
-public class FullDataPoint
+public class FullDataPointUtil
 {
 	/** Represents the data held by an empty data point */
 	public static final int EMPTY_DATA_POINT = 0;

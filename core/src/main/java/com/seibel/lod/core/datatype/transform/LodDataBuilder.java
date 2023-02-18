@@ -1,7 +1,7 @@
 package com.seibel.lod.core.datatype.transform;
 
 import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
-import com.seibel.lod.core.datatype.full.FullDataPoint;
+import com.seibel.lod.core.util.FullDataPointUtil;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
@@ -34,7 +34,7 @@ public class LodDataBuilder {
                     byte newLight = (byte) ((chunk.getBlockLight(x,y+1,z) << 4) + chunk.getSkyLight(x,y+1,z));
 
                     if (!newBiome.equals(biome) || !newBlockState.equals(blockState)) {
-                        longs.add(FullDataPoint.encode(mappedId, lastY-y, y+1 - chunk.getMinBuildHeight(), light));
+                        longs.add(FullDataPointUtil.encode(mappedId, lastY-y, y+1 - chunk.getMinBuildHeight(), light));
                         biome = newBiome;
                         blockState = newBlockState;
                         mappedId = chunkData.getMapping().addIfNotPresentAndGetId(biome, blockState);
@@ -47,7 +47,7 @@ public class LodDataBuilder {
 //                        lastY = y;
 //                    }
                 }
-                longs.add(FullDataPoint.encode(mappedId, lastY-y, y+1 - chunk.getMinBuildHeight(), light));
+                longs.add(FullDataPointUtil.encode(mappedId, lastY-y, y+1 - chunk.getMinBuildHeight(), light));
 
                 chunkData.setSingleColumn(longs.toArray(new long[0]), x, z);
             }

@@ -1,6 +1,6 @@
 package com.seibel.lod.core.datatype.full.accessor;
 
-import com.seibel.lod.core.datatype.full.FullDataPoint;
+import com.seibel.lod.core.util.FullDataPointUtil;
 import com.seibel.lod.core.datatype.full.FullDataPointIdMap;
 import com.seibel.lod.core.util.LodUtil;
 
@@ -80,7 +80,7 @@ public class FullArrayView implements IFullDataView
 					long[] newData = new long[sourceData.length];
 					for (int i = 0; i < newData.length; i++)
 					{
-						newData[i] = FullDataPoint.remap(remappedIds, sourceData[i]);
+						newData[i] = FullDataPointUtil.remap(remappedIds, sourceData[i]);
 					}
 					target.dataArrays[target.offset + x * target.dataSize + o] = newData;
 				}

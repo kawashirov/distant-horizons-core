@@ -3,7 +3,7 @@ package com.seibel.lod.core.file.subDimMatching;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.datatype.full.IFullDataSource;
 import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
-import com.seibel.lod.core.datatype.full.FullDataPoint;
+import com.seibel.lod.core.util.FullDataPointUtil;
 import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;
 import com.seibel.lod.core.datatype.transform.LodDataBuilder;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
@@ -246,7 +246,7 @@ public class SubDimensionLevelMatcher implements AutoCloseable
 								// does any data exist in this column?
 								for (long dataPoint : rawSingleColumn)
 								{
-									if (dataPoint != FullDataPoint.EMPTY_DATA_POINT)
+									if (dataPoint != FullDataPointUtil.EMPTY_DATA_POINT)
 									{
 										// at least one datapoint exists in this chunk
 										testLodDataExists = true;

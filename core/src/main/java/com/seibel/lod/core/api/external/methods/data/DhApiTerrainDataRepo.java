@@ -8,7 +8,7 @@ import com.seibel.lod.api.interfaces.data.IDhApiTerrainDataRepo;
 import com.seibel.lod.api.objects.math.DhApiVec3i;
 import com.seibel.lod.core.api.internal.SharedApi;
 import com.seibel.lod.core.datatype.full.IFullDataSource;
-import com.seibel.lod.core.datatype.full.FullDataPoint;
+import com.seibel.lod.core.util.FullDataPointUtil;
 import com.seibel.lod.core.datatype.full.FullDataPointIdMap;
 import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;
 import com.seibel.lod.core.level.IDhLevel;
@@ -237,8 +237,8 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 							if (dataPoint != 0)
 							{
 								int requestedY = nullableBlockYPos;
-								int bottomY = FullDataPoint.getBottomY(dataPoint) + levelMinimumHeight;
-								int height = FullDataPoint.getHeight(dataPoint);
+								int bottomY = FullDataPointUtil.getBottomY(dataPoint) + levelMinimumHeight;
+								int height = FullDataPointUtil.getHeight(dataPoint);
 								int topY = bottomY + height;
 								
 								// does this datapoint contain the requested Y position? 
@@ -270,15 +270,15 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 	
 	private static DhApiTerrainDataPoint generateApiDatapoint(IDhApiLevelWrapper levelWrapper, FullDataPointIdMap mapping, byte detailLevel, long dataPoint)
 	{
-		IBlockStateWrapper blockState = mapping.getBlockStateWrapper(FullDataPoint.getId(dataPoint));
-		IBiomeWrapper biomeWrapper = mapping.getBiomeWrapper(FullDataPoint.getId(dataPoint));
+		IBlockStateWrapper blockState = mapping.getBlockStateWrapper(FullDataPointUtil.getId(dataPoint));
+		IBiomeWrapper biomeWrapper = mapping.getBiomeWrapper(FullDataPointUtil.getId(dataPoint));
 		
-		int bottomY = FullDataPoint.getBottomY(dataPoint) + levelWrapper.getMinHeight();
-		int height = FullDataPoint.getHeight(dataPoint);
+		int bottomY = FullDataPointUtil.getBottomY(dataPoint) + levelWrapper.getMinHeight();
+		int height = FullDataPointUtil.getHeight(dataPoint);
 		int topY = bottomY + height;
 		
 		return new DhApiTerrainDataPoint(detailLevel, 
-				FullDataPoint.getLight(dataPoint), topY, bottomY,
+				FullDataPointUtil.getLight(dataPoint), topY, bottomY,
 				blockState, biomeWrapper);
 	}	
 	
