@@ -4,6 +4,22 @@
 
 
 
+  "lod.general.back":
+    "Back",
+  "lod.general.next":
+    "Next",
+  "lod.general.done":
+    "Done",
+  "lod.general.cancel":
+    "Cancel",
+  "lod.general.yes":
+    "Yes",
+  "lod.general.no":
+    "No",
+
+
+
+
   "lod.updater.title":
     "Distant Horizons auto updater",
   "lod.updater.text1":
@@ -23,19 +39,6 @@
   "lod.updater.silent.@tooltip":
     "Every time an update is available, it would update\n(§6WARNING§r: It wont prompt the user on an update, tough it would keep the mod up to date)",
 
-
-  "lod.general.back":
-    "Back",
-  "lod.general.next":
-    "Next",
-  "lod.general.done":
-    "Done",
-  "lod.general.cancel":
-    "Cancel",
-  "lod.general.yes":
-    "Yes",
-  "lod.general.no":
-    "No",
 
 
 
@@ -192,6 +195,10 @@
     "At what Y value should cave culling start? \n\n§6NOTE§r: This feature is under development and \n it is VERY experimental! Please don't report \nany issues related to this feature.",
   "lod.config.client.graphics.advancedGraphics.earthCurveRatio":
     "Earth Curve Ratio §6(EXPERIMENTAL)§r",
+  "lod.config.client.graphics.advancedGraphics.lodBias":
+    "LOD Bias §6(Effects vanilla terrain)§r",
+  "lod.config.client.graphics.advancedGraphics.lodBias.@tooltip":
+    "Sets vanilla's lod bias value",
   "lod.config.client.graphics.advancedGraphics.noiseSettings":
     "Noise Settings",
   "lod.config.client.graphics.advancedGraphics.noiseSettings.noiseEnable":
@@ -210,7 +217,6 @@
     "How fast the noise should drop off to no noise based upon your lod render distance\nEg, if you set it to 3, then the noise effect would completely go away after 1/3 of your render distance",
   "lod.config.client.graphics.advancedGraphics.earthCurveRatio.@tooltip":
     "This is the earth size ratio when applying the curvature shader effect. \n\n§6NOTE§r: This feature is just for fun and is VERY experimental! \nPlease don't report any issues related to this feature. \n\n0 = flat/disabled \n1 = 1 to 1 (6,371,000 blocks) \n100 = 1 to 100 (63,710 blocks) \n10000 = 1 to 10000 (637.1 blocks) \n\n§6NOTE§r: due to current limitations, the min value is 50 \n and the max value is 5000. Any values outside this range \n will be set to 0(disabled).",
-
   "lod.config.client.worldGenerator":
     "World generator",
   "lod.config.client.worldGenerator.enableDistantGeneration":
@@ -325,6 +331,7 @@
     "Show options button",
   "lod.config.client.optionsButton.@tooltip":
     "Show the config button to the left of the fov button",
+
 
   "lod.config.enum.EHorizontalResolution.BLOCK":
     "Block",
