@@ -3,7 +3,7 @@ package com.seibel.lod.core.render;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhSectionPos;
-import com.seibel.lod.core.datatype.IRenderSource;
+import com.seibel.lod.core.datatype.render.IRenderSource;
 import com.seibel.lod.core.file.renderfile.ILodRenderSourceProvider;
 import org.apache.logging.log4j.Logger;
 

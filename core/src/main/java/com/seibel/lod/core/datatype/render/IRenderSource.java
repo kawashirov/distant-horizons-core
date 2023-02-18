@@ -1,4 +1,4 @@
-package com.seibel.lod.core.datatype;
+package com.seibel.lod.core.datatype.render;
 
 import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.level.IDhClientLevel;
@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * This represents LOD data that is stored in system memory <br>
- * Example: {@link com.seibel.lod.core.datatype.column.ColumnRenderSource ColumnRenderSource} <br><br>
+ * Example: {@link ColumnRenderSource ColumnRenderSource} <br><br>
  * 
  * These are created via {@link com.seibel.lod.core.file.renderfile.ILodRenderSourceProvider ILodRenderSourceProvider}'s
  */

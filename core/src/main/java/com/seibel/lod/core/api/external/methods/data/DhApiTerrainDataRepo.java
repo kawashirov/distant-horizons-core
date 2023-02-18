@@ -7,7 +7,7 @@ import com.seibel.lod.api.objects.data.DhApiTerrainDataPoint;
 import com.seibel.lod.api.interfaces.data.IDhApiTerrainDataRepo;
 import com.seibel.lod.api.objects.math.DhApiVec3i;
 import com.seibel.lod.core.api.internal.SharedApi;
-import com.seibel.lod.core.datatype.IFullDataSource;
+import com.seibel.lod.core.datatype.full.IFullDataSource;
 import com.seibel.lod.core.datatype.full.FullDataPoint;
 import com.seibel.lod.core.datatype.full.FullDataPointIdMap;
 import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;

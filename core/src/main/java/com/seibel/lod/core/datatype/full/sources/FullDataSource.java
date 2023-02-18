@@ -1,6 +1,6 @@
 package com.seibel.lod.core.datatype.full.sources;
 
-import com.seibel.lod.core.datatype.IFullDataSource;
+import com.seibel.lod.core.datatype.full.IFullDataSource;
 import com.seibel.lod.core.datatype.full.FullDataPointIdMap;
 import com.seibel.lod.core.datatype.full.accessor.FullArrayView;
 import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;

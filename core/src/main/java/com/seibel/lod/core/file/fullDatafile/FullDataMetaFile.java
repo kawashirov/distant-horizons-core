@@ -8,8 +8,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import com.seibel.lod.core.datatype.IFullDataSource;
-import com.seibel.lod.core.datatype.AbstractFullDataSourceLoader;
+import com.seibel.lod.core.datatype.full.IFullDataSource;
+import com.seibel.lod.core.datatype.full.AbstractFullDataSourceLoader;
 import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.file.metaData.MetaData;

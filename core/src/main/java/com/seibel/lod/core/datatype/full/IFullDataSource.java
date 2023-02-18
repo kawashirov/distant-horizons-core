@@ -1,4 +1,4 @@
-package com.seibel.lod.core.datatype;
+package com.seibel.lod.core.datatype.full;
 
 import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.datatype.full.FullDataPointIdMap;

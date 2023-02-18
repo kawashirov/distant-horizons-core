@@ -1,9 +1,9 @@
 package com.seibel.lod.core.datatype.transform;
 
-import com.seibel.lod.core.datatype.IFullDataSource;
-import com.seibel.lod.core.datatype.IRenderSource;
-import com.seibel.lod.core.datatype.column.ColumnRenderLoader;
-import com.seibel.lod.core.datatype.column.ColumnRenderSource;
+import com.seibel.lod.core.datatype.full.IFullDataSource;
+import com.seibel.lod.core.datatype.render.IRenderSource;
+import com.seibel.lod.core.datatype.render.ColumnRenderLoader;
+import com.seibel.lod.core.datatype.render.ColumnRenderSource;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.util.LodUtil;
 

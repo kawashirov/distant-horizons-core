@@ -19,7 +19,7 @@
 
 package com.seibel.lod.core.datatype.column.render;
 
-import com.seibel.lod.core.datatype.column.ColumnRenderSource;
+import com.seibel.lod.core.datatype.render.ColumnRenderSource;
 import com.seibel.lod.core.datatype.column.accessor.ColumnFormat;
 import com.seibel.lod.api.enums.rendering.EDebugMode;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;

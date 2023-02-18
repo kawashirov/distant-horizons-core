@@ -1,6 +1,6 @@
 package com.seibel.lod.core.render;
 
-import com.seibel.lod.core.datatype.IRenderSource;
+import com.seibel.lod.core.datatype.render.IRenderSource;
 import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.pos.Pos2D;
 import com.seibel.lod.core.pos.DhSectionPos;

@@ -1,4 +1,4 @@
-package com.seibel.lod.core.datatype.column;
+package com.seibel.lod.core.datatype.render;
 
 import com.seibel.lod.core.ModInfo;
 import com.seibel.lod.core.datatype.column.accessor.*;
@@ -14,7 +14,6 @@ import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.render.LodRenderSection;
-import com.seibel.lod.core.datatype.IRenderSource;
 import com.seibel.lod.core.util.ColorUtil;
 import com.seibel.lod.core.util.objects.Reference;
 import com.seibel.lod.core.util.LodUtil;

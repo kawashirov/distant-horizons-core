@@ -1,4 +1,4 @@
-package com.seibel.lod.core.datatype;
+package com.seibel.lod.core.datatype.full;
 
 import com.google.common.collect.HashMultimap;
 import com.seibel.lod.core.level.IDhLevel;

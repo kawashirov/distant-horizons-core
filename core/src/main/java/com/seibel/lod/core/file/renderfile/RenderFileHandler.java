@@ -1,11 +1,11 @@
 package com.seibel.lod.core.file.renderfile;
 
 import com.google.common.collect.HashMultimap;
-import com.seibel.lod.core.datatype.IFullDataSource;
+import com.seibel.lod.core.datatype.full.IFullDataSource;
 import com.seibel.lod.core.datatype.PlaceHolderRenderSource;
-import com.seibel.lod.core.datatype.IRenderSource;
-import com.seibel.lod.core.datatype.AbstractRenderSourceLoader;
-import com.seibel.lod.core.datatype.column.ColumnRenderSource;
+import com.seibel.lod.core.datatype.render.IRenderSource;
+import com.seibel.lod.core.datatype.render.AbstractRenderSourceLoader;
+import com.seibel.lod.core.datatype.render.ColumnRenderSource;
 import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.datatype.transform.DataRenderTransformer;
 import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
