@@ -10,22 +10,17 @@ public interface IColumnDataView
 	
 	default Iterator<Long> iterator()
 	{
-		return new Iterator<Long>()
+		return new Iterator<>()
 		{
 			private int index = 0;
 			private final int size = size();
 			
 			@Override
-			public boolean hasNext()
-			{
-				return index < size;
-			}
+			public boolean hasNext() { return this.index < this.size; }
 			
 			@Override
-			public Long next()
-			{
-				return get(index++);
-			}
+			public Long next() { return get(this.index++); }
+			
 		};
 	}
 	
