@@ -30,7 +30,7 @@ import java.util.Arrays;
  * A helper class that is used to access the data in a RenderColumn
  * long datapoint.
  */
-public class RenderDatapointUtil
+public class RenderDataPointUtil
 {
 	/*
 	
@@ -319,8 +319,8 @@ public class RenderDatapointUtil
 		for (int index = 0; index < dataCount; index++)
 		{
 			tempData = sourceData.get(index * inputVerticalSize);
-			allVoid = allVoid && RenderDatapointUtil.isVoid(tempData);
-			allEmpty = allEmpty && !RenderDatapointUtil.doesDataPointExist(tempData);
+			allVoid = allVoid && RenderDataPointUtil.isVoid(tempData);
+			allEmpty = allEmpty && !RenderDataPointUtil.doesDataPointExist(tempData);
 		}
 		
 		//We check if there is any data that's not empty or void
@@ -354,10 +354,10 @@ public class RenderDatapointUtil
 					if (indices[index] < inputVerticalSize)
 					{
 						tempData = sourceData.get(index * inputVerticalSize + indices[index]);
-						if (!RenderDatapointUtil.isVoid(tempData) && RenderDatapointUtil.doesDataPointExist(tempData))
+						if (!RenderDataPointUtil.isVoid(tempData) && RenderDataPointUtil.doesDataPointExist(tempData))
 						{
-							tempHeight = RenderDatapointUtil.getHeight(tempData);
-							tempDepth = RenderDatapointUtil.getDepth(tempData);
+							tempHeight = RenderDataPointUtil.getHeight(tempData);
+							tempDepth = RenderDataPointUtil.getDepth(tempData);
 							if (tempDepth >= newHeight)
 							{
 								//First case
@@ -452,7 +452,7 @@ public class RenderDatapointUtil
 				if (indices[index] < inputVerticalSize)
 				{
 					tempData = sourceData.get(index * inputVerticalSize + indices[index]);
-					stillHasDataToCheck |= !RenderDatapointUtil.isVoid(tempData) && RenderDatapointUtil.doesDataPointExist(tempData);
+					stillHasDataToCheck |= !RenderDataPointUtil.isVoid(tempData) && RenderDataPointUtil.doesDataPointExist(tempData);
 				}
 			}
 		}

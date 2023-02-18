@@ -4,7 +4,7 @@ package com.seibel.lod.core.util;
 
 import org.jetbrains.annotations.Contract;
 
-import static com.seibel.lod.core.util.RenderDatapointUtil.MAX_WORLD_Y_SIZE;
+import static com.seibel.lod.core.util.RenderDataPointUtil.MAX_WORLD_Y_SIZE;
 
 /**
  * <code>

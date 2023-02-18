@@ -2,7 +2,7 @@ package com.seibel.lod.core.datatype.render.bufferBuilding;
 
 import com.seibel.lod.core.datatype.render.ColumnRenderSource;
 import com.seibel.lod.core.datatype.column.accessor.ColumnArrayView;
-import com.seibel.lod.core.util.RenderDatapointUtil;
+import com.seibel.lod.core.util.RenderDataPointUtil;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.render.renderer.LodRenderer;
 import com.seibel.lod.core.util.objects.UncheckedInterruptedException;
@@ -333,8 +333,8 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
                 UncheckedInterruptedException.throwIfInterrupted();
 
                 ColumnArrayView posData = region.getVerticalDataPointView(x, z);
-                if (posData.size() == 0 || !RenderDatapointUtil.doesDataPointExist(posData.get(0))
-                        || RenderDatapointUtil.isVoid(posData.get(0)))
+                if (posData.size() == 0 || !RenderDataPointUtil.doesDataPointExist(posData.get(0))
+                        || RenderDataPointUtil.isVoid(posData.get(0)))
                     continue;
                 ColumnRenderSource.DebugSourceFlag debugSourceFlag = region.debugGetFlag(x, z);
 
@@ -409,11 +409,11 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
                     long data = posData.get(i);
                     // If the data is not renderable (Void or non-existing) we stop since there is
                     // no data left in this position
-                    if (RenderDatapointUtil.isVoid(data) || !RenderDatapointUtil.doesDataPointExist(data))
+                    if (RenderDataPointUtil.isVoid(data) || !RenderDataPointUtil.doesDataPointExist(data))
                         break;
 
-                    long adjDataTop = i - 1 >= 0 ? posData.get(i - 1) : RenderDatapointUtil.EMPTY_DATA;
-                    long adjDataBot = i + 1 < posData.size() ? posData.get(i + 1) : RenderDatapointUtil.EMPTY_DATA;
+                    long adjDataTop = i - 1 >= 0 ? posData.get(i - 1) : RenderDataPointUtil.EMPTY_DATA;
+                    long adjDataBot = i + 1 < posData.size() ? posData.get(i + 1) : RenderDataPointUtil.EMPTY_DATA;
 
                     CubicLodTemplate.addLodToBuffer(data, adjDataTop, adjDataBot, adjData, detailLevel,
                             x, z, quadBuilder, debugMode, debugSourceFlag);
