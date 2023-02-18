@@ -8,9 +8,9 @@ import com.seibel.lod.core.level.IDhLevel;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class SpottyDataLoader extends AbstractDataSourceLoader
+public class SingleChunkFullDataLoader extends AbstractDataSourceLoader
 {
-    public SpottyDataLoader() {
+    public SingleChunkFullDataLoader() {
         super(SingleChunkFullDataSource.class, SingleChunkFullDataSource.TYPE_ID, new byte[]{ SingleChunkFullDataSource.LATEST_VERSION});
     }
 

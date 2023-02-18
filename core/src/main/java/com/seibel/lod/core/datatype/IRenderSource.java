@@ -1,6 +1,6 @@
 package com.seibel.lod.core.datatype;
 
-import com.seibel.lod.core.datatype.full.ChunkSizedData;
+import com.seibel.lod.core.datatype.full.ChunkSizedFullData;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.LodQuadTree;
@@ -47,7 +47,7 @@ public interface IRenderSource
 	
 	boolean isEmpty();
 	
-	void fastWrite(ChunkSizedData chunkData, IDhClientLevel level);
+	void fastWrite(ChunkSizedFullData chunkData, IDhClientLevel level);
 	
 	/** Overrides any data that has not been written directly using write(). Skips empty source dataPoints. */ 
 	void updateFromRenderSource(IRenderSource source);

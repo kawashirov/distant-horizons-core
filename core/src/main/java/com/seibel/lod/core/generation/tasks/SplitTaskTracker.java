@@ -1,6 +1,6 @@
 package com.seibel.lod.core.generation.tasks;
 
-import com.seibel.lod.core.datatype.full.ChunkSizedData;
+import com.seibel.lod.core.datatype.full.ChunkSizedFullData;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -52,6 +52,6 @@ public class SplitTaskTracker extends AbstractWorldGenTaskTracker
 	public boolean isMemoryAddressValid() { return this.isValid; }
 	
 	@Override
-	public Consumer<ChunkSizedData> getConsumer() { return this.parentTracker.getConsumer(); }
+	public Consumer<ChunkSizedFullData> getConsumer() { return this.parentTracker.getConsumer(); }
 	
 }

@@ -6,7 +6,7 @@ import com.seibel.lod.core.datatype.PlaceHolderRenderSource;
 import com.seibel.lod.core.datatype.IRenderSource;
 import com.seibel.lod.core.datatype.AbstractRenderSourceLoader;
 import com.seibel.lod.core.datatype.column.ColumnRenderSource;
-import com.seibel.lod.core.datatype.full.ChunkSizedData;
+import com.seibel.lod.core.datatype.full.ChunkSizedFullData;
 import com.seibel.lod.core.datatype.transform.DataRenderTransformer;
 import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.lod.core.level.IDhClientLevel;
@@ -218,12 +218,12 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 	
     /* This call is concurrent. I.e. it supports multiple threads calling this method at the same time. */
     @Override
-    public void write(DhSectionPos sectionPos, ChunkSizedData chunkData)
+    public void write(DhSectionPos sectionPos, ChunkSizedFullData chunkData)
 	{
         this.writeRecursively(sectionPos,chunkData);
 		this.fullDataSourceProvider.write(sectionPos, chunkData); // TODO why is there fullData handling in the render file handler?
     }
-    private void writeRecursively(DhSectionPos sectPos, ChunkSizedData chunkData)
+    private void writeRecursively(DhSectionPos sectPos, ChunkSizedFullData chunkData)
 	{
 		if (!sectPos.getSectionBBoxPos().overlaps(new DhLodPos((byte) (4 + chunkData.dataDetail), chunkData.x, chunkData.z)))
 		{
@@ -321,8 +321,6 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 	
     public IRenderSource onRenderFileLoaded(IRenderSource renderSource, RenderMetaDataFile file)
 	{
-		// TODO
-		
 //		if (!this.fullDataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get()))
 //		{
 			this.updateCache(renderSource, file);

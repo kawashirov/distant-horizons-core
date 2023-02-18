@@ -60,7 +60,7 @@ public class FullDataSource extends FullArrayView implements IFullDataSource
 	public SingleFullArrayView tryGet(int x, int z) { return this.get(x, z); }
 	
 	@Override
-	public void update(ChunkSizedData data)
+	public void update(ChunkSizedFullData data)
 	{
 		LodUtil.assertTrue(this.sectionPos.getSectionBBoxPos().overlaps(data.getBBoxLodPos()));
 		if (data.dataDetail == 0 && this.getDataDetail() == 0)

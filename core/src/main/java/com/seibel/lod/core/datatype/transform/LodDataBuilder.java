@@ -1,6 +1,6 @@
 package com.seibel.lod.core.datatype.transform;
 
-import com.seibel.lod.core.datatype.full.ChunkSizedData;
+import com.seibel.lod.core.datatype.full.ChunkSizedFullData;
 import com.seibel.lod.core.datatype.full.FullDataPoint;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.util.LodUtil;
@@ -12,10 +12,10 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 
 public class LodDataBuilder {
     private static final IBlockStateWrapper AIR = SingletonInjector.INSTANCE.get(IWrapperFactory.class).getAirBlockStateWrapper();
-    public static ChunkSizedData createChunkData(IChunkWrapper chunk) {
+    public static ChunkSizedFullData createChunkData(IChunkWrapper chunk) {
         if (!canGenerateLodFromChunk(chunk)) return null;
 
-        ChunkSizedData chunkData = new ChunkSizedData((byte)0, chunk.getChunkPos().x, chunk.getChunkPos().z);
+        ChunkSizedFullData chunkData = new ChunkSizedFullData((byte)0, chunk.getChunkPos().x, chunk.getChunkPos().z);
 
         for (int x=0; x<16; x++) {
             for (int z=0; z<16; z++) {

@@ -47,7 +47,7 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
     public byte getDataVersion() { return LATEST_VERSION;  }
 
     @Override
-    public void update(ChunkSizedData data)
+    public void update(ChunkSizedFullData data)
 	{
         LodUtil.assertTrue(this.sectionPos.getSectionBBoxPos().overlaps(data.getBBoxLodPos()));
 

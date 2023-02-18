@@ -1,6 +1,6 @@
 package com.seibel.lod.core.datatype;
 
-import com.seibel.lod.core.datatype.full.ChunkSizedData;
+import com.seibel.lod.core.datatype.full.ChunkSizedFullData;
 import com.seibel.lod.core.datatype.full.FullDataPointIdMap;
 import com.seibel.lod.core.datatype.full.accessor.SingleFullArrayView;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
@@ -18,7 +18,7 @@ public interface IFullDataSource
 	
 	byte getDataVersion();
 	
-	void update(ChunkSizedData data);
+	void update(ChunkSizedFullData data);
 	
 	boolean isEmpty();
 	

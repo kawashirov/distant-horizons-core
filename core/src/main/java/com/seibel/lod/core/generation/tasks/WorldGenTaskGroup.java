@@ -1,6 +1,6 @@
 package com.seibel.lod.core.generation.tasks;
 
-import com.seibel.lod.core.datatype.full.ChunkSizedData;
+import com.seibel.lod.core.datatype.full.ChunkSizedFullData;
 import com.seibel.lod.core.pos.DhLodPos;
 
 import java.util.Iterator;
@@ -28,13 +28,13 @@ public final class WorldGenTaskGroup
 	
 	
 	
-	public void accept(ChunkSizedData data)
+	public void accept(ChunkSizedFullData data)
 	{
 		Iterator<WorldGenTask> tasks = this.generatorTasks.iterator();
 		while (tasks.hasNext())
 		{
 			WorldGenTask task = tasks.next();
-			Consumer<ChunkSizedData> consumer = task.taskTracker.getConsumer();
+			Consumer<ChunkSizedFullData> consumer = task.taskTracker.getConsumer();
 			if (consumer == null)
 			{
 				tasks.remove();

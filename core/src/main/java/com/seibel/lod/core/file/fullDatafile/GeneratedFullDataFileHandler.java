@@ -2,7 +2,7 @@ package com.seibel.lod.core.file.fullDatafile;
 
 import com.seibel.lod.core.datatype.IFullDataSource;
 import com.seibel.lod.core.datatype.IIncompleteFullDataSource;
-import com.seibel.lod.core.datatype.full.ChunkSizedData;
+import com.seibel.lod.core.datatype.full.ChunkSizedFullData;
 import com.seibel.lod.core.datatype.full.SparseFullDataSource;
 import com.seibel.lod.core.datatype.full.SingleChunkFullDataSource;
 import com.seibel.lod.core.generation.tasks.AbstractWorldGenTaskTracker;
@@ -158,7 +158,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		public boolean isMemoryAddressValid() { return this.targetData.get() != null; }
 		
 		@Override
-		public Consumer<ChunkSizedData> getConsumer()
+		public Consumer<ChunkSizedFullData> getConsumer()
 		{
 			if (this.loadedTargetData == null)
 			{

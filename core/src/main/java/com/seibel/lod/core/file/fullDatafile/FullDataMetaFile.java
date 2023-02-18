@@ -10,7 +10,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.seibel.lod.core.datatype.IFullDataSource;
 import com.seibel.lod.core.datatype.AbstractDataSourceLoader;
-import com.seibel.lod.core.datatype.full.ChunkSizedData;
+import com.seibel.lod.core.datatype.full.ChunkSizedFullData;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.file.metaData.MetaData;
 import com.seibel.lod.core.pos.DhLodPos;
@@ -46,7 +46,7 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 	//TODO: use ConcurrentAppendSingleSwapContainer<LodDataSource> instead of below:
 	private static class GuardedMultiAppendQueue {
 		ReentrantReadWriteLock appendLock = new ReentrantReadWriteLock();
-		ConcurrentLinkedQueue<ChunkSizedData> queue = new ConcurrentLinkedQueue<>();
+		ConcurrentLinkedQueue<ChunkSizedFullData> queue = new ConcurrentLinkedQueue<>();
 	}
 
 	// ===Concurrent Write stuff===
@@ -140,7 +140,7 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 //		}
 //	}
 
-	public void addToWriteQueue(ChunkSizedData datatype) {
+	public void addToWriteQueue(ChunkSizedFullData datatype) {
 		debugCheck();
 		DhLodPos chunkPos = new DhLodPos((byte) (datatype.dataDetail + 4), datatype.x, datatype.z);
 		LodUtil.assertTrue(pos.getSectionBBoxPos().overlaps(chunkPos), "Chunk pos {} doesn't overlap with section {}", chunkPos, pos);
@@ -377,7 +377,7 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 		{
 			this.swapWriteQueue();
 			int count = this._backQueue.queue.size();
-			for (ChunkSizedData chunk : this._backQueue.queue)
+			for (ChunkSizedFullData chunk : this._backQueue.queue)
 			{
 				data.update(chunk);
 			}
