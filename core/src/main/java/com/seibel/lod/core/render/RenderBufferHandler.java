@@ -13,10 +13,13 @@ import com.seibel.lod.core.util.objects.SortedArraySet;
 import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * This object tells the {@link LodRenderer} what buffers to render
+ */
 public class RenderBufferHandler
 {
     public final LodQuadTree quadTree;
-    private final MovableGridRingList<RenderBufferNode> renderBufferNodes;
+    private final MovableGridRingList<RenderBufferNode> renderBufferNodesGridList;
 	
 	// TODO: Make sorting go into the update loop instead of the render loop as it doesn't need to be done every frame
 	private SortedArraySet<LoadedRenderBuffer> loadedNearToFarBuffers = null;
@@ -29,7 +32,7 @@ public class RenderBufferHandler
 		
 		MovableGridRingList<LodRenderSection> referenceList = quadTree.getRingList((byte) (quadTree.getNumbersOfSectionDetailLevels() - 1));
 		Pos2D center = referenceList.getCenter();
-		this.renderBufferNodes = new MovableGridRingList<>(referenceList.getHalfSize(), center);
+		this.renderBufferNodesGridList = new MovableGridRingList<>(referenceList.getHalfSize(), center);
 	}
 	
 	
@@ -138,7 +141,7 @@ public class RenderBufferHandler
 		this.loadedNearToFarBuffers = new SortedArraySet<>((a, b) -> -sortFarToNear.compare(a, b));
 		
 		// Add all the loaded buffers to the sorted list
-		this.renderBufferNodes.forEach((renderBufferNode) ->
+		this.renderBufferNodesGridList.forEach((renderBufferNode) ->
 		{
 			if (renderBufferNode != null)
 			{
@@ -164,40 +167,38 @@ public class RenderBufferHandler
 	{
 		byte topDetailLevel = (byte) (this.quadTree.getNumbersOfSectionDetailLevels() - 1);
 		MovableGridRingList<LodRenderSection> renderSectionGridList = this.quadTree.getRingList(topDetailLevel);
-		Pos2D center = renderSectionGridList.getCenter();
-		//boolean moved = renderBufferNodes.getCenterBlockPos().x != center.x || renderBufferNodes.getCenterBlockPos().y != center.y;
-		this.renderBufferNodes.moveTo(center.x, center.y, RenderBufferNode::close); // Note: may lock the list
+		
+		Pos2D newCenterPos = renderSectionGridList.getCenter();
+		this.renderBufferNodesGridList.moveTo(newCenterPos.x, newCenterPos.y, RenderBufferNode::close); // Note: may lock the list
 		
 		
 		
-		this.renderBufferNodes.forEachPosOrdered((renderBufferNode, pos) ->
+		this.renderBufferNodesGridList.forEachPosOrdered((renderBufferNode, pos) ->
 		{
 			DhSectionPos sectPos = new DhSectionPos(topDetailLevel, pos.x, pos.y);
-			LodRenderSection section = this.quadTree.getSection(sectPos);
+			LodRenderSection renderSection = this.quadTree.getSection(sectPos);
 			
-			if (section == null)
+			if (renderSection == null && renderBufferNode != null)
 			{
-				// If section is null, but node exists, remove node
-				if (renderBufferNode != null)
+				// section is null, but a node exists, remove the node
+				this.renderBufferNodesGridList.remove(pos).close();
+			}
+			else if (renderSection != null)
+			{
+				
+				if (renderBufferNode == null)
 				{
-					this.renderBufferNodes.remove(pos).close();
+					// renderSection exists, but node does not
+					renderBufferNode = this.renderBufferNodesGridList.setChained(pos, new RenderBufferNode(sectPos));
 				}
-				// If section is null, continue
-				return;
+				
+				// Update the render node
+				renderBufferNode.update();	
 			}
-			
-			// If section is not null, but node does not exist, create node
-			if (renderBufferNode == null)
-			{
-				renderBufferNode = this.renderBufferNodes.setChained(pos, new RenderBufferNode(sectPos));
-			}
-			
-			// Update node
-			renderBufferNode.update();
 		});
 	}
-
-    public void close() { this.renderBufferNodes.clear(RenderBufferNode::close); }
+	
+    public void close() { this.renderBufferNodesGridList.clear(RenderBufferNode::close); }
 	
 	
 	
@@ -220,11 +221,11 @@ public class RenderBufferHandler
 	
 	private class RenderBufferNode implements AutoCloseable
 	{
-		public final DhSectionPos pos;
-		public volatile RenderBufferNode[] children = null;
+		private final DhSectionPos pos;
+		private volatile RenderBufferNode[] children = null;
 		
 		//FIXME: The multiple Atomics will cause race conditions between them!
-		public final AtomicReference<AbstractRenderBuffer> renderBufferRef = new AtomicReference<>();
+		private final AtomicReference<AbstractRenderBuffer> renderBufferRef = new AtomicReference<>();
 		
 		
 		
@@ -252,6 +253,7 @@ public class RenderBufferHandler
 			}
 		}
 		
+		
 		//TODO: In the future make this logic a bit more complete so that when children are just created,
 		//      the buffer is only unloaded if all children's buffers are ready. This will make the
 		//      transition between buffers no longer causing any flicker.
@@ -266,8 +268,7 @@ public class RenderBufferHandler
 			IRenderSource currentRenderSource = section.getRenderSource();
 			
 			// Update self's render buffer state
-			boolean shouldRender = section.shouldRender();
-			if (!shouldRender)
+			if (!section.shouldRender())
 			{
 				//TODO: Does this really need to force the old buffer to not be rendered?
 				AbstractRenderBuffer renderBuffer = this.renderBufferRef.getAndSet(null);
@@ -282,6 +283,7 @@ public class RenderBufferHandler
 				currentRenderSource.trySwapRenderBufferAsync(quadTree, this.renderBufferRef);
 			}
 			
+			
 			// Update children's render buffer state
 			// TODO: Improve this! (Checking section.isLoaded() as if its not loaded, it can only be because
 			//  it has children. (But this logic is... really hard to read!)
@@ -291,12 +293,11 @@ public class RenderBufferHandler
 			{
 				if (this.children == null)
 				{
-					RenderBufferNode[] children = new RenderBufferNode[4];
+					this.children = new RenderBufferNode[4];
 					for (int i = 0; i < 4; i++)
 					{
-						children[i] = new RenderBufferNode(this.pos.getChildByIndex(i));
+						this.children[i] = new RenderBufferNode(this.pos.getChildByIndex(i));
 					}
-					this.children = children;
 				}
 				
 				for (RenderBufferNode child : this.children)
@@ -324,18 +325,18 @@ public class RenderBufferHandler
 		@Override
 		public void close()
 		{
-			if (children != null)
+			if (this.children != null)
 			{
-				for (RenderBufferNode child : children)
+				for (RenderBufferNode child : this.children)
 				{
 					child.close();
 				}
 			}
-			AbstractRenderBuffer buff;
-			buff = this.renderBufferRef.getAndSet(null);
-			if (buff != null)
+			
+			AbstractRenderBuffer renderBuffer = this.renderBufferRef.getAndSet(null);
+			if (renderBuffer != null)
 			{
-				buff.close();
+				renderBuffer.close();
 			}
 		}
 	}

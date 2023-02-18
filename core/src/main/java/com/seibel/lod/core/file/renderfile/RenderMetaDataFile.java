@@ -150,10 +150,10 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 		// Create an empty and non-completed future.
 		// Note: I do this before actually filling in the future so that I can ensure only
 		//   one task is submitted to the thread pool.
-		CompletableFuture<IRenderSource> future = new CompletableFuture<>();
+		CompletableFuture<IRenderSource> loadRenderSourceFuture = new CompletableFuture<>();
 	
 		// Would use faster and non-nesting Compare and exchange. But java 8 doesn't have it! :(
-		boolean worked = this.data.compareAndSet(obj, future);
+		boolean worked = this.data.compareAndSet(obj, loadRenderSourceFuture);
 		if (!worked)
 		{
 			return this.loadOrGetCached(fileReaderThreads, level);
@@ -166,67 +166,67 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 		if (!this.doesFileExist)
 		{
 			this.fileHandler.onCreateRenderFile(this)
-					.thenApply((data) -> 
+				.thenApply((data) -> 
+				{
+					this.metaData = makeMetaData(data);
+					return data;
+				})
+				.thenApply((renderSource) -> this.fileHandler.onRenderFileLoaded(renderSource, this))
+				.whenComplete((renderSource, exception) -> 
+				{
+					if (exception != null)
 					{
-						this.metaData = makeMetaData(data);
-						return data;
-					})
-					.thenApply((renderSource) -> this.fileHandler.onRenderFileLoaded(renderSource, this))
-					.whenComplete((renderSource, exception) -> 
+						LOGGER.error("Uncaught error on creation {}: ", this.path, exception);
+						loadRenderSourceFuture.complete(null);
+						this.data.set(null);
+					}
+					else
 					{
-						if (exception != null)
-						{
-							LOGGER.error("Uncaught error on creation {}: ", this.path, exception);
-							future.complete(null);
-							this.data.set(null);
-						}
-						else
-						{
-							future.complete(renderSource);
-							//new DataObjTracker(v); //TODO: Obj Tracker??? For debug?
-							this.data.set(new SoftReference<>(renderSource));
-						}
-					});
+						loadRenderSourceFuture.complete(renderSource);
+						//new DataObjTracker(v); //TODO: Obj Tracker??? For debug?
+						this.data.set(new SoftReference<>(renderSource));
+					}
+				});
 		}
 		else
 		{
 			CompletableFuture.supplyAsync(() -> 
+				{
+					if (this.metaData == null)
 					{
-						if (this.metaData == null)
-						{
-							throw new IllegalStateException("Meta data not loaded!");
-						}
-						
-						// Load the file.
-						IRenderSource renderSource;
-						try (FileInputStream fio = this.getDataContent())
-						{
-							renderSource = this.loader.loadRenderSource(this, fio, level);
-						}
-						catch (IOException e)
-						{
-							throw new CompletionException(e);
-						}
-						
-						renderSource = this.fileHandler.onRenderFileLoaded(renderSource, this);
-						return renderSource;
-					}, fileReaderThreads)
-					.whenComplete((f, e) -> 
+						throw new IllegalStateException("Meta data not loaded!");
+					}
+					
+					// Load the file.
+					IRenderSource renderSource;
+					try (FileInputStream fio = this.getDataContent())
 					{
-						if (e != null)
-						{
-							LOGGER.error("Error loading file {}: ", this.path, e);
-							future.complete(null);
-							this.data.set(null);
-						}
-						else
-						{
-							future.complete(f);
-							this.data.set(new SoftReference<>(f));
-						}
-					});
+						renderSource = this.loader.loadRenderSource(this, fio, level);
+					}
+					catch (IOException e)
+					{
+						throw new CompletionException(e);
+					}
+					
+					renderSource = this.fileHandler.onRenderFileLoaded(renderSource, this);
+					return renderSource;
+				}, fileReaderThreads)
+				.whenComplete((renderSource, e) -> 
+				{
+					if (e != null)
+					{
+						LOGGER.error("Error loading file {}: ", this.path, e);
+						loadRenderSourceFuture.complete(null);
+						this.data.set(null);
+					}
+					else
+					{
+						loadRenderSourceFuture.complete(renderSource);
+						this.data.set(new SoftReference<>(renderSource));
+					}
+				});
 		}
-		return future;
+		return loadRenderSourceFuture;
 	}
 	
     private static MetaData makeMetaData(IRenderSource data)

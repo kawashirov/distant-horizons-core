@@ -28,6 +28,8 @@ import java.util.concurrent.ExecutorService;
 
 public class RenderFileHandler implements ILodRenderSourceProvider
 {
+	public static final String RENDER_FILE_EXTENSION = ".rlod";
+	
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
 	private final ExecutorService renderCacheThread = LodUtil.makeSingleThreadPool("RenderCacheThread");
@@ -70,7 +72,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 			}
 			catch (IOException e)
 			{
-				LOGGER.error("Failed to read render meta file at [{}]. Error: ", file, e);
+				LOGGER.error("Failed to read render meta file at ["+file+"]. Error: ", e);
 				String corruptedFileName = file.getName() + ".corrupted";
 				
 				File corruptedFile = new File(file.getParentFile(), corruptedFileName);
@@ -83,14 +85,14 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 				
 				if (file.renameTo(corruptedFile))
 				{
-					LOGGER.error("Renamed corrupted file to [{}].", file.getName() + ".corrupted");
+					LOGGER.error("Renamed corrupted file to ["+corruptedFileName+"].");
 				}
 				else
 				{
-					LOGGER.error("Failed to rename corrupted file to [{}]. Attempting to delete file...", corruptedFileName);
+					LOGGER.error("Failed to rename corrupted file to ["+corruptedFileName+"]. Attempting to delete file...");
 					if (!file.delete())
 					{
-						LOGGER.error("Unable to delete corrupted file [{}].", corruptedFileName);
+						LOGGER.error("Unable to delete corrupted file ["+corruptedFileName+"].");
 					}
 				}
 			}
@@ -128,7 +130,10 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 					for (RenderMetaDataFile metaFile : metaFiles)
 					{
 						if (metaFile == fileToUse)
+						{
 							continue;
+						}
+						
 						File oldFile = new File(metaFile.path + ".old");
 						try
 						{
@@ -172,7 +177,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 			}
 			catch (IOException e)
 			{
-				LOGGER.error("IOException on creating new render file at {}", pos, e);
+				LOGGER.error("IOException on creating new render file at "+pos, e);
 				return null;
 			}
 			
@@ -184,16 +189,15 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 		}
 		
         return metaFile.loadOrGetCached(this.renderCacheThread, this.level).handle(
-                (renderSource, exception) ->
+			(renderSource, exception) ->
+			{
+				if (exception != null)
 				{
-                    if (exception != null)
-					{
-						LOGGER.error("Uncaught error on {}:", pos, exception);
-					}
-					
-					return (renderSource != null) ? renderSource : new PlaceHolderRenderSource(pos);
+					LOGGER.error("Uncaught error on "+pos+":", exception);
 				}
-        );
+				
+				return (renderSource != null) ? renderSource : new PlaceHolderRenderSource(pos);
+			});
     }
 	
     /* This call is concurrent. I.e. it supports multiple threads calling this method at the same time. */
@@ -238,12 +242,6 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 		}
 		return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
 	}
-	
-    private File computeDefaultFilePath(DhSectionPos pos)
-	{ 
-		//TODO: Temp code as we haven't decided on the file naming & location yet.
-        return new File(this.saveDir, pos.serialize() + ".lod");
-    }
 
     @Override
     public void close()
@@ -256,10 +254,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     }
 
-    public File computeRenderFilePath(DhSectionPos pos)
-	{
-        return new File(this.saveDir, pos.serialize() + ".lod");
-    }
+    public File computeRenderFilePath(DhSectionPos pos) { return new File(this.saveDir, pos.serialize() + RENDER_FILE_EXTENSION);}
 
     public CompletableFuture<IRenderSource> onCreateRenderFile(RenderMetaDataFile file)
 	{

@@ -32,7 +32,8 @@ public class LodQuadTree implements AutoCloseable
      * Note: all config values should be via the class that extends this class, and
      *          by implementing different abstract methods
      */
-    private static final byte TREE_LOWEST_DETAIL_LEVEL = ColumnRenderSource.SECTION_SIZE_OFFSET;
+    public static final byte TREE_LOWEST_DETAIL_LEVEL = ColumnRenderSource.SECTION_SIZE_OFFSET;
+	
     private static final boolean SUPER_VERBOSE_LOGGING = false;
 	
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
@@ -571,7 +572,7 @@ public class LodQuadTree implements AutoCloseable
 					{
 						section.disableRender();
 					}
-					if (section.childCount == 0)
+					else if (section.childCount == 0)
 					{
 						section.enableRender(this.level, this);
 					}
