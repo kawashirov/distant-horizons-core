@@ -41,7 +41,7 @@ public class LodRenderSection
 	// rendering //
 	//===========//
 	
-    public void enableRender(IDhClientLevel level, LodQuadTree quadTree)
+    public void enableRender()
 	{
         if (this.isRenderEnabled)
 		{

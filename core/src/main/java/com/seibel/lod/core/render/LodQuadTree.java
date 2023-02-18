@@ -574,7 +574,7 @@ public class LodQuadTree implements AutoCloseable
 					}
 					else if (section.childCount == 0)
 					{
-						section.enableRender(this.level, this);
+						section.enableRender();
 					}
 					
 					
