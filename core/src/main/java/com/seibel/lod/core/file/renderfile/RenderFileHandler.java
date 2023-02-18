@@ -2,8 +2,6 @@ package com.seibel.lod.core.file.renderfile;
 
 import com.google.common.collect.HashMultimap;
 import com.seibel.lod.core.datatype.full.IFullDataSource;
-import com.seibel.lod.core.datatype.PlaceHolderRenderSource;
-import com.seibel.lod.core.datatype.render.IRenderSource;
 import com.seibel.lod.core.datatype.render.AbstractRenderSourceLoader;
 import com.seibel.lod.core.datatype.render.ColumnRenderSource;
 import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
@@ -171,7 +169,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 	
     /** This call is concurrent. I.e. it supports multiple threads calling this method at the same time. */
     @Override
-    public CompletableFuture<IRenderSource> read(DhSectionPos pos)
+    public CompletableFuture<ColumnRenderSource> read(DhSectionPos pos)
 	{
         RenderMetaDataFile metaFile = this.filesBySectionPos.get(pos);
 		if (metaFile == null)
@@ -212,7 +210,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 					LOGGER.error("Uncaught error on "+pos+":", exception);
 				}
 				
-				return (renderSource != null) ? renderSource : new PlaceHolderRenderSource(pos);
+				return (renderSource != null) ? renderSource : ColumnRenderSource.createEmptyRenderSource(pos);
 			});
     }
 	
@@ -272,7 +270,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 
     public File computeRenderFilePath(DhSectionPos pos) { return new File(this.saveDir, pos.serialize() + RENDER_FILE_EXTENSION);}
 
-    public CompletableFuture<IRenderSource> onCreateRenderFile(RenderMetaDataFile file)
+    public CompletableFuture<ColumnRenderSource> onCreateRenderFile(RenderMetaDataFile file)
 	{
 		final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get()
 				.calculateMaxVerticalData((byte) (file.pos.sectionDetailLevel - ColumnRenderSource.SECTION_SIZE_OFFSET));
@@ -281,14 +279,14 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 				new ColumnRenderSource(file.pos, vertSize, this.level.getMinY()));
 	}
 
-    private void updateCache(IRenderSource renderSource, RenderMetaDataFile file)
+    private void updateCache(ColumnRenderSource renderSource, RenderMetaDataFile file)
 	{
 		if (this.cacheUpdateLockBySectionPos.putIfAbsent(file.pos, new Object()) != null)
 		{
 			return;
 		}
 		
-		final WeakReference<IRenderSource> renderSourceReference = new WeakReference<>(renderSource); // TODO why is this a week reference?
+		final WeakReference<ColumnRenderSource> renderSourceReference = new WeakReference<>(renderSource); // TODO why is this a week reference?
 		CompletableFuture<IFullDataSource> fullDataSourceFuture = this.fullDataSourceProvider.read(renderSource.getSectionPos());
 		fullDataSourceFuture = fullDataSourceFuture.thenApply((dataSource) -> 
 			{
@@ -319,7 +317,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 				).thenRun(() -> this.cacheUpdateLockBySectionPos.remove(file.pos));
 	}
 	
-    public IRenderSource onRenderFileLoaded(IRenderSource renderSource, RenderMetaDataFile file)
+    public ColumnRenderSource onRenderFileLoaded(ColumnRenderSource renderSource, RenderMetaDataFile file)
 	{
 //		if (!this.fullDataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get()))
 //		{
@@ -329,8 +327,8 @@ public class RenderFileHandler implements ILodRenderSourceProvider
         return renderSource;
     }
 	
-    private void write(IRenderSource currentRenderSource, RenderMetaDataFile file,
-                       IRenderSource newRenderSource)
+    private void write(ColumnRenderSource currentRenderSource, RenderMetaDataFile file,
+			ColumnRenderSource newRenderSource)
 	{
         if (currentRenderSource == null || newRenderSource == null)
 		{
@@ -348,7 +346,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
         file.save(currentRenderSource, this.level);
     }
 	
-    public void onReadRenderSourceFromCache(RenderMetaDataFile file, IRenderSource data)
+    public void onReadRenderSourceFromCache(RenderMetaDataFile file, ColumnRenderSource data)
 	{
 //        if (!this.fullDataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get()))
 //		{
@@ -356,10 +354,10 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 //        }
     }
 	
-    public boolean refreshRenderSource(IRenderSource source)
+    public boolean refreshRenderSource(ColumnRenderSource renderSource)
 	{
-        RenderMetaDataFile file = this.filesBySectionPos.get(source.getSectionPos());
-        if (source instanceof PlaceHolderRenderSource)
+        RenderMetaDataFile file = this.filesBySectionPos.get(renderSource.getSectionPos());
+        if (renderSource.isEmpty())
 		{
             if (file == null || file.metaData == null)
 			{
@@ -371,7 +369,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
         LodUtil.assertTrue(file.metaData != null);
 //        if (!this.fullDataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get()))
 //		{
-			this.updateCache(source, file);
+			this.updateCache(renderSource, file);
             return true;
 //        }
 		

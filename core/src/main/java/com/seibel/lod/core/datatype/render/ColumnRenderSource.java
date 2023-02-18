@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Leetom
  * @version 2022-2-7
  */
-public class ColumnRenderSource implements IRenderSource, IColumnDatatype
+public class ColumnRenderSource implements IColumnDatatype
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
@@ -76,7 +76,11 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 	
 	
 	
+	//==============//
+	// constructors //
+	//==============//
 	
+	public static ColumnRenderSource createEmptyRenderSource(DhSectionPos sectionPos) { return new ColumnRenderSource(sectionPos, 0, 0); }
 	/**
 	 * Creates an empty ColumnRenderSource.
 	 * 
@@ -239,23 +243,20 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 		}
 	}
 	
-	@Override
-	public void updateFromRenderSource(IRenderSource source)
+	/** Overrides any data that has not been written directly using write(). Skips empty source dataPoints. */
+	public void updateFromRenderSource(ColumnRenderSource renderSource)
 	{
-		// TODO if we can only write this one type of data isn't it dangerous to have it in the interface?
-		LodUtil.assertTrue(source instanceof ColumnRenderSource);
-		ColumnRenderSource src = (ColumnRenderSource) source;
 		
 		// validate we are writing for the same location
-		LodUtil.assertTrue(src.sectionPos.equals(this.sectionPos));
+		LodUtil.assertTrue(renderSource.sectionPos.equals(this.sectionPos));
 		
 		// change the vertical size if necessary (this can happen if the vertical quality was changed in the config) 
-		this.clearAndChangeVerticalSize(src.verticalDataCount);
+		this.clearAndChangeVerticalSize(renderSource.verticalDataCount);
 		// validate both objects have the same number of dataPoints
-		LodUtil.assertTrue(src.verticalDataCount == this.verticalDataCount);
+		LodUtil.assertTrue(renderSource.verticalDataCount == this.verticalDataCount);
 		
 		
-		if (src.isEmpty)
+		if (renderSource.isEmpty)
 		{
 			// the source is empty, don't attempt to update anything
 			return;
@@ -268,7 +269,7 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 		for (int i = 0; i < this.dataContainer.length; i += this.verticalDataCount)
 		{
 			int thisGenMode = ColumnFormat.getGenerationMode(this.dataContainer[i]);
-			int srcGenMode = ColumnFormat.getGenerationMode(src.dataContainer[i]);
+			int srcGenMode = ColumnFormat.getGenerationMode(renderSource.dataContainer[i]);
 			
 			if (srcGenMode == 0)
 			{
@@ -280,10 +281,10 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 			if (thisGenMode <= srcGenMode)
 			{
 				ColumnArrayView thisColumnArrayView = new ColumnArrayView(this.dataContainer, this.verticalDataCount, i, this.verticalDataCount);
-				ColumnArrayView srcColumnArrayView = new ColumnArrayView(src.dataContainer, src.verticalDataCount, i, src.verticalDataCount);
+				ColumnArrayView srcColumnArrayView = new ColumnArrayView(renderSource.dataContainer, renderSource.verticalDataCount, i, renderSource.verticalDataCount);
 				thisColumnArrayView.copyFrom(srcColumnArrayView);
 				
-				this.debugSourceFlags[i / this.verticalDataCount] = src.debugSourceFlags[i / this.verticalDataCount];
+				this.debugSourceFlags[i / this.verticalDataCount] = renderSource.debugSourceFlags[i / this.verticalDataCount];
 			}
 		}
 	}
@@ -302,7 +303,6 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 		}
 	}
 	
-	@Override
 	public void fastWrite(ChunkSizedFullDataSource chunkData, IDhClientLevel level) { FullToColumnTransformer.writeFullDataChunkToColumnData(this, level, chunkData); }
 	
 	
@@ -369,20 +369,22 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 		}
 	}
 	
-	@Override
 	public void enableRender(IDhClientLevel level, LodQuadTree quadTree)
 	{
 		this.level = level;
 		//this.tryBuildBuffer(level, quadTree); // FIXME why was this commented out?
 	}
 	
-	@Override
 	public void disableRender() { this.cancelBuildBuffer(); }
 	
-	@Override
 	public void dispose() { this.cancelBuildBuffer(); }
 	
-	@Override
+	/**
+	 * Try and swap in new render buffer for this section. Note that before this call, there should be no other
+	 * places storing or referencing the render buffer.
+	 * @param renderBufferToSwap The slot for swapping in the new buffer.
+	 * @return True if the swap was successful. False if swap is not needed or if it is in progress.
+	 */
 	public boolean trySwapRenderBufferAsync(LodQuadTree quadTree, AtomicReference<AbstractRenderBuffer> renderBufferToSwap)
 	{
 		// prevent swapping the buffer to quickly
@@ -433,20 +435,17 @@ public class ColumnRenderSource implements IRenderSource, IColumnDatatype
 		return false;
 	}
 	
-	@Override
 	public void saveRender(IDhClientLevel level, RenderMetaDataFile file, OutputStream dataStream) throws IOException
 	{
 		DataOutputStream dos = new DataOutputStream(dataStream); // DO NOT CLOSE
 		this.writeData(dos);
 	}
 	
-	@Override
 	public byte getRenderVersion() { return LATEST_VERSION; }
 	
-	@Override
+	/** Whether this object is still valid. If not, a new one should be created. */
 	public boolean isValid() { return true; }
 	
-	@Override
 	public boolean isEmpty() { return this.isEmpty; }
 	public void markNotEmpty() { this.isEmpty = false; }
 	

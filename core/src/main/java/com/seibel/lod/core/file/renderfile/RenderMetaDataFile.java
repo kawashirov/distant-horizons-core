@@ -1,6 +1,6 @@
 package com.seibel.lod.core.file.renderfile;
 
-import com.seibel.lod.core.datatype.render.IRenderSource;
+import com.seibel.lod.core.datatype.render.ColumnRenderSource;
 import com.seibel.lod.core.datatype.render.AbstractRenderSourceLoader;
 import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.file.metaData.MetaData;
@@ -25,7 +25,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
     public AbstractRenderSourceLoader loader;
-    public Class<? extends IRenderSource> dataType;
+    public Class<? extends ColumnRenderSource> dataType;
 	
     // The '?' type should either be:
     //    SoftReference<LodRenderSource>, or	- File that may still be loaded
@@ -91,7 +91,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 		DhLodPos chunkPos = new DhLodPos((byte) (chunkData.dataDetail + 4), chunkData.x, chunkData.z);
 		LodUtil.assertTrue(this.pos.getSectionBBoxPos().overlaps(chunkPos), "Chunk pos {} doesn't overlap with section {}", chunkPos, pos);
 			
-		CompletableFuture<IRenderSource> source = this._readCached(this.data.get());
+		CompletableFuture<ColumnRenderSource> source = this._readCached(this.data.get());
 		if (source == null)
 		{
 			return;
@@ -107,7 +107,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 			return CompletableFuture.completedFuture(null); // No need to save if the file doesn't exist.
 		}
 		
-		CompletableFuture<IRenderSource> source = this._readCached(this.data.get());
+		CompletableFuture<ColumnRenderSource> source = this._readCached(this.data.get());
 		if (source == null)
 		{
 			return CompletableFuture.completedFuture(null); // If there is no cached data, there is no need to save.
@@ -118,7 +118,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 	
     // Suppress casting of CompletableFuture<?> to CompletableFuture<LodRenderSource>
     @SuppressWarnings("unchecked")
-	private CompletableFuture<IRenderSource> _readCached(Object obj)
+	private CompletableFuture<ColumnRenderSource> _readCached(Object obj)
 	{
 		// Has file cached in RAM and not freed yet.
 		if ((obj instanceof SoftReference<?>))
@@ -126,9 +126,8 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 			Object inner = ((SoftReference<?>) obj).get();
 			if (inner != null)
 			{
-				LodUtil.assertTrue(inner instanceof IRenderSource);
-				fileHandler.onReadRenderSourceFromCache(this, (IRenderSource) inner);
-				return CompletableFuture.completedFuture((IRenderSource) inner);
+				fileHandler.onReadRenderSourceFromCache(this, (ColumnRenderSource) inner);
+				return CompletableFuture.completedFuture((ColumnRenderSource) inner);
 			}
 		}
 		
@@ -136,18 +135,18 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 		// Someone is already trying to complete it. so just return the obj.
 		if ((obj instanceof CompletableFuture<?>))
 		{
-			return (CompletableFuture<IRenderSource>) obj;
+			return (CompletableFuture<ColumnRenderSource>) obj;
 		}
 		return null;
 	}
 	
     // Cause: Generic Type runtime casting cannot safety check it.
 	// However, the Union type ensures the 'data' should only contain the listed type.
-	public CompletableFuture<IRenderSource> loadOrGetCached(Executor fileReaderThreads, IDhLevel level)
+	public CompletableFuture<ColumnRenderSource> loadOrGetCached(Executor fileReaderThreads, IDhLevel level)
 	{
 		Object obj = this.data.get();
 	
-		CompletableFuture<IRenderSource> cached = this._readCached(obj);
+		CompletableFuture<ColumnRenderSource> cached = this._readCached(obj);
 		if (cached != null)
 		{
 			return cached;
@@ -156,7 +155,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 		// Create an empty and non-completed future.
 		// Note: I do this before actually filling in the future so that I can ensure only
 		//   one task is submitted to the thread pool.
-		CompletableFuture<IRenderSource> loadRenderSourceFuture = new CompletableFuture<>();
+		CompletableFuture<ColumnRenderSource> loadRenderSourceFuture = new CompletableFuture<>();
 	
 		// Would use faster and non-nesting Compare and exchange. But java 8 doesn't have it! :(
 		boolean worked = this.data.compareAndSet(obj, loadRenderSourceFuture);
@@ -204,7 +203,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 					}
 					
 					// Load the file.
-					IRenderSource renderSource;
+					ColumnRenderSource renderSource;
 					try (FileInputStream fio = this.getDataContent())
 					{
 						renderSource = this.loader.loadRenderSource(this, fio, level);
@@ -235,11 +234,11 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 		return loadRenderSourceFuture;
 	}
 	
-    private static MetaData makeMetaData(IRenderSource data)
+    private static MetaData makeMetaData(ColumnRenderSource renderSource)
 	{
-		AbstractRenderSourceLoader loader = AbstractRenderSourceLoader.getLoader(data.getClass(), data.getRenderVersion());
-		return new MetaData(data.getSectionPos(), -1,
-				data.getDataDetail(), loader == null ? 0 : loader.renderTypeId, data.getRenderVersion());
+		AbstractRenderSourceLoader loader = AbstractRenderSourceLoader.getLoader(renderSource.getClass(), renderSource.getRenderVersion());
+		return new MetaData(renderSource.getSectionPos(), -1,
+				renderSource.getDataDetail(), loader == null ? 0 : loader.renderTypeId, renderSource.getRenderVersion());
 	}
 	
     private FileInputStream getDataContent() throws IOException
@@ -262,9 +261,9 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 		return fin;
 	}
 	
-    public void save(IRenderSource data, IDhClientLevel level)
+    public void save(ColumnRenderSource renderSource, IDhClientLevel level)
 	{
-		if (data.isEmpty())
+		if (renderSource.isEmpty())
 		{
 			if (this.path.exists())
 			{
@@ -280,7 +279,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 			//LOGGER.info("Saving updated render file v[{}] at sect {}", this.metaData.dataVersion.get(), this.pos);
 			try
 			{
-				super.writeData((out) -> data.saveRender(level, this, out));
+				super.writeData((out) -> renderSource.saveRender(level, this, out));
 				this.doesFileExist = true;
 			}
 			catch (IOException e)

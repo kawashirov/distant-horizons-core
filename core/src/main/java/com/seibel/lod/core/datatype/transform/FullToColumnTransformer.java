@@ -1,7 +1,6 @@
 package com.seibel.lod.core.datatype.transform;
 
 import com.seibel.lod.core.datatype.full.IIncompleteFullDataSource;
-import com.seibel.lod.core.datatype.render.IRenderSource;
 import com.seibel.lod.core.datatype.column.accessor.ColumnFormat;
 import com.seibel.lod.core.datatype.render.ColumnRenderSource;
 import com.seibel.lod.core.datatype.column.accessor.ColumnArrayView;
@@ -68,7 +67,8 @@ public class FullToColumnTransformer {
         return columnSource;
     }
 
-    public static IRenderSource transformIncompleteDataToColumnData(IDhClientLevel level, IIncompleteFullDataSource data) {
+    public static ColumnRenderSource transformIncompleteDataToColumnData(IDhClientLevel level, IIncompleteFullDataSource data)
+	{
         final DhSectionPos pos = data.getSectionPos();
         final byte dataDetail = data.getDataDetail();
         final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(data.getDataDetail());

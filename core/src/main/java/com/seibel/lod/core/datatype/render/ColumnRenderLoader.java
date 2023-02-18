@@ -37,7 +37,7 @@ public class ColumnRenderLoader extends AbstractRenderSourceLoader
 	
 	
     @Override
-    public IRenderSource loadRenderSource(RenderMetaDataFile dataFile, InputStream inputStream, IDhLevel level) throws IOException
+    public ColumnRenderSource loadRenderSource(RenderMetaDataFile dataFile, InputStream inputStream, IDhLevel level) throws IOException
 	{
 		DataInputStream inputDataStream = new DataInputStream(inputStream); // DO NOT CLOSE
 		int dataFileVersion = dataFile.metaData.loaderVersion;
@@ -60,7 +60,7 @@ public class ColumnRenderLoader extends AbstractRenderSourceLoader
     }
 	
     @Override
-    public IRenderSource createRenderSource(IFullDataSource dataSource, IDhClientLevel level)
+    public ColumnRenderSource createRenderSource(IFullDataSource dataSource, IDhClientLevel level)
 	{
 		if (dataSource instanceof FullDataSource) // TODO replace with Java 7 method
 		{
@@ -70,6 +70,7 @@ public class ColumnRenderLoader extends AbstractRenderSourceLoader
 		{
 			return FullToColumnTransformer.transformIncompleteDataToColumnData(level, (IIncompleteFullDataSource) dataSource);
 		}
+		
 		LodUtil.assertNotReach();
 		return null;
     }

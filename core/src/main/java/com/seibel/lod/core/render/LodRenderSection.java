@@ -1,9 +1,9 @@
 package com.seibel.lod.core.render;
 
+import com.seibel.lod.core.datatype.render.ColumnRenderSource;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhSectionPos;
-import com.seibel.lod.core.datatype.render.IRenderSource;
 import com.seibel.lod.core.file.renderfile.ILodRenderSourceProvider;
 import org.apache.logging.log4j.Logger;
 
@@ -23,11 +23,11 @@ public class LodRenderSection
     // (Should always be 4 after tick() is done, or 0 only if this is an unloaded node)
     public byte childCount = 0;
 	
-    private CompletableFuture<IRenderSource> loadFuture;
+    private CompletableFuture<ColumnRenderSource> loadFuture;
     private boolean isRenderEnabled = false;
 	
 	// TODO: Should I provide a way to change the render source?
-	private IRenderSource renderSource;
+	private ColumnRenderSource renderSource;
 	private ILodRenderSourceProvider renderSourceProvider = null;
 	
 	
@@ -156,7 +156,7 @@ public class LodRenderSection
 	
     public boolean isOutdated() { return this.renderSource != null && !this.renderSource.isValid(); }
 
-    public IRenderSource getRenderSource() { return this.renderSource; }
+    public ColumnRenderSource getRenderSource() { return this.renderSource; }
 	
 	
 	
