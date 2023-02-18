@@ -1,5 +1,6 @@
 package com.seibel.lod.core.file.renderfile;
 
+import com.seibel.lod.core.datatype.render.ColumnRenderLoader;
 import com.seibel.lod.core.datatype.render.ColumnRenderSource;
 import com.seibel.lod.core.datatype.render.AbstractRenderSourceLoader;
 import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
@@ -33,7 +34,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
     //    null									- Nothing is loaded or being loaded
     AtomicReference<Object> data = new AtomicReference<>(null);
 	
-	private final RenderFileHandler fileHandler;
+	private final RenderSourceFileHandler fileHandler;
 	private boolean doesFileExist;
 	
 	
@@ -46,11 +47,11 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 	 * NOTE: should only be used if there is NOT an existing file.
 	 * @throws IOException if a file already exists for this position 
 	 */
-	public static RenderMetaDataFile createNewFileForPos(RenderFileHandler fileHandler, DhSectionPos pos) throws IOException
+	public static RenderMetaDataFile createNewFileForPos(RenderSourceFileHandler fileHandler, DhSectionPos pos) throws IOException
 	{
 		return new RenderMetaDataFile(fileHandler, pos);
 	}
-	private RenderMetaDataFile(RenderFileHandler fileHandler, DhSectionPos pos) throws IOException
+	private RenderMetaDataFile(RenderSourceFileHandler fileHandler, DhSectionPos pos) throws IOException
 	{
 		super(fileHandler.computeRenderFilePath(pos), pos);
 		this.fileHandler = fileHandler;
@@ -62,11 +63,11 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 	 * NOTE: should only be used if there IS an existing file.
 	 * @throws IOException if no file exists for this position 
 	 */
-	public static RenderMetaDataFile createFromExistingFile(RenderFileHandler fileHandler, File path) throws IOException
+	public static RenderMetaDataFile createFromExistingFile(RenderSourceFileHandler fileHandler, File path) throws IOException
 	{
 		return new RenderMetaDataFile(fileHandler, path);
 	}
-	private RenderMetaDataFile(RenderFileHandler fileHandler, File path) throws IOException
+	private RenderMetaDataFile(RenderSourceFileHandler fileHandler, File path) throws IOException
 	{
 		super(path);
 		this.fileHandler = fileHandler;

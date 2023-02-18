@@ -1,10 +1,10 @@
 package com.seibel.lod.core.level;
 
 import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
+import com.seibel.lod.core.file.renderfile.RenderSourceFileHandler;
 import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.util.FileScanUtil;
 import com.seibel.lod.core.file.fullDatafile.RemoteFullDataFileHandler;
-import com.seibel.lod.core.file.renderfile.RenderFileHandler;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.render.RenderBufferHandler;
 import com.seibel.lod.core.file.structure.ClientOnlySaveStructure;
@@ -31,7 +31,7 @@ public class DhClientLevel implements IDhClientLevel
 	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	public final ClientOnlySaveStructure save;
 	public final RemoteFullDataFileHandler dataFileHandler;
-	public final RenderFileHandler renderFileHandler;
+	public final RenderSourceFileHandler renderSourceFileHandler;
 	public final RenderBufferHandler renderBufferHandler; //TODO: Should this be owned by renderer?
 	public final IClientLevelWrapper level;
 	public LodRenderer renderer = null;
@@ -45,12 +45,12 @@ public class DhClientLevel implements IDhClientLevel
 		save.getDataFolder(level).mkdirs();
 		save.getRenderCacheFolder(level).mkdirs();
 		this.dataFileHandler = new RemoteFullDataFileHandler(this, save.getDataFolder(level));
-		this.renderFileHandler = new RenderFileHandler(this.dataFileHandler, this, save.getRenderCacheFolder(level));
+		this.renderSourceFileHandler = new RenderSourceFileHandler(this.dataFileHandler, this, save.getRenderCacheFolder(level));
 		this.tree = new LodQuadTree(this, Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * 16,
-				MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, this.renderFileHandler);
+				MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, this.renderSourceFileHandler);
 		this.renderBufferHandler = new RenderBufferHandler(this.tree);
 		this.level = level;
-		FileScanUtil.scanFiles(save, level, this.dataFileHandler, this.renderFileHandler);
+		FileScanUtil.scanFiles(save, level, this.dataFileHandler, this.renderSourceFileHandler);
 		LOGGER.info("Started DHLevel for {} with saves at {}", level, save);
 	}
 	
@@ -110,12 +110,12 @@ public class DhClientLevel implements IDhClientLevel
 	public int getMinY() { return this.level.getMinHeight(); }
 	
 	@Override
-	public CompletableFuture<Void> saveAsync() { return this.renderFileHandler.flushAndSave(); }
+	public CompletableFuture<Void> saveAsync() { return this.renderSourceFileHandler.flushAndSave(); }
 	
 	@Override
 	public void close()
 	{
-		this.renderFileHandler.close();
+		this.renderSourceFileHandler.close();
 		LOGGER.info("Closed DHLevel for {}", this.level);
 	}
 	

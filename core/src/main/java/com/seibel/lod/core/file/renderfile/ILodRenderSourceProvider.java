@@ -10,7 +10,7 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * This represents LOD data that is stored in long term storage (IE LOD files stored on the hard drive) <br>
- * Example: {@link RenderFileHandler RenderFileHandler} <br><br>
+ * Example: {@link RenderSourceFileHandler RenderSourceFileHandler} <br><br>
  * 
  * This is used to create {@link ColumnRenderSource}'s 
  */

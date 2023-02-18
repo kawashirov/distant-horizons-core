@@ -2,7 +2,6 @@ package com.seibel.lod.core.file.renderfile;
 
 import com.google.common.collect.HashMultimap;
 import com.seibel.lod.core.datatype.full.IFullDataSource;
-import com.seibel.lod.core.datatype.render.AbstractRenderSourceLoader;
 import com.seibel.lod.core.datatype.render.ColumnRenderSource;
 import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.datatype.transform.DataRenderTransformer;
@@ -24,9 +23,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
-public class RenderFileHandler implements ILodRenderSourceProvider
+public class RenderSourceFileHandler implements ILodRenderSourceProvider
 {
 	public static final String RENDER_FILE_EXTENSION = ".rlod";
+	public static final long RENDER_SOURCE_TYPE_ID = ColumnRenderSource.TYPE_ID;
 	
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
@@ -42,7 +42,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 	
 	
 	
-	public RenderFileHandler(IFullDataSourceProvider sourceProvider, IDhClientLevel level, File saveRootDir)
+	public RenderSourceFileHandler(IFullDataSourceProvider sourceProvider, IDhClientLevel level, File saveRootDir)
 	{
         this.fullDataSourceProvider = sourceProvider;
         this.level = level;
@@ -339,9 +339,7 @@ public class RenderFileHandler implements ILodRenderSourceProvider
 		
         //file.metaData.dataVersion.set(newDataVersion);
         file.metaData.dataLevel = currentRenderSource.getDataDetail();
-        file.loader = AbstractRenderSourceLoader.getLoader(currentRenderSource.getClass(), currentRenderSource.getRenderVersion());
-        file.dataType = currentRenderSource.getClass();
-        file.metaData.dataTypeId = file.loader.renderTypeId;
+        file.metaData.dataTypeId = RENDER_SOURCE_TYPE_ID;
         file.metaData.loaderVersion = currentRenderSource.getRenderVersion();
         file.save(currentRenderSource, this.level);
     }

@@ -7,6 +7,7 @@ import com.seibel.lod.core.datatype.full.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.datatype.full.sources.FullDataSource;
 import com.seibel.lod.core.datatype.transform.ChunkToLodBuilder;
 import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
+import com.seibel.lod.core.file.renderfile.RenderSourceFileHandler;
 import com.seibel.lod.core.generation.BatchGenerator;
 import com.seibel.lod.core.generation.WorldGenerationQueue;
 import com.seibel.lod.core.pos.DhLodPos;
@@ -14,7 +15,6 @@ import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.file.fullDatafile.GeneratedFullDataFileHandler;
 import com.seibel.lod.core.util.FileScanUtil;
-import com.seibel.lod.core.file.renderfile.RenderFileHandler;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.render.RenderBufferHandler;
 import com.seibel.lod.core.file.structure.LocalSaveStructure;
@@ -130,7 +130,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		DhLodPos pos = data.getBBoxLodPos().convertToDetailLevel(FullDataSource.SECTION_SIZE_OFFSET);
 		if (renderState != null)
 		{
-			renderState.renderFileHandler.write(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);
+			renderState.renderSourceFileHandler.write(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);
 		}
 		else
 		{
@@ -264,7 +264,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		RenderState renderState = this.renderStateRef.get();
 		if (renderState != null)
 		{
-			return renderState.renderFileHandler.flushAndSave().thenCombine(this.dataFileHandler.flushAndSave(), (voidA, voidB) -> null);
+			return renderState.renderSourceFileHandler.flushAndSave().thenCombine(this.dataFileHandler.flushAndSave(), (voidA, voidB) -> null);
 		}
 		else
 		{
@@ -377,7 +377,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 	{
 		public final IClientLevelWrapper clientLevel;
 		public final LodQuadTree quadtree;
-		public final RenderFileHandler renderFileHandler;
+		public final RenderSourceFileHandler renderSourceFileHandler;
 		public final LodRenderer renderer;
 		
 		
@@ -387,13 +387,13 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 			DhClientServerLevel thisParent = DhClientServerLevel.this;
 			
 			this.clientLevel = clientLevel;
-			this.renderFileHandler = new RenderFileHandler(thisParent.dataFileHandler, thisParent, thisParent.saveStructure.getRenderCacheFolder(thisParent.serverLevel));
+			this.renderSourceFileHandler = new RenderSourceFileHandler(thisParent.dataFileHandler, thisParent, thisParent.saveStructure.getRenderCacheFolder(thisParent.serverLevel));
 			
 			this.quadtree = new LodQuadTree(DhClientServerLevel.this, Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH,
-					MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, this.renderFileHandler);
+					MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, this.renderSourceFileHandler);
 			
 			RenderBufferHandler renderBufferHandler = new RenderBufferHandler(this.quadtree);
-			FileScanUtil.scanFiles(thisParent.saveStructure, thisParent.serverLevel, null, this.renderFileHandler);
+			FileScanUtil.scanFiles(thisParent.saveStructure, thisParent.serverLevel, null, this.renderSourceFileHandler);
 			this.renderer = new LodRenderer(renderBufferHandler);
 		}
 		
@@ -403,7 +403,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		{
 			this.renderer.close();
 			this.quadtree.close();
-			return this.renderFileHandler.flushAndSave();
+			return this.renderSourceFileHandler.flushAndSave();
 		}
 	}
 	
