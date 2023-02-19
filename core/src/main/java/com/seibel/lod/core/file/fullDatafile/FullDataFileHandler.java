@@ -64,29 +64,8 @@ public class FullDataFileHandler implements IFullDataSourceProvider
                 }
 				catch (IOException e)
 				{
-                    LOGGER.error("Failed to read data meta file at {}: ", file, e);
-                    File corruptedFile = new File(file.getParentFile(), file.getName() + ".corrupted");
-                    
-					if (corruptedFile.exists())
-					{
-						if (!corruptedFile.delete())
-						{
-							LOGGER.error("Failed to delete corrupted meta data file at {}: ", corruptedFile, e);
-						}
-					}
-					
-                    if (file.renameTo(corruptedFile))
-					{
-                        LOGGER.error("Renamed corrupted file to {}", file.getName() + ".corrupted");
-                    }
-					else
-					{
-                        LOGGER.error("Failed to rename corrupted file to {}. Will try and delete file", file.getName() + ".corrupted");
-                        if (file.delete())
-						{
-							LOGGER.error("Failed to delete corrupted meta data file at {}: ", file, e);
-						}
-                    }
+                    LOGGER.error("Failed to read data meta file at "+file+": ", e);
+                    FileUtil.renameCorruptedFile(file);
                 }
             }
         }

@@ -9,6 +9,7 @@ import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
+import com.seibel.lod.core.util.FileUtil;
 import com.seibel.lod.core.util.objects.UncheckedInterruptedException;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
@@ -71,28 +72,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 			catch (IOException e)
 			{
 				LOGGER.error("Failed to read render meta file at ["+file+"]. Error: ", e);
-				String corruptedFileName = file.getName() + ".corrupted";
-				
-				File corruptedFile = new File(file.getParentFile(), corruptedFileName);
-				if (corruptedFile.exists())
-				{
-					// could happen if there was a corrupted file before that was removed
-					corruptedFile.delete();
-				}
-				
-				
-				if (file.renameTo(corruptedFile))
-				{
-					LOGGER.error("Renamed corrupted file to ["+corruptedFileName+"].");
-				}
-				else
-				{
-					LOGGER.error("Failed to rename corrupted file to ["+corruptedFileName+"]. Attempting to delete file...");
-					if (!file.delete())
-					{
-						LOGGER.error("Unable to delete corrupted file ["+corruptedFileName+"].");
-					}
-				}
+				FileUtil.renameCorruptedFile(file);
 			}
 		}
 		
