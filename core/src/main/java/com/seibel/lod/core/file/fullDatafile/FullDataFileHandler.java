@@ -8,7 +8,7 @@ import com.seibel.lod.core.dataObjects.fullData.sources.FullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.SingleChunkFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.SparseFullDataSource;
 import com.seibel.lod.core.file.FileUtil;
-import com.seibel.lod.core.file.metaData.MetaData;
+import com.seibel.lod.core.file.metaData.BaseMetaData;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
@@ -100,7 +100,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 			{
 //                fileToUse = Collections.max(metaFiles, Comparator.comparingLong(a -> a.metaData.dataVersion.get()));
 				
-                fileToUse = Collections.max(metaFiles, Comparator.comparingLong(fullDataMetaFile -> fullDataMetaFile.path.lastModified()));
+                fileToUse = Collections.max(metaFiles, Comparator.comparingLong(fullDataMetaFile -> fullDataMetaFile.file.lastModified()));
                 {
                     StringBuilder sb = new StringBuilder();
                     sb.append("Multiple files with the same pos: ");
@@ -109,11 +109,11 @@ public class FullDataFileHandler implements IFullDataSourceProvider
                     for (FullDataMetaFile metaFile : metaFiles)
 					{
                         sb.append("\t");
-                        sb.append(metaFile.path);
+                        sb.append(metaFile.file);
                         sb.append("\n");
                     }
                     sb.append("\tUsing: ");
-                    sb.append(fileToUse.path);
+                    sb.append(fileToUse.file);
                     sb.append("\n");
                     sb.append("(Other files will be renamed by appending \".old\" to their name.)");
                     LOGGER.warn(sb.toString());
@@ -125,17 +125,17 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 						{
 							continue;
 						}
-                        File oldFile = new File(metaFile.path + ".old");
+                        File oldFile = new File(metaFile.file + ".old");
                         try
 						{
-                            if (!metaFile.path.renameTo(oldFile))
+                            if (!metaFile.file.renameTo(oldFile))
 							{
 								throw new RuntimeException("Renaming failed");
 							}
                         }
 						catch (Exception e)
 						{
-                            LOGGER.error("Failed to rename file: " + metaFile.path + " to " + oldFile, e);
+                            LOGGER.error("Failed to rename file: " + metaFile.file + " to " + oldFile, e);
                         }
                     }
                 }
@@ -405,7 +405,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	{
 		LOGGER.error("Error reading Data file ["+pos+"]", exception);
 		
-		FileUtil.renameCorruptedFile(metaFile.path);
+		FileUtil.renameCorruptedFile(metaFile.file);
 		// remove the FullDataMetaFile since the old one was corrupted
 		this.files.remove(pos);
 		// create a new FullDataMetaFile to write new data to
@@ -413,7 +413,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	}
 	
 	@Override
-    public IFullDataSource onDataFileLoaded(IFullDataSource source, MetaData metaData,
+    public IFullDataSource onDataFileLoaded(IFullDataSource source, BaseMetaData metaData,
                                           Consumer<IFullDataSource> onUpdated, Function<IFullDataSource, Boolean> updater)
 	{
         boolean changed = updater.apply(source);
@@ -436,7 +436,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
         return source;
     }
     @Override
-    public CompletableFuture<IFullDataSource> onDataFileRefresh(IFullDataSource source, MetaData metaData, Function<IFullDataSource, Boolean> updater, Consumer<IFullDataSource> onUpdated)
+    public CompletableFuture<IFullDataSource> onDataFileRefresh(IFullDataSource source, BaseMetaData metaData, Function<IFullDataSource, Boolean> updater, Consumer<IFullDataSource> onUpdated)
 	{
         return CompletableFuture.supplyAsync(() ->
 		{

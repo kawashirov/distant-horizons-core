@@ -18,13 +18,16 @@ import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * This represents the data appended to any file we write. <br>
+ * Contains a {@link BaseMetaData} which holds most of the necessary values written to the file. <br><br>
+ * 
  * Used size: 40 bytes <br>
  * Remaining space: 24 bytes <br>
- * Total size: 64 bytes <br> <br><br>
+ * Total size: 64 bytes <br><br><br>
  * 
  * 
- * Metadata format: <br> <br>
- * 
+ * <Strong>Metadata format: </Strong><br><br>
+ * <code>
  * 4 bytes: metadata identifier bytes: "DHv0" (in ascii: 0x44 48 76 30) this signals the file is in the metadata format <br>
  * 4 bytes: section X position <br>
  * 4 bytes: section Y position (Unused, for future proofing) <br>
@@ -39,8 +42,9 @@ import org.apache.logging.log4j.Logger;
  * 8 bytes: datatype identifier <br> <br>
  * 
  * 8 bytes: data version
+ * </code>
  */
-public abstract class AbstractMetaDataFile
+public abstract class AbstractMetaDataContainerFile
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     
@@ -56,11 +60,16 @@ public abstract class AbstractMetaDataFile
     public static final boolean USE_ATOMIC_MOVE_REPLACE = false;
 	
 	
-	public volatile MetaData metaData = null;
-	/** also defined in {@link AbstractMetaDataFile#metaData} */
+	/** 
+	 * Will be null if no file exists for this object. <br>
+	 * NOTE: Only use {@link BaseMetaData#pos} when initially setting up this object, afterwards the standalone {@link AbstractMetaDataContainerFile#pos} should be used. 
+	 */
+	public volatile BaseMetaData metaData = null;
+	
+	/** Should be used instead of the position inside {@link AbstractMetaDataContainerFile#metaData} */
     public final DhSectionPos pos;
 	
-    public File path;
+    public File file;
 	
 	
 	
@@ -69,38 +78,38 @@ public abstract class AbstractMetaDataFile
 	//==============//
 	
 	/** Create a metaFile in this path. If the path has a file, throws FileAlreadyExistsException */
-	protected AbstractMetaDataFile(File path, DhSectionPos pos) throws IOException
+	protected AbstractMetaDataContainerFile(File file, DhSectionPos pos) throws IOException
 	{
-		this.path = path;
+		this.file = file;
 		this.pos = pos;
-		if (path.exists())
+		if (file.exists())
 		{
-			throw new FileAlreadyExistsException(path.toString());
+			throw new FileAlreadyExistsException(file.toString());
 		}
 	}
 	
 	/** 
-	 * Creates a {@link AbstractMetaDataFile} with the file at the given path. 
+	 * Creates a {@link AbstractMetaDataContainerFile} with the file at the given path. 
 	 * @throws IOException if the file was formatted incorrectly
 	 * @throws FileNotFoundException if no file exists for the given path
 	 */
-	protected AbstractMetaDataFile(File path) throws IOException, FileNotFoundException
+	protected AbstractMetaDataContainerFile(File file) throws IOException, FileNotFoundException
 	{
-		this.path = path;
-		if (!path.exists())
+		this.file = file;
+		if (!file.exists())
 		{
-			throw new FileNotFoundException("File not found at [" + path + "]");
+			throw new FileNotFoundException("File not found at ["+ file +"]");
 		}
 		
-		validateMetaDataFile(this.path);
-		this.metaData = readMetaDataFromFile(path);
+		validateMetaDataFile(this.file);
+		this.metaData = readMetaDataFromFile(file);
 		this.pos = this.metaData.pos;
 	}
 	/**
-	 * Attempts to create a new {@link AbstractMetaDataFile} from the given file. 
+	 * Attempts to create a new {@link AbstractMetaDataContainerFile} from the given file. 
 	 * @throws IOException if the file was formatted incorrectly
 	 */
-	private static MetaData readMetaDataFromFile(File file) throws IOException
+	private static BaseMetaData readMetaDataFromFile(File file) throws IOException
 	{
         try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.READ))
 		{
@@ -112,7 +121,7 @@ public abstract class AbstractMetaDataFile
             int idBytes = byteBuffer.getInt();
             if (idBytes != METADATA_IDENTITY_BYTES)
 			{
-                throw new IOException("Invalid file format: Metadata Identity byte check failed. Expected: [" + METADATA_IDENTITY_BYTES + "], Actual: [" + idBytes + "].");
+                throw new IOException("Invalid file format: Metadata Identity byte check failed. Expected: ["+METADATA_IDENTITY_BYTES+"], Actual: ["+idBytes+"].");
             }
 			
             int x = byteBuffer.getInt();
@@ -128,7 +137,7 @@ public abstract class AbstractMetaDataFile
             LodUtil.assertTrue(byteBuffer.remaining() == METADATA_RESERVED_SIZE);
             DhSectionPos dataPos = new DhSectionPos(detailLevel, x, z);
 			
-            return new MetaData(dataPos, checksum, dataLevel, dataTypeId, loaderVersion);
+            return new BaseMetaData(dataPos, checksum, dataLevel, dataTypeId, loaderVersion);
         }
     }
 	
@@ -147,14 +156,14 @@ public abstract class AbstractMetaDataFile
 		if (!file.canWrite()) throw new IOException("File not writable");
 	}
 	
-	/** Sets this object's {@link AbstractMetaDataFile#metaData} using the set {@link AbstractMetaDataFile#path} */
+	/** Sets this object's {@link AbstractMetaDataContainerFile#metaData} using the set {@link AbstractMetaDataContainerFile#file} */
 	protected void loadMetaData() throws IOException
 	{
-		validateMetaDataFile(this.path);
-		this.metaData = readMetaDataFromFile(this.path);
+		validateMetaDataFile(this.file);
+		this.metaData = readMetaDataFromFile(this.file);
 		if (!this.metaData.pos.equals(this.pos))
 		{
-			LOGGER.warn("The file is from a different location than expected! Expected: [{}] but got [{}]. Ignoring file tag.", this.pos, this.metaData.pos);
+			LOGGER.warn("The file is from a different location than expected! Expected: ["+this.pos+"] but got ["+this.metaData.pos+"]. Ignoring file tag.");
 			this.metaData.pos = this.pos;
 		}
 	}
@@ -162,20 +171,20 @@ public abstract class AbstractMetaDataFile
 	protected void writeData(IMetaDataWriter<OutputStream> dataWriter) throws IOException
 	{
 		LodUtil.assertTrue(this.metaData != null);
-		if (this.path.exists())
+		if (this.file.exists())
 		{
-			validateMetaDataFile(this.path);
+			validateMetaDataFile(this.file);
 		}
 		
 		File writerFile;
 		if (USE_ATOMIC_MOVE_REPLACE)
 		{
-			writerFile = new File(this.path.getPath() + ".tmp");
+			writerFile = new File(this.file.getPath() + ".tmp");
 			writerFile.deleteOnExit();
 		}
 		else
 		{
-			writerFile = this.path;
+			writerFile = this.file;
 		}
 		
 		try (FileChannel file = FileChannel.open(writerFile.toPath(),
@@ -187,10 +196,12 @@ public abstract class AbstractMetaDataFile
 				try (OutputStream channelOut = new UnclosableOutputStream(Channels.newOutputStream(file)); // Prevent closing the channel
 						BufferedOutputStream bufferedOut = new BufferedOutputStream(channelOut); // TODO: Is default buffer size ok? Do we even need to buffer?
 						CheckedOutputStream checkedOut = new CheckedOutputStream(bufferedOut, new Adler32()))
-				{ // TODO: Is Adler32 ok?
+				{ 
+					// TODO: Is Adler32 ok?
 					dataWriter.writeBufferToFile(checkedOut);
 					checksum = (int) checkedOut.getChecksum().getValue();
 				}
+				
 				file.position(0);
 				// Write metadata
 				ByteBuffer buff = ByteBuffer.allocate(METADATA_SIZE);
@@ -209,11 +220,12 @@ public abstract class AbstractMetaDataFile
 				buff.flip();
 				file.write(buff);
 			}
+			
 			file.close();
 			if (USE_ATOMIC_MOVE_REPLACE)
 			{
 				// Atomic move / replace the actual file
-				Files.move(writerFile.toPath(), this.path.toPath(), StandardCopyOption.ATOMIC_MOVE);
+				Files.move(writerFile.toPath(), this.file.toPath(), StandardCopyOption.ATOMIC_MOVE);
 			}
 		}
 		finally

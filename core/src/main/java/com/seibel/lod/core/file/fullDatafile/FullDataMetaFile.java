@@ -12,9 +12,9 @@ import com.seibel.lod.core.dataObjects.fullData.IFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.AbstractFullDataSourceLoader;
 import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
-import com.seibel.lod.core.file.metaData.MetaData;
+import com.seibel.lod.core.file.metaData.BaseMetaData;
 import com.seibel.lod.core.pos.DhLodPos;
-import com.seibel.lod.core.file.metaData.AbstractMetaDataFile;
+import com.seibel.lod.core.file.metaData.AbstractMetaDataContainerFile;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
@@ -26,7 +26,7 @@ import org.apache.logging.log4j.Logger;
 /**
  * Related to the stored Blockstate/Biome ID data. 
  */
-public class FullDataMetaFile extends AbstractMetaDataFile
+public class FullDataMetaFile extends AbstractMetaDataContainerFile
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger(FullDataMetaFile.class.getSimpleName());
 	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
@@ -134,7 +134,7 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 //		}
 //		else
 //		{
-//			MetaData getData = this.metaData;
+//			BaseMetaData getData = this.metaData;
 //			//NOTE: Do this instead of direct compare so values that wrapped around still work correctly.
 //			return (getData == null ? 0 : this.metaData.dataVersion.get()) - cacheVersion <= 0;
 //		}
@@ -195,7 +195,7 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 					{
 						if (e != null)
 						{
-							LOGGER.error("Uncaught error on creation {}: ", this.path, e);
+							LOGGER.error("Uncaught error on creation {}: ", this.file, e);
 							future.complete(null);
 							this.data.set(null);
 						}
@@ -238,7 +238,7 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 					}, this.handler.getIOExecutor())
 					.exceptionally((e) ->
 					{
-						LOGGER.error("Error loading file {}: ", this.path, e);
+						LOGGER.error("Error loading file {}: ", this.file, e);
 						this.data.set(null);
 						
 						future.completeExceptionally(e);
@@ -257,9 +257,9 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 		return future;
 	}
 
-	private static MetaData makeMetaData(IFullDataSource data) {
+	private static BaseMetaData makeMetaData(IFullDataSource data) {
 		AbstractFullDataSourceLoader loader = AbstractFullDataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
-		return new MetaData(data.getSectionPos(), -1,
+		return new BaseMetaData(data.getSectionPos(), -1,
 				data.getDataDetail(), loader == null ? 0 : loader.datatypeId, data.getDataVersion());
 	}
 
@@ -337,9 +337,9 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 	{
 		if (data.isEmpty())
 		{
-			if (path.exists() && !path.delete())
+			if (file.exists() && !file.delete())
 			{
-					LOGGER.warn("Failed to delete data file at {}", path);
+					LOGGER.warn("Failed to delete data file at {}", file);
 			}
 			doesFileExist = false;
 		}
@@ -361,7 +361,7 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 			}
 			catch (IOException e)
 			{
-				LOGGER.error("Failed to save updated data file at {} for sect {}", path, pos, e);
+				LOGGER.error("Failed to save updated data file at {} for sect {}", file, pos, e);
 			}
 		}
 	}
@@ -389,7 +389,7 @@ public class FullDataMetaFile extends AbstractMetaDataFile
 	
 	private FileInputStream getDataContent() throws IOException
 	{
-		FileInputStream fin = new FileInputStream(this.path);
+		FileInputStream fin = new FileInputStream(this.file);
 		int toSkip = METADATA_SIZE;
 		while (toSkip > 0)
 		{

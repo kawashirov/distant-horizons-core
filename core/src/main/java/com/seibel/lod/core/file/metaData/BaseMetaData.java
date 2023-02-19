@@ -1,15 +1,15 @@
 package com.seibel.lod.core.file.metaData;
 
+import com.seibel.lod.core.dataObjects.fullData.IFullDataSource;
 import com.seibel.lod.core.pos.DhSectionPos;
+import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 
-import java.util.concurrent.atomic.AtomicLong;
-
-/**
- * Contains the MetaData used by DataSources. <br><br>
- * 
- * See {@link AbstractMetaDataFile} for a byte map inorder to see the currently used bytes
+/** 
+ * Contains and represents the meta information ({@link DhSectionPos}, {@link BaseMetaData#dataLevel}, etc.) 
+ * stored at the beginning of files that use the {@link AbstractMetaDataContainerFile}. <Br>
+ * Which, as of the time of writing, includes: {@link IFullDataSource} and {@link ColumnRenderSource} files.
  */
-public class MetaData
+public class BaseMetaData
 {
 	public DhSectionPos pos;
 	public int checksum;
@@ -23,7 +23,7 @@ public class MetaData
 	
 	
 	
-	public MetaData(DhSectionPos pos, int checksum, byte dataLevel, long dataTypeId, byte loaderVersion)
+	public BaseMetaData(DhSectionPos pos, int checksum, byte dataLevel, long dataTypeId, byte loaderVersion)
 	{
 		this.pos = pos;
 		this.checksum = checksum;

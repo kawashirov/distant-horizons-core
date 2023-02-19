@@ -3,11 +3,11 @@ package com.seibel.lod.core.file.renderfile;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderLoader;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource;
-import com.seibel.lod.core.file.metaData.MetaData;
+import com.seibel.lod.core.file.metaData.BaseMetaData;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhLodPos;
-import com.seibel.lod.core.file.metaData.AbstractMetaDataFile;
+import com.seibel.lod.core.file.metaData.AbstractMetaDataContainerFile;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
@@ -20,7 +20,7 @@ import java.lang.ref.SoftReference;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class RenderMetaDataFile extends AbstractMetaDataFile
+public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
@@ -52,7 +52,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 		super(fileHandler.computeRenderFilePath(pos), pos);
 		this.fileHandler = fileHandler;
 		LodUtil.assertTrue(this.metaData == null);
-		this.doesFileExist = this.path.exists();
+		this.doesFileExist = this.file.exists();
 	}
 	
 	/**
@@ -69,7 +69,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 		this.fileHandler = fileHandler;
 		LodUtil.assertTrue(this.metaData != null);
 		
-		this.doesFileExist = this.path.exists();
+		this.doesFileExist = this.file.exists();
 	}
 	
 	
@@ -92,7 +92,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 	
     public CompletableFuture<Void> flushAndSave(ExecutorService renderCacheThread)
 	{
-		if (!path.exists())
+		if (!file.exists())
 		{
 			return CompletableFuture.completedFuture(null); // No need to save if the file doesn't exist.
 		}
@@ -171,7 +171,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 				{
 					if (exception != null)
 					{
-						LOGGER.error("Uncaught error on creation {}: ", this.path, exception);
+						LOGGER.error("Uncaught error on creation {}: ", this.file, exception);
 						loadRenderSourceFuture.complete(null);
 						this.data.set(null);
 					}
@@ -210,7 +210,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 				{
 					if (e != null)
 					{
-						LOGGER.error("Error loading file {}: ", this.path, e);
+						LOGGER.error("Error loading file {}: ", this.file, e);
 						loadRenderSourceFuture.complete(null);
 						this.data.set(null);
 					}
@@ -224,15 +224,15 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 		return loadRenderSourceFuture;
 	}
 	
-    private static MetaData makeMetaData(ColumnRenderSource renderSource)
+    private static BaseMetaData makeMetaData(ColumnRenderSource renderSource)
 	{
-		return new MetaData(renderSource.getSectionPos(), -1,
+		return new BaseMetaData(renderSource.getSectionPos(), -1,
 				renderSource.getDataDetail(), RenderSourceFileHandler.RENDER_SOURCE_TYPE_ID, renderSource.getRenderVersion());
 	}
 	
     private FileInputStream getDataContent() throws IOException
 	{
-		FileInputStream fin = new FileInputStream(this.path);
+		FileInputStream fin = new FileInputStream(this.file);
 		int toSkip = METADATA_SIZE;
 		while (toSkip > 0)
 		{
@@ -258,11 +258,11 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 	{
 		if (renderSource.isEmpty())
 		{
-			if (this.path.exists())
+			if (this.file.exists())
 			{
-				if (!this.path.delete())
+				if (!this.file.delete())
 				{
-					LOGGER.warn("Failed to delete render file at {}", this.path);
+					LOGGER.warn("Failed to delete render file at {}", this.file);
 				}
 			}
 			this.doesFileExist = false;
@@ -277,7 +277,7 @@ public class RenderMetaDataFile extends AbstractMetaDataFile
 			}
 			catch (IOException e)
 			{
-				LOGGER.error("Failed to save updated render file at {} for sect {}", this.path, this.pos, e);
+				LOGGER.error("Failed to save updated render file at {} for sect {}", this.file, this.pos, e);
 			}
 		}
 	}

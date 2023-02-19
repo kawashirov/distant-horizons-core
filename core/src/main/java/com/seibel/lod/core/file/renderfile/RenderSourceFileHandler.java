@@ -109,7 +109,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 				
 				// use the file's last modified date
 				fileToUse = Collections.max(metaFiles, Comparator.comparingLong(renderMetaDataFile -> 
-						renderMetaDataFile.path.lastModified()));
+						renderMetaDataFile.file.lastModified()));
 				
 //				fileToUse = Collections.max(metaFiles, Comparator.comparingLong(renderMetaDataFile -> 
 //						renderMetaDataFile.metaData.dataVersion.get()));
@@ -121,11 +121,11 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 					for (RenderMetaDataFile metaFile : metaFiles)
 					{
 						sb.append("\t");
-						sb.append(metaFile.path);
+						sb.append(metaFile.file);
 						sb.append("\n");
 					}
 					sb.append("\tUsing: ");
-					sb.append(fileToUse.path);
+					sb.append(fileToUse.file);
 					sb.append("\n");
 					sb.append("(Other files will be renamed by appending \".old\" to their name.)");
 					LOGGER.warn(sb.toString());
@@ -138,15 +138,15 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 							continue;
 						}
 						
-						File oldFile = new File(metaFile.path + ".old");
+						File oldFile = new File(metaFile.file + ".old");
 						try
 						{
-							if (!metaFile.path.renameTo(oldFile))
+							if (!metaFile.file.renameTo(oldFile))
 								throw new RuntimeException("Renaming failed");
 						}
 						catch (Exception e)
 						{
-							LOGGER.error("Failed to rename file: [" + metaFile.path + "] to [" + oldFile + "]", e);
+							LOGGER.error("Failed to rename file: [" + metaFile.file + "] to [" + oldFile + "]", e);
 						}
 					}
 				}
