@@ -102,7 +102,7 @@ public abstract class AbstractMetaDataContainerFile
 		this.file = file;
 		if (!file.exists())
 		{
-			throw new FileNotFoundException("File not found at ["+ file +"]");
+			throw new FileNotFoundException("File not found at ["+file+"]");
 		}
 		
 		validateMetaDataFile(this.file);
@@ -125,7 +125,15 @@ public abstract class AbstractMetaDataContainerFile
             int idBytes = byteBuffer.getInt();
             if (idBytes != METADATA_IDENTITY_BYTES)
 			{
-                throw new IOException("Invalid file format: Metadata Identity byte check failed. Expected: ["+METADATA_IDENTITY_BYTES+"], Actual: ["+idBytes+"].");
+				if (file.exists())
+				{
+					FileUtil.renameCorruptedFile(file);
+					throw new IOException("Invalid file format: Metadata Identity byte check failed. Expected: ["+METADATA_IDENTITY_BYTES+"], Actual: ["+idBytes+"].");
+				}
+				else
+				{
+					throw new IOException("No file found for meta data. Expected file path: "+file.getPath());
+				}
             }
 			
             int x = byteBuffer.getInt();
@@ -172,7 +180,7 @@ public abstract class AbstractMetaDataContainerFile
 		}
 	}
 	
-	protected void writeData(IMetaDataWriter<OutputStream> dataWriter) throws IOException
+	protected void writeData(IMetaDataWriterFunc<OutputStream> dataWriterFunc) throws IOException
 	{
 		LodUtil.assertTrue(this.metaData != null);
 		if (this.file.exists())
@@ -184,52 +192,51 @@ public abstract class AbstractMetaDataContainerFile
 		if (USE_ATOMIC_MOVE_REPLACE)
 		{
 			tempFile = new File(this.file.getPath() + ".tmp");
-			tempFile.deleteOnExit();
+			//tempFile.deleteOnExit();
 		}
 		else
 		{
 			tempFile = this.file;
 		}
 		
-		try (FileChannel file = FileChannel.open(tempFile.toPath(),
-				StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))
+		try (FileChannel file = FileChannel.open(tempFile.toPath(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))
 		{
-			{
-				file.position(METADATA_SIZE);
-				int checksum;
-				try (OutputStream channelOut = new UnclosableOutputStream(Channels.newOutputStream(file)); // Prevent closing the channel
-						BufferedOutputStream bufferedOut = new BufferedOutputStream(channelOut); // TODO: Is default buffer size ok? Do we even need to buffer?
-						CheckedOutputStream checkedOut = new CheckedOutputStream(bufferedOut, new Adler32()))
-				{ 
-					// TODO: Is Adler32 ok?
-					dataWriter.writeBufferToFile(checkedOut);
-					checksum = (int) checkedOut.getChecksum().getValue();
-				}
-				
-				file.position(0);
-				// Write metadata
-				ByteBuffer buff = ByteBuffer.allocate(METADATA_SIZE);
-				buff.putInt(METADATA_IDENTITY_BYTES);
-				buff.putInt(this.pos.sectionX);
-				buff.putInt(Integer.MIN_VALUE); // Unused
-				buff.putInt(this.pos.sectionZ);
-				buff.putInt(checksum);
-				buff.put(this.pos.sectionDetailLevel);
-				buff.put(this.metaData.dataLevel);
-				buff.put(this.metaData.loaderVersion);
-				buff.put(Byte.MIN_VALUE); // Unused
-				buff.putLong(this.metaData.dataTypeId);
-				buff.putLong(Long.MAX_VALUE); //buff.putLong(this.metaData.dataVersion.get()); // not currently implemented
-				LodUtil.assertTrue(buff.remaining() == METADATA_RESERVED_SIZE);
-				buff.flip();
-				file.write(buff);
+			file.position(METADATA_SIZE);
+			int checksum;
+			try (OutputStream channelOut = new UnclosableOutputStream(Channels.newOutputStream(file)); // Prevent closing the channel
+					BufferedOutputStream bufferedOut = new BufferedOutputStream(channelOut); // TODO: Is default buffer size ok? Do we even need to buffer?
+					CheckedOutputStream checkedOut = new CheckedOutputStream(bufferedOut, new Adler32()))
+			{ 
+				// TODO: Is Adler32 ok?
+				dataWriterFunc.writeBufferToFile(checkedOut);
+				checksum = (int) checkedOut.getChecksum().getValue();
 			}
+			
+			file.position(0);
+			// Write metadata
+			ByteBuffer buff = ByteBuffer.allocate(METADATA_SIZE);
+			buff.putInt(METADATA_IDENTITY_BYTES);
+			buff.putInt(this.pos.sectionX);
+			buff.putInt(Integer.MIN_VALUE); // Unused
+			buff.putInt(this.pos.sectionZ);
+			buff.putInt(checksum);
+			buff.put(this.pos.sectionDetailLevel);
+			buff.put(this.metaData.dataLevel);
+			buff.put(this.metaData.loaderVersion);
+			buff.put(Byte.MIN_VALUE); // Unused
+			buff.putLong(this.metaData.dataTypeId);
+			buff.putLong(Long.MAX_VALUE); //buff.putLong(this.metaData.dataVersion.get()); // not currently implemented
+			LodUtil.assertTrue(buff.remaining() == METADATA_RESERVED_SIZE);
+			buff.flip();
+			file.write(buff);
+			
 			
 			file.close();
 			if (USE_ATOMIC_MOVE_REPLACE)
 			{
 				// Atomic move / replace the actual file
-				Files.move(tempFile.toPath(), this.file.toPath(), StandardCopyOption.ATOMIC_MOVE); // TODO couldn't StandardCopyOption.REPLACE_EXISTING also work here?
+				Files.move(tempFile.toPath(), this.file.toPath(), StandardCopyOption.REPLACE_EXISTING); // TODO couldn't StandardCopyOption. also work here?
+				LOGGER.info("replaced file: "+this.file.toPath());
 			}
 		}
 		finally
@@ -266,7 +273,7 @@ public abstract class AbstractMetaDataContainerFile
 	//================//
 	
 	@FunctionalInterface
-	public interface IMetaDataWriter<T>
+	public interface IMetaDataWriterFunc<T>
 	{
 		void writeBufferToFile(T t) throws IOException;
 	}

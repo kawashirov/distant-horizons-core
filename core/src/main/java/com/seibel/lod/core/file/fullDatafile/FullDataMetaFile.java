@@ -139,26 +139,30 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 //			return (getData == null ? 0 : this.metaData.dataVersion.get()) - cacheVersion <= 0;
 //		}
 //	}
-
-	public void addToWriteQueue(ChunkSizedFullDataSource datatype) {
+	
+	public void addToWriteQueue(ChunkSizedFullDataSource datatype)
+	{
 		debugCheck();
 		DhLodPos chunkPos = new DhLodPos((byte) (datatype.dataDetail + 4), datatype.x, datatype.z);
-		LodUtil.assertTrue(pos.getSectionBBoxPos().overlaps(chunkPos), "Chunk pos {} doesn't overlap with section {}", chunkPos, pos);
+		LodUtil.assertTrue(pos.getSectionBBoxPos().overlaps(chunkPos), "Chunk pos "+chunkPos+" doesn't overlap with section "+pos);
 		//LOGGER.info("Write Chunk {} to file {}", chunkPos, pos);
-
-		GuardedMultiAppendQueue queue = writeQueue.get();
+		
+		GuardedMultiAppendQueue writeQueue = this.writeQueue.get();
 		// Using read lock is OK, because the queue's underlying data structure is thread-safe.
 		// This lock is only used to insure on polling the queue, that the queue is not being
 		// modified by another thread.
-		Lock appendLock = queue.appendLock.readLock();
+		Lock appendLock = writeQueue.appendLock.readLock();
 		appendLock.lock();
-		try {
-			queue.queue.add(datatype);
-		} finally {
+		try
+		{
+			writeQueue.queue.add(datatype);
+		}
+		finally
+		{
 			appendLock.unlock();
 		}
 	}
-
+	
 	// Cause: Generic Type runtime casting cannot safety check it.
 	// However, the Union type ensures the 'data' should only contain the listed type.
 	public CompletableFuture<IFullDataSource> loadOrGetCachedAsync()
@@ -333,9 +337,9 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 		_backQueue = queue;
 	}
 	
-	private void saveChanges(IFullDataSource data)
+	private void saveChanges(IFullDataSource fullDataSource)
 	{
-		if (data.isEmpty())
+		if (fullDataSource.isEmpty())
 		{
 			if (file.exists() && !file.delete())
 			{
@@ -350,24 +354,24 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 			{
 				// Write/Update data
 				LodUtil.assertTrue(metaData != null);
-				metaData.dataLevel = data.getDataDetail();
-				loader = AbstractFullDataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
-				LodUtil.assertTrue(loader != null, "No loader for {} (v{})", data.getClass(), data.getDataVersion());
-				dataType = data.getClass();
-				metaData.dataTypeId = loader == null ? 0 : loader.datatypeId;
-				metaData.loaderVersion = data.getDataVersion();
-				super.writeData((out) -> data.saveData(level, this, out));
+				metaData.dataLevel = fullDataSource.getDataDetail();
+				loader = AbstractFullDataSourceLoader.getLoader(fullDataSource.getClass(), fullDataSource.getDataVersion());
+				LodUtil.assertTrue(loader != null, "No loader for "+fullDataSource.getClass()+" (v"+fullDataSource.getDataVersion()+")");
+				dataType = fullDataSource.getClass();
+				metaData.dataTypeId = (loader == null) ? 0 : loader.datatypeId;
+				metaData.loaderVersion = fullDataSource.getDataVersion();
+				super.writeData((outputStream) -> fullDataSource.saveData(level, this, outputStream));
 				doesFileExist = true;
 			}
 			catch (IOException e)
 			{
-				LOGGER.error("Failed to save updated data file at {} for sect {}", file, pos, e);
+				LOGGER.error("Failed to save updated data file at "+file+" for sect "+pos, e);
 			}
 		}
 	}
 	
 	// Return whether any write has happened to the data
-	private boolean applyWriteQueue(IFullDataSource data)
+	private boolean applyWriteQueue(IFullDataSource fullDataSource)
 	{
 		// Poll the write queue
 		// First check if write queue is empty, then swap the write queue.
@@ -379,7 +383,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 			int count = this._backQueue.queue.size();
 			for (ChunkSizedFullDataSource chunk : this._backQueue.queue)
 			{
-				data.update(chunk);
+				fullDataSource.update(chunk);
 			}
 			this._backQueue.queue.clear();
 			//LOGGER.info("Updated Data file at {} for sect {} with {} chunk writes.", path, pos, count);
