@@ -54,10 +54,13 @@ public abstract class AbstractMetaDataContainerFile
     public static final int METADATA_IDENTITY_BYTES = 0x44_48_76_30;
 	
     /** 
+	 * James tested this on windows (2023-02-18) and didn't have any issues,
+	 * so it will be turned on for now. If there turns out to be issues 
+	 * we can always 
 	 * Currently set to false because for some reason 
 	 * Window is throwing PermissionDeniedException when trying to atomic replace a file... 
 	 */
-    public static final boolean USE_ATOMIC_MOVE_REPLACE = false;
+    public static final boolean USE_ATOMIC_MOVE_REPLACE = true;
 	
 	
 	/** 
@@ -176,18 +179,18 @@ public abstract class AbstractMetaDataContainerFile
 			validateMetaDataFile(this.file);
 		}
 		
-		File writerFile;
+		File tempFile;
 		if (USE_ATOMIC_MOVE_REPLACE)
 		{
-			writerFile = new File(this.file.getPath() + ".tmp");
-			writerFile.deleteOnExit();
+			tempFile = new File(this.file.getPath() + ".tmp");
+			tempFile.deleteOnExit();
 		}
 		else
 		{
-			writerFile = this.file;
+			tempFile = this.file;
 		}
 		
-		try (FileChannel file = FileChannel.open(writerFile.toPath(),
+		try (FileChannel file = FileChannel.open(tempFile.toPath(),
 				StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))
 		{
 			{
@@ -225,19 +228,33 @@ public abstract class AbstractMetaDataContainerFile
 			if (USE_ATOMIC_MOVE_REPLACE)
 			{
 				// Atomic move / replace the actual file
-				Files.move(writerFile.toPath(), this.file.toPath(), StandardCopyOption.ATOMIC_MOVE);
+				Files.move(tempFile.toPath(), this.file.toPath(), StandardCopyOption.ATOMIC_MOVE); // TODO couldn't StandardCopyOption.REPLACE_EXISTING also work here?
 			}
 		}
 		finally
 		{
+			String tempDeleteErrorMessage = null;
 			try
 			{
-				if (USE_ATOMIC_MOVE_REPLACE && writerFile.exists())
+				// Delete temp file if it exists (this generally means there was an issue saving)
+				if (USE_ATOMIC_MOVE_REPLACE && tempFile.exists())
 				{
-					boolean fileRemoved = writerFile.delete(); // Delete temp file. Ignore errors if it fails.
+					boolean fileRemoved = tempFile.delete();
+					if (!fileRemoved)
+					{
+						tempDeleteErrorMessage = "Unable to remove Temporary file at: "+tempFile.getPath();
+					}
 				}
 			}
-			catch (SecurityException ignored) { }
+			catch (SecurityException exception) 
+			{
+				tempDeleteErrorMessage = "Security error: ["+exception.getMessage()+"] when attempting to remove Temporary file at: "+tempFile.getPath();
+			}
+			
+			if (tempDeleteErrorMessage != null)
+			{
+				LOGGER.error(tempDeleteErrorMessage);
+			}
 		}
 	}
 	
