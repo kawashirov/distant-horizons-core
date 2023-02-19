@@ -1,4 +1,4 @@
-package com.seibel.lod.core.file;
+package com.seibel.lod.core.util;
 
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import org.apache.logging.log4j.Logger;

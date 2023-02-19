@@ -7,7 +7,7 @@ import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource
 import com.seibel.lod.core.dataObjects.fullData.sources.FullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.SingleChunkFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.SparseFullDataSource;
-import com.seibel.lod.core.file.FileUtil;
+import com.seibel.lod.core.util.FileUtil;
 import com.seibel.lod.core.file.metaData.BaseMetaData;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhLodPos;

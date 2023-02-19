@@ -11,6 +11,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.zip.Adler32;
 import java.util.zip.CheckedOutputStream;
 
+import com.seibel.lod.core.util.FileUtil;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.objects.UnclosableOutputStream;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
