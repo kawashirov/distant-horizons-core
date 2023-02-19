@@ -223,7 +223,7 @@ public class LodQuadTree implements AutoCloseable
 			
 			if (!gridList.getCenter().equals(expectedCenterPos))
 			{
-				LOGGER.info("TreeTick: Moving ring list "+sectionDetailLevel+" from "+gridList.getCenter()+" to "+expectedCenterPos);
+//				LOGGER.info("TreeTick: Moving ring list "+sectionDetailLevel+" from "+gridList.getCenter()+" to "+expectedCenterPos);
 				gridList.moveTo(expectedCenterPos.x, expectedCenterPos.y, LodRenderSection::dispose);
 			}
 		}

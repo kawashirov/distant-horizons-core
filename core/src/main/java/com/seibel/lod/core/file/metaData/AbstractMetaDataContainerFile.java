@@ -236,7 +236,7 @@ public abstract class AbstractMetaDataContainerFile
 			{
 				// Atomic move / replace the actual file
 				Files.move(tempFile.toPath(), this.file.toPath(), StandardCopyOption.REPLACE_EXISTING); // TODO couldn't StandardCopyOption. also work here?
-				LOGGER.info("replaced file: "+this.file.toPath());
+				//LOGGER.info("replaced file: "+this.file.toPath());
 			}
 		}
 		finally
