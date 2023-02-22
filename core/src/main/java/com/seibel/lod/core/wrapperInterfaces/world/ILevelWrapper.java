@@ -66,4 +66,7 @@ public interface ILevelWrapper extends IDhApiLevelWrapper, IBindable
 	@Override
 	Object getWrappedMcObject_UNSAFE();
 	
+	// TODO implement onUnload
+	//  necessary so ChunkToLodBuilder can have its cache cleared after the level closes
+	
 }

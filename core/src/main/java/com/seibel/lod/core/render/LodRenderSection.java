@@ -48,7 +48,10 @@ public class LodRenderSection
 			return;
 		}
 		
-		this.loadFuture = this.renderSourceProvider.read(this.pos);
+		if (this.renderSource == null)
+		{
+			this.loadFuture = this.renderSourceProvider.read(this.pos);
+		}
 		this.isRenderEnabled = true;
     }
     public void disableRender()

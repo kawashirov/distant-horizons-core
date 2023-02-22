@@ -130,8 +130,6 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 		return null;
 	}
 	
-    // Cause: Generic Type runtime casting cannot safety check it.
-	// However, the Union type ensures the 'data' should only contain the listed type.
 	public CompletableFuture<ColumnRenderSource> loadOrGetCached(Executor fileReaderThreads, IDhLevel level)
 	{
 		Object obj = this.data.get();

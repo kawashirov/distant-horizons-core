@@ -9,12 +9,16 @@ import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.pos.DhChunkPos;
 import com.seibel.lod.core.util.*;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
+import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
+import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import org.apache.logging.log4j.LogManager;
 
 //FIXME: To-Be-Used class
 public class ChunkToLodBuilder
 {
     public static final ConfigBasedLogger LOGGER = new ConfigBasedLogger(LogManager.getLogger(), () -> Config.Client.Advanced.Debugging.DebugSwitch.logLodBuilderEvent.get());
+	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
+	
     public static final long MAX_TICK_TIME_NS = 1000000000L / 20L;
     public static final int THREAD_COUNT = 1;
 	
@@ -56,8 +60,25 @@ public class ChunkToLodBuilder
 	
     public void tick()
 	{
-        if (runningCount.get() >= THREAD_COUNT) return;
-        if (taskToBuild.isEmpty()) return;
+        if (runningCount.get() >= THREAD_COUNT)
+		{
+			return;
+		}
+        else if (taskToBuild.isEmpty())
+		{
+			return;
+		}
+		else if (!MC.playerExists())
+		{
+			// MC hasn't finished loading (or is currently unloaded)
+			
+			// TODO these should be cleared whenever a level is unloaded, 
+			//  but for now, just assume any previous chunks are invalid if the player doesn't exist 
+			taskToBuild.clear();
+			return;
+		}
+		
+		
         for (int i = 0; i<THREAD_COUNT; i++)
 		{
             runningCount.incrementAndGet();
@@ -65,7 +86,7 @@ public class ChunkToLodBuilder
 			{
                 try
 				{
-                    _tick();
+					_tick();
                 }
 				finally
 				{
@@ -82,8 +103,10 @@ public class ChunkToLodBuilder
         boolean allDone = false;
         while (true)
 		{
-            if (System.nanoTime() - time > MAX_TICK_TIME_NS && !taskToBuild.isEmpty()) 
+            if (System.nanoTime() - time > MAX_TICK_TIME_NS && !taskToBuild.isEmpty())
+			{
 				break;
+			}
 			
             Task task = taskToBuild.pollFirst();
             if (task == null)
