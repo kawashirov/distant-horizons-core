@@ -426,7 +426,10 @@ public class ColumnRenderSource
 	
 	public byte getRenderVersion() { return DATA_FORMAT_VERSION; }
 	
-	/** Whether this object is still valid. If not, a new one should be created. */
+	/** 
+	 * Whether this object is still valid. If not, a new one should be created.
+	 * TODO under what circumstances should this return false?
+	 */
 	public boolean isValid() { return true; }
 	
 	public boolean isEmpty() { return this.isEmpty; }
