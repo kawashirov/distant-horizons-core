@@ -25,7 +25,7 @@ public class LodRenderSection
 	
     private CompletableFuture<ColumnRenderSource> loadFuture;
     private boolean isRenderEnabled = false;
-	
+    
 	// TODO: Should I provide a way to change the render source?
 	private ColumnRenderSource renderSource;
 	private ILodRenderSourceProvider renderSourceProvider = null;
@@ -48,7 +48,6 @@ public class LodRenderSection
 			return;
 		}
 		
-		
 		this.loadFuture = this.renderSourceProvider.read(this.pos);
 		this.isRenderEnabled = true;
     }
@@ -59,20 +58,7 @@ public class LodRenderSection
 			return;
 		}
 		
-		
-        if (this.renderSource != null)
-		{
-			this.renderSource.disableRender();
-			this.renderSource.dispose();
-			this.renderSource = null;
-        }
-		
-        if (this.loadFuture != null)
-		{
-			this.loadFuture.cancel(true);
-			this.loadFuture = null;
-        }
-		
+		this.disposeRenderData();
 		this.isRenderEnabled = false;
     }
 	
@@ -128,15 +114,19 @@ public class LodRenderSection
         }
     }
 	
-    public void dispose()
+    public void disposeRenderData()
 	{
 		if (this.renderSource != null)
 		{
+			this.renderSource.disableRender();
 			this.renderSource.dispose();
+			this.renderSource = null;
 		}
-		else if (this.loadFuture != null)
+		
+		if (this.loadFuture != null)
 		{
 			this.loadFuture.cancel(true);
+			this.loadFuture = null;
 		}
 	}
 
@@ -148,14 +138,11 @@ public class LodRenderSection
 	
     public boolean shouldRender() { return this.isLoaded() && this.isRenderEnabled; }
 
+    public boolean isRenderingEnabled() { return this.isRenderEnabled; }
     public boolean isLoaded() { return this.renderSource != null; }
 	public boolean isLoading() { return this.loadFuture != null; }
-	
-    //FIXME: Used by RenderBufferHandler
-    public int FIXME_BYPASS_DONT_USE_getChildCount() { return this.childCount; }
-	
     public boolean isOutdated() { return this.renderSource != null && !this.renderSource.isValid(); }
-
+	
     public ColumnRenderSource getRenderSource() { return this.renderSource; }
 	
 	

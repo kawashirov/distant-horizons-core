@@ -288,7 +288,7 @@ public class RenderBufferHandler
 			// TODO: Improve this! (Checking section.isLoaded() as if its not loaded, it can only be because
 			//  it has children. (But this logic is... really hard to read!)
 			// FIXME: Above comment is COMPLETELY WRONG! I am an idiot!
-			boolean sectionHasChildren = section.FIXME_BYPASS_DONT_USE_getChildCount() > 0;
+			boolean sectionHasChildren = section.childCount > 0;
 			if (sectionHasChildren)
 			{
 				if (this.children == null)

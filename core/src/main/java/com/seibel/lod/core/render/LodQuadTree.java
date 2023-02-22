@@ -224,7 +224,7 @@ public class LodQuadTree implements AutoCloseable
 			if (!gridList.getCenter().equals(expectedCenterPos))
 			{
 //				LOGGER.info("TreeTick: Moving ring list "+sectionDetailLevel+" from "+gridList.getCenter()+" to "+expectedCenterPos);
-				gridList.moveTo(expectedCenterPos.x, expectedCenterPos.y, LodRenderSection::dispose);
+				gridList.moveTo(expectedCenterPos.x, expectedCenterPos.y, LodRenderSection::disposeRenderData);
 			}
 		}
 		
@@ -550,7 +550,8 @@ public class LodQuadTree implements AutoCloseable
 					}
 					
 					ringList.remove(pos.x, pos.y);
-					section.dispose();
+					section.disposeRenderData();
+					
 					return;
 				}
 				else
@@ -567,10 +568,15 @@ public class LodQuadTree implements AutoCloseable
 					}
 					
 					
-					// TODO is this right? - enable rendering if this section is a leaf node in the tree, otherwise disable rendering 
+					// enable rendering if this section is a leaf node in the tree, otherwise disable rendering 
 					if (section.childCount == 4)
 					{
-						section.disableRender();
+						// only disable rendering if the next section is ready to render, 
+						// isRenderingEnabled check to prevent calling the recursive method more than necessary
+						if (section.isRenderingEnabled() && areChildRenderSectionsLoaded(section)) // FIXME: this is an imperfect solution, some sections will still appear/disappear incorrectly
+						{
+							section.disableRender();
+						}
 					}
 					else if (section.childCount == 0)
 					{
@@ -585,7 +591,8 @@ public class LodQuadTree implements AutoCloseable
 				
 				
 				// section validation
-				LodUtil.assertTrue(section.childCount == 4 || section.childCount == 0);
+				LodUtil.assertTrue(section.childCount == 4|| section.childCount == 0,"Expected render section to have a child count of 0, or 4. Found value: "+section.childCount);
+				
 				if (section.pos.sectionDetailLevel == TREE_LOWEST_DETAIL_LEVEL)
 				{
 					// sections at the bottom of the tree (leaves) should have no additional children
@@ -621,6 +628,39 @@ public class LodQuadTree implements AutoCloseable
 			});
 		}
     }
+	private boolean areChildRenderSectionsLoaded(LodRenderSection renderSection)
+	{
+		if (renderSection == null)
+		{
+			// this section isn't loaded
+			return false;
+		}
+		if (renderSection.pos.sectionDetailLevel == TREE_LOWEST_DETAIL_LEVEL)
+		{
+			// this section is at the bottom detail level and has no children
+			return isSectionLoaded(renderSection);
+		}
+		else
+		{
+			// recursively look for a loaded child
+			LodRenderSection child0 = this.getChildSection(renderSection.pos, 0);
+			LodRenderSection child1 = this.getChildSection(renderSection.pos, 1);
+			LodRenderSection child2 = this.getChildSection(renderSection.pos, 2);
+			LodRenderSection child3 = this.getChildSection(renderSection.pos, 3);
+			
+			// either the child section is loaded, or check the next section down
+			return (isSectionLoaded(child0) || areChildRenderSectionsLoaded(child0))
+					&& (isSectionLoaded(child1) || areChildRenderSectionsLoaded(child1))
+					&& (isSectionLoaded(child2) || areChildRenderSectionsLoaded(child2))
+					&& (isSectionLoaded(child3) || areChildRenderSectionsLoaded(child3));
+		}
+	}
+	private static boolean isSectionLoaded(LodRenderSection renderSection)
+	{
+		return renderSection != null && renderSection.isLoaded() && !renderSection.getRenderSource().isEmpty();
+	}
+	
+	
 	
 	/** 
 	 * Re-creates the color, render data. 
@@ -636,7 +676,7 @@ public class LodQuadTree implements AutoCloseable
 			MovableGridRingList<LodRenderSection> ringList = this.renderSectionRingLists[sectionDetailLevel-TREE_LOWEST_DETAIL_LEVEL];
 			if (ringList != null)
 			{
-				ringList.clear((section) -> section.dispose());
+				ringList.clear((section) -> section.disposeRenderData());
 				
 				LOGGER.info("Finished deleting render files for detail level ["+sectionDetailLevel+"]...");
 			}
@@ -710,7 +750,7 @@ public class LodQuadTree implements AutoCloseable
 			{
 				if (section != null)
 				{
-					section.dispose();
+					section.disposeRenderData();
 				}
 			});
 		}
