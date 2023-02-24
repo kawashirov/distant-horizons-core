@@ -15,7 +15,6 @@ shadowJar {
     // SVG
     relocate 'com.kitfox.svg', 'distanthorizons.libraries.kitfox.svg'
 
-    classifier null
     mergeServiceFiles()
 }
 
