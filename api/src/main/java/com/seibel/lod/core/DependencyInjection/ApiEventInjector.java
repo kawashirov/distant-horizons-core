@@ -48,7 +48,8 @@ public class ApiEventInjector extends DependencyInjector<IDhApiEvent> implements
 	private ApiEventInjector() { super(IDhApiEvent.class, true); }
 	
 	
-	
+
+	@SuppressWarnings("unchecked")
 	@Override
 	public void bind(Class<? extends IDhApiEvent> abstractEvent, IDhApiEvent eventImplementation) throws IllegalStateException, IllegalArgumentException
 	{
