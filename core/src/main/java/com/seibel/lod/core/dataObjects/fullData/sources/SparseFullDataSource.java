@@ -364,7 +364,8 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 				}
 				
 				// read in the presence of each data column
-				byte[] bytes = inputStream.readNBytes(numberOfDataColumns);
+				byte[] bytes = new byte[numberOfDataColumns];
+				inputStream.readFully(bytes, 0, numberOfDataColumns);
 				BitSet dataArrayIndexHasData = BitSet.valueOf(bytes);
 				
 				

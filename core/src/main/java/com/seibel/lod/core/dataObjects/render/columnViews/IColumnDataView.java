@@ -10,7 +10,7 @@ public interface IColumnDataView
 	
 	default Iterator<Long> iterator()
 	{
-		return new Iterator<>()
+		return new Iterator<Long>()
 		{
 			private int index = 0;
 			private final int size = size();

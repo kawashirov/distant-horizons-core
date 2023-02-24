@@ -610,7 +610,7 @@ public class WorldGenerationQueue implements Closeable
 											return null;
 										}));
 									});
-		this.generatorClosingFuture = CompletableFuture.allOf(array.toArray(CompletableFuture[]::new)); //FIXME: Closer threading issues with runCurrentGenTasksUntilBusy
+		this.generatorClosingFuture = CompletableFuture.allOf(array.toArray(new CompletableFuture[0])); //FIXME: Closer threading issues with runCurrentGenTasksUntilBusy
 		this.looseWoldGenTasks.forEach(t -> t.future.complete(false));
 		this.looseWoldGenTasks.clear();
 		return this.generatorClosingFuture;
@@ -627,7 +627,8 @@ public class WorldGenerationQueue implements Closeable
 		
 		try
 		{
-			this.generatorClosingFuture.orTimeout(SHUTDOWN_TIMEOUT_SEC, TimeUnit.SECONDS).join();
+			// this will throw a timeout exception if the generator doesn't return soon enough
+			this.generatorClosingFuture.get(SHUTDOWN_TIMEOUT_SEC, TimeUnit.SECONDS);
 		}
 		catch (Throwable e)
 		{

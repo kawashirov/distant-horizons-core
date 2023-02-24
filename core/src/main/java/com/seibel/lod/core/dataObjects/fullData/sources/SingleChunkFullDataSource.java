@@ -154,7 +154,9 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
 				throw new IOException(LodUtil.formatLog("Spotty Flag BitSet size outside reasonable range: {} (expects {} to {})",
 						length, 1, SECTION_SIZE * SECTION_SIZE / 8 + 63));
 			}
-            byte[] bytes = dos.readNBytes(length);
+			
+			byte[] bytes = new byte[length];
+		 	dos.readFully(bytes, 0, length);
             BitSet isColumnNotEmpty = BitSet.valueOf(bytes);
 
             // Data array content

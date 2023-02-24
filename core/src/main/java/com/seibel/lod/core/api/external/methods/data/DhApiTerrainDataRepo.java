@@ -137,9 +137,9 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 		int dataColumnsReturned = 0;
 		
 		// get each column over the area
-		for (var x = 0; x < widthOfAreaInBlocks; x++)
+		for (int x = 0; x < widthOfAreaInBlocks; x++)
 		{
-			for (var z = 0; z < widthOfAreaInBlocks; z++)
+			for (int z = 0; z < widthOfAreaInBlocks; z++)
 			{
 				DhLodPos blockColumnPos = new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, startingBlockPos.x + x, startingBlockPos.z + z);
 				DhApiResult<DhApiTerrainDataPoint[]> result = getTerrainDataColumnArray(levelWrapper, blockColumnPos, null);

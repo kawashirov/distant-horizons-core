@@ -13,6 +13,7 @@ import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -122,7 +123,7 @@ public class ClientOnlySaveStructure extends AbstractSaveStructure
 				}
 		).sorted();
 		
-		return fileStream.toList();
+		return fileStream.collect(Collectors.toList());
 	}
 	
 	@Override
