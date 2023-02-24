@@ -627,8 +627,7 @@ public class WorldGenerationQueue implements Closeable
 		
 		try
 		{
-			// this will throw a timeout exception if the generator doesn't return soon enough
-			this.generatorClosingFuture.get(SHUTDOWN_TIMEOUT_SEC, TimeUnit.SECONDS);
+			this.generatorClosingFuture.cancel(true);
 		}
 		catch (Throwable e)
 		{
