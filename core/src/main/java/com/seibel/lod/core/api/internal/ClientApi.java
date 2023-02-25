@@ -106,13 +106,17 @@ public class ClientApi
 	
 	public void onClientOnlyDisconnected()
 	{
-		if (ENABLE_EVENT_LOGGING)
+		AbstractDhWorld world = SharedApi.getAbstractDhWorld();
+		if (world != null)
 		{
-			LOGGER.info("Client on ClientOnly mode disconnecting.");
+			if (ENABLE_EVENT_LOGGING)
+			{
+				LOGGER.info("Client on ClientOnly mode disconnecting.");
+			}
+			
+			world.close();
+			SharedApi.setDhWorld(null);
 		}
-		
-		SharedApi.getAbstractDhWorld().close();
-		SharedApi.setDhWorld(null);
 	}
 	
 	public void clientChunkLoadEvent(IChunkWrapper chunk, IClientLevelWrapper level)
