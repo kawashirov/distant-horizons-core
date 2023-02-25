@@ -172,55 +172,6 @@ public class LodUtil
 	}
 
 
-	/** returns the server name, IP and game version. */
-	@Deprecated // FIXME: There are soooo many duplicated methods doing the same thing everywhere
-	// Cloned to a7 package's DHFileHandler
-	public static String getServerFolderName()
-	{
-		// parse the current server's IP
-		ParsedIp parsedIp = new ParsedIp(MC_CLIENT.getCurrentServerIp());
-		String serverIpCleaned = parsedIp.ip.replaceAll(INVALID_FILE_CHARACTERS_REGEX, "");
-		String serverPortCleaned = parsedIp.port != null ? parsedIp.port.replaceAll(INVALID_FILE_CHARACTERS_REGEX, "") : "";
-		
-		
-		// determine the format of the folder name
-		EServerFolderNameMode folderNameMode = Config.Client.Multiplayer.serverFolderNameMode.get();
-		if (folderNameMode == EServerFolderNameMode.AUTO)
-		{
-			folderNameMode = EServerFolderNameMode.NAME_ONLY;
-		}
-			
-		
-		String serverName = MC_CLIENT.getCurrentServerName().replaceAll(INVALID_FILE_CHARACTERS_REGEX, "");
-		String serverMcVersion = MC_CLIENT.getCurrentServerVersion().replaceAll(INVALID_FILE_CHARACTERS_REGEX, "");
-		
-		// generate the folder name
-		String folderName = "";
-		switch (folderNameMode)
-		{
-		// default and auto shouldn't be used 
-		// and are just here to make the compiler happy
-		default:
-		case AUTO:
-		case NAME_ONLY:
-			folderName = serverName;
-			break;
-		
-		case NAME_IP:
-			folderName = serverName + ", IP " + serverIpCleaned;
-			break;
-		case NAME_IP_PORT:
-			folderName = serverName + ", IP " + serverIpCleaned + (serverPortCleaned.length() != 0 ? ("-" + serverPortCleaned) : "");
-			break;
-		case NAME_IP_PORT_MC_VERSION:
-			folderName = serverName + ", IP " + serverIpCleaned + (serverPortCleaned.length() != 0 ? ("-" + serverPortCleaned) : "") + ", GameVersion " + serverMcVersion;
-			break;
-		}
-		// PercentEscaper makes the characters all part of the standard alphameric character set
-		// This fixes some issues when the server is named something in other languages
-		return new PercentEscaper("", true).escape(folderName);
-	}
-	
 	public static int computeOverdrawOffset() {
 		int chunkRenderDist = MC_RENDER.getRenderDistance() + 1;
 		EVanillaOverdraw overdraw = Config.Client.Graphics.AdvancedGraphics.vanillaOverdraw.get();

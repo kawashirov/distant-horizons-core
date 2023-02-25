@@ -187,18 +187,7 @@ public class ClientOnlySaveStructure extends AbstractSaveStructure
 		EServerFolderNameMode folderNameMode = Config.Client.Multiplayer.serverFolderNameMode.get();
 		if (folderNameMode == EServerFolderNameMode.AUTO)
 		{
-			if (parsedIp.isLan())
-			{
-				// LAN
-				folderNameMode = EServerFolderNameMode.NAME_IP;
-			}
-			else
-			{
-				// normal multiplayer
-				folderNameMode = EServerFolderNameMode.NAME_IP_PORT;
-			}
-			// TODO can we determine if a server is a Mojang operated Realm based on the IP?
-			// If so we should also default to either NAME_IP or just NAME
+			folderNameMode = EServerFolderNameMode.NAME_ONLY;
 		}
 		String serverName = MC_CLIENT.getCurrentServerName().replaceAll(INVALID_FILE_CHARACTERS_REGEX, "");
 		String serverMcVersion = MC_CLIENT.getCurrentServerVersion().replaceAll(INVALID_FILE_CHARACTERS_REGEX, "");
