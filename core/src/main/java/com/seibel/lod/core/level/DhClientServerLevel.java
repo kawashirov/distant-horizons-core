@@ -7,17 +7,14 @@ import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource
 import com.seibel.lod.core.dataObjects.fullData.sources.FullDataSource;
 import com.seibel.lod.core.dataObjects.transformers.ChunkToLodBuilder;
 import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
-import com.seibel.lod.core.file.renderfile.RenderSourceFileHandler;
 import com.seibel.lod.core.generation.BatchGenerator;
 import com.seibel.lod.core.generation.WorldGenerationQueue;
 import com.seibel.lod.core.level.states.ClientRenderState;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
-import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.file.fullDatafile.GeneratedFullDataFileHandler;
 import com.seibel.lod.core.util.FileScanUtil;
 import com.seibel.lod.core.pos.DhBlockPos2D;
-import com.seibel.lod.core.render.RenderBufferHandler;
 import com.seibel.lod.core.file.structure.LocalSaveStructure;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
@@ -25,7 +22,6 @@ import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.logging.f3.F3Screen;
 import com.seibel.lod.core.pos.DhBlockPos;
 import com.seibel.lod.core.util.math.Mat4f;
-import com.seibel.lod.core.render.renderer.LodRenderer;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
@@ -96,47 +92,33 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 	@Override
 	public void clientTick()
 	{
-		ClientRenderState ClientRenderState = this.ClientRenderStateRef.get();
-		if (ClientRenderState == null)
+		ClientRenderState clientRenderState = this.ClientRenderStateRef.get();
+		if (clientRenderState == null)
 		{
 			return;
 		}
 		
-		if (ClientRenderState.quadtree.blockRenderDistance != Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH)
+		if (clientRenderState.quadtree.blockRenderDistance != Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH)
 		{
-			if (!this.ClientRenderStateRef.compareAndSet(ClientRenderState, null))
+			if (!this.ClientRenderStateRef.compareAndSet(clientRenderState, null))
 			{
 				return; //If we fail, we'll just wait for the next tick
 			}
 			
-			IClientLevelWrapper levelWrapper = ClientRenderState.clientLevel;
-			ClientRenderState.closeAsync().join(); //TODO: Make it async.
-			ClientRenderState = new ClientRenderState(this, levelWrapper);
-			if (!this.ClientRenderStateRef.compareAndSet(null, ClientRenderState))
+			IClientLevelWrapper levelWrapper = clientRenderState.clientLevel;
+			clientRenderState.closeAsync().join(); //TODO: Make it async.
+			clientRenderState = new ClientRenderState(this, levelWrapper);
+			if (!this.ClientRenderStateRef.compareAndSet(null, clientRenderState))
 			{
 				//FIXME: How to handle this?
 				LOGGER.warn("Failed to set render state due to concurrency after changing view distance");
-				ClientRenderState.closeAsync();
+				clientRenderState.closeAsync();
 				return;
 			}
 		}
 		
-		ClientRenderState.quadtree.tick(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
-		ClientRenderState.renderer.bufferHandler.update();
-	}
-	
-	private void saveWrites(ChunkSizedFullDataSource data)
-	{
-		ClientRenderState ClientRenderState = this.ClientRenderStateRef.get();
-		DhLodPos pos = data.getBBoxLodPos().convertToDetailLevel(FullDataSource.SECTION_SIZE_OFFSET);
-		if (ClientRenderState != null)
-		{
-			ClientRenderState.renderSourceFileHandler.write(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);
-		}
-		else
-		{
-			this.dataFileHandler.write(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);
-		}
+		clientRenderState.quadtree.tick(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
+		clientRenderState.renderer.bufferHandler.update();
 	}
 	
 	@Override
@@ -247,6 +229,19 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		if (future != null)
 		{
 			future.thenAccept(this::saveWrites);
+		}
+	}
+	private void saveWrites(ChunkSizedFullDataSource data)
+	{
+		ClientRenderState ClientRenderState = this.ClientRenderStateRef.get();
+		DhLodPos pos = data.getBBoxLodPos().convertToDetailLevel(FullDataSource.SECTION_SIZE_OFFSET);
+		if (ClientRenderState != null)
+		{
+			ClientRenderState.renderSourceFileHandler.write(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);
+		}
+		else
+		{
+			this.dataFileHandler.write(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);
 		}
 	}
 	

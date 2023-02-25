@@ -59,7 +59,6 @@ public class LodDataBuilder {
     public static boolean canGenerateLodFromChunk(IChunkWrapper chunk)
     {
         //return true;
-        return chunk != null &&
-                chunk.isLightCorrect();
+        return chunk != null && chunk.isLightCorrect(); // TODO client only chunks return chunks with bad lighting, preventing chunk building (or transparent only chunks)
     }
 }

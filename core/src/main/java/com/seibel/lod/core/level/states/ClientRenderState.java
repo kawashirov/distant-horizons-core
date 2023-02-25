@@ -3,6 +3,7 @@ package com.seibel.lod.core.level.states;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.file.renderfile.RenderSourceFileHandler;
+import com.seibel.lod.core.level.DhClientLevel;
 import com.seibel.lod.core.level.DhClientServerLevel;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.render.LodQuadTree;
@@ -27,7 +28,7 @@ public class ClientRenderState
 	public final LodRenderer renderer;
 	
 	
-	
+	// TODO combine
 	public ClientRenderState(DhClientServerLevel parent, IClientLevelWrapper clientLevel)
 	{
 		this.clientLevel = clientLevel;
@@ -38,6 +39,18 @@ public class ClientRenderState
 		
 		RenderBufferHandler renderBufferHandler = new RenderBufferHandler(this.quadtree);
 		FileScanUtil.scanFiles(parent.saveStructure, parent.serverLevel, null, this.renderSourceFileHandler);
+		this.renderer = new LodRenderer(renderBufferHandler);
+	}
+	public ClientRenderState(DhClientLevel parent, IClientLevelWrapper clientLevel)
+	{
+		this.clientLevel = clientLevel;
+		this.renderSourceFileHandler = new RenderSourceFileHandler(parent.dataFileHandler, parent, parent.saveStructure.getRenderCacheFolder(parent.level));
+		
+		this.quadtree = new LodQuadTree(parent, Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH,
+				MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, this.renderSourceFileHandler);
+		
+		RenderBufferHandler renderBufferHandler = new RenderBufferHandler(this.quadtree);
+		FileScanUtil.scanFiles(parent.saveStructure, parent.level, null, this.renderSourceFileHandler);
 		this.renderer = new LodRenderer(renderBufferHandler);
 	}
 	

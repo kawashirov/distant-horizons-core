@@ -52,7 +52,10 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 				return null;
 			}
 			
-            return new DhClientLevel(this.saveStructure, clientLevelWrapper);
+			DhClientLevel level = new DhClientLevel(this.saveStructure, clientLevelWrapper);
+			level.startRenderer(clientLevelWrapper);
+			
+            return level;
         });
     }
 
@@ -93,7 +96,7 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 		while (iterator.hasNext())
 		{
 			DhClientLevel level = iterator.next();
-			if (level.tree.blockRenderDistance != newBlockRenderDistance)
+			if (level.ClientRenderStateRef.get().quadtree.blockRenderDistance != newBlockRenderDistance)
 			{
 				level.close();
 				iterator.remove();
