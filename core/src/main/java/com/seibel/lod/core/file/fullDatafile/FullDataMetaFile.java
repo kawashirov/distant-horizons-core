@@ -370,7 +370,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 		}
 	}
 	
-	// Return whether any write has happened to the data
+	/** @return whether any writing has happened to the data */
 	private boolean applyWriteQueue(IFullDataSource fullDataSource)
 	{
 		// Poll the write queue

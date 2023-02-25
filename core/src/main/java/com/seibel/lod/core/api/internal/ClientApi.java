@@ -311,7 +311,7 @@ public class ClientApi
 	//    DEBUG USE    //
 	//=================//
 	
-	// Trigger once on key press, with CLIENT PLAYER.
+	/** Trigger once on key press, with CLIENT PLAYER. */
 	public void keyPressedEvent(int glfwKey)
 	{
 		if (!Config.Client.Advanced.Debugging.enableDebugKeybindings.get())

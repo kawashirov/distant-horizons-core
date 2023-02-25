@@ -116,7 +116,7 @@ public class DhClientLevel implements IDhClientLevel
 	public void close()
 	{
 		this.renderSourceFileHandler.close();
-		LOGGER.info("Closed DHLevel for {}", this.level);
+		LOGGER.info("Closed DHLevel for "+this.level);
 	}
 	
 }

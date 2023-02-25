@@ -103,7 +103,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 			return CompletableFuture.completedFuture(null); // If there is no cached data, there is no need to save.
 		}
 		
-		return source.thenAccept((a) -> { }); // Otherwise, wait for the data to be read (which also flushes changes to the file).
+		return source.thenAccept((columnRenderSource) -> { }); // Otherwise, wait for the data to be read (which also flushes changes to the file).
 	}
 	
     // Suppress casting of CompletableFuture<?> to CompletableFuture<LodRenderSource>
