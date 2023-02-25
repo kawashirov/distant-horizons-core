@@ -9,7 +9,6 @@ import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
 
 public interface IDhClientLevel extends IDhLevel
 {
-    /** Return whether the level needs to be reloaded */
     void clientTick();
 	
     void render(Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, float partialTicks, IProfilerWrapper profiler);

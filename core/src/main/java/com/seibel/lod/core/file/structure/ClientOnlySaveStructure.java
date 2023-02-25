@@ -54,7 +54,7 @@ public class ClientOnlySaveStructure extends AbstractSaveStructure
 	//================//
 	
 	@Override
-	public File tryGetOrCreateLevelFolder(ILevelWrapper level)
+	public File getLevelFolder(ILevelWrapper level)
 	{
 		return this.levelToFileMap.computeIfAbsent(level, (newLevel) ->
 		{
@@ -139,7 +139,7 @@ public class ClientOnlySaveStructure extends AbstractSaveStructure
 	}
 	
 	@Override
-	public File getDataFolder(ILevelWrapper level)
+	public File getFullDataFolder(ILevelWrapper level)
 	{
 		File levelFolder = this.levelToFileMap.get(level);
 		if (levelFolder == null)

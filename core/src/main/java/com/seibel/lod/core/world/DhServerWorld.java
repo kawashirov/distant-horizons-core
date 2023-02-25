@@ -40,7 +40,7 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 		
 		return this.levels.computeIfAbsent((IServerLevelWrapper) wrapper, (w) ->
 		{
-			File levelFile = this.saveStructure.tryGetOrCreateLevelFolder(wrapper);
+			File levelFile = this.saveStructure.getLevelFolder(wrapper);
 			LodUtil.assertTrue(levelFile != null);
 			return new DhServerLevel(this.saveStructure, w);
 		});

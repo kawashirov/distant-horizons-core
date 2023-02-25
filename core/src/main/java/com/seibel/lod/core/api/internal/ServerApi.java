@@ -104,7 +104,7 @@ public class ServerApi
 	{
 		if (ENABLE_EVENT_LOGGING)
 		{
-			LOGGER.info("Server Level {} loading", level);
+			LOGGER.info("Server Level "+level+" loading");
 		}
 		
 		AbstractDhWorld serverWorld = SharedApi.getAbstractDhWorld();

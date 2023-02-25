@@ -46,7 +46,7 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 
         return this.levels.computeIfAbsent((IClientLevelWrapper) wrapper, (clientLevelWrapper) ->
 		{
-            File file = this.saveStructure.tryGetOrCreateLevelFolder(wrapper);
+            File file = this.saveStructure.getLevelFolder(wrapper);
             if (file == null)
 			{
 				return null;
@@ -121,7 +121,7 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 		this.saveAndFlush().join();
         for (DhClientLevel level : this.levels.values())
 		{
-            LOGGER.info("Unloading level " + level.clientLevel.getDimensionType().getDimensionName());
+            LOGGER.info("Unloading level " + level.clientLevelWrapper.getDimensionType().getDimensionName());
             level.close();
         }
 		

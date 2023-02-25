@@ -28,29 +28,17 @@ public class ClientRenderState
 	public final LodRenderer renderer;
 	
 	
-	// TODO combine
-	public ClientRenderState(DhClientServerLevel parent, IClientLevelWrapper clientLevel)
-	{
-		this.clientLevel = clientLevel;
-		this.renderSourceFileHandler = new RenderSourceFileHandler(parent.fullDataFileHandler, parent, parent.saveStructure.getRenderCacheFolder(parent.serverLevel));
-		
-		this.quadtree = new LodQuadTree(parent, Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH,
-				MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, this.renderSourceFileHandler);
-		
-		RenderBufferHandler renderBufferHandler = new RenderBufferHandler(this.quadtree);
-		FileScanUtil.scanFiles(parent.saveStructure, parent.serverLevel, null, this.renderSourceFileHandler);
-		this.renderer = new LodRenderer(renderBufferHandler);
-	}
+	
 	public ClientRenderState(DhClientLevel parent, IClientLevelWrapper clientLevel)
 	{
 		this.clientLevel = clientLevel;
-		this.renderSourceFileHandler = new RenderSourceFileHandler(parent.fullDataFileHandler, parent, parent.saveStructure.getRenderCacheFolder(parent.clientLevel));
+		this.renderSourceFileHandler = new RenderSourceFileHandler(parent.fullDataFileHandler, parent, parent.saveStructure.getRenderCacheFolder(parent.getLevelWrapper()));
 		
 		this.quadtree = new LodQuadTree(parent, Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH,
 				MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, this.renderSourceFileHandler);
 		
 		RenderBufferHandler renderBufferHandler = new RenderBufferHandler(this.quadtree);
-		FileScanUtil.scanFiles(parent.saveStructure, parent.clientLevel, null, this.renderSourceFileHandler);
+		FileScanUtil.scanFiles(parent.saveStructure, parent.getLevelWrapper(), null, this.renderSourceFileHandler);
 		this.renderer = new LodRenderer(renderBufferHandler);
 	}
 	

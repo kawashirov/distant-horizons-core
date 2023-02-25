@@ -27,7 +27,7 @@ public class LocalSaveStructure extends AbstractSaveStructure
 	//================//
 	
 	@Override
-    public File tryGetOrCreateLevelFolder(ILevelWrapper wrapper)
+    public File getLevelFolder(ILevelWrapper wrapper)
 	{
         IServerLevelWrapper serverSide = (IServerLevelWrapper) wrapper;
         this.debugPath = new File(serverSide.getSaveFolder(), "Distant_Horizons");
@@ -43,11 +43,11 @@ public class LocalSaveStructure extends AbstractSaveStructure
     }
 
     @Override
-    public File getDataFolder(ILevelWrapper level)
+    public File getFullDataFolder(ILevelWrapper level)
 	{
-        IServerLevelWrapper serverSide = (IServerLevelWrapper) level;
-        this.debugPath = new File(serverSide.getSaveFolder(), SERVER_FOLDER_NAME);
-        return new File(new File(serverSide.getSaveFolder(), SERVER_FOLDER_NAME), DATA_FOLDER);
+        IServerLevelWrapper serverLevelWrapper = (IServerLevelWrapper) level;
+        this.debugPath = new File(serverLevelWrapper.getSaveFolder(), SERVER_FOLDER_NAME);
+        return new File(new File(serverLevelWrapper.getSaveFolder(), SERVER_FOLDER_NAME), DATA_FOLDER);
     }
 	
 	

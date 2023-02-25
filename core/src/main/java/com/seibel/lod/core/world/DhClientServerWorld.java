@@ -50,7 +50,7 @@ public class DhClientServerWorld extends AbstractDhWorld implements IDhClientWor
 		{
 			return this.levelObjMap.computeIfAbsent(wrapper, (levelWrapper) -> 
 			{
-				File levelFile = this.saveStructure.tryGetOrCreateLevelFolder(levelWrapper);
+				File levelFile = this.saveStructure.getLevelFolder(levelWrapper);
 				LodUtil.assertTrue(levelFile != null);
 				DhClientServerLevel level = new DhClientServerLevel(this.saveStructure, (IServerLevelWrapper) levelWrapper);
 				this.dhLevels.add(level);
@@ -132,7 +132,7 @@ public class DhClientServerWorld extends AbstractDhWorld implements IDhClientWor
 		
 		for (DhClientServerLevel level : this.dhLevels)
 		{
-			LOGGER.info("Unloading level " + level.serverLevel.getDimensionType().getDimensionName());
+			LOGGER.info("Unloading level " + level.serverLevelWrapper.getDimensionType().getDimensionName());
 			level.close();
 		}
 		

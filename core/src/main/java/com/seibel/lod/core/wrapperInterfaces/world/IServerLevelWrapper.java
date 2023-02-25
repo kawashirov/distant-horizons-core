@@ -5,7 +5,7 @@ import java.io.File;
 
 public interface IServerLevelWrapper extends ILevelWrapper {
     @Nullable
-    IClientLevelWrapper tryGetClientSideWrapper();
+    IClientLevelWrapper tryGetClientLevelWrapper();
 
     File getSaveFolder();
 }

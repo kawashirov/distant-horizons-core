@@ -26,7 +26,7 @@ public class FileScanUtil
 	{
 		if (dataSourceProvider != null)
 		{
-			try (Stream<Path> pathStream = Files.walk(saveStructure.getDataFolder(levelWrapper).toPath(), MAX_SCAN_DEPTH))
+			try (Stream<Path> pathStream = Files.walk(saveStructure.getFullDataFolder(levelWrapper).toPath(), MAX_SCAN_DEPTH))
 			{
 				dataSourceProvider.addScannedFile(pathStream.filter(
 								path -> path.toFile().getName().endsWith(LOD_FILE_POSTFIX) && path.toFile().isFile()
@@ -35,7 +35,7 @@ public class FileScanUtil
 			}
 			catch (Exception e)
 			{
-				LOGGER.error("Failed to scan and collect data files for {} in {}", levelWrapper, saveStructure, e);
+				LOGGER.error("Failed to scan and collect full data files for "+levelWrapper+" in "+saveStructure, e);
 			}
 		}
 		
@@ -50,7 +50,7 @@ public class FileScanUtil
 			}
 			catch (Exception e)
 			{
-				LOGGER.error("Failed to scan and collect data files for {} in {}", levelWrapper, saveStructure, e);
+				LOGGER.error("Failed to scan and collect cache files for "+levelWrapper+" in "+saveStructure, e);
 			}
 		}
 	}

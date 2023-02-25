@@ -25,12 +25,12 @@ public abstract class AbstractSaveStructure implements AutoCloseable
 	 * This will always return a folder, however that folder may not be the best match
 	 * if multiverse support is enabled.
 	 * */
-    public abstract File tryGetOrCreateLevelFolder(ILevelWrapper wrapper);
+    public abstract File getLevelFolder(ILevelWrapper wrapper);
 	
 	/** Will return null if no parent folder exists for the given {@link ILevelWrapper}.*/
     public abstract File getRenderCacheFolder(ILevelWrapper world);
 	/** Will return null if no parent folder exists for the given {@link ILevelWrapper}.*/
-    public abstract File getDataFolder(ILevelWrapper world);
+    public abstract File getFullDataFolder(ILevelWrapper world);
 	
 }
 
