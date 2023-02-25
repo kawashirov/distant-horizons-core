@@ -149,7 +149,7 @@ public class BatchGenerator implements IDhApiWorldGenerator
 	public void close() { this.stop(true); }
 	public void stop(boolean blocking)
 	{
-		LOGGER.info("Batch Chunk Generator shutting down...");
+		LOGGER.info(BatchGenerator.class.getSimpleName()+" shutting down...");
 		this.generationGroup.stop(blocking);
 	}
 	

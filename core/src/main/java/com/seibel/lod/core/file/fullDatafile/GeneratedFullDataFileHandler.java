@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -121,7 +122,11 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	{
 		if (exception != null)
 		{
-			LOGGER.error("Uncaught Gen Task Exception at {}:", pos, exception);
+			// don't log the shutdown exceptions
+			if (!(exception instanceof CancellationException || exception.getCause() instanceof CancellationException))
+			{
+				LOGGER.error("Uncaught Gen Task Exception at " + pos + ":", exception);
+			}
 		}
 		
 		if (exception == null && genTaskCompleted)

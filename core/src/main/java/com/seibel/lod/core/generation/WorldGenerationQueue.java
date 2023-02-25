@@ -557,20 +557,22 @@ public class WorldGenerationQueue implements Closeable
 		DhChunkPos chunkPosMin = new DhChunkPos(pos.getCornerBlockPos());
 		LOGGER.info("Generating section {} with granularity {} at {}", pos, granularity, chunkPosMin);
 		task.genFuture = startGenerationEvent(this.generator, chunkPosMin, granularity, dataDetail, task.group::accept);
-		task.genFuture.whenComplete((voidObj, ex) ->
+		task.genFuture.whenComplete((voidObj, exception) ->
 		{
-			if (ex != null)
+			if (exception != null)
 			{
-				if (!UncheckedInterruptedException.isThrowableInterruption(ex))
+				// don't log the shutdown exceptions
+				if (!UncheckedInterruptedException.isThrowableInterruption(exception) && !(exception instanceof CancellationException || exception.getCause() instanceof CancellationException))
 				{
-					LOGGER.error("Error generating data for section [{}]", pos, ex);
+					LOGGER.error("Error generating data for section "+pos, exception);
 				}
-				task.group.generatorTasks.forEach(m -> m.future.complete(false));
+				
+				task.group.generatorTasks.forEach(worldGenTask -> worldGenTask.future.complete(false));
 			}
 			else
 			{
-				LOGGER.info("Section generation at [{}] completed", pos);
-				task.group.generatorTasks.forEach(m -> m.future.complete(true));
+				LOGGER.info("Section generation at "+pos+" completed");
+				task.group.generatorTasks.forEach(worldGenTask -> worldGenTask.future.complete(true));
 			}
 			boolean worked = this.inProgressGenTasksByLodPos.remove(pos, task);
 			LodUtil.assertTrue(worked);
@@ -585,40 +587,53 @@ public class WorldGenerationQueue implements Closeable
 	
 	public CompletableFuture<Void> startClosing(boolean cancelCurrentGeneration, boolean alsoInterruptRunning)
 	{
-		this.waitingTaskGroupsByLodPos.values().forEach(g -> g.generatorTasks.forEach(t -> t.future.complete(false)));
+		this.waitingTaskGroupsByLodPos.values().forEach(worldGenTaskGroup -> worldGenTaskGroup.generatorTasks.forEach(
+				(worldGenTask) -> 
+				{ 
+					try { worldGenTask.future.cancel(true); } catch (CancellationException ignored) { /* don't log shutdown exceptions */ }
+				}
+		));
+		
 		this.waitingTaskGroupsByLodPos.clear();
-		ArrayList<CompletableFuture<Void>> array = new ArrayList<>(this.inProgressGenTasksByLodPos.size());
+		
+		ArrayList<CompletableFuture<Void>> inProgressTasksCancelingFutures = new ArrayList<>(this.inProgressGenTasksByLodPos.size());
 		this.inProgressGenTasksByLodPos.values().forEach(runningTaskGroup ->
-									{
-										CompletableFuture<Void> genFuture = runningTaskGroup.genFuture; // Do this to prevent it getting swapped out
-										
-										if (cancelCurrentGeneration)
-										{
-											genFuture.cancel(alsoInterruptRunning);
-										}
-										
-										array.add(genFuture.handle((voidObj, ex) ->
-										{
-											if (ex instanceof CompletionException)
-											{
-												ex = ex.getCause();
-											}
-											if (!UncheckedInterruptedException.isThrowableInterruption(ex))
-											{
-												LOGGER.error("Error when terminating data generation for section {}", runningTaskGroup.group.pos, ex);
-											}
-											return null;
-										}));
-									});
-		this.generatorClosingFuture = CompletableFuture.allOf(array.toArray(new CompletableFuture[0])); //FIXME: Closer threading issues with runCurrentGenTasksUntilBusy
-		this.looseWoldGenTasks.forEach(t -> t.future.complete(false));
+			{
+				CompletableFuture<Void> genFuture = runningTaskGroup.genFuture; // Do this to prevent it getting swapped out
+				
+				if (cancelCurrentGeneration)
+				{
+					genFuture.cancel(alsoInterruptRunning);
+				}
+				
+				inProgressTasksCancelingFutures.add(genFuture.handle((voidObj, exception) ->
+				{
+					if (exception instanceof CompletionException)
+					{
+						exception = exception.getCause();
+					}
+					
+					if (!UncheckedInterruptedException.isThrowableInterruption(exception) && !(exception instanceof CancellationException))
+					{
+						LOGGER.error("Error when terminating data generation for section "+runningTaskGroup.group.pos, exception);
+					}
+					
+					return null;
+				}));
+			});
+		this.generatorClosingFuture = CompletableFuture.allOf(inProgressTasksCancelingFutures.toArray(new CompletableFuture[0])); //FIXME: Closer threading issues with runCurrentGenTasksUntilBusy
+		
+		this.looseWoldGenTasks.forEach(worldGenTask -> worldGenTask.future.cancel(true)); //.complete(false));
 		this.looseWoldGenTasks.clear();
+		
 		return this.generatorClosingFuture;
 	}
 	
 	@Override
 	public void close()
 	{
+		LOGGER.info("Closing "+WorldGenerationQueue.class.getSimpleName()+"...");
+		
 		if (this.generatorClosingFuture == null)
 		{
 			this.startClosing(true, true);
@@ -633,6 +648,8 @@ public class WorldGenerationQueue implements Closeable
 		{
 			LOGGER.error("Failed to close generation queue: ", e);
 		}
+		
+		LOGGER.info("Successfully closed "+WorldGenerationQueue.class.getSimpleName());
 	}
 	
 	
