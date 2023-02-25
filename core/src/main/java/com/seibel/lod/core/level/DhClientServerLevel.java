@@ -43,10 +43,10 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	
 	public final LocalSaveStructure saveStructure;
-	public final GeneratedFullDataFileHandler dataFileHandler;
+	public final GeneratedFullDataFileHandler fullDataFileHandler;
 	public final ChunkToLodBuilder chunkToLodBuilder;
 	public final IServerLevelWrapper serverLevel;
-	private final AppliedConfigState<Boolean> generatorEnabled;
+	private final AppliedConfigState<Boolean> worldGeneratorEnabledConfig;
 	public F3Screen.NestedMessage f3Message;
 	
 	private final AtomicReference<ClientRenderState> ClientRenderStateRef = new AtomicReference<>();
@@ -54,24 +54,31 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 	
 	
 	
-	public DhClientServerLevel(LocalSaveStructure saveStructure, IServerLevelWrapper level)
+	public DhClientServerLevel(LocalSaveStructure saveStructure, IServerLevelWrapper serverLevel)
 	{
-		this.serverLevel = level;
+		this.serverLevel = serverLevel;
 		
 		this.saveStructure = saveStructure;
-		saveStructure.getDataFolder(level).mkdirs();
-		saveStructure.getRenderCacheFolder(level).mkdirs();
+		saveStructure.getDataFolder(serverLevel).mkdirs();
+		saveStructure.getRenderCacheFolder(serverLevel).mkdirs();
 		
-		this.dataFileHandler = new GeneratedFullDataFileHandler(this, saveStructure.getDataFolder(level));
-		FileScanUtil.scanFiles(saveStructure, this.serverLevel, this.dataFileHandler, null);
+		this.fullDataFileHandler = new GeneratedFullDataFileHandler(this, saveStructure.getDataFolder(serverLevel));
+		FileScanUtil.scanFiles(saveStructure, this.serverLevel, this.fullDataFileHandler, null);
 		
-		LOGGER.info("Started DHLevel for "+level+" with saves at "+saveStructure);
 		this.f3Message = new F3Screen.NestedMessage(this::f3Log);
 		this.chunkToLodBuilder = new ChunkToLodBuilder();
-		this.generatorEnabled = new AppliedConfigState<>(Config.Client.WorldGenerator.enableDistantGeneration);
+		
+		this.worldGeneratorEnabledConfig = new AppliedConfigState<>(Config.Client.WorldGenerator.enableDistantGeneration);
+		
+		
+		LOGGER.info("Started DHLevel for "+serverLevel+" with saves at "+saveStructure);
 	}
 	
 	
+	
+	//=======================//
+	// misc helper functions //
+	//=======================//
 	
 	/** Returns what should be displayed in Minecraft's F3 debug menu */
 	private String[] f3Log()
@@ -88,6 +95,18 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 			};
 		}
 	}
+	
+	@Override
+	public void dumpRamUsage()
+	{
+		//TODO
+	}
+	
+	
+	
+	//==============//
+	// tick methods //
+	//==============//
 	
 	@Override
 	public void clientTick()
@@ -124,6 +143,55 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 	@Override
 	public void serverTick() { this.chunkToLodBuilder.tick(); }
 	
+	@Override
+	public void doWorldGen()
+	{
+		WorldGenState wgs = this.worldGenStateRef.get();
+		
+		// if the world generator config changes, add/remove the world generator
+		if (this.worldGeneratorEnabledConfig.pollNewValue())
+		{
+			boolean shouldDoWorldGen = this.worldGeneratorEnabledConfig.get() && this.ClientRenderStateRef.get() != null;
+			if (shouldDoWorldGen && wgs == null)
+			{
+				// create the new world generator
+				WorldGenState newWgs = new WorldGenState(this);
+				if (!this.worldGenStateRef.compareAndSet(null, newWgs))
+				{
+					LOGGER.warn("Failed to start world gen due to concurrency");
+					newWgs.closeAsync(false);
+				}
+			}
+			else if (!shouldDoWorldGen && wgs != null)
+			{
+				// shut down the world generator
+				while (!this.worldGenStateRef.compareAndSet(wgs, null))
+				{
+					wgs = this.worldGenStateRef.get();
+					if (wgs == null)
+					{
+						return;
+					}
+				}
+				wgs.closeAsync(true).join(); //TODO: Make it async.
+			}
+		}
+		
+		
+		if (wgs != null)
+		{
+			// queue new world generation requests
+			wgs.chunkGenerator.preGeneratorTaskStart();
+			wgs.worldGenerationQueue.runCurrentGenTasksUntilBusy(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
+		}
+	}
+	
+	
+	
+	//========//
+	// render //
+	//========//
+	
 	public void startRenderer(IClientLevelWrapper clientLevel)
 	{
 		LOGGER.info("Starting renderer for "+this);
@@ -135,8 +203,8 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		}
 		else
 		{
-			this.generatorEnabled.pollNewValue();
-			if (this.generatorEnabled.get() && this.worldGenStateRef.get() == null)
+			this.worldGeneratorEnabledConfig.pollNewValue();
+			if (this.worldGeneratorEnabledConfig.get() && this.worldGenStateRef.get() == null)
 			{
 				WorldGenState worldGenState = new WorldGenState(this);
 				if (!this.worldGenStateRef.compareAndSet(null, worldGenState))
@@ -198,7 +266,13 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		}
 	}
 	
-	@Override //FIXME
+	
+	
+	//================//
+	// level handling //
+	//================//
+	
+	@Override //FIXME // why is this labeled "fixme"?
 	public int computeBaseColor(DhBlockPos pos, IBiomeWrapper biome, IBlockStateWrapper block)
 	{
 		IClientLevelWrapper clientLevel = this.getClientLevelWrapper();
@@ -218,9 +292,20 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		ClientRenderState ClientRenderState = this.ClientRenderStateRef.get();
 		return ClientRenderState == null ? null : ClientRenderState.clientLevel;
 	}
+	@Override
+	public IServerLevelWrapper getServerLevelWrapper() { return this.serverLevel; }
 	
 	@Override
 	public ILevelWrapper getLevelWrapper() { return this.serverLevel; }
+	
+	@Override
+	public int getMinY() { return this.serverLevel.getMinHeight(); }
+	
+	
+	
+	//===============//
+	// data handling //
+	//===============//
 	
 	@Override
 	public void updateChunkAsync(IChunkWrapper chunk)
@@ -241,18 +326,9 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		}
 		else
 		{
-			this.dataFileHandler.write(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);
+			this.fullDataFileHandler.write(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);
 		}
 	}
-	
-	@Override
-	public void dumpRamUsage()
-	{
-		//TODO
-	}
-	
-	@Override
-	public int getMinY() { return this.serverLevel.getMinHeight(); }
 	
 	@Override
 	public CompletableFuture<Void> saveAsync()
@@ -260,11 +336,11 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 		ClientRenderState ClientRenderState = this.ClientRenderStateRef.get();
 		if (ClientRenderState != null)
 		{
-			return ClientRenderState.renderSourceFileHandler.flushAndSave().thenCombine(this.dataFileHandler.flushAndSave(), (voidA, voidB) -> null);
+			return ClientRenderState.renderSourceFileHandler.flushAndSave().thenCombine(this.fullDataFileHandler.flushAndSave(), (voidA, voidB) -> null);
 		}
 		else
 		{
-			return this.dataFileHandler.flushAndSave();
+			return this.fullDataFileHandler.flushAndSave();
 		}
 	}
 	
@@ -304,53 +380,7 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 	
 	
 	@Override
-	public void doWorldGen()
-	{
-		WorldGenState wgs = this.worldGenStateRef.get();
-		
-		// if the world generator config changes, add/remove the world generator
-		if (this.generatorEnabled.pollNewValue())
-		{
-			boolean shouldDoWorldGen = this.generatorEnabled.get() && this.ClientRenderStateRef.get() != null;
-			if (shouldDoWorldGen && wgs == null)
-			{
-				// create the new world generator
-				WorldGenState newWgs = new WorldGenState(this);
-				if (!this.worldGenStateRef.compareAndSet(null, newWgs))
-				{
-					LOGGER.warn("Failed to start world gen due to concurrency");
-					newWgs.closeAsync(false);
-				}
-			}
-			else if (!shouldDoWorldGen && wgs != null)
-			{
-				// shut down the world generator
-				while (!this.worldGenStateRef.compareAndSet(wgs, null))
-				{
-					wgs = this.worldGenStateRef.get();
-					if (wgs == null)
-					{
-						return;
-					}
-				}
-				wgs.closeAsync(true).join(); //TODO: Make it async.
-			}
-		}
-		
-		
-		if (wgs != null)
-		{
-			// queue new world generation requests
-			wgs.chunkGenerator.preGeneratorTaskStart();
-			wgs.worldGenerationQueue.runCurrentGenTasksUntilBusy(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
-		}
-	}
-	
-	@Override
-	public IServerLevelWrapper getServerLevelWrapper() { return this.serverLevel; }
-	
-	@Override
-	public IFullDataSourceProvider getFileHandler() { return this.dataFileHandler; }
+	public IFullDataSourceProvider getFileHandler() { return this.fullDataFileHandler; }
 	
 	@Override
 	public void clearRenderDataCache()
@@ -390,14 +420,14 @@ public class DhClientServerLevel implements IDhClientLevel, IDhServerLevel
 			this.chunkGenerator = worldGenerator;
 			
 			this.worldGenerationQueue = new WorldGenerationQueue(this.chunkGenerator);
-			DhClientServerLevel.this.dataFileHandler.setGenerationQueue(this.worldGenerationQueue);
+			DhClientServerLevel.this.fullDataFileHandler.setGenerationQueue(this.worldGenerationQueue);
 		}
 		
 		
 		
 		CompletableFuture<Void> closeAsync(boolean doInterrupt)
 		{
-			DhClientServerLevel.this.dataFileHandler.clearGenerationQueue();
+			DhClientServerLevel.this.fullDataFileHandler.clearGenerationQueue();
 			return this.worldGenerationQueue.startClosing(true, doInterrupt)
 					.exceptionally(ex ->
 					{

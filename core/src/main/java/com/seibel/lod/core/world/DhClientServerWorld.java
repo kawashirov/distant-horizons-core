@@ -97,6 +97,7 @@ public class DhClientServerWorld extends AbstractDhWorld implements IDhClientWor
 			}
 			else
 			{
+				// TODO why is this called here?
 				this.levelObjMap.remove(wrapper).stopRenderer(); // Ignore resource warning. The level obj is referenced elsewhere.
 			}
 		}

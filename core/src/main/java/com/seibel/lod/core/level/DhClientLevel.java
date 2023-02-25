@@ -4,15 +4,13 @@ import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource
 import com.seibel.lod.core.dataObjects.fullData.sources.FullDataSource;
 import com.seibel.lod.core.dataObjects.transformers.ChunkToLodBuilder;
 import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
-import com.seibel.lod.core.file.renderfile.RenderSourceFileHandler;
 import com.seibel.lod.core.level.states.ClientRenderState;
+import com.seibel.lod.core.logging.f3.F3Screen;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
-import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.util.FileScanUtil;
 import com.seibel.lod.core.file.fullDatafile.RemoteFullDataFileHandler;
 import com.seibel.lod.core.pos.DhBlockPos2D;
-import com.seibel.lod.core.render.RenderBufferHandler;
 import com.seibel.lod.core.file.structure.ClientOnlySaveStructure;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
@@ -20,7 +18,6 @@ import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhBlockPos;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.math.Mat4f;
-import com.seibel.lod.core.render.renderer.LodRenderer;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
@@ -37,35 +34,68 @@ public class DhClientLevel implements IDhClientLevel
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
+	
 	public final ClientOnlySaveStructure saveStructure;
-	public final RemoteFullDataFileHandler dataFileHandler;
-	public final ChunkToLodBuilder chunkToLodBuilder = new ChunkToLodBuilder();;
-	public final IClientLevelWrapper level;
+	public final RemoteFullDataFileHandler fullDataFileHandler;
+	public final ChunkToLodBuilder chunkToLodBuilder;
+	public final IClientLevelWrapper clientLevel;
+	public F3Screen.NestedMessage f3Message;
 	
 	public final AtomicReference<ClientRenderState> ClientRenderStateRef = new AtomicReference<>();
 	
 	
 	
-	public DhClientLevel(ClientOnlySaveStructure saveStructure, IClientLevelWrapper level)
+	public DhClientLevel(ClientOnlySaveStructure saveStructure, IClientLevelWrapper clientLevel)
 	{
+		this.clientLevel = clientLevel;
+		
 		this.saveStructure = saveStructure;
+		saveStructure.getDataFolder(clientLevel).mkdirs();
+		saveStructure.getRenderCacheFolder(clientLevel).mkdirs();
 		
-		saveStructure.getDataFolder(level).mkdirs();
-		saveStructure.getRenderCacheFolder(level).mkdirs();
-		this.dataFileHandler = new RemoteFullDataFileHandler(this, saveStructure.getDataFolder(level));
+		this.fullDataFileHandler = new RemoteFullDataFileHandler(this, saveStructure.getDataFolder(clientLevel));
+		FileScanUtil.scanFiles(saveStructure, clientLevel, this.fullDataFileHandler, null);
 		
-		this.level = level;
-		FileScanUtil.scanFiles(saveStructure, level, this.dataFileHandler, null);
-		LOGGER.info("Started DHLevel for "+level+" with saves at "+ saveStructure);
+		this.f3Message = new F3Screen.NestedMessage(this::f3Log);
+		this.chunkToLodBuilder = new ChunkToLodBuilder();
+		
+		
+		LOGGER.info("Started DHLevel for "+clientLevel+" with saves at "+saveStructure);
 	}
 	
 	
+	
+	//=======================//
+	// misc helper functions //
+	//=======================//
+	
+	/** Returns what should be displayed in Minecraft's F3 debug menu */
+	private String[] f3Log()
+	{
+		ClientRenderState rs = this.ClientRenderStateRef.get();
+		if (rs == null)
+		{
+			return new String[] { LodUtil.formatLog("level @ {}: Inactive", this.clientLevel.getDimensionType().getDimensionName()) };
+		}
+		else
+		{
+			return new String[] {
+					LodUtil.formatLog("level @ {}: Active", this.clientLevel.getDimensionType().getDimensionName())
+			};
+		}
+	}
 	
 	@Override
 	public void dumpRamUsage()
 	{
 		//TODO
 	}
+	
+	
+	
+	//==============//
+	// tick methods //
+	//==============//
 	
 	@Override
 	public void clientTick()
@@ -101,6 +131,11 @@ public class DhClientLevel implements IDhClientLevel
 		this.chunkToLodBuilder.tick();
 	}
 	
+	
+	
+	//========//
+	// render //
+	//========//
 	
 	public void startRenderer(IClientLevelWrapper clientLevel)
 	{
@@ -148,27 +183,44 @@ public class DhClientLevel implements IDhClientLevel
 		
 	}
 	
-	@Override
-	public int computeBaseColor(DhBlockPos pos, IBiomeWrapper biome, IBlockStateWrapper block) { return 0; /* TODO */ }
+	
+	
+	//================//
+	// level handling //
+	//================//
 	
 	@Override
-	public IClientLevelWrapper getClientLevelWrapper() { return this.level; }
-	
-	@Override
-	public ILevelWrapper getLevelWrapper() { return this.level; }
-	
-	@Override
-	public IFullDataSourceProvider getFileHandler() { return this.dataFileHandler; }
-	
-	@Override 
-	public void clearRenderDataCache()
+	public int computeBaseColor(DhBlockPos pos, IBiomeWrapper biome, IBlockStateWrapper block)
 	{
-		ClientRenderState ClientRenderState = this.ClientRenderStateRef.get();
-		if (ClientRenderState != null && ClientRenderState.quadtree != null)
+		IClientLevelWrapper clientLevel = this.getClientLevelWrapper();
+		if (clientLevel == null)
 		{
-			ClientRenderState.quadtree.clearRenderDataCache();
+			return 0;
+		}
+		else
+		{
+			return clientLevel.computeBaseColor(pos, biome, block);
 		}
 	}
+	
+	@Override
+	public IClientLevelWrapper getClientLevelWrapper()
+	{
+		ClientRenderState ClientRenderState = this.ClientRenderStateRef.get();
+		return ClientRenderState == null ? null : ClientRenderState.clientLevel;
+	}
+	
+	@Override
+	public ILevelWrapper getLevelWrapper() { return this.clientLevel; }
+	
+	@Override
+	public int getMinY() { return this.clientLevel.getMinHeight(); }
+	
+	
+	
+	//===============//
+	// data handling //
+	//===============//
 	
 	@Override
 	public void updateChunkAsync(IChunkWrapper chunk)
@@ -189,12 +241,9 @@ public class DhClientLevel implements IDhClientLevel
 		}
 		else
 		{
-			this.dataFileHandler.write(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);
+			this.fullDataFileHandler.write(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);
 		}
 	}
-	
-	@Override
-	public int getMinY() { return this.level.getMinHeight(); }
 	
 	@Override
 	public CompletableFuture<Void> saveAsync()
@@ -202,13 +251,15 @@ public class DhClientLevel implements IDhClientLevel
 		ClientRenderState ClientRenderState = this.ClientRenderStateRef.get();
 		if (ClientRenderState != null)
 		{
-			return ClientRenderState.renderSourceFileHandler.flushAndSave().thenCombine(this.dataFileHandler.flushAndSave(), (voidA, voidB) -> null);
+			return ClientRenderState.renderSourceFileHandler.flushAndSave().thenCombine(this.fullDataFileHandler.flushAndSave(), (voidA, voidB) -> null);
 		}
 		else
 		{
-			return this.dataFileHandler.flushAndSave();
+			return this.fullDataFileHandler.flushAndSave();
 		}
 	}
+	
+	
 	
 	@Override
 	public void close()
@@ -227,7 +278,22 @@ public class DhClientLevel implements IDhClientLevel
 			ClientRenderState.closeAsync().join(); //TODO: Make this async.
 		}
 		
-		LOGGER.info("Closed DHLevel for "+this.level);
+		LOGGER.info("Closed DHLevel for "+this.clientLevel);
 	}
+	
+	
+	@Override
+	public IFullDataSourceProvider getFileHandler() { return this.fullDataFileHandler; }
+	
+	@Override
+	public void clearRenderDataCache()
+	{
+		ClientRenderState ClientRenderState = this.ClientRenderStateRef.get();
+		if (ClientRenderState != null && ClientRenderState.quadtree != null)
+		{
+			ClientRenderState.quadtree.clearRenderDataCache();
+		}
+	}
+	
 	
 }
