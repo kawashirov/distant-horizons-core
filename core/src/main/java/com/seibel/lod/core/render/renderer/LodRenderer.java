@@ -127,9 +127,13 @@ public class LodRenderer
 			return;
 		}
 		
+		EVENT_LOGGER.info("Shutting down "+LodRenderer.class.getSimpleName()+"...");
+		
 		this.closeCalled = true;
 		GLProxy.getInstance().recordOpenGlCall(this::cleanup);
 		this.bufferHandler.close();
+		
+		EVENT_LOGGER.info("Finished shutting down "+LodRenderer.class.getSimpleName());
 	}
 
 	public void drawLODs(Mat4f baseModelViewMatrix, Mat4f baseProjectionMatrix, float partialTicks, IProfilerWrapper profiler)

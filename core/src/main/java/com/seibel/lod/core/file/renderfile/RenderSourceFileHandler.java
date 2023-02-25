@@ -9,6 +9,7 @@ import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
+import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.util.FileUtil;
 import com.seibel.lod.core.util.objects.UncheckedInterruptedException;
 import com.seibel.lod.core.config.Config;
@@ -229,12 +230,16 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
     @Override
 	public CompletableFuture<Void> flushAndSave()
 	{
+		LOGGER.info("Shutting down "+ RenderSourceFileHandler.class.getSimpleName()+"...");
+		
 		ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (RenderMetaDataFile metaFile : this.filesBySectionPos.values())
 		{
 			futures.add(metaFile.flushAndSave(this.renderCacheThread));
 		}
-		return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+		
+		return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+				.whenComplete((voidObj, exception) -> LOGGER.info("Finished shutting down "+ RenderSourceFileHandler.class.getSimpleName()) );
 	}
 
     @Override

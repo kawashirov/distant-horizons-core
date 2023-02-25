@@ -2,11 +2,13 @@ package com.seibel.lod.core.render;
 
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.level.IDhClientLevel;
+import com.seibel.lod.core.level.states.ClientRenderState;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.file.renderfile.ILodRenderSourceProvider;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.Pos2D;
+import com.seibel.lod.core.render.renderer.LodRenderer;
 import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.DetailDistanceUtil;
 import com.seibel.lod.core.util.LodUtil;
@@ -744,6 +746,8 @@ public class LodQuadTree implements AutoCloseable
     @Override
 	public void close()
 	{
+		LOGGER.info("Shutting down "+ LodQuadTree.class.getSimpleName()+"...");
+		
 		for (MovableGridRingList<LodRenderSection> ringList : this.renderSectionRingLists)
 		{
 			ringList.forEach((section) ->
@@ -754,6 +758,8 @@ public class LodQuadTree implements AutoCloseable
 				}
 			});
 		}
+		
+		LOGGER.info("Finished shutting down "+ LodQuadTree.class.getSimpleName());
 	}
 	
 }
