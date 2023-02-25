@@ -61,17 +61,17 @@ public class DhClientServerWorld extends AbstractDhWorld implements IDhClientWor
 		{
 			return this.levelObjMap.computeIfAbsent(wrapper, (levelWrapper) ->
 			{
-				IClientLevelWrapper clientSide = (IClientLevelWrapper) levelWrapper;
-				IServerLevelWrapper serverSide = clientSide.tryGetServerSideWrapper();
-				LodUtil.assertTrue(serverSide != null);
+				IClientLevelWrapper clientLevelWrapper = (IClientLevelWrapper) levelWrapper;
+				IServerLevelWrapper serverLevelWrapper = clientLevelWrapper.tryGetServerSideWrapper();
+				LodUtil.assertTrue(serverLevelWrapper != null);
 				
-				DhClientServerLevel level = this.levelObjMap.get(serverSide);
+				DhClientServerLevel level = this.levelObjMap.get(serverLevelWrapper);
 				if (level == null)
 				{
 					return null;
 				}
 				
-				level.startRenderer(clientSide);
+				level.startRenderer(clientLevelWrapper);
 				return level;
 			});
 		}
