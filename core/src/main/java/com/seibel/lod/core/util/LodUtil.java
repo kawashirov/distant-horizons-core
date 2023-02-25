@@ -187,16 +187,7 @@ public class LodUtil
 		EServerFolderNameMode folderNameMode = Config.Client.Multiplayer.serverFolderNameMode.get();
 		if (folderNameMode == EServerFolderNameMode.AUTO)
 		{
-			if (parsedIp.isLan())
-			{
-				// LAN
-				folderNameMode = EServerFolderNameMode.NAME_IP;
-			}
-			else
-			{
-				// normal multiplayer
-				folderNameMode = EServerFolderNameMode.NAME_IP_PORT;
-			}
+			folderNameMode = EServerFolderNameMode.NAME_ONLY;
 		}
 			
 		

@@ -647,7 +647,7 @@ public class Config
                     .comment(""
                             + " What multiplayer save folders should be named. \n"
                             + "\n"
-                            + " " + EServerFolderNameMode.AUTO + ": " + EServerFolderNameMode.NAME_IP + " for LAN connections, " + EServerFolderNameMode.NAME_IP_PORT + " for all others. \n"
+                            + " " + EServerFolderNameMode.AUTO + ": Defaults to " + EServerFolderNameMode.NAME_ONLY + " for both standard multiplayer and LAN. \n"
                             + " " + EServerFolderNameMode.NAME_ONLY + ": Example: \"Minecraft Server\" \n"
                             + " " + EServerFolderNameMode.NAME_IP + ": Example: \"Minecraft Server IP 192.168.1.40\" \n"
                             + " " + EServerFolderNameMode.NAME_IP_PORT + ": Example: \"Minecraft Server IP 192.168.1.40:25565\""
