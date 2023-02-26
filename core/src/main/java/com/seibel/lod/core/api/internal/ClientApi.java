@@ -142,7 +142,11 @@ public class ClientApi
 	{
 		if (SharedApi.getEnvironment() == EWorldEnvironment.Client_Only)
 		{
-			//TODO: Implement
+			IDhLevel dhLevel = SharedApi.getAbstractDhWorld().getLevel(level);
+			if (dhLevel != null)
+			{
+				dhLevel.updateChunkAsync(chunk);
+			}
 			
 			// TODO: potentially add a list of chunks that were updated during the save
 			ApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelSaveEvent.class, new DhApiLevelSaveEvent.EventParam(level));
