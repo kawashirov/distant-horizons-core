@@ -12,8 +12,6 @@ import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.FileScanUtil;
 import com.seibel.lod.core.file.fullDatafile.RemoteFullDataFileHandler;
-import com.seibel.lod.core.pos.DhBlockPos2D;
-import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhBlockPos;
@@ -31,16 +29,15 @@ import org.apache.logging.log4j.Logger;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class DhClientLevel implements IDhClientLevel
+/** The level used when connected to a server */
+public class DhClientLevel extends AbstractDhClientLevel implements IDhClientLevel
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	
-	public final IClientLevelWrapper clientLevelWrapper;
-	
-	public final AbstractSaveStructure saveStructure;
-	public final ChunkToLodBuilder chunkToLodBuilder;
+	private final IClientLevelWrapper clientLevelWrapper;
 	public final F3Screen.NestedMessage f3Message;
+	
 	
 	public FullDataFileHandler fullDataFileHandler;
 	
@@ -54,34 +51,10 @@ public class DhClientLevel implements IDhClientLevel
 	
 	public DhClientLevel(AbstractSaveStructure saveStructure, IClientLevelWrapper clientLevelWrapper)
 	{
-		this(saveStructure, clientLevelWrapper, null);
+		super(saveStructure, clientLevelWrapper);
 		
-		this.fullDataFileHandler = new RemoteFullDataFileHandler(this, this.saveStructure.getFullDataFolder(this.clientLevelWrapper));
-		FileScanUtil.scanFiles(saveStructure, this.clientLevelWrapper, this.fullDataFileHandler, null);
-	}
-	public DhClientLevel(AbstractSaveStructure saveStructure, IClientLevelWrapper clientLevelWrapper, FullDataFileHandler fullDataFileHandler)
-	{
 		this.clientLevelWrapper = clientLevelWrapper;
-		
-		this.saveStructure = saveStructure;
-		if (this.saveStructure.getFullDataFolder(this.clientLevelWrapper).mkdirs())
-		{
-			LOGGER.warn("unable to create full data folder.");
-		}
-		if (this.saveStructure.getRenderCacheFolder(this.clientLevelWrapper).mkdirs())
-		{
-			LOGGER.warn("unable to create cache folder.");
-		}
-		
-		// TODO not a great way of handling this, but it works for now
-		if (fullDataFileHandler != null)
-		{
-			this.fullDataFileHandler = fullDataFileHandler;
-			FileScanUtil.scanFiles(saveStructure, this.clientLevelWrapper, this.fullDataFileHandler, null);
-		}
-		
-		this.f3Message = new F3Screen.NestedMessage(this::f3Log);
-		this.chunkToLodBuilder = new ChunkToLodBuilder();
+		this.f3Message = new F3Screen.NestedMessage(super::f3Log);
 		
 		
 		LOGGER.info("Started DHLevel for "+this.clientLevelWrapper+" with saves at "+this.saveStructure);
@@ -103,42 +76,6 @@ public class DhClientLevel implements IDhClientLevel
 		
 		this.chunkToLodBuilder.tick();
 	}
-	/** 
-	 * Includes logic used by both {@link DhClientServerLevel} and {@link DhClientServerLevel}
-	 * @return whether the tick method completed
-	 */
-	protected boolean baseClientTick()
-	{
-		ClientRenderState clientRenderState = this.ClientRenderStateRef.get();
-		if (clientRenderState == null)
-		{
-			return false;
-		}
-		
-		if (clientRenderState.quadtree.blockRenderDistance != Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH)
-		{
-			if (!this.ClientRenderStateRef.compareAndSet(clientRenderState, null))
-			{
-				return false; //If we fail, we'll just wait for the next tick
-			}
-			
-			IClientLevelWrapper levelWrapper = clientRenderState.clientLevel;
-			clientRenderState.closeAsync().join(); //TODO: Make it async.
-			clientRenderState = new ClientRenderState(this, levelWrapper);
-			if (!this.ClientRenderStateRef.compareAndSet(null, clientRenderState))
-			{
-				//FIXME: How to handle this?
-				LOGGER.warn("Failed to set render state due to concurrency after changing view distance");
-				clientRenderState.closeAsync();
-				return false;
-			}
-		}
-		
-		clientRenderState.quadtree.tick(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
-		clientRenderState.renderer.bufferHandler.update();
-		
-		return true;
-	}
 	
 	
 	
@@ -150,55 +87,6 @@ public class DhClientLevel implements IDhClientLevel
 	{
 		LOGGER.info("Starting renderer for "+this);
 		this.setAndStartRenderer();
-	}
-	/** @return if the {@link ClientRenderState} was successfully swapped */
-	protected boolean setAndStartRenderer()
-	{
-		ClientRenderState ClientRenderState = new ClientRenderState(this, this.clientLevelWrapper);
-		if (!this.ClientRenderStateRef.compareAndSet(null, ClientRenderState))
-		{
-			LOGGER.warn("Failed to start renderer due to concurrency");
-			ClientRenderState.closeAsync();
-			return false;
-		}
-		else
-		{
-			return true;
-		}
-	}
-	
-	@Override
-	public void render(Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, float partialTicks, IProfilerWrapper profiler)
-	{
-		ClientRenderState ClientRenderState = this.ClientRenderStateRef.get();
-		if (ClientRenderState == null)
-		{
-			LOGGER.error("Tried to call render() on "+this+" when renderer has not been started!");
-			return;
-		}
-		ClientRenderState.renderer.drawLODs(mcModelViewMatrix, mcProjectionMatrix, partialTicks, profiler);
-	}
-	
-	public void stopRenderer()
-	{
-		LOGGER.info("Stopping renderer for "+this);
-		ClientRenderState ClientRenderState = this.ClientRenderStateRef.get();
-		if (ClientRenderState == null)
-		{
-			LOGGER.warn("Tried to stop renderer for "+this+" when it was not started!");
-			return;
-		}
-		
-		// stop the render state
-		while (!this.ClientRenderStateRef.compareAndSet(ClientRenderState, null)) // TODO why is there a while loop here?
-		{
-			ClientRenderState = this.ClientRenderStateRef.get();
-			if (ClientRenderState == null)
-			{
-				return;
-			}
-		}
-		ClientRenderState.closeAsync().join(); //TODO: Make it async.
 	}
 	
 	
@@ -224,43 +112,6 @@ public class DhClientLevel implements IDhClientLevel
 	// data handling //
 	//===============//
 	
-	@Override
-	public void updateChunkAsync(IChunkWrapper chunk)
-	{
-		CompletableFuture<ChunkSizedFullDataSource> future = this.chunkToLodBuilder.tryGenerateData(chunk);
-		if (future != null)
-		{
-			future.thenAccept(this::saveWrites);
-		}
-	}
-	private void saveWrites(ChunkSizedFullDataSource data)
-	{
-		ClientRenderState ClientRenderState = this.ClientRenderStateRef.get();
-		DhLodPos pos = data.getBBoxLodPos().convertToDetailLevel(FullDataSource.SECTION_SIZE_OFFSET);
-		if (ClientRenderState != null)
-		{
-			ClientRenderState.renderSourceFileHandler.write(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);
-		}
-		else
-		{
-			this.fullDataFileHandler.write(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);
-		}
-	}
-	
-	@Override
-	public CompletableFuture<Void> saveAsync()
-	{
-		ClientRenderState ClientRenderState = this.ClientRenderStateRef.get();
-		if (ClientRenderState != null)
-		{
-			return ClientRenderState.renderSourceFileHandler.flushAndSave().thenCombine(this.fullDataFileHandler.flushAndSave(), (voidA, voidB) -> null);
-		}
-		else
-		{
-			return this.fullDataFileHandler.flushAndSave();
-		}
-	}
-	
 	
 	
 	@Override
@@ -269,28 +120,6 @@ public class DhClientLevel implements IDhClientLevel
 		this.baseClose();
 		LOGGER.info("Closed "+DhClientLevel.class.getSimpleName()+" for "+this.clientLevelWrapper);
 	}
-	/** Includes logic used by both {@link DhClientServerLevel} and {@link DhClientServerLevel} */
-	protected void baseClose()
-	{
-		ClientRenderState ClientRenderState = this.ClientRenderStateRef.get();
-		if (ClientRenderState != null)
-		{
-			// TODO does this have to be in a while loop, if so why?
-			while (!this.ClientRenderStateRef.compareAndSet(ClientRenderState, null))
-			{
-				ClientRenderState = this.ClientRenderStateRef.get();
-				if (ClientRenderState == null)
-				{
-					break;
-				}
-			}
-			
-			if (ClientRenderState != null)
-			{
-				ClientRenderState.closeAsync().join(); //TODO: Make this async.
-			}
-		}
-	}
 	
 	
 	
@@ -298,22 +127,6 @@ public class DhClientLevel implements IDhClientLevel
 	//=======================//
 	// misc helper functions //
 	//=======================//
-	
-	/** Returns what should be displayed in Minecraft's F3 debug menu */
-	protected String[] f3Log()
-	{
-		ClientRenderState renderState = this.ClientRenderStateRef.get();
-		if (renderState == null)
-		{
-			return new String[] { LodUtil.formatLog("level @ {}: Inactive", this.clientLevelWrapper.getDimensionType().getDimensionName()) };
-		}
-		else
-		{
-			return new String[] {
-					LodUtil.formatLog("level @ {}: Active", this.clientLevelWrapper.getDimensionType().getDimensionName())
-			};
-		}
-	}
 	
 	@Override
 	public void dumpRamUsage()
@@ -333,7 +146,5 @@ public class DhClientLevel implements IDhClientLevel
 			ClientRenderState.quadtree.clearRenderDataCache();
 		}
 	}
-	
-	
 	
 }

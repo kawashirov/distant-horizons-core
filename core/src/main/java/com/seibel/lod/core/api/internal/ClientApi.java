@@ -96,26 +96,33 @@ public class ClientApi
 	
 	public void onClientOnlyConnected()
 	{
-		if (ENABLE_EVENT_LOGGING)
+		// only continue if the client is connected to a different server
+		if (MC.clientConnectedToDedicatedServer())
 		{
-			LOGGER.info("Client on ClientOnly mode connecting.");
+			if (ENABLE_EVENT_LOGGING)
+			{
+				LOGGER.info("Client on ClientOnly mode connecting.");
+			}
+			
+			SharedApi.setDhWorld(new DhClientWorld());
 		}
-		
-		SharedApi.setDhWorld(new DhClientWorld());
 	}
 	
 	public void onClientOnlyDisconnected()
 	{
-		AbstractDhWorld world = SharedApi.getAbstractDhWorld();
-		if (world != null)
+		if (MC.clientConnectedToDedicatedServer())
 		{
-			if (ENABLE_EVENT_LOGGING)
+			AbstractDhWorld world = SharedApi.getAbstractDhWorld();
+			if (world != null)
 			{
-				LOGGER.info("Client on ClientOnly mode disconnecting.");
+				if (ENABLE_EVENT_LOGGING)
+				{
+					LOGGER.info("Client on ClientOnly mode disconnecting.");
+				}
+				
+				world.close();
+				SharedApi.setDhWorld(null);
 			}
-			
-			world.close();
-			SharedApi.setDhWorld(null);
 		}
 	}
 	

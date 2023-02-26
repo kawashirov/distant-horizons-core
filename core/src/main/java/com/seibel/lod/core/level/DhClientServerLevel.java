@@ -9,11 +9,14 @@ import com.seibel.lod.core.file.structure.AbstractSaveStructure;
 import com.seibel.lod.core.generation.BatchGenerator;
 import com.seibel.lod.core.generation.WorldGenerationQueue;
 import com.seibel.lod.core.file.fullDatafile.GeneratedFullDataFileHandler;
+import com.seibel.lod.core.level.states.ClientRenderState;
+import com.seibel.lod.core.logging.f3.F3Screen;
 import com.seibel.lod.core.util.FileScanUtil;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhBlockPos;
+import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
@@ -26,15 +29,16 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 /** The level used on a singleplayer world */
-public class DhClientServerLevel extends DhClientLevel implements IDhClientLevel, IDhServerLevel
+public class DhClientServerLevel extends AbstractDhClientLevel implements IDhClientLevel, IDhServerLevel
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	
 	public final IServerLevelWrapper serverLevelWrapper;
+	public final F3Screen.NestedMessage f3Message;
 	
 	/**
-	 * This is separate from {@link DhClientLevel#fullDataFileHandler} and included 
+	 * This is separate from {@link AbstractDhClientLevel#fullDataFileHandler}
 	 * since the base {@link FullDataFileHandler} doesn't support world generation
 	 */
 	public final GeneratedFullDataFileHandler generatedFullDataFileHandler;
@@ -46,12 +50,14 @@ public class DhClientServerLevel extends DhClientLevel implements IDhClientLevel
 	
 	public DhClientServerLevel(AbstractSaveStructure saveStructure, IServerLevelWrapper serverLevelWrapper)
 	{
-		super(saveStructure, serverLevelWrapper.tryGetClientLevelWrapper(), null);
+		super(saveStructure, serverLevelWrapper);
 		
 		this.serverLevelWrapper = serverLevelWrapper;
+		this.f3Message = new F3Screen.NestedMessage(super::f3Log);
 		
 		this.generatedFullDataFileHandler = new GeneratedFullDataFileHandler(this, saveStructure.getFullDataFolder(serverLevelWrapper));
 		this.fullDataFileHandler = this.generatedFullDataFileHandler;
+		
 		FileScanUtil.scanFiles(saveStructure, this.serverLevelWrapper, this.fullDataFileHandler, null);
 		
 		this.worldGeneratorEnabledConfig = new AppliedConfigState<>(Config.Client.WorldGenerator.enableDistantGeneration);
@@ -174,7 +180,7 @@ public class DhClientServerLevel extends DhClientLevel implements IDhClientLevel
 	// level handling //
 	//================//
 	
-	@Override //FIXME this can fail if the clientLevel hasn't been created yet
+	@Override //FIXME this can fail if the clientLevel isn't available yet, maybe in that case we could return -1 and handle it upstream?
 	public int computeBaseColor(DhBlockPos pos, IBiomeWrapper biome, IBlockStateWrapper block)
 	{
 		IClientLevelWrapper clientLevel = this.getClientLevelWrapper();
@@ -188,6 +194,8 @@ public class DhClientServerLevel extends DhClientLevel implements IDhClientLevel
 		}
 	}
 	
+	@Override
+	public IClientLevelWrapper getClientLevelWrapper() { return this.serverLevelWrapper.tryGetClientLevelWrapper(); }
 	@Override
 	public IServerLevelWrapper getServerLevelWrapper() { return this.serverLevelWrapper; }
 	@Override

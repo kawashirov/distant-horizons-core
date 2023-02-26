@@ -59,6 +59,7 @@ public interface IMinecraftClientWrapper extends IBindable
 	float getShade(ELodDirection lodDirection);
 	
 	boolean hasSinglePlayerServer();
+	boolean clientConnectedToDedicatedServer();
 	
 	String getCurrentServerName();
 	String getCurrentServerIp();

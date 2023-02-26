@@ -22,10 +22,8 @@ public class SharedApi
 	public static void setDhWorld(AbstractDhWorld newWorld) { currentWorld = newWorld; }
 	
 	public static AbstractDhWorld getAbstractDhWorld() { return currentWorld; }
-	
 	/** returns null if the {@link SharedApi#currentWorld} isn't a {@link DhClientServerWorld} */
 	public static DhClientServerWorld getDhClientServerWorld() { return (currentWorld != null && DhClientServerWorld.class.isInstance(currentWorld)) ? (DhClientServerWorld) currentWorld : null; }
-	
 	/** returns null if the {@link SharedApi#currentWorld} isn't a {@link DhClientWorld} or {@link DhClientServerWorld} */
 	public static IDhClientWorld getIDhClientWorld() { return (currentWorld != null && IDhClientWorld.class.isInstance(currentWorld)) ? (IDhClientWorld) currentWorld : null; }
 	/** returns null if the {@link SharedApi#currentWorld} isn't a {@link DhServerWorld} or {@link DhClientServerWorld} */
