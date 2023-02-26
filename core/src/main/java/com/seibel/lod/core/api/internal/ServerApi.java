@@ -151,18 +151,27 @@ public class ServerApi
 
 	public void serverChunkLoadEvent(IChunkWrapper chunk, ILevelWrapper level)
 	{
-		IDhLevel dhLevel = SharedApi.getAbstractDhWorld().getLevel(level);
-		if (dhLevel != null)
+		// the world should always be non-null, this != null is just in case the world was removed accidentally 
+		AbstractDhWorld dhWorld = SharedApi.getAbstractDhWorld();
+		if (dhWorld != null)
 		{
-			dhLevel.updateChunkAsync(chunk);
+			IDhLevel dhLevel = dhWorld.getLevel(level);
+			if (dhLevel != null)
+			{
+				dhLevel.updateChunkAsync(chunk);
+			}
 		}
 	}
 	public void serverChunkSaveEvent(IChunkWrapper chunk, ILevelWrapper level)
 	{
-		IDhLevel dhLevel = SharedApi.getAbstractDhWorld().getLevel(level);
-		if (dhLevel != null)
+		AbstractDhWorld dhWorld = SharedApi.getAbstractDhWorld();
+		if (dhWorld != null)
 		{
-			dhLevel.updateChunkAsync(chunk);
+			IDhLevel dhLevel = SharedApi.getAbstractDhWorld().getLevel(level);
+			if (dhLevel != null)
+			{
+				dhLevel.updateChunkAsync(chunk);
+			}
 		}
 	}
 	
