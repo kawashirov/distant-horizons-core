@@ -4,6 +4,7 @@ import com.seibel.lod.core.level.DhClientLevel;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.file.structure.ClientOnlySaveStructure;
 import com.seibel.lod.core.config.Config;
+import com.seibel.lod.core.level.states.ClientRenderState;
 import com.seibel.lod.core.util.DetailDistanceUtil;
 import com.seibel.lod.core.util.objects.EventLoop;
 import com.seibel.lod.core.util.LodUtil;
@@ -96,10 +97,16 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 		while (iterator.hasNext())
 		{
 			DhClientLevel level = iterator.next();
-			if (level.ClientRenderStateRef.get().quadtree.blockRenderDistance != newBlockRenderDistance)
+			ClientRenderState clientRenderState = level.ClientRenderStateRef.get();
+			
+			if (clientRenderState != null && clientRenderState.quadtree != null)
 			{
-				level.close();
-				iterator.remove();
+				if (clientRenderState.quadtree.blockRenderDistance != newBlockRenderDistance)
+				{
+					// TODO is this the best way to handle changing the render distance?
+					level.close();
+					iterator.remove();
+				}
 			}
 		}
 		
@@ -119,10 +126,10 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
     public void close()
 	{
 		this.saveAndFlush().join();
-        for (DhClientLevel level : this.levels.values())
+        for (DhClientLevel dhClientLevel : this.levels.values())
 		{
-            LOGGER.info("Unloading level " + level.clientLevelWrapper.getDimensionType().getDimensionName());
-            level.close();
+            LOGGER.info("Unloading level " + dhClientLevel.getLevelWrapper().getDimensionType().getDimensionName());
+            dhClientLevel.close();
         }
 		
 		this.levels.clear();
