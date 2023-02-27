@@ -1,3 +1,7 @@
+dependencies {
+    implementation project(":api")
+}
+
 shadowJar {
     configurations = [project.configurations.shadowMe]
 
