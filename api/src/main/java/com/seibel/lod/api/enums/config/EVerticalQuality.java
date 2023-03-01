@@ -28,7 +28,7 @@ package com.seibel.lod.api.enums.config;
  */
 public enum EVerticalQuality
 {
-	HEIGHT_MAP(new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }),
+//	HEIGHT_MAP(new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }), // commented out for now since it causes issues with transparency, may be re-added if the transparency issue is fixed
 	LOW(new int[] { 4, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1 }),
 	MEDIUM(new int[] { 6, 4, 3, 2, 2, 1, 1, 1, 1, 1, 1 }),
 	HIGH(new int[] { 8, 6, 4, 2, 2, 2, 2, 1, 1, 1, 1 }),

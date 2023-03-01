@@ -70,6 +70,7 @@ public class LodRenderer
 
 	public static final boolean ENABLE_IBO = true;
 
+	// TODO make these private, the LOD Builder can get these variables from the config itself
 	public static boolean transparencyEnabled = true;
 	public static boolean fakeOceanFloor = true;
 

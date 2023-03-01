@@ -40,13 +40,8 @@ public enum ETransparency
 	// when removing items up the API major version
 	
 	
-	/**  */
 	DISABLED(false, false),
-
-	/**  */
 	FAKE(true, true),
-	
-	/**  */
 	COMPLETE(true, false);
 
 	public final boolean tranparencyEnabled;
