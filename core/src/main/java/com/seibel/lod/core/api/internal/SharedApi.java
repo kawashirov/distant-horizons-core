@@ -4,10 +4,10 @@ import com.seibel.lod.core.Initializer;
 import com.seibel.lod.core.world.*;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
 
+/** Contains code and variables used by both {@link ClientApi} and {@link ServerApi} */
 public class SharedApi
 {
-    public static IMinecraftSharedWrapper MC;
-	
+	public static IMinecraftSharedWrapper MC; // TODO remove if possible, it is only used in one odd spot
     private static AbstractDhWorld currentWorld;
 	
 	

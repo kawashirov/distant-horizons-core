@@ -49,7 +49,7 @@ public class DhApiWorldProxy implements IDhApiWorldProxy
 		}
 		
 		
-		if (!SharedApi.MC.isDedicatedServer())
+		if (!SharedApi.MC.isDedicatedServer()) // TODO why isn't this thrown a null pointer? when is SharedApi.MC being set?
 		{
 			return MC.getWrappedClientWorld();
 		}

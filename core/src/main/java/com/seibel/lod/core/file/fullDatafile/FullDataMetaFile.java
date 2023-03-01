@@ -195,19 +195,19 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 						return data;
 					})
 					.thenApply((data) -> this.handler.onDataFileLoaded(data, this.metaData, this::saveChanges, this::applyWriteQueue))
-					.whenComplete((v, e) ->
+					.whenComplete((fullDataSource, exception) ->
 					{
-						if (e != null)
+						if (exception != null)
 						{
-							LOGGER.error("Uncaught error on creation {}: ", this.file, e);
+							LOGGER.error("Uncaught error on creation "+this.file+": ", exception);
 							future.complete(null);
 							this.data.set(null);
 						}
 						else
 						{
-							future.complete(v);
-							new DataObjTracker(v);
-							this.data.set(new SoftReference<>(v));
+							future.complete(fullDataSource);
+							new DataObjTracker(fullDataSource);
+							this.data.set(new SoftReference<>(fullDataSource));
 						}
 					});
 		}
@@ -343,7 +343,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 		{
 			if (file.exists() && !file.delete())
 			{
-					LOGGER.warn("Failed to delete data file at {}", file);
+				LOGGER.warn("Failed to delete data file at {}", file);
 			}
 			doesFileExist = false;
 		}

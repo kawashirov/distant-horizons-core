@@ -114,17 +114,14 @@ public class DhClientServerWorld extends AbstractDhWorld implements IDhClientWor
         //LOGGER.info("Client world tick");
 		this.eventLoop.tick();
     }
-
+	
     public void serverTick() { this.dhLevels.forEach(DhClientServerLevel::serverTick); }
-
+	
     public void doWorldGen() { this.dhLevels.forEach(DhClientServerLevel::doWorldGen); }
-
+	
     @Override
-    public CompletableFuture<Void> saveAndFlush() 
-	{ 
-		return CompletableFuture.allOf(this.dhLevels.stream().map(DhClientServerLevel::saveAsync).toArray(CompletableFuture[]::new)); 
-	}
-
+    public CompletableFuture<Void> saveAndFlush() { return CompletableFuture.allOf(this.dhLevels.stream().map(DhClientServerLevel::saveAsync).toArray(CompletableFuture[]::new)); }
+	
     @Override
     public void close()
 	{
@@ -132,7 +129,7 @@ public class DhClientServerWorld extends AbstractDhWorld implements IDhClientWor
 		
 		for (DhClientServerLevel level : this.dhLevels)
 		{
-			LOGGER.info("Unloading level " + level.serverLevelWrapper.getDimensionType().getDimensionName());
+			LOGGER.info("Unloading level "+level.serverLevelWrapper.getDimensionType().getDimensionName());
 			level.close();
 		}
 		
