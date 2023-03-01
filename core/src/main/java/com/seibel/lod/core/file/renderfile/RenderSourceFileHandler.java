@@ -9,7 +9,6 @@ import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
-import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.util.FileUtil;
 import com.seibel.lod.core.util.objects.UncheckedInterruptedException;
 import com.seibel.lod.core.config.Config;
@@ -289,14 +288,20 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 			});
 		
 		//LOGGER.info("Recreating cache for {}", data.getSectionPos());
-		DataRenderTransformer.asyncTransformDataSource(fullDataSourceFuture, this.level)
+		DataRenderTransformer.transformDataSourceAsync(fullDataSourceFuture, this.level)
 				.thenAccept((newRenderSource) -> this.write(renderSourceReference.get(), file, newRenderSource))
 				.exceptionally((ex) -> 
 				{
-					if (!UncheckedInterruptedException.isThrowableInterruption(ex))
+					if (ex instanceof InterruptedException)
+					{
+						// expected if the transformer is shut down, the exception can be ignored
+//						LOGGER.warn("RenderSource file transforming interrupted.");
+					}
+					else if (!UncheckedInterruptedException.isThrowableInterruption(ex))
 					{
 						LOGGER.error("Exception when updating render file using data source: ", ex);
 					}
+					
 					return null;
 				}
 				).thenRun(() -> this.cacheUpdateLockBySectionPos.remove(file.pos));

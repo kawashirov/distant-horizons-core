@@ -213,6 +213,11 @@ public abstract class AbstractDhClientLevel implements IDhClientLevel
 	/** Includes logic used by both {@link DhClientServerLevel} and {@link DhClientServerLevel} */
 	protected void baseClose()
 	{
+		// shut down to prevent reading/writing files after the client has left the world
+		fullDataFileHandler.close();
+		
+		
+		// shutdown the renderer
 		ClientRenderState ClientRenderState = this.ClientRenderStateRef.get();
 		if (ClientRenderState != null)
 		{

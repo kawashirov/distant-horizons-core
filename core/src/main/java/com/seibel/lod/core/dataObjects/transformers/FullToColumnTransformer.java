@@ -20,34 +20,73 @@ import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
 
-public class FullToColumnTransformer {
-
+public class FullToColumnTransformer
+{
     private static final IBlockStateWrapper AIR = SingletonInjector.INSTANCE.get(IWrapperFactory.class).getAirBlockStateWrapper();
-
+	
+	
+	
+	/**
+	 * Called in loops that may run for an extended period of time. <br>
+	 * This is necessary to allow canceling these transformers since running
+	 * them after the client has left a given world will throw exceptions here.
+	 */
+	private static void throwIfThreadInterrupted() throws InterruptedException
+	{
+		if (Thread.interrupted())
+		{
+			throw new InterruptedException(FullToColumnTransformer.class.getSimpleName()+" task interrupted.");
+		}
+	}
+	
+	
+	//==============//
+	// transformers //
+	//==============//
+	
     /**
      * Creates a LodNode for a chunk in the given world.
      * @throws IllegalArgumentException thrown if either the chunk or world is null.
+	 * @throws InterruptedException Can be caused by interrupting the thread upstream.
+	 * 								Generally thrown if the method is running after the client leaves the current world.
      */
-    public static ColumnRenderSource transformFullDataToColumnData(IDhClientLevel level, FullDataSource data) {
+    public static ColumnRenderSource transformFullDataToColumnData(IDhClientLevel level, FullDataSource data) throws InterruptedException 
+	{
         final DhSectionPos pos = data.getSectionPos();
         final byte dataDetail = data.getDataDetail();
         final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(data.getDataDetail());
         final ColumnRenderSource columnSource = new ColumnRenderSource(pos, vertSize, level.getMinY());
-        if (data.isEmpty()) return columnSource;
+        if (data.isEmpty())
+		{
+			return columnSource;
+		}
+		
         columnSource.markNotEmpty();
 
-        if (dataDetail == columnSource.getDataDetail()) {
+        if (dataDetail == columnSource.getDataDetail())
+		{
             int baseX = pos.getCorner().getCornerBlockPos().x;
             int baseZ = pos.getCorner().getCornerBlockPos().z;
-            for (int x = 0; x < pos.getWidth(dataDetail).numberOfLodSectionsWide; x++) {
-                for (int z = 0; z < pos.getWidth(dataDetail).numberOfLodSectionsWide; z++) {
+			
+            for (int x = 0; x < pos.getWidth(dataDetail).numberOfLodSectionsWide; x++)
+			{
+                for (int z = 0; z < pos.getWidth(dataDetail).numberOfLodSectionsWide; z++)
+				{
+					throwIfThreadInterrupted();
+					
                     ColumnArrayView columnArrayView = columnSource.getVerticalDataPointView(x, z);
                     SingleFullArrayView fullArrayView = data.get(x, z);
                     convertColumnData(level, baseX + x, baseZ + z, columnArrayView, fullArrayView, 1);
-                    if (fullArrayView.doesItExist()) LodUtil.assertTrue(columnSource.doesDataPointExist(x, z));
+                    
+					if (fullArrayView.doesItExist())
+					{
+						LodUtil.assertTrue(columnSource.doesDataPointExist(x, z));
+					}
                 }
             }
+			
             columnSource.fillDebugFlag(0, 0, ColumnRenderSource.SECTION_SIZE, ColumnRenderSource.SECTION_SIZE, ColumnRenderSource.DebugSourceFlag.FULL);
+			
 //        } else if (dataDetail == 0 && columnSource.getDataDetail() > dataDetail) {
 //            byte deltaDetail = (byte) (columnSource.getDataDetail() - dataDetail);
 //            int perColumnWidth = 1 << deltaDetail;
@@ -61,136 +100,209 @@ public class FullToColumnTransformer {
 //                    convertColumnData(level, columnArrayView, fullArrayView);
 //                }
 //            }
-        } else {
-            throw new UnsupportedOperationException("To be implemented");
-            //FIXME: Implement different size creation of renderData
-        }
-        return columnSource;
+		}
+		else
+		{
+			throw new UnsupportedOperationException("To be implemented");
+			//FIXME: Implement different size creation of renderData
+		}
+		return columnSource;
     }
-
-    public static ColumnRenderSource transformIncompleteDataToColumnData(IDhClientLevel level, IIncompleteFullDataSource data)
+	
+	/**
+	 * @throws InterruptedException Can be caused by interrupting the thread upstream.
+	 * 								Generally thrown if the method is running after the client leaves the current world.
+	 */
+    public static ColumnRenderSource transformIncompleteDataToColumnData(IDhClientLevel level, IIncompleteFullDataSource data) throws InterruptedException
 	{
         final DhSectionPos pos = data.getSectionPos();
         final byte dataDetail = data.getDataDetail();
         final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(data.getDataDetail());
         final ColumnRenderSource columnSource = new ColumnRenderSource(pos, vertSize, level.getMinY());
-        if (data.isEmpty()) return columnSource;
+        if (data.isEmpty())
+		{
+			return columnSource;
+		}
+		
         columnSource.markNotEmpty();
-
-        if (dataDetail == columnSource.getDataDetail()) {
-            int baseX = pos.getCorner().getCornerBlockPos().x;
-            int baseZ = pos.getCorner().getCornerBlockPos().z;
-            for (int x = 0; x < pos.getWidth(dataDetail).numberOfLodSectionsWide; x++) {
-                for (int z = 0; z < pos.getWidth(dataDetail).numberOfLodSectionsWide; z++) {
-                    SingleFullArrayView fullArrayView = data.tryGet(x, z);
-                    if (fullArrayView == null) continue;
-                    ColumnArrayView columnArrayView = columnSource.getVerticalDataPointView(x, z);
-                    convertColumnData(level, baseX + x, baseZ + z, columnArrayView, fullArrayView, 1);
-                    columnSource.fillDebugFlag(x, z, 1, 1, ColumnRenderSource.DebugSourceFlag.SPARSE);
-                    if (fullArrayView.doesItExist()) LodUtil.assertTrue(columnSource.doesDataPointExist(x, z));
-                }
-            }
-        } else {
-            throw new UnsupportedOperationException("To be implemented");
-            //FIXME: Implement different size creation of renderData
-        }
+		
+		if (dataDetail == columnSource.getDataDetail())
+		{
+			int baseX = pos.getCorner().getCornerBlockPos().x;
+			int baseZ = pos.getCorner().getCornerBlockPos().z;
+			for (int x = 0; x < pos.getWidth(dataDetail).numberOfLodSectionsWide; x++)
+			{
+				for (int z = 0; z < pos.getWidth(dataDetail).numberOfLodSectionsWide; z++)
+				{
+					throwIfThreadInterrupted();
+					
+					SingleFullArrayView fullArrayView = data.tryGet(x, z);
+					if (fullArrayView == null)
+					{
+						continue;
+					}
+					
+					ColumnArrayView columnArrayView = columnSource.getVerticalDataPointView(x, z);
+					convertColumnData(level, baseX + x, baseZ + z, columnArrayView, fullArrayView, 1);
+					columnSource.fillDebugFlag(x, z, 1, 1, ColumnRenderSource.DebugSourceFlag.SPARSE);
+					if (fullArrayView.doesItExist())
+						LodUtil.assertTrue(columnSource.doesDataPointExist(x, z));
+				}
+			}
+		}
+		else
+		{
+			throw new UnsupportedOperationException("To be implemented");
+			//FIXME: Implement different size creation of renderData
+		}
         return columnSource;
     }
+	
+	/**
+	 * @throws InterruptedException Can be caused by interrupting the thread upstream.
+	 * 								Generally thrown if the method is running after the client leaves the current world.
+	 */
+	public static void writeFullDataChunkToColumnData(ColumnRenderSource render, IDhClientLevel level, ChunkSizedFullDataSource data) throws InterruptedException
+	{
+		if (data.dataDetail != 0)
+		{
+			throw new UnsupportedOperationException("To be implemented");
+		}
+		
+		final DhSectionPos pos = render.getSectionPos();
+		final int renderOffsetX = (data.x * 16) - pos.getCorner().getCornerBlockPos().x;
+		final int renderOffsetZ = (data.z * 16) - pos.getCorner().getCornerBlockPos().z;
+		final int blockX = pos.getCorner().getCornerBlockPos().x;
+		final int blockZ = pos.getCorner().getCornerBlockPos().z;
+		final int perRenderWidth = 1 << render.getDataDetail();
+		final int perDataWidth = 1 << data.dataDetail;
+		render.markNotEmpty();
+		if (data.dataDetail == render.getDataDetail())
+		{
+			if (renderOffsetX < 0 || renderOffsetX + 16 > render.getDataSize() || renderOffsetZ < 0 || renderOffsetZ + 16 > render.getDataSize())
+			{
+				throw new IllegalArgumentException("Data offset is out of bounds");
+			}
+			
+			
+			for (int x = 0; x < 16; x++)
+			{
+				for (int z = 0; z < 16; z++)
+				{
+					throwIfThreadInterrupted();
+					
+					ColumnArrayView columnArrayView = render.getVerticalDataPointView(renderOffsetX + x, renderOffsetZ + z);
+					SingleFullArrayView fullArrayView = data.get(x, z);
+					convertColumnData(level, blockX + perRenderWidth * (renderOffsetX + x),
+							blockZ + perRenderWidth * (renderOffsetZ + z),
+							columnArrayView, fullArrayView, 2);
+					
+					if (fullArrayView.doesItExist())
+					{
+						LodUtil.assertTrue(render.doesDataPointExist(renderOffsetX + x, renderOffsetZ + z));
+					}
+				}
+			}
+			render.fillDebugFlag(renderOffsetX, renderOffsetZ, 16, 16, ColumnRenderSource.DebugSourceFlag.DIRECT);
+		}
+		else
+		{
+			final int dataPerRender = 1 << (render.getDataDetail() - data.dataDetail);
+			final int dataSize = 16 / dataPerRender;
+			final int vertSize = render.getVerticalSize();
+			long[] tempRender = new long[dataPerRender * dataPerRender * vertSize];
+			if (renderOffsetX < 0 || renderOffsetX + dataSize > render.getDataSize() || renderOffsetZ < 0 || renderOffsetZ + dataSize > render.getDataSize())
+			{
+				throw new IllegalArgumentException("Data offset is out of bounds");
+			}
+			
+			for (int x = 0; x < dataSize; x++)
+			{
+				for (int z = 0; z < dataSize; z++)
+				{
+					
+					ColumnQuadView tempQuadView = new ColumnQuadView(tempRender, dataPerRender, vertSize, 0, 0, dataPerRender, dataPerRender);
+					for (int ox = 0; ox < dataPerRender; ox++)
+					{
+						for (int oz = 0; oz < dataPerRender; oz++)
+						{
+							throwIfThreadInterrupted();
+							
+							
+							ColumnArrayView columnArrayView = tempQuadView.get(ox, oz);
+							SingleFullArrayView fullArrayView = data.get(x * dataPerRender + ox, z * dataPerRender + oz);
+							convertColumnData(level, blockX + perRenderWidth * (renderOffsetX + x) + perDataWidth * ox,
+									blockZ + perRenderWidth * (renderOffsetZ + z) + perDataWidth * oz,
+									columnArrayView, fullArrayView, 2);
+						}
+					}
+					ColumnArrayView downSampledArrayView = render.getVerticalDataPointView(renderOffsetX + x, renderOffsetZ + z);
+					downSampledArrayView.mergeMultiDataFrom(tempQuadView);
+				}
+			}
+			render.fillDebugFlag(renderOffsetX, renderOffsetZ, dataSize, dataSize, ColumnRenderSource.DebugSourceFlag.DIRECT);
+		}
+	}
 
-    public static void writeFullDataChunkToColumnData(ColumnRenderSource render, IDhClientLevel level, ChunkSizedFullDataSource data) {
-        if (data.dataDetail != 0)
-            throw new UnsupportedOperationException("To be implemented");
+    private static void convertColumnData(IDhClientLevel level, int blockX, int blockZ, ColumnArrayView columnArrayView, SingleFullArrayView fullArrayView, int genMode)
+	{
+        if (!fullArrayView.doesItExist())
+		{
+			return;
+		}
+        
+		int dataTotalLength = fullArrayView.getSingleLength();
+        if (dataTotalLength == 0)
+		{
+			return;
+		}
 
-        final DhSectionPos pos = render.getSectionPos();
-        final int renderOffsetX = (data.x*16) - pos.getCorner().getCornerBlockPos().x;
-        final int renderOffsetZ = (data.z*16) - pos.getCorner().getCornerBlockPos().z;
-        final int blockX = pos.getCorner().getCornerBlockPos().x;
-        final int blockZ = pos.getCorner().getCornerBlockPos().z;
-        final int perRenderWidth = 1 << render.getDataDetail();
-        final int perDataWidth = 1 << data.dataDetail;
-        render.markNotEmpty();
-        if (data.dataDetail == render.getDataDetail()) {
-            if (renderOffsetX < 0 || renderOffsetX+16 > render.getDataSize() || renderOffsetZ < 0 || renderOffsetZ+16 > render.getDataSize())
-                throw new IllegalArgumentException("Data offset is out of bounds");
-            for (int x = 0; x < 16; x++) {
-                for (int z = 0; z < 16; z++) {
-                    ColumnArrayView columnArrayView = render.getVerticalDataPointView(renderOffsetX + x, renderOffsetZ + z);
-                    SingleFullArrayView fullArrayView = data.get(x, z);
-                    convertColumnData(level, blockX + perRenderWidth * (renderOffsetX+x),
-                            blockZ + perRenderWidth * (renderOffsetZ+z),
-                            columnArrayView, fullArrayView, 2);
-                    if (fullArrayView.doesItExist()) LodUtil.assertTrue(render.doesDataPointExist(renderOffsetX + x, renderOffsetZ + z));
-                }
-            }
-            render.fillDebugFlag(renderOffsetX, renderOffsetZ, 16, 16, ColumnRenderSource.DebugSourceFlag.DIRECT);
-        } else {
-            final int dataPerRender = 1 << (render.getDataDetail() - data.dataDetail);
-            final int dataSize = 16 / dataPerRender;
-            final int vertSize = render.getVerticalSize();
-            long[] tempRender = new long[dataPerRender * dataPerRender * vertSize];
-            if (renderOffsetX < 0 || renderOffsetX+dataSize > render.getDataSize() || renderOffsetZ < 0 || renderOffsetZ+dataSize > render.getDataSize())
-                throw new IllegalArgumentException("Data offset is out of bounds");
-            for (int x = 0; x < dataSize; x++) {
-                for (int z = 0; z < dataSize; z++) {
-
-                    ColumnQuadView tempQuadView = new ColumnQuadView(tempRender, dataPerRender, vertSize, 0, 0, dataPerRender, dataPerRender);
-                    for (int ox = 0; ox < dataPerRender; ox++) {
-                        for (int oz = 0; oz < dataPerRender; oz++) {
-                            ColumnArrayView columnArrayView = tempQuadView.get(ox, oz);
-                            SingleFullArrayView fullArrayView = data.get(x*dataPerRender+ox, z*dataPerRender+oz);
-                            convertColumnData(level, blockX + perRenderWidth * (renderOffsetX+x) + perDataWidth * ox,
-                                    blockZ + perRenderWidth * (renderOffsetZ+z) + perDataWidth * oz,
-                                    columnArrayView, fullArrayView, 2);
-                        }
-                    }
-                    ColumnArrayView downSampledArrayView = render.getVerticalDataPointView(renderOffsetX + x, renderOffsetZ + z);
-                    downSampledArrayView.mergeMultiDataFrom(tempQuadView);
-                }
-            }
-            render.fillDebugFlag(renderOffsetX, renderOffsetZ, dataSize, dataSize, ColumnRenderSource.DebugSourceFlag.DIRECT);
-        }
-    }
-
-    private static void convertColumnData(IDhClientLevel level, int blockX, int blockZ, ColumnArrayView columnArrayView, SingleFullArrayView fullArrayView, int genMode) {
-        if (!fullArrayView.doesItExist()) return;
-        int dataTotalLength = fullArrayView.getSingleLength();
-        if (dataTotalLength == 0) return;
-
-        if (dataTotalLength > columnArrayView.verticalSize()) {
+        if (dataTotalLength > columnArrayView.verticalSize())
+		{
             ColumnArrayView totalColumnData = new ColumnArrayView(new long[dataTotalLength], dataTotalLength, 0, dataTotalLength);
             iterateAndConvert(level, blockX, blockZ, genMode, totalColumnData, fullArrayView);
             columnArrayView.changeVerticalSizeFrom(totalColumnData);
-        } else {
-            iterateAndConvert(level, blockX, blockZ, genMode, columnArrayView, fullArrayView); //Directly use the arrayView since it fits.
-        }
+		}
+		else
+		{
+			iterateAndConvert(level, blockX, blockZ, genMode, columnArrayView, fullArrayView); //Directly use the arrayView since it fits.
+		}
     }
-
-    private static void iterateAndConvert(IDhClientLevel level, int blockX, int blockZ, int genMode, ColumnArrayView column, SingleFullArrayView data) {
-        FullDataPointIdMap mapping = data.getMapping();
-        boolean isVoid = true;
-        int offset = 0;
-        for (int i = 0; i < data.getSingleLength(); i++) {
-            long fullData = data.getSingle(i);
-            int bottomY = FullDataPointUtil.getBottomY(fullData);
-            int blockHeight = FullDataPointUtil.getHeight(fullData);
-            int id = FullDataPointUtil.getId(fullData);
-            int light = FullDataPointUtil.getLight(fullData);
-            IBiomeWrapper biome = mapping.getBiomeWrapper(id);
-            IBlockStateWrapper block = mapping.getBlockStateWrapper(id);
-            if (block.equals(AIR)) continue;
-            isVoid = false;
-            int color = level.computeBaseColor(new DhBlockPos(blockX, bottomY + level.getMinY(), blockZ), biome, block);
-            long columnData = RenderDataPointUtil.createDataPoint(bottomY + blockHeight, bottomY, color, light, genMode);
-            column.set(offset, columnData);
-            offset++;
-        }
-        if (isVoid) {
-            column.set(0, RenderDataPointUtil.createVoidDataPoint((byte) genMode));
-        }
-    }
-
-//
-//
+	
+	private static void iterateAndConvert(IDhClientLevel level, int blockX, int blockZ, int genMode, ColumnArrayView column, SingleFullArrayView data)
+	{
+		FullDataPointIdMap mapping = data.getMapping();
+		boolean isVoid = true;
+		int offset = 0;
+		for (int i = 0; i < data.getSingleLength(); i++)
+		{
+			long fullData = data.getSingle(i);
+			int bottomY = FullDataPointUtil.getBottomY(fullData);
+			int blockHeight = FullDataPointUtil.getHeight(fullData);
+			int id = FullDataPointUtil.getId(fullData);
+			int light = FullDataPointUtil.getLight(fullData);
+			IBiomeWrapper biome = mapping.getBiomeWrapper(id);
+			IBlockStateWrapper block = mapping.getBlockStateWrapper(id);
+			if (block.equals(AIR))
+			{
+				continue;
+			}
+			
+			isVoid = false;
+			int color = level.computeBaseColor(new DhBlockPos(blockX, bottomY + level.getMinY(), blockZ), biome, block);
+			long columnData = RenderDataPointUtil.createDataPoint(bottomY + blockHeight, bottomY, color, light, genMode);
+			column.set(offset, columnData);
+			offset++;
+		}
+		
+		if (isVoid)
+		{
+			column.set(0, RenderDataPointUtil.createVoidDataPoint((byte) genMode));
+		}
+	}
+	
+	
+	
 //    /** creates a vertical DataPoint */
 //    private void writeVerticalData(long[] data, int dataOffset, int maxVerticalData,
 //                                   IChunkWrapper chunk, LodBuilderConfig config, int chunkSubPosX, int chunkSubPosZ)

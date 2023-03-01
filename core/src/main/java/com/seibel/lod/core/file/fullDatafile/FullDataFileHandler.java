@@ -452,7 +452,9 @@ public class FullDataFileHandler implements IFullDataSourceProvider
     public void close()
 	{
         FullDataMetaFile.debugCheck();
-         //TODO
+		
+		// stop any existing file tasks
+		fileReaderThread.shutdownNow();
     }
 	
 }

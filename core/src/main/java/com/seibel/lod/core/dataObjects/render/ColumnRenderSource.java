@@ -290,7 +290,18 @@ public class ColumnRenderSource
 		}
 	}
 	
-	public void fastWrite(ChunkSizedFullDataSource chunkData, IDhClientLevel level) { FullToColumnTransformer.writeFullDataChunkToColumnData(this, level, chunkData); }
+	public void fastWrite(ChunkSizedFullDataSource chunkData, IDhClientLevel level) 
+	{
+		try
+		{
+			FullToColumnTransformer.writeFullDataChunkToColumnData(this, level, chunkData);
+		}
+		catch (InterruptedException e)
+		{
+			// expected if the transformer is shut down, the exception can be ignored
+//			LOGGER.warn(ColumnRenderSource.class.getSimpleName()+" fast write interrupted.");
+		}
+	}
 	
 	
 	

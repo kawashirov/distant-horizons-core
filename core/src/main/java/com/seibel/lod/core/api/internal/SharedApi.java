@@ -1,6 +1,7 @@
 package com.seibel.lod.core.api.internal;
 
 import com.seibel.lod.core.Initializer;
+import com.seibel.lod.core.dataObjects.transformers.DataRenderTransformer;
 import com.seibel.lod.core.world.*;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
 
@@ -19,7 +20,21 @@ public class SharedApi
 	public static EWorldEnvironment getEnvironment() { return (currentWorld == null) ? null : currentWorld.environment; }
 	
 	
-	public static void setDhWorld(AbstractDhWorld newWorld) { currentWorld = newWorld; }
+	public static void setDhWorld(AbstractDhWorld newWorld) 
+	{
+		currentWorld = newWorld; 
+		
+		// starting and stopping the DataRenderTransformer is necessary to prevent attempting to
+		// access the MC level at inappropriate times, which can cause exceptions
+		if (currentWorld == null)
+		{
+			DataRenderTransformer.shutdownExecutorService();
+		}
+		else
+		{
+			DataRenderTransformer.setupExecutorService();
+		}
+	}
 	
 	public static AbstractDhWorld getAbstractDhWorld() { return currentWorld; }
 	/** returns null if the {@link SharedApi#currentWorld} isn't a {@link DhClientServerWorld} */

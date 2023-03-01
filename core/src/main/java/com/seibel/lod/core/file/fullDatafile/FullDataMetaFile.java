@@ -2,6 +2,7 @@ package com.seibel.lod.core.file.fullDatafile;
 
 import java.io.*;
 import java.lang.ref.*;
+import java.nio.channels.ClosedByInterruptException;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -362,6 +363,11 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 				metaData.loaderVersion = fullDataSource.getDataVersion();
 				super.writeData((outputStream) -> fullDataSource.saveData(level, this, outputStream));
 				doesFileExist = true;
+			}
+			catch (ClosedByInterruptException e) // thrown by buffers that are interrupted
+			{
+				// expected if the file handler is shut down, the exception can be ignored
+//				LOGGER.warn("FullData file writing interrupted.", e);
 			}
 			catch (IOException e)
 			{

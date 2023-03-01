@@ -57,9 +57,12 @@ public class ColumnRenderLoader
 		}
     }
 	
-    public ColumnRenderSource createRenderSource(IFullDataSource dataSource, IDhClientLevel level)
+	/** 
+	 * @throws InterruptedException see {@link FullToColumnTransformer#transformFullDataToColumnData(IDhClientLevel, FullDataSource) FullToColumnTransformer#transformFullDataToColumnData} for documentation
+	 */
+    public ColumnRenderSource createRenderSource(IFullDataSource dataSource, IDhClientLevel level) throws InterruptedException
 	{
-		if (dataSource instanceof FullDataSource) // TODO replace with Java 7 method
+		if (dataSource instanceof FullDataSource)
 		{
 			return FullToColumnTransformer.transformFullDataToColumnData(level, (FullDataSource) dataSource);
 		}
