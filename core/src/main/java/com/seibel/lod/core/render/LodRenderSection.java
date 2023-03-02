@@ -100,6 +100,7 @@ public class LodRenderSection
 	
     public void tick(LodQuadTree quadTree, IDhClientLevel level)
 	{
+		// get the renderSource if it has finished loading
         if (this.loadFuture != null && this.loadFuture.isDone())
 		{
 			this.renderSource = this.loadFuture.join();
@@ -109,11 +110,6 @@ public class LodRenderSection
 			{
 				this.renderSource.enableRender(level, quadTree);
             }
-        }
-		
-        if (this.renderSource != null)
-		{
-			this.renderSourceProvider.refreshRenderSource(this.renderSource);
         }
     }
 	
