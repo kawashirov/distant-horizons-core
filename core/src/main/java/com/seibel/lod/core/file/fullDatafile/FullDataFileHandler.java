@@ -37,13 +37,17 @@ public class FullDataFileHandler implements IFullDataSourceProvider
     final File saveDir;
     AtomicInteger topDetailLevel = new AtomicInteger(-1);
     final int minDetailLevel = FullDataSource.SECTION_SIZE_OFFSET;
-
+	
+	
+	
     public FullDataFileHandler(IDhLevel level, File saveRootDir)
 	{
         this.saveDir = saveRootDir;
         this.level = level;
     }
-
+	
+	
+	
     /*
     * Caller must ensure that this method is called only once,
     *  and that this object is not used before this method is called.
