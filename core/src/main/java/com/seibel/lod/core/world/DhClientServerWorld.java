@@ -64,6 +64,8 @@ public class DhClientServerWorld extends AbstractDhWorld implements IDhClientWor
 				IClientLevelWrapper clientLevelWrapper = (IClientLevelWrapper) levelWrapper;
 				IServerLevelWrapper serverLevelWrapper = clientLevelWrapper.tryGetServerSideWrapper();
 				LodUtil.assertTrue(serverLevelWrapper != null);
+				LodUtil.assertTrue(clientLevelWrapper.getDimensionType().equals(serverLevelWrapper.getDimensionType()), "tryGetServerSideWrapper returned a level for a different dimension. ClientLevelWrapper dim: " + clientLevelWrapper.getDimensionType().getDimensionName() + " ServerLevelWrapper dim: " + serverLevelWrapper.getDimensionType().getDimensionName());
+				
 				
 				DhClientServerLevel level = this.levelObjMap.get(serverLevelWrapper);
 				if (level == null)
