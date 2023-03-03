@@ -43,7 +43,7 @@ public class ColumnRenderLoader
 		switch (dataFileVersion)
 		{
 			case 1:
-				LOGGER.info("loading render source "+dataFile.pos);
+				//LOGGER.info("loading render source "+dataFile.pos);
 				
 				ParsedColumnData parsedColumnData = readDataV1(inputDataStream, level.getMinY());
 				if (parsedColumnData.isEmpty)
