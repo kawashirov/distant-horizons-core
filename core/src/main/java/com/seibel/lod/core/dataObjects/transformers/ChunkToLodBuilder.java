@@ -40,31 +40,39 @@ public class ChunkToLodBuilder
 	
 	
 	
+	public ChunkToLodBuilder() { }
+	
+	
+	
     public CompletableFuture<ChunkSizedFullDataSource> tryGenerateData(IChunkWrapper chunk)
 	{
-        if (chunk == null) 
+        if (chunk == null)
+		{
 			throw new NullPointerException("ChunkWrapper cannot be null!");
+		}
 		
-        IChunkWrapper oldChunk = latestChunkToBuild.put(chunk.getChunkPos(), chunk); // an Exchange operation
+        IChunkWrapper oldChunk = this.latestChunkToBuild.put(chunk.getChunkPos(), chunk); // an Exchange operation
         // If there's old chunk, that means we just replaced an unprocessed old request on generating data on this pos.
         //   if so, we can just return null to signal this, as the old request's future will instead be the proper one
         //   that will return the latest generated data.
-        if (oldChunk != null) 
+        if (oldChunk != null)
+		{
 			return null;
+		}
 		
-        // Otherwise, it means we're the first to do so. Lets submit our task to this entry.
+        // Otherwise, it means we're the first to do so. Let's submit our task to this entry.
         CompletableFuture<ChunkSizedFullDataSource> future = new CompletableFuture<>();
-        taskToBuild.addLast(new Task(chunk.getChunkPos(), future));
+		this.taskToBuild.addLast(new Task(chunk.getChunkPos(), future));
         return future;
     }
 	
     public void tick()
 	{
-        if (runningCount.get() >= THREAD_COUNT)
+        if (this.runningCount.get() >= THREAD_COUNT)
 		{
 			return;
 		}
-        else if (taskToBuild.isEmpty())
+        else if (this.taskToBuild.isEmpty())
 		{
 			return;
 		}
@@ -72,17 +80,15 @@ public class ChunkToLodBuilder
 		{
 			// MC hasn't finished loading (or is currently unloaded)
 			
-			// TODO these should be cleared whenever a level is unloaded, 
-			//  but for now, just assume any previous chunks are invalid if the player doesn't exist 
-			taskToBuild.clear();
-			latestChunkToBuild.clear();
+			// can be uncommented if tasks aren't being cleared correctly
+			//this.clearCurrentTasks();
 			return;
 		}
 		
 		
         for (int i = 0; i<THREAD_COUNT; i++)
 		{
-            runningCount.incrementAndGet();
+			this.runningCount.incrementAndGet();
             CompletableFuture.runAsync(() ->
 			{
                 try
@@ -91,12 +97,11 @@ public class ChunkToLodBuilder
                 }
 				finally
 				{
-                    runningCount.decrementAndGet();
+					this.runningCount.decrementAndGet();
                 }
-            }, executor);
+            }, this.executor);
         }
     }
-	
     private void _tick()
 	{
         long time = System.nanoTime();
@@ -104,12 +109,13 @@ public class ChunkToLodBuilder
         boolean allDone = false;
         while (true)
 		{
-            if (System.nanoTime() - time > MAX_TICK_TIME_NS && !taskToBuild.isEmpty())
+			// run until we either run out of time, or all tasks are complete
+            if (System.nanoTime() - time > MAX_TICK_TIME_NS && !this.taskToBuild.isEmpty())
 			{
 				break;
 			}
 			
-            Task task = taskToBuild.pollFirst();
+            Task task = this.taskToBuild.pollFirst();
             if (task == null)
 			{
                 allDone = true;
@@ -117,10 +123,10 @@ public class ChunkToLodBuilder
             }
 			
             count++;
-            IChunkWrapper latestChunk = latestChunkToBuild.remove(task.chunkPos); // Basically an Exchange operation
+            IChunkWrapper latestChunk = this.latestChunkToBuild.remove(task.chunkPos); // Basically an Exchange operation
             if (latestChunk == null)
 			{
-                LOGGER.error("Somehow Task at {} has latestChunk as null! Skipping task!", task.chunkPos);
+                LOGGER.error("Somehow Task at "+task.chunkPos+" has latestChunk as null. Skipping task.");
                 task.future.complete(null);
                 continue;
             }
@@ -139,15 +145,20 @@ public class ChunkToLodBuilder
             }
 			catch (Exception ex)
 			{
-                LOGGER.error("Error while processing Task at {}!", task.chunkPos, ex);
+                LOGGER.error("Error while processing Task at "+task.chunkPos, ex);
             }
 			
             // Failed to build due to chunk not meeting requirement.
-            IChunkWrapper casChunk = latestChunkToBuild.putIfAbsent(task.chunkPos, latestChunk); // CAS operation with expected=null
+            IChunkWrapper casChunk = this.latestChunkToBuild.putIfAbsent(task.chunkPos, latestChunk); // CAS operation with expected=null
             if (casChunk == null || latestChunk.isStillValid()) // That means CAS have been successful
-                taskToBuild.addLast(task); // Then add back the same old task.
+			{
+				this.taskToBuild.addLast(task); // Then add back the same old task.
+			}
             else // Else, it means someone managed to sneak in a new gen request in this pos. Then lets drop this old task.
-                task.future.complete(null);
+			{
+				task.future.complete(null);
+			}
+			
             count--;
         }
 		
@@ -161,5 +172,17 @@ public class ChunkToLodBuilder
             //LOGGER.info("Completed all {} tasks in {}", count, Duration.ofNanos(time2 - time));
         }
     }
+	
+	
+	/** 
+	 * should be called whenever changing levels/worlds 
+	 * to prevent trying to generate LODs for chunk(s) that are no longer loaded
+	 * (which can cause exceptions)
+	 */
+	public void clearCurrentTasks()
+	{
+		this.taskToBuild.clear();
+		this.latestChunkToBuild.clear();
+	}
 	
 }

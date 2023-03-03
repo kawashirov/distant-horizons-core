@@ -214,7 +214,10 @@ public abstract class AbstractDhClientLevel implements IDhClientLevel
 	protected void baseClose()
 	{
 		// shut down to prevent reading/writing files after the client has left the world
-		fullDataFileHandler.close();
+		this.fullDataFileHandler.close();
+		
+		// clear the chunk builder to prevent generating LODs for chunks that are unloaded
+		this.chunkToLodBuilder.clearCurrentTasks();
 		
 		
 		// shutdown the renderer
