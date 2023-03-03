@@ -368,7 +368,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 						{
                             if (data != null)
 							{
-                                LOGGER.info("Merging data from {} into {}", data.getSectionPos(), pos);
+                                //LOGGER.info("Merging data from {} into {}", data.getSectionPos(), pos);
                                 dataSource.sampleFrom(data);
                             }
                         })

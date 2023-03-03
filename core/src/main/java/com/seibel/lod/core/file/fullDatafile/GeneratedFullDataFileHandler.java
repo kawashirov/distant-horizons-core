@@ -105,7 +105,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 						{
                             if (data != null)
 							{
-                                LOGGER.info("Merging data from {} into {}", data.getSectionPos(), pos);
+                                //LOGGER.info("Merging data from {} into {}", data.getSectionPos(), pos);
                                 dataSource.sampleFrom(data);
                             }
                         })
