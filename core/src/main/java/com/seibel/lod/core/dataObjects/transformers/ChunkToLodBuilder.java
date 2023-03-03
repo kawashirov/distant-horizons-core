@@ -75,6 +75,7 @@ public class ChunkToLodBuilder
 			// TODO these should be cleared whenever a level is unloaded, 
 			//  but for now, just assume any previous chunks are invalid if the player doesn't exist 
 			taskToBuild.clear();
+			latestChunkToBuild.clear();
 			return;
 		}
 		
