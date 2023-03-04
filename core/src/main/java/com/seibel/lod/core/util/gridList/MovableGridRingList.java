@@ -22,9 +22,7 @@ package com.seibel.lod.core.util.gridList;
 import com.seibel.lod.core.pos.Pos2D;
 import com.seibel.lod.core.util.LodUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiConsumer;
@@ -42,7 +40,7 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 	private final ReentrantReadWriteLock moveLock = new ReentrantReadWriteLock();
 	
 	/** used to iterate over each item in the list in an in-to-out order */
-	private Pos2D[] ringIteratorList = null;
+	private Pos2D[] ringPositionIteratorArray = null;
 	
 	
 	
@@ -389,7 +387,7 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 	public void forEachOrdered(Consumer<? super T> consumer)
 	{
 		// create the iterator if necessary
-		if (this.ringIteratorList == null)
+		if (this.ringPositionIteratorArray == null)
 		{
 			this.createRingIteratorList();
 		}
@@ -398,7 +396,7 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 		try
 		{
 			Pos2D min = this.minPosRef.get();
-			for (Pos2D offset : this.ringIteratorList)
+			for (Pos2D offset : this.ringPositionIteratorArray)
 			{
 				T item = this._getUnsafe(min.x + offset.x, min.y + offset.y);
 				if (item != null)
@@ -420,7 +418,7 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 	public void forEachPosOrdered(BiConsumer<? super T, Pos2D> consumer)
 	{
 		// create the iterator if necessary
-		if (this.ringIteratorList == null)
+		if (this.ringPositionIteratorArray == null)
 		{
 			this.createRingIteratorList();
 		}
@@ -429,7 +427,7 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 		try
 		{
 			Pos2D min = this.minPosRef.get();
-			for (Pos2D offset : this.ringIteratorList)
+			for (Pos2D offset : this.ringPositionIteratorArray)
 			{
 				LodUtil.assertTrue(this._inRangeAcquired(min.x + offset.x, min.y + offset.y, min));
 				T item = this._getUnsafe(min.x + offset.x, min.y + offset.y);
@@ -451,7 +449,7 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 	 */
 	private void createRingIteratorList()
 	{
-		this.ringIteratorList = null;
+		this.ringPositionIteratorArray = null;
 		Pos2D[] posArray = new Pos2D[this.size*this.size];
 		
 		int i = 0;
@@ -482,7 +480,7 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 			LodUtil.assertTrue(pos2D.y >= 0 && pos2D.y < this.size);
 		}
 		
-		this.ringIteratorList = posArray;
+		this.ringPositionIteratorArray = posArray;
 	}
 	
 	
