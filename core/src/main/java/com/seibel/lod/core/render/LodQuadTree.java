@@ -513,7 +513,8 @@ public class LodQuadTree implements AutoCloseable
 		//   if childCount == -1: // (section could be loaded or unloaded if the player is moving fast)
 		//     - set this section to null (TODO: Is this needed to be first or last or don't matter for concurrency?)
 		//     - If loaded unload section
-		for (byte sectLevel = (byte) (this.numbersOfSectionDetailLevels - 1); sectLevel >= TREE_LOWEST_DETAIL_LEVEL; sectLevel--)
+		// start with close sections and move outward
+		for (byte sectLevel = TREE_LOWEST_DETAIL_LEVEL; sectLevel < (byte) (this.numbersOfSectionDetailLevels - 1); sectLevel++)
 		{
 			final MovableGridRingList<LodRenderSection> ringList = this.renderSectionRingLists[sectLevel - TREE_LOWEST_DETAIL_LEVEL];
 			//final MovableGridRingList<LodRenderSection> childRingList = sectLevel == TREE_LOWEST_DETAIL_LEVEL ? null : this.renderSectionRingLists[sectLevel - TREE_LOWEST_DETAIL_LEVEL - 1];
