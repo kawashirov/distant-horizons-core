@@ -231,7 +231,13 @@ public class LodQuadTree implements AutoCloseable
 		}
 		
 		
+		updateAllRenderSectionChildCounts(playerPos);
 		
+		updateAllREnderSections();
+	}
+	
+	private void updateAllRenderSectionChildCounts(DhBlockPos2D playerPos)
+	{
 		
 		// TODO: inline comments should be added everywhere for this tick pass, so this comment block should be removed (having duplicate comments in two places is a bad idea) 
 		// First tick pass: update all sections' childCount from bottom level to top level. Step:
@@ -253,16 +259,16 @@ public class LodQuadTree implements AutoCloseable
 		//       - If targetLevel <= dataLevel@sectLevel && section == null: (direct use the current sectLevel's dataLevel)
 		//         - create new section with childCount = 0
 		//     - Else:
-        //       - // Section is not the top level. So we also need to consider the parent.
-        //       - If targetLevel >= dataLevel@(sectLevel+1) && section != null: (use the next level's dataLevel)
-        //         - Parent's childCount-- (Assert parent != null && childCount > 0 before decrementing)
-        //         - // Note that this doesn't necessarily mean this section will be freed as it may be rescued later
-        //              due to neighboring quadrants not able to be freed (they pass targetLevel checks or has children)
-        //              or due to parent's layer is in the Always Cascade mode. (containerType == null)
-        //         - set childCount to -1 (Signal that this section will be freed if not rescued)
-        //       - If targetLevel < dataLevel@(sectLevel+1) && section == null: (use the next level's dataLevel)
-        //         - create new section with childCount = 0
-        //         - Parent's childCount++ (Create parent if needed)
+		//       - // Section is not the top level. So we also need to consider the parent.
+		//       - If targetLevel >= dataLevel@(sectLevel+1) && section != null: (use the next level's dataLevel)
+		//         - Parent's childCount-- (Assert parent != null && childCount > 0 before decrementing)
+		//         - // Note that this doesn't necessarily mean this section will be freed as it may be rescued later
+		//              due to neighboring quadrants not able to be freed (they pass targetLevel checks or has children)
+		//              or due to parent's layer is in the Always Cascade mode. (containerType == null)
+		//         - set childCount to -1 (Signal that this section will be freed if not rescued)
+		//       - If targetLevel < dataLevel@(sectLevel+1) && section == null: (use the next level's dataLevel)
+		//         - create new section with childCount = 0
+		//         - Parent's childCount++ (Create parent if needed)
 		for (byte sectionDetailLevelIteration = TREE_LOWEST_DETAIL_LEVEL; sectionDetailLevelIteration < this.numbersOfSectionDetailLevels; sectionDetailLevelIteration++)
 		{
 			final byte sectionDetailLevel = sectionDetailLevelIteration; // final to prevent accidentally setting (and because intellij highlights final values different so it is easier to identify)
@@ -485,28 +491,29 @@ public class LodQuadTree implements AutoCloseable
 				}
 			});
 		}
-		
-		
-		
+	}
+	
+	private void updateAllREnderSections()
+	{
 		// TODO: inline comments should be added everywhere for this tick pass, so this comment block should be removed (having duplicate comments in two places is a bad idea)
-        // Second tick pass:
-        // Cascade the layers that is in Always Cascade Mode from top to bottom. (Not yet exposed or used)
-        // At the same time, load and unload sections (and can also be used to assert everything is working).
+		// Second tick pass:
+		// Cascade the layers that is in Always Cascade Mode from top to bottom. (Not yet exposed or used)
+		// At the same time, load and unload sections (and can also be used to assert everything is working).
 		// 
-        //   // ===Assertion steps===
-        //   assert childCount == 4 || childCount == 0 || childCount == -1
-        //   if childCount == 4 assert all children exist
-        //   if childCount == 0 assert all children are null
-        //   if childCount == -1 assert parent childCount is 0
-        //   // ======================
+		//   // ===Assertion steps===
+		//   assert childCount == 4 || childCount == 0 || childCount == -1
+		//   if childCount == 4 assert all children exist
+		//   if childCount == 0 assert all children are null
+		//   if childCount == -1 assert parent childCount is 0
+		//   // ======================
 		// 
-        //   if childCount == 4 && section is loaded:
-        //     - unload section
-        //   if childCount == 0 && section is unloaded:
-        //     - load section
-        //   if childCount == -1: // (section could be loaded or unloaded if the player is moving fast)
-        //     - set this section to null (TODO: Is this needed to be first or last or don't matter for concurrency?)
-        //     - If loaded unload section
+		//   if childCount == 4 && section is loaded:
+		//     - unload section
+		//   if childCount == 0 && section is unloaded:
+		//     - load section
+		//   if childCount == -1: // (section could be loaded or unloaded if the player is moving fast)
+		//     - set this section to null (TODO: Is this needed to be first or last or don't matter for concurrency?)
+		//     - If loaded unload section
 		for (byte sectLevel = (byte) (this.numbersOfSectionDetailLevels - 1); sectLevel >= TREE_LOWEST_DETAIL_LEVEL; sectLevel--)
 		{
 			final MovableGridRingList<LodRenderSection> ringList = this.renderSectionRingLists[sectLevel - TREE_LOWEST_DETAIL_LEVEL];
@@ -522,24 +529,24 @@ public class LodQuadTree implements AutoCloseable
 				
 				
 				// Cascade layers
-//                if (doCascade && section.childCount == 0) {
-//                    LodUtil.assertTrue(childRingList != null);
-//                    // Create children to cascade the layer.
-//                    for (byte i = 0; i < 4; i++) {
-//                        DhSectionPos childPos = section.pos.getChild(i);
-//                        LodRenderSection child = childRingList.get(childPos.sectionX, childPos.sectionZ);
-//                        if (child == null) {
-//                            child = childRingList.setChained(childPos.sectionX, childPos.sectionZ,
-//                                    new LodRenderSection(childPos));
-//                            child.childCount = 0;
-//                        } else {
-//                            LodUtil.assertTrue(child.childCount == -1,
-//                                    "Self has child count 0 but an existing child's child count != -1!");
-//                            child.childCount = 0;
-//                        }
-//                    }
-//                    section.childCount = 4;
-//                }
+				//                if (doCascade && section.childCount == 0) {
+				//                    LodUtil.assertTrue(childRingList != null);
+				//                    // Create children to cascade the layer.
+				//                    for (byte i = 0; i < 4; i++) {
+				//                        DhSectionPos childPos = section.pos.getChild(i);
+				//                        LodRenderSection child = childRingList.get(childPos.sectionX, childPos.sectionZ);
+				//                        if (child == null) {
+				//                            child = childRingList.setChained(childPos.sectionX, childPos.sectionZ,
+				//                                    new LodRenderSection(childPos));
+				//                            child.childCount = 0;
+				//                        } else {
+				//                            LodUtil.assertTrue(child.childCount == -1,
+				//                                    "Self has child count 0 but an existing child's child count != -1!");
+				//                            child.childCount = 0;
+				//                        }
+				//                    }
+				//                    section.childCount = 4;
+				//                }
 				
 				// Call load on new sections, tick on existing ones, and dispose old sections
 				if (section.childCount == -1)
@@ -629,7 +636,9 @@ public class LodQuadTree implements AutoCloseable
 				}
 			});
 		}
-    }
+	}
+	
+	
 	private boolean areChildRenderSectionsLoaded(LodRenderSection renderSection)
 	{
 		if (renderSection == null)
