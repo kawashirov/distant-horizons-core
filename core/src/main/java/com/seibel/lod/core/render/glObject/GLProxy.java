@@ -114,7 +114,9 @@ public class GLProxy
 		// getting Minecraft's context has to be done on the render thread,
 		// where the GL context is
 		if (GLFW.glfwGetCurrentContext() == 0L)
+		{
 			throw new IllegalStateException(GLProxy.class.getSimpleName() + " was created outside the render thread!");
+		}
 		
 		
 		
@@ -140,7 +142,9 @@ public class GLProxy
 		GL_LOGGER.info("minecraftGlCapabilities:\n"+getVersionInfo(minecraftGlCapabilities));
 		
 		if (OVERRIDE_VANILLA_GL_LOGGER)
+		{
 			GLUtil.setupDebugMessageCallback(new PrintStream(new GLMessageOutputStream(GLProxy::logMessage, vanillaDebugMessageBuilder), true));
+		}
 		
 		
 		
@@ -306,21 +310,31 @@ public class GLProxy
 		
 		
 		if (currentContext == lodBuilderGlContext)
+		{
 			return EGLProxyContext.LOD_BUILDER;
+		}
 		else if (currentContext == minecraftGlContext)
+		{
 			return EGLProxyContext.MINECRAFT;
+		}
 		else if (currentContext == proxyWorkerGlContext)
+		{
 			return EGLProxyContext.PROXY_WORKER;
+		}
 		else if (currentContext == 0L)
+		{
 			return EGLProxyContext.NONE;
+		}
 		else
+		{
 			// hopefully this shouldn't happen
-			throw new IllegalStateException(Thread.currentThread().getName() + 
+			throw new IllegalStateException(Thread.currentThread().getName() +
 					" has a unknown OpenGl context: [" + currentContext + "]. "
 					+ "Minecraft context [" + minecraftGlContext + "], "
 					+ "LodBuilder context [" + lodBuilderGlContext + "], "
 					+ "ProxyWorker context [" + proxyWorkerGlContext + "], "
 					+ "no context [0].");
+		}
 	}
 	
 	public static boolean hasInstance() { return instance != null; }
@@ -328,7 +342,10 @@ public class GLProxy
 	public static GLProxy getInstance()
 	{
 		if (instance == null)
+		{
 			instance = new GLProxy();
+		}
+		
 		return instance;
 	}
 	
@@ -379,8 +396,11 @@ public class GLProxy
 	
 	public static void ensureAllGLJobCompleted()
 	{
-		if (!hasInstance()) 
+		if (!hasInstance())
+		{
 			return;
+		}
+		
 		
 		LOGGER.info("Blocking until GL jobs finished...");
 		try
@@ -388,7 +408,9 @@ public class GLProxy
 			instance.workerThread.shutdown();
 			boolean worked = instance.workerThread.awaitTermination(30, TimeUnit.SECONDS);
 			if (!worked)
+			{
 				LOGGER.error("GLWorkerThread shutdown timed out! Game may crash on exit due to cleanup failure!");
+			}
 		}
 		catch (InterruptedException e)
 		{
@@ -421,6 +443,7 @@ public class GLProxy
 		{
 			return false;
 		}
+		
 		namedObjectSupported = c.glNamedBufferStorage != 0;
 		bufferStorageSupported = c.glBufferStorage != 0;
 		VertexAttributeBufferBindingSupported = c.glVertexAttribBinding != 0;
@@ -439,11 +462,12 @@ public class GLProxy
 	{
 		GLMessage.ESeverity s = msg.severity;
 		if (msg.type == GLMessage.EType.ERROR ||
-				msg.type == GLMessage.EType.UNDEFINED_BEHAVIOR)
+			msg.type == GLMessage.EType.UNDEFINED_BEHAVIOR)
 		{
 			GL_LOGGER.error("GL ERROR {} from {}: {}", msg.id, msg.source, msg.message);
 			throw new RuntimeException("GL ERROR: " + msg.toString());
 		}
+		
 		RuntimeException e = new RuntimeException("GL MESSAGE: " + msg.toString());
 		switch (s)
 		{
