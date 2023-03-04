@@ -16,6 +16,7 @@ import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.pos.DhChunkPos;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.util.ThreadUtil;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
@@ -43,7 +44,7 @@ public class SubDimensionLevelMatcher implements AutoCloseable
 	public static final ConfigBasedLogger LOGGER = new ConfigBasedLogger(LogManager.getLogger(),
 			() -> Config.Client.Advanced.Debugging.DebugSwitch.logFileSubDimEvent.get());
 	
-	private final ExecutorService matcherThread = LodUtil.makeSingleThreadPool("Level-To-File-Matcher");
+	private final ExecutorService matcherThread = ThreadUtil.makeSingleThreadPool("Level-To-File-Matcher");
 	
 	private SubDimensionPlayerData playerData = null;
 	private SubDimensionPlayerData firstSeenPlayerData = null;

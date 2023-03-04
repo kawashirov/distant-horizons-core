@@ -10,6 +10,7 @@ import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.FileUtil;
+import com.seibel.lod.core.util.ThreadUtil;
 import com.seibel.lod.core.util.objects.UncheckedInterruptedException;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
@@ -31,7 +32,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
-	private final ExecutorService renderCacheThread = LodUtil.makeSingleThreadPool("RenderCacheThread");
+	private final ExecutorService renderCacheThread = ThreadUtil.makeSingleThreadPool("RenderCacheThread");
 	private final ConcurrentHashMap<DhSectionPos, RenderMetaDataFile> filesBySectionPos = new ConcurrentHashMap<>();
 	
 	private final IDhClientLevel level;

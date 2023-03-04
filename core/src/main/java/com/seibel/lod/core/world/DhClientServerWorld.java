@@ -4,6 +4,7 @@ import com.seibel.lod.core.level.DhClientServerLevel;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.file.structure.LocalSaveStructure;
 import com.seibel.lod.core.logging.f3.F3Screen;
+import com.seibel.lod.core.util.ThreadUtil;
 import com.seibel.lod.core.util.objects.EventLoop;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
@@ -22,7 +23,7 @@ public class DhClientServerWorld extends AbstractDhWorld implements IDhClientWor
     private final HashSet<DhClientServerLevel> dhLevels;
     public final LocalSaveStructure saveStructure;
 	
-    public ExecutorService dhTickerThread = LodUtil.makeSingleThreadPool("DHTickerThread", 2);
+    public ExecutorService dhTickerThread = ThreadUtil.makeSingleThreadPool("DHTickerThread", 2);
     public EventLoop eventLoop = new EventLoop(this.dhTickerThread, this::_clientTick); //TODO: Rate-limit the loop
 	
     public F3Screen.DynamicMessage f3Message;

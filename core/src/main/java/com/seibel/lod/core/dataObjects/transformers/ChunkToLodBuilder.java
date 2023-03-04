@@ -35,7 +35,7 @@ public class ChunkToLodBuilder
     }
     private final ConcurrentHashMap<DhChunkPos, IChunkWrapper> latestChunkToBuild = new ConcurrentHashMap<>();
     private final ConcurrentLinkedDeque<Task> taskToBuild = new ConcurrentLinkedDeque<>();
-    private final ExecutorService executor = LodUtil.makeThreadPool(THREAD_COUNT, ChunkToLodBuilder.class);
+    private final ExecutorService executor = ThreadUtil.makeThreadPool(THREAD_COUNT, ChunkToLodBuilder.class);
     private final AtomicInteger runningCount = new AtomicInteger(0);
 	
 	

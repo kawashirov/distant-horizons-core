@@ -20,22 +20,16 @@
 package com.seibel.lod.core.util;
 
 import java.util.Iterator;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-import com.google.common.net.PercentEscaper;
 import com.seibel.lod.core.config.Config;
-import com.seibel.lod.api.enums.config.EServerFolderNameMode;
 import com.seibel.lod.api.enums.config.EVanillaOverdraw;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhChunkPos;
-import com.seibel.lod.core.util.objects.ParsedIp;
 import com.seibel.lod.core.pos.Pos2D;
 import com.seibel.lod.core.render.vertexFormat.DefaultLodVertexFormats;
 import com.seibel.lod.core.render.vertexFormat.LodVertexFormat;
 import com.seibel.lod.core.util.gridList.EdgeDistanceBooleanGrid;
-import com.seibel.lod.core.util.objects.LodThreadFactory;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IDimensionTypeWrapper;
@@ -301,31 +295,6 @@ public class LodUtil
 	public static void assertToDo() {
 		throw new AssertFailureException("TODO!");
 	}
-
-	public static ExecutorService makeSingleThreadPool(String name, int relativePriority) {
-		return Executors.newFixedThreadPool(1, new LodThreadFactory(name, Thread.NORM_PRIORITY+relativePriority));
-	}
-	public static ExecutorService makeSingleThreadPool(Class<?> clazz, int relativePriority) {
-		return makeSingleThreadPool(clazz.getSimpleName(), relativePriority);
-	}
-	public static ExecutorService makeSingleThreadPool(String name) {
-		return makeSingleThreadPool(name, 0);
-	}
-	public static ExecutorService makeSingleThreadPool(Class<?> clazz) {
-		return makeSingleThreadPool(clazz.getSimpleName(), 0);
-	}
-	public static ExecutorService makeThreadPool(int poolSize, String name, int relativePriority) {
-		return Executors.newFixedThreadPool(poolSize, new LodThreadFactory(name, Thread.NORM_PRIORITY+relativePriority));
-	}
-	public static ExecutorService makeThreadPool(int poolSize, Class<?> clazz, int relativePriority) {
-		return makeThreadPool(poolSize, clazz.getSimpleName(), relativePriority);
-	}
-	public static ExecutorService makeThreadPool(int poolSize, String name) {
-		return makeThreadPool(poolSize, name, 0);
-	}
-	public static ExecutorService makeThreadPool(int poolSize, Class<?> clazz) {
-		return makeThreadPool(poolSize, clazz.getSimpleName(), 0);
-	}
-
-
+	
+	
 }

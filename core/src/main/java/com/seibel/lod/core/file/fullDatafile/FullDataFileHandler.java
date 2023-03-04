@@ -14,6 +14,7 @@ import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.util.ThreadUtil;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
@@ -31,7 +32,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 {
     // Note: Single main thread only for now. May make it multi-thread later, depending on the usage.
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
-    final ExecutorService fileReaderThread = LodUtil.makeThreadPool(4, "FileReaderThread");
+    final ExecutorService fileReaderThread = ThreadUtil.makeThreadPool(4, "FileReaderThread");
     final ConcurrentHashMap<DhSectionPos, FullDataMetaFile> files = new ConcurrentHashMap<>();
     final IDhLevel level;
     final File saveDir;

@@ -6,6 +6,7 @@ import com.seibel.lod.core.file.structure.ClientOnlySaveStructure;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.level.states.ClientRenderState;
 import com.seibel.lod.core.util.DetailDistanceUtil;
+import com.seibel.lod.core.util.ThreadUtil;
 import com.seibel.lod.core.util.objects.EventLoop;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
@@ -22,7 +23,7 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
     private final HashMap<IClientLevelWrapper, DhClientLevel> levels;
     public final ClientOnlySaveStructure saveStructure;
 	
-    public ExecutorService dhTickerThread = LodUtil.makeSingleThreadPool("DHTickerThread", 2);
+    public ExecutorService dhTickerThread = ThreadUtil.makeSingleThreadPool("DHTickerThread", 2);
     public EventLoop eventLoop = new EventLoop(this.dhTickerThread, this::_clientTick);
 	
 	

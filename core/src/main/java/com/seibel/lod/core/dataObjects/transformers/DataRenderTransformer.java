@@ -6,7 +6,7 @@ import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
-import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.util.ThreadUtil;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import org.apache.logging.log4j.Logger;
 
@@ -73,7 +73,7 @@ public class DataRenderTransformer
 		if (transformerThreads == null || transformerThreads.isTerminated())
 		{
 			LOGGER.info("Starting "+DataRenderTransformer.class.getSimpleName());
-			transformerThreads = LodUtil.makeThreadPool(4, "Data/Render Transformer");
+			transformerThreads = ThreadUtil.makeThreadPool(4, "Data/Render Transformer");
 		}
 	}
 	
