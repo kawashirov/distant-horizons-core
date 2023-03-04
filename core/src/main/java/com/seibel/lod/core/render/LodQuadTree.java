@@ -491,7 +491,7 @@ public class LodQuadTree implements AutoCloseable
 		}
 	}
 	
-	private void updateAllREnderSections()
+	
 	private void updateAllRenderSections()
 	{
 		// TODO: inline comments should be added everywhere for this tick pass, so this comment block should be removed (having duplicate comments in two places is a bad idea)
@@ -513,6 +513,7 @@ public class LodQuadTree implements AutoCloseable
 		//   if childCount == -1: // (section could be loaded or unloaded if the player is moving fast)
 		//     - set this section to null (TODO: Is this needed to be first or last or don't matter for concurrency?)
 		//     - If loaded unload section
+		
 		// start with close sections and move outward
 		for (byte sectLevel = TREE_LOWEST_DETAIL_LEVEL; sectLevel < (byte) (this.numbersOfSectionDetailLevels - 1); sectLevel++)
 		{
@@ -573,13 +574,14 @@ public class LodQuadTree implements AutoCloseable
 					if (!section.isLoaded() && !section.isLoading())
 					{
 						// load in the new section
-						section.load(this.renderSourceProvider);
+						section.setRenderSourceProvider(this.renderSourceProvider);
 					}
-					else if (section.isOutdated())
-					{
-						// replace the out of date data
-						section.reload(this.renderSourceProvider);
-					}
+					// unimplemented, would be needed for dedicated server support
+//					else if (section.isOutdated())
+//					{
+//						// replace the out of date data
+//						section.reload(this.renderSourceProvider);
+//					}
 					
 					
 					// enable rendering if this section is a leaf node in the tree, otherwise disable rendering 
@@ -587,14 +589,14 @@ public class LodQuadTree implements AutoCloseable
 					{
 						// only disable rendering if the next section is ready to render, 
 						// isRenderingEnabled check to prevent calling the recursive method more than necessary
-						if (section.isRenderingEnabled() && areChildRenderSectionsLoaded(section)) // FIXME: this is an imperfect solution, some sections will still appear/disappear incorrectly
+						if (section.isRenderingEnabled() && areChildRenderSectionsLoaded(section)) // FIXME: this is an imperfect solution, some sections will still appear/disappear incorrectly and/or not disappear when they should
 						{
 							section.disableRender();
 						}
 					}
 					else if (section.childCount == 0)
 					{
-						section.enableRender();
+						section.loadRenderSourceAndEnableRendering();
 					}
 					
 					
@@ -607,6 +609,7 @@ public class LodQuadTree implements AutoCloseable
 				assertRenderSectionIsValid(section);
 			});
 		}
+	}
 	
 	/** @throws LodUtil.AssertFailureException if the section isn't valid */
 	private void assertRenderSectionIsValid(LodRenderSection section) throws LodUtil.AssertFailureException

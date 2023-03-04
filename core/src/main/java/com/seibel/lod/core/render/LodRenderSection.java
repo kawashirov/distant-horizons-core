@@ -41,9 +41,14 @@ public class LodRenderSection
 	// rendering //
 	//===========//
 	
-    public void enableRender()
+    public void loadRenderSourceAndEnableRendering()
 	{
         if (this.isRenderEnabled)
+		{
+			return;
+		}
+		
+		if (this.renderSourceProvider == null)
 		{
 			return;
 		}
@@ -67,12 +72,12 @@ public class LodRenderSection
 	
 	
 	
-	//==============//
-	// LOD provider //
-	//==============//
+	//========================//
+	// render source provider //
+	//========================//
 	
-	// TODO why does this just set the sourceProvider?
-    public void load(ILodRenderSourceProvider renderDataProvider) { this.renderSourceProvider = renderDataProvider; }
+    public void setRenderSourceProvider(ILodRenderSourceProvider renderDataProvider) { this.renderSourceProvider = renderDataProvider; }
+	
     public void reload(ILodRenderSourceProvider renderDataProvider)
 	{
 		this.renderSourceProvider = renderDataProvider;
@@ -143,7 +148,6 @@ public class LodRenderSection
     public boolean isOutdated() { return this.renderSource != null && !this.renderSource.isValid(); }
 	
     public ColumnRenderSource getRenderSource() { return this.renderSource; }
-	
 	
 	
 	//==============//
