@@ -263,12 +263,13 @@ public class LodUtil
 		}
 	}
 
-	static class AssertFailureException extends RuntimeException {
+	public static class AssertFailureException extends RuntimeException {
 		public AssertFailureException(String message) {
 			super(message);
 			debugBreak();
 		}
 	}
+	
 	private static void debugBreak() {
 		int a = 0; // Set breakpoint here for auto pause on assert failure
 	}

@@ -439,7 +439,7 @@ public class ColumnRenderSource
 	
 	/** 
 	 * Whether this object is still valid. If not, a new one should be created.
-	 * TODO under what circumstances should this return false?
+	 * TODO this will be necessary for dedicated multiplayer support, if the server has newer data this section should no longer be valid
 	 */
 	public boolean isValid() { return true; }
 	

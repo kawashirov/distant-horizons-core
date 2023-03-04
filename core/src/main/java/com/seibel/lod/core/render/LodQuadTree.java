@@ -2,13 +2,11 @@ package com.seibel.lod.core.render;
 
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.level.IDhClientLevel;
-import com.seibel.lod.core.level.states.ClientRenderState;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.file.renderfile.ILodRenderSourceProvider;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.Pos2D;
-import com.seibel.lod.core.render.renderer.LodRenderer;
 import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.DetailDistanceUtil;
 import com.seibel.lod.core.util.LodUtil;
@@ -233,7 +231,7 @@ public class LodQuadTree implements AutoCloseable
 		
 		updateAllRenderSectionChildCounts(playerPos);
 		
-		updateAllREnderSections();
+		updateAllRenderSections();
 	}
 	
 	private void updateAllRenderSectionChildCounts(DhBlockPos2D playerPos)
@@ -494,6 +492,7 @@ public class LodQuadTree implements AutoCloseable
 	}
 	
 	private void updateAllREnderSections()
+	private void updateAllRenderSections()
 	{
 		// TODO: inline comments should be added everywhere for this tick pass, so this comment block should be removed (having duplicate comments in two places is a bad idea)
 		// Second tick pass:
@@ -527,28 +526,33 @@ public class LodQuadTree implements AutoCloseable
 					return;
 				}
 				
-				
 				// Cascade layers
-				//                if (doCascade && section.childCount == 0) {
-				//                    LodUtil.assertTrue(childRingList != null);
-				//                    // Create children to cascade the layer.
-				//                    for (byte i = 0; i < 4; i++) {
-				//                        DhSectionPos childPos = section.pos.getChild(i);
-				//                        LodRenderSection child = childRingList.get(childPos.sectionX, childPos.sectionZ);
-				//                        if (child == null) {
-				//                            child = childRingList.setChained(childPos.sectionX, childPos.sectionZ,
-				//                                    new LodRenderSection(childPos));
-				//                            child.childCount = 0;
-				//                        } else {
-				//                            LodUtil.assertTrue(child.childCount == -1,
-				//                                    "Self has child count 0 but an existing child's child count != -1!");
-				//                            child.childCount = 0;
-				//                        }
-				//                    }
-				//                    section.childCount = 4;
-				//                }
+//                if (doCascade && section.childCount == 0) {
+//                    LodUtil.assertTrue(childRingList != null);
+//                    // Create children to cascade the layer.
+//                    for (byte i = 0; i < 4; i++) {
+//                        DhSectionPos childPos = section.pos.getChild(i);
+//                        LodRenderSection child = childRingList.get(childPos.sectionX, childPos.sectionZ);
+//                        if (child == null) {
+//                            child = childRingList.setChained(childPos.sectionX, childPos.sectionZ,
+//                                    new LodRenderSection(childPos));
+//                            child.childCount = 0;
+//                        } else {
+//                            LodUtil.assertTrue(child.childCount == -1,
+//                                    "Self has child count 0 but an existing child's child count != -1!");
+//                            child.childCount = 0;
+//                        }
+//                    }
+//                    section.childCount = 4;
+//                }
 				
-				// Call load on new sections, tick on existing ones, and dispose old sections
+				
+				//======================//
+				// load new sections,   //
+				// tick existing ones,  //
+				// dispose old sections //
+				//======================//
+				
 				if (section.childCount == -1)
 				{
 					// dispose the old section
@@ -598,43 +602,48 @@ public class LodQuadTree implements AutoCloseable
 				}
 				
 				
-				
-				// section validation
-				LodUtil.assertTrue(section.childCount == 4|| section.childCount == 0,"Expected render section to have a child count of 0, or 4. Found value: "+section.childCount);
-				
-				if (section.pos.sectionDetailLevel == TREE_LOWEST_DETAIL_LEVEL)
-				{
-					// sections at the bottom of the tree (leaves) should have no additional children
-					LodUtil.assertTrue(section.childCount == 0);
-				}
-				else
-				{
-					LodRenderSection child0 = this.getChildSection(section.pos, 0);
-					LodRenderSection child1 = this.getChildSection(section.pos, 1);
-					LodRenderSection child2 = this.getChildSection(section.pos, 2);
-					LodRenderSection child3 = this.getChildSection(section.pos, 3);
-					
-					if (section.childCount == 4)
-					{
-						LodUtil.assertTrue(
-								child0 != null && child0.childCount != -1 &&
-										child1 != null && child1.childCount != -1 &&
-										child2 != null && child2.childCount != -1 &&
-										child3 != null && child3.childCount != -1,
-								"Sect "+section.pos+" child count 4 but child has null or is being disposed: {} {} {} {}", child0, child1, child2, child3);
-					}
-					else if (section.childCount == 0)
-					{
-						LodUtil.assertTrue(
-								(child0 == null || child0.childCount == -1) &&
-										(child1 == null || child1.childCount == -1) &&
-										(child2 == null || child2.childCount == -1) &&
-										(child3 == null || child3.childCount == -1),
-								"Sect "+section.pos+" child count 0 but child is neither null or being disposed: {} {} {} {}",
-								child0, child1, child2, child3);
-					}
-				}
+				// should be called after the section has been updated
+				assertRenderSectionIsValid(section);
 			});
+		}
+	
+	/** @throws LodUtil.AssertFailureException if the section isn't valid */
+	private void assertRenderSectionIsValid(LodRenderSection section) throws LodUtil.AssertFailureException
+	{
+		// section validation
+		LodUtil.assertTrue(section.childCount == 4|| section.childCount == 0,"Expected render section to have a child count of 0, or 4. Found value: "+ section.childCount);
+		
+		if (section.pos.sectionDetailLevel == TREE_LOWEST_DETAIL_LEVEL)
+		{
+			// sections at the bottom of the tree (leaves) should have no additional children
+			LodUtil.assertTrue(section.childCount == 0);
+		}
+		else
+		{
+			LodRenderSection child0 = this.getChildSection(section.pos, 0);
+			LodRenderSection child1 = this.getChildSection(section.pos, 1);
+			LodRenderSection child2 = this.getChildSection(section.pos, 2);
+			LodRenderSection child3 = this.getChildSection(section.pos, 3);
+			
+			if (section.childCount == 4)
+			{
+				LodUtil.assertTrue(
+						child0 != null && child0.childCount != -1 &&
+								child1 != null && child1.childCount != -1 &&
+								child2 != null && child2.childCount != -1 &&
+								child3 != null && child3.childCount != -1,
+						"Sect "+ section.pos+" child count 4 but child has null or is being disposed: {} {} {} {}", child0, child1, child2, child3);
+			}
+			else if (section.childCount == 0)
+			{
+				LodUtil.assertTrue(
+						(child0 == null || child0.childCount == -1) &&
+								(child1 == null || child1.childCount == -1) &&
+								(child2 == null || child2.childCount == -1) &&
+								(child3 == null || child3.childCount == -1),
+						"Sect "+ section.pos+" child count 0 but child is neither null or being disposed: {} {} {} {}",
+						child0, child1, child2, child3);
+			}
 		}
 	}
 	
