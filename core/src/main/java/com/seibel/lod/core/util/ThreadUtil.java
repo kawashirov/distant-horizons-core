@@ -39,7 +39,7 @@ public class ThreadUtil
 	
 	public static ExecutorService makeSingleThreadPool(String name, int relativePriority) 
 	{ 
-		return makeThreadPool(1, name, Thread.NORM_PRIORITY+relativePriority); 
+		return makeThreadPool(1, name, relativePriority); 
 	}
 	public static ExecutorService makeSingleThreadPool(Class<?> clazz, int relativePriority) 
 	{ 
