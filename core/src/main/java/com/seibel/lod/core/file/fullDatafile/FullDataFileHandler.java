@@ -32,7 +32,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 {
     // Note: Single main thread only for now. May make it multi-thread later, depending on the usage.
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
-    final ExecutorService fileReaderThread = ThreadUtil.makeThreadPool(4, "FileReaderThread");
+    final ExecutorService fileReaderThread = ThreadUtil.makeThreadPool(4, FullDataFileHandler.class.getSimpleName()+"Thread");
     final ConcurrentHashMap<DhSectionPos, FullDataMetaFile> files = new ConcurrentHashMap<>();
     final IDhLevel level;
     final File saveDir;

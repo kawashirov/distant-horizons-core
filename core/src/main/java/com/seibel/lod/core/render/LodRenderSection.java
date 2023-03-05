@@ -148,6 +148,7 @@ public class LodRenderSection
     public boolean isOutdated() { return this.renderSource != null && !this.renderSource.isValid(); }
 	
     public ColumnRenderSource getRenderSource() { return this.renderSource; }
+    public CompletableFuture<ColumnRenderSource> getRenderSourceLoadingFuture() { return this.loadFuture; }
 	
 	
 	//==============//

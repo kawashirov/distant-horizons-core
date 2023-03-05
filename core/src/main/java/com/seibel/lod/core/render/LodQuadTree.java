@@ -14,6 +14,8 @@ import com.seibel.lod.core.util.MathUtil;
 import com.seibel.lod.core.util.gridList.MovableGridRingList;
 import org.apache.logging.log4j.Logger;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * This quadTree structure is our core data structure and holds
  * all rendering data. <br><br>
@@ -54,7 +56,15 @@ public class LodQuadTree implements AutoCloseable
     public final int blockRenderDistance;
     private final ILodRenderSourceProvider renderSourceProvider;
 	
-    private final IDhClientLevel level; //FIXME: Proper hierarchy to remove this reference!
+	/** How many {@link LodRenderSection}'s are currently loading */
+	private int numberOfRenderSectionsLoading = 0;
+	/** 
+	 * Indicates how many {@link LodRenderSection}'s can load concurrently. <br>
+	 * Prevents large number of {@link ILodRenderSourceProvider} tasks from building up when initially loading. 
+	 */
+	private static final int MAX_NUMBER_OF_LOADING_RENDER_SECTIONS = 2;
+	
+	private final IDhClientLevel level; //FIXME: Proper hierarchy to remove this reference!
 	
 	
 	
@@ -596,7 +606,24 @@ public class LodQuadTree implements AutoCloseable
 					}
 					else if (section.childCount == 0)
 					{
-						section.loadRenderSourceAndEnableRendering();
+						// limit how many render sections can be loading at a time
+						if (!section.isRenderingEnabled() && this.numberOfRenderSectionsLoading < MAX_NUMBER_OF_LOADING_RENDER_SECTIONS)
+						{
+							section.loadRenderSourceAndEnableRendering();
+							
+							this.numberOfRenderSectionsLoading++;
+							
+							CompletableFuture<ColumnRenderSource> future = section.getRenderSourceLoadingFuture();
+							if (future != null)
+							{
+								future.whenComplete((renderSource, ex) -> this.numberOfRenderSectionsLoading-- );
+							}
+							else
+							{
+								// the future will be null if the section was already loaded
+								this.numberOfRenderSectionsLoading--;
+							}
+						}
 					}
 					
 					
