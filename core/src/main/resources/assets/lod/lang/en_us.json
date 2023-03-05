@@ -38,6 +38,8 @@
     "Always silent update",
   "lod.updater.silent.@tooltip":
     "Every time an update is available, it would update\n(§6WARNING§r: It wont prompt the user on an update, tough it would keep the mod up to date)",
+  "lod.updater.waitingForClose":
+    "Distant Horizons will finish update once game restarts",
 
 
 
@@ -223,9 +225,9 @@
     "Enable Distant Generation",
   "lod.config.client.worldGenerator.enableDistantGeneration.@tooltip":
     "§6True:§r in single player fake chunks will be generated outside the vanilla render distance.\nNote: this can use a large amount of CPU.\n\n§6False:§r fake chunks will only generate within the vanilla render distance.",
-  "lod.config.client.worldGenerator.distanceGenerationMode":
+  "lod.config.client.worldGenerator.distantGeneratorMode":
     "Distance generation mode",
-  "lod.config.client.worldGenerator.distanceGenerationMode.@tooltip":
+  "lod.config.client.worldGenerator.distantGeneratorMode.@tooltip":
     "How complicated the generation should be when generating fake chunks outside the vanilla render distance.\n\n§6§6Fastest:§r Biome only\n§6Best Quality:§r Features (suggested)\n§6Best compatibility:§r Full (Very slow, don't use unless the fake chunks generate incorrectly.)",
   "lod.config.client.worldGenerator.lightGenerationMode":
     "Light Generation Mode",
