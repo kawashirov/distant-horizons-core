@@ -38,6 +38,8 @@
     "Always silent update",
   "lod.updater.silent.@tooltip":
     "Every time an update is available, it would update\n(§6WARNING§r: It wont prompt the user on an update, tough it would keep the mod up to date)",
+  "lod.updater.waitingForClose":
+    "Distant Horizons will finish update once game restarts",
 
 
 
