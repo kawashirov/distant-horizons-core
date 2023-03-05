@@ -18,7 +18,7 @@ public class ThreadUtil
 	
 	public static ExecutorService makeThreadPool(int poolSize, String name, int relativePriority)
 	{
-		return Executors.newFixedThreadPool(poolSize, new LodThreadFactory(name, Thread.NORM_PRIORITY+relativePriority));
+		return Executors.newFixedThreadPool(poolSize, new LodThreadFactory("DH-" + name, Thread.NORM_PRIORITY+relativePriority));
 	}
 	
 	public static ExecutorService makeThreadPool(int poolSize, Class<?> clazz, int relativePriority)
