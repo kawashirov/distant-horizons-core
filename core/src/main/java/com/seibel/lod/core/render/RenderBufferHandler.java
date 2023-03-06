@@ -2,6 +2,7 @@ package com.seibel.lod.core.render;
 
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.enums.ELodDirection;
+import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.Pos2D;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.renderer.LodRenderer;
@@ -9,6 +10,7 @@ import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.gridList.MovableGridRingList;
 import com.seibel.lod.core.util.math.Vec3f;
 import com.seibel.lod.core.util.objects.SortedArraySet;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicReference;
@@ -18,7 +20,9 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class RenderBufferHandler
 {
-    public final LodQuadTree quadTree;
+	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	
+	public final LodQuadTree quadTree;
     private final MovableGridRingList<RenderBufferNode> renderBufferNodesGridList;
 	
 	// TODO: Make sorting go into the update loop instead of the render loop as it doesn't need to be done every frame
@@ -165,37 +169,45 @@ public class RenderBufferHandler
 	
 	public void update()
 	{
-		byte topDetailLevel = (byte) (this.quadTree.getNumbersOfSectionDetailLevels() - 1);
-		MovableGridRingList<LodRenderSection> renderSectionGridList = this.quadTree.getRingList(topDetailLevel);
-		
-		Pos2D newCenterPos = renderSectionGridList.getCenter();
-		this.renderBufferNodesGridList.moveTo(newCenterPos.x, newCenterPos.y, RenderBufferNode::close); // Note: may lock the list
-		
-		
-		
-		this.renderBufferNodesGridList.forEachPosOrdered((renderBufferNode, pos) ->
+		try
 		{
-			DhSectionPos sectPos = new DhSectionPos(topDetailLevel, pos.x, pos.y);
-			LodRenderSection renderSection = this.quadTree.getSection(sectPos);
+			byte topDetailLevel = (byte) (this.quadTree.getNumbersOfSectionDetailLevels() - 1);
+			MovableGridRingList<LodRenderSection> renderSectionGridList = this.quadTree.getRingList(topDetailLevel);
 			
-			if (renderSection == null && renderBufferNode != null)
+			Pos2D newCenterPos = renderSectionGridList.getCenter();
+			this.renderBufferNodesGridList.moveTo(newCenterPos.x, newCenterPos.y, RenderBufferNode::close); // Note: may lock the list
+			
+			
+			
+			this.renderBufferNodesGridList.forEachPosOrdered((renderBufferNode, pos) ->
 			{
-				// section is null, but a node exists, remove the node
-				this.renderBufferNodesGridList.remove(pos).close();
-			}
-			else if (renderSection != null)
-			{
+				DhSectionPos sectPos = new DhSectionPos(topDetailLevel, pos.x, pos.y);
+				LodRenderSection renderSection = this.quadTree.getSection(sectPos);
 				
-				if (renderBufferNode == null)
+				if (renderSection == null && renderBufferNode != null)
 				{
-					// renderSection exists, but node does not
-					renderBufferNode = this.renderBufferNodesGridList.setChained(pos, new RenderBufferNode(sectPos));
+					// section is null, but a node exists, remove the node
+					this.renderBufferNodesGridList.remove(pos).close();
 				}
-				
-				// Update the render node
-				renderBufferNode.update();	
-			}
-		});
+				else if (renderSection != null)
+				{
+					
+					if (renderBufferNode == null)
+					{
+						// renderSection exists, but node does not
+						renderBufferNode = this.renderBufferNodesGridList.setChained(pos, new RenderBufferNode(sectPos));
+					}
+					
+					// Update the render node
+					renderBufferNode.update();
+				}
+			});
+		}
+		catch (Exception e)
+		{
+			// TODO when we are stable this shouldn't be necessary
+			LOGGER.error(RenderBufferHandler.class.getSimpleName()+" exception in update for the quadTree: "+this.quadTree.toString()+", exception: "+e.getMessage(), e);
+		}
 	}
 	
     public void close() { this.renderBufferNodesGridList.clear(RenderBufferNode::close); }

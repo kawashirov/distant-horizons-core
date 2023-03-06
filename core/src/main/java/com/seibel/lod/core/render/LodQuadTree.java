@@ -225,23 +225,31 @@ public class LodQuadTree implements AutoCloseable
      */
     public void tick(DhBlockPos2D playerPos)
 	{
-		// recenter the grid lists if necessary
-        for (int sectionDetailLevel = TREE_LOWEST_DETAIL_LEVEL; sectionDetailLevel < this.numbersOfSectionDetailLevels; sectionDetailLevel++)
+		try
 		{
-			Pos2D expectedCenterPos = new Pos2D(BitShiftUtil.divideByPowerOfTwo(playerPos.x, sectionDetailLevel), BitShiftUtil.divideByPowerOfTwo(playerPos.z, sectionDetailLevel));
-			MovableGridRingList<LodRenderSection> gridList = this.renderSectionRingLists[sectionDetailLevel-TREE_LOWEST_DETAIL_LEVEL];
-			
-			if (!gridList.getCenter().equals(expectedCenterPos))
+			// recenter the grid lists if necessary
+			for (int sectionDetailLevel = TREE_LOWEST_DETAIL_LEVEL; sectionDetailLevel < this.numbersOfSectionDetailLevels; sectionDetailLevel++)
 			{
-//				LOGGER.info("TreeTick: Moving ring list "+sectionDetailLevel+" from "+gridList.getCenter()+" to "+expectedCenterPos);
-				gridList.moveTo(expectedCenterPos.x, expectedCenterPos.y, LodRenderSection::disposeRenderData);
+				Pos2D expectedCenterPos = new Pos2D(BitShiftUtil.divideByPowerOfTwo(playerPos.x, sectionDetailLevel), BitShiftUtil.divideByPowerOfTwo(playerPos.z, sectionDetailLevel));
+				MovableGridRingList<LodRenderSection> gridList = this.renderSectionRingLists[sectionDetailLevel - TREE_LOWEST_DETAIL_LEVEL];
+				
+				if (!gridList.getCenter().equals(expectedCenterPos))
+				{
+					//				LOGGER.info("TreeTick: Moving ring list "+sectionDetailLevel+" from "+gridList.getCenter()+" to "+expectedCenterPos);
+					gridList.moveTo(expectedCenterPos.x, expectedCenterPos.y, LodRenderSection::disposeRenderData);
+				}
 			}
+			
+			
+			updateAllRenderSectionChildCounts(playerPos);
+			
+			updateAllRenderSections();
 		}
-		
-		
-		updateAllRenderSectionChildCounts(playerPos);
-		
-		updateAllRenderSections();
+		catch (Exception e)
+		{
+			// TODO when we are stable this shouldn't be necessary
+			LOGGER.error("Quad Tree tick exception for dimension: "+this.level.getClientLevelWrapper().getDimensionType().getDimensionName()+", exception: "+e.getMessage(), e);
+		}
 	}
 	
 	private void updateAllRenderSectionChildCounts(DhBlockPos2D playerPos)
