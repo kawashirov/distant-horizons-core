@@ -34,10 +34,10 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	
 	
 	/** Assumes there isn't a pre-existing queue. */
-    public void setGenerationQueue(WorldGenerationQueue newQueue)
+    public void setGenerationQueue(WorldGenerationQueue newWorldGenQueue)
 	{
-        boolean oldQueueExists = this.worldGenQueueRef.compareAndSet(null, newQueue);
-        LodUtil.assertTrue(oldQueueExists, "previous queue is still here!");
+        boolean oldQueueExists = this.worldGenQueueRef.compareAndSet(null, newWorldGenQueue);
+        LodUtil.assertTrue(oldQueueExists, "previous world gen queue is still here!");
     }
 	
 	public void clearGenerationQueue() { this.worldGenQueueRef.set(null); }
@@ -66,14 +66,13 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		{
             // No LOD data exists for this position yet
 			
-            WorldGenerationQueue queue = this.worldGenQueueRef.get();
-            if (queue != null)
+            WorldGenerationQueue worldGenQueue = this.worldGenQueueRef.get();
+            if (worldGenQueue != null)
 			{
 				// queue this section to be generated
 				GenTask task = new GenTask(pos, new WeakReference<>(dataSource));
-                queue.submitGenTask(dataSource.getSectionPos().getSectionBBoxPos(),
-                        dataSource.getDataDetail(), task)
-						.whenComplete( (genTaskCompleted, ex) -> this.onWorldGenTaskComplete(genTaskCompleted, ex, task, pos) );
+				worldGenQueue.submitGenTask(dataSource.getSectionPos().getSectionBBoxPos(), dataSource.getDataDetail(), task)
+							 .whenComplete((genTaskCompleted, ex) -> this.onWorldGenTaskComplete(genTaskCompleted, ex, task, pos));
             }
 			
 			// return the empty dataSource (it will be populated later)
