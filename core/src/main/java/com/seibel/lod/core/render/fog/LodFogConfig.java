@@ -22,9 +22,7 @@ package com.seibel.lod.core.render.fog;
 import com.seibel.lod.api.enums.rendering.*;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.dependencyInjection.ModAccessorInjector;
-import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.render.glObject.shader.Shader;
-import com.seibel.lod.core.wrapperInterfaces.config.ILodConfigWrapperSingleton;
 import com.seibel.lod.core.wrapperInterfaces.modAccessor.IOptifineAccessor;
 
 import java.io.FileOutputStream;
@@ -46,7 +44,6 @@ import static com.seibel.lod.core.render.glObject.GLProxy.GL_LOGGER;
 public class LodFogConfig
 {
 	private static final IOptifineAccessor OPTIFINE = ModAccessorInjector.INSTANCE.get(IOptifineAccessor.class);
-	private static final ILodConfigWrapperSingleton CONFIG = SingletonInjector.INSTANCE.get(ILodConfigWrapperSingleton.class);
 	
 	public static final boolean DEBUG_DUMP_GENERATED_CODE = false;
 	
@@ -69,7 +66,7 @@ public class LodFogConfig
 	
 	public static LodFogConfig generateFogConfig()
 	{
-		EFogDrawMode fogMode = CONFIG.client().graphics().fogQuality().getFogDrawMode();
+		EFogDrawMode fogMode = Config.Client.Graphics.FogQuality.fogDrawMode.get();
 		if (fogMode == EFogDrawMode.USE_OPTIFINE_SETTING && OPTIFINE != null)
 		{
 			fogMode = OPTIFINE.getFogDrawMode();
@@ -91,18 +88,23 @@ public class LodFogConfig
 
 		if (fogDrawMode != EFogDrawMode.FOG_DISABLED)
 		{
-			ILodConfigWrapperSingleton.IClient.IGraphics.IFogQuality fogSettings = CONFIG.client().graphics().fogQuality();
-			
-			EFogDistance fogDistance = fogSettings.getFogDistance();
+			EFogDistance fogDistance = Config.Client.Graphics.FogQuality.fogDistance.get();
 			drawNearFog = (fogDistance == EFogDistance.NEAR || fogDistance == EFogDistance.NEAR_AND_FAR);
 			
 			if (fogDistance == EFogDistance.FAR || fogDistance == EFogDistance.NEAR_AND_FAR)
 			{
 				// far fog should be drawn
 				
-				farFogSetting = fogSettings.advancedFog().computeFarFogSetting();
+				farFogSetting = new FogSettings(
+						Config.Client.Graphics.FogQuality.AdvancedFog.farFogStart.get(),
+						Config.Client.Graphics.FogQuality.AdvancedFog.farFogEnd.get(),
+						Config.Client.Graphics.FogQuality.AdvancedFog.farFogMin.get(),
+						Config.Client.Graphics.FogQuality.AdvancedFog.farFogMax.get(),
+						Config.Client.Graphics.FogQuality.AdvancedFog.farFogDensity.get(),
+						Config.Client.Graphics.FogQuality.AdvancedFog.farFogType.get()
+				);
 				
-				heightFogMixMode = fogSettings.advancedFog().heightFog().getHeightFogMixMode();
+				heightFogMixMode = Config.Client.Graphics.FogQuality.AdvancedFog.HeightFog.heightFogMixMode.get();
 				if (heightFogMixMode == EHeightFogMixMode.IGNORE_HEIGHT || heightFogMixMode == EHeightFogMixMode.BASIC)
 				{
 					// basic fog mixing
@@ -115,8 +117,16 @@ public class LodFogConfig
 				{
 					// advanced fog mixing
 					
-					heightFogSetting = fogSettings.advancedFog().heightFog().computeHeightFogSetting();
-					heightFogMode = fogSettings.advancedFog().heightFog().getHeightFogMode();
+					heightFogSetting = new FogSettings(
+							Config.Client.Graphics.FogQuality.AdvancedFog.HeightFog.heightFogDensity.get(),
+							Config.Client.Graphics.FogQuality.AdvancedFog.HeightFog.heightFogEnd.get(),
+							Config.Client.Graphics.FogQuality.AdvancedFog.HeightFog.heightFogMin.get(),
+							Config.Client.Graphics.FogQuality.AdvancedFog.HeightFog.heightFogMax.get(),
+							Config.Client.Graphics.FogQuality.AdvancedFog.HeightFog.heightFogDensity.get(),
+							Config.Client.Graphics.FogQuality.AdvancedFog.HeightFog.heightFogType.get()
+					);
+							
+					heightFogMode = Config.Client.Graphics.FogQuality.AdvancedFog.HeightFog.heightFogMode.get();
 					
 					if (heightFogMode.basedOnCamera)
 					{
@@ -124,7 +134,7 @@ public class LodFogConfig
 					}
 					else
 					{
-						heightFogHeight = (float) fogSettings.advancedFog().heightFog().getHeightFogHeight();
+						heightFogHeight = Config.Client.Graphics.FogQuality.AdvancedFog.HeightFog.heightFogHeight.get().floatValue();
 					}
 				}
 			}

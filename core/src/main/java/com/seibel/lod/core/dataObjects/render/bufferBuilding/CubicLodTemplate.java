@@ -19,16 +19,15 @@
 
 package com.seibel.lod.core.dataObjects.render.bufferBuilding;
 
+import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.util.RenderDataPointUtil;
 import com.seibel.lod.api.enums.rendering.EDebugMode;
-import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.dataObjects.render.columnViews.ColumnArrayView;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.ColorUtil;
 import com.seibel.lod.core.util.LodUtil;
-import com.seibel.lod.core.wrapperInterfaces.config.ILodConfigWrapperSingleton;
 
 /**
  * Builds LODs as rectangular prisms.
@@ -37,8 +36,6 @@ import com.seibel.lod.core.wrapperInterfaces.config.ILodConfigWrapperSingleton;
  */
 public class CubicLodTemplate
 {
-	private static final ILodConfigWrapperSingleton CONFIG = SingletonInjector.INSTANCE.get(ILodConfigWrapperSingleton.class);
-
 
 	public static void addLodToBuffer(long data, long topData, long botData, ColumnArrayView[][] adjData,
 									  byte detailLevel, int offsetPosX, int offsetOosZ, LodQuadBuilder quadBuilder, EDebugMode debugging, ColumnRenderSource.DebugSourceFlag debugSource)
@@ -66,8 +63,8 @@ public class CubicLodTemplate
 			case OFF:
 			case SHOW_WIREFRAME:
 			{
-				float saturationMultiplier = (float)CONFIG.client().graphics().advancedGraphics().getSaturationMultiplier();
-				float brightnessMultiplier = (float)CONFIG.client().graphics().advancedGraphics().getBrightnessMultiplier();
+				float saturationMultiplier = Config.Client.Graphics.AdvancedGraphics.saturationMultiplier.get().floatValue();
+				float brightnessMultiplier = Config.Client.Graphics.AdvancedGraphics.brightnessMultiplier.get().floatValue();
 				if (saturationMultiplier == 1.0 && brightnessMultiplier == 1.0) {
 					color = RenderDataPointUtil.getColor(data);
 				} else {
