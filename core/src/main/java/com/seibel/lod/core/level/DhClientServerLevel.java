@@ -55,6 +55,11 @@ public class DhClientServerLevel extends AbstractDhClientLevel implements IDhCli
 		this.serverLevelWrapper = serverLevelWrapper;
 		this.f3Message = new F3Screen.NestedMessage(super::f3Log);
 		
+		if (this.fullDataFileHandler != null)
+		{
+			// done since the super() constructor creates a FullDataFileHandler first that we don't want // TODO in the future it would be nice if we didn't have to overwrite an existing object like this
+			this.fullDataFileHandler.close();
+		}
 		this.generatedFullDataFileHandler = new GeneratedFullDataFileHandler(this, saveStructure.getFullDataFolder(serverLevelWrapper));
 		this.fullDataFileHandler = this.generatedFullDataFileHandler;
 		
@@ -89,13 +94,13 @@ public class DhClientServerLevel extends AbstractDhClientLevel implements IDhCli
 	@Override
 	public void doWorldGen()
 	{
-		WorldGenState wgs = this.worldGenStateRef.get();
+		WorldGenState worldGenState = this.worldGenStateRef.get();
 		
 		// if the world generator config changes, add/remove the world generator
 		if (this.worldGeneratorEnabledConfig.pollNewValue())
 		{
 			boolean shouldDoWorldGen = this.worldGeneratorEnabledConfig.get() && this.ClientRenderStateRef.get() != null;
-			if (shouldDoWorldGen && wgs == null)
+			if (shouldDoWorldGen && worldGenState == null)
 			{
 				// create the new world generator
 				WorldGenState newWgs = new WorldGenState(this);
@@ -105,27 +110,27 @@ public class DhClientServerLevel extends AbstractDhClientLevel implements IDhCli
 					newWgs.closeAsync(false);
 				}
 			}
-			else if (!shouldDoWorldGen && wgs != null)
+			else if (!shouldDoWorldGen && worldGenState != null)
 			{
 				// shut down the world generator
-				while (!this.worldGenStateRef.compareAndSet(wgs, null))
+				while (!this.worldGenStateRef.compareAndSet(worldGenState, null))
 				{
-					wgs = this.worldGenStateRef.get();
-					if (wgs == null)
+					worldGenState = this.worldGenStateRef.get();
+					if (worldGenState == null)
 					{
 						return;
 					}
 				}
-				wgs.closeAsync(true).join(); //TODO: Make it async.
+				worldGenState.closeAsync(true).join(); //TODO: Make it async.
 			}
 		}
 		
 		
-		if (wgs != null)
+		if (worldGenState != null)
 		{
 			// queue new world generation requests
-			wgs.chunkGenerator.preGeneratorTaskStart();
-			wgs.worldGenerationQueue.runCurrentGenTasksUntilBusy(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
+			worldGenState.chunkGenerator.preGeneratorTaskStart();
+			worldGenState.worldGenerationQueue.runCurrentGenTasksUntilBusy(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
 		}
 	}
 	
