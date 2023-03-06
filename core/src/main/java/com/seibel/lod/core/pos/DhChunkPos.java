@@ -21,103 +21,109 @@ package com.seibel.lod.core.pos;
 
 import java.util.Objects;
 
-public class DhChunkPos {
+public class DhChunkPos
+{
     public final int x; // Low 32 bits
     public final int z; // High 32 bits
 
-    public DhChunkPos(int x, int z) {
+	
+	
+    public DhChunkPos(int x, int z)
+	{
         this.x = x;
         this.z = z;
     }
-
-    public DhChunkPos(DhBlockPos blockPos) {
+    public DhChunkPos(DhBlockPos blockPos)
+	{
         this.x = blockPos.x >> 4; // Same as div 16
         this.z = blockPos.z >> 4; // Same as div 16
     }
-    public DhChunkPos(DhBlockPos2D blockPos) {
+    public DhChunkPos(DhBlockPos2D blockPos)
+	{
         this.x = blockPos.x >> 4; // Same as div 16
         this.z = blockPos.z >> 4; // Same as div 16
     }
+	public DhChunkPos(long packed) { this(getX(packed), getZ(packed)); }
+	
+	
+	
+	public DhBlockPos center() { return new DhBlockPos(8 + x << 4, 0, 8 + z << 4); }
+    public DhBlockPos corner() { return new DhBlockPos(x << 4, 0, z << 4); }
 
-    public DhBlockPos center() {
-        return new DhBlockPos(8 + x << 4, 0, 8 + z << 4);
-    }
-    public DhBlockPos corner() {
-        return new DhBlockPos(x << 4, 0, z << 4);
-    }
+    public static long toLong(int x, int z) { return ((long)x & 0xFFFFFFFFL) << 32 | (long)z & 0xFFFFFFFFL; }
 
-    public static long toLong(int x, int z) {
-        return ((long)x & 0xFFFFFFFFL) << 32 | (long)z & 0xFFFFFFFFL;
-    }
-
-    public static int getX(long chunkPos) {
-        return (int)(chunkPos >> 32);
-    }
-    public static int getZ(long chunkPos) {
-        return (int)(chunkPos & 0xFFFFFFFFL);
-    }
-
-    public DhChunkPos(long packed) {
-        this(getX(packed), getZ(packed));
-    }
+    public static int getX(long chunkPos) { return (int)(chunkPos >> 32); }
+    public static int getZ(long chunkPos) { return (int)(chunkPos & 0xFFFFFFFFL); }
 
     @Deprecated
-    public int getX()
-    {
-        return x;
-    }
-
+    public int getX() { return x; }
     @Deprecated
-    public int getZ()
-    {
-        return z;
-    }
+    public int getZ() { return z; }
 
-    public int getMinBlockX()
-    {
-        return x << 4;
-    }
-    public int getMinBlockZ()
-    {
-        return z << 4;
-    }
+    public int getMinBlockX() { return x << 4; }
+    public int getMinBlockZ() { return z << 4; }
 
-    public DhBlockPos2D getMinBlockPos() {
-        return new DhBlockPos2D(x<<4, z<<4);
-    }
+    public DhBlockPos2D getMinBlockPos() { return new DhBlockPos2D(x<<4, z<<4); }
 
-    public long getLong() {
-    	return toLong(x, z);
-    }
+    public long getLong() { return toLong(x, z); }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        DhChunkPos that = (DhChunkPos) o;
-        return x == that.x && z == that.z;
-    }
+	public boolean equals(Object obj)
+	{
+		if (this == obj)
+		{
+			return true;
+		}
+		else if (obj == null || getClass() != obj.getClass())
+		{
+			return false;
+		}
+		else
+		{
+			DhChunkPos that = (DhChunkPos) obj;
+			return x == that.x && z == that.z;	
+		}
+	}
 
     @Override
-    public int hashCode() {
-        return Objects.hash(x, z);
-    }
+    public int hashCode() { return Objects.hash(x, z); }
 
     @Override
-    public String toString() {
-    	return "C[" + x + "," + z + "]";
-    }
+    public String toString() { return "C["+x+","+z+"]"; }
+	
+	
+	
+	//=======================//
+	// static helper methods //
+	//=======================//
 
-
-    public static void _DebugCheckPacker(int x, int z, long expected) {
+    public static void _DebugCheckPacker(int x, int z, long expected)
+	{
         long packed = toLong(x, z);
-        if (packed != expected) {
-            throw new IllegalArgumentException("Packed values don't match: " + packed + " != " + expected);
-        }
-        DhChunkPos pos = new DhChunkPos(packed);
-        if (pos.x != x || pos.z != z) {
-            throw new IllegalArgumentException("Values after decode don't match: " + pos + " != " + x + ", " + z);
-        }
+		if (packed != expected)
+		{
+			throw new IllegalArgumentException("Packed values don't match: "+packed+" != "+expected);
+		}
+		
+		DhChunkPos pos = new DhChunkPos(packed);
+		if (pos.x != x || pos.z != z)
+		{
+			throw new IllegalArgumentException("Values after decode don't match: "+pos+" != "+x+", "+z);
+		}
     }
-
+	
+	/** @return true if testPos is within the area defined by the min and max positions. */
+	public static boolean isChunkPosBetween(DhChunkPos minChunkPos, DhChunkPos testPos, DhChunkPos maxChunkPos)
+	{
+		int minChunkX = Math.min(minChunkPos.x, maxChunkPos.x);
+		int minChunkZ = Math.min(minChunkPos.z, maxChunkPos.z);
+		
+		int maxChunkX = Math.max(minChunkPos.x, maxChunkPos.x);
+		int maxChunkZ = Math.max(minChunkPos.z, maxChunkPos.z);
+		
+		return minChunkX <= testPos.x && testPos.x <= maxChunkX &&
+			   minChunkZ <= testPos.z && testPos.z <= maxChunkZ;
+	}
+	
+	
 }
