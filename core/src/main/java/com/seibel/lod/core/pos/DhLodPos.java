@@ -39,7 +39,7 @@ public class DhLodPos implements Comparable<DhLodPos>
     public DhLodUnit getZ() { return new DhLodUnit(this.detailLevel, this.z); }
 	
     public int getBlockWidth() { return this.getBlockWidth(this.detailLevel); }
-	public int getBlockWidth(byte detailLevel)
+	public int getBlockWidth(byte detailLevel) // TODO this needs some documentation or a better name describing what is happening
 	{
 		LodUtil.assertTrue(detailLevel <= this.detailLevel);
 		return BitShiftUtil.powerOfTwo(this.detailLevel - detailLevel);

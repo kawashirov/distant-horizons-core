@@ -29,7 +29,6 @@ import java.util.function.Consumer;
  */
 public class WorldGenerationQueue implements Closeable
 {
-	public static final int SHUTDOWN_TIMEOUT_SEC = 10;
 	public static final int MAX_TASKS_PROCESSED_PER_TICK = 10000;
 	
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
@@ -46,32 +45,31 @@ public class WorldGenerationQueue implements Closeable
 	// FIXME: Concurrency issue on close!
 	// FIXME: This is using up a TONS of time to process!
 	private final ConcurrentSkipListMap<DhLodPos, WorldGenTaskGroup> waitingTaskGroupsByLodPos = new ConcurrentSkipListMap<>(
-			(a, b) ->
+		(aLodPos, bLodPos) ->
+		{
+			// sort based on detail level, higher detailLevels first (less detailed sections first)
+			if (aLodPos.detailLevel != bLodPos.detailLevel)
 			{
-				// sort based on detail level, higher detailLevels first (less detailed sections first)
-				if (a.detailLevel != b.detailLevel)
-				{
-					return a.detailLevel - b.detailLevel;
-				}
-				
-				// sort into layers (or sqaures) around the world origin, closer positions first // (look at the definition of chebyshev distance for an example of what this looks like)
-				// TODO shouldn't we sort based on the player's position, not the world center? Although doing that could potentially cause issues with having to constantly re-sort this list
-				int aDist = a.getCenterBlockPos().toPos2D().chebyshevDist(Pos2D.ZERO);
-				int bDist = b.getCenterBlockPos().toPos2D().chebyshevDist(Pos2D.ZERO);
-				if (aDist != bDist)
-				{
-					return aDist - bDist;
-				}
-				else if (a.x != b.x)
-				{
-					return a.x - b.x;
-				}
-				else
-				{
-				return a.z - b.z;
-				}
+				return aLodPos.detailLevel - bLodPos.detailLevel;
 			}
-	); // Accessed by poller only
+			
+			// sort into layers (or squares) around the world origin, closer positions first // (look at the definition of chebyshev distance for an example of what this looks like)
+			// TODO shouldn't we sort based on the player's position, not the world center? Although doing that could potentially cause issues with having to constantly re-sort this list
+			int aDist = aLodPos.getCenterBlockPos().toPos2D().chebyshevDist(Pos2D.ZERO);
+			int bDist = bLodPos.getCenterBlockPos().toPos2D().chebyshevDist(Pos2D.ZERO);
+			if (aDist != bDist)
+			{
+				return aDist - bDist;
+			}
+			else if (aLodPos.x != bLodPos.x)
+			{
+				return aLodPos.x - bLodPos.x;
+			}
+			else
+			{
+				return aLodPos.z - bLodPos.z;
+			}
+		}); // Accessed by poller only
 	
 	private final ConcurrentHashMap<DhLodPos, InProgressWorldGenTaskGroup> inProgressGenTasksByLodPos = new ConcurrentHashMap<>();
 	
@@ -218,8 +216,11 @@ public class WorldGenerationQueue implements Closeable
 		}
 		
 		
+		// done to prevent generating chunks where the player isn't
+		this.removeOutOfRangeTasks(targetPos);
+		
 		// generate terrain until the generator is asked to stop (if the while loop wasn't done the world generator would run out of tasks and will end up idle)
-		while (!this.generator.isBusy())// && !this.waitingTaskGroupsByLodPos.isEmpty())
+		while (!this.generator.isBusy())// && !this.waitingTaskGroupsByLodPos.isEmpty()) // TODO why is the isEmpty() commented out?
 		{
 			this.removeOutdatedTaskGroups();
 			this.processLooseTasks();
@@ -523,6 +524,8 @@ public class WorldGenerationQueue implements Closeable
 			// Remove the selected task from the waiting list
 			boolean taskRemoved = this.waitingTaskGroupsByLodPos.remove(closestTaskGroup.pos, closestTaskGroup);
 			LodUtil.assertTrue(taskRemoved);
+			 
+			//LOGGER.info("waiting world gen task count: "+this.waitingTaskGroupsByLodPos.size());
 			
 			if (previousInProgressTask != null)
 			{
@@ -555,7 +558,7 @@ public class WorldGenerationQueue implements Closeable
 		LodUtil.assertTrue(dataDetail >= this.minDataDetail && dataDetail <= this.maxDataDetail);
 		
 		DhChunkPos chunkPosMin = new DhChunkPos(pos.getCornerBlockPos());
-		LOGGER.info("Generating section {} with granularity {} at {}", pos, granularity, chunkPosMin);
+		//LOGGER.info("Generating section {} with granularity {} at {}", pos, granularity, chunkPosMin);
 		task.genFuture = startGenerationEvent(this.generator, chunkPosMin, granularity, dataDetail, task.group::accept);
 		task.genFuture.whenComplete((voidObj, exception) ->
 		{
@@ -571,12 +574,72 @@ public class WorldGenerationQueue implements Closeable
 			}
 			else
 			{
-				LOGGER.info("Section generation at "+pos+" completed");
+				//LOGGER.info("Section generation at "+pos+" completed");
 				task.group.generatorTasks.forEach(worldGenTask -> worldGenTask.future.complete(true));
 			}
 			boolean worked = this.inProgressGenTasksByLodPos.remove(pos, task);
 			LodUtil.assertTrue(worked);
 		});
+	}
+	
+	
+	/**
+	 * Removes all {@link WorldGenTask}'s and {@link WorldGenTaskGroup}'s
+	 * that are outside the player's render distance. <br>
+	 * This is done to prevent generating chunks where the player isn't. <br><br>
+	 * 
+	 * TODO it would be better in the long term to query what chunks should be generated each tick
+	 *      instead of keeping a running list of every chunk pos that could ever need generating.
+	 *      Said list can get very long and is often troublesome to use.
+	 */
+	private void removeOutOfRangeTasks(DhBlockPos2D targetBlockPos)
+	{
+		int numberOfTasksRemoved = 0;
+		
+		DhChunkPos targetChunkPos = new DhChunkPos(targetBlockPos);
+		
+		int chunkRenderDistance = Config.Client.Graphics.Quality.lodChunkRenderDistance.get();
+		chunkRenderDistance += 6; // add a buffer where the user can move without clearing any tasks
+		
+		DhChunkPos minChunkPos = new DhChunkPos(targetChunkPos.x - chunkRenderDistance, targetChunkPos.z - chunkRenderDistance);
+		DhChunkPos maxChunkPos = new DhChunkPos(targetChunkPos.x + chunkRenderDistance, targetChunkPos.z + chunkRenderDistance);
+		
+		
+		Iterator<WorldGenTaskGroup> taskGroupIter = this.waitingTaskGroupsByLodPos.values().iterator();
+		
+		// go through each TaskGroup
+		while (taskGroupIter.hasNext())
+		{
+			// go through each WorldGenTask in the TaskGroup
+			WorldGenTaskGroup taskGroup = taskGroupIter.next();
+			Iterator<WorldGenTask> taskIter = taskGroup.generatorTasks.iterator();
+			while (taskIter.hasNext())
+			{
+				// remove this task if it has been garbage collected
+				WorldGenTask task = taskIter.next();
+				DhChunkPos centerChunkPos = new DhChunkPos(task.pos.getCenterBlockPos()); // TODO this assumes the world gen tasks are exactly 1 chunk wide, which isn't always the case. But it works well enough for now
+				
+				if (!DhChunkPos.isChunkPosBetween(minChunkPos, centerChunkPos, maxChunkPos))
+				{
+					taskIter.remove();
+					task.future.complete(false);
+					
+					numberOfTasksRemoved++;
+				}
+			}
+			
+			// remove this group if it is now empty
+			if (taskGroup.generatorTasks.isEmpty())
+			{
+				taskGroupIter.remove();
+			}
+		}
+		
+		
+		if (numberOfTasksRemoved != 0)
+		{
+//			LOGGER.info(numberOfTasksRemoved+" world gen tasks removed.");
+		}
 	}
 	
 	
