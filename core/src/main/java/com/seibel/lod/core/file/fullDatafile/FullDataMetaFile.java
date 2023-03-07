@@ -190,71 +190,71 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 		if (!this.doesFileExist)
 		{
 			this.handler.onCreateDataFile(this)
-					.thenApply((data) -> 
+				.thenApply((data) -> 
+				{
+					this.metaData = makeMetaData(data);
+					return data;
+				})
+				.thenApply((data) -> this.handler.onDataFileLoaded(data, this.metaData, this::saveChanges, this::applyWriteQueue))
+				.whenComplete((fullDataSource, exception) ->
+				{
+					if (exception != null)
 					{
-						this.metaData = makeMetaData(data);
-						return data;
-					})
-					.thenApply((data) -> this.handler.onDataFileLoaded(data, this.metaData, this::saveChanges, this::applyWriteQueue))
-					.whenComplete((fullDataSource, exception) ->
+						LOGGER.error("Uncaught error on creation "+this.file+": ", exception);
+						future.complete(null);
+						this.data.set(null);
+					}
+					else
 					{
-						if (exception != null)
-						{
-							LOGGER.error("Uncaught error on creation "+this.file+": ", exception);
-							future.complete(null);
-							this.data.set(null);
-						}
-						else
-						{
-							future.complete(fullDataSource);
-							new DataObjTracker(fullDataSource);
-							this.data.set(new SoftReference<>(fullDataSource));
-						}
-					});
+						future.complete(fullDataSource);
+						new DataObjTracker(fullDataSource);
+						this.data.set(new SoftReference<>(fullDataSource));
+					}
+				});
 		}
 		else
 		{
 			CompletableFuture.supplyAsync(() ->
+				{
+					if (this.metaData == null)
 					{
-						if (this.metaData == null)
-						{
-							throw new IllegalStateException("Meta data not loaded!"); // TODO should this be a CompletionException?
-						}
-						
-						// Load the file.
-						IFullDataSource data;
-						try (FileInputStream inputStream = this.getDataContent())
-						{
-							data = this.loader.loadData(this, inputStream, this.level);
-						}
-						catch (Exception e)
-						{
-							// can happen if there is a missing file or the file was incorrectly formatted
-							throw new CompletionException(e);
-						}
-						
-						// Apply the write queue
-						LodUtil.assertTrue(this.inCacheWriteAccessFuture.get() == null,
-								"No one should be writing to the cache while we are in the process of " +
-										"loading one into the cache! Is this a deadlock?");
-						
-						data = this.handler.onDataFileLoaded(data, this.metaData, this::saveChanges, this::applyWriteQueue);
-						return data;
-					}, this.handler.getIOExecutor())
-					.exceptionally((e) ->
+						throw new IllegalStateException("Meta data not loaded!"); // TODO should this be a CompletionException?
+					}
+					
+					// Load the file.
+					IFullDataSource data;
+					try (FileInputStream inputStream = this.getDataContent())
 					{
-						LOGGER.error("Error loading file {}: ", this.file, e);
-						this.data.set(null);
-						
-						future.completeExceptionally(e);
-						return null; // the return value here doesn't matter
-					})
-					.whenComplete((dataSource, e) -> 
+						data = this.loader.loadData(this, inputStream, this.level);
+					}
+					catch (Exception e)
 					{
-						future.complete(dataSource);
-						new DataObjTracker(dataSource);
-						this.data.set(new SoftReference<>(dataSource));
-					});
+						// can happen if there is a missing file or the file was incorrectly formatted
+						throw new CompletionException(e);
+					}
+					
+					// Apply the write queue
+					LodUtil.assertTrue(this.inCacheWriteAccessFuture.get() == null,
+							"No one should be writing to the cache while we are in the process of " +
+									"loading one into the cache! Is this a deadlock?");
+					
+					data = this.handler.onDataFileLoaded(data, this.metaData, this::saveChanges, this::applyWriteQueue);
+					return data;
+				}, this.handler.getIOExecutor())
+				.exceptionally((e) ->
+				{
+					LOGGER.error("Error loading file {}: ", this.file, e);
+					this.data.set(null);
+					
+					future.completeExceptionally(e);
+					return null; // the return value here doesn't matter
+				})
+				.whenComplete((dataSource, e) -> 
+				{
+					future.complete(dataSource);
+					new DataObjTracker(dataSource);
+					this.data.set(new SoftReference<>(dataSource));
+				});
 		}
 		
 		// Would use CompletableFuture.completeAsync(...), But, java 8 doesn't have it! :(

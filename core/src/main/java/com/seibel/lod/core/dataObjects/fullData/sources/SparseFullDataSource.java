@@ -405,7 +405,6 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 					// get the column data
 					for (int x = 0; x < dataColumn.length; x++)
 					{
-						
 						if (dataColumn[x].length != 0)
 						{
 							// read in the data columns
