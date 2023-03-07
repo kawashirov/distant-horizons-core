@@ -349,7 +349,7 @@ public class ColumnRenderSource
 					//LOGGER.info("attempting to build buffer for: "+renderSection.pos);
 				}
 			}
-			this.buildRenderBufferFuture = ColumnRenderBuffer.build(level, this.columnRenderBufferRef, this, columnRenderSources);
+			this.buildRenderBufferFuture = ColumnRenderBuffer.buildBuffers(level, this.columnRenderBufferRef, this, columnRenderSources);
 		}
 	}
 	

@@ -64,9 +64,13 @@ public enum EGpuUploadMethod
 	 */
 	DATA(false, false);
 	
+	
+	
 	public final boolean useEarlyMapping;
 	public final boolean useBufferStorage;
-	EGpuUploadMethod(boolean useEarlyMapping, boolean useBufferStorage) {
+	
+	EGpuUploadMethod(boolean useEarlyMapping, boolean useBufferStorage)
+	{
 		this.useEarlyMapping = useEarlyMapping;
 		this.useBufferStorage = useBufferStorage;
 	}

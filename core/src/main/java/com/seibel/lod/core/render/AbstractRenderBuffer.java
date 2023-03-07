@@ -30,9 +30,9 @@ public abstract class AbstractRenderBuffer implements AutoCloseable
 	// ======================================================================
 
 	// ========== Called by render thread ==========
-	/* Called on... well... rendering.
-	 * Return false if nothing rendered. (Optional) */
+	/** @return true if something was rendered, false otherwise */
 	public abstract boolean renderOpaque(LodRenderer renderContext);
+	/** @return true if something was rendered, false otherwise */
 	public abstract boolean renderTransparent(LodRenderer renderContext);
 
 	// ========== Called by any thread. (thread safe) ==========
