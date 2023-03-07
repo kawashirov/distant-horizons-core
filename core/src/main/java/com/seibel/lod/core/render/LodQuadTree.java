@@ -413,11 +413,12 @@ public class LodQuadTree implements AutoCloseable
 						if (section != null && targetDetailLevel > this.getLayerDataDetail(sectionDetailLevel))
 						{
 							// this section is a higher detail level than we want, mark it for deletion
+							section.childCount = -1;
+							
 							if (SUPER_VERBOSE_LOGGING)
 							{
 								LOGGER.info("sect "+sectPos+" in top detail level & target>current. Mark as free.");
 							}
-							section.childCount = -1;
 						}
 						
 						if (section == null && targetDetailLevel <= this.getLayerDataDetail(sectionDetailLevel))
@@ -581,7 +582,11 @@ public class LodQuadTree implements AutoCloseable
 					
 					if (section.pos.sectionDetailLevel < this.treeMaxDetailLevel)
 					{
-						LodUtil.assertTrue(this.getParentSection(section.pos).childCount == 0);
+						int parentChildCount = this.getParentSection(section.pos).childCount;
+						if (parentChildCount != 0 && parentChildCount != -1)
+						{
+							LodUtil.assertNotReach("Incorrect section removal. Parent has ["+parentChildCount+"] children, expected [0] (empty parent) or [-1] (parent also marked for deletion).");
+						}
 					}
 					
 					ringList.remove(pos.x, pos.y);
