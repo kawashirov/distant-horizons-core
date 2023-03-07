@@ -48,8 +48,10 @@ public class LodQuadTree implements AutoCloseable
     public final byte getLayerSectionDetail(byte dataDetail) { return (byte) (dataDetail + this.getLayerSectionDetailOffset()); }
 	
 	
-	/** AKA how many detail levels are in this quad tree, adding this to the {@link LodQuadTree#TREE_LOWEST_DETAIL_LEVEL} is equivalent to the maximum detail level in this tree */
+	/** AKA how many detail levels are in this quad tree */
     public final byte numbersOfSectionDetailLevels;
+	/** related to {@link LodQuadTree#numbersOfSectionDetailLevels}, the largest number detail level in this tree. */
+    public final byte treeMaxDetailLevel;
 	
     private final MovableGridRingList<LodRenderSection>[] renderSectionRingLists;
 	
@@ -90,8 +92,8 @@ public class LodQuadTree implements AutoCloseable
         // Calculate the max section detail level //
 		
 		byte maxDetailLevel = this.getMaxDetailInRange(viewDistance * Math.sqrt(2));
-		byte topSectionDetailLevel = this.getLayerSectionDetail(maxDetailLevel);
-		this.numbersOfSectionDetailLevels = (byte) (topSectionDetailLevel + 1);
+		this.treeMaxDetailLevel = this.getLayerSectionDetail(maxDetailLevel);
+		this.numbersOfSectionDetailLevels = (byte) (this.treeMaxDetailLevel + 1);
 		this.renderSectionRingLists = new MovableGridRingList[this.numbersOfSectionDetailLevels - TREE_LOWEST_DETAIL_LEVEL];
         
 		
@@ -293,7 +295,7 @@ public class LodQuadTree implements AutoCloseable
 			
 			// child and parent are relative to the detail level
 			final MovableGridRingList<LodRenderSection> childRingList = (sectionDetailLevel == TREE_LOWEST_DETAIL_LEVEL) ? null : this.renderSectionRingLists[sectionDetailLevel- TREE_LOWEST_DETAIL_LEVEL -1];
-			final MovableGridRingList<LodRenderSection> parentRingList = (sectionDetailLevel == this.numbersOfSectionDetailLevels-1) ? null : this.renderSectionRingLists[sectionDetailLevel- TREE_LOWEST_DETAIL_LEVEL +1];
+			final MovableGridRingList<LodRenderSection> parentRingList = (sectionDetailLevel == this.treeMaxDetailLevel) ? null : this.renderSectionRingLists[sectionDetailLevel- TREE_LOWEST_DETAIL_LEVEL +1];
 			
 			
 			ringList.forEachPosOrdered((section, pos) ->
@@ -398,12 +400,12 @@ public class LodQuadTree implements AutoCloseable
 					byte targetDetailLevel = this.calculateExpectedDetailLevel(playerPos, sectPos);
 					if (SUPER_VERBOSE_LOGGING)
 					{
-						String layerDetailLevel = (sectionDetailLevel == this.numbersOfSectionDetailLevels-1) ? "N/A" : this.getLayerDataDetail((byte) (sectionDetailLevel+1))+"";
+						String layerDetailLevel = (sectionDetailLevel == this.treeMaxDetailLevel) ? "N/A" : this.getLayerDataDetail((byte) (sectionDetailLevel+1))+"";
 						LOGGER.info("0 child sect "+sectPos+"(null?"+(section==null)+") - target:"+targetDetailLevel+"/"+this.getLayerDataDetail(sectionDetailLevel)+" (parent:"+layerDetailLevel+")");
 					}
 					
 					
-					if (sectionDetailLevel == this.numbersOfSectionDetailLevels-1) // TODO equivalent to ... == treeMaxDetailLevel
+					if (sectionDetailLevel == this.treeMaxDetailLevel)
 					{
 						// Render Section is at the top detail level.
 						
@@ -577,7 +579,7 @@ public class LodQuadTree implements AutoCloseable
 				{
 					// dispose the old section
 					
-					if (section.pos.sectionDetailLevel < this.numbersOfSectionDetailLevels-1)
+					if (section.pos.sectionDetailLevel < this.treeMaxDetailLevel)
 					{
 						LodUtil.assertTrue(this.getParentSection(section.pos).childCount == 0);
 					}
