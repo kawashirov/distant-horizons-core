@@ -378,10 +378,10 @@ public class Config
                         .build();
 
                 public static ConfigEntry<EVanillaOverdraw> vanillaOverdraw = new ConfigEntry.Builder<EVanillaOverdraw>()
-                        .set(EVanillaOverdraw.DYNAMIC)
+                        .set(EVanillaOverdraw.ALWAYS)
                         .comment(""
-                                + "How often should LODs be drawn on top of regular chunks? \n"
-                                + "HALF and ALWAYS will prevent holes in the world, \n"
+                                + " How often should LODs be drawn on top of regular chunks? \n"
+                                + " ALWAYS will prevent holes in the world, \n"
                                 + " but may look odd for transparent blocks or in caves. \n"
                                 + "\n"
                                 + EVanillaOverdraw.NEVER + ": \n"
