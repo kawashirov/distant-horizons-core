@@ -53,20 +53,20 @@ public class Config
 
     // Since the original config system uses forge stuff, that means we have to rewrite the whole config system
 
-    public static ConfigCategory client = new ConfigCategory.Builder().set(Client.class).build();
+    private static final ConfigCategory client = new ConfigCategory.Builder().set(Client.class).build();
 
 
     public static class Client
     {
-        public static ConfigCategory graphics = new ConfigCategory.Builder().set(Graphics.class).build();
+        private static final ConfigCategory graphics = new ConfigCategory.Builder().set(Graphics.class).build();
 
-        public static ConfigCategory worldGenerator = new ConfigCategory.Builder().set(WorldGenerator.class).build();
+        private static final ConfigCategory worldGenerator = new ConfigCategory.Builder().set(WorldGenerator.class).build();
 
-        public static ConfigCategory multiplayer = new ConfigCategory.Builder().set(Multiplayer.class).build();
+        private static final ConfigCategory multiplayer = new ConfigCategory.Builder().set(Multiplayer.class).build();
 
-        public static ConfigCategory advanced = new ConfigCategory.Builder().set(Advanced.class).build();
+        private static final ConfigCategory advanced = new ConfigCategory.Builder().set(Advanced.class).build();
 
-        public static ConfigCategory autoUpdater =  new ConfigCategory.Builder().set(AutoUpdater.class).build();
+        private static final ConfigCategory autoUpdater =  new ConfigCategory.Builder().set(AutoUpdater.class).build();
 
         public static ConfigEntry<Boolean> optionsButton = new ConfigEntry.Builder<Boolean>()
                 .set(true)
@@ -80,11 +80,12 @@ public class Config
 
         public static class Graphics
         {
-            public static ConfigCategory quality = new ConfigCategory.Builder().set(Quality.class).build();
+			// TODO make these private?
+            private static final ConfigCategory quality = new ConfigCategory.Builder().set(Quality.class).build();
 
-            public static ConfigCategory fogQuality = new ConfigCategory.Builder().set(FogQuality.class).build();
+            private static final ConfigCategory fogQuality = new ConfigCategory.Builder().set(FogQuality.class).build();
 
-            public static ConfigCategory advancedGraphics = new ConfigCategory.Builder().set(AdvancedGraphics.class).build();
+            private static final ConfigCategory advancedGraphics = new ConfigCategory.Builder().set(AdvancedGraphics.class).build();
 
 
             public static class Quality
@@ -204,7 +205,7 @@ public class Config
                                 + "Experimental! Mod support is not guarantee.")
                         .build();
 
-                public static ConfigCategory advancedFog = new ConfigCategory.Builder().set(AdvancedFog.class).build();
+                private static final ConfigCategory advancedFog = new ConfigCategory.Builder().set(AdvancedFog.class).build();
 
 
                 public static class AdvancedFog {
@@ -265,7 +266,7 @@ public class Config
                             .comment("What is the fog density?")
                             .build();
 
-                    public static ConfigCategory heightFog = new ConfigCategory.Builder().set(HeightFog.class).build();
+                    private static final ConfigCategory heightFog = new ConfigCategory.Builder().set(HeightFog.class).build();
 
 
                     public static class HeightFog {
@@ -480,7 +481,7 @@ public class Config
 
 
 
-                public static ConfigCategory noiseSettings = new ConfigCategory.Builder().set(NoiseSettings.class).build();
+                private static final ConfigCategory noiseSettings = new ConfigCategory.Builder().set(NoiseSettings.class).build();
 
 
                 public static class NoiseSettings
@@ -675,11 +676,11 @@ public class Config
 
         public static class Advanced
         {
-            public static ConfigCategory threading = new ConfigCategory.Builder().set(Threading.class).build();
+            private static final ConfigCategory threading = new ConfigCategory.Builder().set(Threading.class).build();
 
-            public static ConfigCategory debugging = new ConfigCategory.Builder().set(Debugging.class).build();
+            private static final ConfigCategory debugging = new ConfigCategory.Builder().set(Debugging.class).build();
 
-            public static ConfigCategory buffers = new ConfigCategory.Builder().set(Buffers.class).build();
+            private static final ConfigCategory buffers = new ConfigCategory.Builder().set(Buffers.class).build();
 
             public static ConfigEntry<Boolean> lodOnlyMode = new ConfigEntry.Builder<Boolean>()
                     .set(false)
@@ -772,7 +773,7 @@ public class Config
                                 + " and the F6 key can be used to enable and disable LOD rendering.")
                         .build();
 
-                public static ConfigCategory debugSwitch = new ConfigCategory.Builder().set(DebugSwitch.class).build();
+                private static final ConfigCategory debugSwitch = new ConfigCategory.Builder().set(DebugSwitch.class).build();
 
 
                 public static class DebugSwitch {
