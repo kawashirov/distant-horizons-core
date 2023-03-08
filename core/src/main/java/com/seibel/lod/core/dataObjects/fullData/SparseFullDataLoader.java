@@ -15,7 +15,7 @@ public class SparseFullDataLoader extends AbstractFullDataSourceLoader
 	}
 
     @Override
-	public IFullDataSource loadData(FullDataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException
+	public IFullDataSource loadData(FullDataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException, InterruptedException
 	{
 		return SparseFullDataSource.loadData(dataFile, data, level);
 	}

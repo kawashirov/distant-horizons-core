@@ -178,7 +178,7 @@ public class FullDataSource extends FullArrayView implements IFullDataSource
 	}
 	
 	
-	public static FullDataSource loadData(FullDataMetaFile dataFile, InputStream dataStream, IDhLevel level) throws IOException
+	public static FullDataSource loadData(FullDataMetaFile dataFile, InputStream dataStream, IDhLevel level) throws IOException, InterruptedException
 	{
 		DataInputStream dos = new DataInputStream(dataStream); // DO NOT CLOSE
 		{

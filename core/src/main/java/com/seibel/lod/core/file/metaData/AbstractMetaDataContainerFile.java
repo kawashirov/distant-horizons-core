@@ -4,6 +4,7 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ClosedByInterruptException;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -240,7 +241,7 @@ public abstract class AbstractMetaDataContainerFile
 				//LOGGER.info("replaced file: "+this.file.toPath());
 			}
 		}
-		catch (ClosedByInterruptException e)
+		catch (ClosedChannelException e) // includes ClosedByInterruptException
 		{
 			// expected if the file handler is shut down, the exception can be ignored
 //			LOGGER.warn(AbstractMetaDataContainerFile.class.getSimpleName()+" file writing interrupted.");

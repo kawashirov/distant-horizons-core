@@ -119,7 +119,7 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
     }
 
 
-    public static SingleChunkFullDataSource loadData(FullDataMetaFile dataFile, InputStream dataStream, IDhLevel level) throws IOException
+    public static SingleChunkFullDataSource loadData(FullDataMetaFile dataFile, InputStream dataStream, IDhLevel level) throws IOException, InterruptedException
 	{
         DataInputStream dos = new DataInputStream(dataStream); // DO NOT CLOSE
         {

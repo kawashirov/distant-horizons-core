@@ -15,7 +15,7 @@ public class FullDataLoader extends AbstractFullDataSourceLoader
     }
 	
     @Override
-    public IFullDataSource loadData(FullDataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException
+    public IFullDataSource loadData(FullDataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException, InterruptedException
 	{
         //TODO: Add decompressor here
         return FullDataSource.loadData(dataFile, data, level);

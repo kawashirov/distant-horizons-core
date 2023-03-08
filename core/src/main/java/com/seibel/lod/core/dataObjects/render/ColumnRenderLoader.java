@@ -57,9 +57,7 @@ public class ColumnRenderLoader
 		}
     }
 	
-	/** 
-	 * @throws InterruptedException see {@link FullToColumnTransformer#transformFullDataToColumnData(IDhClientLevel, FullDataSource) FullToColumnTransformer#transformFullDataToColumnData} for documentation
-	 */
+	/** @throws InterruptedException see {@link FullToColumnTransformer#transformFullDataToColumnData(IDhClientLevel, FullDataSource) FullToColumnTransformer#transformFullDataToColumnData} for documentation */
     public ColumnRenderSource createRenderSource(IFullDataSource dataSource, IDhClientLevel level) throws InterruptedException
 	{
 		if (dataSource instanceof FullDataSource)

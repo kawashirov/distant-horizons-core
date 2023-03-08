@@ -14,7 +14,8 @@ public class SingleChunkFullDataLoader extends AbstractFullDataSourceLoader
     }
 
     @Override
-    public IFullDataSource loadData(FullDataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException {
+    public IFullDataSource loadData(FullDataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException, InterruptedException
+	{
         return SingleChunkFullDataSource.loadData(dataFile, data, level);
     }
 }

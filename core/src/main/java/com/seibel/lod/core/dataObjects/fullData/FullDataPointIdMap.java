@@ -1,5 +1,6 @@
 package com.seibel.lod.core.dataObjects.fullData;
 
+import com.seibel.lod.core.dataObjects.transformers.FullToColumnTransformer;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
@@ -71,7 +72,7 @@ public class FullDataPointIdMap
 	}
 	
 	/** Creates a new IdBiomeBlockStateMap from the given UTF formatted stream */
-	public static FullDataPointIdMap deserialize(InputStream inputStream) throws IOException
+	public static FullDataPointIdMap deserialize(InputStream inputStream) throws IOException, InterruptedException
 	{
 		DataInputStream dataStream = new DataInputStream(inputStream); // DO NOT CLOSE! It would close all related streams
 		int entityCount = dataStream.readInt();
@@ -136,11 +137,19 @@ public class FullDataPointIdMap
 		
 		public String serialize() { return this.biome.serialize() + " " + this.blockState.serialize(); }
 		
-		public static Entry deserialize(String str) throws IOException
+		public static Entry deserialize(String str) throws IOException, InterruptedException
 		{
 			String[] stringArray = str.split(" ");
 			if (stringArray.length != 2)
+			{
 				throw new IOException("Failed to deserialize BiomeBlockStateEntry");
+			}
+			
+			// necessary to prevent issues with deserializing objects after the level has been closed
+			if (Thread.interrupted())
+			{
+				throw new InterruptedException(FullDataPointIdMap.class.getSimpleName()+" task interrupted.");
+			}
 			
 			IBiomeWrapper biome = WRAPPER_FACTORY.deserializeBiomeWrapper(stringArray[0]);
 			IBlockStateWrapper blockState = WRAPPER_FACTORY.deserializeBlockStateWrapper(stringArray[1]);

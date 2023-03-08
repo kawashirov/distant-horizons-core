@@ -24,6 +24,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 
 public class RenderSourceFileHandler implements ILodRenderSourceProvider
 {
@@ -273,16 +274,16 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		
 		final WeakReference<ColumnRenderSource> renderSourceReference = new WeakReference<>(renderSource); // TODO why is this a week reference?
 		CompletableFuture<IFullDataSource> fullDataSourceFuture = this.fullDataSourceProvider.read(renderSource.getSectionPos());
-		fullDataSourceFuture = fullDataSourceFuture.thenApply((dataSource) -> 
+		fullDataSourceFuture = fullDataSourceFuture.thenApply((fullDataSource) -> 
 			{
 				if (renderSourceReference.get() == null)
 				{
 					throw new UncheckedInterruptedException();
 				}
-				LodUtil.assertTrue(dataSource != null);
-				return dataSource;
-			}
-			).exceptionally((ex) -> 
+				
+				// the fullDataSource can be null if the thread this was running on was interrupted
+				return fullDataSource;
+			}).exceptionally((ex) -> 
 			{
 				LOGGER.error("Exception when getting data for updateCache()", ex);
 				return null;
@@ -296,6 +297,11 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 					if (ex instanceof InterruptedException)
 					{
 						// expected if the transformer is shut down, the exception can be ignored
+//						LOGGER.warn("RenderSource file transforming interrupted.");
+					}
+					else if (ex instanceof RejectedExecutionException || ex.getCause() instanceof RejectedExecutionException)
+					{
+						// expected if the transformer was already shut down, the exception can be ignored
 //						LOGGER.warn("RenderSource file transforming interrupted.");
 					}
 					else if (!UncheckedInterruptedException.isThrowableInterruption(ex))

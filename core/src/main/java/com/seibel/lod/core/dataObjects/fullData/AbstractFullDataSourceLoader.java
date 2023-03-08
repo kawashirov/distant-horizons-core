@@ -1,6 +1,9 @@
 package com.seibel.lod.core.dataObjects.fullData;
 
 import com.google.common.collect.HashMultimap;
+import com.seibel.lod.core.dataObjects.fullData.sources.FullDataSource;
+import com.seibel.lod.core.dataObjects.transformers.FullToColumnTransformer;
+import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 
@@ -52,8 +55,11 @@ public abstract class AbstractFullDataSourceLoader
 		loaderRegistry.put(clazz, this);
 	}
 	
-	/** Can return null as meaning the requirement is not met */
-	public abstract IFullDataSource loadData(FullDataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException;
+	/** 
+	 * Can return null if any of the requirements aren't met.
+	 * @throws InterruptedException if the loader thread is interrupted, generally happens when the level is shutting down
+	 */
+	public abstract IFullDataSource loadData(FullDataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException, InterruptedException;
 	
 	
 	

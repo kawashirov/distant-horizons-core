@@ -227,10 +227,16 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 					{
 						data = this.loader.loadData(this, inputStream, this.level);
 					}
-					catch (Exception e)
+					catch (Exception ex)
 					{
+						if (ex instanceof InterruptedException)
+						{
+//							LOGGER.warn(FullDataMetaFile.class.getSimpleName()+" loadOrGetCachedAsync interrupted.");
+							return null;
+						}
+						
 						// can happen if there is a missing file or the file was incorrectly formatted
-						throw new CompletionException(e);
+						throw new CompletionException(ex);
 					}
 					
 					// Apply the write queue
@@ -241,12 +247,26 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 					data = this.handler.onDataFileLoaded(data, this.metaData, this::saveChanges, this::applyWriteQueue);
 					return data;
 				}, this.handler.getIOExecutor())
-				.exceptionally((e) ->
+				.exceptionally((ex) ->
 				{
-					LOGGER.error("Error loading file {}: ", this.file, e);
+					if (ex instanceof InterruptedException)
+					{
+						//LOGGER.warn(FullDataMetaFile.class.getSimpleName()+" loadOrGetCachedAsync interrupted.");
+						//future.completeExceptionally(ex); // this exception can be ignored
+						return null;
+					}
+					else if (ex instanceof RejectedExecutionException)
+					{
+						//LOGGER.warn(FullDataMetaFile.class.getSimpleName()+" loadOrGetCachedAsync attempted to use a closed thread pool.");
+						//future.completeExceptionally(ex); // this exception can be ignored
+						return null;
+					}
+					
+					
+					LOGGER.error("Error loading file {}: ", this.file, ex);
 					this.data.set(null);
 					
-					future.completeExceptionally(e);
+					future.completeExceptionally(ex);
 					return null; // the return value here doesn't matter
 				})
 				.whenComplete((dataSource, e) -> 
