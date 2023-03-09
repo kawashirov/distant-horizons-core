@@ -11,7 +11,7 @@ import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.LodUtil;
-import com.seibel.lod.core.util.objects.UnclosableInputStream;
+import com.seibel.lod.core.util.objects.DhUnclosableInputStream;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
@@ -180,7 +180,7 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
             if (end != 0xFFFFFFFF) 
 				throw new IOException("invalid data content end guard");
 			
-            FullDataPointIdMap mapping = FullDataPointIdMap.deserialize(new UnclosableInputStream(dos));
+            FullDataPointIdMap mapping = FullDataPointIdMap.deserialize(new DhUnclosableInputStream(dos));
             end = dos.readInt();
             if (end != 0xFFFFFFFF)
 				throw new IOException("invalid id mapping end guard");

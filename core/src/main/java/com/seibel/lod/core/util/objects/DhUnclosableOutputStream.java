@@ -4,8 +4,8 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class UnclosableOutputStream extends FilterOutputStream {
-    public UnclosableOutputStream(OutputStream it) {
+public class DhUnclosableOutputStream extends FilterOutputStream {
+    public DhUnclosableOutputStream(OutputStream it) {
         super(it);
     }
     @Override

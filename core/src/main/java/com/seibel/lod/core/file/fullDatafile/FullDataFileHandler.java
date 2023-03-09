@@ -427,7 +427,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
             IFullDataSource sourceLocal = source;
 			
             boolean changed = updater.apply(sourceLocal);
-//            if (changed)
+//          if (changed)
 //			{
 //				metaData.dataVersion.incrementAndGet();
 //			}
@@ -439,6 +439,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
                 changed |= newSource != sourceLocal;
                 sourceLocal = newSource;
             }
+			
             if (changed)
 			{
 				onUpdated.accept(sourceLocal);

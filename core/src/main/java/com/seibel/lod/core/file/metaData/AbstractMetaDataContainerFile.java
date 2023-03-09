@@ -3,7 +3,6 @@ package com.seibel.lod.core.file.metaData;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
-import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileAlreadyExistsException;
@@ -15,7 +14,7 @@ import java.util.zip.CheckedOutputStream;
 
 import com.seibel.lod.core.util.FileUtil;
 import com.seibel.lod.core.pos.DhSectionPos;
-import com.seibel.lod.core.util.objects.UnclosableOutputStream;
+import com.seibel.lod.core.util.objects.DhUnclosableOutputStream;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
@@ -51,7 +50,8 @@ public abstract class AbstractMetaDataContainerFile
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     
-    public static final int METADATA_SIZE = 64;
+    public static final int METADATA_SIZE_IN_BYTES = 64;
+//    public static final int BUFFER_SIZE = 8192;
     public static final int METADATA_RESERVED_SIZE = 24;
 	/** equivalent to "DHv0" */
     public static final int METADATA_IDENTITY_BYTES = 0x44_48_76_30;
@@ -119,7 +119,7 @@ public abstract class AbstractMetaDataContainerFile
 	{
         try (FileChannel channel = FileChannel.open(file.toPath(), StandardOpenOption.READ))
 		{
-            ByteBuffer byteBuffer = ByteBuffer.allocate(METADATA_SIZE);
+            ByteBuffer byteBuffer = ByteBuffer.allocate(METADATA_SIZE_IN_BYTES);
             channel.read(byteBuffer, 0);
             channel.close();
             byteBuffer.flip();
@@ -203,20 +203,21 @@ public abstract class AbstractMetaDataContainerFile
 		
 		try (FileChannel file = FileChannel.open(tempFile.toPath(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))
 		{
-			file.position(METADATA_SIZE);
+			file.position(METADATA_SIZE_IN_BYTES);
 			int checksum;
-			try (OutputStream channelOut = new UnclosableOutputStream(Channels.newOutputStream(file)); // Prevent closing the channel
+			try (OutputStream channelOut = new DhUnclosableOutputStream(Channels.newOutputStream(file)); // Prevent closing the channel
 					BufferedOutputStream bufferedOut = new BufferedOutputStream(channelOut); // TODO: Is default buffer size ok? Do we even need to buffer?
 					CheckedOutputStream checkedOut = new CheckedOutputStream(bufferedOut, new Adler32()))
-			{ 
+			{
 				// TODO: Is Adler32 ok?
 				dataWriterFunc.writeBufferToFile(checkedOut);
 				checksum = (int) checkedOut.getChecksum().getValue();
 			}
 			
+			
 			file.position(0);
 			// Write metadata
-			ByteBuffer buff = ByteBuffer.allocate(METADATA_SIZE);
+			ByteBuffer buff = ByteBuffer.allocate(METADATA_SIZE_IN_BYTES);
 			buff.putInt(METADATA_IDENTITY_BYTES);
 			buff.putInt(this.pos.sectionX);
 			buff.putInt(Integer.MIN_VALUE); // Unused

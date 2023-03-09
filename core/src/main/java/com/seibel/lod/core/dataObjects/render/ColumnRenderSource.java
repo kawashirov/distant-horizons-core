@@ -202,6 +202,11 @@ public class ColumnRenderSource
 	// data update and output //
 	//========================//
 	
+	public void saveRender(IDhClientLevel level, RenderMetaDataFile file, OutputStream dataStream) throws IOException
+	{
+		DataOutputStream dos = new DataOutputStream(dataStream); // DO NOT CLOSE
+		this.writeData(dos);
+	}
 	void writeData(DataOutputStream outputStream) throws IOException
 	{
 		outputStream.writeByte(this.getDataDetail());
@@ -427,12 +432,6 @@ public class ColumnRenderSource
 		}
 		
 		return false;
-	}
-	
-	public void saveRender(IDhClientLevel level, RenderMetaDataFile file, OutputStream dataStream) throws IOException
-	{
-		DataOutputStream dos = new DataOutputStream(dataStream); // DO NOT CLOSE
-		this.writeData(dos);
 	}
 	
 	public byte getRenderVersion() { return DATA_FORMAT_VERSION; }

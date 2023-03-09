@@ -10,7 +10,7 @@ import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.BitShiftUtil;
-import com.seibel.lod.core.util.objects.UnclosableInputStream;
+import com.seibel.lod.core.util.objects.DhUnclosableInputStream;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
@@ -245,7 +245,7 @@ public class FullDataSource extends FullArrayView implements IFullDataSource
 				throw new IOException("invalid data content end guard");
 			}
 			
-			FullDataPointIdMap mapping = FullDataPointIdMap.deserialize(new UnclosableInputStream(dos));
+			FullDataPointIdMap mapping = FullDataPointIdMap.deserialize(new DhUnclosableInputStream(dos));
 			end = dos.readInt();
 			if (end != 0xFFFFFFFF)
 			{

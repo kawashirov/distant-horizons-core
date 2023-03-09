@@ -420,7 +420,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 	private FileInputStream getDataContent() throws IOException
 	{
 		FileInputStream fin = new FileInputStream(this.file);
-		int toSkip = METADATA_SIZE;
+		int toSkip = METADATA_SIZE_IN_BYTES;
 		while (toSkip > 0)
 		{
 			long skipped = fin.skip(toSkip);
