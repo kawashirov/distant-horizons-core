@@ -129,52 +129,52 @@ public class FullDataSource extends FullArrayView implements IFullDataSource
     public void markNotEmpty() { this.isEmpty = false; }
 	
 	@Override
-	public void saveData(IDhLevel level, FullDataMetaFile file, OutputStream dataStream) throws IOException
+	public void saveData(IDhLevel level, FullDataMetaFile file, BufferedOutputStream bufferedOutputStream) throws IOException
 	{
-		DataOutputStream dos = new DataOutputStream(dataStream); // DO NOT CLOSE
+		DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream); // DO NOT CLOSE
+		
+		
+		dataOutputStream.writeInt(this.getDataDetail());
+		dataOutputStream.writeInt(this.size);
+		dataOutputStream.writeInt(level.getMinY());
+		if (this.isEmpty)
 		{
-			dos.writeInt(this.getDataDetail());
-			dos.writeInt(this.size);
-			dos.writeInt(level.getMinY());
-			if (this.isEmpty)
-			{
-				dos.writeInt(0x00000001);
-				return;
-			}
-			dos.writeInt(0xFFFFFFFF);
-			
-			// Data array length
-			for (int x = 0; x < this.size; x++)
-			{
-				for (int z = 0; z < this.size; z++)
-				{
-					dos.writeInt(this.get(x, z).getSingleLength());
-				}
-			}
-			
-			// Data array content (only on non-empty columns)
-			dos.writeInt(0xFFFFFFFF);
-			for (int x = 0; x < this.size; x++)
-			{
-				for (int z = 0; z < this.size; z++)
-				{
-					SingleFullArrayView column = this.get(x, z);
-					if (!column.doesItExist())
-						continue;
-					
-					long[] raw = column.getRaw();
-					for (long l : raw)
-					{
-						dos.writeLong(l);
-					}
-				}
-			}
-			
-			// Id mapping
-			dos.writeInt(0xFFFFFFFF);
-			this.mapping.serialize(dos);
-			dos.writeInt(0xFFFFFFFF);
+			dataOutputStream.writeInt(0x00000001);
+			return;
 		}
+		dataOutputStream.writeInt(0xFFFFFFFF);
+		
+		// Data array length
+		for (int x = 0; x < this.size; x++)
+		{
+			for (int z = 0; z < this.size; z++)
+			{
+				dataOutputStream.writeInt(this.get(x, z).getSingleLength());
+			}
+		}
+		
+		// Data array content (only on non-empty columns)
+		dataOutputStream.writeInt(0xFFFFFFFF);
+		for (int x = 0; x < this.size; x++)
+		{
+			for (int z = 0; z < this.size; z++)
+			{
+				SingleFullArrayView column = this.get(x, z);
+				if (!column.doesItExist())
+					continue;
+				
+				long[] raw = column.getRaw();
+				for (long l : raw)
+				{
+					dataOutputStream.writeLong(l);
+				}
+			}
+		}
+		
+		// Id mapping
+		dataOutputStream.writeInt(0xFFFFFFFF);
+		this.mapping.serialize(bufferedOutputStream);
+		dataOutputStream.writeInt(0xFFFFFFFF);
 	}
 	
 	

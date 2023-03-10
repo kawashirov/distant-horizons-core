@@ -310,8 +310,8 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 					}
 					
 					return null;
-				}
-				).thenRun(() -> this.cacheUpdateLockBySectionPos.remove(file.pos));
+				})
+				.thenRun(() -> this.cacheUpdateLockBySectionPos.remove(file.pos));
 	}
 	
     public ColumnRenderSource onRenderFileLoaded(ColumnRenderSource renderSource, RenderMetaDataFile file)
@@ -338,7 +338,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
         file.metaData.dataLevel = currentRenderSource.getDataDetail();
         file.metaData.dataTypeId = RENDER_SOURCE_TYPE_ID;
         file.metaData.loaderVersion = currentRenderSource.getRenderVersion();
-        file.save(currentRenderSource, this.level);
+        file.save(currentRenderSource);
     }
 	
     public void onReadRenderSourceFromCache(RenderMetaDataFile file, ColumnRenderSource data)

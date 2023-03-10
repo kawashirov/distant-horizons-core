@@ -1,5 +1,6 @@
 package com.seibel.lod.core.dataObjects.render;
 
+import com.google.common.primitives.Longs;
 import com.seibel.lod.core.ModInfo;
 import com.seibel.lod.core.dataObjects.render.columnViews.ColumnArrayView;
 import com.seibel.lod.core.dataObjects.render.columnViews.ColumnQuadView;
@@ -202,27 +203,25 @@ public class ColumnRenderSource
 	// data update and output //
 	//========================//
 	
-	public void saveRender(IDhClientLevel level, RenderMetaDataFile file, OutputStream dataStream) throws IOException
+	public void writeData(BufferedOutputStream bufferedOutputStream) throws IOException
 	{
-		DataOutputStream dos = new DataOutputStream(dataStream); // DO NOT CLOSE
-		this.writeData(dos);
-	}
-	void writeData(DataOutputStream outputStream) throws IOException
-	{
-		outputStream.writeByte(this.getDataDetail());
-		outputStream.writeInt(this.verticalDataCount);
+		bufferedOutputStream.flush();
+		DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream);
+		
+		dataOutputStream.writeByte(this.getDataDetail());
+		dataOutputStream.writeInt(this.verticalDataCount);
 		
 		if (this.isEmpty)
 		{
 			// no data is present
-			outputStream.writeByte(NO_DATA_FLAG_BYTE);
+			dataOutputStream.writeByte(NO_DATA_FLAG_BYTE);
 		}
 		else
 		{
 			// data is present
-			outputStream.writeByte(DATA_GUARD_BYTE);
+			dataOutputStream.writeByte(DATA_GUARD_BYTE);
 			
-			outputStream.writeInt(this.yOffset);
+			dataOutputStream.writeInt(this.yOffset);
 			
 			// write the data for each column
 			for (int xz = 0; xz < SECTION_SIZE * SECTION_SIZE; xz++)
@@ -230,10 +229,12 @@ public class ColumnRenderSource
 				for (int y = 0; y < this.verticalDataCount; y++)
 				{
 					long currentDatapoint = this.renderDataContainer[xz * this.verticalDataCount + y];
-					outputStream.writeLong(Long.reverseBytes(currentDatapoint)); // the reverse bytes is necessary to ensure the data is read in correctly
+					dataOutputStream.writeLong(Long.reverseBytes(currentDatapoint)); // the reverse bytes is necessary to ensure the data is read in correctly
 				}
 			}
 		}
+		
+		bufferedOutputStream.flush();
 	}
 	
 	/** Overrides any data that has not been written directly using write(). Skips empty source dataPoints. */

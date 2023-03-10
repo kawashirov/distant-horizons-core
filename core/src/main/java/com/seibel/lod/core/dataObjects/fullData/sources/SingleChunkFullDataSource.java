@@ -80,42 +80,42 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
     public void markNotEmpty() { this.isEmpty = false;  }
 
     @Override
-    public void saveData(IDhLevel level, FullDataMetaFile file, OutputStream dataStream) throws IOException
+    public void saveData(IDhLevel level, FullDataMetaFile file, BufferedOutputStream bufferedOutputStream) throws IOException
 	{
-        DataOutputStream dos = new DataOutputStream(dataStream); // DO NOT CLOSE
-        {
-            dos.writeInt(this.getDataDetail());
-            dos.writeInt(this.size);
-            dos.writeInt(level.getMinY());
-            if (this.isEmpty)
-			{
-                dos.writeInt(0x00000001);
-                return;
-            }
+        DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream); // DO NOT CLOSE
+        
+		
+		dataOutputStream.writeInt(this.getDataDetail());
+		dataOutputStream.writeInt(this.size);
+		dataOutputStream.writeInt(level.getMinY());
+		if (this.isEmpty)
+		{
+			dataOutputStream.writeInt(0x00000001);
+			return;
+		}
 
-            // Is column not empty
-            dos.writeInt(0xFFFFFFFF);
-            byte[] bytes = this.isColumnNotEmpty.toByteArray();
-            dos.writeInt(bytes.length);
-            dos.write(bytes);
+		// Is column not empty
+		dataOutputStream.writeInt(0xFFFFFFFF);
+		byte[] bytes = this.isColumnNotEmpty.toByteArray();
+		dataOutputStream.writeInt(bytes.length);
+		dataOutputStream.write(bytes);
 
-            // Data array content
-            dos.writeInt(0xFFFFFFFF);
-            for (int i = this.isColumnNotEmpty.nextSetBit(0); i >= 0; i = this.isColumnNotEmpty.nextSetBit(i + 1))
-            {
-                dos.writeByte(this.dataArrays[i].length);
-                if (this.dataArrays[i].length == 0) 
-					continue;
-                for (long l : this.dataArrays[i]) {
-                    dos.writeLong(l);
-                }
-            }
+		// Data array content
+		dataOutputStream.writeInt(0xFFFFFFFF);
+		for (int i = this.isColumnNotEmpty.nextSetBit(0); i >= 0; i = this.isColumnNotEmpty.nextSetBit(i + 1))
+		{
+			dataOutputStream.writeByte(this.dataArrays[i].length);
+			if (this.dataArrays[i].length == 0) 
+				continue;
+			for (long l : this.dataArrays[i]) {
+				dataOutputStream.writeLong(l);
+			}
+		}
 
-            // Id mapping
-            dos.writeInt(0xFFFFFFFF);
-			this.mapping.serialize(dos);
-            dos.writeInt(0xFFFFFFFF);
-        }
+		// Id mapping
+		dataOutputStream.writeInt(0xFFFFFFFF);
+		this.mapping.serialize(bufferedOutputStream);
+		dataOutputStream.writeInt(0xFFFFFFFF);
     }
 
 

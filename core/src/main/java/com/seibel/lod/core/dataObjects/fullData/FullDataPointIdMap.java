@@ -61,9 +61,9 @@ public class FullDataPointIdMap
 	}
 	
 	/** Serializes all contained entries into the given stream, formatted in UTF */
-	public void serialize(OutputStream outputStream) throws IOException
+	public void serialize(BufferedOutputStream bufferedOutputStream) throws IOException
 	{
-		DataOutputStream dataStream = new DataOutputStream(outputStream); // DO NOT CLOSE! It would close all related streams
+		DataOutputStream dataStream = new DataOutputStream(bufferedOutputStream); // DO NOT CLOSE! It would close all related streams
 		dataStream.writeInt(this.entries.size());
 		for (Entry entry : this.entries)
 		{

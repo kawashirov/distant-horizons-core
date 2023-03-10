@@ -6,8 +6,8 @@ import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 
 public interface IFullDataSource
 {
@@ -21,7 +21,7 @@ public interface IFullDataSource
 	
 	boolean isEmpty();
 	
-	void saveData(IDhLevel level, FullDataMetaFile file, OutputStream dataStream) throws IOException;
+	void saveData(IDhLevel level, FullDataMetaFile file, BufferedOutputStream bufferedOutputStream) throws IOException;
 	
 	/** 
 	 * Attempts to get the data column for the given relative x and z position.

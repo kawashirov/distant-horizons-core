@@ -182,7 +182,7 @@ public abstract class AbstractMetaDataContainerFile
 		}
 	}
 	
-	protected void writeData(IMetaDataWriterFunc<OutputStream> dataWriterFunc) throws IOException
+	protected void writeData(IMetaDataWriterFunc<BufferedOutputStream> dataWriterFunc) throws IOException
 	{
 		LodUtil.assertTrue(this.metaData != null);
 		if (this.file.exists())
@@ -205,33 +205,33 @@ public abstract class AbstractMetaDataContainerFile
 		{
 			file.position(METADATA_SIZE_IN_BYTES);
 			int checksum;
-			try (OutputStream channelOut = new DhUnclosableOutputStream(Channels.newOutputStream(file)); // Prevent closing the channel
-					BufferedOutputStream bufferedOut = new BufferedOutputStream(channelOut); // TODO: Is default buffer size ok? Do we even need to buffer?
+			try (//DhUnclosableOutputStream channelOut = new DhUnclosableOutputStream(Channels.newOutputStream(file)); // Prevent closing the channel // TODO update DhUnclosableOutputStream to use a bufferedOutput, otherwise this slows down the file handling significantly
+					BufferedOutputStream bufferedOut = new BufferedOutputStream(Channels.newOutputStream(file)); // TODO: Is default buffer size ok? Do we even need to buffer?
 					CheckedOutputStream checkedOut = new CheckedOutputStream(bufferedOut, new Adler32()))
 			{
 				// TODO: Is Adler32 ok?
-				dataWriterFunc.writeBufferToFile(checkedOut);
+				dataWriterFunc.writeBufferToFile(bufferedOut);
 				checksum = (int) checkedOut.getChecksum().getValue();
 			}
 			
 			
 			file.position(0);
 			// Write metadata
-			ByteBuffer buff = ByteBuffer.allocate(METADATA_SIZE_IN_BYTES);
-			buff.putInt(METADATA_IDENTITY_BYTES);
-			buff.putInt(this.pos.sectionX);
-			buff.putInt(Integer.MIN_VALUE); // Unused
-			buff.putInt(this.pos.sectionZ);
-			buff.putInt(checksum);
-			buff.put(this.pos.sectionDetailLevel);
-			buff.put(this.metaData.dataLevel);
-			buff.put(this.metaData.loaderVersion);
-			buff.put(Byte.MIN_VALUE); // Unused
-			buff.putLong(this.metaData.dataTypeId);
-			buff.putLong(Long.MAX_VALUE); //buff.putLong(this.metaData.dataVersion.get()); // not currently implemented
-			LodUtil.assertTrue(buff.remaining() == METADATA_RESERVED_SIZE);
-			buff.flip();
-			file.write(buff);
+			ByteBuffer buffer = ByteBuffer.allocate(METADATA_SIZE_IN_BYTES);
+			buffer.putInt(METADATA_IDENTITY_BYTES);
+			buffer.putInt(this.pos.sectionX);
+			buffer.putInt(Integer.MIN_VALUE); // Unused
+			buffer.putInt(this.pos.sectionZ);
+			buffer.putInt(checksum);
+			buffer.put(this.pos.sectionDetailLevel);
+			buffer.put(this.metaData.dataLevel);
+			buffer.put(this.metaData.loaderVersion);
+			buffer.put(Byte.MIN_VALUE); // Unused
+			buffer.putLong(this.metaData.dataTypeId);
+			buffer.putLong(Long.MAX_VALUE); //buff.putLong(this.metaData.dataVersion.get()); // not currently implemented
+			LodUtil.assertTrue(buffer.remaining() == METADATA_RESERVED_SIZE);
+			buffer.flip();
+			file.write(buffer);
 			
 			
 			file.close();

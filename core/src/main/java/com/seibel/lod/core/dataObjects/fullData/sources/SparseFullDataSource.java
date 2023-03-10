@@ -222,73 +222,73 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 	//===============//
 	
     @Override
-    public void saveData(IDhLevel level, FullDataMetaFile file, OutputStream dataStream) throws IOException
+    public void saveData(IDhLevel level, FullDataMetaFile file, BufferedOutputStream bufferedOutputStream) throws IOException
 	{
-        try (DataOutputStream dos = new DataOutputStream(dataStream))
-		{
-            dos.writeShort(this.getDataDetail());
-            dos.writeShort(SPARSE_UNIT_DETAIL);
-            dos.writeInt(SECTION_SIZE);
-            dos.writeInt(level.getMinY());
-            if (this.isEmpty)
-			{
-                dos.writeInt(NO_DATA_FLAG_BYTE);
-                return;
-            }
+        DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream);
+		
 			
-            dos.writeInt(DATA_GUARD_BYTE);
-            // sparse array existence bitset
-            BitSet dataArrayIndexHasData = new BitSet(this.sparseData.length);
-            for (int i = 0; i < this.sparseData.length; i++)
-			{
-				dataArrayIndexHasData.set(i, this.sparseData[i] != null);
-			}
-            byte[] bytes = dataArrayIndexHasData.toByteArray();
-            dos.writeInt(bytes.length);
-            dos.write(bytes);
+		dataOutputStream.writeShort(this.getDataDetail());
+		dataOutputStream.writeShort(SPARSE_UNIT_DETAIL);
+		dataOutputStream.writeInt(SECTION_SIZE);
+		dataOutputStream.writeInt(level.getMinY());
+		if (this.isEmpty)
+		{
+			dataOutputStream.writeInt(NO_DATA_FLAG_BYTE);
+			return;
+		}
+		
+		dataOutputStream.writeInt(DATA_GUARD_BYTE);
+		// sparse array existence bitset
+		BitSet dataArrayIndexHasData = new BitSet(this.sparseData.length);
+		for (int i = 0; i < this.sparseData.length; i++)
+		{
+			dataArrayIndexHasData.set(i, this.sparseData[i] != null);
+		}
+		byte[] bytes = dataArrayIndexHasData.toByteArray();
+		dataOutputStream.writeInt(bytes.length);
+		dataOutputStream.write(bytes);
 
-            // Data array content (only on non-empty stuff)
-            dos.writeInt(DATA_GUARD_BYTE);
-            for (int i = dataArrayIndexHasData.nextSetBit(0); 
-				 i >= 0; 
-				 i = dataArrayIndexHasData.nextSetBit(i+1))
+		// Data array content (only on non-empty stuff)
+		dataOutputStream.writeInt(DATA_GUARD_BYTE);
+		for (int i = dataArrayIndexHasData.nextSetBit(0); 
+			 i >= 0; 
+			 i = dataArrayIndexHasData.nextSetBit(i+1))
+		{
+			// column data length
+			FullArrayView array = this.sparseData[i];
+			LodUtil.assertTrue(array != null);
+			for (int x = 0; x < array.width(); x++)
 			{
-				// column data length
-                FullArrayView array = this.sparseData[i];
-                LodUtil.assertTrue(array != null);
-				for (int x = 0; x < array.width(); x++)
+				for (int z = 0; z < array.width(); z++)
 				{
-					for (int z = 0; z < array.width(); z++)
-					{
-						dos.writeInt(array.get(x, z).getSingleLength());
-					}
+					dataOutputStream.writeInt(array.get(x, z).getSingleLength());
 				}
-				
-				// column data
-				for (int x = 0; x < array.width(); x++)
+			}
+			
+			// column data
+			for (int x = 0; x < array.width(); x++)
+			{
+				for (int z = 0; z < array.width(); z++)
 				{
-					for (int z = 0; z < array.width(); z++)
+					SingleFullArrayView column = array.get(x, z);
+					LodUtil.assertTrue(column.getMapping() == this.mapping); // the mappings must be exactly equal!
+					
+					if (column.doesItExist())
 					{
-						SingleFullArrayView column = array.get(x, z);
-						LodUtil.assertTrue(column.getMapping() == this.mapping); // the mappings must be exactly equal!
-						
-						if (column.doesItExist())
+						long[] raw = column.getRaw();
+						for (long l : raw)
 						{
-							long[] raw = column.getRaw();
-							for (long l : raw)
-							{
-								dos.writeLong(l);
-							}
+							dataOutputStream.writeLong(l);
 						}
 					}
 				}
-            }
-			
-            // Id mapping
-            dos.writeInt(DATA_GUARD_BYTE);
-			this.mapping.serialize(dos);
-			dos.writeInt(DATA_GUARD_BYTE);
-        }
+			}
+		}
+		
+		// Id mapping
+		dataOutputStream.writeInt(DATA_GUARD_BYTE);
+		this.mapping.serialize(bufferedOutputStream);
+		dataOutputStream.writeInt(DATA_GUARD_BYTE);
     }
 
     public static SparseFullDataSource loadData(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException, InterruptedException

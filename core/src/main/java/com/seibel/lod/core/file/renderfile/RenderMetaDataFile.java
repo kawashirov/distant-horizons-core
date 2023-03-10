@@ -254,7 +254,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 		}
 	}
 	
-    public void save(ColumnRenderSource renderSource, IDhClientLevel level)
+    public void save(ColumnRenderSource renderSource)
 	{
 		if (renderSource.isEmpty())
 		{
@@ -272,7 +272,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 			//LOGGER.info("Saving updated render file v[{}] at sect {}", this.metaData.dataVersion.get(), this.pos);
 			try
 			{
-				super.writeData((out) -> renderSource.saveRender(level, this, out));
+				super.writeData((out) -> renderSource.writeData(out));
 				this.doesFileExist = true;
 			}
 			catch (IOException e)
