@@ -119,74 +119,73 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
     }
 
 
-    public static SingleChunkFullDataSource loadData(FullDataMetaFile dataFile, InputStream dataStream, IDhLevel level) throws IOException, InterruptedException
+    public static SingleChunkFullDataSource loadData(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException, InterruptedException
 	{
-        DataInputStream dos = new DataInputStream(dataStream); // DO NOT CLOSE
-        {
-            int dataDetail = dos.readInt();
-            if(dataDetail != dataFile.metaData.dataLevel)
-                throw new IOException(LodUtil.formatLog("Data level mismatch: {} != {}", dataDetail, dataFile.metaData.dataLevel));
-			
-            int size = dos.readInt();
-            if (size != SECTION_SIZE)
-                throw new IOException(LodUtil.formatLog(
-                        "Section size mismatch: {} != {} (Currently only 1 section size is supported)", size, SECTION_SIZE));
-			
-            int minY = dos.readInt();
-            if (minY != level.getMinY())
-                LOGGER.warn("Data minY mismatch: {} != {}. Will ignore data's y level", minY, level.getMinY());
-			
-            int end = dos.readInt();
-            // Data array length
-            if (end == 0x00000001)
-			{
-                // Section is empty
-                return new SingleChunkFullDataSource(dataFile.pos);
-            }
+        DataInputStream dataInputStream = new DataInputStream(bufferedInputStream); // DO NOT CLOSE
+        
+		int dataDetail = dataInputStream.readInt();
+		if(dataDetail != dataFile.metaData.dataLevel)
+			throw new IOException(LodUtil.formatLog("Data level mismatch: {} != {}", dataDetail, dataFile.metaData.dataLevel));
+		
+		int size = dataInputStream.readInt();
+		if (size != SECTION_SIZE)
+			throw new IOException(LodUtil.formatLog(
+					"Section size mismatch: {} != {} (Currently only 1 section size is supported)", size, SECTION_SIZE));
+		
+		int minY = dataInputStream.readInt();
+		if (minY != level.getMinY())
+			LOGGER.warn("Data minY mismatch: {} != {}. Will ignore data's y level", minY, level.getMinY());
+		
+		int end = dataInputStream.readInt();
+		// Data array length
+		if (end == 0x00000001)
+		{
+			// Section is empty
+			return new SingleChunkFullDataSource(dataFile.pos);
+		}
 
-            // Is column not empty
-            if (end != 0xFFFFFFFF) 
-				throw new IOException("invalid header end guard");
-            int length = dos.readInt();
+		// Is column not empty
+		if (end != 0xFFFFFFFF) 
+			throw new IOException("invalid header end guard");
+		int length = dataInputStream.readInt();
 
-            if (length < 0 || length > (SECTION_SIZE*SECTION_SIZE/8+64)*2)
+		if (length < 0 || length > (SECTION_SIZE*SECTION_SIZE/8+64)*2)
+		{
+			throw new IOException(LodUtil.formatLog("Spotty Flag BitSet size outside reasonable range: {} (expects {} to {})",
+					length, 1, SECTION_SIZE * SECTION_SIZE / 8 + 63));
+		}
+		
+		byte[] bytes = new byte[length];
+		dataInputStream.readFully(bytes, 0, length);
+		BitSet isColumnNotEmpty = BitSet.valueOf(bytes);
+
+		// Data array content
+		long[][] data = new long[SECTION_SIZE*SECTION_SIZE][];
+		end = dataInputStream.readInt();
+		if (end != 0xFFFFFFFF) 
+			throw new IOException("invalid spotty flag end guard");
+		
+		for (int i = isColumnNotEmpty.nextSetBit(0); i >= 0; i = isColumnNotEmpty.nextSetBit(i + 1))
+		{
+			long[] array = new long[dataInputStream.readByte()];
+			for (int j = 0; j < array.length; j++)
 			{
-				throw new IOException(LodUtil.formatLog("Spotty Flag BitSet size outside reasonable range: {} (expects {} to {})",
-						length, 1, SECTION_SIZE * SECTION_SIZE / 8 + 63));
+				array[j] = dataInputStream.readLong();
 			}
-			
-			byte[] bytes = new byte[length];
-		 	dos.readFully(bytes, 0, length);
-            BitSet isColumnNotEmpty = BitSet.valueOf(bytes);
+			data[i] = array;
+		}
 
-            // Data array content
-            long[][] data = new long[SECTION_SIZE*SECTION_SIZE][];
-            end = dos.readInt();
-            if (end != 0xFFFFFFFF) 
-				throw new IOException("invalid spotty flag end guard");
-			
-            for (int i = isColumnNotEmpty.nextSetBit(0); i >= 0; i = isColumnNotEmpty.nextSetBit(i + 1))
-            {
-                long[] array = new long[dos.readByte()];
-                for (int j = 0; j < array.length; j++)
-				{
-                    array[j] = dos.readLong();
-                }
-                data[i] = array;
-            }
-
-            // Id mapping
-            end = dos.readInt();
-            if (end != 0xFFFFFFFF) 
-				throw new IOException("invalid data content end guard");
-			
-            FullDataPointIdMap mapping = FullDataPointIdMap.deserialize(new DhUnclosableInputStream(dos));
-            end = dos.readInt();
-            if (end != 0xFFFFFFFF)
-				throw new IOException("invalid id mapping end guard");
-			
-            return new SingleChunkFullDataSource(dataFile.pos, mapping, isColumnNotEmpty, data);
-        }
+		// Id mapping
+		end = dataInputStream.readInt();
+		if (end != 0xFFFFFFFF) 
+			throw new IOException("invalid data content end guard");
+		
+		FullDataPointIdMap mapping = FullDataPointIdMap.deserialize(bufferedInputStream);
+		end = dataInputStream.readInt();
+		if (end != 0xFFFFFFFF)
+			throw new IOException("invalid id mapping end guard");
+		
+		return new SingleChunkFullDataSource(dataFile.pos, mapping, isColumnNotEmpty, data);
     }
 
     private SingleChunkFullDataSource(DhSectionPos pos, FullDataPointIdMap mapping, BitSet isColumnNotEmpty, long[][] data)

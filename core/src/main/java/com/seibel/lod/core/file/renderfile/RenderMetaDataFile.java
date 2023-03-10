@@ -13,6 +13,7 @@ import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -192,9 +193,10 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 					
 					// Load the file.
 					ColumnRenderSource renderSource;
-					try (FileInputStream fio = this.getDataContent())
+					try (FileInputStream fileInputStream = this.getDataContent();
+						BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream))
 					{
-						renderSource = ColumnRenderLoader.INSTANCE.loadRenderSource(this, fio, level);
+						renderSource = ColumnRenderLoader.INSTANCE.loadRenderSource(this, bufferedInputStream, level);
 					}
 					catch (IOException e)
 					{

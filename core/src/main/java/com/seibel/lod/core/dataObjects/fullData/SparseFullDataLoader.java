@@ -4,6 +4,7 @@ import com.seibel.lod.core.dataObjects.fullData.sources.SparseFullDataSource;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.level.IDhLevel;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -15,8 +16,8 @@ public class SparseFullDataLoader extends AbstractFullDataSourceLoader
 	}
 
     @Override
-	public IFullDataSource loadData(FullDataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException, InterruptedException
+	public IFullDataSource loadData(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException, InterruptedException
 	{
-		return SparseFullDataSource.loadData(dataFile, data, level);
+		return SparseFullDataSource.loadData(dataFile, bufferedInputStream, level);
 	}
 }

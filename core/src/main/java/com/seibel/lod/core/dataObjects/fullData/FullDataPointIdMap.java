@@ -72,9 +72,9 @@ public class FullDataPointIdMap
 	}
 	
 	/** Creates a new IdBiomeBlockStateMap from the given UTF formatted stream */
-	public static FullDataPointIdMap deserialize(InputStream inputStream) throws IOException, InterruptedException
+	public static FullDataPointIdMap deserialize(BufferedInputStream bufferedInputStream) throws IOException, InterruptedException
 	{
-		DataInputStream dataStream = new DataInputStream(inputStream); // DO NOT CLOSE! It would close all related streams
+		DataInputStream dataStream = new DataInputStream(bufferedInputStream); // DO NOT CLOSE! It would close all related streams
 		int entityCount = dataStream.readInt();
 		FullDataPointIdMap newMap = new FullDataPointIdMap();
 		for (int i = 0; i < entityCount; i++)

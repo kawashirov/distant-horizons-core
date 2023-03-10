@@ -7,6 +7,7 @@ import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -59,7 +60,7 @@ public abstract class AbstractFullDataSourceLoader
 	 * Can return null if any of the requirements aren't met.
 	 * @throws InterruptedException if the loader thread is interrupted, generally happens when the level is shutting down
 	 */
-	public abstract IFullDataSource loadData(FullDataMetaFile dataFile, InputStream data, IDhLevel level) throws IOException, InterruptedException;
+	public abstract IFullDataSource loadData(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException, InterruptedException;
 	
 	
 	

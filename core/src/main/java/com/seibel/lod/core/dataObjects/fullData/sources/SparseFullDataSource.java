@@ -291,166 +291,166 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
         }
     }
 
-    public static SparseFullDataSource loadData(FullDataMetaFile dataFile, InputStream dataStream, IDhLevel level) throws IOException, InterruptedException
+    public static SparseFullDataSource loadData(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException, InterruptedException
 	{
         LodUtil.assertTrue(dataFile.pos.sectionDetailLevel > SPARSE_UNIT_DETAIL);
         LodUtil.assertTrue(dataFile.pos.sectionDetailLevel <= MAX_SECTION_DETAIL);
 		
-        DataInputStream inputStream = new DataInputStream(dataStream); // DO NOT CLOSE! It would close all related streams
-        {
-			// TODO what is a data detail?
-            int dataDetail = inputStream.readShort();
-            if(dataDetail != dataFile.metaData.dataLevel)
+        DataInputStream dataInputStream = new DataInputStream(bufferedInputStream); // DO NOT CLOSE! It would close all related streams
+        
+		
+		// TODO what is a data detail?
+		int dataDetail = dataInputStream.readShort();
+		if(dataDetail != dataFile.metaData.dataLevel)
+		{
+			throw new IOException(LodUtil.formatLog("Data level mismatch: {} != {}", dataDetail, dataFile.metaData.dataLevel));
+		}
+		
+		// confirm that the detail level is correct
+		int sparseDetail = dataInputStream.readShort();
+		if (sparseDetail != SPARSE_UNIT_DETAIL)
+		{
+			throw new IOException((LodUtil.formatLog("Unexpected sparse detail level: {} != {}",
+					sparseDetail, SPARSE_UNIT_DETAIL)));
+		}
+		
+		// confirm the scale of the data points is correct
+		int sectionSize = dataInputStream.readInt();
+		if (sectionSize != SECTION_SIZE)
+		{
+			throw new IOException(LodUtil.formatLog(
+					"Section size mismatch: {} != {} (Currently only 1 section size is supported)", sectionSize, SECTION_SIZE));
+		}
+		
+		
+		// calculate the number of chunks and dataPoints based on the sparseDetail and sectionSize
+		// TODO these values should be constant, should we still be calculating them like this?
+		int chunks = BitShiftUtil.powerOfTwo(dataFile.pos.sectionDetailLevel - sparseDetail);
+		int dataPointsPerChunk = sectionSize / chunks;
+		
+		
+		// get the data's starting Y-level
+		int minY = dataInputStream.readInt();
+		if (minY != level.getMinY())
+		{
+			LOGGER.warn("Data minY mismatch: {} != {}. Will ignore data's y level", minY, level.getMinY());
+		}
+		
+		
+		// check if this file has any data
+		int hasDataFlag = dataInputStream.readInt();
+		if (hasDataFlag == NO_DATA_FLAG_BYTE)
+		{
+			// this file is empty
+			return createEmpty(dataFile.pos);
+		}
+		else if (hasDataFlag != DATA_GUARD_BYTE)
+		{
+			// the file format is incorrect
+			throw new IOException("invalid header end guard");
+		}
+		else
+		{
+			// this file has data
+			
+			
+			// get the number of columns (IE the bitSet from before)
+			int numberOfDataColumns = dataInputStream.readInt();
+			// validate the number of data columns
+			int maxNumberOfDataColumns = (chunks * chunks / 8 + 64) * 2; // TODO what do these values represent?
+			if (numberOfDataColumns < 0 || numberOfDataColumns > maxNumberOfDataColumns)
 			{
-				throw new IOException(LodUtil.formatLog("Data level mismatch: {} != {}", dataDetail, dataFile.metaData.dataLevel));
+				throw new IOException(LodUtil.formatLog("Sparse Flag BitSet size outside reasonable range: {} (expects {} to {})",
+						numberOfDataColumns, 1, maxNumberOfDataColumns));
 			}
 			
-			// confirm that the detail level is correct
-            int sparseDetail = inputStream.readShort();
-            if (sparseDetail != SPARSE_UNIT_DETAIL)
-			{
-				throw new IOException((LodUtil.formatLog("Unexpected sparse detail level: {} != {}",
-						sparseDetail, SPARSE_UNIT_DETAIL)));
-			}
-			
-			// confirm the scale of the data points is correct
-            int sectionSize = inputStream.readInt();
-            if (sectionSize != SECTION_SIZE)
-			{
-				throw new IOException(LodUtil.formatLog(
-						"Section size mismatch: {} != {} (Currently only 1 section size is supported)", sectionSize, SECTION_SIZE));
-			}
+			// read in the presence of each data column
+			byte[] bytes = new byte[numberOfDataColumns];
+			dataInputStream.readFully(bytes, 0, numberOfDataColumns);
+			BitSet dataArrayIndexHasData = BitSet.valueOf(bytes);
 			
 			
-			// calculate the number of chunks and dataPoints based on the sparseDetail and sectionSize
-			// TODO these values should be constant, should we still be calculating them like this?
-			int chunks = BitShiftUtil.powerOfTwo(dataFile.pos.sectionDetailLevel - sparseDetail);
-			int dataPointsPerChunk = sectionSize / chunks;
 			
+			//====================//
+			// Data array content //
+			//====================//
 			
-			// get the data's starting Y-level
-			int minY = inputStream.readInt();
-			if (minY != level.getMinY())
-			{
-				LOGGER.warn("Data minY mismatch: {} != {}. Will ignore data's y level", minY, level.getMinY());
-			}
-			
-			
-			// check if this file has any data
-            int hasDataFlag = inputStream.readInt();
-            if (hasDataFlag == NO_DATA_FLAG_BYTE)
-			{
-                // this file is empty
-                return createEmpty(dataFile.pos);
-            }
-            else if (hasDataFlag != DATA_GUARD_BYTE)
+			//  (only on non-empty columns)
+			int dataArrayStartByte = dataInputStream.readInt();
+			// confirm the column data is starting
+			if (dataArrayStartByte != DATA_GUARD_BYTE)
 			{
 				// the file format is incorrect
-				throw new IOException("invalid header end guard");
+				throw new IOException("invalid data length end guard");
 			}
-			else
+			
+			
+			// read in each column that has data written to it
+			long[][][] rawFullDataArrays = new long[chunks * chunks][][];
+			for (int fullDataIndex = dataArrayIndexHasData.nextSetBit(0);
+				 fullDataIndex >= 0 && // TODO why does this happen? 
+						 fullDataIndex < rawFullDataArrays.length;
+				 fullDataIndex = dataArrayIndexHasData.nextSetBit(fullDataIndex + 1))
 			{
-				// this file has data
+				long[][] dataColumn = new long[dataPointsPerChunk * dataPointsPerChunk][];
 				
-				
-				// get the number of columns (IE the bitSet from before)
-				int numberOfDataColumns = inputStream.readInt();
-				// validate the number of data columns
-				int maxNumberOfDataColumns = (chunks * chunks / 8 + 64) * 2; // TODO what do these values represent?
-				if (numberOfDataColumns < 0 || numberOfDataColumns > maxNumberOfDataColumns)
+				// get the column data lengths
+				rawFullDataArrays[fullDataIndex] = dataColumn;
+				for (int x = 0; x < dataColumn.length; x++)
 				{
-					throw new IOException(LodUtil.formatLog("Sparse Flag BitSet size outside reasonable range: {} (expects {} to {})",
-							numberOfDataColumns, 1, maxNumberOfDataColumns));
+					// this should be zero if the column doesn't have any data
+					int dataColumnLength = dataInputStream.readInt();
+					dataColumn[x] = new long[dataColumnLength];
 				}
 				
-				// read in the presence of each data column
-				byte[] bytes = new byte[numberOfDataColumns];
-				inputStream.readFully(bytes, 0, numberOfDataColumns);
-				BitSet dataArrayIndexHasData = BitSet.valueOf(bytes);
-				
-				
-				
-				//====================//
-				// Data array content //
-				//====================//
-				
-				//  (only on non-empty columns)
-				int dataArrayStartByte = inputStream.readInt();
-				// confirm the column data is starting
-				if (dataArrayStartByte != DATA_GUARD_BYTE)
+				// get the column data
+				for (int x = 0; x < dataColumn.length; x++)
 				{
-					// the file format is incorrect
-					throw new IOException("invalid data length end guard");
-				}
-				
-				
-				// read in each column that has data written to it
-				long[][][] rawFullDataArrays = new long[chunks * chunks][][];
-				for (int fullDataIndex = dataArrayIndexHasData.nextSetBit(0);
-					 fullDataIndex >= 0 && // TODO why does this happen? 
-							 fullDataIndex < rawFullDataArrays.length;
-					 fullDataIndex = dataArrayIndexHasData.nextSetBit(fullDataIndex + 1))
-				{
-					long[][] dataColumn = new long[dataPointsPerChunk * dataPointsPerChunk][];
-					
-					// get the column data lengths
-					rawFullDataArrays[fullDataIndex] = dataColumn;
-					for (int x = 0; x < dataColumn.length; x++)
+					if (dataColumn[x].length != 0)
 					{
-						// this should be zero if the column doesn't have any data
-						int dataColumnLength = inputStream.readInt();
-						dataColumn[x] = new long[dataColumnLength];
-					}
-					
-					// get the column data
-					for (int x = 0; x < dataColumn.length; x++)
-					{
-						if (dataColumn[x].length != 0)
+						// read in the data columns
+						for (int z = 0; z < dataColumn[x].length; z++)
 						{
-							// read in the data columns
-							for (int z = 0; z < dataColumn[x].length; z++)
-							{
-								dataColumn[x][z] = inputStream.readLong();
-							}
+							dataColumn[x][z] = dataInputStream.readLong();
 						}
 					}
 				}
-				
-				
-				
-				//============//
-				// ID mapping //
-				//============//
-				
-				// mark the start of the ID data
-				int idMappingStartByte = inputStream.readInt();
-				if (idMappingStartByte != DATA_GUARD_BYTE)
-				{
-					// the file format is incorrect
-					throw new IOException("invalid data content end guard");
-				}
-				
-				// deserialize the ID data
-				FullDataPointIdMap mapping = FullDataPointIdMap.deserialize(inputStream);
-				int idMappingEndByte = inputStream.readInt();
-				if (idMappingEndByte != DATA_GUARD_BYTE)
-				{
-					// the file format is incorrect
-					throw new IOException("invalid id mapping end guard");
-				}
-				
-				FullArrayView[] fullDataArrays = new FullArrayView[chunks * chunks];
-				for (int i = 0; i < rawFullDataArrays.length; i++)
-				{
-					if (rawFullDataArrays[i] != null)
-					{
-						fullDataArrays[i] = new FullArrayView(mapping, rawFullDataArrays[i], dataPointsPerChunk);
-					}
-				}
-				
-				return new SparseFullDataSource(dataFile.pos, mapping, fullDataArrays);
 			}
-        }
+			
+			
+			
+			//============//
+			// ID mapping //
+			//============//
+			
+			// mark the start of the ID data
+			int idMappingStartByte = dataInputStream.readInt();
+			if (idMappingStartByte != DATA_GUARD_BYTE)
+			{
+				// the file format is incorrect
+				throw new IOException("invalid data content end guard");
+			}
+			
+			// deserialize the ID data
+			FullDataPointIdMap mapping = FullDataPointIdMap.deserialize(bufferedInputStream);
+			int idMappingEndByte = dataInputStream.readInt();
+			if (idMappingEndByte != DATA_GUARD_BYTE)
+			{
+				// the file format is incorrect
+				throw new IOException("invalid id mapping end guard");
+			}
+			
+			FullArrayView[] fullDataArrays = new FullArrayView[chunks * chunks];
+			for (int i = 0; i < rawFullDataArrays.length; i++)
+			{
+				if (rawFullDataArrays[i] != null)
+				{
+					fullDataArrays[i] = new FullArrayView(mapping, rawFullDataArrays[i], dataPointsPerChunk);
+				}
+			}
+			
+			return new SparseFullDataSource(dataFile.pos, mapping, fullDataArrays);
+		}
     }
 	
 	

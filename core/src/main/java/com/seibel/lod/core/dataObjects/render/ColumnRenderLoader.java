@@ -11,6 +11,7 @@ import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
+import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,9 +36,9 @@ public class ColumnRenderLoader
 	
 	
 	
-    public ColumnRenderSource loadRenderSource(RenderMetaDataFile dataFile, InputStream inputStream, IDhLevel level) throws IOException
+    public ColumnRenderSource loadRenderSource(RenderMetaDataFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException
 	{
-		DataInputStream inputDataStream = new DataInputStream(inputStream); // DO NOT CLOSE
+		DataInputStream inputDataStream = new DataInputStream(bufferedInputStream); // DO NOT CLOSE
 		int dataFileVersion = dataFile.metaData.loaderVersion;
 		
 		switch (dataFileVersion)
