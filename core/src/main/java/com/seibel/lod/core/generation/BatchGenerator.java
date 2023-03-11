@@ -146,11 +146,10 @@ public class BatchGenerator implements IDhApiWorldGenerator
 	//=========//
 	
 	@Override
-	public void close() { this.stop(true); }
-	public void stop(boolean blocking)
+	public void close()
 	{
 		LOGGER.info(BatchGenerator.class.getSimpleName()+" shutting down...");
-		this.generationGroup.stop(blocking);
+		this.generationGroup.stop(true);
 	}
 	
 	

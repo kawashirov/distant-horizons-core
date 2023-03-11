@@ -59,7 +59,9 @@ public abstract class AbstractMetaDataContainerFile
     /** 
 	 * James tested this on windows (2023-02-18) and didn't have any issues,
 	 * so it will be turned on for now. If there turns out to be issues 
-	 * we can always 
+	 * we can always turn it off. <Br><br>
+	 * 
+	 * original comment: <br>
 	 * Currently set to false because for some reason 
 	 * Window is throwing PermissionDeniedException when trying to atomic replace a file... 
 	 */
@@ -201,12 +203,12 @@ public abstract class AbstractMetaDataContainerFile
 			tempFile = this.file;
 		}
 		
-		try (FileChannel file = FileChannel.open(tempFile.toPath(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))
+		try (FileChannel fileChannel = FileChannel.open(tempFile.toPath(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))
 		{
-			file.position(METADATA_SIZE_IN_BYTES);
+			fileChannel.position(METADATA_SIZE_IN_BYTES);
 			int checksum;
 			
-			try(DhUnclosableOutputStream bufferedOut = new DhUnclosableOutputStream(Channels.newOutputStream(file)); // Prevent closing the channel by anything but closing the file channel
+			try(DhUnclosableOutputStream bufferedOut = new DhUnclosableOutputStream(Channels.newOutputStream(fileChannel)); // Prevent closing the channel by anything but closing the file channel
 				CheckedOutputStream checkedOut = new CheckedOutputStream(bufferedOut, new Adler32())) // TODO: Is Adler32 ok?
 			{
 				dataWriterFunc.writeBufferToFile(bufferedOut); // TODO it might be nice to have a DH stream we pass in instead of the base BufferedOutputStream to make it clear the streams can't be closed
@@ -214,7 +216,7 @@ public abstract class AbstractMetaDataContainerFile
 			}
 			
 			
-			file.position(0);
+			fileChannel.position(0);
 			// Write metadata
 			ByteBuffer buffer = ByteBuffer.allocate(METADATA_SIZE_IN_BYTES);
 			buffer.putInt(METADATA_IDENTITY_BYTES);
@@ -230,10 +232,10 @@ public abstract class AbstractMetaDataContainerFile
 			buffer.putLong(Long.MAX_VALUE); //buff.putLong(this.metaData.dataVersion.get()); // not currently implemented
 			LodUtil.assertTrue(buffer.remaining() == METADATA_RESERVED_SIZE);
 			buffer.flip();
-			file.write(buffer);
+			fileChannel.write(buffer);
 			
 			
-			file.close();
+			fileChannel.close();
 			if (USE_ATOMIC_MOVE_REPLACE)
 			{
 				// Atomic move / replace the actual file

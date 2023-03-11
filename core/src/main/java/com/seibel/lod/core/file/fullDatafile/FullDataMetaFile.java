@@ -141,10 +141,10 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 //		}
 //	}
 	
-	public void addToWriteQueue(ChunkSizedFullDataSource datatype)
+	public void addToWriteQueue(ChunkSizedFullDataSource chunkDataSource)
 	{
 		debugCheck();
-		DhLodPos chunkPos = new DhLodPos((byte) (datatype.dataDetail + 4), datatype.x, datatype.z);
+		DhLodPos chunkPos = new DhLodPos((byte) (chunkDataSource.dataDetail + 4), chunkDataSource.x, chunkDataSource.z);
 		LodUtil.assertTrue(pos.getSectionBBoxPos().overlaps(chunkPos), "Chunk pos "+chunkPos+" doesn't overlap with section "+pos);
 		//LOGGER.info("Write Chunk {} to file {}", chunkPos, pos);
 		
@@ -156,7 +156,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 		appendLock.lock();
 		try
 		{
-			writeQueue.queue.add(datatype);
+			writeQueue.queue.add(chunkDataSource);
 		}
 		finally
 		{
