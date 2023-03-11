@@ -112,7 +112,7 @@ public class WorldGenerationQueue implements Closeable
 	// task handling   //
 	//=================//
 	
-	public CompletableFuture<Boolean> submitGenTask(DhLodPos pos, byte requiredDataDetail, AbstractWorldGenTaskTracker tracker)
+	public CompletableFuture<Boolean> submitGenTask(DhLodPos pos, byte requiredDataDetail, IWorldGenTaskTracker tracker)
 	{
 		// if the generator is shutting down, don't add new tasks
 		if (this.generatorClosingFuture != null)
@@ -146,7 +146,7 @@ public class WorldGenerationQueue implements Closeable
 			DhLodPos cornerSubPos = pos.getCornerLodPos(subDetail);
 			CompletableFuture<Boolean>[] subFutures = new CompletableFuture[subPosWidthCount * subPosWidthCount];
 			ArrayList<WorldGenTask> subTasks = new ArrayList<>(subPosWidthCount * subPosWidthCount);
-			SplitTaskTracker splitTaskTracker = new SplitTaskTracker(tracker, new CompletableFuture<>());
+			SplitWorldGenTaskTracker splitTaskTracker = new SplitWorldGenTaskTracker(tracker, new CompletableFuture<>());
 			
 			// create the new sub-futures
 			int subFutureIndex = 0;
@@ -241,7 +241,7 @@ public class WorldGenerationQueue implements Closeable
 		{
 			// go through each WorldGenTask in the TaskGroup
 			WorldGenTaskGroup taskGroup = groupIter.next();
-			Iterator<WorldGenTask> taskIter = taskGroup.generatorTasks.iterator();
+			Iterator<WorldGenTask> taskIter = taskGroup.worldGenTasks.iterator();
 			while (taskIter.hasNext())
 			{
 				// remove this task if it has been garbage collected
@@ -254,7 +254,7 @@ public class WorldGenerationQueue implements Closeable
 			}
 			
 			// remove this group if it is now empty
-			if (taskGroup.generatorTasks.isEmpty())
+			if (taskGroup.worldGenTasks.isEmpty())
 			{
 				groupIter.remove();
 			}
@@ -287,7 +287,7 @@ public class WorldGenerationQueue implements Closeable
 				{
 					// the existing group has an equal or lower detail level,
 					// we can just append the new task to its list.
-					existingWorldGenGroup.generatorTasks.add(task);
+					existingWorldGenGroup.worldGenTasks.add(task);
 				}
 				else
 				{
@@ -300,7 +300,7 @@ public class WorldGenerationQueue implements Closeable
 					LodUtil.assertTrue(taskRemoved);
 					
 					// re-add the task group
-					existingWorldGenGroup.generatorTasks.add(task);
+					existingWorldGenGroup.worldGenTasks.add(task);
 					this.addAndCombineTaskGroup(existingWorldGenGroup);
 				}
 			}
@@ -317,7 +317,7 @@ public class WorldGenerationQueue implements Closeable
 					if (existingWorldGenGroup != null && existingWorldGenGroup.dataDetail == taskDataDetail)
 					{
 						// We can just append to the higher detail level group
-						existingWorldGenGroup.generatorTasks.add(task);
+						existingWorldGenGroup.worldGenTasks.add(task);
 						addedToHigherDetailGroup = true;
 						break;
 					}
@@ -328,7 +328,7 @@ public class WorldGenerationQueue implements Closeable
 					// no higher detail group exists that we can append to,
 					// create a new task group
 					existingWorldGenGroup = new WorldGenTaskGroup(task.pos, taskDataDetail);
-					existingWorldGenGroup.generatorTasks.add(task);
+					existingWorldGenGroup.worldGenTasks.add(task);
 					this.addAndCombineTaskGroup(existingWorldGenGroup);
 				}
 			}
@@ -367,7 +367,7 @@ public class WorldGenerationQueue implements Closeable
 				// We should have already ALWAYS selected the higher granularity.
 				LodUtil.assertTrue(group.pos.detailLevel < newTaskGroup.pos.detailLevel);
 				groupIter.remove(); // Remove and consume all from that lower granularity request
-				newTaskGroup.generatorTasks.addAll(group.generatorTasks);
+				newTaskGroup.worldGenTasks.addAll(group.worldGenTasks);
 			}
 		}
 		
@@ -419,7 +419,7 @@ public class WorldGenerationQueue implements Closeable
 						// We can just append us into the existing list.
 						for (WorldGenTaskGroup g : groups)
 						{
-							newGroup.generatorTasks.addAll(g.generatorTasks);
+							newGroup.worldGenTasks.addAll(g.worldGenTasks);
 						}	
 					}
 					else
@@ -430,7 +430,7 @@ public class WorldGenerationQueue implements Closeable
 						LodUtil.assertTrue(worked);
 						for (WorldGenTaskGroup g : groups)
 						{
-							newGroup.generatorTasks.addAll(g.generatorTasks);
+							newGroup.worldGenTasks.addAll(g.worldGenTasks);
 						}
 						this.addAndCombineTaskGroup(newGroup); // Recursive check the new group
 					}
@@ -441,7 +441,7 @@ public class WorldGenerationQueue implements Closeable
 					newGroup = new WorldGenTaskGroup(parentPos, newTaskGroup.dataDetail);
 					for (WorldGenTaskGroup g : groups)
 					{
-						newGroup.generatorTasks.addAll(g.generatorTasks);
+						newGroup.worldGenTasks.addAll(g.worldGenTasks);
 					}
 					this.addAndCombineTaskGroup(newGroup); // Recursive check the new group
 				}
@@ -559,7 +559,8 @@ public class WorldGenerationQueue implements Closeable
 		
 		DhChunkPos chunkPosMin = new DhChunkPos(pos.getCornerBlockPos());
 		//LOGGER.info("Generating section {} with granularity {} at {}", pos, granularity, chunkPosMin);
-		task.genFuture = startGenerationEvent(this.generator, chunkPosMin, granularity, dataDetail, task.group::accept);
+		
+		task.genFuture = startGenerationEvent(this.generator, chunkPosMin, granularity, dataDetail, task.group::onGenerationComplete);
 		task.genFuture.whenComplete((voidObj, exception) ->
 		{
 			if (exception != null)
@@ -570,12 +571,12 @@ public class WorldGenerationQueue implements Closeable
 					LOGGER.error("Error generating data for section "+pos, exception);
 				}
 				
-				task.group.generatorTasks.forEach(worldGenTask -> worldGenTask.future.complete(false));
+				task.group.worldGenTasks.forEach(worldGenTask -> worldGenTask.future.complete(false));
 			}
 			else
 			{
 				//LOGGER.info("Section generation at "+pos+" completed");
-				task.group.generatorTasks.forEach(worldGenTask -> worldGenTask.future.complete(true));
+				task.group.worldGenTasks.forEach(worldGenTask -> worldGenTask.future.complete(true));
 			}
 			boolean worked = this.inProgressGenTasksByLodPos.remove(pos, task);
 			LodUtil.assertTrue(worked);
@@ -612,7 +613,7 @@ public class WorldGenerationQueue implements Closeable
 		{
 			// go through each WorldGenTask in the TaskGroup
 			WorldGenTaskGroup taskGroup = taskGroupIter.next();
-			Iterator<WorldGenTask> taskIter = taskGroup.generatorTasks.iterator();
+			Iterator<WorldGenTask> taskIter = taskGroup.worldGenTasks.iterator();
 			while (taskIter.hasNext())
 			{
 				// remove this task if it has been garbage collected
@@ -629,7 +630,7 @@ public class WorldGenerationQueue implements Closeable
 			}
 			
 			// remove this group if it is now empty
-			if (taskGroup.generatorTasks.isEmpty())
+			if (taskGroup.worldGenTasks.isEmpty())
 			{
 				taskGroupIter.remove();
 			}
@@ -650,7 +651,7 @@ public class WorldGenerationQueue implements Closeable
 	
 	public CompletableFuture<Void> startClosing(boolean cancelCurrentGeneration, boolean alsoInterruptRunning)
 	{
-		this.waitingTaskGroupsByLodPos.values().forEach(worldGenTaskGroup -> worldGenTaskGroup.generatorTasks.forEach(
+		this.waitingTaskGroupsByLodPos.values().forEach(worldGenTaskGroup -> worldGenTaskGroup.worldGenTasks.forEach(
 				(worldGenTask) -> 
 				{ 
 					try { worldGenTask.future.cancel(true); } catch (CancellationException ignored) { /* don't log shutdown exceptions */ }
@@ -754,7 +755,7 @@ public class WorldGenerationQueue implements Closeable
 	private static CompletableFuture<Void> startGenerationEvent(IDhApiWorldGenerator worldGenerator,
 			DhChunkPos chunkPosMin,
 			byte granularity, byte targetDataDetail,
-			Consumer<ChunkSizedFullDataSource> resultConsumer)
+			Consumer<ChunkSizedFullDataSource> generationCompleteConsumer)
 	{
 		EDhApiDistantGeneratorMode generatorMode = Config.Client.WorldGenerator.distantGeneratorMode.get();
 		return worldGenerator.generateChunks(chunkPosMin.x, chunkPosMin.z, granularity, targetDataDetail, generatorMode, (objectArray) ->
@@ -762,7 +763,7 @@ public class WorldGenerationQueue implements Closeable
 			try
 			{
 				IChunkWrapper chunk = SingletonInjector.INSTANCE.get(IWrapperFactory.class).createChunkWrapper(objectArray);
-				resultConsumer.accept(LodDataBuilder.createChunkData(chunk));
+				generationCompleteConsumer.accept(LodDataBuilder.createChunkData(chunk));
 			}
 			catch (ClassCastException e)
 			{

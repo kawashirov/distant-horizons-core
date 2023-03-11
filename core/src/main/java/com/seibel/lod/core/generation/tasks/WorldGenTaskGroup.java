@@ -16,7 +16,7 @@ public final class WorldGenTaskGroup
 	public final DhLodPos pos;
 	public byte dataDetail;
 	/** Only accessed by the generator polling thread */
-	public final LinkedList<WorldGenTask> generatorTasks = new LinkedList<>();
+	public final LinkedList<WorldGenTask> worldGenTasks = new LinkedList<>();
 	
 	
 	
@@ -28,21 +28,22 @@ public final class WorldGenTaskGroup
 	
 	
 	
-	public void accept(ChunkSizedFullDataSource data)
+	public void onGenerationComplete(ChunkSizedFullDataSource chunkSizedFullDataSource)
 	{
-		Iterator<WorldGenTask> tasks = this.generatorTasks.iterator();
+		Iterator<WorldGenTask> tasks = this.worldGenTasks.iterator();
 		while (tasks.hasNext())
 		{
 			WorldGenTask task = tasks.next();
-			Consumer<ChunkSizedFullDataSource> consumer = task.taskTracker.getConsumer();
-			if (consumer == null)
+			Consumer<ChunkSizedFullDataSource> onGenTaskCompleteConsumer = task.taskTracker.getOnGenTaskCompleteConsumer();
+			if (onGenTaskCompleteConsumer == null)
 			{
 				tasks.remove();
 				task.future.complete(false);
 			}
 			else
 			{
-				consumer.accept(data);
+				// TODO why aren't we removing the task if it has a consumer?
+				onGenTaskCompleteConsumer.accept(chunkSizedFullDataSource);
 			}
 		}
 	}

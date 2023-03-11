@@ -5,7 +5,7 @@ import com.seibel.lod.core.dataObjects.fullData.IIncompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.SparseFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.SingleChunkFullDataSource;
-import com.seibel.lod.core.generation.tasks.AbstractWorldGenTaskTracker;
+import com.seibel.lod.core.generation.tasks.IWorldGenTaskTracker;
 import com.seibel.lod.core.generation.WorldGenerationQueue;
 import com.seibel.lod.core.level.IDhServerLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
@@ -70,9 +70,9 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
             if (worldGenQueue != null)
 			{
 				// queue this section to be generated
-				GenTask task = new GenTask(pos, new WeakReference<>(dataSource));
-				worldGenQueue.submitGenTask(dataSource.getSectionPos().getSectionBBoxPos(), dataSource.getDataDetail(), task)
-							 .whenComplete((genTaskCompleted, ex) -> this.onWorldGenTaskComplete(genTaskCompleted, ex, task, pos));
+				GenTask genTask = new GenTask(pos, new WeakReference<>(dataSource));
+				worldGenQueue.submitGenTask(dataSource.getSectionPos().getSectionBBoxPos(), dataSource.getDataDetail(), genTask)
+							 .whenComplete((genTaskCompleted, ex) -> this.onWorldGenTaskComplete(genTaskCompleted, ex, genTask, pos));
             }
 			
 			// return the empty dataSource (it will be populated later)
@@ -117,7 +117,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	
 	
 	
-	private void onWorldGenTaskComplete(Boolean genTaskCompleted, Throwable exception, GenTask task, DhSectionPos pos)
+	private void onWorldGenTaskComplete(Boolean genTaskCompleted, Throwable exception, GenTask genTask, DhSectionPos pos)
 	{
 		if (exception != null)
 		{
@@ -127,13 +127,13 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 				LOGGER.error("Uncaught Gen Task Exception at " + pos + ":", exception);
 			}
 		}
-		
-		if (exception == null && genTaskCompleted)
+		else if (genTaskCompleted)
 		{
 //			this.files.get(task.pos).metaData.dataVersion.incrementAndGet();
 			return;
 		}
-		task.releaseStrongReference();
+		
+		genTask.releaseStrongReference();
 	}
 	
 	
@@ -142,47 +142,50 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	// helper class //
 	//==============//
 	
-	class GenTask extends AbstractWorldGenTaskTracker
+	private class GenTask implements IWorldGenTaskTracker
 	{
 		private final DhSectionPos pos;
-		private final WeakReference<IFullDataSource> targetData;
-		private IFullDataSource loadedTargetData = null;
+		
+		// weak reference (probably) used to prevent overloading the GC when lots of gen tasks are created?
+		private final WeakReference<IFullDataSource> targetFullDataSourceRef;
+		// the target data source is where the generated chunk data will be put when completed
+		private IFullDataSource loadedTargetFullDataSource = null;
 		
 		
 		
-		GenTask(DhSectionPos pos, WeakReference<IFullDataSource> targetData)
+		public GenTask(DhSectionPos pos, WeakReference<IFullDataSource> targetFullDataSourceRef)
 		{
 			this.pos = pos;
-			this.targetData = targetData;
+			this.targetFullDataSourceRef = targetFullDataSourceRef;
 		}
 		
 		
 		
 		@Override
-		public boolean isMemoryAddressValid() { return this.targetData.get() != null; }
+		public boolean isMemoryAddressValid() { return this.targetFullDataSourceRef.get() != null; }
 		
 		@Override
-		public Consumer<ChunkSizedFullDataSource> getConsumer()
+		public Consumer<ChunkSizedFullDataSource> getOnGenTaskCompleteConsumer()
 		{
-			if (this.loadedTargetData == null)
+			if (this.loadedTargetFullDataSource == null)
 			{
-				this.loadedTargetData = this.targetData.get();
-				if (this.loadedTargetData == null)
+				this.loadedTargetFullDataSource = this.targetFullDataSourceRef.get();
+				if (this.loadedTargetFullDataSource == null)
 				{
 					return null;
 				}
 			}
 			
-			return (chunk) ->
+			return (chunkSizedFullDataSource) ->
 			{
-				if (chunk.getBBoxLodPos().overlaps(this.loadedTargetData.getSectionPos().getSectionBBoxPos()))
+				if (chunkSizedFullDataSource.getBBoxLodPos().overlaps(this.loadedTargetFullDataSource.getSectionPos().getSectionBBoxPos()))
 				{
-					GeneratedFullDataFileHandler.this.write(this.loadedTargetData.getSectionPos(), chunk);
+					GeneratedFullDataFileHandler.this.write(this.loadedTargetFullDataSource.getSectionPos(), chunkSizedFullDataSource);
 				}
 			};
 		}
 		
-		void releaseStrongReference() { this.loadedTargetData = null; }
+		public void releaseStrongReference() { this.loadedTargetFullDataSource = null; }
 		
 	}
 	

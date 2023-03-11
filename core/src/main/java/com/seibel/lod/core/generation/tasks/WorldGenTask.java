@@ -12,11 +12,11 @@ public final class WorldGenTask
 {
 	public final DhLodPos pos;
 	public final byte dataDetailLevel;
-	public final AbstractWorldGenTaskTracker taskTracker;
+	public final IWorldGenTaskTracker taskTracker;
 	public final CompletableFuture<Boolean> future;
 	
 	
-	public WorldGenTask(DhLodPos pos, byte dataDetail, AbstractWorldGenTaskTracker taskTracker, CompletableFuture<Boolean> future)
+	public WorldGenTask(DhLodPos pos, byte dataDetail, IWorldGenTaskTracker taskTracker, CompletableFuture<Boolean> future)
 	{
 		this.dataDetailLevel = dataDetail;
 		this.pos = pos;

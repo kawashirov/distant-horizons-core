@@ -13,9 +13,9 @@ import com.seibel.lod.core.generation.WorldGenerationQueue;
  * @author Leetom
  * @version 2022-11-25
  */
-public class SplitTaskTracker extends AbstractWorldGenTaskTracker
+public class SplitWorldGenTaskTracker implements IWorldGenTaskTracker
 {
-	public final AbstractWorldGenTaskTracker parentTracker;
+	public final IWorldGenTaskTracker parentTracker;
 	public final CompletableFuture<Boolean> parentFuture;
 	
 	/** cached value to allow for quicker checking */
@@ -23,7 +23,7 @@ public class SplitTaskTracker extends AbstractWorldGenTaskTracker
 	
 	
 	
-	public SplitTaskTracker(AbstractWorldGenTaskTracker parentTracker, CompletableFuture<Boolean> parentFuture)
+	public SplitWorldGenTaskTracker(IWorldGenTaskTracker parentTracker, CompletableFuture<Boolean> parentFuture)
 	{
 		this.parentTracker = parentTracker;
 		this.parentFuture = parentFuture;
@@ -31,7 +31,7 @@ public class SplitTaskTracker extends AbstractWorldGenTaskTracker
 	
 	
 	
-	/** Recalculates and returns the new {@link SplitTaskTracker#isValid} value */
+	/** Recalculates and returns the new {@link SplitWorldGenTaskTracker#isValid} value */
 	public boolean recalculateIsValid()
 	{
 		if (!this.isValid)
@@ -52,6 +52,6 @@ public class SplitTaskTracker extends AbstractWorldGenTaskTracker
 	public boolean isMemoryAddressValid() { return this.isValid; }
 	
 	@Override
-	public Consumer<ChunkSizedFullDataSource> getConsumer() { return this.parentTracker.getConsumer(); }
+	public Consumer<ChunkSizedFullDataSource> getOnGenTaskCompleteConsumer() { return this.parentTracker.getOnGenTaskCompleteConsumer(); }
 	
 }
