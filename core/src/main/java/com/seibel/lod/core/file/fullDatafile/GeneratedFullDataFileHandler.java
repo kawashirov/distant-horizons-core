@@ -129,7 +129,9 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		}
 		else if (genTaskCompleted)
 		{
-//			this.files.get(task.pos).metaData.dataVersion.incrementAndGet();
+			this.files.get(genTask.pos).flushAndSave();
+			
+//			this.files.get(genTask.pos).metaData.dataVersion.incrementAndGet();
 			return;
 		}
 		
