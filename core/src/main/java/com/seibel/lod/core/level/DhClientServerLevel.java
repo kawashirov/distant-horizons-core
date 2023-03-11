@@ -11,6 +11,7 @@ import com.seibel.lod.core.generation.WorldGenerationQueue;
 import com.seibel.lod.core.file.fullDatafile.GeneratedFullDataFileHandler;
 import com.seibel.lod.core.level.states.ClientRenderState;
 import com.seibel.lod.core.logging.f3.F3Screen;
+import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.FileScanUtil;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.config.Config;
@@ -28,7 +29,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 /** The level used on a singleplayer world */
-public class DhClientServerLevel extends AbstractDhClientLevel implements IDhClientLevel, IDhServerLevel
+public class DhClientServerLevel extends AbstractDhClientLevel implements IDhClientLevel, IDhServerLevel, GeneratedFullDataFileHandler.IOnWorldGenCompleteListener
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
@@ -242,6 +243,17 @@ public class DhClientServerLevel extends AbstractDhClientLevel implements IDhCli
 	}
 	
 	
+	@Override 
+	public void onWorldGenTaskComplete(DhSectionPos pos)
+	{
+		ClientRenderState clientRenderState = this.ClientRenderStateRef.get();
+		if (clientRenderState != null && clientRenderState.quadtree != null)
+		{
+			clientRenderState.quadtree.reloadPos(pos);
+		}
+	}
+	
+	
 	
 	
 	//================//
@@ -255,7 +267,7 @@ public class DhClientServerLevel extends AbstractDhClientLevel implements IDhCli
 		
 		
 		
-		WorldGenState(IDhLevel level)
+		WorldGenState(DhClientServerLevel level)
 		{
 			IDhApiWorldGenerator worldGenerator = WorldGeneratorInjector.INSTANCE.get(level.getLevelWrapper());
 			if (worldGenerator == null)
@@ -270,6 +282,7 @@ public class DhClientServerLevel extends AbstractDhClientLevel implements IDhCli
 			
 			this.worldGenerationQueue = new WorldGenerationQueue(this.chunkGenerator);
 			DhClientServerLevel.this.generatedFullDataFileHandler.setGenerationQueue(this.worldGenerationQueue);
+			DhClientServerLevel.this.generatedFullDataFileHandler.addWorldGenCompleteListener(level);
 		}
 		
 		

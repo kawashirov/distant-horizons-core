@@ -27,11 +27,17 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	
     private final AtomicReference<WorldGenerationQueue> worldGenQueueRef = new AtomicReference<>(null);
 	
+	private final ArrayList<IOnWorldGenCompleteListener> onWorldGenTaskCompleteListeners = new ArrayList<>();
+	
 	
 	
     public GeneratedFullDataFileHandler(IDhServerLevel level, File saveRootDir) { super(level, saveRootDir); }
 	
 	
+	
+	//==================//
+	// generation queue //
+	//==================//
 	
 	/** Assumes there isn't a pre-existing queue. */
     public void setGenerationQueue(WorldGenerationQueue newWorldGenQueue)
@@ -43,6 +49,26 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	public void clearGenerationQueue() { this.worldGenQueueRef.set(null); }
 	
 	
+	
+	//=================//
+	// event listeners //
+	//=================//
+	
+	public void addWorldGenCompleteListener(IOnWorldGenCompleteListener listener)
+	{
+		this.onWorldGenTaskCompleteListeners.add(listener);
+	}
+	
+	public void removeWorldGenCompleteListener(IOnWorldGenCompleteListener listener)
+	{
+		this.onWorldGenTaskCompleteListeners.remove(listener);
+	}
+	
+	
+	
+	//========//
+	// events //
+	//========//
 	
     @Override
     public CompletableFuture<IFullDataSource> onCreateDataFile(FullDataMetaFile file)
@@ -115,8 +141,6 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
         }
     }
 	
-	
-	
 	private void onWorldGenTaskComplete(Boolean genTaskCompleted, Throwable exception, GenTask genTask, DhSectionPos pos)
 	{
 		if (exception != null)
@@ -131,6 +155,12 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		{
 			this.files.get(genTask.pos).flushAndSave();
 			
+			// fire the event listeners 
+			for (IOnWorldGenCompleteListener listener : this.onWorldGenTaskCompleteListeners)
+			{
+				listener.onWorldGenTaskComplete(genTask.pos);
+			}
+			
 //			this.files.get(genTask.pos).metaData.dataVersion.incrementAndGet();
 			return;
 		}
@@ -140,9 +170,9 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	
 	
 	
-	//==============//
-	// helper class //
-	//==============//
+	//================//
+	// helper classes //
+	//================//
 	
 	private class GenTask implements IWorldGenTaskTracker
 	{
@@ -191,5 +221,15 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		
 	}
 	
+	/** 
+	 * used by external event listeners <br> 
+	 * TODO may or may not be best to have this in a separate file
+	 */
+	@FunctionalInterface
+	public interface IOnWorldGenCompleteListener
+	{
+		/** Fired whenever a section has completed generating */
+		void onWorldGenTaskComplete(DhSectionPos pos);
+	}
 	
 }

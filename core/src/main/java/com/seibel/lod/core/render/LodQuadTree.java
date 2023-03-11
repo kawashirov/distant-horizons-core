@@ -601,12 +601,6 @@ public class LodQuadTree implements AutoCloseable
 						// load in the new section
 						section.setRenderSourceProvider(this.renderSourceProvider);
 					}
-					// unimplemented, would be needed for dedicated server support
-//					else if (section.isOutdated())
-//					{
-//						// replace the out of date data
-//						section.reload(this.renderSourceProvider);
-//					}
 					
 					
 					// enable rendering if this section is a leaf node in the tree, otherwise disable rendering 
@@ -728,6 +722,10 @@ public class LodQuadTree implements AutoCloseable
 	
 	
 	
+	//=============//
+	// render data //
+	//=============//
+	
 	/** 
 	 * Re-creates the color, render data. 
 	 * This method should be called after resource packs are changed or LOD settings are modified.
@@ -754,6 +752,18 @@ public class LodQuadTree implements AutoCloseable
 		LOGGER.info("Render cache invalidated");
 	}
 	
+	/** 
+	 * Can be called whenever a render section's data needs to be refreshed. <br>
+	 * This should be called whenever a world generation task is completed or if the connected server has new data to show.
+	 */
+	public void reloadPos(DhSectionPos pos)
+	{
+		LodRenderSection renderSection = this.getSection(pos);
+		if (renderSection != null)
+		{
+			renderSection.reload(this.renderSourceProvider);
+		}
+	}
 	
 	
 	
