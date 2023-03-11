@@ -128,6 +128,7 @@ public class DhClientServerWorld extends AbstractDhWorld implements IDhClientWor
     @Override
     public void close()
 	{
+		// at this point the levels are probably unloaded, so this save call usually generally won't do anything
 		this.saveAndFlush().join();
 		
 		for (DhClientServerLevel level : this.dhLevels)

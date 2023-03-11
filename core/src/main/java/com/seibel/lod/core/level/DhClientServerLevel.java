@@ -16,7 +16,6 @@ import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhBlockPos;
-import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
@@ -278,18 +277,19 @@ public class DhClientServerLevel extends AbstractDhClientLevel implements IDhCli
 		CompletableFuture<Void> closeAsync(boolean doInterrupt)
 		{
 			DhClientServerLevel.this.generatedFullDataFileHandler.clearGenerationQueue();
+			
 			return this.worldGenerationQueue.startClosing(true, doInterrupt)
-					.exceptionally(ex ->
-					{
-						LOGGER.error("Error closing generation queue", ex);
-						return null;
-					}
-					).thenRun(this.chunkGenerator::close)
-					.exceptionally(ex ->
-					{
-						LOGGER.error("Error closing world gen", ex);
-						return null;
-					});
+				.exceptionally(ex ->
+				{
+					LOGGER.error("Error closing generation queue", ex);
+					return null;
+				}
+				).thenRun(this.chunkGenerator::close)
+				.exceptionally(ex ->
+				{
+					LOGGER.error("Error closing world gen", ex);
+					return null;
+				});
 		}
 	}
 	

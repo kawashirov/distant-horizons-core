@@ -282,20 +282,21 @@ public class FullDataFileHandler implements IFullDataSourceProvider
         LodUtil.assertTrue(chunkPos.overlaps(sectionPos.getSectionBBoxPos()), "Chunk "+chunkPos+" does not overlap section "+sectionPos);
 		
         chunkPos = chunkPos.convertToDetailLevel((byte) this.minDetailLevel);
-		this.recursiveWrite(new DhSectionPos(chunkPos.detailLevel, chunkPos.x, chunkPos.z), chunkData);
+		this.writeChunkDataToMetaFile(new DhSectionPos(chunkPos.detailLevel, chunkPos.x, chunkPos.z), chunkData);
     }
-    private void recursiveWrite(DhSectionPos sectionPos, ChunkSizedFullDataSource chunkData)
+    private void writeChunkDataToMetaFile(DhSectionPos sectionPos, ChunkSizedFullDataSource chunkData)
 	{
         FullDataMetaFile metaFile = this.files.get(sectionPos);
         if (metaFile != null)
 		{ 
-			// Fast path: if there is a file for this section, just write to it.
+			// there is a file for this position
             metaFile.addToWriteQueue(chunkData);
         }
 		
         if (sectionPos.sectionDetailLevel <= this.topDetailLevel.get())
 		{
-			this.recursiveWrite(sectionPos.getParentPos(), chunkData);
+			// recursively attempt to get the meta file for this position
+			this.writeChunkDataToMetaFile(sectionPos.getParentPos(), chunkData);
         }
     }
 	

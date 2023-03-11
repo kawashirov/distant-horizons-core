@@ -337,7 +337,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
         //file.metaData.dataVersion.set(newDataVersion);
         file.metaData.dataLevel = currentRenderSource.getDataDetail();
         file.metaData.dataTypeId = RENDER_SOURCE_TYPE_ID;
-        file.metaData.loaderVersion = currentRenderSource.getRenderVersion();
+        file.metaData.loaderVersion = currentRenderSource.getRenderDataFormatVersion();
         file.save(currentRenderSource);
     }
 	

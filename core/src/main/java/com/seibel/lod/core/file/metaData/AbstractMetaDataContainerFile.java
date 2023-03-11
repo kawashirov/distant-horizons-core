@@ -236,6 +236,8 @@ public abstract class AbstractMetaDataContainerFile
 			
 			
 			fileChannel.close();
+			//LOGGER.info("Saved file: "+this.file.getName());
+			
 			if (USE_ATOMIC_MOVE_REPLACE)
 			{
 				// Atomic move / replace the actual file

@@ -1,6 +1,5 @@
 package com.seibel.lod.core.dataObjects.render;
 
-import com.google.common.primitives.Longs;
 import com.seibel.lod.core.ModInfo;
 import com.seibel.lod.core.dataObjects.render.columnViews.ColumnArrayView;
 import com.seibel.lod.core.dataObjects.render.columnViews.ColumnQuadView;
@@ -11,7 +10,6 @@ import com.seibel.lod.core.dataObjects.transformers.FullToColumnTransformer;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.AbstractRenderBuffer;
-import com.seibel.lod.core.file.renderfile.RenderMetaDataFile;
 import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.level.IDhLevel;
@@ -435,7 +433,7 @@ public class ColumnRenderSource
 		return false;
 	}
 	
-	public byte getRenderVersion() { return DATA_FORMAT_VERSION; }
+	public byte getRenderDataFormatVersion() { return DATA_FORMAT_VERSION; }
 	
 	/** 
 	 * Whether this object is still valid. If not, a new one should be created.
