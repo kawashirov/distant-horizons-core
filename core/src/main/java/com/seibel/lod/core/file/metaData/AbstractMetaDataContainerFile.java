@@ -205,12 +205,11 @@ public abstract class AbstractMetaDataContainerFile
 		{
 			file.position(METADATA_SIZE_IN_BYTES);
 			int checksum;
-			try (//DhUnclosableOutputStream channelOut = new DhUnclosableOutputStream(Channels.newOutputStream(file)); // Prevent closing the channel // TODO update DhUnclosableOutputStream to use a bufferedOutput, otherwise this slows down the file handling significantly
-					BufferedOutputStream bufferedOut = new BufferedOutputStream(Channels.newOutputStream(file)); // TODO: Is default buffer size ok? Do we even need to buffer?
-					CheckedOutputStream checkedOut = new CheckedOutputStream(bufferedOut, new Adler32()))
+			
+			try(DhUnclosableOutputStream bufferedOut = new DhUnclosableOutputStream(Channels.newOutputStream(file)); // Prevent closing the channel by anything but closing the file channel
+				CheckedOutputStream checkedOut = new CheckedOutputStream(bufferedOut, new Adler32())) // TODO: Is Adler32 ok?
 			{
-				// TODO: Is Adler32 ok?
-				dataWriterFunc.writeBufferToFile(bufferedOut);
+				dataWriterFunc.writeBufferToFile(bufferedOut); // TODO it might be nice to have a DH stream we pass in instead of the base BufferedOutputStream to make it clear the streams can't be closed
 				checksum = (int) checkedOut.getChecksum().getValue();
 			}
 			
@@ -245,7 +244,7 @@ public abstract class AbstractMetaDataContainerFile
 		catch (ClosedChannelException e) // includes ClosedByInterruptException
 		{
 			// expected if the file handler is shut down, the exception can be ignored
-//			LOGGER.warn(AbstractMetaDataContainerFile.class.getSimpleName()+" file writing interrupted.");
+//			LOGGER.warn(AbstractMetaDataContainerFile.class.getSimpleName()+" file writing interrupted. Error: "+e.getMessage());
 		}
 		finally
 		{
