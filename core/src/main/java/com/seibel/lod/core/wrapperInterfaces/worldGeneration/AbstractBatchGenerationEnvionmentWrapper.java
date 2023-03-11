@@ -27,12 +27,12 @@ import java.util.function.Consumer;
 
 public abstract class AbstractBatchGenerationEnvionmentWrapper
 {
-	public enum Steps {
+	public enum EGenerationStep 
+	{
 		Empty, StructureStart, StructureReference, Biomes, Noise, Surface, Carvers, LiquidCarvers, Features, Light,
 	}
 
-	public AbstractBatchGenerationEnvionmentWrapper(IDhLevel level) {
-	}
+	public AbstractBatchGenerationEnvionmentWrapper(IDhLevel level) { }
 
 	public abstract void resizeThreadPool(int newThreadCount);
 
@@ -42,6 +42,6 @@ public abstract class AbstractBatchGenerationEnvionmentWrapper
 
 	public abstract void stop(boolean blocking);
 
-	public abstract CompletableFuture<Void> generateChunks(int minX, int minZ, int genSize, Steps targetStep, double runTimeRatio, Consumer<IChunkWrapper> resultConsumer);
+	public abstract CompletableFuture<Void> generateChunks(int minX, int minZ, int genSize, EGenerationStep targetStep, double runTimeRatio, Consumer<IChunkWrapper> resultConsumer);
 	
 }

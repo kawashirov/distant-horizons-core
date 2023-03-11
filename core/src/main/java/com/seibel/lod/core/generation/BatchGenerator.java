@@ -32,7 +32,7 @@ import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.lod.core.wrapperInterfaces.worldGeneration.AbstractBatchGenerationEnvionmentWrapper;
-import com.seibel.lod.core.wrapperInterfaces.worldGeneration.AbstractBatchGenerationEnvionmentWrapper.Steps;
+import com.seibel.lod.core.wrapperInterfaces.worldGeneration.AbstractBatchGenerationEnvionmentWrapper.EGenerationStep;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
@@ -98,24 +98,24 @@ public class BatchGenerator implements IDhApiWorldGenerator
 	@Override
 	public CompletableFuture<Void> generateChunks(int chunkPosMinX, int chunkPosMinZ, byte granularity, byte targetDataDetail, EDhApiDistantGeneratorMode generatorMode, Consumer<Object[]> resultConsumer)
 	{
-		Steps targetStep = null;
+		EGenerationStep targetStep = null;
 		switch (generatorMode)
 		{
 			case PRE_EXISTING_ONLY:
-				targetStep = Steps.Empty; // NOTE: Only load in existing chunks. No new chunk generation
+				targetStep = EGenerationStep.Empty; // NOTE: Only load in existing chunks. No new chunk generation
 				break;
 			case BIOME_ONLY:
-				targetStep = Steps.Biomes; // NOTE: No blocks. Require fake height in LodBuilder
+				targetStep = EGenerationStep.Biomes; // NOTE: No blocks. Require fake height in LodBuilder
 				break;
 			case BIOME_ONLY_SIMULATE_HEIGHT:
-				targetStep = Steps.Noise; // NOTE: Stone only. Require fake surface
+				targetStep = EGenerationStep.Noise; // NOTE: Stone only. Require fake surface
 				break;
 			case SURFACE:
-				targetStep = Steps.Surface; // Carvers or Surface???
+				targetStep = EGenerationStep.Surface; // Carvers or Surface???
 				break;
 			case FEATURES:
 			case FULL:
-				targetStep = Steps.Features;
+				targetStep = EGenerationStep.Features;
 				break;
 		}
 		
