@@ -95,7 +95,7 @@ public class DhClientServerWorld extends AbstractDhWorld implements IDhClientWor
 			{
 				LOGGER.info("Unloading level "+this.levelObjMap.get(wrapper));
 				DhClientServerLevel clientServerLevel = this.levelObjMap.remove(wrapper);
-				clientServerLevel.saveAsync().join();
+				this.dhLevels.remove(clientServerLevel);
 				clientServerLevel.close();
 			}
 			else
