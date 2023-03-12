@@ -151,13 +151,15 @@ public class ColumnBox {
     }
 
     private static void makeAdjQuads(LodQuadBuilder builder, ColumnArrayView adjData, ELodDirection direction, short x, short y,
-                                     short z, short w0, short wy, int color, int overlapColor, byte upSkyLight, byte blockLight) {
-        color = ColorUtil.applyShade(color, MC.getShade(direction));
-        ColumnArrayView dataPoint = adjData;
-        if (dataPoint == null || RenderDataPointUtil.isVoid(dataPoint.get(0))) {
-            builder.addQuadAdj(direction, x, y, z, w0, wy, color, (byte) 15, blockLight);
-            return;
-        }
+                                     short z, short w0, short wy, int color, int overlapColor, byte upSkyLight, byte blockLight)
+	{
+		color = ColorUtil.applyShade(color, MC.getShade(direction));
+		ColumnArrayView dataPoint = adjData;
+		if (dataPoint == null || dataPoint.size == 0 || RenderDataPointUtil.isVoid(dataPoint.get(0)))
+		{
+			builder.addQuadAdj(direction, x, y, z, w0, wy, color, (byte) 15, blockLight);
+			return;
+		}
 
         int i;
         boolean firstFace = true;
