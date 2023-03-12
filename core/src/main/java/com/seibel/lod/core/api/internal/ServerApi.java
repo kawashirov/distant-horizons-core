@@ -62,16 +62,24 @@ public class ServerApi
 	
 	public void serverTickEvent()
 	{
-		IDhServerWorld serverWorld = SharedApi.getIDhServerWorld();
-		if (serverWorld != null)
+		try
 		{
-			serverWorld.serverTick();
-			this.lastWorldGenTickDelta--;
-			if (this.lastWorldGenTickDelta <= 0)
+			IDhServerWorld serverWorld = SharedApi.getIDhServerWorld();
+			if (serverWorld != null)
 			{
-				serverWorld.doWorldGen();
-				this.lastWorldGenTickDelta = 20;
+				serverWorld.serverTick();
+				this.lastWorldGenTickDelta--;
+				if (this.lastWorldGenTickDelta <= 0)
+				{
+					serverWorld.doWorldGen();
+					this.lastWorldGenTickDelta = 20;
+				}
 			}
+		}
+		catch (Exception e)
+		{
+			// try catch is necessary to prevent crashing the internal server when an exception is thrown
+			LOGGER.error("ServerTickEvent error: "+e.getMessage(), e);
 		}
 	}
 	public void serverLevelTickEvent(IServerLevelWrapper level)
@@ -129,7 +137,7 @@ public class ServerApi
 		}
 	}
 
-	@Deprecated
+	@Deprecated // TODO not implemented, remove
 	public void serverSaveEvent()
 	{
 		if (ENABLE_EVENT_LOGGING)
