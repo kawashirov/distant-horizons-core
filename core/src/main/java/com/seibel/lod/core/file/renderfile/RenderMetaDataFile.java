@@ -80,7 +80,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 	public void updateChunkIfNeeded(ChunkSizedFullDataSource chunkData, IDhClientLevel level)
 	{
 		DhLodPos chunkPos = new DhLodPos((byte) (chunkData.dataDetail + 4), chunkData.x, chunkData.z);
-		LodUtil.assertTrue(this.pos.getSectionBBoxPos().overlaps(chunkPos), "Chunk pos {} doesn't overlap with section {}", chunkPos, pos);
+		LodUtil.assertTrue(this.pos.getSectionBBoxPos().overlapsExactly(chunkPos), "Chunk pos {} doesn't overlap with section {}", chunkPos, pos);
 			
 		CompletableFuture<ColumnRenderSource> source = this._readCached(this.data.get());
 		if (source == null)

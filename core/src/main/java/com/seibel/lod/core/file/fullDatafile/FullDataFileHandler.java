@@ -279,7 +279,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
     public void write(DhSectionPos sectionPos, ChunkSizedFullDataSource chunkData)
 	{
         DhLodPos chunkPos = new DhLodPos((byte) (chunkData.dataDetail+4), chunkData.x, chunkData.z);
-        LodUtil.assertTrue(chunkPos.overlaps(sectionPos.getSectionBBoxPos()), "Chunk "+chunkPos+" does not overlap section "+sectionPos);
+        LodUtil.assertTrue(chunkPos.overlapsExactly(sectionPos.getSectionBBoxPos()), "Chunk "+chunkPos+" does not overlap section "+sectionPos);
 		
         chunkPos = chunkPos.convertToDetailLevel((byte) this.minDetailLevel);
 		this.writeChunkDataToMetaFile(new DhSectionPos(chunkPos.detailLevel, chunkPos.x, chunkPos.z), chunkData);

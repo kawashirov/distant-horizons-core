@@ -205,7 +205,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
     }
     private void writeRecursively(DhSectionPos sectPos, ChunkSizedFullDataSource chunkData)
 	{
-		if (!sectPos.getSectionBBoxPos().overlaps(new DhLodPos((byte) (4 + chunkData.dataDetail), chunkData.x, chunkData.z)))
+		if (!sectPos.getSectionBBoxPos().overlapsExactly(new DhLodPos((byte) (4 + chunkData.dataDetail), chunkData.x, chunkData.z)))
 		{
 			return;
 		}

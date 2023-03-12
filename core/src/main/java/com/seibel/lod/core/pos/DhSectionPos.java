@@ -150,7 +150,7 @@ public class DhSectionPos
 	public DhLodPos getSectionBBoxPos() { return new DhLodPos(this.sectionDetailLevel, this.sectionX, this.sectionZ); }
 	
 	/** NOTE: This does not consider yOffset! */
-	public boolean overlaps(DhSectionPos other) { return this.getSectionBBoxPos().overlaps(other.getSectionBBoxPos()); }
+	public boolean overlaps(DhSectionPos other) { return this.getSectionBBoxPos().overlapsExactly(other.getSectionBBoxPos()); }
 	
 	/** Serialize() is different from toString() as it must NEVER be changed, and should be in a short format */
 	public String serialize() { return "[" + this.sectionDetailLevel + ',' + this.sectionX + ',' + this.sectionZ + ']'; }

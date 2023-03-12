@@ -186,7 +186,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	{
 		private final DhSectionPos pos;
 		
-		// weak reference (probably) used to prevent overloading the GC when lots of gen tasks are created?
+		// weak reference (probably) used to prevent overloading the GC when lots of gen tasks are created? // TODO do we still need a weak reference here?
 		private final WeakReference<IFullDataSource> targetFullDataSourceRef;
 		// the target data source is where the generated chunk data will be put when completed
 		private IFullDataSource loadedTargetFullDataSource = null;
@@ -218,7 +218,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 			
 			return (chunkSizedFullDataSource) ->
 			{
-				if (chunkSizedFullDataSource.getBBoxLodPos().overlaps(this.loadedTargetFullDataSource.getSectionPos().getSectionBBoxPos()))
+				if (chunkSizedFullDataSource.getBBoxLodPos().overlapsExactly(this.loadedTargetFullDataSource.getSectionPos().getSectionBBoxPos()))
 				{
 					GeneratedFullDataFileHandler.this.write(this.loadedTargetFullDataSource.getSectionPos(), chunkSizedFullDataSource);
 				}

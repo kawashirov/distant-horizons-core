@@ -49,7 +49,7 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
     @Override
     public void update(ChunkSizedFullDataSource data)
 	{
-        LodUtil.assertTrue(this.sectionPos.getSectionBBoxPos().overlaps(data.getBBoxLodPos()));
+        LodUtil.assertTrue(this.sectionPos.getSectionBBoxPos().overlapsExactly(data.getBBoxLodPos()));
 
         if (data.dataDetail == 0 && this.getDataDetail() >= 4)
 		{

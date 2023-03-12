@@ -63,7 +63,7 @@ public class FullDataSource extends FullArrayView implements IFullDataSource
 	@Override
 	public void update(ChunkSizedFullDataSource data)
 	{
-		LodUtil.assertTrue(this.sectionPos.getSectionBBoxPos().overlaps(data.getBBoxLodPos()));
+		LodUtil.assertTrue(this.sectionPos.getSectionBBoxPos().overlapsExactly(data.getBBoxLodPos()));
 		if (data.dataDetail == 0 && this.getDataDetail() == 0)
 		{
 			DhBlockPos2D chunkBlockPos = new DhBlockPos2D(data.x * 16, data.z * 16);

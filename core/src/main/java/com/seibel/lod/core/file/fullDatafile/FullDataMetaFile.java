@@ -150,7 +150,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 	{
 		debugCheck();
 		DhLodPos chunkPos = new DhLodPos((byte) (chunkDataSource.dataDetail + 4), chunkDataSource.x, chunkDataSource.z);
-		LodUtil.assertTrue(pos.getSectionBBoxPos().overlaps(chunkPos), "Chunk pos "+chunkPos+" doesn't overlap with section "+pos);
+		LodUtil.assertTrue(pos.getSectionBBoxPos().overlapsExactly(chunkPos), "Chunk pos "+chunkPos+" doesn't overlap with section "+pos);
 		//LOGGER.info("Write Chunk {} to file {}", chunkPos, pos);
 		
 		GuardedMultiAppendQueue writeQueue = this.writeQueue.get();

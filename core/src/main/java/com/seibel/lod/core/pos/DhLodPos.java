@@ -39,7 +39,7 @@ public class DhLodPos implements Comparable<DhLodPos>
     public DhLodUnit getZ() { return new DhLodUnit(this.detailLevel, this.z); }
 	
     public int getBlockWidth() { return this.getBlockWidth(this.detailLevel); }
-	public int getBlockWidth(byte detailLevel) // TODO this needs some documentation or a better name describing what is happening
+	public int getBlockWidth(byte detailLevel) // TODO this needs some documentation or a better name describing what is happening, why is there an assert here?
 	{
 		LodUtil.assertTrue(detailLevel <= this.detailLevel);
 		return BitShiftUtil.powerOfTwo(this.detailLevel - detailLevel);
@@ -165,7 +165,8 @@ public class DhLodPos implements Comparable<DhLodPos>
 		}
 	}
 	
-	public boolean overlaps(DhLodPos other)
+	/** @return true if the two positions overlap exactly */
+	public boolean overlapsExactly(DhLodPos other)
 	{
 		if (this.equals(other))
 			return true;
