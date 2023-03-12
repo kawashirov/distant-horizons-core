@@ -186,19 +186,19 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 	/** see {@link MovableGridRingList#clear(Consumer)} for full documentation */
 	@Override
 	public void clear() { this.clear(null); }
-	/** @param consumer the consumer run on each item before it is removed from the list */
-	public void clear(Consumer<? super T> consumer)
+	/** @param removedItemConsumer the consumer run on each item before it is removed from the list */
+	public void clear(Consumer<? super T> removedItemConsumer)
 	{
 		this.moveLock.writeLock().lock();
 		try
 		{
-			if (consumer != null)
+			if (removedItemConsumer != null)
 			{
 				super.forEach((item) ->
 				{
 					if (item != null)
 					{
-						consumer.accept(item);
+						removedItemConsumer.accept(item);
 					}
 				});
 			}
@@ -222,7 +222,7 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 	/** see {@link MovableGridRingList#moveTo(int, int, Consumer)} for full documentation */
 	public boolean moveTo(int newCenterX, int newCenterY) { return this.moveTo(newCenterX, newCenterY, null); }
 	/** Returns true if the grid was successfully moved, false otherwise */
-	public boolean moveTo(int newCenterX, int newCenterY, Consumer<? super T> consumer)
+	public boolean moveTo(int newCenterX, int newCenterY, Consumer<? super T> removedItemConsumer)
 	{
 		Pos2D cPos = this.minPosRef.get();
 		int newMinX = newCenterX - this.halfSize;
@@ -248,7 +248,7 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 			// and update the pos
 			if (Math.abs(deltaX) >= this.size || Math.abs(deltaY) >= this.size)
 			{
-				this.clear(consumer);
+				this.clear(removedItemConsumer);
 			}
 			else
 			{
@@ -262,9 +262,9 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 							|| y - deltaY >= this.size)
 						{
 							T item = this._swapUnsafe(x+cPos.x, y+cPos.y, null);
-							if (item != null && consumer != null)
+							if (item != null && removedItemConsumer != null)
 							{
-								consumer.accept(item);
+								removedItemConsumer.accept(item);
 							}
 						}
 					}

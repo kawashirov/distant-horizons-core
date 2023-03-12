@@ -469,7 +469,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 		// wait for the tracker to be garbage collected(?)
 		while (phantom != null)
 		{
-			LOGGER.info("Full Data at pos: "+phantom.pos+" has been freed. "+lifeCycleDebugSet.size()+" Full Data files remaining.");
+			//LOGGER.info("Full Data at pos: "+phantom.pos+" has been freed. "+lifeCycleDebugSet.size()+" Full Data files remaining.");
 			phantom.close();
 			phantom = (DataObjTracker) lifeCycleDebugQueue.poll();
 		}

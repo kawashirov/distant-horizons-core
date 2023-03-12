@@ -82,10 +82,17 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		// confirm the quad tree has at least one node in it
         LodUtil.assertTrue(!missingPositions.isEmpty() || !existingFiles.isEmpty());
 		
+		
 		// determine the type of dataSource that should be used for this position
-		IIncompleteFullDataSource dataSource = pos.sectionDetailLevel <= SparseFullDataSource.MAX_SECTION_DETAIL ?
-				SparseFullDataSource.createEmpty(pos) :
-				SingleChunkFullDataSource.createEmpty(pos);
+		IIncompleteFullDataSource incompleteFullDataSource;
+		if (pos.sectionDetailLevel <= SparseFullDataSource.MAX_SECTION_DETAIL)
+		{
+			incompleteFullDataSource = SparseFullDataSource.createEmpty(pos);
+		}
+		else
+		{
+			incompleteFullDataSource = SingleChunkFullDataSource.createEmpty(pos);
+		}
 		
 		
         if (missingPositions.size() == 1 && existingFiles.isEmpty() && missingPositions.get(0).equals(pos))
@@ -96,13 +103,13 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
             if (worldGenQueue != null)
 			{
 				// queue this section to be generated
-				GenTask genTask = new GenTask(pos, new WeakReference<>(dataSource));
-				worldGenQueue.submitGenTask(dataSource.getSectionPos().getSectionBBoxPos(), dataSource.getDataDetail(), genTask)
+				GenTask genTask = new GenTask(pos, new WeakReference<>(incompleteFullDataSource));
+				worldGenQueue.submitGenTask(incompleteFullDataSource.getSectionPos().getSectionBBoxPos(), incompleteFullDataSource.getDataDetail(), genTask)
 							 .whenComplete((genTaskCompleted, ex) -> this.onWorldGenTaskComplete(genTaskCompleted, ex, genTask, pos));
             }
 			
 			// return the empty dataSource (it will be populated later)
-            return CompletableFuture.completedFuture(dataSource);
+            return CompletableFuture.completedFuture(incompleteFullDataSource);
         }
 		else
 		{
@@ -121,23 +128,24 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
             LOGGER.debug("Creating {} from sampling {} files: {}", pos, existingFiles.size(), existingFiles);
 			
 			// read in the existing data
-			final ArrayList<CompletableFuture<Void>> futures = new ArrayList<>(existingFiles.size());
+			final ArrayList<CompletableFuture<Void>> loadDataFutures = new ArrayList<>(existingFiles.size());
             for (FullDataMetaFile existingFile : existingFiles)
 			{
-                futures.add(existingFile.loadOrGetCachedAsync()
+                loadDataFutures.add(existingFile.loadOrGetCachedAsync()
                         .exceptionally((ex) -> /*Ignore file read errors*/null)
                         .thenAccept((data) ->
 						{
                             if (data != null)
 							{
                                 //LOGGER.info("Merging data from {} into {}", data.getSectionPos(), pos);
-                                dataSource.sampleFrom(data);
+                                incompleteFullDataSource.sampleFrom(data);
                             }
                         })
                 );
             }
-            return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                    .thenApply((voidValue) -> dataSource.trySelfPromote());
+			
+            return CompletableFuture.allOf(loadDataFutures.toArray(new CompletableFuture[0]))
+                    .thenApply((voidValue) -> incompleteFullDataSource.trySelfPromote());
         }
     }
 	
