@@ -7,12 +7,11 @@ import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource
 import com.seibel.lod.core.dataObjects.transformers.LodDataBuilder;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.generation.tasks.*;
-import com.seibel.lod.core.pos.DhBlockPos2D;
-import com.seibel.lod.core.pos.DhLodPos;
-import com.seibel.lod.core.pos.Pos2D;
+import com.seibel.lod.core.pos.*;
+import com.seibel.lod.core.util.gridList.MovableGridRingList;
+import com.seibel.lod.core.util.objects.QuadTree;
 import com.seibel.lod.core.util.objects.UncheckedInterruptedException;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
-import com.seibel.lod.core.pos.DhChunkPos;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
@@ -21,55 +20,17 @@ import org.apache.logging.log4j.Logger;
 import java.io.Closeable;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-/**
- * @author Leetom
- * @version 2022-11-25
- */
 public class WorldGenerationQueue implements Closeable
 {
-	public static final int MAX_TASKS_PROCESSED_PER_TICK = 10000;
-	
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
 	private final IDhApiWorldGenerator generator;
 	
-	/**
-	 * This list contains all of the {@link WorldGenTask}'s that haven't been processed yet. <br> 
-	 * These tasks may or may not be necessary or valid. <br.
-	 * All valid tasks in this list will eventually be added to 
-	 * the {@link WorldGenerationQueue#waitingTaskGroupsByLodPos} list (provided they aren't garbage collected first).
-	 */
-	private final ConcurrentLinkedQueue<WorldGenTask> looseWoldGenTasks = new ConcurrentLinkedQueue<>();
-	// FIXME: Concurrency issue on close!
-	// FIXME: This is using up a TONS of time to process!
-	private final ConcurrentSkipListMap<DhLodPos, WorldGenTaskGroup> waitingTaskGroupsByLodPos = new ConcurrentSkipListMap<>(
-		(aLodPos, bLodPos) ->
-		{
-			// sort based on detail level, higher detailLevels first (less detailed sections first)
-			if (aLodPos.detailLevel != bLodPos.detailLevel)
-			{
-				return aLodPos.detailLevel - bLodPos.detailLevel;
-			}
-			
-			// sort into layers (or squares) around the world origin, closer positions first // (look at the definition of chebyshev distance for an example of what this looks like)
-			// TODO shouldn't we sort based on the player's position, not the world center? Although doing that could potentially cause issues with having to constantly re-sort this list
-			int aDist = aLodPos.getCenterBlockPos().toPos2D().chebyshevDist(Pos2D.ZERO);
-			int bDist = bLodPos.getCenterBlockPos().toPos2D().chebyshevDist(Pos2D.ZERO);
-			if (aDist != bDist)
-			{
-				return aDist - bDist;
-			}
-			else if (aLodPos.x != bLodPos.x)
-			{
-				return aLodPos.x - bLodPos.x;
-			}
-			else
-			{
-				return aLodPos.z - bLodPos.z;
-			}
-		}); // Accessed by poller only
+	/** contains the positions that need to be generated */
+	private final QuadTree<WorldGenTask> waitingTaskQuadTree;
 	
 	private final ConcurrentHashMap<DhLodPos, InProgressWorldGenTaskGroup> inProgressGenTasksByLodPos = new ConcurrentHashMap<>();
 	
@@ -94,6 +55,8 @@ public class WorldGenerationQueue implements Closeable
 		this.maxDataDetail = generator.getMaxDataDetailLevel();
 		this.minDataDetail = generator.getMinDataDetailLevel();
 		
+		this.waitingTaskQuadTree = new QuadTree<>(Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH, DhBlockPos2D.ZERO /*the quad tree will be re-centered later*/);
+		
 		
 		if (this.minGranularity < LodUtil.CHUNK_DETAIL_LEVEL)
 		{
@@ -114,12 +77,21 @@ public class WorldGenerationQueue implements Closeable
 	
 	public CompletableFuture<Boolean> submitGenTask(DhLodPos pos, byte requiredDataDetail, IWorldGenTaskTracker tracker)
 	{
-		// if the generator is shutting down, don't add new tasks
+		// TODO implement multiple detail level generation
+		if (pos.detailLevel != 6)
+//		if (!(pos.detailLevel >= this.minGranularity && pos.detailLevel <= this.maxGranularity))
+		{
+			return CompletableFuture.completedFuture(false);
+		}
+		
+		
+		// the generator is shutting down, don't add new tasks
 		if (this.generatorClosingFuture != null)
 		{
 			return CompletableFuture.completedFuture(false);
 		}
 		
+		// TODO what does these checks and the assert below mean?
 		if (requiredDataDetail < this.minDataDetail)
 		{
 			throw new UnsupportedOperationException("Current generator does not meet requiredDataDetail level");
@@ -129,438 +101,192 @@ public class WorldGenerationQueue implements Closeable
 			requiredDataDetail = this.maxDataDetail;
 		}
 		
-		
-		LodUtil.assertTrue(pos.detailLevel > requiredDataDetail + 4);
-		byte granularity = (byte) (pos.detailLevel - requiredDataDetail);
+		LodUtil.assertTrue(pos.detailLevel > requiredDataDetail + LodUtil.CHUNK_DETAIL_LEVEL/*TODO is chunkDetailLevel the correct replacement? otherwise the magic number was 4*/); 
 		
 		
 		
-		
-		if (granularity > this.maxGranularity)
-		{
-			// The generation section is too big, split it up
-			
-			byte subDetail = (byte) (this.maxGranularity + requiredDataDetail);
-			int subPosWidthCount = pos.getBlockWidth(subDetail);
-			
-			DhLodPos cornerSubPos = pos.getCornerLodPos(subDetail);
-			CompletableFuture<Boolean>[] subFutures = new CompletableFuture[subPosWidthCount * subPosWidthCount];
-			ArrayList<WorldGenTask> subTasks = new ArrayList<>(subPosWidthCount * subPosWidthCount);
-			SplitWorldGenTaskTracker splitTaskTracker = new SplitWorldGenTaskTracker(tracker, new CompletableFuture<>());
-			
-			// create the new sub-futures
-			int subFutureIndex = 0;
-			for (int xOffset = 0; xOffset < subPosWidthCount; xOffset++)
-			{
-				for (int zOffset = 0; zOffset < subPosWidthCount; zOffset++)
-				{
-					CompletableFuture<Boolean> subFuture = new CompletableFuture<>();
-					subFutures[subFutureIndex++] = subFuture;
-					subTasks.add(new WorldGenTask(cornerSubPos.addOffset(xOffset, zOffset), requiredDataDetail, splitTaskTracker, subFuture));
-				}
-			}
-			
-			CompletableFuture.allOf(subFutures).whenComplete((v, ex) -> 
-			{
-				if (ex != null)
-				{
-					splitTaskTracker.parentFuture.completeExceptionally(ex);
-				}
-				
-				if (!splitTaskTracker.recalculateIsValid())
-				{
-					return; // Auto join future
-				}
-				
-				for (CompletableFuture<Boolean> subFuture : subFutures)
-				{
-					boolean successful = subFuture.join();
-					if (!successful)
-					{
-						splitTaskTracker.parentFuture.complete(false);
-						return;
-					}
-				}
-				splitTaskTracker.parentFuture.complete(true);
-			});
-			
-			this.looseWoldGenTasks.addAll(subTasks);
-			return splitTaskTracker.parentFuture;
-		}
-		else if (granularity < this.minGranularity)
-		{
-			// Too small of a chunk. We'll just over-size the generation.
-			byte parentDetail = (byte) (this.minGranularity + requiredDataDetail);
-			DhLodPos parentPos = pos.convertToDetailLevel(parentDetail);
-			CompletableFuture<Boolean> future = new CompletableFuture<>();
-			this.looseWoldGenTasks.add(new WorldGenTask(parentPos, requiredDataDetail, tracker, future));
-			
-			return future;
-		}
-		else
-		{
-			// the requested granularity is within the min and max granularity provided by the world generator,
-			// no additional task changes are necessary
-			
-			CompletableFuture<Boolean> future = new CompletableFuture<>();
-			this.looseWoldGenTasks.add(new WorldGenTask(pos, requiredDataDetail, tracker, future));
-			return future;
-		}
+		CompletableFuture<Boolean> future = new CompletableFuture<>();
+		this.waitingTaskQuadTree.set(new DhSectionPos(pos.detailLevel, pos.x, pos.z), new WorldGenTask(pos, requiredDataDetail, tracker, future));
+		return future;
 	}
+	
+	
+	//===============//
+	// running tasks //
+	//===============//
 	
 	public void runCurrentGenTasksUntilBusy(DhBlockPos2D targetPos)
 	{
-		if (this.generator == null)
+		try
 		{
-			throw new IllegalStateException("generator is null");
-		}
-		
-		
-		// done to prevent generating chunks where the player isn't
-		this.removeOutOfRangeTasks(targetPos);
-		
-		// generate terrain until the generator is asked to stop (if the while loop wasn't done the world generator would run out of tasks and will end up idle)
-		while (!this.generator.isBusy())// && !this.waitingTaskGroupsByLodPos.isEmpty()) // TODO why is the isEmpty() commented out?
-		{
-			this.removeOutdatedTaskGroups();
-			this.processLooseTasks();
-			this.startNextWorldGenTask(targetPos);
-		}
-	}
-	
-	/** 
-	 * Removes all invalid {@link WorldGenTask}'s and {@link WorldGenTaskGroup}'s <br> 
-	 * This generally happens if a worldGenTask has been garbage collected.
-	 */
-	private void removeOutdatedTaskGroups()
-	{
-		Iterator<WorldGenTaskGroup> groupIter = this.waitingTaskGroupsByLodPos.values().iterator();
-		
-		// go through each TaskGroup
-		while (groupIter.hasNext())
-		{
-			// go through each WorldGenTask in the TaskGroup
-			WorldGenTaskGroup taskGroup = groupIter.next();
-			Iterator<WorldGenTask> taskIter = taskGroup.worldGenTasks.iterator();
-			while (taskIter.hasNext())
+			if (this.generator == null)
 			{
-				// remove this task if it has been garbage collected
-				WorldGenTask task = taskIter.next();
-				if (!task.taskTracker.isMemoryAddressValid())
-				{
-					taskIter.remove();
-					task.future.complete(false);
-				}
+				throw new IllegalStateException("generator is null");
 			}
 			
-			// remove this group if it is now empty
-			if (taskGroup.worldGenTasks.isEmpty())
+			// the generator is shutting down, don't attempt to generate anything
+			if (this.generatorClosingFuture != null)
 			{
-				groupIter.remove();
-			}
-		}
-	}
-	
-	/** 
-	 * This processes the currently available loose tasks and prepares them 
-	 * so, they can actually be used for world generation.
-	 */
-	private void processLooseTasks()
-	{
-		int taskProcessed = 0;
-		
-		WorldGenTask task = this.looseWoldGenTasks.poll(); // using poll prevents concurrency issues where the list is cleared after asking if it was empty
-		while (task != null && taskProcessed < MAX_TASKS_PROCESSED_PER_TICK)
-		{
-			taskProcessed++;
-			byte taskDataDetail = task.dataDetailLevel;
-			byte taskGranularity = (byte) (task.pos.detailLevel - taskDataDetail);
-			LodUtil.assertTrue(taskGranularity >= LodUtil.CHUNK_DETAIL_LEVEL && taskGranularity >= this.minGranularity && taskGranularity <= this.maxGranularity);
-			
-			// Check if a task already exists for this position
-			WorldGenTaskGroup existingWorldGenGroup = this.waitingTaskGroupsByLodPos.get(task.pos);
-			if (existingWorldGenGroup != null)
-			{
-				// a task already exists for this exact position
-				
-				if (existingWorldGenGroup.dataDetail <= taskDataDetail)
-				{
-					// the existing group has an equal or lower detail level,
-					// we can just append the new task to its list.
-					existingWorldGenGroup.worldGenTasks.add(task);
-				}
-				else
-				{
-					// the existing group has a higher detail level than this one,
-					// we need to increase the existing group's detail level.
-					existingWorldGenGroup.dataDetail = taskDataDetail;
-					
-					// remove the existing task, so it can be re-added after the necessary modifications
-					boolean taskRemoved = this.waitingTaskGroupsByLodPos.remove(task.pos, existingWorldGenGroup);
-					LodUtil.assertTrue(taskRemoved);
-					
-					// re-add the task group
-					existingWorldGenGroup.worldGenTasks.add(task);
-					this.addAndCombineTaskGroup(existingWorldGenGroup);
-				}
-			}
-			else
-			{
-				// no task group exists for this position
-				
-				// Check if there is one with a higher detail level
-				byte granularity = taskGranularity;
-				boolean addedToHigherDetailGroup = false;
-				while (++granularity <= this.maxGranularity)
-				{
-					existingWorldGenGroup = this.waitingTaskGroupsByLodPos.get(task.pos.convertToDetailLevel((byte) (taskDataDetail + granularity)));
-					if (existingWorldGenGroup != null && existingWorldGenGroup.dataDetail == taskDataDetail)
-					{
-						// We can just append to the higher detail level group
-						existingWorldGenGroup.worldGenTasks.add(task);
-						addedToHigherDetailGroup = true;
-						break;
-					}
-				}
-				
-				if (!addedToHigherDetailGroup)
-				{
-					// no higher detail group exists that we can append to,
-					// create a new task group
-					existingWorldGenGroup = new WorldGenTaskGroup(task.pos, taskDataDetail);
-					existingWorldGenGroup.worldGenTasks.add(task);
-					this.addAndCombineTaskGroup(existingWorldGenGroup);
-				}
-			}
-			
-			
-			// get the next task to process (will be null if the list is empty)
-			task = this.looseWoldGenTasks.poll();
-		}
-		
-		if (taskProcessed != 0)
-		{
-			LOGGER.info("Processed " + taskProcessed + " loose tasks");
-		}
-	}
-	/** adds the new TaskGroup either as a new group or combines it into an existing task group */
-	private void addAndCombineTaskGroup(WorldGenTaskGroup newTaskGroup)
-	{
-		byte newGranularity = (byte) (newTaskGroup.pos.detailLevel - newTaskGroup.dataDetail);
-		LodUtil.assertTrue(newGranularity <= this.maxGranularity && newGranularity >= this.minGranularity);
-		LodUtil.assertTrue(!this.waitingTaskGroupsByLodPos.containsKey(newTaskGroup.pos));
-		
-		// Check and merge all those who have exactly the same dataDetail, and overlap the position; but have lower granularity than us
-		if (newGranularity > this.minGranularity)
-		{
-			// TODO: Optimize this check
-			Iterator<WorldGenTaskGroup> groupIter = this.waitingTaskGroupsByLodPos.values().iterator();
-			while (groupIter.hasNext())
-			{
-				WorldGenTaskGroup group = groupIter.next();
-				if (group.dataDetail != newTaskGroup.dataDetail
-					|| !group.pos.overlaps(newTaskGroup.pos))
-				{
-					continue;
-				}
-				
-				// We should have already ALWAYS selected the higher granularity.
-				LodUtil.assertTrue(group.pos.detailLevel < newTaskGroup.pos.detailLevel);
-				groupIter.remove(); // Remove and consume all from that lower granularity request
-				newTaskGroup.worldGenTasks.addAll(group.worldGenTasks);
-			}
-		}
-		
-		// Now, Check if we are the missing piece in the 4 quadrants, and if so, combine the four into a new higher granularity group
-		if (newGranularity < this.maxGranularity)
-		{ 
-			// Obviously, only do so if we aren't at the maxGranularity already
-			// Check for merging and upping the granularity
-			DhLodPos corePos = newTaskGroup.pos;
-			DhLodPos parentPos = corePos.convertToDetailLevel((byte) (corePos.detailLevel + 1));
-			int targetChildId = newTaskGroup.pos.getChildIndexOfParent();
-			
-			boolean allPassed = true;
-			for (int i = 0; i < 4; i++)
-			{
-				if (i == targetChildId)
-					continue;
-				WorldGenTaskGroup group = this.waitingTaskGroupsByLodPos.get(parentPos.getChildPosByIndex(i));
-				if (group == null || group.dataDetail != newTaskGroup.dataDetail)
-				{
-					allPassed = false;
-					break;
-				}
-			}
-			
-			if (allPassed)
-			{
-				LodUtil.assertTrue(!this.waitingTaskGroupsByLodPos.containsKey(parentPos) || this.waitingTaskGroupsByLodPos.get(parentPos).dataDetail != newTaskGroup.dataDetail);
-				WorldGenTaskGroup[] groups = new WorldGenTaskGroup[4];
-				for (int i = 0; i < 4; i++)
-				{
-					if (i == targetChildId)
-					{
-						groups[i] = newTaskGroup;
-					}
-					else
-					{
-						groups[i] = this.waitingTaskGroupsByLodPos.remove(parentPos.getChildPosByIndex(i));
-					}
-					LodUtil.assertTrue(groups[i] != null && groups[i].dataDetail == newTaskGroup.dataDetail);
-				}
-				
-				WorldGenTaskGroup newGroup = this.waitingTaskGroupsByLodPos.get(parentPos);
-				if (newGroup != null)
-				{
-					LodUtil.assertTrue(newGroup.dataDetail != newTaskGroup.dataDetail); // if it is equal, we should have been merged ages ago
-					if (newGroup.dataDetail < newTaskGroup.dataDetail)
-					{
-						// We can just append us into the existing list.
-						for (WorldGenTaskGroup g : groups)
-						{
-							newGroup.worldGenTasks.addAll(g.worldGenTasks);
-						}	
-					}
-					else
-					{
-						// We need to upgrade the requested dataDetail of the group.
-						newGroup.dataDetail = newTaskGroup.dataDetail;
-						boolean worked = this.waitingTaskGroupsByLodPos.remove(parentPos, newGroup); // Pop it off for later proper merge check
-						LodUtil.assertTrue(worked);
-						for (WorldGenTaskGroup g : groups)
-						{
-							newGroup.worldGenTasks.addAll(g.worldGenTasks);
-						}
-						this.addAndCombineTaskGroup(newGroup); // Recursive check the new group
-					}
-				}
-				else
-				{
-					// There should not be any higher granularity to check, as otherwise we would have merged ages ago
-					newGroup = new WorldGenTaskGroup(parentPos, newTaskGroup.dataDetail);
-					for (WorldGenTaskGroup g : groups)
-					{
-						newGroup.worldGenTasks.addAll(g.worldGenTasks);
-					}
-					this.addAndCombineTaskGroup(newGroup); // Recursive check the new group
-				}
-				
-				// We have merged. So no need to add the target group
 				return;
 			}
+			
+			
+			// done to prevent generating chunks where the player isn't
+			this.removeOutOfRangeTasks(targetPos);
+			
+			// generate terrain until the generator is asked to stop (if the while loop wasn't done the world generator would run out of tasks and will end up idle)
+			boolean taskStarted = true;
+			while (!this.generator.isBusy() && taskStarted)// && !this.waitingTaskGroupsByLodPos.isEmpty()) // TODO add !isEmpty()
+			{
+				this.removeGarbageCollectedTasks();
+				taskStarted = this.startNextWorldGenTask(targetPos);
+			}
 		}
-		
-		// Finally, we should be safe to add the target group into the list
-		WorldGenTaskGroup existingTaskGroup = this.waitingTaskGroupsByLodPos.put(newTaskGroup.pos, newTaskGroup);
-		LodUtil.assertTrue(existingTaskGroup == null); // should never be replacing other things
+		catch (Exception e)
+		{
+			LOGGER.error(e.getMessage(), e);
+		}
 	}
 	
-	private void startNextWorldGenTask(DhBlockPos2D targetPos)
+	private void removeOutOfRangeTasks(DhBlockPos2D targetBlockPos)
 	{
-		WorldGenTaskGroup closestTaskGroup = null;
-		long closestGenGroupDist = Long.MAX_VALUE;
-		int lastChebshevDistToOrigin = Integer.MIN_VALUE;
-		boolean continueNextRound = true;
-		byte currentDetailChecking = -1;
+		AtomicInteger numberOfTasksRemoved = new AtomicInteger();
 		
+		this.waitingTaskQuadTree.setCenterPos(targetBlockPos, (worldGenTask) -> { numberOfTasksRemoved.getAndIncrement(); });
 		
-		// Select the TaskGroup closest to the target pos with the highest detail level
-		for (WorldGenTaskGroup worldGenGroup : this.waitingTaskGroupsByLodPos.values())
+//		if (numberOfTasksRemoved.get() != 0)
+//		{
+//			LOGGER.info(numberOfTasksRemoved.get()+" world gen tasks removed.");
+//		}
+	}
+	
+	/** Removes all {@link WorldGenTask}'s and {@link WorldGenTaskGroup}'s that have been garbage collected. */
+	private void removeGarbageCollectedTasks() // TODO remove, potential mystery errors caused by garbage collection isn't worth it (and may not be necessary any more now that we are using a quad tree to hold the tasks)
+	{
+		for (byte detailLevel = QuadTree.TREE_LOWEST_DETAIL_LEVEL; detailLevel < this.waitingTaskQuadTree.treeMaxDetailLevel; detailLevel++)
 		{
-			// the list should be sorted detailLevel first,
-			// so we should break before getting to a different detail level in the list
-			if (currentDetailChecking == -1)
+			MovableGridRingList<WorldGenTask> gridRingList = this.waitingTaskQuadTree.getRingList(detailLevel);
+			Iterator<WorldGenTask> taskIterator = gridRingList.iterator();
+			while (taskIterator.hasNext())
 			{
-				currentDetailChecking = worldGenGroup.dataDetail;
-			}
-			LodUtil.assertTrue(currentDetailChecking == worldGenGroup.dataDetail);
-			
-			
-			// look for the closest position in each given layer around the world origin
-			// TODO why are we looking around the world's origin?
-			int chebDistToOrigin = worldGenGroup.pos.getCenterBlockPos().toPos2D().chebyshevDist(Pos2D.ZERO);
-			if (chebDistToOrigin > lastChebshevDistToOrigin)
-			{
-				// this worldGenGroup is 1 layer farther from the world origin
-				
-				if (!continueNextRound)
+				// go through each WorldGenTask in the TaskGroup
+				WorldGenTask genTask = taskIterator.next();
+				if (genTask != null && !genTask.taskTracker.isMemoryAddressValid())
 				{
-					// We have found the best worldGenGroup, stop looking
-					break;
-				}
-				else
-				{
-					continueNextRound = false;
-					lastChebshevDistToOrigin = chebDistToOrigin;
+					taskIterator.remove();
+					genTask.future.complete(false);
 				}
 			}
-
-
-			// is this worldGenGroup closer to the targetPos than the previous closest?
-			long dist = worldGenGroup.pos.getCenterBlockPos().distSquared(targetPos);
-			if (closestTaskGroup != null && dist >= closestGenGroupDist)
+		}
+	}
+	
+	/** @param targetPos the position to center the generation around */
+	private boolean startNextWorldGenTask(DhBlockPos2D targetPos)
+	{
+		WorldGenTask closestTask = null;
+		
+		// look through the tree from lowest to highest detail level to find the next task to generate
+		for (byte detailLevel = QuadTree.TREE_LOWEST_DETAIL_LEVEL; detailLevel < this.waitingTaskQuadTree.treeMaxDetailLevel; detailLevel++)
+		{
+			// look for the task that is closest to the targetPos
+			long closestGenDist = Long.MAX_VALUE;
+			
+			MovableGridRingList<WorldGenTask> gridRingList = this.waitingTaskQuadTree.getRingList(detailLevel);
+			for (WorldGenTask newGenTask : gridRingList)
 			{
-				// this worldGenGroup is farther away
-				continue;
+				if (newGenTask != null)
+				{
+					// use chebyShev distance in order to generate in rings around the target pos (also because it is a fast distance calculation)
+					int chebDistToTargetPos = newGenTask.pos.getCenterBlockPos().toPos2D().chebyshevDist(targetPos.toPos2D());
+					if (chebDistToTargetPos < closestGenDist)
+					{
+						// this task is closer than the last one
+						closestTask = newGenTask;
+						closestGenDist = chebDistToTargetPos;
+						
+					}
+				}
+			}
+			
+			// a task has been found, don't look at the next detail level,
+			// everything there will be farther away
+			if (closestTask != null)
+			{
+				break;
+			}
+		}
+		
+		
+		
+		if (closestTask == null)
+		{
+			// no task was found, this probably means there isn't anything left to generate
+			return false;
+		}
+		
+		
+		
+		// remove the task we found, we are going to start it and don't want to run it multiple times
+		WorldGenTask removedWorldGenTask = this.waitingTaskQuadTree.set(closestTask.pos.detailLevel, closestTask.pos.x, closestTask.pos.z, null);
+		// removedWorldGenTask can be null // TODO when? 
+		
+		
+		// do we need to modify this task to generate it?
+		if(canGeneratePos((byte) 0, closestTask.pos)) // TODO should 0 be replaced?
+		{
+			// detail level is correct for generation, start generation
+			
+			WorldGenTaskGroup closestTaskGroup = new WorldGenTaskGroup(closestTask.pos, (byte) 0);  // TODO should 0 be replaced?
+			closestTaskGroup.worldGenTasks.add(closestTask); // TODO
+			
+			InProgressWorldGenTaskGroup newInProgressTask = new InProgressWorldGenTaskGroup(closestTaskGroup);
+			InProgressWorldGenTaskGroup previousInProgressTask = this.inProgressGenTasksByLodPos.putIfAbsent(closestTask.pos, newInProgressTask);
+			if (previousInProgressTask == null)
+			{
+				// no task exists for this position, start one
+				this.startWorldGenTaskGroup(newInProgressTask);	
 			}
 			else
 			{
-				// this worldGenGroup is closer than the previous closest
-				closestGenGroupDist = dist;
-				closestTaskGroup = worldGenGroup;
-				
-				continueNextRound = true;
-			}
-		}
-		
-		
-		// if a new worldGenGroup was found, try starting it
-		if (closestTaskGroup != null)
-		{
-			InProgressWorldGenTaskGroup newInProgressTask = new InProgressWorldGenTaskGroup(closestTaskGroup);
-			InProgressWorldGenTaskGroup previousInProgressTask = this.inProgressGenTasksByLodPos.putIfAbsent(closestTaskGroup.pos, newInProgressTask);
-			
-			// Remove the selected task from the waiting list
-			boolean taskRemoved = this.waitingTaskGroupsByLodPos.remove(closestTaskGroup.pos, closestTaskGroup);
-			LodUtil.assertTrue(taskRemoved);
-			 
-			//LOGGER.info("waiting world gen task count: "+this.waitingTaskGroupsByLodPos.size());
-			
-			if (previousInProgressTask != null)
-			{
-				// There is already a worldGenTask running for this position
-				
+				// TODO replace the previous inProgress task if one exists
 				// Note: Due to concurrency reasons, even if the currently running task is compatible with 
 				// 		   the newly selected task, we cannot use it,
 				//         as some chunks may have already been written into.
-				
-				// recursively look for a different worldGenTask to start
-				this.startNextWorldGenTask(targetPos);
-				
-				// TODO why are we putting the task back? since a compatible task is already running, why would we re-add it to the list
-				WorldGenTaskGroup exchange = this.waitingTaskGroupsByLodPos.put(closestTaskGroup.pos, closestTaskGroup); // put back the task.
-				LodUtil.assertTrue(exchange == null);
 			}
-			else
+			
+			// a task has been started
+			return true;
+		}
+		else
+		{
+			// detail level is (probably) too high, split up the task
+			LodUtil.assertTrue(closestTask == removedWorldGenTask); // should be the same memory address, removedWorldGenTask shouldn't be null // TODO why shouldn't it be null?
+			
+			
+			// split up the task and add each one to the tree
+			DhSectionPos sectionPos = new DhSectionPos(closestTask.pos.detailLevel, closestTask.pos.x, closestTask.pos.z);
+			sectionPos.forEachChild((childDhSectionPos) -> 
 			{
-				// No worldGenTask is running for this position, start one
-				this.startWorldGenTaskGroup(newInProgressTask);
-			}
+				WorldGenTask newGenTask = new WorldGenTask(new DhLodPos(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ), childDhSectionPos.sectionDetailLevel, removedWorldGenTask.taskTracker, removedWorldGenTask.future /*TODO probably need to do something about the futures here*/);
+				this.waitingTaskQuadTree.set(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ, newGenTask);
+			});
+			
+			// return true so we attempt to generate again
+			return true;
 		}
 	}
 	private void startWorldGenTaskGroup(InProgressWorldGenTaskGroup task)
 	{
-		byte dataDetail = task.group.dataDetail;
-		DhLodPos pos = task.group.pos;
-		byte granularity = (byte) (pos.detailLevel - dataDetail);
+		byte taskDetailLevel = task.group.dataDetail;
+		DhLodPos taskPos = task.group.pos;
+		byte granularity = (byte) (taskPos.detailLevel - taskDetailLevel);
 		LodUtil.assertTrue(granularity >= this.minGranularity && granularity <= this.maxGranularity);
-		LodUtil.assertTrue(dataDetail >= this.minDataDetail && dataDetail <= this.maxDataDetail);
+		LodUtil.assertTrue(taskDetailLevel >= this.minDataDetail && taskDetailLevel <= this.maxDataDetail);
 		
-		DhChunkPos chunkPosMin = new DhChunkPos(pos.getCornerBlockPos());
-		//LOGGER.info("Generating section {} with granularity {} at {}", pos, granularity, chunkPosMin);
+		DhChunkPos chunkPosMin = new DhChunkPos(taskPos.getCornerBlockPos());
+		LOGGER.info("Generating section "+taskPos+" with granularity "+granularity+" at "+chunkPosMin);
 		
-		task.genFuture = startGenerationEvent(this.generator, chunkPosMin, granularity, dataDetail, task.group::onGenerationComplete);
+		task.genFuture = startGenerationEvent(this.generator, chunkPosMin, granularity, taskDetailLevel, task.group::onGenerationComplete);
 		task.genFuture.whenComplete((voidObj, exception) ->
 		{
 			if (exception != null)
@@ -568,7 +294,7 @@ public class WorldGenerationQueue implements Closeable
 				// don't log the shutdown exceptions
 				if (!UncheckedInterruptedException.isThrowableInterruption(exception) && !(exception instanceof CancellationException || exception.getCause() instanceof CancellationException))
 				{
-					LOGGER.error("Error generating data for section "+pos, exception);
+					LOGGER.error("Error generating data for section "+taskPos, exception);
 				}
 				
 				task.group.worldGenTasks.forEach(worldGenTask -> worldGenTask.future.complete(false));
@@ -578,69 +304,9 @@ public class WorldGenerationQueue implements Closeable
 				//LOGGER.info("Section generation at "+pos+" completed");
 				task.group.worldGenTasks.forEach(worldGenTask -> worldGenTask.future.complete(true));
 			}
-			boolean worked = this.inProgressGenTasksByLodPos.remove(pos, task);
+			boolean worked = this.inProgressGenTasksByLodPos.remove(taskPos, task);
 			LodUtil.assertTrue(worked);
 		});
-	}
-	
-	
-	/**
-	 * Removes all {@link WorldGenTask}'s and {@link WorldGenTaskGroup}'s
-	 * that are outside the player's render distance. <br>
-	 * This is done to prevent generating chunks where the player isn't. <br><br>
-	 * 
-	 * TODO it would be better in the long term to query what chunks should be generated each tick
-	 *      instead of keeping a running list of every chunk pos that could ever need generating.
-	 *      Said list can get very long and is often troublesome to use.
-	 */
-	private void removeOutOfRangeTasks(DhBlockPos2D targetBlockPos)
-	{
-		int numberOfTasksRemoved = 0;
-		
-		DhChunkPos targetChunkPos = new DhChunkPos(targetBlockPos);
-		
-		int chunkRenderDistance = Config.Client.Graphics.Quality.lodChunkRenderDistance.get();
-		chunkRenderDistance += 6; // add a buffer where the user can move without clearing any tasks
-		
-		DhChunkPos minChunkPos = new DhChunkPos(targetChunkPos.x - chunkRenderDistance, targetChunkPos.z - chunkRenderDistance);
-		DhChunkPos maxChunkPos = new DhChunkPos(targetChunkPos.x + chunkRenderDistance, targetChunkPos.z + chunkRenderDistance);
-		
-		
-		Iterator<WorldGenTaskGroup> taskGroupIter = this.waitingTaskGroupsByLodPos.values().iterator();
-		
-		// go through each TaskGroup
-		while (taskGroupIter.hasNext())
-		{
-			// go through each WorldGenTask in the TaskGroup
-			WorldGenTaskGroup taskGroup = taskGroupIter.next();
-			Iterator<WorldGenTask> taskIter = taskGroup.worldGenTasks.iterator();
-			while (taskIter.hasNext())
-			{
-				// remove this task if it has been garbage collected
-				WorldGenTask task = taskIter.next();
-				DhChunkPos centerChunkPos = new DhChunkPos(task.pos.getCenterBlockPos()); // TODO this assumes the world gen tasks are exactly 1 chunk wide, which isn't always the case. But it works well enough for now
-				
-				if (!DhChunkPos.isChunkPosBetween(minChunkPos, centerChunkPos, maxChunkPos))
-				{
-					taskIter.remove();
-					task.future.complete(false);
-					
-					numberOfTasksRemoved++;
-				}
-			}
-			
-			// remove this group if it is now empty
-			if (taskGroup.worldGenTasks.isEmpty())
-			{
-				taskGroupIter.remove();
-			}
-		}
-		
-		
-		if (numberOfTasksRemoved != 0)
-		{
-//			LOGGER.info(numberOfTasksRemoved+" world gen tasks removed.");
-		}
 	}
 	
 	
@@ -651,14 +317,40 @@ public class WorldGenerationQueue implements Closeable
 	
 	public CompletableFuture<Void> startClosing(boolean cancelCurrentGeneration, boolean alsoInterruptRunning)
 	{
-		this.waitingTaskGroupsByLodPos.values().forEach(worldGenTaskGroup -> worldGenTaskGroup.worldGenTasks.forEach(
-				(worldGenTask) -> 
-				{ 
-					try { worldGenTask.future.cancel(true); } catch (CancellationException ignored) { /* don't log shutdown exceptions */ }
+		for (byte detailLevel = QuadTree.TREE_LOWEST_DETAIL_LEVEL; detailLevel < this.waitingTaskQuadTree.treeMaxDetailLevel; detailLevel++)
+		{
+			// TODO remove
+//			Iterator<WorldGenTask> ringListIterator = this.waitingTaskQuadTree.getRingList(detailLevel).iterator();
+//			while (ringListIterator.hasNext())
+//			{
+//				WorldGenTask worldGenTask = ringListIterator.next();
+//				if (worldGenTask != null)
+//				{
+//					try
+//					{
+//						worldGenTask.future.cancel(true);
+//					}
+//					catch (CancellationException ignored)
+//					{ /* don't log shutdown exceptions */ }
+//				}
+//			}
+			
+			// TODO shouldn't I clear the list? not just cancel each item?
+			MovableGridRingList<WorldGenTask> ringList = this.waitingTaskQuadTree.getRingList(detailLevel);
+			ringList.clear((worldGenTask) ->
+			{
+				if (worldGenTask != null)
+				{
+					try
+					{
+						worldGenTask.future.cancel(true);
+					}
+					catch (CancellationException ignored)
+					{ /* don't log shutdown exceptions */ }
 				}
-		));
+			});
+		}
 		
-		this.waitingTaskGroupsByLodPos.clear();
 		
 		ArrayList<CompletableFuture<Void>> inProgressTasksCancelingFutures = new ArrayList<>(this.inProgressGenTasksByLodPos.size());
 		this.inProgressGenTasksByLodPos.values().forEach(runningTaskGroup ->
@@ -686,9 +378,6 @@ public class WorldGenerationQueue implements Closeable
 				}));
 			});
 		this.generatorClosingFuture = CompletableFuture.allOf(inProgressTasksCancelingFutures.toArray(new CompletableFuture[0])); //FIXME: Closer threading issues with runCurrentGenTasksUntilBusy
-		
-		this.looseWoldGenTasks.forEach(worldGenTask -> worldGenTask.future.cancel(true)); //.complete(false));
-		this.looseWoldGenTasks.clear();
 		
 		return this.generatorClosingFuture;
 	}
@@ -721,6 +410,12 @@ public class WorldGenerationQueue implements Closeable
 	//================//
 	// helper methods //
 	//================//
+	
+	private boolean canGeneratePos(byte worldGenTaskGroupDetailLevel /*when in doubt use 0*/, DhLodPos taskPos)
+	{
+		byte granularity = (byte) (taskPos.detailLevel - worldGenTaskGroupDetailLevel);
+		return (granularity >= this.minGranularity && granularity <= this.maxGranularity);
+	}
 	
 	/**
 	 * Source: <a href="https://stackoverflow.com/questions/3706219/algorithm-for-iterating-over-an-outward-spiral-on-a-discrete-2d-grid-from-the-or">...</a>
