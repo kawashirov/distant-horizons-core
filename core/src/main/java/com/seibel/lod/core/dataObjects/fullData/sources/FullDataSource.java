@@ -10,7 +10,6 @@ import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.BitShiftUtil;
-import com.seibel.lod.core.util.objects.DhUnclosableInputStream;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
