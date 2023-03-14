@@ -239,7 +239,7 @@ public class DhClientServerLevel extends AbstractDhClientLevel implements IDhCli
 			}
 		}
 		
-		LOGGER.info("Closed "+DhClientLevel.class.getSimpleName()+" for "+this.serverLevelWrapper);
+		LOGGER.info("Closed "+this.getClass().getSimpleName()+" for "+this.serverLevelWrapper);
 	}
 	
 	
