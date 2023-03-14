@@ -236,6 +236,19 @@ public class QuadTree<T>
 	}
 	public boolean isDetailLevelEmpty(byte detailLevel) { return this.getRingList(detailLevel).isEmpty(); }
 	
+	/** returns the number of items in this QuadTree */
+	public int size() 
+	{
+		int size = 0;
+		for (byte detailLevel = QuadTree.TREE_LOWEST_DETAIL_LEVEL; detailLevel < this.treeMaxDetailLevel; detailLevel++)
+		{
+			size += getRingList(detailLevel).size();
+		}
+		
+		return size;
+	}
+	
+	
 	public String getDebugString()
 	{
 		StringBuilder sb = new StringBuilder();

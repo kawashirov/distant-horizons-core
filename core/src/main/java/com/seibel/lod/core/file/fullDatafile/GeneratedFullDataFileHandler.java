@@ -7,6 +7,7 @@ import com.seibel.lod.core.dataObjects.fullData.sources.SparseFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.SingleChunkFullDataSource;
 import com.seibel.lod.core.generation.tasks.IWorldGenTaskTracker;
 import com.seibel.lod.core.generation.WorldGenerationQueue;
+import com.seibel.lod.core.generation.tasks.WorldGenResult;
 import com.seibel.lod.core.level.IDhServerLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
@@ -105,7 +106,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 				// queue this section to be generated
 				GenTask genTask = new GenTask(pos, new WeakReference<>(incompleteFullDataSource));
 				worldGenQueue.submitGenTask(incompleteFullDataSource.getSectionPos().getSectionBBoxPos(), incompleteFullDataSource.getDataDetail(), genTask)
-							 .whenComplete((genTaskCompleted, ex) -> this.onWorldGenTaskComplete(genTaskCompleted, ex, genTask, pos));
+							 .whenComplete((genTaskResult, ex) -> this.onWorldGenTaskComplete(genTaskResult, ex, genTask, pos));
             }
 			
 			// return the empty dataSource (it will be populated later)
@@ -149,18 +150,20 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
         }
     }
 	
-	private void onWorldGenTaskComplete(Boolean genTaskCompleted, Throwable exception, GenTask genTask, DhSectionPos pos)
+	private void onWorldGenTaskComplete(WorldGenResult genTaskResult, Throwable exception, GenTask genTask, DhSectionPos pos)
 	{
 		if (exception != null)
 		{
-			// don't log the shutdown exceptions
+			// don't log shutdown exceptions
 			if (!(exception instanceof CancellationException || exception.getCause() instanceof CancellationException))
 			{
 				LOGGER.error("Uncaught Gen Task Exception at " + pos + ":", exception);
 			}
 		}
-		else if (genTaskCompleted)
+		else if (genTaskResult.success)
 		{
+			// generation completed, update the files and listener(s)
+			
 			this.files.get(genTask.pos).flushAndSave();
 			
 			// fire the event listeners 
@@ -171,6 +174,16 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 			
 //			this.files.get(genTask.pos).metaData.dataVersion.incrementAndGet();
 			return;
+		}
+		else
+		{
+			// generation didn't complete
+			
+			// if the generation task was split up into smaller positions, wait for them to complete
+			for (CompletableFuture<WorldGenResult> siblingFuture : genTaskResult.childFutures)
+			{
+				siblingFuture.whenComplete((siblingGenTaskResult, siblingEx) -> this.onWorldGenTaskComplete(siblingGenTaskResult, siblingEx, genTask, pos));
+			}
 		}
 		
 		genTask.releaseStrongReference();

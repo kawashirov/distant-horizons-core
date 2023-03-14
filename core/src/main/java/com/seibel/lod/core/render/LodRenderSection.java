@@ -80,6 +80,13 @@ public class LodRenderSection
 	
     public void reload(ILodRenderSourceProvider renderDataProvider)
 	{
+		// don't accidentally enable rendering for a disabled section
+		if (!this.isRenderEnabled)
+		{
+			return;
+		}
+		
+		
 		this.renderSourceProvider = renderDataProvider;
 		
         if (this.loadFuture != null)

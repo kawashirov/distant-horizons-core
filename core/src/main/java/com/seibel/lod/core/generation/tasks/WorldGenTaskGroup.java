@@ -2,6 +2,7 @@ package com.seibel.lod.core.generation.tasks;
 
 import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.pos.DhLodPos;
+import com.seibel.lod.core.pos.DhSectionPos;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -38,7 +39,7 @@ public final class WorldGenTaskGroup
 			if (onGenTaskCompleteConsumer == null)
 			{
 				tasks.remove();
-				task.future.complete(false);
+				task.future.complete(WorldGenResult.CreateFail());
 			}
 			else
 			{

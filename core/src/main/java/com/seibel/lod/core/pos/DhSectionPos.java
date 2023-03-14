@@ -66,6 +66,13 @@ public class DhSectionPos
 		this.sectionZ = lodPos.z;
 	}
 	
+	public DhSectionPos(byte detailLevel, DhLodPos dhLodPos)
+	{
+		this.sectionDetailLevel = detailLevel;
+		this.sectionX = dhLodPos.x;
+		this.sectionZ = dhLodPos.z;
+	}
+	
 	
 	
 	/** Returns the center for the highest detail level (0) */

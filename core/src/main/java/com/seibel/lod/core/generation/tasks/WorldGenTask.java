@@ -2,6 +2,7 @@ package com.seibel.lod.core.generation.tasks;
 
 import com.seibel.lod.core.pos.DhLodPos;
 
+import java.util.LinkedList;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -13,10 +14,11 @@ public final class WorldGenTask
 	public final DhLodPos pos;
 	public final byte dataDetailLevel;
 	public final IWorldGenTaskTracker taskTracker;
-	public final CompletableFuture<Boolean> future;
+	public final CompletableFuture<WorldGenResult> future;
 	
 	
-	public WorldGenTask(DhLodPos pos, byte dataDetail, IWorldGenTaskTracker taskTracker, CompletableFuture<Boolean> future)
+	
+	public WorldGenTask(DhLodPos pos, byte dataDetail, IWorldGenTaskTracker taskTracker, CompletableFuture<WorldGenResult> future)
 	{
 		this.dataDetailLevel = dataDetail;
 		this.pos = pos;

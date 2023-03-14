@@ -75,23 +75,16 @@ public class WorldGenerationQueue implements Closeable
 	// task handling   //
 	//=================//
 	
-	public CompletableFuture<Boolean> submitGenTask(DhLodPos pos, byte requiredDataDetail, IWorldGenTaskTracker tracker)
+	public CompletableFuture<WorldGenResult> submitGenTask(DhLodPos pos, byte requiredDataDetail, IWorldGenTaskTracker tracker)
 	{
-		// TODO implement multiple detail level generation
-		if (pos.detailLevel != 6)
-//		if (!(pos.detailLevel >= this.minGranularity && pos.detailLevel <= this.maxGranularity))
-		{
-			return CompletableFuture.completedFuture(false);
-		}
-		
-		
 		// the generator is shutting down, don't add new tasks
 		if (this.generatorClosingFuture != null)
 		{
-			return CompletableFuture.completedFuture(false);
+			return CompletableFuture.completedFuture(WorldGenResult.CreateFail());
 		}
 		
-		// TODO what does these checks and the assert below mean?
+		
+		// make sure the generator can provide the requested position
 		if (requiredDataDetail < this.minDataDetail)
 		{
 			throw new UnsupportedOperationException("Current generator does not meet requiredDataDetail level");
@@ -101,11 +94,12 @@ public class WorldGenerationQueue implements Closeable
 			requiredDataDetail = this.maxDataDetail;
 		}
 		
+		// TODO what does this assert mean?
 		LodUtil.assertTrue(pos.detailLevel > requiredDataDetail + LodUtil.CHUNK_DETAIL_LEVEL/*TODO is chunkDetailLevel the correct replacement? otherwise the magic number was 4*/); 
 		
 		
 		
-		CompletableFuture<Boolean> future = new CompletableFuture<>();
+		CompletableFuture<WorldGenResult> future = new CompletableFuture<>();
 		this.waitingTaskQuadTree.set(new DhSectionPos(pos.detailLevel, pos.x, pos.z), new WorldGenTask(pos, requiredDataDetail, tracker, future));
 		return future;
 	}
@@ -174,13 +168,16 @@ public class WorldGenerationQueue implements Closeable
 				if (genTask != null && !genTask.taskTracker.isMemoryAddressValid())
 				{
 					taskIterator.remove();
-					genTask.future.complete(false);
+					genTask.future.complete(WorldGenResult.CreateFail());
 				}
 			}
 		}
 	}
 	
-	/** @param targetPos the position to center the generation around */
+	/** 
+	 * @param targetPos the position to center the generation around 
+	 * @return false if no tasks were found to generate
+	 */
 	private boolean startNextWorldGenTask(DhBlockPos2D targetPos)
 	{
 		WorldGenTask closestTask = null;
@@ -259,35 +256,46 @@ public class WorldGenerationQueue implements Closeable
 		}
 		else
 		{
-			// detail level is (probably) too high, split up the task
-			LodUtil.assertTrue(closestTask == removedWorldGenTask); // should be the same memory address, removedWorldGenTask shouldn't be null // TODO why shouldn't it be null?
+			// detail level is too high (if the detail level was too low, the generator would've ignored the request),
+			// split up the task
+			
+			// make sure that we have a task to split up
+			LodUtil.assertTrue(closestTask == removedWorldGenTask);
 			
 			
 			// split up the task and add each one to the tree
+			LinkedList<CompletableFuture<WorldGenResult>> childFutures = new LinkedList<>();
 			DhSectionPos sectionPos = new DhSectionPos(closestTask.pos.detailLevel, closestTask.pos.x, closestTask.pos.z);
 			sectionPos.forEachChild((childDhSectionPos) -> 
 			{
-				WorldGenTask newGenTask = new WorldGenTask(new DhLodPos(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ), childDhSectionPos.sectionDetailLevel, removedWorldGenTask.taskTracker, removedWorldGenTask.future /*TODO probably need to do something about the futures here*/);
+				CompletableFuture<WorldGenResult> newFuture = new CompletableFuture<>();
+				childFutures.add(newFuture);
+						
+				WorldGenTask newGenTask = new WorldGenTask(new DhLodPos(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ), childDhSectionPos.sectionDetailLevel, removedWorldGenTask.taskTracker, newFuture);
 				this.waitingTaskQuadTree.set(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ, newGenTask);
 			});
+			
+			// send the child futures to the future recipient, to notify them of the new tasks
+			removedWorldGenTask.future.complete(WorldGenResult.CreateSplit(childFutures));
+			
 			
 			// return true so we attempt to generate again
 			return true;
 		}
 	}
-	private void startWorldGenTaskGroup(InProgressWorldGenTaskGroup task)
+	private void startWorldGenTaskGroup(InProgressWorldGenTaskGroup inProgressTaskGroup)
 	{
-		byte taskDetailLevel = task.group.dataDetail;
-		DhLodPos taskPos = task.group.pos;
+		byte taskDetailLevel = inProgressTaskGroup.group.dataDetail;
+		DhLodPos taskPos = inProgressTaskGroup.group.pos;
 		byte granularity = (byte) (taskPos.detailLevel - taskDetailLevel);
 		LodUtil.assertTrue(granularity >= this.minGranularity && granularity <= this.maxGranularity);
 		LodUtil.assertTrue(taskDetailLevel >= this.minDataDetail && taskDetailLevel <= this.maxDataDetail);
 		
 		DhChunkPos chunkPosMin = new DhChunkPos(taskPos.getCornerBlockPos());
-		LOGGER.info("Generating section "+taskPos+" with granularity "+granularity+" at "+chunkPosMin);
+//		LOGGER.info("Generating section "+taskPos+" with granularity "+granularity+" at "+chunkPosMin);
 		
-		task.genFuture = startGenerationEvent(this.generator, chunkPosMin, granularity, taskDetailLevel, task.group::onGenerationComplete);
-		task.genFuture.whenComplete((voidObj, exception) ->
+		inProgressTaskGroup.genFuture = startGenerationEvent(this.generator, chunkPosMin, granularity, taskDetailLevel, inProgressTaskGroup.group::onGenerationComplete);
+		inProgressTaskGroup.genFuture.whenComplete((voidObj, exception) ->
 		{
 			if (exception != null)
 			{
@@ -297,14 +305,14 @@ public class WorldGenerationQueue implements Closeable
 					LOGGER.error("Error generating data for section "+taskPos, exception);
 				}
 				
-				task.group.worldGenTasks.forEach(worldGenTask -> worldGenTask.future.complete(false));
+				inProgressTaskGroup.group.worldGenTasks.forEach(worldGenTask -> worldGenTask.future.complete(WorldGenResult.CreateFail()));
 			}
 			else
 			{
 				//LOGGER.info("Section generation at "+pos+" completed");
-				task.group.worldGenTasks.forEach(worldGenTask -> worldGenTask.future.complete(true));
+				inProgressTaskGroup.group.worldGenTasks.forEach(worldGenTask -> worldGenTask.future.complete(WorldGenResult.CreateSuccess(new DhSectionPos(granularity, taskPos))));
 			}
-			boolean worked = this.inProgressGenTasksByLodPos.remove(taskPos, task);
+			boolean worked = this.inProgressGenTasksByLodPos.remove(taskPos, inProgressTaskGroup);
 			LodUtil.assertTrue(worked);
 		});
 	}
@@ -317,25 +325,9 @@ public class WorldGenerationQueue implements Closeable
 	
 	public CompletableFuture<Void> startClosing(boolean cancelCurrentGeneration, boolean alsoInterruptRunning)
 	{
+		// remove any incomplete generation tasks
 		for (byte detailLevel = QuadTree.TREE_LOWEST_DETAIL_LEVEL; detailLevel < this.waitingTaskQuadTree.treeMaxDetailLevel; detailLevel++)
 		{
-			// TODO remove
-//			Iterator<WorldGenTask> ringListIterator = this.waitingTaskQuadTree.getRingList(detailLevel).iterator();
-//			while (ringListIterator.hasNext())
-//			{
-//				WorldGenTask worldGenTask = ringListIterator.next();
-//				if (worldGenTask != null)
-//				{
-//					try
-//					{
-//						worldGenTask.future.cancel(true);
-//					}
-//					catch (CancellationException ignored)
-//					{ /* don't log shutdown exceptions */ }
-//				}
-//			}
-			
-			// TODO shouldn't I clear the list? not just cancel each item?
 			MovableGridRingList<WorldGenTask> ringList = this.waitingTaskQuadTree.getRingList(detailLevel);
 			ringList.clear((worldGenTask) ->
 			{
@@ -352,6 +344,7 @@ public class WorldGenerationQueue implements Closeable
 		}
 		
 		
+		// stop and remove any in progress tasks
 		ArrayList<CompletableFuture<Void>> inProgressTasksCancelingFutures = new ArrayList<>(this.inProgressGenTasksByLodPos.size());
 		this.inProgressGenTasksByLodPos.values().forEach(runningTaskGroup ->
 			{
@@ -377,7 +370,7 @@ public class WorldGenerationQueue implements Closeable
 					return null;
 				}));
 			});
-		this.generatorClosingFuture = CompletableFuture.allOf(inProgressTasksCancelingFutures.toArray(new CompletableFuture[0])); //FIXME: Closer threading issues with runCurrentGenTasksUntilBusy
+		this.generatorClosingFuture = CompletableFuture.allOf(inProgressTasksCancelingFutures.toArray(new CompletableFuture[0]));
 		
 		return this.generatorClosingFuture;
 	}
