@@ -8,6 +8,7 @@ import com.seibel.lod.core.dataObjects.transformers.LodDataBuilder;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.generation.tasks.*;
 import com.seibel.lod.core.pos.*;
+import com.seibel.lod.core.util.ThreadUtil;
 import com.seibel.lod.core.util.gridList.MovableGridRingList;
 import com.seibel.lod.core.util.objects.QuadTree;
 import com.seibel.lod.core.util.objects.UncheckedInterruptedException;
@@ -43,6 +44,11 @@ public class WorldGenerationQueue implements Closeable
 	
 	/** If not null this generator is in the process of shutting down */
 	private volatile CompletableFuture<Void> generatorClosingFuture = null;
+	
+	// TODO 
+	private final ExecutorService queueingThread = ThreadUtil.makeSingleThreadPool("Queue pool");
+	private boolean generationQueueStarted = false;
+	private DhBlockPos2D generationTargetPos = DhBlockPos2D.ZERO;
 	
 	
 	
@@ -125,15 +131,52 @@ public class WorldGenerationQueue implements Closeable
 			}
 			
 			
-			// done to prevent generating chunks where the player isn't
-			this.removeOutOfRangeTasks(targetPos);
 			
-			// generate terrain until the generator is asked to stop (if the while loop wasn't done the world generator would run out of tasks and will end up idle)
-			boolean taskStarted = true;
-			while (!this.generator.isBusy() && taskStarted)// && !this.waitingTaskGroupsByLodPos.isEmpty()) // TODO add !isEmpty()
+			this.generationTargetPos = targetPos;
+			
+			// start the queueing thread if it isn't running
+			if (!generationQueueStarted)
 			{
-				this.removeGarbageCollectedTasks();
-				taskStarted = this.startNextWorldGenTask(targetPos);
+				generationQueueStarted = true;
+				
+				// queue world generation tasks on its own thread since this process is very slow and would lag the server thread
+				// TODO this logic is bad but mostly functions and should probably be replaced or improved
+				queueingThread.execute(() -> 
+				{
+					try
+					{
+						while (true)
+						{
+							if (Thread.interrupted())
+							{
+								break;
+							}
+							
+							// done to prevent generating chunks where the player isn't
+							this.removeOutOfRangeTasks(targetPos);
+							
+							// generate terrain until the generator is asked to stop (if the while loop wasn't done the world generator would run out of tasks and will end up idle)
+							boolean taskStarted = true;
+							while (!this.generator.isBusy() && taskStarted)
+							{
+								//this.removeGarbageCollectedTasks(); // TODO this is extremely slow
+								taskStarted = this.startNextWorldGenTask(targetPos);
+								if (!taskStarted)
+								{
+									int debugPointOne = 0;
+								}
+							}
+							
+							Thread.sleep(1000);
+							int debugPointTwo = 0;
+						}
+					}
+					catch (Exception e)
+					{
+						LOGGER.error("queueing exception: "+e.getMessage(), e);
+						generationQueueStarted = false;
+					}
+				});
 			}
 		}
 		catch (Exception e)
@@ -273,6 +316,15 @@ public class WorldGenerationQueue implements Closeable
 						
 				WorldGenTask newGenTask = new WorldGenTask(new DhLodPos(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ), childDhSectionPos.sectionDetailLevel, removedWorldGenTask.taskTracker, newFuture);
 				this.waitingTaskQuadTree.set(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ, newGenTask);
+				
+				boolean valueAdded = this.waitingTaskQuadTree.get(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ) != null;
+				LodUtil.assertTrue(valueAdded); // failed to add world gen task to quad tree, this means the quad tree was the wrong size
+//				if (!valueAdded)
+//				{
+//					this.waitingTaskQuadTree.set(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ, newGenTask);
+//				}
+				
+//				LOGGER.info("split feature "+sectionPos+" into "+childDhSectionPos+" "+(valueAdded ? "added" : "notAdded"));
 			});
 			
 			// send the child futures to the future recipient, to notify them of the new tasks
@@ -325,6 +377,8 @@ public class WorldGenerationQueue implements Closeable
 	
 	public CompletableFuture<Void> startClosing(boolean cancelCurrentGeneration, boolean alsoInterruptRunning)
 	{
+		queueingThread.shutdownNow();
+		
 		// remove any incomplete generation tasks
 		for (byte detailLevel = QuadTree.TREE_LOWEST_DETAIL_LEVEL; detailLevel < this.waitingTaskQuadTree.treeMaxDetailLevel; detailLevel++)
 		{
