@@ -9,7 +9,6 @@ import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.DetailDistanceUtil;
 import com.seibel.lod.core.util.LodUtil;
-import com.seibel.lod.core.util.MathUtil;
 import com.seibel.lod.core.util.gridList.MovableGridRingList;
 import org.apache.logging.log4j.Logger;
 
@@ -30,8 +29,8 @@ public class QuadTree<T>
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
 	
-	public final byte getLayerDataDetailOffset() { return ColumnRenderSource.SECTION_SIZE_OFFSET; }
-	public final byte getLayerDataDetail(byte sectionDetailLevel) { return (byte) (sectionDetailLevel - this.getLayerDataDetailOffset()); }
+	public final byte getLayerDetailLevelOffset() { return ColumnRenderSource.SECTION_SIZE_OFFSET; }
+	public final byte getLayerDetailLevel(byte sectionDetailLevel) { return (byte) (sectionDetailLevel - this.getLayerDetailLevelOffset()); }
 	
     public final byte getLayerSectionDetailOffset() { return ColumnRenderSource.SECTION_SIZE_OFFSET; }
     public final byte getLayerSectionDetail(byte dataDetail) { return (byte) (dataDetail + this.getLayerSectionDetailOffset()); }
@@ -78,10 +77,12 @@ public class QuadTree<T>
 		LOGGER.info("Creating "+MovableGridRingList.class.getSimpleName()+" with player center at "+this.centerBlockPos);
 		for (byte sectionDetailLevel = TREE_LOWEST_DETAIL_LEVEL; sectionDetailLevel < this.numbersOfSectionDetailLevels; sectionDetailLevel++)
 		{
-			byte targetDetailLevel = this.getLayerDataDetail(sectionDetailLevel);
+			byte targetDetailLevel = this.getLayerDetailLevel(sectionDetailLevel);
 			int maxDist = this.getFurthestBlockDistanceForDetailLevel(targetDetailLevel);
-			int halfSize = MathUtil.ceilDiv(maxDist, BitShiftUtil.powerOfTwo(sectionDetailLevel)) + 8; // +8 to make sure the section is fully contained in the ringList //TODO what does the "8" represent?
 			
+			// TODO temp fix that may or may not allocate the right amount, but it works well enough for now
+//			int halfSize = MathUtil.ceilDiv(maxDist, BitShiftUtil.powerOfTwo(sectionDetailLevel)) + 8; // +8 to make sure the section is fully contained in the ringList //TODO what does the "8" represent?
+			int halfSize = BitShiftUtil.powerOfTwo(this.treeMaxDetailLevel-targetDetailLevel); //MathUtil.ceilDiv(maxDist, sectionDetailLevel) + 8; // +8 to make sure the section is fully contained in the ringList //TODO what does the "8" represent?
 			
 			// check that the detail level and position are valid
 			DhSectionPos checkedPos = new DhSectionPos(sectionDetailLevel, halfSize, halfSize);
@@ -127,7 +128,7 @@ public class QuadTree<T>
 		this.ringLists[detailLevel - TREE_LOWEST_DETAIL_LEVEL].set(x, z, value);
 		return previousValue;
 	}
-	
+	 
 	
 	
 	//===============//
@@ -201,9 +202,9 @@ public class QuadTree<T>
      * Note: the returned distance should always be the ceiling estimation of the circleRadius.
      * @return the furthest distance to the center, in blocks
      */
-    public final int getFurthestBlockDistanceForDetailLevel(byte circleRadius)
+    public final int getFurthestBlockDistanceForDetailLevel(byte detailLevl)
 	{
-        return (int)Math.ceil(DetailDistanceUtil.getDrawDistanceFromDetail(circleRadius + 1));
+        return (int)Math.ceil(DetailDistanceUtil.getDrawDistanceFromDetail(detailLevl + 1));
         // +1 because that's the border to the next detail level, and we want to include up to it.
     }
     
