@@ -111,7 +111,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 	
 	
 	
-	public CompletableFuture<Void> flushAndSave()
+	public CompletableFuture<Void> flushAndSaveAsync()
 	{
 		debugCheck();
 		boolean isEmpty = this.writeQueue.get().queue.isEmpty();

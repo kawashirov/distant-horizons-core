@@ -307,7 +307,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
         ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
         for (FullDataMetaFile metaFile : this.files.values())
 		{
-            futures.add(metaFile.flushAndSave());
+            futures.add(metaFile.flushAndSaveAsync());
         }
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }

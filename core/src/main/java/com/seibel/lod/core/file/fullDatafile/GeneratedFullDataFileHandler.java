@@ -164,7 +164,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		{
 			// generation completed, update the files and listener(s)
 			
-			this.files.get(genTask.pos).flushAndSave();
+			this.files.get(genTask.pos).flushAndSaveAsync();
 			
 			// fire the event listeners 
 			for (IOnWorldGenCompleteListener listener : this.onWorldGenTaskCompleteListeners)
