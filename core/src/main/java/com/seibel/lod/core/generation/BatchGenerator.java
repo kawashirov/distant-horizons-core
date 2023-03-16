@@ -136,7 +136,7 @@ public class BatchGenerator implements IDhApiWorldGenerator
 	@Override
 	public boolean isBusy()
 	{
-		return this.generationGroup.getEventCount() > Math.max(Config.Client.Advanced.Threading.numberOfWorldGenerationThreads.get().intValue(), 1) * 40; // TODO the multiplier here should change dynamically based on how fast the generator is vs the queuing thread, this is too high and may cause issues when moving, but keeps the generator threads fed
+		return this.generationGroup.getEventCount() > Math.max(Config.Client.Advanced.Threading.numberOfWorldGenerationThreads.get().intValue(), 1) * 40; // TODO the multiplier here should change dynamically based on how fast the generator is vs the queuing thread, if this is too high it may cause issues when moving, but if it is too low the generator threads won't have enough tasks to work on
 	}
 	
 	
