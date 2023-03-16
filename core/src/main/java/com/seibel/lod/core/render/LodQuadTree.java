@@ -447,7 +447,7 @@ public class LodQuadTree implements AutoCloseable
 							LodUtil.assertTrue(parentRingList != null);
 							
 							LodRenderSection parent = this._getNotNull(parentRingList, halfPos.x, halfPos.y);
-							LodUtil.assertTrue(parent.childCount > 0 && parent.childCount <= 4);
+							LodUtil.assertTrue(parent.childCount > 0 && parent.childCount <= 4, "parent section has the wrong number of children. Expected 0 or 4, actual count: ["+parent.childCount+"].");
 							
 							parent.childCount--;
 							if (SUPER_VERBOSE_LOGGING)
