@@ -45,11 +45,20 @@ public class WorldGenerationQueue implements Closeable
 	/** If not null this generator is in the process of shutting down */
 	private volatile CompletableFuture<Void> generatorClosingFuture = null;
 	
-	// TODO 
-	private final ExecutorService queueingThread = ThreadUtil.makeSingleThreadPool("Queue pool");
+	// TODO this logic isn't great and can cause a limit to how many thread could be used for world generation, 
+	//  however it won't cause duplicate request or concurrency issues, so it will be good enough for now
+	private final ExecutorService queueingThread = ThreadUtil.makeSingleThreadPool("World Gen Queue");
 	private boolean generationQueueStarted = false;
 	private DhBlockPos2D generationTargetPos = DhBlockPos2D.ZERO;
-	
+	private int numberOfTasksQueued = 0;
+	/** 
+	 * Settings this to true will cause the system to queue the first generation request it can find, 
+	 * this improves generation thread feeding efficiency, but can potentially cause generation requests to queue out of order (IE they may not be closest to farthest). <br><br>
+	 * 
+	 * Setting this to false will cause the system to queue the closest generation request it can find. <br>
+	 * This will reduce generation queuing efficiency.
+	 */
+	private boolean queueFirstGenerationRequestFound = true; 
 	
 	
 	
@@ -131,58 +140,66 @@ public class WorldGenerationQueue implements Closeable
 			}
 			
 			
-			
+			// update the target pos
 			this.generationTargetPos = targetPos;
 			
-			// start the queueing thread if it isn't running
+			// only start the queuing thread once
 			if (!generationQueueStarted)
 			{
-				generationQueueStarted = true;
-				
-				// queue world generation tasks on its own thread since this process is very slow and would lag the server thread
-				// TODO this logic is bad but mostly functions and should probably be replaced or improved
-				queueingThread.execute(() -> 
-				{
-					try
-					{
-						while (true)
-						{
-							if (Thread.interrupted())
-							{
-								break;
-							}
-							
-							// done to prevent generating chunks where the player isn't
-							this.removeOutOfRangeTasks(targetPos);
-							
-							// generate terrain until the generator is asked to stop (if the while loop wasn't done the world generator would run out of tasks and will end up idle)
-							boolean taskStarted = true;
-							while (!this.generator.isBusy() && taskStarted)
-							{
-								//this.removeGarbageCollectedTasks(); // TODO this is extremely slow
-								taskStarted = this.startNextWorldGenTask(targetPos);
-								if (!taskStarted)
-								{
-									int debugPointOne = 0;
-								}
-							}
-							
-							Thread.sleep(1000);
-							int debugPointTwo = 0;
-						}
-					}
-					catch (Exception e)
-					{
-						LOGGER.error("queueing exception: "+e.getMessage(), e);
-						generationQueueStarted = false;
-					}
-				});
+				startWorldGenQueuingThread();
 			}
 		}
 		catch (Exception e)
 		{
 			LOGGER.error(e.getMessage(), e);
 		}
+	}
+	private void startWorldGenQueuingThread()
+	{
+		this.generationQueueStarted = true;
+		
+		// queue world generation tasks on its own thread since this process is very slow and would lag the server thread
+		this.queueingThread.execute(() ->
+		{
+			try
+			{
+				// loop until the generator is shutdown
+				while (!Thread.interrupted())
+				{
+//					LOGGER.info("pre task count: " + this.numberOfTasksQueued);
+					
+					// done to prevent generating chunks where the player isn't
+					this.removeOutOfRangeTasks(this.generationTargetPos);
+					
+					// queue generation tasks until the generator is full, or there are no more tasks to generate
+					boolean taskStarted = true;
+					while (!this.generator.isBusy() && taskStarted)
+					{
+						//this.removeGarbageCollectedTasks(); // TODO this is extremely slow
+						taskStarted = this.startNextWorldGenTask(this.generationTargetPos);
+						if (!taskStarted)
+						{
+							int debugPointOne = 0;
+						}
+					}
+					
+					
+//					LOGGER.info("after task count: " + this.numberOfTasksQueued);
+					
+					// if there aren't any new tasks, wait a second before checking again // TODO replace with a listener instead
+					Thread.sleep(1000);
+				}
+			}
+			catch (InterruptedException e)
+			{
+				/* do nothing, this means the thread is being shut down */
+			}
+			catch (Exception e)
+			{
+				LOGGER.error("queueing exception: "+e.getMessage(), e);
+				generationQueueStarted = false;
+			}
+		});
 	}
 	
 	private void removeOutOfRangeTasks(DhBlockPos2D targetBlockPos)
@@ -198,7 +215,7 @@ public class WorldGenerationQueue implements Closeable
 	}
 	
 	/** Removes all {@link WorldGenTask}'s and {@link WorldGenTaskGroup}'s that have been garbage collected. */
-	private void removeGarbageCollectedTasks() // TODO remove, potential mystery errors caused by garbage collection isn't worth it (and may not be necessary any more now that we are using a quad tree to hold the tasks)
+	private void removeGarbageCollectedTasks() // TODO remove, potential mystery errors caused by garbage collection isn't worth it (and may not be necessary any more now that we are using a quad tree to hold the tasks). // also this is very slow with the curent quad tree impelmentation
 	{
 		for (byte detailLevel = QuadTree.TREE_LOWEST_DETAIL_LEVEL; detailLevel < this.waitingTaskQuadTree.treeMaxDetailLevel; detailLevel++)
 		{
@@ -236,14 +253,29 @@ public class WorldGenerationQueue implements Closeable
 			{
 				if (newGenTask != null)
 				{
-					// use chebyShev distance in order to generate in rings around the target pos (also because it is a fast distance calculation)
-					int chebDistToTargetPos = newGenTask.pos.getCenterBlockPos().toPos2D().chebyshevDist(targetPos.toPos2D());
-					if (chebDistToTargetPos < closestGenDist)
+					if (queueFirstGenerationRequestFound)
 					{
-						// this task is closer than the last one
+						// queue the first task we can find
 						closestTask = newGenTask;
-						closestGenDist = chebDistToTargetPos;
-						
+						break;
+					}
+					else
+					{
+						// use chebyShev distance in order to generate in rings around the target pos (also because it is a fast distance calculation)
+						int chebDistToTargetPos = newGenTask.pos.getCenterBlockPos().toPos2D().chebyshevDist(targetPos.toPos2D());
+						if (chebDistToTargetPos < closestGenDist)
+						{
+							// this task is closer than the last one
+							closestTask = newGenTask;
+							closestGenDist = chebDistToTargetPos;
+						}
+						else if (closestTask != null)
+						{
+							// this task is farther than the last one, 
+							// assume we have gotten as close as we can
+							// and queue the task
+							break;
+						}
 					}
 				}
 			}
@@ -319,10 +351,6 @@ public class WorldGenerationQueue implements Closeable
 				
 				boolean valueAdded = this.waitingTaskQuadTree.get(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ) != null;
 				LodUtil.assertTrue(valueAdded); // failed to add world gen task to quad tree, this means the quad tree was the wrong size
-//				if (!valueAdded)
-//				{
-//					this.waitingTaskQuadTree.set(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ, newGenTask);
-//				}
 				
 //				LOGGER.info("split feature "+sectionPos+" into "+childDhSectionPos+" "+(valueAdded ? "added" : "notAdded"));
 			});
@@ -346,9 +374,11 @@ public class WorldGenerationQueue implements Closeable
 		DhChunkPos chunkPosMin = new DhChunkPos(taskPos.getCornerBlockPos());
 //		LOGGER.info("Generating section "+taskPos+" with granularity "+granularity+" at "+chunkPosMin);
 		
+		this.numberOfTasksQueued++;
 		inProgressTaskGroup.genFuture = startGenerationEvent(this.generator, chunkPosMin, granularity, taskDetailLevel, inProgressTaskGroup.group::onGenerationComplete);
 		inProgressTaskGroup.genFuture.whenComplete((voidObj, exception) ->
 		{
+			this.numberOfTasksQueued--;
 			if (exception != null)
 			{
 				// don't log the shutdown exceptions
