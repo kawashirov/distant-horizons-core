@@ -1,12 +1,9 @@
 package com.seibel.lod.core.jar;
 
-import com.formdev.flatlaf.FlatDarkLaf;
-import com.formdev.flatlaf.FlatLightLaf;
 import com.seibel.lod.core.ModInfo;
 import com.seibel.lod.core.config.ConfigBase;
 import com.seibel.lod.core.jar.DarkModeDetector;
 import com.seibel.lod.core.jar.JarUtils;
-import com.seibel.lod.core.jar.gui.BaseJFrame;
 import com.seibel.lod.core.jar.gui.cusomJObject.JBox;
 import com.seibel.lod.core.jar.installer.ModrinthGetter;
 import com.seibel.lod.core.jar.installer.WebDownloader;
@@ -40,6 +37,9 @@ public class JarMain extends Application {
     public static List<String> programArgs;
     public static final boolean isDarkTheme = DarkModeDetector.isDarkMode();
     public static boolean isOffline = WebDownloader.netIsAvailable();
+
+    // TODO: Rewrite the standalone jar
+    // Previous version here https://gitlab.com/jeseibel/distant-horizons-core/-/blob/333dc4d0e079777b712c0fff246837104ae9a2b6/core/src/main/java/com/seibel/lod/core/jar/JarMain.java
 
     @Override
     public void start(Stage stage) {

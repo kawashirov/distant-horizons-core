@@ -14,7 +14,7 @@ import java.nio.ByteOrder;
 /**
  * @author coolGi
  */
-public class ConfigScreen extends AbstractScreen {
+public class OpenGLConfigScreen extends AbstractScreen {
     ShaderProgram basicShader;
     GLVertexBuffer sameContextBuffer;
     GLVertexBuffer sharedContextBuffer;

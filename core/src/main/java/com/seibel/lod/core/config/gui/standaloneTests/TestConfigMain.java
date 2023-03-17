@@ -1,8 +1,7 @@
 package com.seibel.lod.core.config.gui.standaloneTests;
 
-import com.seibel.lod.core.api.internal.ClientApi;
 import com.seibel.lod.core.config.gui.AbstractScreen;
-import com.seibel.lod.core.config.gui.ConfigScreen;
+import com.seibel.lod.core.config.gui.OpenGLConfigScreen;
 import com.seibel.lod.core.pos.Pos2D;
 import org.lwjgl.*;
 import org.lwjgl.glfw.*;
@@ -34,7 +33,7 @@ public class TestConfigMain {
 
 
     public void run() {
-        abstractScreen = new ConfigScreen();
+        abstractScreen = new OpenGLConfigScreen();
         System.out.println("Hello LWJGL version " + Version.getVersion());
 
 //        ClientApi.INSTANCE.rendererStartupEvent();

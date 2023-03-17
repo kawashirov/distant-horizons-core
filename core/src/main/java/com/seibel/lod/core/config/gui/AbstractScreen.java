@@ -16,6 +16,7 @@ public abstract class AbstractScreen {
     public int mouseY = 0;
     /** Weather it should close when you press the escape key */
     public boolean shouldCloseOnEsc = true;
+    /** If set to true, the screen would close on the next tick (warning, it closes after tick gets called for a last time) */
     public boolean close = false;
 
 
@@ -30,5 +31,5 @@ public abstract class AbstractScreen {
 
     // ---------- Random stuff that might be needed later on ---------- //
     /** File dropped into the screen */
-    public void onFilesDrop(List<Path> list) {}
+    public void onFilesDrop(List<Path> files) {}
 }
