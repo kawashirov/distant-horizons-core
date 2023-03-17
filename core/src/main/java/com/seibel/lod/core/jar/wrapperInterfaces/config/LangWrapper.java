@@ -5,12 +5,15 @@ import com.electronwill.nightconfig.core.io.ParsingMode;
 import com.electronwill.nightconfig.json.JsonFormat;
 import com.seibel.lod.core.jar.JarUtils;
 import com.seibel.lod.core.wrapperInterfaces.config.ILangWrapper;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Locale;
 
 public class LangWrapper implements ILangWrapper {
     public static final LangWrapper INSTANCE = new LangWrapper();
     private static final Config jsonObject = Config.inMemory();
+    private static final Logger logger = LogManager.getLogger(LangWrapper.class);
 
     public static void init() {
         try {
@@ -20,7 +23,10 @@ public class LangWrapper implements ILangWrapper {
                     JarUtils.convertInputStreamToString(JarUtils.accessFile("assets/lod/lang/"+ Locale.getDefault().toString().toLowerCase()+".json")),
                     jsonObject, ParsingMode.REPLACE
             );
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            logger.error("Failed to read lang file");
+            e.printStackTrace();
+        }
     }
 
     @Override
