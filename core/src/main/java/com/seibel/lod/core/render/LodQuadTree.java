@@ -118,6 +118,8 @@ public class LodQuadTree implements AutoCloseable
 		{
 			byte targetDetailLevel = this.getLayerDataDetail(sectionDetailLevel);
 			int maxDist = this.getFurthestDistance(targetDetailLevel);
+			
+			// always 10
 			int halfSize = MathUtil.ceilDiv(maxDist, BitShiftUtil.powerOfTwo(sectionDetailLevel)) + 8; // +8 to make sure the section is fully contained in the ringList //TODO what does the "8" represent?
 			
 			
@@ -137,6 +139,7 @@ public class LodQuadTree implements AutoCloseable
 			
 		}
 		
+		int breakPoint = 0;
     }
 	
 	
@@ -150,11 +153,19 @@ public class LodQuadTree implements AutoCloseable
 	
     /**
      * This method returns the RingList of a given detail level
-     * @apiNote The returned ringList should not be modified!
+     * @apiNote The returned ringList should not be modified! // TODO why?
      * @param detailLevel the detail level
-     * @return the RingList
+     * @return the RingList, will return null if no ringList exists for the given detailLevel
      */
-    public MovableGridRingList<LodRenderSection> getRingList(byte detailLevel) { return this.renderSectionRingLists[detailLevel - TREE_LOWEST_DETAIL_LEVEL]; }
+    public MovableGridRingList<LodRenderSection> getRingListForDetailLevel(byte detailLevel) 
+	{
+		int index = detailLevel - TREE_LOWEST_DETAIL_LEVEL;
+		if (index < 0 || index > this.renderSectionRingLists.length)
+		{
+			return null;
+		}
+		return this.renderSectionRingLists[index]; 
+	}
 	
     /**
      * This method returns the number of detail levels in the quadTree
@@ -245,20 +256,40 @@ public class LodQuadTree implements AutoCloseable
 			// recenter the grid lists if necessary
 			for (int sectionDetailLevel = TREE_LOWEST_DETAIL_LEVEL; sectionDetailLevel < this.numbersOfSectionDetailLevels; sectionDetailLevel++)
 			{
+				byte sectionDetailLevelByte = (byte) sectionDetailLevel;
 				Pos2D expectedCenterPos = new Pos2D(BitShiftUtil.divideByPowerOfTwo(playerPos.x, sectionDetailLevel), BitShiftUtil.divideByPowerOfTwo(playerPos.z, sectionDetailLevel));
 				MovableGridRingList<LodRenderSection> gridList = this.renderSectionRingLists[sectionDetailLevel - TREE_LOWEST_DETAIL_LEVEL];
 				
 				if (!gridList.getCenter().equals(expectedCenterPos))
 				{
-					//				LOGGER.info("TreeTick: Moving ring list "+sectionDetailLevel+" from "+gridList.getCenter()+" to "+expectedCenterPos);
-					gridList.moveTo(expectedCenterPos.x, expectedCenterPos.y, LodRenderSection::disposeRenderData);
+					LOGGER.info("TreeTick: Moving ring list "+sectionDetailLevel+" from "+gridList.getCenter()+" to "+expectedCenterPos);
+//					gridList.moveTo(expectedCenterPos.x, expectedCenterPos.y, LodRenderSection::disposeRenderData);
+					
+					gridList.moveTo(expectedCenterPos.x, expectedCenterPos.y, null, (gridListPos, lodRenderSection) -> 
+					{
+						if (lodRenderSection != null && lodRenderSection.childCount != -1)
+						{
+							lodRenderSection.disposeRenderData();
+							
+							DhSectionPos sectionPos = new DhSectionPos(sectionDetailLevelByte, gridListPos.x, gridListPos.y);
+							LodRenderSection parentSection = this.getParentSection(sectionPos);
+							if (parentSection != null)
+							{
+								parentSection.childCount--;
+							}
+							
+							lodRenderSection.childCount = -1;
+							
+							LOGGER.info("deleting renderSection at: "+sectionPos);
+						}
+					});
 				}
 			}
 			
 			
 			updateAllRenderSectionChildCounts(playerPos);
 			
-			updateAllRenderSections();
+//			updateAllRenderSections();
 		}
 		catch (Exception e)
 		{
@@ -270,36 +301,6 @@ public class LodQuadTree implements AutoCloseable
 	private void updateAllRenderSectionChildCounts(DhBlockPos2D playerPos)
 	{
 		
-		// TODO: inline comments should be added everywhere for this tick pass, so this comment block should be removed (having duplicate comments in two places is a bad idea) 
-		// First tick pass: update all sections' childCount from bottom level to top level. Step:
-		//   If sectLevel is bottom && section != null:
-		//     - set childCount to 0
-		//   If section != null && child != 0: //TODO: Should I move this createChild steps to Second tick pass?
-		//     - // Section will be in the unloaded state.
-		//     - create parent if not at final level and if it doesn't exist, with childCount = 1
-		//     - for each child:
-		//       - if null, create new with childCount = 0 (force load due to neighboring issues)
-		//       - else if childCount == -1, set childCount = 0 (rescue it)
-		//     - set childCount to 4
-		//   Else:
-		//     - Calculate targetLevel at that section
-		//     - If sectLevel == numberOfSectionLevels - 1:
-		//       - // Section is the top level.
-		//       - If targetLevel > dataLevel@sectLevel && section != null:
-		//         - set childCount to -1 (Signal that section is to be freed) (this prob not be rescued as it is the top level)
-		//       - If targetLevel <= dataLevel@sectLevel && section == null: (direct use the current sectLevel's dataLevel)
-		//         - create new section with childCount = 0
-		//     - Else:
-		//       - // Section is not the top level. So we also need to consider the parent.
-		//       - If targetLevel >= dataLevel@(sectLevel+1) && section != null: (use the next level's dataLevel)
-		//         - Parent's childCount-- (Assert parent != null && childCount > 0 before decrementing)
-		//         - // Note that this doesn't necessarily mean this section will be freed as it may be rescued later
-		//              due to neighboring quadrants not able to be freed (they pass targetLevel checks or has children)
-		//              or due to parent's layer is in the Always Cascade mode. (containerType == null)
-		//         - set childCount to -1 (Signal that this section will be freed if not rescued)
-		//       - If targetLevel < dataLevel@(sectLevel+1) && section == null: (use the next level's dataLevel)
-		//         - create new section with childCount = 0
-		//         - Parent's childCount++ (Create parent if needed)
 		for (byte sectionDetailLevelIteration = TREE_LOWEST_DETAIL_LEVEL; sectionDetailLevelIteration < this.numbersOfSectionDetailLevels; sectionDetailLevelIteration++)
 		{
 			final byte sectionDetailLevel = sectionDetailLevelIteration; // final to prevent accidentally setting (and because intellij highlights final values different so it is easier to identify)
@@ -308,188 +309,238 @@ public class LodQuadTree implements AutoCloseable
 			
 			// child and parent are relative to the detail level
 			final MovableGridRingList<LodRenderSection> childRingList = (sectionDetailLevel == TREE_LOWEST_DETAIL_LEVEL) ? null : this.renderSectionRingLists[sectionDetailLevel- TREE_LOWEST_DETAIL_LEVEL -1];
-			final MovableGridRingList<LodRenderSection> parentRingList = (sectionDetailLevel == this.treeMaxDetailLevel) ? null : this.renderSectionRingLists[sectionDetailLevel- TREE_LOWEST_DETAIL_LEVEL +1];
+//			final MovableGridRingList<LodRenderSection> parentRingList = (sectionDetailLevel == this.treeMaxDetailLevel) ? null : this.renderSectionRingLists[sectionDetailLevel- TREE_LOWEST_DETAIL_LEVEL +1];
 			
 			
-			ringList.forEachPosOrdered((section, pos) ->
+			ringList.forEachPosOrdered((renderSection, tree2dPos) ->
 			{
 				// TODO why do we need to use the halfPos to get sections?
-				final Pos2D halfPos = new Pos2D(BitShiftUtil.half(pos.x), BitShiftUtil.half(pos.y));
+				final Pos2D halfPos = new Pos2D(BitShiftUtil.half(tree2dPos.x), BitShiftUtil.half(tree2dPos.y));
 				
 				
-				if (section != null && sectionDetailLevel == TREE_LOWEST_DETAIL_LEVEL)
-				{
-					// this section is a leaf node, set its children to 0
-					section.childCount = 0;
-					//LOGGER.info("sect {} in first layer with non-null. Reset childCount", section.pos);
-				}
+				final DhSectionPos sectionPos = new DhSectionPos(sectionDetailLevel, tree2dPos.x, tree2dPos.y);
+				// confirm sectionPos is correct
+				LodUtil.assertTrue(sectionPos.sectionDetailLevel == sectionDetailLevel
+								&& sectionPos.sectionX == tree2dPos.x
+								&& sectionPos.sectionZ == tree2dPos.y,
+						"sectionPos "+sectionPos+" != "+tree2dPos+" @ "+sectionDetailLevel);
 				
-				if (section != null && section.childCount != 0)
+				
+				byte targetDetailLevel = this.calculateExpectedDetailLevel(playerPos, sectionPos);
+				boolean renderSectionDetailLevelTooHigh = targetDetailLevel > this.getLayerDataDetail(sectionDetailLevel);
+				
+				
+				
+				if (renderSection != null)
 				{
-					// Section will be in the unloaded state, with 1-3 children
-					// load its parent and children
-					//TODO: Should I move this createChild steps to the Second tick pass?
-					
-					if (SUPER_VERBOSE_LOGGING)
+					if (sectionDetailLevel == TREE_LOWEST_DETAIL_LEVEL)
 					{
-						LOGGER.info("sect "+section.pos+" has child");
-					}
-					
-					
-					// if this isn't the top detail level, make sure it has a valid parent
-					if (parentRingList != null)
-					{
-						LodRenderSection parentSection = this._getRenderSectionFromGridList(parentRingList, halfPos.x, halfPos.y);
-						if (parentSection == null)
-						{
-							// the parent render section is missing, create it
-							if (SUPER_VERBOSE_LOGGING)
-							{
-								LOGGER.info("sect "+section.pos+" missing parent. Creating at "+section.pos.getParentPos());
-							}
-							
-							parentSection = this._setRenderSectionInGridList(parentRingList, halfPos.x, halfPos.y, new LodRenderSection(section.pos.getParentPos()));
-							parentSection.childCount++;
-							
-							if (SUPER_VERBOSE_LOGGING)
-							{
-								LOGGER.info("parent sect "+section.pos.getParentPos()+" now has "+parentSection.childCount+" children.");
-							}
-						}
+						// this section is a leaf node, set its children to 0
+						renderSection.childCount = 0;
 						
-						LodUtil.assertTrue(parentSection.childCount > 0 && parentSection.childCount <= 4, "Parent section expected to have 1-4 children, actual child count: "+parentSection.childCount);
+						runValidations(renderSection);
 					}
-					
-					
-					// load this section's children
-					LodUtil.assertTrue(childRingList != null); // this shouldn't be a leaf node
-					for (int childIndex = 0; childIndex < 4; childIndex++)
+					else if (renderSection.childCount > 0)
 					{
-						DhSectionPos childPos = section.pos.getChildByIndex(childIndex);
+						// this section is NOT a leaf node
+						LodUtil.assertTrue(childRingList != null);
 						
-						LodRenderSection child = this._getRenderSectionFromGridList(childRingList, childPos.sectionX, childPos.sectionZ);
-						if (child == null)
-						{
-							// no child exists, create one
-							
-							if (SUPER_VERBOSE_LOGGING)
-							{
-								LOGGER.info("sect "+section.pos+" missing child at "+childPos+". Creating.");
-							}
-							
-							child = this._setRenderSectionInGridList(childRingList, childPos.sectionX, childPos.sectionZ, new LodRenderSection(childPos));
-							child.childCount = 0;
-						}
-						else if (child.childCount == -1)
-						{
-							// a child existed but was marked for deletion,
-							// rescue (reuse) it
-							
-							if (SUPER_VERBOSE_LOGGING)
-							{
-								LOGGER.info("sect "+section.pos+" rescued child at "+childPos+".");
-							}
-							
-							child.childCount = 0;
-						}
-					}
-					
-					// the section is now fully loaded
-					section.childCount = 4;
-				}
-				else
-				{
-					// this render section is either a leaf node, or null
-					
-					final DhSectionPos sectPos = (section != null) ? section.pos : new DhSectionPos(sectionDetailLevel, pos.x, pos.y);
-					
-					// confirm the sectPos is correct
-					LodUtil.assertTrue(sectPos.sectionDetailLevel == sectionDetailLevel 
-									&& sectPos.sectionX == pos.x 
-									&& sectPos.sectionZ == pos.y,
-							"sectPos "+sectPos+" != "+pos+" @ "+sectionDetailLevel);
-					
-					
-					byte targetDetailLevel = this.calculateExpectedDetailLevel(playerPos, sectPos);
-					if (SUPER_VERBOSE_LOGGING)
-					{
-						String layerDetailLevel = (sectionDetailLevel == this.treeMaxDetailLevel) ? "N/A" : this.getLayerDataDetail((byte) (sectionDetailLevel+1))+"";
-						LOGGER.info("0 child sect "+sectPos+"(null?"+(section==null)+") - target:"+targetDetailLevel+"/"+this.getLayerDataDetail(sectionDetailLevel)+" (parent:"+layerDetailLevel+")");
-					}
-					
-					
-					if (sectionDetailLevel == this.treeMaxDetailLevel)
-					{
-						// Render Section is at the top detail level.
 						
-						// TODO what does any of this mean? shouldn't both values in this if statement be independent of the section?
-						if (section != null && targetDetailLevel > this.getLayerDataDetail(sectionDetailLevel))
+						if (renderSectionDetailLevelTooHigh)
 						{
 							// this section is a higher detail level than we want, mark it for deletion
-							section.childCount = -1;
+							renderSection.childCount = -1;
+							
+							
+							// update the parent section's child count if present
+							if (parentRingList != null)
+							{
+								LodRenderSection parent = this._getNotNull(parentRingList, halfPos.x, halfPos.y);
+								LodUtil.assertTrue(parent.childCount >= 1 && parent.childCount <= 4, "parent section at target detail level ["+targetDetailLevel+"] has the wrong number of children. Expected 1 to 4, actual count: ["+parent.childCount+"].");
+								
+								parent.childCount--;
+								if (SUPER_VERBOSE_LOGGING)
+								{
+									LOGGER.info("parent sect "+renderSection.pos+" now has "+parent.childCount+" child.");
+								}
+							}
+							
+							
+							// TODO confirm children are also deleted correctly, should happen automatically when going through the layers, but just in case
 							
 							if (SUPER_VERBOSE_LOGGING)
 							{
-								LOGGER.info("sect "+sectPos+" in top detail level & target>current. Mark as free.");
+								LOGGER.info("sect "+renderSection.pos+" in top detail level & target>current. Mark as free.");
 							}
+							
+							runValidations(renderSection);
+						}
+						else
+						{
+							// this section is at or below the requested detail level, 
+							// make sure its parent and children are loaded
+							
+							
+							// parentRingList will be null if we are at the top detail level
+							if (parentRingList != null)
+							{
+								boolean createdNewParent = false;
+								
+								LodRenderSection parentSection = this._getRenderSectionFromGridList(parentRingList, halfPos.x, halfPos.y);
+								if (parentSection == null)
+								{
+									// the parent render section is missing, create it
+									if (SUPER_VERBOSE_LOGGING)
+									{
+										LOGGER.info("sect "+renderSection.pos+" missing parent. Creating at "+renderSection.pos.getParentPos());
+									}
+									
+									parentSection = new LodRenderSection(renderSection.pos.getParentPos());
+									parentSection = this._setRenderSectionInGridList(parentRingList, halfPos.x, halfPos.y, parentSection);
+									LodUtil.assertTrue(parentSection != null); // if the section is null, that means the position is outside the quad tree
+									
+									parentSection.childCount = 1;
+									
+									if (SUPER_VERBOSE_LOGGING)
+									{
+										LOGGER.info("parent sect "+renderSection.pos.getParentPos()+" now has "+parentSection.childCount+" children.");
+									}
+									
+									createdNewParent = true;
+								}
+								
+								if (parentSection.childCount == 0 || parentSection.childCount == -1)
+								{
+									byte parentSectionChildCount = 0;
+									for (int innerChildIndex = 0; innerChildIndex < 4; innerChildIndex++)
+									{
+										DhSectionPos parentChildPos = parentSection.pos.getChildByIndex(innerChildIndex);
+										LodRenderSection parentChildSection = this._getRenderSectionFromGridList(ringList, parentChildPos.sectionX, parentChildPos.sectionZ);
+										if (parentChildSection != null && parentChildSection.childCount != -1)
+										{
+											// TODO this isn't getting this section's position, I probably goofed the math
+											parentSectionChildCount++;
+										}
+									}
+									
+									parentSection.childCount = parentSectionChildCount;
+								}
+								
+								LodUtil.assertTrue(parentSection.childCount > 0 && parentSection.childCount <= 4, (createdNewParent ? "New " : "")+" Parent section expected to have 1-4 children, actual child count: "+parentSection.childCount);
+							}
+							
+							
+							// load this section's children
+							for (int childIndex = 0; childIndex < 4; childIndex++)
+							{
+								DhSectionPos childPos = renderSection.pos.getChildByIndex(childIndex);
+								LodRenderSection childRenderSection = this._getRenderSectionFromGridList(childRingList, childPos.sectionX, childPos.sectionZ);
+								if (childRenderSection == null)
+								{
+									// no child exists, create one
+									
+									if (SUPER_VERBOSE_LOGGING)
+									{
+										LOGGER.info("sect "+renderSection.pos+" missing child at "+childPos+". Creating.");
+									}
+									
+									childRenderSection = new LodRenderSection(childPos);
+									childRenderSection = this._setRenderSectionInGridList(childRingList, childPos.sectionX, childPos.sectionZ, childRenderSection);
+									LodUtil.assertTrue(childRenderSection != null); // the childPos is outside the quadTree
+								}
+								else if (childRenderSection.childCount == -1)
+								{
+									// a child existed but was marked for deletion,
+									// rescue (reuse) it
+									
+									if (SUPER_VERBOSE_LOGGING)
+									{
+										LOGGER.info("sect "+renderSection.pos+" rescued child at "+childPos+".");
+									}
+									
+									// TODO this hasn't been hit yet, but make sure it gets the right number of children
+									
+									MovableGridRingList<LodRenderSection> grandChildRingList = getRingListForDetailLevel((byte) (childRenderSection.pos.sectionDetailLevel-1));
+									if (grandChildRingList != null)
+									{
+										byte childSectionChildCount = 0;
+										for (int innerChildIndex = 0; innerChildIndex < 4; innerChildIndex++)
+										{
+											DhSectionPos innerChildPos = renderSection.pos.getChildByIndex(innerChildIndex);
+											LodRenderSection r = this._getRenderSectionFromGridList(grandChildRingList, innerChildPos.sectionX, innerChildPos.sectionZ);
+											if (r != null && r.childCount != -1)
+											{
+												childSectionChildCount++;
+											}
+										}
+										childRenderSection.childCount = childSectionChildCount;
+									}
+									else
+									{
+										childRenderSection.childCount = 0;
+									}
+									
+								}
+								else
+								{
+									// the child render section exists in a usable state, nothing needs to be done
+								}
+							}
+							
+							// this section is now fully loaded
+							renderSection.childCount = 4;
+							
+							runValidations(renderSection);
 						}
 						
-						if (section == null && targetDetailLevel <= this.getLayerDataDetail(sectionDetailLevel))
-						{
-							// the render section for this detail level is missing, create it
-							
-							if (SUPER_VERBOSE_LOGGING)
-							{
-								LOGGER.info("null sect "+sectPos+" in top & target<=current. Creating.");
-							}
-							section = this._setRenderSectionInGridList(ringList, pos.x, pos.y, new LodRenderSection(sectPos));
-						}
+						runValidations(renderSection);
 					}
 					else
 					{
-						// Section is not in the top detail level,
-						// so we also need to consider its parent.
+						// render section has 0 children
 						
-						if (section != null && targetDetailLevel >= this.getLayerDataDetail((byte) (sectionDetailLevel + 1)))
+						// make sure all children are marked for disposal
+						for (int innerChildIndex = 0; innerChildIndex < 4; innerChildIndex++)
 						{
-							// this section is a higher detail level than what we want, mark it for deletion
-							if (SUPER_VERBOSE_LOGGING)
+							DhSectionPos childPos = renderSection.pos.getChildByIndex(innerChildIndex);
+							LodRenderSection childSection = this._getRenderSectionFromGridList(childRingList, childPos.sectionX, childPos.sectionZ);
+							if (childSection != null && childSection.childCount != -1)
 							{
-								LOGGER.info("sect "+sectPos+" target>=nextLevel. Mark as free.");
+								childSection.disposeRenderData();
+								childSection.childCount = -1;
 							}
-							LodUtil.assertTrue(parentRingList != null);
-							
-							LodRenderSection parent = this._getNotNull(parentRingList, halfPos.x, halfPos.y);
-							LodUtil.assertTrue(parent.childCount >= 1 && parent.childCount <= 4, "parent section at target detail level ["+targetDetailLevel+"] has the wrong number of children. Expected 1 to 4, actual count: ["+parent.childCount+"].");
-							
-							parent.childCount--;
-							if (SUPER_VERBOSE_LOGGING)
-							{
-								LOGGER.info("parent sect "+sectPos+" now has "+parent.childCount+" child.");
-							}
-							
-							// mark this section for deletion
-							section.childCount = -1;
-							
-							// Note that this doesn't necessarily mean this section will be freed as it may be rescued later
-							//	  due to neighboring quadrants not able to be freed (they pass targetLevel checks or has children)
-							//	  or due to parent's layer is in the Always Cascade mode. (containerType == null)
+						}
+						
+						runValidations(renderSection);	
+					}
+				}
+				else
+				{
+					// render section is null
+					
+					if (SUPER_VERBOSE_LOGGING)
+					{
+						String layerDetailLevel = (sectionDetailLevel == this.treeMaxDetailLevel) ? "N/A" : this.getLayerDataDetail((byte) (sectionDetailLevel+1))+"";
+						LOGGER.info("0 child sect "+sectionPos+"(null?"+ true +") - target:"+targetDetailLevel+"/"+this.getLayerDataDetail(sectionDetailLevel)+" (parent:"+layerDetailLevel+")");
+					}
+					
+					if (targetDetailLevel < this.getLayerDataDetail((byte) (sectionDetailLevel + 1))) // TODO replace with renderSectionDetailLevelTooHigh?
+					{
+						// the render section for this detail level is missing, create it
+						
+						if (SUPER_VERBOSE_LOGGING)
+						{
+							LOGGER.info("null sect "+sectionPos+" target<nextLevel. Creating.");
 						}
 						
 						
-						if (section == null && targetDetailLevel < this.getLayerDataDetail((byte) (sectionDetailLevel + 1)))
+						// add the new renderSection
+						renderSection = this._setRenderSectionInGridList(ringList, tree2dPos.x, tree2dPos.y, new LodRenderSection(sectionPos));
+						
+						
+						// update the parent if necessary
+						if (parentRingList != null)
 						{
-							// the render section for this detail level is missing, create it
-							
-							if (SUPER_VERBOSE_LOGGING)
-							{
-								LOGGER.info("null sect "+sectPos+" target<nextLevel. Creating.");
-							}
-							
-							section = this._setRenderSectionInGridList(ringList, pos.x, pos.y, new LodRenderSection(sectPos));
-							LodUtil.assertTrue(parentRingList != null);
-							
-							
 							LodRenderSection parent = this._getRenderSectionFromGridList(parentRingList, halfPos.x, halfPos.y);
 							if (parent == null)
 							{
@@ -497,33 +548,68 @@ public class LodQuadTree implements AutoCloseable
 								
 								if (SUPER_VERBOSE_LOGGING)
 								{
-									LOGGER.info("sect "+sectPos+" missing parent. Creating at "+sectPos.getParentPos());
+									LOGGER.info("sect "+sectionPos+" missing parent. Creating at "+sectionPos.getParentPos());
 								}
 								
-								parent = this._setRenderSectionInGridList(parentRingList, halfPos.x, halfPos.y, new LodRenderSection(sectPos.getParentPos()));
+								parent = this._setRenderSectionInGridList(parentRingList, halfPos.x, halfPos.y, new LodRenderSection(sectionPos.getParentPos()));
 							}
 							
 							
 							parent.childCount++;
 							if (SUPER_VERBOSE_LOGGING)
 							{
-								LOGGER.info("parent render section "+sectPos.getParentPos()+" now has "+parent.childCount+" children.");
+								LOGGER.info("parent render section "+sectionPos.getParentPos()+" now has "+parent.childCount+" children.");
 							}
 						}
 					}
+					
+					runValidations(renderSection);
 				}
+				
+				
 				
 				
 				// Final quick assert to insure section pos is correct.
-				if (section != null)
+				if (renderSection != null)
 				{
-					LodUtil.assertTrue(section.pos.sectionDetailLevel == sectionDetailLevel, "section.pos: " + section.pos + " vs level: " + sectionDetailLevel);
-					LodUtil.assertTrue(section.pos.sectionX == pos.x, "section.pos: " + section.pos + " vs pos: " + pos);
-					LodUtil.assertTrue(section.pos.sectionZ == pos.y, "section.pos: " + section.pos + " vs pos: " + pos);
+					LodUtil.assertTrue(renderSection.pos.sectionDetailLevel == sectionDetailLevel, "section.pos: " + renderSection.pos + " vs level: " + sectionDetailLevel);
+					LodUtil.assertTrue(renderSection.pos.sectionX == tree2dPos.x, "section.pos: " + renderSection.pos + " vs pos: " + tree2dPos);
+					LodUtil.assertTrue(renderSection.pos.sectionZ == tree2dPos.y, "section.pos: " + renderSection.pos + " vs pos: " + tree2dPos);
+					
+					runValidations(renderSection);
 				}
 			});
 		}
+		
+		
+		
+		// re-run validation, this must be done separately just in case a previously valid renderSection was modified after being validated
+		for (byte sectionDetailLevelIteration = TREE_LOWEST_DETAIL_LEVEL; sectionDetailLevelIteration < this.numbersOfSectionDetailLevels; sectionDetailLevelIteration++)
+		{
+			final MovableGridRingList<LodRenderSection> ringList = this.renderSectionRingLists[sectionDetailLevelIteration- TREE_LOWEST_DETAIL_LEVEL];
+			ringList.forEachPosOrdered((renderSection, tree2dPos) ->
+			{
+				runValidations(renderSection);
+			});
+		}
+		
 	}
+	private void runValidations(LodRenderSection renderSection)
+	{
+		if (renderSection != null && renderSection.childCount != -1)
+		{
+			try
+			{
+				assertRenderSectionIsValid(renderSection);
+			}
+			catch (LodUtil.AssertFailureException e)
+			{
+				LOGGER.error(e.getMessage(), e);
+				int k = 2;
+			}
+		}
+	}
+	
 	
 	
 	private void updateAllRenderSections()
@@ -621,7 +707,7 @@ public class LodQuadTree implements AutoCloseable
 					{
 						// only disable rendering if the next section is ready to render, 
 						// isRenderingEnabled check to prevent calling the recursive method more than necessary
-						if (section.isRenderingEnabled() && areChildRenderSectionsLoaded(section)) // FIXME: this is an imperfect solution, some sections will still appear/disappear incorrectly and/or not disappear when they should
+						if (section.isRenderingEnabled()) // && areChildRenderSectionsLoaded(section)) // FIXME: this is an imperfect solution, some sections will still appear/disappear incorrectly and/or not disappear when they should
 						{
 							section.disableRender();
 						}
@@ -685,7 +771,8 @@ public class LodQuadTree implements AutoCloseable
 								child1 != null && child1.childCount != -1 &&
 								child2 != null && child2.childCount != -1 &&
 								child3 != null && child3.childCount != -1,
-						"Sect "+ section.pos+" child count 4 but child has null or is being disposed: {} {} {} {}", child0, child1, child2, child3);
+						"Sect "+ section.pos+" has a child count of 4 but one or more children is null or marked for disposal: \n{} \n{} \n{} \n{}", 
+						child0, child1, child2, child3);
 			}
 			else if (section.childCount == 0)
 			{
@@ -694,7 +781,7 @@ public class LodQuadTree implements AutoCloseable
 								(child1 == null || child1.childCount == -1) &&
 								(child2 == null || child2.childCount == -1) &&
 								(child3 == null || child3.childCount == -1),
-						"Sect "+ section.pos+" child count 0 but child is neither null or being disposed: {} {} {} {}",
+						"Sect "+ section.pos+" has a child count of 0 but has one or more children that are neither null or marked for disposal: \n{} \n{} \n{} \n{}",
 						child0, child1, child2, child3);
 			}
 		}
@@ -785,6 +872,7 @@ public class LodQuadTree implements AutoCloseable
 	// internal helper methods //
 	//=========================//
 	
+	/** @return the renderSection set */
 	private LodRenderSection _setRenderSectionInGridList(MovableGridRingList<LodRenderSection> list, int x, int z, LodRenderSection renderSection)
 	{
 		LodUtil.assertTrue(renderSection != null, "setting null at [{},{}] in {}", x, z, list.toString());

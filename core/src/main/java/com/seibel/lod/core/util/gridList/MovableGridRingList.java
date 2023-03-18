@@ -221,8 +221,10 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 	
 	/** see {@link MovableGridRingList#moveTo(int, int, Consumer)} for full documentation */
 	public boolean moveTo(int newCenterX, int newCenterY) { return this.moveTo(newCenterX, newCenterY, null); }
+	
+	public boolean moveTo(int newCenterX, int newCenterY, Consumer<? super T> removedItemConsumer) { return this.moveTo(newCenterX, newCenterY, removedItemConsumer, null); }
 	/** Returns true if the grid was successfully moved, false otherwise */
-	public boolean moveTo(int newCenterX, int newCenterY, Consumer<? super T> removedItemConsumer)
+	public boolean moveTo(int newCenterX, int newCenterY, Consumer<? super T> removedItemConsumer, BiConsumer<Pos2D, ? super T> nullableRemovedItemConsumer)
 	{
 		Pos2D cPos = this.minPosRef.get();
 		int newMinX = newCenterX - this.halfSize;
@@ -256,16 +258,27 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 				{
 					for (int y = 0; y < this.size; y++)
 					{
+						Pos2D itemPos = new Pos2D(x+cPos.x, y+cPos.y);
+						
 						if (x - deltaX < 0 
 							|| y - deltaY < 0 
 							|| x - deltaX >= this.size 
 							|| y - deltaY >= this.size)
 						{
-							T item = this._swapUnsafe(x+cPos.x, y+cPos.y, null);
+							T item = this._swapUnsafe(itemPos.x, itemPos.y, null);
 							if (item != null && removedItemConsumer != null)
 							{
 								removedItemConsumer.accept(item);
 							}
+							
+							if (nullableRemovedItemConsumer != null)
+							{
+								nullableRemovedItemConsumer.accept(itemPos, item);
+							}
+						}
+						else if (nullableRemovedItemConsumer != null)
+						{
+							nullableRemovedItemConsumer.accept(itemPos, null);
 						}
 					}
 				}

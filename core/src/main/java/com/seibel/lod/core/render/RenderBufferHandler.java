@@ -34,7 +34,7 @@ public class RenderBufferHandler
 	{
 		this.quadTree = quadTree;
 		
-		MovableGridRingList<LodRenderSection> referenceList = quadTree.getRingList((byte) (quadTree.getNumbersOfSectionDetailLevels() - 1));
+		MovableGridRingList<LodRenderSection> referenceList = quadTree.getRingListForDetailLevel((byte) (quadTree.getNumbersOfSectionDetailLevels() - 1));
 		Pos2D center = referenceList.getCenter();
 		this.renderBufferNodesGridList = new MovableGridRingList<>(referenceList.getHalfSize(), center);
 	}
@@ -169,25 +169,26 @@ public class RenderBufferHandler
 	
 	public void update()
 	{
-		try
+		byte topDetailLevel = (byte) (this.quadTree.getNumbersOfSectionDetailLevels() - 1);
+		MovableGridRingList<LodRenderSection> renderSectionGridList = this.quadTree.getRingListForDetailLevel(topDetailLevel);
+		
+		Pos2D newCenterPos = renderSectionGridList.getCenter();
+		this.renderBufferNodesGridList.moveTo(newCenterPos.x, newCenterPos.y, RenderBufferNode::close); // Note: may lock the list
+		
+		
+		
+		this.renderBufferNodesGridList.forEachPosOrdered((renderBufferNode, pos2d) ->
 		{
-			byte topDetailLevel = (byte) (this.quadTree.getNumbersOfSectionDetailLevels() - 1);
-			MovableGridRingList<LodRenderSection> renderSectionGridList = this.quadTree.getRingList(topDetailLevel);
-			
-			Pos2D newCenterPos = renderSectionGridList.getCenter();
-			this.renderBufferNodesGridList.moveTo(newCenterPos.x, newCenterPos.y, RenderBufferNode::close); // Note: may lock the list
-			
-			
-			
-			this.renderBufferNodesGridList.forEachPosOrdered((renderBufferNode, pos) ->
+			try
 			{
-				DhSectionPos sectPos = new DhSectionPos(topDetailLevel, pos.x, pos.y);
-				LodRenderSection renderSection = this.quadTree.getSection(sectPos);
+			
+				DhSectionPos sectionPos = new DhSectionPos(topDetailLevel, pos2d.x, pos2d.y);
+				LodRenderSection renderSection = this.quadTree.getSection(sectionPos);
 				
 				if (renderSection == null && renderBufferNode != null)
 				{
 					// section is null, but a node exists, remove the node
-					this.renderBufferNodesGridList.remove(pos).close();
+					this.renderBufferNodesGridList.remove(pos2d).close();
 				}
 				else if (renderSection != null)
 				{
@@ -195,19 +196,21 @@ public class RenderBufferHandler
 					if (renderBufferNode == null)
 					{
 						// renderSection exists, but node does not
-						renderBufferNode = this.renderBufferNodesGridList.setChained(pos, new RenderBufferNode(sectPos));
+						renderBufferNode = this.renderBufferNodesGridList.setChained(pos2d, new RenderBufferNode(sectionPos));
 					}
 					
 					// Update the render node
 					renderBufferNode.update();
 				}
-			});
-		}
-		catch (Exception e)
-		{
-			// TODO when we are stable this shouldn't be necessary
-			LOGGER.error(RenderBufferHandler.class.getSimpleName()+" exception in update for the quadTree: "+this.quadTree.toString()+", exception: "+e.getMessage(), e);
-		}
+			
+			}
+			catch (Exception e)
+			{
+				// TODO when we are stable this shouldn't be necessary
+				LOGGER.error(RenderBufferHandler.class.getSimpleName()+" exception in update for the quadTree: "+this.quadTree.toString()+", exception: "+e.getMessage(), e);
+				int breaker = 0;
+			}
+		});
 	}
 	
     public void close() { this.renderBufferNodesGridList.clear(RenderBufferNode::close); }
@@ -271,16 +274,16 @@ public class RenderBufferHandler
 		//      transition between buffers no longer causing any flicker.
 		public void update()
 		{
-			LodRenderSection section = quadTree.getSection(this.pos);
+			LodRenderSection renderSection = quadTree.getSection(this.pos);
 			
-			// If this fails, there may be concurrent modification of the quad tree
+			// If this fails, there may be a concurrent modification of the quad tree
 			//  (as this update() should be called from the same thread that calls update() on the quad tree)
-			LodUtil.assertTrue(section != null);
+			LodUtil.assertTrue(renderSection != null,  RenderBufferHandler.class.getSimpleName()+" update failed. Expected to find a "+LodRenderSection.class.getSimpleName()+" at pos: "+this.pos+" in the "+LodQuadTree.class.getSimpleName());
 			
-			ColumnRenderSource currentRenderSource = section.getRenderSource();
+			ColumnRenderSource currentRenderSource = renderSection.getRenderSource();
 			
 			// Update self's render buffer state
-			if (!section.shouldRender())
+			if (!renderSection.shouldRender())
 			{
 				//TODO: Does this really need to force the old buffer to not be rendered?
 				AbstractRenderBuffer renderBuffer = this.renderBufferRef.getAndSet(null);
@@ -300,7 +303,7 @@ public class RenderBufferHandler
 			// TODO: Improve this! (Checking section.isLoaded() as if its not loaded, it can only be because
 			//  it has children. (But this logic is... really hard to read!)
 			// FIXME: Above comment is COMPLETELY WRONG! I am an idiot!
-			boolean sectionHasChildren = section.childCount > 0;
+			boolean sectionHasChildren = renderSection.childCount > 0;
 			if (sectionHasChildren)
 			{
 				if (this.children == null)
@@ -319,18 +322,18 @@ public class RenderBufferHandler
 			}
 			else
 			{
-//				if (this.children != null)
-//				{
-//					//FIXME: Concurrency issue here: If render thread is concurrently using the child's buffer,
-//					//  and this thread got priority to close the buffer, it causes a bug where the render thread
-//					//  will be using a closed buffer!!!!
-//					RenderBufferNode[] children = this.children;
-//					this.children = null;
-//					for (RenderBufferNode child : children)
-//					{
-//						child.close();
-//					}
-//				}
+				if (this.children != null)
+				{
+					//FIXME: Concurrency issue here: If render thread is concurrently using the child's buffer,
+					//  and this thread got priority to close the buffer, it causes a bug where the render thread
+					//  will be using a closed buffer!!!!
+					RenderBufferNode[] children = this.children;
+					this.children = null;
+					for (RenderBufferNode child : children)
+					{
+						child.close();
+					}
+				}
 			}
 		}
 		
