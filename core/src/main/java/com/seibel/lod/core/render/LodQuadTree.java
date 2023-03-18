@@ -27,6 +27,19 @@ import java.util.concurrent.CompletableFuture;
  *      -by adding data with the lodBuilder <br> 
  * <br><br> 
  * The QuadTree is built from several layers of 2d ring buffers.
+ * <br><br> 
+ * 
+ * Example of how the tree is visualized (please view in code, otherwise the spacing isn't maintained):
+ * <code>
+ * C---C---C---C---		Detail level = 2 <br>
+ *     B-B-B-B-			Detail level = 1 <br>
+ *       AAAA			Detail level = 0 <br>
+ * </code> 
+ * <br><br>
+ * The tree doesn't go all the way down for all areas. Looking at the example above,
+ * detail level 0 only exists for the middle 4 positions, attempting to access detail level 0 
+ * outside that range will always return null, and cannot be set.
+ * This is done to reduce memory and processing since we only render detail levels out a certain distance.
  */
 public class LodQuadTree implements AutoCloseable
 {
