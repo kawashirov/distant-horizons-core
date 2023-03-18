@@ -357,7 +357,7 @@ public class LodQuadTree implements AutoCloseable
 							}
 						}
 						
-						LodUtil.assertTrue(parentSection.childCount > 0 && parentSection.childCount <= 4);
+						LodUtil.assertTrue(parentSection.childCount > 0 && parentSection.childCount <= 4, "Parent section expected to have 1-4 children, actual child count: "+parentSection.childCount);
 					}
 					
 					
@@ -460,7 +460,7 @@ public class LodQuadTree implements AutoCloseable
 							LodUtil.assertTrue(parentRingList != null);
 							
 							LodRenderSection parent = this._getNotNull(parentRingList, halfPos.x, halfPos.y);
-							LodUtil.assertTrue(parent.childCount > 0 && parent.childCount <= 4, "parent section has the wrong number of children. Expected 0 or 4, actual count: ["+parent.childCount+"].");
+							LodUtil.assertTrue(parent.childCount >= 1 && parent.childCount <= 4, "parent section at target detail level ["+targetDetailLevel+"] has the wrong number of children. Expected 1 to 4, actual count: ["+parent.childCount+"].");
 							
 							parent.childCount--;
 							if (SUPER_VERBOSE_LOGGING)
