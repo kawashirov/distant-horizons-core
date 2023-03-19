@@ -289,7 +289,7 @@ public class LodQuadTree implements AutoCloseable
 			
 			updateAllRenderSectionChildCounts(playerPos);
 			
-//			updateAllRenderSections();
+			updateAllRenderSections();
 		}
 		catch (Exception e)
 		{
@@ -309,7 +309,7 @@ public class LodQuadTree implements AutoCloseable
 			
 			// child and parent are relative to the detail level
 			final MovableGridRingList<LodRenderSection> childRingList = (sectionDetailLevel == TREE_LOWEST_DETAIL_LEVEL) ? null : this.renderSectionRingLists[sectionDetailLevel- TREE_LOWEST_DETAIL_LEVEL -1];
-//			final MovableGridRingList<LodRenderSection> parentRingList = (sectionDetailLevel == this.treeMaxDetailLevel) ? null : this.renderSectionRingLists[sectionDetailLevel- TREE_LOWEST_DETAIL_LEVEL +1];
+			final MovableGridRingList<LodRenderSection> parentRingList = (sectionDetailLevel == this.treeMaxDetailLevel) ? null : this.renderSectionRingLists[sectionDetailLevel- TREE_LOWEST_DETAIL_LEVEL +1];
 			
 			
 			ringList.forEachPosOrdered((renderSection, tree2dPos) ->
