@@ -28,6 +28,8 @@ public class DhLodPos implements Comparable<DhLodPos>
 		this.x = x;
 		this.z = z;
 	}
+	public DhLodPos(DhSectionPos sectionPos) { this(sectionPos.sectionDetailLevel, sectionPos.sectionX, sectionPos.sectionZ); }
+	
 	
 	
 	

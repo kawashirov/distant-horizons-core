@@ -46,7 +46,8 @@ public class DhSectionPos
 		this.sectionZ = sectionZ;
 	}
 	
-	public DhSectionPos(DhBlockPos blockPos)
+	public DhSectionPos(DhBlockPos blockPos) { this(new DhBlockPos2D(blockPos)); }
+	public DhSectionPos(DhBlockPos2D blockPos)
 	{
 		DhLodPos lodPos = new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPos.x, blockPos.z);
 		lodPos = lodPos.convertToDetailLevel(SECTION_BLOCK_DETAIL_LEVEL);
@@ -76,7 +77,7 @@ public class DhSectionPos
 	
 	
 	/** Returns the center for the highest detail level (0) */
-	public DhLodPos getCenter() { return this.getCenter((byte) 0); }
+	public DhLodPos getCenter() { return this.getCenter((byte) 0); } // TODO why does this use detail level 0 instead of this object's detail level?
 	public DhLodPos getCenter(byte returnDetailLevel)
 	{
 		LodUtil.assertTrue(returnDetailLevel <= this.sectionDetailLevel, "returnDetailLevel must be less than sectionDetail");
@@ -110,6 +111,15 @@ public class DhSectionPos
 		return new DhLodUnit(this.sectionDetailLevel, BitShiftUtil.powerOfTwo(offset));
 	}
 	
+	/** uses the absolute detail level aka detail levels like {@link LodUtil#CHUNK_DETAIL_LEVEL} instead of the dhSectionPos detaillevels */ // TODO comment
+	public DhSectionPos convertToDetailLevel(byte newSectionDetailLevel)
+	{
+		DhLodPos lodPos = new DhLodPos(this.sectionDetailLevel, this.sectionX, this.sectionZ);
+		lodPos = lodPos.convertToDetailLevel(newSectionDetailLevel);
+		
+		DhSectionPos newPos = new DhSectionPos(newSectionDetailLevel, lodPos);
+		return newPos;
+	}
 	
 	/**
 	 * Returns the DhLodPos 1 detail level lower <br><br>
@@ -158,6 +168,18 @@ public class DhSectionPos
 	
 	/** NOTE: This does not consider yOffset! */
 	public boolean overlaps(DhSectionPos other) { return this.getSectionBBoxPos().overlapsExactly(other.getSectionBBoxPos()); }
+	
+	/** NOTE: This does not consider yOffset! */
+	public boolean contains(DhSectionPos otherPos)
+	{
+		DhBlockPos2D otherCornerBlockPos = otherPos.getCorner(LodUtil.BLOCK_DETAIL_LEVEL).getCornerBlockPos();
+		
+		DhBlockPos2D thisMinBlockPos = this.getCorner(LodUtil.BLOCK_DETAIL_LEVEL).getCornerBlockPos();
+		DhBlockPos2D thisMaxBlockPos = new DhBlockPos2D(thisMinBlockPos.x + this.getWidth().toBlockWidth(), thisMinBlockPos.z + this.getWidth().toBlockWidth());
+		
+		return thisMinBlockPos.x <= otherCornerBlockPos.x && otherCornerBlockPos.x <= thisMaxBlockPos.x &&
+				thisMinBlockPos.z <= otherCornerBlockPos.z && otherCornerBlockPos.z <= thisMaxBlockPos.z;
+	}
 	
 	/** Serialize() is different from toString() as it must NEVER be changed, and should be in a short format */
 	public String serialize() { return "[" + this.sectionDetailLevel + ',' + this.sectionX + ',' + this.sectionZ + ']'; }

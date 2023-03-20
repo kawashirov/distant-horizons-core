@@ -34,8 +34,9 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 	private final AtomicReference<Pos2D> minPosRef = new AtomicReference<>();
 	
 	/** width of this grid list */
-	private final int size;
-	private final int halfSize;
+	private final int width;
+	/** radius or half-width of this grid list */
+	private final int halfWidth;
 	
 	private final ReentrantReadWriteLock moveLock = new ReentrantReadWriteLock();
 	
@@ -48,14 +49,14 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 	// constructors //
 	//==============//
 	
-	public MovableGridRingList(int halfSize, Pos2D center) { this(halfSize, center.x, center.y); }
-	public MovableGridRingList(int halfSize, int centerX, int centerY)
+	public MovableGridRingList(int halfWidth, Pos2D center) { this(halfWidth, center.x, center.y); }
+	public MovableGridRingList(int halfWidth, int centerX, int centerY)
 	{
-		super((halfSize * 2 + 1) * (halfSize * 2 + 1));
+		super((halfWidth * 2 + 1) * (halfWidth * 2 + 1));
 		
-		this.size = halfSize * 2 + 1;
-		this.halfSize = halfSize;
-		this.minPosRef.set(new Pos2D(centerX-halfSize, centerY-halfSize));
+		this.width = halfWidth * 2 + 1;
+		this.halfWidth = halfWidth;
+		this.minPosRef.set(new Pos2D(centerX- halfWidth, centerY- halfWidth));
 		this.clear();
 	}
 	
@@ -204,9 +205,9 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 			}
 			
 			super.clear();
-			super.ensureCapacity(this.size * this.size);
+			super.ensureCapacity(this.width * this.width);
 			// TODO why are we filling the array will nulls? everything should already be null after the clear
-			for (int i = 0; i < this.size * this.size; i++)
+			for (int i = 0; i < this.width * this.width; i++)
 			{
 				super.add(null);
 			}
@@ -227,8 +228,8 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 	public boolean moveTo(int newCenterX, int newCenterY, Consumer<? super T> removedItemConsumer, BiConsumer<Pos2D, ? super T> nullableRemovedItemConsumer)
 	{
 		Pos2D cPos = this.minPosRef.get();
-		int newMinX = newCenterX - this.halfSize;
-		int newMinY = newCenterY - this.halfSize;
+		int newMinX = newCenterX - this.halfWidth;
+		int newMinY = newCenterY - this.halfWidth;
 		if (cPos.x == newMinX && cPos.y == newMinY)
 		{
 			return false;
@@ -248,22 +249,22 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 			// if the x or z offset is equal to or greater than
 			// the total width, just delete the current data
 			// and update the pos
-			if (Math.abs(deltaX) >= this.size || Math.abs(deltaY) >= this.size)
+			if (Math.abs(deltaX) >= this.width || Math.abs(deltaY) >= this.width)
 			{
 				this.clear(removedItemConsumer);
 			}
 			else
 			{
-				for (int x = 0; x < this.size; x++)
+				for (int x = 0; x < this.width; x++)
 				{
-					for (int y = 0; y < this.size; y++)
+					for (int y = 0; y < this.width; y++)
 					{
 						Pos2D itemPos = new Pos2D(x+cPos.x, y+cPos.y);
 						
 						if (x - deltaX < 0 
 							|| y - deltaY < 0 
-							|| x - deltaX >= this.size 
-							|| y - deltaY >= this.size)
+							|| x - deltaX >= this.width 
+							|| y - deltaY >= this.width)
 						{
 							T item = this._swapUnsafe(itemPos.x, itemPos.y, null);
 							if (item != null && removedItemConsumer != null)
@@ -299,13 +300,13 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 	// position getters //
 	//==================//
 	
-	public Pos2D getCenter() { return new Pos2D(this.minPosRef.get().x + this.halfSize, this.minPosRef.get().y + this.halfSize); }
+	public Pos2D getCenter() { return new Pos2D(this.minPosRef.get().x + this.halfWidth, this.minPosRef.get().y + this.halfWidth); }
 	
 	public Pos2D getMinPosInRange() { return this.minPosRef.get(); }
-	public Pos2D getMaxPosInRange() { return new Pos2D(this.minPosRef.get().x + this.size-1, this.minPosRef.get().y + this.size-1); }
+	public Pos2D getMaxPosInRange() { return new Pos2D(this.minPosRef.get().x + this.width -1, this.minPosRef.get().y + this.width -1); }
 	
-	public int getSize() { return this.size; }
-	public int getHalfSize() { return this.halfSize; }
+	public int getWidth() { return this.width; }
+	public int getHalfWidth() { return this.halfWidth; }
 	
 	
 	
@@ -321,22 +322,22 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 	{
 		Pos2D minPos = this.minPosRef.get();
 		return (x>=minPos.x 
-				&& x<minPos.x+this.size 
+				&& x<minPos.x+this.width 
 				&& y>=minPos.y 
-				&& y<minPos.y+this.size);
+				&& y<minPos.y+this.width);
 	}
 	
 	private boolean _inRangeAcquired(int x, int y, Pos2D min)
 	{
 		return (x>=min.x 
-				&& x<min.x+this.size 
+				&& x<min.x+this.width 
 				&& y>=min.y 
-				&& y<min.y+this.size);
+				&& y<min.y+this.width);
 	}
 	
-	private T _getUnsafe(int x, int y) { return super.get(Math.floorMod(x, this.size) + Math.floorMod(y, this.size)*this.size); }
-	private void _setUnsafe(int x, int y, T item) { super.set(Math.floorMod(x, this.size) + Math.floorMod(y, this.size)*this.size, item); }
-	private T _swapUnsafe(int x, int y, T item) { return super.set(Math.floorMod(x, this.size) + Math.floorMod(y, this.size)*this.size, item); }
+	private T _getUnsafe(int x, int y) { return super.get(Math.floorMod(x, this.width) + Math.floorMod(y, this.width)*this.width); }
+	private void _setUnsafe(int x, int y, T item) { super.set(Math.floorMod(x, this.width) + Math.floorMod(y, this.width)*this.width, item); }
+	private T _swapUnsafe(int x, int y, T item) { return super.set(Math.floorMod(x, this.width) + Math.floorMod(y, this.width)*this.width, item); }
 
 	
 	// TODO: implement this
@@ -378,9 +379,9 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 		try
 		{
 			Pos2D min = this.minPosRef.get();
-			for (int x = min.x; x < min.x + this.size; x++)
+			for (int x = min.x; x < min.x + this.width; x++)
 			{
-				for (int y = min.y; y < min.y + this.size; y++)
+				for (int y = min.y; y < min.y + this.width; y++)
 				{
 					T t = this._getUnsafe(x, y);
 					consumer.accept(t, new Pos2D(x, y));
@@ -463,12 +464,12 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 	private void createRingIteratorList()
 	{
 		this.ringPositionIteratorArray = null;
-		Pos2D[] posArray = new Pos2D[this.size*this.size];
+		Pos2D[] posArray = new Pos2D[this.width *this.width];
 		
 		int i = 0;
-		for (int xPos = -this.halfSize; xPos <= this.halfSize; xPos++)
+		for (int xPos = -this.halfWidth; xPos <= this.halfWidth; xPos++)
 		{
-			for (int zPos = -this.halfSize; zPos <= this.halfSize; zPos++)
+			for (int zPos = -this.halfWidth; zPos <= this.halfWidth; zPos++)
 			{
 				posArray[i] = new Pos2D(xPos, zPos);
 				i++;
@@ -485,12 +486,12 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 		
 		for (int j = 0; j < posArray.length; j++)
 		{
-			posArray[j] = posArray[j].add(new Pos2D(this.halfSize, this.halfSize));
+			posArray[j] = posArray[j].add(new Pos2D(this.halfWidth, this.halfWidth));
 		}
 		for (Pos2D pos2D : posArray)
 		{
-			LodUtil.assertTrue(pos2D.x >= 0 && pos2D.x < this.size);
-			LodUtil.assertTrue(pos2D.y >= 0 && pos2D.y < this.size);
+			LodUtil.assertTrue(pos2D.x >= 0 && pos2D.x < this.width);
+			LodUtil.assertTrue(pos2D.y >= 0 && pos2D.y < this.width);
 		}
 		
 		this.ringPositionIteratorArray = posArray;
@@ -507,7 +508,7 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 	public String toString()
 	{
 		Pos2D p = this.minPosRef.get();
-		return this.getClass().getSimpleName() + "[" + (p.x+this.halfSize) + "," + (p.y+this.halfSize) + "] " + this.size + "*" + this.size + "[" + this.size() + "]";
+		return this.getClass().getSimpleName() + "[" + (p.x+this.halfWidth) + "," + (p.y+this.halfWidth) + "] " + this.width + "*" + this.width + "[" + this.size() + "]";
 	}
 	
 	public String toDetailString()
@@ -522,7 +523,7 @@ public class MovableGridRingList<T> extends ArrayList<T> implements List<T>
 			str.append(t != null ? t.toString() : "NULL");
 			str.append(", ");
 			i++;
-			if (i % this.size == 0)
+			if (i % this.width == 0)
 			{
 				str.append("\n");
 			}

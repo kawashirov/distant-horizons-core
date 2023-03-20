@@ -9,8 +9,7 @@ import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.generation.tasks.*;
 import com.seibel.lod.core.pos.*;
 import com.seibel.lod.core.util.ThreadUtil;
-import com.seibel.lod.core.util.gridList.MovableGridRingList;
-import com.seibel.lod.core.util.objects.QuadTree;
+import com.seibel.lod.core.util.objects.quadTree.QuadTree;
 import com.seibel.lod.core.util.objects.UncheckedInterruptedException;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
@@ -22,6 +21,7 @@ import java.io.Closeable;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 public class WorldGenerationQueue implements Closeable
@@ -210,7 +210,7 @@ public class WorldGenerationQueue implements Closeable
 	{
 		AtomicInteger numberOfTasksRemoved = new AtomicInteger();
 		
-		this.waitingTaskQuadTree.setCenterPos(targetBlockPos, (worldGenTask) -> { numberOfTasksRemoved.getAndIncrement(); });
+		this.waitingTaskQuadTree.setCenterBlockPos(targetBlockPos, (worldGenTask) -> { numberOfTasksRemoved.getAndIncrement(); });
 		
 //		if (numberOfTasksRemoved.get() != 0)
 //		{
@@ -218,25 +218,25 @@ public class WorldGenerationQueue implements Closeable
 //		}
 	}
 	
-	/** Removes all {@link WorldGenTask}'s and {@link WorldGenTaskGroup}'s that have been garbage collected. */
-	private void removeGarbageCollectedTasks() // TODO remove, potential mystery errors caused by garbage collection isn't worth it (and may not be necessary any more now that we are using a quad tree to hold the tasks). // also this is very slow with the curent quad tree impelmentation
-	{
-		for (byte detailLevel = QuadTree.TREE_LOWEST_DETAIL_LEVEL; detailLevel < this.waitingTaskQuadTree.treeMaxDetailLevel; detailLevel++)
-		{
-			MovableGridRingList<WorldGenTask> gridRingList = this.waitingTaskQuadTree.getRingList(detailLevel);
-			Iterator<WorldGenTask> taskIterator = gridRingList.iterator();
-			while (taskIterator.hasNext())
-			{
-				// go through each WorldGenTask in the TaskGroup
-				WorldGenTask genTask = taskIterator.next();
-				if (genTask != null && !genTask.taskTracker.isMemoryAddressValid())
-				{
-					taskIterator.remove();
-					genTask.future.complete(WorldGenResult.CreateFail());
-				}
-			}
-		}
-	}
+//	/** Removes all {@link WorldGenTask}'s and {@link WorldGenTaskGroup}'s that have been garbage collected. */
+//	private void removeGarbageCollectedTasks() // TODO remove, potential mystery errors caused by garbage collection isn't worth it (and may not be necessary any more now that we are using a quad tree to hold the tasks). // also this is very slow with the curent quad tree impelmentation
+//	{
+//		for (byte detailLevel = QuadTree.TREE_LOWEST_DETAIL_LEVEL; detailLevel < this.waitingTaskQuadTree.treeMaxDetailLevel; detailLevel++)
+//		{
+//			MovableGridRingList<WorldGenTask> gridRingList = this.waitingTaskQuadTree.getRingList(detailLevel);
+//			Iterator<WorldGenTask> taskIterator = gridRingList.iterator();
+//			while (taskIterator.hasNext())
+//			{
+//				// go through each WorldGenTask in the TaskGroup
+//				WorldGenTask genTask = taskIterator.next();
+//				if (genTask != null && !genTask.taskTracker.isMemoryAddressValid())
+//				{
+//					taskIterator.remove();
+//					genTask.future.complete(WorldGenResult.CreateFail());
+//				}
+//			}
+//		}
+//	}
 	
 	/** 
 	 * @param targetPos the position to center the generation around 
@@ -244,53 +244,71 @@ public class WorldGenerationQueue implements Closeable
 	 */
 	private boolean startNextWorldGenTask(DhBlockPos2D targetPos)
 	{
-		WorldGenTask closestTask = null;
+		final AtomicReference<WorldGenTask> closestTaskRef = new AtomicReference<>(null);
 		
-		// look through the tree from lowest to highest detail level to find the next task to generate
-		for (byte detailLevel = QuadTree.TREE_LOWEST_DETAIL_LEVEL; detailLevel < this.waitingTaskQuadTree.treeMaxDetailLevel; detailLevel++)
+		// TODO improve
+		this.waitingTaskQuadTree.forEachRootNode((rootQuadNode) -> 
 		{
-			// look for the task that is closest to the targetPos
-			long closestGenDist = Long.MAX_VALUE;
-			
-			MovableGridRingList<WorldGenTask> gridRingList = this.waitingTaskQuadTree.getRingList(detailLevel);
-			for (WorldGenTask newGenTask : gridRingList)
+			if (closestTaskRef.get() == null)
 			{
-				if (newGenTask != null)
+				rootQuadNode.forAllLeafValues((worldGenTask) ->
 				{
-					if (queueFirstGenerationRequestFound)
+					if (closestTaskRef.get() == null)
 					{
-						// queue the first task we can find
-						closestTask = newGenTask;
-						break;
+						closestTaskRef.set(worldGenTask);
 					}
-					else
-					{
-						// use chebyShev distance in order to generate in rings around the target pos (also because it is a fast distance calculation)
-						int chebDistToTargetPos = newGenTask.pos.getCenterBlockPos().toPos2D().chebyshevDist(targetPos.toPos2D());
-						if (chebDistToTargetPos < closestGenDist)
-						{
-							// this task is closer than the last one
-							closestTask = newGenTask;
-							closestGenDist = chebDistToTargetPos;
-						}
-						else if (closestTask != null)
-						{
-							// this task is farther than the last one, 
-							// assume we have gotten as close as we can
-							// and queue the task
-							break;
-						}
-					}
-				}
+				});
 			}
-			
-			// a task has been found, don't look at the next detail level,
-			// everything there will be farther away
-			if (closestTask != null)
-			{
-				break;
-			}
-		}
+		});
+		
+		WorldGenTask closestTask = closestTaskRef.get();
+		
+		
+//		// look through the tree from lowest to highest detail level to find the next task to generate
+//		for (byte detailLevel = QuadTree.TREE_LOWEST_DETAIL_LEVEL; detailLevel < this.waitingTaskQuadTree.treeMaxDetailLevel; detailLevel++)
+//		{
+//			// look for the task that is closest to the targetPos
+//			long closestGenDist = Long.MAX_VALUE;
+//			
+//			MovableGridRingList<WorldGenTask> gridRingList = this.waitingTaskQuadTree.getRingList(detailLevel);
+//			for (WorldGenTask newGenTask : gridRingList)
+//			{
+//				if (newGenTask != null)
+//				{
+//					if (queueFirstGenerationRequestFound)
+//					{
+//						// queue the first task we can find
+//						closestTask = newGenTask;
+//						break;
+//					}
+//					else
+//					{
+//						// use chebyShev distance in order to generate in rings around the target pos (also because it is a fast distance calculation)
+//						int chebDistToTargetPos = newGenTask.pos.getCenterBlockPos().toPos2D().chebyshevDist(targetPos.toPos2D());
+//						if (chebDistToTargetPos < closestGenDist)
+//						{
+//							// this task is closer than the last one
+//							closestTask = newGenTask;
+//							closestGenDist = chebDistToTargetPos;
+//						}
+//						else if (closestTask != null)
+//						{
+//							// this task is farther than the last one, 
+//							// assume we have gotten as close as we can
+//							// and queue the task
+//							break;
+//						}
+//					}
+//				}
+//			}
+//			
+//			// a task has been found, don't look at the next detail level,
+//			// everything there will be farther away
+//			if (closestTask != null)
+//			{
+//				break;
+//			}
+//		}
 		
 		
 		
@@ -303,7 +321,7 @@ public class WorldGenerationQueue implements Closeable
 		
 		
 		// remove the task we found, we are going to start it and don't want to run it multiple times
-		WorldGenTask removedWorldGenTask = this.waitingTaskQuadTree.set(closestTask.pos.detailLevel, closestTask.pos.x, closestTask.pos.z, null);
+		WorldGenTask removedWorldGenTask = this.waitingTaskQuadTree.set(new DhSectionPos(closestTask.pos.detailLevel, closestTask.pos.x, closestTask.pos.z), null);
 		// removedWorldGenTask can be null // TODO when? 
 		
 		
@@ -351,9 +369,9 @@ public class WorldGenerationQueue implements Closeable
 				childFutures.add(newFuture);
 						
 				WorldGenTask newGenTask = new WorldGenTask(new DhLodPos(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ), childDhSectionPos.sectionDetailLevel, removedWorldGenTask.taskTracker, newFuture);
-				this.waitingTaskQuadTree.set(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ, newGenTask);
+				this.waitingTaskQuadTree.set(new DhSectionPos(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ), newGenTask);
 				
-				boolean valueAdded = this.waitingTaskQuadTree.get(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ) != null;
+				boolean valueAdded = this.waitingTaskQuadTree.get(new DhSectionPos(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ)) != null;
 				LodUtil.assertTrue(valueAdded); // failed to add world gen task to quad tree, this means the quad tree was the wrong size
 				
 //				LOGGER.info("split feature "+sectionPos+" into "+childDhSectionPos+" "+(valueAdded ? "added" : "notAdded"));
@@ -376,7 +394,7 @@ public class WorldGenerationQueue implements Closeable
 		LodUtil.assertTrue(taskDetailLevel >= this.minDataDetail && taskDetailLevel <= this.maxDataDetail);
 		
 		DhChunkPos chunkPosMin = new DhChunkPos(taskPos.getCornerBlockPos());
-//		LOGGER.info("Generating section "+taskPos+" with granularity "+granularity+" at "+chunkPosMin);
+		LOGGER.info("Generating section "+taskPos+" with granularity "+granularity+" at "+chunkPosMin);
 		
 		this.numberOfTasksQueued++;
 		inProgressTaskGroup.genFuture = startGenerationEvent(this.generator, chunkPosMin, granularity, taskDetailLevel, inProgressTaskGroup.group::onGenerationComplete);
@@ -414,22 +432,22 @@ public class WorldGenerationQueue implements Closeable
 		queueingThread.shutdownNow();
 		
 		// remove any incomplete generation tasks
-		for (byte detailLevel = QuadTree.TREE_LOWEST_DETAIL_LEVEL; detailLevel < this.waitingTaskQuadTree.treeMaxDetailLevel; detailLevel++)
-		{
-			MovableGridRingList<WorldGenTask> ringList = this.waitingTaskQuadTree.getRingList(detailLevel);
-			ringList.clear((worldGenTask) ->
-			{
-				if (worldGenTask != null)
-				{
-					try
-					{
-						worldGenTask.future.cancel(true);
-					}
-					catch (CancellationException ignored)
-					{ /* don't log shutdown exceptions */ }
-				}
-			});
-		}
+//		for (byte detailLevel = QuadTree.TREE_LOWEST_DETAIL_LEVEL; detailLevel < this.waitingTaskQuadTree.treeMaxDetailLevel; detailLevel++)
+//		{
+//			MovableGridRingList<WorldGenTask> ringList = this.waitingTaskQuadTree.getRingList(detailLevel);
+//			ringList.clear((worldGenTask) ->
+//			{
+//				if (worldGenTask != null)
+//				{
+//					try
+//					{
+//						worldGenTask.future.cancel(true);
+//					}
+//					catch (CancellationException ignored)
+//					{ /* don't log shutdown exceptions */ }
+//				}
+//			});
+//		}
 		
 		
 		// stop and remove any in progress tasks

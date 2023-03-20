@@ -36,7 +36,7 @@ public class RenderBufferHandler
 		
 		MovableGridRingList<LodRenderSection> referenceList = quadTree.getRingListForDetailLevel((byte) (quadTree.getNumbersOfSectionDetailLevels() - 1));
 		Pos2D center = referenceList.getCenter();
-		this.renderBufferNodesGridList = new MovableGridRingList<>(referenceList.getHalfSize(), center);
+		this.renderBufferNodesGridList = new MovableGridRingList<>(referenceList.getHalfWidth(), center);
 	}
 	
 	
