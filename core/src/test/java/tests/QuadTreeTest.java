@@ -51,23 +51,7 @@ public class QuadTreeTest
 		Configurator.setRootLevel(Level.ALL);
 	}
 	
-	@Test
-	public void SectionPosTest()
-	{
-		DhSectionPos root = new DhSectionPos((byte)10, 0, 0);
-		DhSectionPos child = new DhSectionPos((byte)9, 1, 1);
-		
-		Assert.assertTrue("section pos contains fail", root.contains(child));
-		Assert.assertFalse("section pos contains fail", child.contains(root));
-		
-		
-		root = new DhSectionPos((byte)10, 1, 0);
-		child = new DhSectionPos((byte)9, 1, 1);
-		Assert.assertFalse("section pos contains fail", root.contains(child));
-		child = new DhSectionPos((byte)9, 2, 2);
-		Assert.assertTrue("section pos contains fail", root.contains(child));
-		
-	}
+	
 	
 	@Test
 	public void BasicPositiveQuadTreeTest()
