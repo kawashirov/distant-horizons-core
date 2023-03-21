@@ -36,10 +36,9 @@ public class QuadTree<T>
 	
 	/**
      * Constructor of the quadTree
+	 * @param widthInBlocks equivalent to the distance between two opposing sides 
      */
-    public QuadTree(
-			int viewDistanceInBlocks, 
-			DhBlockPos2D centerBlockPos)
+    public QuadTree(int widthInBlocks, DhBlockPos2D centerBlockPos)
 	{
         DetailDistanceUtil.updateSettings(); //TODO: Move this to somewhere else
 		this.centerBlockPos = centerBlockPos;
@@ -47,7 +46,7 @@ public class QuadTree<T>
 		this.treeMaxDetailLevel = 10; // TODO we may need to make this dynamic // detail 10 = (2^10) 1024 blocks wide
 		
 //		int halfSize = 12; // TODO use this.treeMaxDetailLevel to determine
-		int halfSize = Math.floorDiv(viewDistanceInBlocks, 2) / BitShiftUtil.powerOfTwo(this.treeMaxDetailLevel);
+		int halfSize = Math.floorDiv(widthInBlocks, 2) / BitShiftUtil.powerOfTwo(this.treeMaxDetailLevel);
 		halfSize = Math.max(halfSize, 1); // at minimum the ring list should have 3x3 (9) root nodes in it, to account for moving around 
 		
 		Pos2D ringListCenterPos = new Pos2D(

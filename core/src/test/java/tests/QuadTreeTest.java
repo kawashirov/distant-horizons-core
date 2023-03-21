@@ -38,7 +38,9 @@ public class QuadTreeTest
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
 	private static final int ROOT_NODE_WIDTH_IN_BLOCKS = BitShiftUtil.powerOfTwo(10);
-	private static final int BASIC_TREE_WIDTH_IN_BLOCKS = ROOT_NODE_WIDTH_IN_BLOCKS * 8;
+	/** needs to be an odd number to function correctly */
+	private static final int BASIC_TREE_WIDTH_IN_ROOT_NODES = 9;
+	private static final int BASIC_TREE_WIDTH_IN_BLOCKS = ROOT_NODE_WIDTH_IN_BLOCKS * BASIC_TREE_WIDTH_IN_ROOT_NODES;
 	
 	static
 	{
@@ -51,6 +53,7 @@ public class QuadTreeTest
 	public void BasicPositiveQuadTreeTest()
 	{
 		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0, 0));
+		Assert.assertEquals("Incorrect basic tree width", BASIC_TREE_WIDTH_IN_ROOT_NODES, tree.ringListWidth());
 		
 		
 		// root node //
@@ -136,7 +139,6 @@ public class QuadTreeTest
 		QuadTree<Integer> tree = new QuadTree<>(treeWidthInBlocks, new DhBlockPos2D(0, 0));
 		
 		
-		
 		// root nodes //
 		testSet(tree, new DhSectionPos((byte)10, 0, 0), 1);
 		
@@ -199,13 +201,18 @@ public class QuadTreeTest
 		tree.setCenterBlockPos(DhBlockPos2D.ZERO);
 		Assert.assertEquals("Tree center incorrect", DhBlockPos2D.ZERO, tree.getCenterBlockPos());
 		
-		// 1 root node from the edge
-		DhSectionPos edgePos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, -((treeWidthInBlocks/2)-ROOT_NODE_WIDTH_IN_BLOCKS), 0);
-		testSet(tree, edgePos, 2);
+		// on the negative X edge
+		DhSectionPos edgePos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, -treeWidthInBlocks/2, 0);
+		testSet(tree, edgePos, 1);
 		Assert.assertEquals("incorrect leaf node count", 1, tree.leafNodeCount());
 		
-		// edge move 
-		DhBlockPos2D edgeMoveBlockPos = new DhBlockPos2D(ROOT_NODE_WIDTH_IN_BLOCKS, 0); // TODO I can only move this 1 root node away from the center for some reason
+		// +1 root node from the negative X edge
+		DhSectionPos adjacentEdgePos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, (-treeWidthInBlocks/2)+ROOT_NODE_WIDTH_IN_BLOCKS, 0);
+		testSet(tree, adjacentEdgePos, 2);
+		Assert.assertEquals("incorrect leaf node count", 2, tree.leafNodeCount());
+		
+		// move so only the root nodes exactly on the X edge remain
+		DhBlockPos2D edgeMoveBlockPos = new DhBlockPos2D(ROOT_NODE_WIDTH_IN_BLOCKS - (BASIC_TREE_WIDTH_IN_ROOT_NODES*ROOT_NODE_WIDTH_IN_BLOCKS), 0);
 		tree.setCenterBlockPos(edgeMoveBlockPos);
 		Assert.assertEquals("Tree center incorrect", edgeMoveBlockPos, tree.getCenterBlockPos());
 		
