@@ -101,7 +101,11 @@ public class QuadTree<T>
 		else
 		{
 			// TODO give the min and max allowed positions
-			throw new IndexOutOfBoundsException("QuadTree GetOrSet failed. Position out of bounds, given Position: "+pos);
+			int width = this.widthInBlocks()/2;
+			
+			DhBlockPos2D minPos = this.getCenterBlockPos().add(new DhBlockPos2D(-width, -width));
+			DhBlockPos2D maxPos =this.getCenterBlockPos().add(new DhBlockPos2D(width, width));
+			throw new IndexOutOfBoundsException("QuadTree GetOrSet failed. Position out of bounds, min pos: "+minPos+", max pos: "+maxPos+", given Position: "+pos);
 		}
 	}
 	
@@ -118,8 +122,8 @@ public class QuadTree<T>
 		int minZ = this.centerBlockPos.z - halfWidthInBlocks;
 		int maxZ = this.centerBlockPos.z + halfWidthInBlocks;
 		
-		return minX <= blockPos.sectionX && blockPos.sectionX < maxX &&
-				minZ <= blockPos.sectionZ && blockPos.sectionZ < maxZ;
+		return minX <= blockPos.sectionX && blockPos.sectionX <= maxX &&
+				minZ <= blockPos.sectionZ && blockPos.sectionZ <= maxZ;
 	}
 	
 	
@@ -151,7 +155,7 @@ public class QuadTree<T>
 	//================//
 	
 	public void setCenterBlockPos(DhBlockPos2D newCenterPos) { this.setCenterBlockPos(newCenterPos, null); }
-	public void setCenterBlockPos(DhBlockPos2D newCenterPos, Consumer<QuadNode<? super T>> removedItemConsumer)
+	public void setCenterBlockPos(DhBlockPos2D newCenterPos, Consumer<? super T> removedItemConsumer)
 	{
 		this.centerBlockPos = newCenterPos;
 		
@@ -161,7 +165,13 @@ public class QuadTree<T>
 		
 		if (!this.topRingList.getCenter().equals(expectedCenterPos))
 		{
-			this.topRingList.moveTo(expectedCenterPos.x, expectedCenterPos.y, removedItemConsumer);
+			this.topRingList.moveTo(expectedCenterPos.x, expectedCenterPos.y, (quadNode) -> 
+			{
+				if (quadNode != null && removedItemConsumer != null)
+				{
+					removedItemConsumer.accept(quadNode.value);
+				}
+			});
 		}
 	}
 	
@@ -191,7 +201,8 @@ public class QuadTree<T>
 		return count.get();
 	}
 	
-	public int width() { return this.topRingList.getWidth(); }
+	public int ringListWidth() { return this.topRingList.getWidth(); }
+	public int widthInBlocks() { return this.ringListWidth() * BitShiftUtil.powerOfTwo(this.treeMaxDetailLevel); }
 	
 //	public String getDebugString()
 //	{
