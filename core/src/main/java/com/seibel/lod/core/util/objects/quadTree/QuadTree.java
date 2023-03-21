@@ -169,48 +169,6 @@ public class QuadTree<T>
 	
 	
 	
-	//===========================//
-	// detail level calculations //
-	//===========================//
-    
-    /**
-     * This method will compute the detail level based on target position and section pos.
-     * @param targetPos can be the player's position. A reference for calculating the detail level
-     * @return detail level of this section pos
-     */
-    public final byte calculateExpectedDetailLevel(DhBlockPos2D targetPos, DhSectionPos sectionPos)
-	{
-        return DetailDistanceUtil.getDetailLevelFromDistance(
-                targetPos.dist(sectionPos.getCenter().getCenterBlockPos()));
-    }
-
-    /**
-     * Returns the highest detail level in a circle around the center.<br>
-     * Note: the returned distance should always be the ceiling estimation of the circleRadius.
-     * @return the highest detail level in the circle
-     */
-    public final byte getMaxDetailLevelInRange(double circleRadius) { return DetailDistanceUtil.getDetailLevelFromDistance(circleRadius); }
-
-    /**
-     * Returns the furthest distance to the center for the given detail level. <br>
-     * Note: the returned distance should always be the ceiling estimation of the circleRadius.
-     * @return the furthest distance to the center, in blocks
-     */
-    public final int getFurthestBlockDistanceForDetailLevel(byte detailLevl)
-	{
-        return (int)Math.ceil(DetailDistanceUtil.getDrawDistanceFromDetail(detailLevl + 1));
-        // +1 because that's the border to the next detail level, and we want to include up to it.
-    }
-    
-    /** Given a section pos at level n this method returns the parent value at level n+1 */
-    public final T getParentValue(DhSectionPos pos) { return this.get(pos.getParentPos()); }
-    
-    /**
-     * Given a section pos at level n and a child index, this returns the child section at level n-1
-     * @param child0to3 since there are 4 possible children this index identifies which one we are getting
-     */
-    public final T getChildValue(DhSectionPos pos, int child0to3) { return this.get(pos.getChildByIndex(child0to3)); }
-	
 	
 	
 	//==============//
