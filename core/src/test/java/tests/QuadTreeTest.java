@@ -33,18 +33,12 @@ import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * This is just a quick demo to confirm the testing system is set up correctly.
- * 
- * @author James Seibel
- * @version 2022-9-5
- */
 public class QuadTreeTest
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
 	private static final int ROOT_NODE_WIDTH_IN_BLOCKS = BitShiftUtil.powerOfTwo(10);
-	private static final int MIN_TREE_WIDTH_IN_BLOCKS = ROOT_NODE_WIDTH_IN_BLOCKS * 8;
+	private static final int BASIC_TREE_WIDTH_IN_BLOCKS = ROOT_NODE_WIDTH_IN_BLOCKS * 8;
 	
 	static
 	{
@@ -56,7 +50,7 @@ public class QuadTreeTest
 	@Test
 	public void BasicPositiveQuadTreeTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(MIN_TREE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0, 0));
+		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0, 0));
 		
 		
 		// root node //
@@ -90,7 +84,7 @@ public class QuadTreeTest
 	@Test
 	public void BasicNegativeQuadTreeTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(MIN_TREE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0, 0));
+		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0, 0));
 		
 		
 		// root node //
@@ -178,10 +172,10 @@ public class QuadTreeTest
 		Assert.assertEquals("Tree center incorrect", bigMoveBlockPos, tree.getCenterBlockPos());
 		
 		// nothing should be found in the tree
-		Assert.assertThrows(IndexOutOfBoundsException.class, () -> testGet(tree, nw, null));
-		Assert.assertThrows(IndexOutOfBoundsException.class, () -> testGet(tree, ne, null));
-		Assert.assertThrows(IndexOutOfBoundsException.class, () -> testGet(tree, sw, null));
-		Assert.assertThrows(IndexOutOfBoundsException.class, () -> testGet(tree, se, null));
+		testGet(tree, nw, null, IndexOutOfBoundsException.class);
+		testGet(tree, ne, null, IndexOutOfBoundsException.class);
+		testGet(tree, sw, null, IndexOutOfBoundsException.class);
+		testGet(tree, se, null, IndexOutOfBoundsException.class);
 		
 		Assert.assertEquals("incorrect leaf node count", tree.leafNodeCount(), 0);
 		
@@ -195,7 +189,7 @@ public class QuadTreeTest
 		
 		// TODO move me
 		DhSectionPos outOfBoundsPos = new DhSectionPos(DhSectionPos.SECTION_BLOCK_DETAIL_LEVEL, ROOT_NODE_WIDTH_IN_BLOCKS, 0); // wrong detail level on purpose, if the detail level was 0 (block) this should work
-		Assert.assertThrows("incorrect exception thrown ", IndexOutOfBoundsException.class, () -> testSet(tree, outOfBoundsPos, 2));
+		testSet(tree, outOfBoundsPos, 2, IndexOutOfBoundsException.class);
 		Assert.assertEquals("incorrect leaf node count", 0, tree.leafNodeCount());
 		
 		// 1 root node from the edge
@@ -210,14 +204,12 @@ public class QuadTreeTest
 		
 		Assert.assertEquals("incorrect leaf node count", 1, tree.leafNodeCount());
 		
-		
 	}
-	
 	
 	@Test
 	public void QuadTreeIterationTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(MIN_TREE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0, 0));
+		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0, 0));
 		
 		
 		// root nodes //
@@ -251,23 +243,82 @@ public class QuadTreeTest
 		
 	}
 	
-	
-	
-	private static void testSet(QuadTree<Integer> tree, DhSectionPos pos, Integer value)
+	@Test
+	public void FullTreeTest()
 	{
-		// set
-		Integer setResult = tree.set(pos, value);
-		Assert.assertNull("set failed "+pos, setResult);
-		// get
-		Integer getResult = tree.get(pos);
-		Assert.assertEquals("get failed "+pos, value, getResult);
+		QuadTree<Integer> tree = new QuadTree<>(0, new DhBlockPos2D(0, 0));
+		// minimum size tree should be 3 root nodes wide
+		Assert.assertEquals("incorrect minimum size tree", 3, tree.ringListWidth());
+		
+		
+		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, -1, -1), 0);
+		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, -1, 0), 0);
+		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, -1, 1), 0);
+		
+		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 0, -1), 0);
+		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 0, 0), 0);
+		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 0, 1), 0);
+		
+		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 1, -1), 0);
+		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 1, 0), 0);
+		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 1, 1), 0);
+		
+		
+		
+		AtomicInteger rootCount = new AtomicInteger(0);
+		tree.forEachRootNode((rootNode) -> 
+		{
+			rootCount.getAndAdd(1);
+		});
+		Assert.assertEquals("incorrect leaf value sum", 9, rootCount.get());
+		
 	}
 	
-	private static void testGet(QuadTree<Integer> tree, DhSectionPos pos, Integer value)
+	
+	
+	
+	//================//
+	// helper methods //
+	//================//
+	
+	private static void testSet(QuadTree<Integer> tree, DhSectionPos pos, Integer value) { testSet(tree, pos, value, null); }
+	private static <TE extends Throwable> void testSet(QuadTree<Integer> tree, DhSectionPos pos, Integer value, Class<TE> expectedExceptionClass)
 	{
-		// get
-		Integer getResult = tree.get(pos);
-		Assert.assertEquals("get failed "+pos, value, getResult);
+		// set
+		try
+		{
+			Integer previousValue = tree.set(pos, value);
+		}
+		catch (Exception e)
+		{
+			if (expectedExceptionClass == null || e.getClass() != expectedExceptionClass)
+			{
+				e.printStackTrace();
+				Assert.fail("set failed "+pos+" with exception "+e.getClass()+", expected exception: "+expectedExceptionClass+". error: "+e.getMessage());
+			}
+		}
+		
+		
+		// get (confirm value was correctly set)
+		testGet(tree, pos, value, expectedExceptionClass);
+	}
+	
+	private static void testGet(QuadTree<Integer> tree, DhSectionPos pos, Integer value) { testSet(tree, pos, value, null); }
+	private static <TE extends Throwable> void testGet(QuadTree<Integer> tree, DhSectionPos pos, Integer value, Class<TE> expectedExceptionClass)
+	{
+		try
+		{
+			Integer getResult = tree.get(pos);
+			Assert.assertEquals("get failed "+pos, value, getResult);
+		}
+		catch (Exception e)
+		{
+			if (expectedExceptionClass == null || e.getClass() != expectedExceptionClass)
+			{
+				e.printStackTrace();
+				Assert.fail("get failed "+pos+" with exception "+e.getClass()+", expected exception: "+expectedExceptionClass+". error: "+e.getMessage());
+			}
+		}
 	}
 	
 	
