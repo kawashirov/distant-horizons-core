@@ -117,6 +117,18 @@ public class QuadTreeTest
 	}
 	
 	@Test
+	public void OutOfBoundsQuadTreeTest()
+	{
+		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0, 0));
+		
+		// wrong detail level on purpose, if the detail level was 0 (block) this should work
+		DhSectionPos outOfBoundsPos = new DhSectionPos(DhSectionPos.SECTION_BLOCK_DETAIL_LEVEL, ROOT_NODE_WIDTH_IN_BLOCKS, 0);
+		testSet(tree, outOfBoundsPos, 2, IndexOutOfBoundsException.class);
+		Assert.assertEquals("incorrect leaf node count", 0, tree.leafNodeCount());
+		
+	}
+	
+	@Test
 	public void QuadTreeMovingTest()
 	{
 		int treeWidthInRootNodes = 8;
@@ -153,7 +165,7 @@ public class QuadTreeTest
 		
 		
 		// small move //
-		DhBlockPos2D smallMoveBlockPos = new DhBlockPos2D(ROOT_NODE_WIDTH_IN_BLOCKS *2, 0); // move enough that the original root nodes aren't touching the same grid squares they were before, but not far enough as to be garbage collected (TODO reword)
+		DhBlockPos2D smallMoveBlockPos = new DhBlockPos2D(ROOT_NODE_WIDTH_IN_BLOCKS*2, 0); // move enough that the original root nodes aren't touching the same grid squares they were before, but not far enough as to be garbage collected (TODO reword)
 		tree.setCenterBlockPos(smallMoveBlockPos);
 		Assert.assertEquals("Tree center incorrect", smallMoveBlockPos, tree.getCenterBlockPos());
 		
@@ -186,11 +198,6 @@ public class QuadTreeTest
 		// move back to the origin for easy testing
 		tree.setCenterBlockPos(DhBlockPos2D.ZERO);
 		Assert.assertEquals("Tree center incorrect", DhBlockPos2D.ZERO, tree.getCenterBlockPos());
-		
-		// TODO move me
-		DhSectionPos outOfBoundsPos = new DhSectionPos(DhSectionPos.SECTION_BLOCK_DETAIL_LEVEL, ROOT_NODE_WIDTH_IN_BLOCKS, 0); // wrong detail level on purpose, if the detail level was 0 (block) this should work
-		testSet(tree, outOfBoundsPos, 2, IndexOutOfBoundsException.class);
-		Assert.assertEquals("incorrect leaf node count", 0, tree.leafNodeCount());
 		
 		// 1 root node from the edge
 		DhSectionPos edgePos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, -((treeWidthInBlocks/2)-ROOT_NODE_WIDTH_IN_BLOCKS), 0);
@@ -281,13 +288,13 @@ public class QuadTreeTest
 	// helper methods //
 	//================//
 	
-	private static void testSet(QuadTree<Integer> tree, DhSectionPos pos, Integer value) { testSet(tree, pos, value, null); }
-	private static <TE extends Throwable> void testSet(QuadTree<Integer> tree, DhSectionPos pos, Integer value, Class<TE> expectedExceptionClass)
+	private static void testSet(QuadTree<Integer> tree, DhSectionPos pos, Integer setValue) { testSet(tree, pos, setValue, null); }
+	private static <TE extends Throwable> void testSet(QuadTree<Integer> tree, DhSectionPos pos, Integer setValue, Class<TE> expectedExceptionClass)
 	{
 		// set
 		try
 		{
-			Integer previousValue = tree.set(pos, value);
+			Integer previousValue = tree.set(pos, setValue);
 		}
 		catch (Exception e)
 		{
@@ -300,16 +307,16 @@ public class QuadTreeTest
 		
 		
 		// get (confirm value was correctly set)
-		testGet(tree, pos, value, expectedExceptionClass);
+		testGet(tree, pos, setValue, expectedExceptionClass);
 	}
 	
-	private static void testGet(QuadTree<Integer> tree, DhSectionPos pos, Integer value) { testSet(tree, pos, value, null); }
-	private static <TE extends Throwable> void testGet(QuadTree<Integer> tree, DhSectionPos pos, Integer value, Class<TE> expectedExceptionClass)
+	private static void testGet(QuadTree<Integer> tree, DhSectionPos pos, Integer getValue) { testSet(tree, pos, getValue, null); }
+	private static <TE extends Throwable> void testGet(QuadTree<Integer> tree, DhSectionPos pos, Integer getValue, Class<TE> expectedExceptionClass)
 	{
 		try
 		{
 			Integer getResult = tree.get(pos);
-			Assert.assertEquals("get failed "+pos, value, getResult);
+			Assert.assertEquals("get failed "+pos, getValue, getResult);
 		}
 		catch (Exception e)
 		{
