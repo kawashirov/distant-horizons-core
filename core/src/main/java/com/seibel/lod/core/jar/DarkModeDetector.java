@@ -3,8 +3,6 @@ package com.seibel.lod.core.jar;
 import java.io.*;
 import java.util.regex.Pattern;
 
-import static com.seibel.lod.core.jar.JarMain.getOperatingSystem;
-
 /**
  * A fork of iris'is dark mode detector (https://github.com/IrisShaders/Iris-Installer/blob/master/src/main/java/net/hypercubemc/iris_installer/DarkModeDetector.java)
  * Which is a fork of HanSolo's dark mode detector (https://gist.github.com/HanSolo/7cf10b86efff8ca2845bf5ec2dd0fe1d)
@@ -21,7 +19,7 @@ public class DarkModeDetector {
     private static final String DARK_THEME_CMD = REGQUERY_UTIL + "\"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize\"" + " /v AppsUseLightTheme";
 
     public static boolean isDarkMode() {
-        switch (getOperatingSystem()) {
+        switch (JarUtils.getOperatingSystem()) {
             case WINDOWS:
                 return isWindowsDarkMode();
             case MACOS:

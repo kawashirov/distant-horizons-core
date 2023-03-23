@@ -10,6 +10,7 @@ import java.util.List;
  * @author coolGi
  */
 public abstract class AbstractScreen {
+    public long minecraftWindow;
     public int width;
     public int height;
     public int mouseX = 0;
