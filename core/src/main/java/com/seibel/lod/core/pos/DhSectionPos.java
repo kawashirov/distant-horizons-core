@@ -83,12 +83,22 @@ public class DhSectionPos
 		LodUtil.assertTrue(returnDetailLevel <= this.sectionDetailLevel, "returnDetailLevel must be less than sectionDetail");
 		
 		if (returnDetailLevel == this.sectionDetailLevel)
+		{
 			return new DhLodPos(this.sectionDetailLevel, this.sectionX, this.sectionZ);
+		}
 		
-		byte offset = (byte) (this.sectionDetailLevel - returnDetailLevel);
+		byte detailLevelOffset = (byte) (this.sectionDetailLevel - returnDetailLevel);
+		
+		// we can't get the center of the position at block level, only attempt to get the position offset for detail levels above 0 // TODO should this also apply to detail level 1 or is it fine?
+		int positionOffset = 0; 
+		if (this.sectionDetailLevel != 1 || returnDetailLevel != 0)
+		{
+			positionOffset = BitShiftUtil.powerOfTwo(detailLevelOffset - 1);
+		}
+		
 		return new DhLodPos(returnDetailLevel,
-				(this.sectionX * BitShiftUtil.powerOfTwo(offset)) + BitShiftUtil.powerOfTwo(offset - 1),
-				(this.sectionZ * BitShiftUtil.powerOfTwo(offset)) + BitShiftUtil.powerOfTwo(offset - 1));
+				(this.sectionX * BitShiftUtil.powerOfTwo(detailLevelOffset)) + positionOffset,
+				(this.sectionZ * BitShiftUtil.powerOfTwo(detailLevelOffset)) + positionOffset);
 	}
 	
 	/** @return the corner with the smallest X and Z coordinate */
@@ -111,7 +121,10 @@ public class DhSectionPos
 		return new DhLodUnit(this.sectionDetailLevel, BitShiftUtil.powerOfTwo(offset));
 	}
 	
-	/** uses the absolute detail level aka detail levels like {@link LodUtil#CHUNK_DETAIL_LEVEL} instead of the dhSectionPos detaillevels */ // TODO comment
+	/** 
+	 * uses the absolute detail level aka detail levels like {@link LodUtil#CHUNK_DETAIL_LEVEL} instead of the dhSectionPos detailLevels 
+	 * @return the new position closest to negative infinity with the new detail level
+	 */
 	public DhSectionPos convertToDetailLevel(byte newSectionDetailLevel)
 	{
 		DhLodPos lodPos = new DhLodPos(this.sectionDetailLevel, this.sectionX, this.sectionZ);
@@ -125,10 +138,10 @@ public class DhSectionPos
 	 * Returns the DhLodPos 1 detail level lower <br><br>
 	 *
 	 * Relative child positions returned for each index: <br>
-	 * 0 = (0,0) <br>
-	 * 1 = (1,0) <br>
-	 * 2 = (0,1) <br>
-	 * 3 = (1,1) <br>
+	 * 0 = (0,0) - North West <br>
+	 * 1 = (1,0) - South West <br>
+	 * 2 = (0,1) - North East <br>
+	 * 3 = (1,1) - South East <br>
 	 *
 	 * @param child0to3 must be an int between 0 and 3
 	 */
@@ -172,10 +185,11 @@ public class DhSectionPos
 	/** NOTE: This does not consider yOffset! */
 	public boolean contains(DhSectionPos otherPos)
 	{
+		DhBlockPos2D thisMinBlockPos = this.getCorner(LodUtil.BLOCK_DETAIL_LEVEL).getCornerBlockPos();
 		DhBlockPos2D otherCornerBlockPos = otherPos.getCorner(LodUtil.BLOCK_DETAIL_LEVEL).getCornerBlockPos();
 		
-		DhBlockPos2D thisMinBlockPos = this.getCorner(LodUtil.BLOCK_DETAIL_LEVEL).getCornerBlockPos();
-		DhBlockPos2D thisMaxBlockPos = new DhBlockPos2D(thisMinBlockPos.x + this.getWidth().toBlockWidth(), thisMinBlockPos.z + this.getWidth().toBlockWidth());
+		int thisBlockWidth = this.getWidth().toBlockWidth() - 1; // minus 1 to account for zero based positional indexing
+		DhBlockPos2D thisMaxBlockPos = new DhBlockPos2D(thisMinBlockPos.x + thisBlockWidth, thisMinBlockPos.z + thisBlockWidth);
 		
 		return thisMinBlockPos.x <= otherCornerBlockPos.x && otherCornerBlockPos.x <= thisMaxBlockPos.x &&
 				thisMinBlockPos.z <= otherCornerBlockPos.z && otherCornerBlockPos.z <= thisMaxBlockPos.z;

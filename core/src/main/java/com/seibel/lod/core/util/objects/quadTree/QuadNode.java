@@ -1,8 +1,8 @@
 package com.seibel.lod.core.util.objects.quadTree;
 
 import com.seibel.lod.core.logging.DhLoggerBuilder;
-import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
+import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
 import java.util.function.Consumer;
@@ -119,7 +119,7 @@ public class QuadNode<T>
 		if (!this.sectionPos.contains(inputSectionPos))
 		{
 			LOGGER.error((replaceValue ? "set " : "get ")+inputSectionPos+" center block: "+inputSectionPos.getCenter().getCornerBlockPos()+", this pos: "+this.sectionPos+" this center block: "+this.sectionPos.getCenter().getCornerBlockPos());
-			throw new IllegalArgumentException("Input section pos outside of this quadNode's range: "+this.sectionPos+" width: "+this.sectionPos.getWidth()+" input detail level: "+inputSectionPos+" width: "+inputSectionPos.getWidth());
+			throw new IllegalArgumentException("Input section pos "+inputSectionPos+" outside of this quadNode's pos: "+this.sectionPos+", this node's blockPos: "+this.sectionPos.convertToDetailLevel(LodUtil.BLOCK_DETAIL_LEVEL)+" block width: "+this.sectionPos.getWidth().toBlockWidth()+" input detail level: "+inputSectionPos.convertToDetailLevel(LodUtil.BLOCK_DETAIL_LEVEL)+" width: "+inputSectionPos.getWidth().toBlockWidth());
 		}
 		
 		if (inputSectionPos.sectionDetailLevel > this.sectionPos.sectionDetailLevel)
@@ -149,65 +149,68 @@ public class QuadNode<T>
 			
 //			LOGGER.info((replaceValue ? "set " : "get ")+inputSectionPos+" center block: "+inputSectionPos.getCenter().getCornerBlockPos()+", this pos: "+this.sectionPos+" this center block: "+this.sectionPos.getCenter().getCornerBlockPos());
 			
-			DhLodPos nodeCenterPos = this.sectionPos.getCenter(); //.convertToDetailLevel((byte)0).getCenter();
-			DhLodPos inputCenterPos = inputSectionPos.getCenter(); //.convertToDetailLevel((byte)0).getCenter();
+			DhSectionPos nwPos = this.sectionPos.getChildByIndex(0);
+			DhSectionPos swPos = this.sectionPos.getChildByIndex(1);
+			DhSectionPos nePos = this.sectionPos.getChildByIndex(2);
+			DhSectionPos sePos = this.sectionPos.getChildByIndex(3);
 			
-			// may or may not be at the requested detail level
+			// look for the child that contains the input position (there may be a faster way to do this, but this works for now)
 			QuadNode<T> childNode;
-			if (inputCenterPos.x <= nodeCenterPos.x)
+			if (nwPos.contains(inputSectionPos))
 			{
-				if (inputCenterPos.z <= nodeCenterPos.z)
+				// TODO merge duplicate code
+				if (replaceValue && this.nwChild == null)
 				{
-					// TODO merge duplicate code
-					if (replaceValue && this.nwChild == null)
-					{
-						// if no node exists for this position, but we want to insert a new value at this position, create a new node
-						this.nwChild = new QuadNode<>(this.sectionPos.getChildByIndex(0));
-					}
-//					LOGGER.info("NW");
-					childNode = this.nwChild;
+					// if no node exists for this position, but we want to insert a new value at this position, create a new node
+					this.nwChild = new QuadNode<>(nwPos);
 				}
-				else
+				childNode = this.nwChild;
+				
+				// childNode should only be null when replaceValue = false and the end of a node chain has been reached
+				return (childNode != null) ? childNode.getOrSetValue(inputSectionPos, replaceValue, newValue) : null;
+			}
+			else if (swPos.contains(inputSectionPos))
+			{
+				// TODO merge duplicate code
+				if (replaceValue && this.swChild == null)
 				{
-					if (replaceValue && this.neChild == null)
-					{
-						this.neChild = new QuadNode<>(this.sectionPos.getChildByIndex(2));
-					}
-//					LOGGER.info("NE");
-					childNode = this.neChild;
+					// if no node exists for this position, but we want to insert a new value at this position, create a new node
+					this.swChild = new QuadNode<>(swPos);
 				}
+				childNode = this.swChild;
+				
+				// childNode should only be null when replaceValue = false and the end of a node chain has been reached
+				return (childNode != null) ? childNode.getOrSetValue(inputSectionPos, replaceValue, newValue) : null;
+			}
+			else if (nePos.contains(inputSectionPos))
+			{
+				// TODO merge duplicate code
+				if (replaceValue && this.neChild == null)
+				{
+					// if no node exists for this position, but we want to insert a new value at this position, create a new node
+					this.neChild = new QuadNode<>(nePos);
+				}
+				childNode = this.neChild;
+				
+				// childNode should only be null when replaceValue = false and the end of a node chain has been reached
+				return (childNode != null) ? childNode.getOrSetValue(inputSectionPos, replaceValue, newValue) : null;
+			}
+			else if (sePos.contains(inputSectionPos))
+			{
+				// TODO merge duplicate code
+				if (replaceValue && this.seChild == null)
+				{
+					// if no node exists for this position, but we want to insert a new value at this position, create a new node
+					this.seChild = new QuadNode<>(sePos);
+				}
+				childNode = this.seChild;
+				
+				// childNode should only be null when replaceValue = false and the end of a node chain has been reached
+				return (childNode != null) ? childNode.getOrSetValue(inputSectionPos, replaceValue, newValue) : null;
 			}
 			else
 			{
-				if (inputCenterPos.z <= nodeCenterPos.z)
-				{
-					if (replaceValue && this.swChild == null)
-					{
-						this.swChild = new QuadNode<>(this.sectionPos.getChildByIndex(1));
-					}
-//					LOGGER.info("SW");
-					childNode = this.swChild;
-				}
-				else
-				{
-					if (replaceValue && this.seChild == null)
-					{
-						this.seChild = new QuadNode<>(this.sectionPos.getChildByIndex(3));
-					}
-//					LOGGER.info("SE");
-					childNode = this.seChild;
-				}
-			}
-			
-			
-			if (childNode == null)
-			{
-				// should only happen when replaceValue = false and the end of a node chain has been reached
-				return null;
-			}
-			else
-			{
-				return childNode.getOrSetValue(inputSectionPos, replaceValue, newValue);	
+				throw new IllegalStateException("input position not contained by any node children. This should've been caught by the this.sectionPos.contains(inputPos) assert before this point.");
 			}
 		}
 	}

@@ -2,6 +2,7 @@ package com.seibel.lod.core.util.objects.quadTree;
 
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhBlockPos2D;
+import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.pos.Pos2D;
 import com.seibel.lod.core.util.BitShiftUtil;
@@ -11,6 +12,7 @@ import com.seibel.lod.core.util.gridList.MovableGridRingList;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -30,7 +32,9 @@ public class QuadTree<T>
 	/** contain the actual data in the quad tree structure */
     private final MovableGridRingList<QuadNode<T>> topRingList;
 	
-	DhBlockPos2D centerBlockPos;
+	private DhBlockPos2D centerBlockPos;
+	
+	private int widthInBlocks; 
 	
 	
 	
@@ -42,20 +46,19 @@ public class QuadTree<T>
 	{
         DetailDistanceUtil.updateSettings(); //TODO: Move this to somewhere else
 		this.centerBlockPos = centerBlockPos;
+		this.widthInBlocks = widthInBlocks;
 		
-		this.treeMaxDetailLevel = 10; // TODO we may need to make this dynamic // detail 10 = (2^10) 1024 blocks wide
+		this.treeMaxDetailLevel = 10; // TODO in the future we may need to make this dynamic // detail 10 = (2^10) 1024 blocks wide
 		
-//		int halfSize = 12; // TODO use this.treeMaxDetailLevel to determine
-		int halfSize = Math.floorDiv(widthInBlocks, 2) / BitShiftUtil.powerOfTwo(this.treeMaxDetailLevel);
-		halfSize = Math.max(halfSize, 1); // at minimum the ring list should have 3x3 (9) root nodes in it, to account for moving around 
+		int halfSizeInRootNodes = Math.floorDiv(this.widthInBlocks, 2) / BitShiftUtil.powerOfTwo(this.treeMaxDetailLevel);
+		halfSizeInRootNodes = halfSizeInRootNodes + 1; // always add 1 so nodes will always have a parent, even if the tree's center is offset from the root node grid 
 		
 		Pos2D ringListCenterPos = new Pos2D(
 				BitShiftUtil.divideByPowerOfTwo(this.centerBlockPos.x, this.treeMaxDetailLevel), 
 				BitShiftUtil.divideByPowerOfTwo(this.centerBlockPos.z, this.treeMaxDetailLevel));
-		
-		this.topRingList = new MovableGridRingList<>(halfSize, ringListCenterPos.x, ringListCenterPos.y);
+		this.topRingList = new MovableGridRingList<>(halfSizeInRootNodes, ringListCenterPos.x, ringListCenterPos.y);
         
-    }// constructor
+    }
 	
 	
 	
@@ -70,7 +73,7 @@ public class QuadTree<T>
 	
 	protected final T getOrSet(DhSectionPos pos, boolean setNewValue, T newValue) throws IndexOutOfBoundsException
 	{
-		if (this.isPositionInBounds(pos))
+		if (this.isSectionPosInBounds(pos))
 		{
 			DhSectionPos rootPos = pos.convertToDetailLevel(this.treeMaxDetailLevel);
 			int ringListPosX = rootPos.sectionX;
@@ -79,6 +82,11 @@ public class QuadTree<T>
 			QuadNode<T> topQuadNode = this.topRingList.get(ringListPosX, ringListPosZ);
 			if (topQuadNode == null)
 			{
+				if (!setNewValue)
+				{
+					return null;
+				}
+				
 				topQuadNode = new QuadNode<T>(rootPos);
 				boolean successfullyAdded = this.topRingList.set(ringListPosX, ringListPosZ, topQuadNode);
 				LodUtil.assertTrue(successfullyAdded, "Failed to add top quadTree node at position: "+rootPos);
@@ -99,34 +107,44 @@ public class QuadTree<T>
 		}
 		else
 		{
-			// TODO give the min and max allowed positions
-			int width = this.widthInBlocks()/2;
-			
-			DhBlockPos2D minPos = this.getCenterBlockPos().add(new DhBlockPos2D(-width, -width));
-			DhBlockPos2D maxPos =this.getCenterBlockPos().add(new DhBlockPos2D(width, width));
-			throw new IndexOutOfBoundsException("QuadTree GetOrSet failed. Position out of bounds, min pos: "+minPos+", max pos: "+maxPos+", given Position: "+pos);
+			int radius = this.diameterInBlocks()/2;
+			DhBlockPos2D minPos = this.getCenterBlockPos().add(new DhBlockPos2D(-radius, -radius));
+			DhBlockPos2D maxPos =this.getCenterBlockPos().add(new DhBlockPos2D(radius, radius));
+			throw new IndexOutOfBoundsException("QuadTree GetOrSet failed. Position out of bounds, min pos: "+minPos+", max pos: "+maxPos+", given Position: "+pos+" = block pos: "+pos.convertToDetailLevel(LodUtil.BLOCK_DETAIL_LEVEL));
 		}
 	}
 	
-	
-	private boolean isPositionInBounds(DhSectionPos pos)
+	private boolean isSectionPosInBounds(DhSectionPos testPos)
 	{
-		DhSectionPos blockPos = pos.convertToDetailLevel(LodUtil.BLOCK_DETAIL_LEVEL);
+		DhBlockPos2D blockCornerOfTree = this.centerBlockPos.add(new DhBlockPos2D(-this.widthInBlocks/2,-this.widthInBlocks/2));
+		DhLodPos cornerOfTreePos = new DhLodPos((byte)0, blockCornerOfTree.x, blockCornerOfTree.z);
 		
-		int halfWidthInBlocks = BitShiftUtil.powerOfTwo(this.treeMaxDetailLevel) * Math.floorDiv(this.topRingList.getWidth(), 2);
+		DhSectionPos sectionCornerOfInput = testPos.convertToDetailLevel((byte)0);
+		DhLodPos cornerOfInputPos = new DhLodPos((byte)0, sectionCornerOfInput.sectionX, sectionCornerOfInput.sectionZ);
+		int inputWidth = BitShiftUtil.powerOfTwo(testPos.sectionDetailLevel);
 		
-		int minX = this.centerBlockPos.x - halfWidthInBlocks;
-		int maxX = this.centerBlockPos.x + halfWidthInBlocks;
+		return DoSquaresOverlap(cornerOfTreePos, this.widthInBlocks, cornerOfInputPos, inputWidth);
+	}
+	public static boolean DoSquaresOverlap(DhLodPos rect1Min, int rect1Width, DhLodPos rect2Min, int rect2Width)
+	{
+		// Determine the coordinates of the rectangles
+		float rect1MinX = rect1Min.x;
+		float rect1MaxX = rect1Min.x + rect1Width;
+		float rect1MinZ = rect1Min.z;
+		float rect1MaxZ = rect1Min.z + rect1Width;
 		
-		int minZ = this.centerBlockPos.z - halfWidthInBlocks;
-		int maxZ = this.centerBlockPos.z + halfWidthInBlocks;
+		float rect2MinX = rect2Min.x;
+		float rect2MaxX = rect2Min.x + rect2Width;
+		float rect2MinZ = rect2Min.z;
+		float rect2MaxZ = rect2Min.z + rect2Width;
 		
-		return minX <= blockPos.sectionX && blockPos.sectionX <= maxX &&
-				minZ <= blockPos.sectionZ && blockPos.sectionZ <= maxZ;
+		// Check if the rectangles overlap
+		return rect1MinX < rect2MaxX && rect1MaxX > rect2MinX && rect1MinZ < rect2MaxZ && rect1MaxZ > rect2MinZ;
 	}
 	
 	
-	/** no nulls TODO */
+	
+	/** no nulls TODO comment/rename */
 	public void forEachRootNode(Consumer<QuadNode<T>> consumer)
 	{
 		this.topRingList.forEachOrdered((rootNode) -> 
@@ -134,6 +152,18 @@ public class QuadTree<T>
 			if (rootNode != null)
 			{
 				consumer.accept(rootNode);
+			}
+		});
+	}
+	
+	/** root nodes can be null */
+	public void forEachRootNodePos(BiConsumer<QuadNode<T>, Pos2D> consumer)
+	{
+		this.topRingList.forEachPosOrdered((rootNode, pos2D) ->
+		{
+			if (isSectionPosInBounds(new DhSectionPos(this.treeMaxDetailLevel, pos2D.x, pos2D.y)))
+			{
+				consumer.accept(rootNode, pos2D);
 			}
 		});
 	}
@@ -189,19 +219,16 @@ public class QuadTree<T>
 	public int leafNodeCount() 
 	{
 		AtomicInteger count = new AtomicInteger(0); 
-		this.topRingList.forEachPos((node, pos) -> 
+		this.topRingList.forEachOrdered((node) -> 
 		{
-			if (node != null)
-			{
-				node.forAllLeafValues((value) -> { count.addAndGet(1); });
-			}
+			node.forAllLeafValues((value) -> { count.addAndGet(1); });
 		});
 		
 		return count.get();
 	}
 	
 	public int ringListWidth() { return this.topRingList.getWidth(); }
-	public int widthInBlocks() { return this.ringListWidth() * BitShiftUtil.powerOfTwo(this.treeMaxDetailLevel); }
+	public int diameterInBlocks() { return this.widthInBlocks; }
 	
 //	public String getDebugString()
 //	{

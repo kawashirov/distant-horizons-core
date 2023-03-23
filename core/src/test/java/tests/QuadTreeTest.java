@@ -37,10 +37,17 @@ public class QuadTreeTest
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
+	private static final DhBlockPos2D TREE_CENTER_POS = new DhBlockPos2D(BitShiftUtil.powerOfTwo(10)/2, BitShiftUtil.powerOfTwo(10)/2);
+	
 	private static final int ROOT_NODE_WIDTH_IN_BLOCKS = BitShiftUtil.powerOfTwo(10);
 	/** needs to be an odd number to function correctly */
-	private static final int BASIC_TREE_WIDTH_IN_ROOT_NODES = 9;
-	private static final int BASIC_TREE_WIDTH_IN_BLOCKS = ROOT_NODE_WIDTH_IN_BLOCKS * BASIC_TREE_WIDTH_IN_ROOT_NODES;
+	private static final int BASIC_TREE_INPUT_WIDTH_IN_ROOT_NODES = 9;
+	private static final int BASIC_TREE_WIDTH_IN_BLOCKS = ROOT_NODE_WIDTH_IN_BLOCKS * BASIC_TREE_INPUT_WIDTH_IN_ROOT_NODES;
+	
+	/** the tree should be slightly larger to account for offset centers */
+	private static final int BASIC_TREE_ACTUAL_WIDTH_IN_ROOT_NODES = BASIC_TREE_INPUT_WIDTH_IN_ROOT_NODES + 2;
+	
+	private static final int MINIMUM_TREE_WIDTH_IN_BLOCKS = 32;
 	
 	static
 	{
@@ -52,8 +59,8 @@ public class QuadTreeTest
 	@Test
 	public void BasicPositiveQuadTreeTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0, 0));
-		Assert.assertEquals("Incorrect basic tree width", BASIC_TREE_WIDTH_IN_ROOT_NODES, tree.ringListWidth());
+		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS);
+		Assert.assertEquals("Incorrect basic tree width", BASIC_TREE_ACTUAL_WIDTH_IN_ROOT_NODES, tree.ringListWidth());
 		
 		
 		// root node //
@@ -87,7 +94,7 @@ public class QuadTreeTest
 	@Test
 	public void BasicNegativeQuadTreeTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0, 0));
+		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS);
 		
 		
 		// root node //
@@ -122,21 +129,52 @@ public class QuadTreeTest
 	@Test
 	public void OutOfBoundsQuadTreeTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0, 0));
+		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0,0));
+		Assert.assertEquals("tree diameter incorrect", BASIC_TREE_WIDTH_IN_BLOCKS, tree.diameterInBlocks());
+		
 		
 		// wrong detail level on purpose, if the detail level was 0 (block) this should work
 		DhSectionPos outOfBoundsPos = new DhSectionPos(DhSectionPos.SECTION_BLOCK_DETAIL_LEVEL, ROOT_NODE_WIDTH_IN_BLOCKS, 0);
-		testSet(tree, outOfBoundsPos, 2, IndexOutOfBoundsException.class);
+		testSet(tree, outOfBoundsPos, -1, IndexOutOfBoundsException.class);
 		Assert.assertEquals("incorrect leaf node count", 0, tree.leafNodeCount());
+		
+		
+		// out of bounds //
+		outOfBoundsPos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, (BASIC_TREE_WIDTH_IN_BLOCKS/2) + 1, 0);
+		testSet(tree, outOfBoundsPos, -1, IndexOutOfBoundsException.class);
+		Assert.assertEquals("incorrect leaf node count", 0, tree.leafNodeCount());
+		
+		outOfBoundsPos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, (BASIC_TREE_WIDTH_IN_BLOCKS/2), 0);
+		testSet(tree, outOfBoundsPos, -1, IndexOutOfBoundsException.class);
+		Assert.assertEquals("incorrect leaf node count", 0, tree.leafNodeCount());
+		
+		
+		// in bounds //
+		outOfBoundsPos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, (BASIC_TREE_WIDTH_IN_BLOCKS/2)-1, 0);
+		testSet(tree, outOfBoundsPos, 0);
+		Assert.assertEquals("incorrect leaf node count", 1, tree.leafNodeCount());
+		
+		outOfBoundsPos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, (BASIC_TREE_WIDTH_IN_BLOCKS/2)-3, 0);
+		testSet(tree, outOfBoundsPos, 0);
+		Assert.assertEquals("incorrect leaf node count", 2, tree.leafNodeCount());
+		
+		// TODO this position probably has trouble with getting the center.
+		outOfBoundsPos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, (BASIC_TREE_WIDTH_IN_BLOCKS/2)-2, 0);
+		testSet(tree, outOfBoundsPos, 0);
+		Assert.assertEquals("incorrect leaf node count", 3, tree.leafNodeCount());
+		
+		outOfBoundsPos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, (BASIC_TREE_WIDTH_IN_BLOCKS/2)-4, 0);
+		testSet(tree, outOfBoundsPos, 0);
+		Assert.assertEquals("incorrect leaf node count", 4, tree.leafNodeCount());
 		
 	}
 	
 	@Test
-	public void QuadTreeMovingTest()
+	public void QuadTreeRootAlignedMovingTest()
 	{
 		int treeWidthInRootNodes = 8;
 		int treeWidthInBlocks = ROOT_NODE_WIDTH_IN_BLOCKS * treeWidthInRootNodes;
-		QuadTree<Integer> tree = new QuadTree<>(treeWidthInBlocks, new DhBlockPos2D(0, 0));
+		QuadTree<Integer> tree = new QuadTree<>(treeWidthInBlocks, TREE_CENTER_POS);
 		
 		
 		// root nodes //
@@ -212,18 +250,18 @@ public class QuadTreeTest
 		Assert.assertEquals("incorrect leaf node count", 2, tree.leafNodeCount());
 		
 		// move so only the root nodes exactly on the X edge remain
-		DhBlockPos2D edgeMoveBlockPos = new DhBlockPos2D(ROOT_NODE_WIDTH_IN_BLOCKS - (BASIC_TREE_WIDTH_IN_ROOT_NODES*ROOT_NODE_WIDTH_IN_BLOCKS), 0);
+		DhBlockPos2D edgeMoveBlockPos = new DhBlockPos2D(ROOT_NODE_WIDTH_IN_BLOCKS - (BASIC_TREE_INPUT_WIDTH_IN_ROOT_NODES*ROOT_NODE_WIDTH_IN_BLOCKS), 0);
 		tree.setCenterBlockPos(edgeMoveBlockPos);
 		Assert.assertEquals("Tree center incorrect", edgeMoveBlockPos, tree.getCenterBlockPos());
 		
-		Assert.assertEquals("incorrect leaf node count", 1, tree.leafNodeCount());
+		Assert.assertEquals("incorrect leaf node count", 2, tree.leafNodeCount());
 		
 	}
 	
 	@Test
 	public void QuadTreeIterationTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0, 0));
+		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS);
 		
 		
 		// root nodes //
@@ -258,25 +296,133 @@ public class QuadTreeTest
 	}
 	
 	@Test
-	public void FullTreeTest()
+	public void CenteredGridListIterationTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(0, new DhBlockPos2D(0, 0));
-		// minimum size tree should be 3 root nodes wide
-		Assert.assertEquals("incorrect minimum size tree", 3, tree.ringListWidth());
-		
-		
-		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, -1, -1), 0);
-		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, -1, 0), 0);
-		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, -1, 1), 0);
-		
-		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 0, -1), 0);
+		final QuadTree<Integer> tree = new QuadTree<>(MINIMUM_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS);
 		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 0, 0), 0);
-		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 0, 1), 0);
 		
-		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 1, -1), 0);
-		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 1, 0), 0);
-		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 1, 1), 0);
+		// confirm the root node were added
+		final AtomicInteger rootNodeCount = new AtomicInteger(0);
+		tree.forEachRootNode((rootNode) -> { rootNodeCount.addAndGet(1); });
+		Assert.assertEquals("incorrect root count", 1, rootNodeCount.get());
 		
+		// attempt to get and remove, each node in the tree
+		final AtomicInteger rootNodePosCount = new AtomicInteger(0);
+		tree.forEachRootNodePos((renderBufferNode, pos2d) ->
+		{
+			DhSectionPos sectionPos = new DhSectionPos(tree.treeMaxDetailLevel, pos2d.x, pos2d.y);
+			
+			testGet(tree, sectionPos, 0);
+			testSet(tree, sectionPos, null);
+			
+			rootNodePosCount.addAndGet(1);
+		});
+		Assert.assertEquals("incorrect root count", 1, rootNodeCount.get());
+		
+	}
+	
+	@Test
+	public void OffsetGridListIterationTest()
+	{
+		
+		// offset fully inside (10*0,0)
+		final QuadTree<Integer> fullyInsideTree = new QuadTree<>(MINIMUM_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS);
+		
+		DhBlockPos2D fullyInsideOffsetBlockPos = new DhBlockPos2D(MINIMUM_TREE_WIDTH_IN_BLOCKS, MINIMUM_TREE_WIDTH_IN_BLOCKS);
+		fullyInsideTree.setCenterBlockPos(fullyInsideOffsetBlockPos);
+		
+		fullyInsideTree.forEachRootNodePos((rootNode, pos2D) ->
+		{
+			testSet(fullyInsideTree, new DhSectionPos(fullyInsideTree.treeMaxDetailLevel, pos2D.x, pos2D.y), 0);
+		});
+		
+		// only 1 root node should be added
+		final AtomicInteger fullyInsideRootNodeCount = new AtomicInteger(0);
+		fullyInsideTree.forEachRootNode((rootNode) -> { fullyInsideRootNodeCount.addAndGet(1); });
+		Assert.assertEquals("incorrect root count", 1, fullyInsideRootNodeCount.get());
+		
+		
+		
+		
+		// offset fully inside (10*0,0)
+		final QuadTree<Integer> borderInsideTree = new QuadTree<>(MINIMUM_TREE_WIDTH_IN_BLOCKS, new DhBlockPos2D(MINIMUM_TREE_WIDTH_IN_BLOCKS * 2, MINIMUM_TREE_WIDTH_IN_BLOCKS * 2));
+		
+		borderInsideTree.forEachRootNodePos((rootNode, pos2D) ->
+		{
+			testSet(borderInsideTree, new DhSectionPos(borderInsideTree.treeMaxDetailLevel, pos2D.x, pos2D.y), 0);
+		});
+		
+		// only 1 root node should be added
+		final AtomicInteger borderInsideRootNodeCount = new AtomicInteger(0);
+		borderInsideTree.forEachRootNode((rootNode) -> { borderInsideRootNodeCount.addAndGet(1); });
+		Assert.assertEquals("incorrect root count", 1, borderInsideRootNodeCount.get());
+		
+		
+		
+		
+		// offset across (10*-1,0) and (10*0,0)
+		final QuadTree<Integer> acrossTree = new QuadTree<>(MINIMUM_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS);
+
+		DhBlockPos2D acrossOffsetBlockPos = new DhBlockPos2D(-MINIMUM_TREE_WIDTH_IN_BLOCKS/4, MINIMUM_TREE_WIDTH_IN_BLOCKS);
+		acrossTree.setCenterBlockPos(acrossOffsetBlockPos);
+
+		acrossTree.forEachRootNodePos((rootNode, pos2D) ->
+		{
+			testSet(acrossTree, new DhSectionPos(acrossTree.treeMaxDetailLevel, pos2D.x, pos2D.y), 0);
+		});
+
+		// 2 root nodes should be added
+		final AtomicInteger acrossRootNodeCount = new AtomicInteger(0);
+		acrossTree.forEachRootNode((rootNode) -> { acrossRootNodeCount.addAndGet(1); });
+		Assert.assertEquals("incorrect root count", 2, acrossRootNodeCount.get());
+		
+	}
+	
+	@Test
+	public void TinyGridAlignedTreeTest()
+	{
+		QuadTree<Integer> tree = new QuadTree<>(ROOT_NODE_WIDTH_IN_BLOCKS, TREE_CENTER_POS);
+		// minimum size tree should be 3 root nodes wide
+		Assert.assertEquals("incorrect tree node width", 3, tree.ringListWidth());
+		Assert.assertEquals("incorrect tree width", ROOT_NODE_WIDTH_IN_BLOCKS, tree.diameterInBlocks());
+		
+		
+		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 0, 0), 0);
+		
+		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, -1, -1), -1, IndexOutOfBoundsException.class);
+		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 1, 1), -1, IndexOutOfBoundsException.class);
+		
+		AtomicInteger rootCount = new AtomicInteger(0);
+		tree.forEachRootNode((rootNode) -> 
+		{
+			rootCount.getAndAdd(1);
+		});
+		Assert.assertEquals("incorrect leaf value sum", 1, rootCount.get());
+		
+	}
+	
+	@Test
+	public void TinyGridOffsetTreeTest()
+	{
+		QuadTree<Integer> tree = new QuadTree<>(ROOT_NODE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0, 0));
+		// minimum size tree should be 3 root nodes wide
+		Assert.assertEquals("incorrect tree node width", 3, tree.ringListWidth());
+		Assert.assertEquals("incorrect tree width", ROOT_NODE_WIDTH_IN_BLOCKS, tree.diameterInBlocks());
+		
+		
+		// 2x2 valid positions (overlap the tree's width)
+		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 0, 0), 0);
+		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, -1, 0), 0);
+		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 0, -1), 0);
+		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, -1, -1), 0);
+		
+		// invalid positions
+		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, -1, 1), -1, IndexOutOfBoundsException.class);
+		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 0, 1), -1, IndexOutOfBoundsException.class);
+		
+		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 1, 0), -1, IndexOutOfBoundsException.class);
+		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 1, 1), -1, IndexOutOfBoundsException.class);
+		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 1, -1), -1, IndexOutOfBoundsException.class);
 		
 		
 		AtomicInteger rootCount = new AtomicInteger(0);
@@ -284,7 +430,7 @@ public class QuadTreeTest
 		{
 			rootCount.getAndAdd(1);
 		});
-		Assert.assertEquals("incorrect leaf value sum", 9, rootCount.get());
+		Assert.assertEquals("incorrect leaf value sum", 4, rootCount.get());
 		
 	}
 	
