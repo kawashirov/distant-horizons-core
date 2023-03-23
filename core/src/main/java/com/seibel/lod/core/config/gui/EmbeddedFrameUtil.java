@@ -1,6 +1,5 @@
 package com.seibel.lod.core.config.gui;
 
-import com.seibel.lod.core.jar.JarUtils;
 import org.lwjgl.system.*;
 import org.lwjgl.system.jawt.JAWT;
 import org.lwjgl.system.macosx.*;
@@ -26,8 +25,6 @@ public final class EmbeddedFrameUtil {
     private static final JAWT awt;
 
     static {
-        System.setProperty("java.awt.headless", "false");
-
         Pattern p = Pattern.compile("^(?:1[.])?([1-9][0-9]*)[.-]");
         Matcher m = p.matcher(System.getProperty("java.version"));
 
@@ -39,21 +36,21 @@ public final class EmbeddedFrameUtil {
 
         awt = JAWT.calloc();
         awt.version(JAVA_VERSION < 9 ? JAWT_VERSION_1_4 : JAWT_VERSION_9);
-//        if (!JAWT_GetAWT(awt)) {
-//            throw new RuntimeException("GetAWT failed");
-//        }
+        if (!JAWT_GetAWT(awt)) {
+            throw new RuntimeException("GetAWT failed");
+        }
     }
 
     private static String getEmbeddedFrameImpl() {
-        switch (JarUtils.getOperatingSystem()) {
+        switch (Platform.get()) {
             case LINUX:
                 return "sun.awt.X11.XEmbeddedFrame";
+            case MACOSX:
+                return "sun.lwawt.macosx.CViewEmbeddedFrame";
             case WINDOWS:
                 return "sun.awt.windows.WEmbeddedFrame";
-            case MACOS:
-                return "sun.lwawt.macosx.CViewEmbeddedFrame";
             default:
-                throw new IllegalStateException(); // TODO: Find a compromise for other os'
+                throw new IllegalStateException();
         }
     }
 
@@ -61,11 +58,11 @@ public final class EmbeddedFrameUtil {
         switch (Platform.get()) {
             case LINUX:
                 return glfwGetX11Window(window);
-            case WINDOWS:
-                return glfwGetWin32Window(window);
             case MACOSX:
                 long objc_msgSend = ObjCRuntime.getLibrary().getFunctionAddress("objc_msgSend");
                 return invokePPP(glfwGetCocoaWindow(window), sel_getUid("contentView"), objc_msgSend);
+            case WINDOWS:
+                return glfwGetWin32Window(window);
             default:
                 throw new IllegalStateException();
         }
@@ -119,7 +116,7 @@ public final class EmbeddedFrameUtil {
         }
     }
 
-    // The code below is by me
+    // The code below is by Ran
 
     public static void hideFrame(Frame embeddedFrame) {
         if (embeddedFrame != null) {
