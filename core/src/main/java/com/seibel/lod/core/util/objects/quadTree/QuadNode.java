@@ -5,6 +5,7 @@ import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class QuadNode<T>
@@ -12,7 +13,8 @@ public class QuadNode<T>
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
 	
-	public DhSectionPos sectionPos;
+	public final DhSectionPos sectionPos;
+	public final byte minimumDetailLevel;
 	public T value;
 	
 	
@@ -45,9 +47,10 @@ public class QuadNode<T>
 	
 	
 	
-	public QuadNode(DhSectionPos sectionPos)
+	public QuadNode(DhSectionPos sectionPos, byte minimumDetailLevel)
 	{
 		this.sectionPos = sectionPos;
+		this.minimumDetailLevel = minimumDetailLevel;
 	}
 	
 	
@@ -116,6 +119,8 @@ public class QuadNode<T>
 	 */
 	private T getOrSetValue(DhSectionPos inputSectionPos, boolean replaceValue, T newValue) throws IllegalArgumentException
 	{
+		// debug validation
+		
 		if (!this.sectionPos.contains(inputSectionPos))
 		{
 			LOGGER.error((replaceValue ? "set " : "get ")+inputSectionPos+" center block: "+inputSectionPos.getCenter().getCornerBlockPos()+", this pos: "+this.sectionPos+" this center block: "+this.sectionPos.getCenter().getCornerBlockPos());
@@ -132,6 +137,14 @@ public class QuadNode<T>
 			throw new IllegalArgumentException("Node and input detail level are equal, however positions are not; this tree doesn't contain the requested position. Node pos: "+this.sectionPos+", input pos: "+inputSectionPos);
 		}
 		
+		if (inputSectionPos.sectionDetailLevel < this.minimumDetailLevel)
+		{
+			throw new IllegalArgumentException("Input position is requesting a detail level lower than what this node can provide. Node minimum detail level: "+this.minimumDetailLevel+", input pos: "+inputSectionPos);
+		}
+		
+		
+		
+		// get/set logic
 		if (inputSectionPos.sectionDetailLevel == this.sectionPos.sectionDetailLevel)
 		{
 			// this node is the requested position
@@ -162,7 +175,7 @@ public class QuadNode<T>
 				if (replaceValue && this.nwChild == null)
 				{
 					// if no node exists for this position, but we want to insert a new value at this position, create a new node
-					this.nwChild = new QuadNode<>(nwPos);
+					this.nwChild = new QuadNode<>(nwPos, this.minimumDetailLevel);
 				}
 				childNode = this.nwChild;
 				
@@ -175,7 +188,7 @@ public class QuadNode<T>
 				if (replaceValue && this.swChild == null)
 				{
 					// if no node exists for this position, but we want to insert a new value at this position, create a new node
-					this.swChild = new QuadNode<>(swPos);
+					this.swChild = new QuadNode<>(swPos, this.minimumDetailLevel);
 				}
 				childNode = this.swChild;
 				
@@ -188,7 +201,7 @@ public class QuadNode<T>
 				if (replaceValue && this.neChild == null)
 				{
 					// if no node exists for this position, but we want to insert a new value at this position, create a new node
-					this.neChild = new QuadNode<>(nePos);
+					this.neChild = new QuadNode<>(nePos, this.minimumDetailLevel);
 				}
 				childNode = this.neChild;
 				
@@ -201,7 +214,7 @@ public class QuadNode<T>
 				if (replaceValue && this.seChild == null)
 				{
 					// if no node exists for this position, but we want to insert a new value at this position, create a new node
-					this.seChild = new QuadNode<>(sePos);
+					this.seChild = new QuadNode<>(sePos, this.minimumDetailLevel);
 				}
 				childNode = this.seChild;
 				
@@ -221,11 +234,15 @@ public class QuadNode<T>
 	 * Applies the given consumer to all 4 of this nodes' children. <br> 
 	 * Note: this will pass in null children.
 	 */
-	public void forEachDirectChild(Consumer<QuadNode<T>> callback)
+	public void forEachDirectChild(BiConsumer<QuadNode<T>, DhSectionPos> callback)
 	{
-		for (int i = 0; i < 4; i++)
+		if (this.sectionPos.sectionDetailLevel != this.minimumDetailLevel)
 		{
-			callback.accept(this.getChildByIndex(i));
+			for (int i = 0; i < 4; i++)
+			{
+				DhSectionPos childPos = this.sectionPos.getChildByIndex(i);
+				callback.accept(this.getChildByIndex(i), childPos);
+			}
 		}
 	}
 	
@@ -235,7 +252,7 @@ public class QuadNode<T>
 	 */
 	public void forAllLeafValues(Consumer<? super T> callback)
 	{
-		if (this.childCount() == 0)
+		if (this.childCount() == 0 || this.sectionPos.sectionDetailLevel == this.minimumDetailLevel)
 		{
 			// base case, bottom leaf node found
 			callback.accept(this.value);
@@ -252,6 +269,45 @@ public class QuadNode<T>
 				}
 			}
 		}
+	}
+	
+	public void deleteAllChildren() { this.deleteAllChildren(null); }
+	/** @param removedItemConsumer is only fired for non-null nodes, however the value passed in may be null */
+	public void deleteAllChildren(Consumer<? super T> removedItemConsumer)
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			QuadNode<T> childNode = this.getChildByIndex(i);
+			if (childNode != null)
+			{
+				childNode.deleteAllChildren(removedItemConsumer);
+			}
+		}
+		
+		
+		if (nwChild != null)
+		{
+			removedItemConsumer.accept(nwChild.value);
+		}
+		nwChild = null;
+		
+		if (neChild != null)
+		{
+			removedItemConsumer.accept(neChild.value);
+		}
+		neChild = null;
+		
+		if (seChild != null)
+		{
+			removedItemConsumer.accept(seChild.value);
+		}
+		seChild = null;
+		
+		if (swChild != null)
+		{
+			removedItemConsumer.accept(swChild.value);
+		}
+		swChild = null;
 	}
 	
 	

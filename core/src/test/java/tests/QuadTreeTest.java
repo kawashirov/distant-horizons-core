@@ -24,6 +24,7 @@ import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.util.objects.quadTree.QuadNode;
 import com.seibel.lod.core.util.objects.quadTree.QuadTree;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
@@ -31,6 +32,7 @@ import org.apache.logging.log4j.core.config.Configurator;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class QuadTreeTest
@@ -59,7 +61,7 @@ public class QuadTreeTest
 	@Test
 	public void BasicPositiveQuadTreeTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS);
+		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS, LodUtil.BLOCK_DETAIL_LEVEL);
 		Assert.assertEquals("Incorrect basic tree width", BASIC_TREE_ACTUAL_WIDTH_IN_ROOT_NODES, tree.ringListWidth());
 		
 		
@@ -94,7 +96,7 @@ public class QuadTreeTest
 	@Test
 	public void BasicNegativeQuadTreeTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS);
+		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS, LodUtil.BLOCK_DETAIL_LEVEL);
 		
 		
 		// root node //
@@ -129,7 +131,7 @@ public class QuadTreeTest
 	@Test
 	public void OutOfBoundsQuadTreeTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0,0));
+		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0,0), LodUtil.BLOCK_DETAIL_LEVEL);
 		Assert.assertEquals("tree diameter incorrect", BASIC_TREE_WIDTH_IN_BLOCKS, tree.diameterInBlocks());
 		
 		
@@ -174,7 +176,7 @@ public class QuadTreeTest
 	{
 		int treeWidthInRootNodes = 8;
 		int treeWidthInBlocks = ROOT_NODE_WIDTH_IN_BLOCKS * treeWidthInRootNodes;
-		QuadTree<Integer> tree = new QuadTree<>(treeWidthInBlocks, TREE_CENTER_POS);
+		QuadTree<Integer> tree = new QuadTree<>(treeWidthInBlocks, TREE_CENTER_POS, LodUtil.BLOCK_DETAIL_LEVEL);
 		
 		
 		// root nodes //
@@ -261,7 +263,7 @@ public class QuadTreeTest
 	@Test
 	public void QuadTreeIterationTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS);
+		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS, LodUtil.BLOCK_DETAIL_LEVEL);
 		
 		
 		// root nodes //
@@ -298,7 +300,7 @@ public class QuadTreeTest
 	@Test
 	public void CenteredGridListIterationTest()
 	{
-		final QuadTree<Integer> tree = new QuadTree<>(MINIMUM_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS);
+		final QuadTree<Integer> tree = new QuadTree<>(MINIMUM_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS, LodUtil.BLOCK_DETAIL_LEVEL);
 		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 0, 0), 0);
 		
 		// confirm the root node were added
@@ -308,10 +310,8 @@ public class QuadTreeTest
 		
 		// attempt to get and remove, each node in the tree
 		final AtomicInteger rootNodePosCount = new AtomicInteger(0);
-		tree.forEachRootNodePos((renderBufferNode, pos2d) ->
+		tree.forEachRootNodePos((renderBufferNode, sectionPos) ->
 		{
-			DhSectionPos sectionPos = new DhSectionPos(tree.treeMaxDetailLevel, pos2d.x, pos2d.y);
-			
 			testGet(tree, sectionPos, 0);
 			testSet(tree, sectionPos, null);
 			
@@ -326,14 +326,14 @@ public class QuadTreeTest
 	{
 		
 		// offset fully inside (10*0,0)
-		final QuadTree<Integer> fullyInsideTree = new QuadTree<>(MINIMUM_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS);
+		final QuadTree<Integer> fullyInsideTree = new QuadTree<>(MINIMUM_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS, LodUtil.BLOCK_DETAIL_LEVEL);
 		
 		DhBlockPos2D fullyInsideOffsetBlockPos = new DhBlockPos2D(MINIMUM_TREE_WIDTH_IN_BLOCKS, MINIMUM_TREE_WIDTH_IN_BLOCKS);
 		fullyInsideTree.setCenterBlockPos(fullyInsideOffsetBlockPos);
 		
-		fullyInsideTree.forEachRootNodePos((rootNode, pos2D) ->
+		fullyInsideTree.forEachRootNodePos((rootNode, sectionPos) ->
 		{
-			testSet(fullyInsideTree, new DhSectionPos(fullyInsideTree.treeMaxDetailLevel, pos2D.x, pos2D.y), 0);
+			testSet(fullyInsideTree, sectionPos, 0);
 		});
 		
 		// only 1 root node should be added
@@ -345,11 +345,11 @@ public class QuadTreeTest
 		
 		
 		// offset fully inside (10*0,0)
-		final QuadTree<Integer> borderInsideTree = new QuadTree<>(MINIMUM_TREE_WIDTH_IN_BLOCKS, new DhBlockPos2D(MINIMUM_TREE_WIDTH_IN_BLOCKS * 2, MINIMUM_TREE_WIDTH_IN_BLOCKS * 2));
+		final QuadTree<Integer> borderInsideTree = new QuadTree<>(MINIMUM_TREE_WIDTH_IN_BLOCKS, new DhBlockPos2D(MINIMUM_TREE_WIDTH_IN_BLOCKS * 2, MINIMUM_TREE_WIDTH_IN_BLOCKS * 2), LodUtil.BLOCK_DETAIL_LEVEL);
 		
-		borderInsideTree.forEachRootNodePos((rootNode, pos2D) ->
+		borderInsideTree.forEachRootNodePos((rootNode, sectionPos) ->
 		{
-			testSet(borderInsideTree, new DhSectionPos(borderInsideTree.treeMaxDetailLevel, pos2D.x, pos2D.y), 0);
+			testSet(borderInsideTree, sectionPos, 0);
 		});
 		
 		// only 1 root node should be added
@@ -361,14 +361,14 @@ public class QuadTreeTest
 		
 		
 		// offset across (10*-1,0) and (10*0,0)
-		final QuadTree<Integer> acrossTree = new QuadTree<>(MINIMUM_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS);
+		final QuadTree<Integer> acrossTree = new QuadTree<>(MINIMUM_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS, LodUtil.BLOCK_DETAIL_LEVEL);
 
 		DhBlockPos2D acrossOffsetBlockPos = new DhBlockPos2D(-MINIMUM_TREE_WIDTH_IN_BLOCKS/4, MINIMUM_TREE_WIDTH_IN_BLOCKS);
 		acrossTree.setCenterBlockPos(acrossOffsetBlockPos);
 
-		acrossTree.forEachRootNodePos((rootNode, pos2D) ->
+		acrossTree.forEachRootNodePos((rootNode, sectionPos) ->
 		{
-			testSet(acrossTree, new DhSectionPos(acrossTree.treeMaxDetailLevel, pos2D.x, pos2D.y), 0);
+			testSet(acrossTree, sectionPos, 0);
 		});
 
 		// 2 root nodes should be added
@@ -381,7 +381,7 @@ public class QuadTreeTest
 	@Test
 	public void TinyGridAlignedTreeTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(ROOT_NODE_WIDTH_IN_BLOCKS, TREE_CENTER_POS);
+		QuadTree<Integer> tree = new QuadTree<>(ROOT_NODE_WIDTH_IN_BLOCKS, TREE_CENTER_POS, LodUtil.BLOCK_DETAIL_LEVEL);
 		// minimum size tree should be 3 root nodes wide
 		Assert.assertEquals("incorrect tree node width", 3, tree.ringListWidth());
 		Assert.assertEquals("incorrect tree width", ROOT_NODE_WIDTH_IN_BLOCKS, tree.diameterInBlocks());
@@ -404,7 +404,7 @@ public class QuadTreeTest
 	@Test
 	public void TinyGridOffsetTreeTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(ROOT_NODE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0, 0));
+		QuadTree<Integer> tree = new QuadTree<>(ROOT_NODE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0, 0), LodUtil.BLOCK_DETAIL_LEVEL);
 		// minimum size tree should be 3 root nodes wide
 		Assert.assertEquals("incorrect tree node width", 3, tree.ringListWidth());
 		Assert.assertEquals("incorrect tree width", ROOT_NODE_WIDTH_IN_BLOCKS, tree.diameterInBlocks());
@@ -433,6 +433,96 @@ public class QuadTreeTest
 		Assert.assertEquals("incorrect leaf value sum", 4, rootCount.get());
 		
 	}
+	
+	@Test
+	public void TreeDetailLevelLimitTest()
+	{
+		QuadTree<Integer> tree = new QuadTree<>(ROOT_NODE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0, 0), (byte)8);
+		Assert.assertEquals("Test detail level's need to be adjusted. This isn't necessarily a failed test.", 10, tree.treeMaxDetailLevel);
+		
+		// valid detail levels
+		testSet(tree, new DhSectionPos((byte)10, 0, 0), 1);
+		testSet(tree, new DhSectionPos((byte)9, 0, 0), 2);
+		testSet(tree, new DhSectionPos((byte)8, 0, 0), 3);
+		
+		// detail level too low
+		testSet(tree, new DhSectionPos((byte)7, 0, 0), -1, IndexOutOfBoundsException.class);
+		testSet(tree, new DhSectionPos((byte)6, 0, 0), -1, IndexOutOfBoundsException.class);
+		
+		// detail level too high
+		testSet(tree, new DhSectionPos((byte)11, 0, 0), -1, IndexOutOfBoundsException.class);
+		testSet(tree, new DhSectionPos((byte)12, 0, 0), -1, IndexOutOfBoundsException.class);
+		
+	}
+	
+	@Test
+	public void QuadNodeDetailLimitTest()
+	{
+		QuadTree<Integer> tree = new QuadTree<>(ROOT_NODE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0, 0), (byte)6);
+		Assert.assertEquals("Test detail level's need to be adjusted. This isn't necessarily a failed test.", 10, tree.treeMaxDetailLevel);
+		
+		// create the root node
+		testSet(tree, new DhSectionPos((byte)10, 0, 0), 1);
+		
+		// recurse down the tree
+		AtomicInteger minimumDetailLevelReachedRef = new AtomicInteger(tree.treeMaxDetailLevel);
+		tree.forEachRootNode((rootNode) -> 
+		{
+			rootNode.forEachDirectChild((quadNode, sectionPos) ->
+			{
+				// all sections will be null
+				rootNode.setValue(sectionPos, 0);
+			});
+			
+			rootNode.forEachDirectChild((quadNode, sectionPos) -> 
+			{
+				recursivelyCreateNodeChildren(quadNode, tree.treeMinDetailLevel, minimumDetailLevelReachedRef);
+			});
+		});
+		
+		// confirm that the tree can and did iterate all the way down to the minimum detail level
+		Assert.assertEquals("Minimum detail level never reached", minimumDetailLevelReachedRef.get(), tree.treeMinDetailLevel);
+	}
+	private void recursivelyCreateNodeChildren(QuadNode<Integer> node, byte minDetailLevel, AtomicInteger minimumDetailLevelReachedRef)
+	{
+		AtomicBoolean childNodesCreatedRef = new AtomicBoolean(false);
+		AtomicBoolean childNodesIteratedRef = new AtomicBoolean(false);
+		
+		// fill in the null children
+		node.forEachDirectChild((childNode, childSectionPos) ->
+		{
+			node.setValue(childSectionPos, 0);
+			childNodesCreatedRef.set(true);
+		});
+		
+		// attempt to recurse down these new children
+		node.forEachDirectChild((childNode, childSectionPos) ->
+		{
+			Assert.assertTrue("Child node recurred too low. Min detail level: "+minDetailLevel+", node detail level: "+childSectionPos.sectionDetailLevel, childSectionPos.sectionDetailLevel >= minDetailLevel);
+			recursivelyCreateNodeChildren(childNode, minDetailLevel, minimumDetailLevelReachedRef);
+			
+			childNodesIteratedRef.set(true);
+		});
+		
+		
+		// keep track of how far down the tree we have gone
+		if (node.sectionPos.sectionDetailLevel < minimumDetailLevelReachedRef.get())
+		{
+			minimumDetailLevelReachedRef.set(node.sectionPos.sectionDetailLevel);
+		}
+		
+		
+		// assertions
+		if (childNodesCreatedRef.get())
+		{
+			Assert.assertTrue("node children created below minimum detail level", node.sectionPos.sectionDetailLevel >= minDetailLevel);
+		}
+		if (childNodesIteratedRef.get())
+		{
+			Assert.assertTrue("node children iterated below minimum detail level", node.sectionPos.sectionDetailLevel-1 >= minDetailLevel);
+		}
+	}
+	
 	
 	
 	

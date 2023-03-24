@@ -20,14 +20,14 @@ import java.util.function.Consumer;
  */
 public class QuadTree<T>
 {
-    public static final byte TREE_LOWEST_DETAIL_LEVEL = 0;
-	
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
 	
 	
 	/** The largest number detail level in this tree. */
     public final byte treeMaxDetailLevel;
+	/** The smallest number detail level in this tree. */
+    public final byte treeMinDetailLevel;
 	
 	/** contain the actual data in the quad tree structure */
     private final MovableGridRingList<QuadNode<T>> topRingList;
@@ -42,13 +42,14 @@ public class QuadTree<T>
      * Constructor of the quadTree
 	 * @param widthInBlocks equivalent to the distance between two opposing sides 
      */
-    public QuadTree(int widthInBlocks, DhBlockPos2D centerBlockPos)
+    public QuadTree(int widthInBlocks, DhBlockPos2D centerBlockPos, byte treeMinDetailLevel)
 	{
         DetailDistanceUtil.updateSettings(); //TODO: Move this to somewhere else
 		this.centerBlockPos = centerBlockPos;
 		this.widthInBlocks = widthInBlocks;
 		
 		this.treeMaxDetailLevel = 10; // TODO in the future we may need to make this dynamic // detail 10 = (2^10) 1024 blocks wide
+		this.treeMinDetailLevel = treeMinDetailLevel;
 		
 		int halfSizeInRootNodes = Math.floorDiv(this.widthInBlocks, 2) / BitShiftUtil.powerOfTwo(this.treeMaxDetailLevel);
 		halfSizeInRootNodes = halfSizeInRootNodes + 1; // always add 1 so nodes will always have a parent, even if the tree's center is offset from the root node grid 
@@ -87,7 +88,7 @@ public class QuadTree<T>
 					return null;
 				}
 				
-				topQuadNode = new QuadNode<T>(rootPos);
+				topQuadNode = new QuadNode<T>(rootPos, this.treeMinDetailLevel);
 				boolean successfullyAdded = this.topRingList.set(ringListPosX, ringListPosZ, topQuadNode);
 				LodUtil.assertTrue(successfullyAdded, "Failed to add top quadTree node at position: "+rootPos);
 			}
@@ -110,12 +111,21 @@ public class QuadTree<T>
 			int radius = this.diameterInBlocks()/2;
 			DhBlockPos2D minPos = this.getCenterBlockPos().add(new DhBlockPos2D(-radius, -radius));
 			DhBlockPos2D maxPos =this.getCenterBlockPos().add(new DhBlockPos2D(radius, radius));
-			throw new IndexOutOfBoundsException("QuadTree GetOrSet failed. Position out of bounds, min pos: "+minPos+", max pos: "+maxPos+", given Position: "+pos+" = block pos: "+pos.convertToDetailLevel(LodUtil.BLOCK_DETAIL_LEVEL));
+			throw new IndexOutOfBoundsException("QuadTree GetOrSet failed. Position out of bounds, min pos: "+minPos+", max pos: "+maxPos+", min detail level: "+this.treeMinDetailLevel+", max detail level: "+this.treeMaxDetailLevel+". Given Position: "+pos+" = block pos: "+pos.convertToDetailLevel(LodUtil.BLOCK_DETAIL_LEVEL));
 		}
 	}
 	
-	private boolean isSectionPosInBounds(DhSectionPos testPos)
+	public boolean isSectionPosInBounds(DhSectionPos testPos)
 	{
+		// check if the testPos is within the detail level limits of the tree
+		boolean detailLevelWithinBounds = this.treeMinDetailLevel <= testPos.sectionDetailLevel && testPos.sectionDetailLevel <= this.treeMaxDetailLevel;
+		if (!detailLevelWithinBounds)
+		{
+			return false;
+		}
+		
+		
+		// check if the testPos is within the X,Z boundry of the tree
 		DhBlockPos2D blockCornerOfTree = this.centerBlockPos.add(new DhBlockPos2D(-this.widthInBlocks/2,-this.widthInBlocks/2));
 		DhLodPos cornerOfTreePos = new DhLodPos((byte)0, blockCornerOfTree.x, blockCornerOfTree.z);
 		
@@ -125,7 +135,7 @@ public class QuadTree<T>
 		
 		return DoSquaresOverlap(cornerOfTreePos, this.widthInBlocks, cornerOfInputPos, inputWidth);
 	}
-	public static boolean DoSquaresOverlap(DhLodPos rect1Min, int rect1Width, DhLodPos rect2Min, int rect2Width)
+	private static boolean DoSquaresOverlap(DhLodPos rect1Min, int rect1Width, DhLodPos rect2Min, int rect2Width)
 	{
 		// Determine the coordinates of the rectangles
 		float rect1MinX = rect1Min.x;
@@ -157,13 +167,14 @@ public class QuadTree<T>
 	}
 	
 	/** root nodes can be null */
-	public void forEachRootNodePos(BiConsumer<QuadNode<T>, Pos2D> consumer)
+	public void forEachRootNodePos(BiConsumer<QuadNode<T>, DhSectionPos> consumer)
 	{
 		this.topRingList.forEachPosOrdered((rootNode, pos2D) ->
 		{
-			if (isSectionPosInBounds(new DhSectionPos(this.treeMaxDetailLevel, pos2D.x, pos2D.y)))
+			DhSectionPos rootPos = new DhSectionPos(this.treeMaxDetailLevel, pos2D.x, pos2D.y);
+			if (isSectionPosInBounds(rootPos))
 			{
-				consumer.accept(rootNode, pos2D);
+				consumer.accept(rootNode, rootPos);
 			}
 		});
 	}
