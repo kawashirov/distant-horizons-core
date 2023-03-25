@@ -187,7 +187,6 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 				recursivelyUpdateRenderSectionNode(playerPos, rootNode, quadNode, sectionPos);
 			});
 		});
-		
 	}
 	private void recursivelyUpdateRenderSectionNode(DhBlockPos2D playerPos, QuadNode<LodRenderSection> rootNode, QuadNode<LodRenderSection> nullableQuadNode, DhSectionPos sectionPos)
 	{
@@ -204,24 +203,23 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		
 		if (sectionPos.sectionDetailLevel > expectedDetailLevel)
 		{
-			// detail level too high...
+			// section detail level too high...
 			
 			if (nullableRenderSection != null)
 			{
-				nullableRenderSection.disableRender();
+				nullableRenderSection.disableAndDisposeRender();
 			}
 			
 			if (nullableQuadNode == null)
 			{
 				// ...create self
-				if (this.isSectionPosInBounds(sectionPos))
+				if (this.isSectionPosInBounds(sectionPos)) // this should only fail when at the edge of the user's render distance
 				{
 					rootNode.setValue(sectionPos, new LodRenderSection(sectionPos));
 				}
 			}
 			else
 			{
-				// ...children exist, recurse down them to the next layer
 				nullableQuadNode.forEachDirectChild((childQuadNode, childSectionPosition) ->
 				{
 					recursivelyUpdateRenderSectionNode(playerPos, rootNode, childQuadNode, childSectionPosition);
@@ -230,15 +228,17 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		}
 		else if (sectionPos.sectionDetailLevel == expectedDetailLevel)
 		{
+			// this is the correct detail level and should be rendered
+			
 			if (nullableQuadNode == null)
 			{
 				if (this.isSectionPosInBounds(sectionPos))
 				{
+					// create new value and update next tick
 					rootNode.setValue(sectionPos, new LodRenderSection(sectionPos));
 				}
 			}
-			
-			if (nullableQuadNode != null)
+			else
 			{
 				// create a new render section if missing
 				if (nullableRenderSection == null)
@@ -251,20 +251,17 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 				
 				// enable the render section
 				nullableRenderSection.loadRenderSourceAndEnableRendering(this.renderSourceProvider);
-			}
-			
-			if (nullableRenderSection != null)
-			{
-				// should be called after the section has been updated
+				
 				nullableRenderSection.tick(this, this.level);
-			}
-		}
-		else //if (sectionPos.sectionDetailLevel < expectedDetailLevel)
-		{
-			// detail level too low, disable rendering if active
-			if (nullableRenderSection != null)
-			{
-				nullableRenderSection.disableRender();
+				
+				// delete/disable children
+				nullableQuadNode.deleteAllChildren((renderSection) ->
+				{
+					if (renderSection != null)
+					{
+						renderSection.disableAndDisposeRender();
+					}
+				});
 			}
 		}
 	}

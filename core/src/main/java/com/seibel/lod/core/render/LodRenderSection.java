@@ -5,7 +5,6 @@ import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.file.renderfile.ILodRenderSourceProvider;
-import com.seibel.lod.core.util.objects.quadTree.QuadNode;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
@@ -54,7 +53,7 @@ public class LodRenderSection
 		}
 		this.isRenderEnabled = true;
     }
-    public void disableRender()
+    public void disableAndDisposeRender()
 	{
         if (!this.isRenderEnabled)
 		{

@@ -176,6 +176,12 @@ public class QuadTree<T>
 	}
 	
 	
+	
+	
+	//===========//
+	// iterators //
+	//===========//
+	
 	/** no nulls TODO comment/rename */
 	public void forEachRootNode(Consumer<QuadNode<T>> consumer)
 	{
