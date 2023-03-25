@@ -24,6 +24,7 @@ import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.util.MathUtil;
 import com.seibel.lod.core.util.objects.quadTree.QuadNode;
 import com.seibel.lod.core.util.objects.quadTree.QuadTree;
 import org.apache.logging.log4j.Level;
@@ -39,20 +40,10 @@ public class QuadTreeTest
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
-	private static final DhBlockPos2D TREE_CENTER_POS = new DhBlockPos2D(BitShiftUtil.powerOfTwo(10)/2, BitShiftUtil.powerOfTwo(10)/2);
-	
-	private static final int ROOT_NODE_WIDTH_IN_BLOCKS = BitShiftUtil.powerOfTwo(10);
-	/** needs to be an odd number to function correctly */
-	private static final int BASIC_TREE_INPUT_WIDTH_IN_ROOT_NODES = 9;
-	private static final int BASIC_TREE_WIDTH_IN_BLOCKS = ROOT_NODE_WIDTH_IN_BLOCKS * BASIC_TREE_INPUT_WIDTH_IN_ROOT_NODES;
-	
-	/** the tree should be slightly larger to account for offset centers */
-	private static final int BASIC_TREE_ACTUAL_WIDTH_IN_ROOT_NODES = BASIC_TREE_INPUT_WIDTH_IN_ROOT_NODES + 2;
-	
-	private static final int MINIMUM_TREE_WIDTH_IN_BLOCKS = 32;
 	
 	static
 	{
+		// by default Log4J doesn't log Info's, which can be a problem when debugging
 		Configurator.setRootLevel(Level.ALL);
 	}
 	
@@ -61,11 +52,12 @@ public class QuadTreeTest
 	@Test
 	public void BasicPositiveQuadTreeTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS, LodUtil.BLOCK_DETAIL_LEVEL);
-		Assert.assertEquals("Incorrect basic tree width", BASIC_TREE_ACTUAL_WIDTH_IN_ROOT_NODES, tree.ringListWidth());
+		AbstractTestTreeParams treeParams = new LargeTestTree();
+		QuadTree<Integer> tree = new QuadTree<>(treeParams.getWidthInBlocks(), treeParams.getPositiveEdgeCenterPos(), LodUtil.BLOCK_DETAIL_LEVEL);
+		Assert.assertTrue("Tree min/max detail level out of expected bounds: "+tree, tree.treeMaxDetailLevel >= 10 && tree.treeMinDetailLevel <= 10 - 4);
 		
 		
-		// root node //
+		// (pseudo) root node //
 		testSet(tree, new DhSectionPos((byte)10, 0, 0), 0);
 		
 		// first child (0,0) //
@@ -96,7 +88,8 @@ public class QuadTreeTest
 	@Test
 	public void BasicNegativeQuadTreeTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS, LodUtil.BLOCK_DETAIL_LEVEL);
+		AbstractTestTreeParams treeParams = new LargeTestTree();
+		QuadTree<Integer> tree = new QuadTree<>(treeParams.getWidthInBlocks(), DhBlockPos2D.ZERO, LodUtil.BLOCK_DETAIL_LEVEL);
 		
 		
 		// root node //
@@ -131,41 +124,42 @@ public class QuadTreeTest
 	@Test
 	public void OutOfBoundsQuadTreeTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0,0), LodUtil.BLOCK_DETAIL_LEVEL);
-		Assert.assertEquals("tree diameter incorrect", BASIC_TREE_WIDTH_IN_BLOCKS, tree.diameterInBlocks());
+		AbstractTestTreeParams treeParams = new LargeTestTree();
+		QuadTree<Integer> tree = new QuadTree<>(treeParams.getWidthInBlocks(), new DhBlockPos2D(0,0), LodUtil.BLOCK_DETAIL_LEVEL);
+		Assert.assertEquals("tree diameter incorrect", treeParams.getWidthInBlocks(), tree.diameterInBlocks());
 		
 		
 		// wrong detail level on purpose, if the detail level was 0 (block) this should work
-		DhSectionPos outOfBoundsPos = new DhSectionPos(DhSectionPos.SECTION_BLOCK_DETAIL_LEVEL, ROOT_NODE_WIDTH_IN_BLOCKS, 0);
+		DhSectionPos outOfBoundsPos = new DhSectionPos(DhSectionPos.SECTION_BLOCK_DETAIL_LEVEL, (treeParams.getWidthInBlocks()/2), 0);
 		testSet(tree, outOfBoundsPos, -1, IndexOutOfBoundsException.class);
 		Assert.assertEquals("incorrect leaf node count", 0, tree.leafNodeCount());
 		
 		
 		// out of bounds //
-		outOfBoundsPos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, (BASIC_TREE_WIDTH_IN_BLOCKS/2) + 1, 0);
+		outOfBoundsPos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, (treeParams.getWidthInBlocks()/2) + 1, 0);
 		testSet(tree, outOfBoundsPos, -1, IndexOutOfBoundsException.class);
 		Assert.assertEquals("incorrect leaf node count", 0, tree.leafNodeCount());
 		
-		outOfBoundsPos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, (BASIC_TREE_WIDTH_IN_BLOCKS/2), 0);
+		outOfBoundsPos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, (treeParams.getWidthInBlocks()/2), 0);
 		testSet(tree, outOfBoundsPos, -1, IndexOutOfBoundsException.class);
 		Assert.assertEquals("incorrect leaf node count", 0, tree.leafNodeCount());
 		
 		
 		// in bounds //
-		outOfBoundsPos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, (BASIC_TREE_WIDTH_IN_BLOCKS/2)-1, 0);
+		outOfBoundsPos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, (treeParams.getWidthInBlocks()/2)-1, 0);
 		testSet(tree, outOfBoundsPos, 0);
 		Assert.assertEquals("incorrect leaf node count", 1, tree.leafNodeCount());
 		
-		outOfBoundsPos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, (BASIC_TREE_WIDTH_IN_BLOCKS/2)-3, 0);
+		outOfBoundsPos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, (treeParams.getWidthInBlocks()/2)-3, 0);
 		testSet(tree, outOfBoundsPos, 0);
 		Assert.assertEquals("incorrect leaf node count", 2, tree.leafNodeCount());
 		
 		// TODO this position probably has trouble with getting the center.
-		outOfBoundsPos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, (BASIC_TREE_WIDTH_IN_BLOCKS/2)-2, 0);
+		outOfBoundsPos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, (treeParams.getWidthInBlocks()/2)-2, 0);
 		testSet(tree, outOfBoundsPos, 0);
 		Assert.assertEquals("incorrect leaf node count", 3, tree.leafNodeCount());
 		
-		outOfBoundsPos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, (BASIC_TREE_WIDTH_IN_BLOCKS/2)-4, 0);
+		outOfBoundsPos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, (treeParams.getWidthInBlocks()/2)-4, 0);
 		testSet(tree, outOfBoundsPos, 0);
 		Assert.assertEquals("incorrect leaf node count", 4, tree.leafNodeCount());
 		
@@ -174,12 +168,13 @@ public class QuadTreeTest
 	@Test
 	public void QuadTreeRootAlignedMovingTest()
 	{
-		int treeWidthInRootNodes = 8;
-		int treeWidthInBlocks = ROOT_NODE_WIDTH_IN_BLOCKS * treeWidthInRootNodes;
-		QuadTree<Integer> tree = new QuadTree<>(treeWidthInBlocks, TREE_CENTER_POS, LodUtil.BLOCK_DETAIL_LEVEL);
+		AbstractTestTreeParams treeParams = new LargeTestTree();
+		QuadTree<Integer> tree = new QuadTree<>(treeParams.getWidthInBlocks(), treeParams.getPositiveEdgeCenterPos(), LodUtil.BLOCK_DETAIL_LEVEL);
+		
+		int pseudoRootNodeWidthInBlocks = BitShiftUtil.powerOfTwo(10);
 		
 		
-		// root nodes //
+		// (pseudo) root nodes //
 		testSet(tree, new DhSectionPos((byte)10, 0, 0), 1);
 		
 		// first child (0,0) //
@@ -207,7 +202,7 @@ public class QuadTreeTest
 		
 		
 		// small move //
-		DhBlockPos2D smallMoveBlockPos = new DhBlockPos2D(ROOT_NODE_WIDTH_IN_BLOCKS*2, 0); // move enough that the original root nodes aren't touching the same grid squares they were before, but not far enough as to be garbage collected (TODO reword)
+		DhBlockPos2D smallMoveBlockPos = new DhBlockPos2D(pseudoRootNodeWidthInBlocks*2, 0); // move enough that the original root nodes aren't touching the same grid squares they were before, but not far enough as to be garbage collected (TODO reword)
 		tree.setCenterBlockPos(smallMoveBlockPos);
 		Assert.assertEquals("Tree center incorrect", smallMoveBlockPos, tree.getCenterBlockPos());
 		
@@ -220,8 +215,8 @@ public class QuadTreeTest
 		
 		
 		
-		// big move //
-		DhBlockPos2D bigMoveBlockPos = new DhBlockPos2D(treeWidthInBlocks * 2, 0);
+		// very large move //
+		DhBlockPos2D bigMoveBlockPos = new DhBlockPos2D(treeParams.getWidthInBlocks() * 2, 0);
 		tree.setCenterBlockPos(bigMoveBlockPos);
 		Assert.assertEquals("Tree center incorrect", bigMoveBlockPos, tree.getCenterBlockPos());
 		
@@ -242,20 +237,19 @@ public class QuadTreeTest
 		Assert.assertEquals("Tree center incorrect", DhBlockPos2D.ZERO, tree.getCenterBlockPos());
 		
 		// on the negative X edge
-		DhSectionPos edgePos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, -treeWidthInBlocks/2, 0);
+		DhSectionPos edgePos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, -treeParams.getWidthInBlocks()/2, 0);
 		testSet(tree, edgePos, 1);
 		Assert.assertEquals("incorrect leaf node count", 1, tree.leafNodeCount());
 		
 		// +1 root node from the negative X edge
-		DhSectionPos adjacentEdgePos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, (-treeWidthInBlocks/2)+ROOT_NODE_WIDTH_IN_BLOCKS, 0);
+		DhSectionPos adjacentEdgePos = new DhSectionPos(LodUtil.BLOCK_DETAIL_LEVEL, (-treeParams.getWidthInBlocks()/2)+pseudoRootNodeWidthInBlocks, 0);
 		testSet(tree, adjacentEdgePos, 2);
 		Assert.assertEquals("incorrect leaf node count", 2, tree.leafNodeCount());
 		
 		// move so only the root nodes exactly on the X edge remain
-		DhBlockPos2D edgeMoveBlockPos = new DhBlockPos2D(ROOT_NODE_WIDTH_IN_BLOCKS - (BASIC_TREE_INPUT_WIDTH_IN_ROOT_NODES*ROOT_NODE_WIDTH_IN_BLOCKS), 0);
+		DhBlockPos2D edgeMoveBlockPos = new DhBlockPos2D(pseudoRootNodeWidthInBlocks - (treeParams.getWidthInRootNodes()*pseudoRootNodeWidthInBlocks), 0);
 		tree.setCenterBlockPos(edgeMoveBlockPos);
 		Assert.assertEquals("Tree center incorrect", edgeMoveBlockPos, tree.getCenterBlockPos());
-		
 		Assert.assertEquals("incorrect leaf node count", 2, tree.leafNodeCount());
 		
 	}
@@ -263,10 +257,11 @@ public class QuadTreeTest
 	@Test
 	public void QuadTreeIterationTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(BASIC_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS, LodUtil.BLOCK_DETAIL_LEVEL);
+		AbstractTestTreeParams treeParams = new LargeTestTree();
+		QuadTree<Integer> tree = new QuadTree<>(treeParams.getWidthInBlocks(), treeParams.getPositiveEdgeCenterPos(), LodUtil.BLOCK_DETAIL_LEVEL);
 		
 		
-		// root nodes //
+		// (pseudo) root nodes //
 		testSet(tree, new DhSectionPos((byte)10, 0, 0), 1);
 		testSet(tree, new DhSectionPos((byte)10, 1, 0), 2);
 		
@@ -291,7 +286,7 @@ public class QuadTreeTest
 			});	
 		});
 		
-		Assert.assertEquals("incorrect root count", 2, rootNodeCount.get());
+		Assert.assertEquals("incorrect root count", 1, rootNodeCount.get());
 		Assert.assertEquals("incorrect leaf count", 5, leafCount.get());
 		Assert.assertEquals("incorrect leaf value sum", 20, leafValueSum.get());
 		
@@ -300,7 +295,8 @@ public class QuadTreeTest
 	@Test
 	public void CenteredGridListIterationTest()
 	{
-		final QuadTree<Integer> tree = new QuadTree<>(MINIMUM_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS, LodUtil.BLOCK_DETAIL_LEVEL);
+		AbstractTestTreeParams treeParams = new TinyTestTree();
+		final QuadTree<Integer> tree = new QuadTree<>(treeParams.getWidthInBlocks(), treeParams.getPositiveEdgeCenterPos(), LodUtil.BLOCK_DETAIL_LEVEL);
 		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 0, 0), 0);
 		
 		// confirm the root node were added
@@ -324,67 +320,48 @@ public class QuadTreeTest
 	@Test
 	public void OffsetGridListIterationTest()
 	{
+		AbstractTestTreeParams treeParams = new TinyTestTree();
 		
-		// offset fully inside (10*0,0)
-		final QuadTree<Integer> fullyInsideTree = new QuadTree<>(MINIMUM_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS, LodUtil.BLOCK_DETAIL_LEVEL);
+		// exactly inside (5*0,0)
+		testGridListRootCount(treeParams.getWidthInBlocks(), treeParams.getPositiveEdgeCenterPos(), 1);
 		
-		DhBlockPos2D fullyInsideOffsetBlockPos = new DhBlockPos2D(MINIMUM_TREE_WIDTH_IN_BLOCKS, MINIMUM_TREE_WIDTH_IN_BLOCKS);
-		fullyInsideTree.setCenterBlockPos(fullyInsideOffsetBlockPos);
+		// offset across (5*-1,0) and (5*0,0)
+		testGridListRootCount(treeParams.getWidthInBlocks(), new DhBlockPos2D(-treeParams.getWidthInBlocks() / 4, treeParams.getPositiveEdgeCenterPos().z), 2);
 		
-		fullyInsideTree.forEachRootNodePos((rootNode, sectionPos) ->
+		// offset across the origin: (5*0,0), (5*-1,0), (5*0,-1), and (5*-1,-1)
+		testGridListRootCount(treeParams.getWidthInBlocks(), DhBlockPos2D.ZERO, 4);
+		
+	}
+	private static void testGridListRootCount(int treeWidth, DhBlockPos2D treeMovePos, int expectedRootNodeCount)
+	{
+		final QuadTree<Integer> tree = new QuadTree<>(treeWidth, DhBlockPos2D.ZERO, LodUtil.BLOCK_DETAIL_LEVEL);
+		Assert.assertEquals("tree creation failed, incorrect initial position", DhBlockPos2D.ZERO, tree.getCenterBlockPos());
+		
+		tree.setCenterBlockPos(treeMovePos);
+		Assert.assertEquals("tree move failed, incorrect position after move", treeMovePos, tree.getCenterBlockPos());
+		
+		tree.forEachRootNodePos((rootNode, sectionPos) ->
 		{
-			testSet(fullyInsideTree, sectionPos, 0);
+			testSet(tree, sectionPos, 0);
 		});
 		
-		// only 1 root node should be added
-		final AtomicInteger fullyInsideRootNodeCount = new AtomicInteger(0);
-		fullyInsideTree.forEachRootNode((rootNode) -> { fullyInsideRootNodeCount.addAndGet(1); });
-		Assert.assertEquals("incorrect root count", 1, fullyInsideRootNodeCount.get());
-		
-		
-		
-		
-		// offset fully inside (10*0,0)
-		final QuadTree<Integer> borderInsideTree = new QuadTree<>(MINIMUM_TREE_WIDTH_IN_BLOCKS, new DhBlockPos2D(MINIMUM_TREE_WIDTH_IN_BLOCKS * 2, MINIMUM_TREE_WIDTH_IN_BLOCKS * 2), LodUtil.BLOCK_DETAIL_LEVEL);
-		
-		borderInsideTree.forEachRootNodePos((rootNode, sectionPos) ->
-		{
-			testSet(borderInsideTree, sectionPos, 0);
+		// 4 root nodes should be added
+		final AtomicInteger rootNodeCount = new AtomicInteger(0);
+		tree.forEachRootNode((rootNode) -> 
+		{ 
+			rootNodeCount.addAndGet(1); 
 		});
-		
-		// only 1 root node should be added
-		final AtomicInteger borderInsideRootNodeCount = new AtomicInteger(0);
-		borderInsideTree.forEachRootNode((rootNode) -> { borderInsideRootNodeCount.addAndGet(1); });
-		Assert.assertEquals("incorrect root count", 1, borderInsideRootNodeCount.get());
-		
-		
-		
-		
-		// offset across (10*-1,0) and (10*0,0)
-		final QuadTree<Integer> acrossTree = new QuadTree<>(MINIMUM_TREE_WIDTH_IN_BLOCKS, TREE_CENTER_POS, LodUtil.BLOCK_DETAIL_LEVEL);
-
-		DhBlockPos2D acrossOffsetBlockPos = new DhBlockPos2D(-MINIMUM_TREE_WIDTH_IN_BLOCKS/4, MINIMUM_TREE_WIDTH_IN_BLOCKS);
-		acrossTree.setCenterBlockPos(acrossOffsetBlockPos);
-
-		acrossTree.forEachRootNodePos((rootNode, sectionPos) ->
-		{
-			testSet(acrossTree, sectionPos, 0);
-		});
-
-		// 2 root nodes should be added
-		final AtomicInteger acrossRootNodeCount = new AtomicInteger(0);
-		acrossTree.forEachRootNode((rootNode) -> { acrossRootNodeCount.addAndGet(1); });
-		Assert.assertEquals("incorrect root count", 2, acrossRootNodeCount.get());
-		
+		Assert.assertEquals("incorrect root count", expectedRootNodeCount, rootNodeCount.get());
 	}
 	
 	@Test
 	public void TinyGridAlignedTreeTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(ROOT_NODE_WIDTH_IN_BLOCKS, TREE_CENTER_POS, LodUtil.BLOCK_DETAIL_LEVEL);
+		AbstractTestTreeParams treeParams = new MediumTestTree();
+		QuadTree<Integer> tree = new QuadTree<>(treeParams.getWidthInBlocks(), treeParams.getPositiveEdgeCenterPos(), LodUtil.BLOCK_DETAIL_LEVEL);
 		// minimum size tree should be 3 root nodes wide
 		Assert.assertEquals("incorrect tree node width", 3, tree.ringListWidth());
-		Assert.assertEquals("incorrect tree width", ROOT_NODE_WIDTH_IN_BLOCKS, tree.diameterInBlocks());
+		Assert.assertEquals("incorrect tree width", treeParams.getWidthInBlocks(), tree.diameterInBlocks());
 		
 		
 		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 0, 0), 0);
@@ -404,10 +381,11 @@ public class QuadTreeTest
 	@Test
 	public void TinyGridOffsetTreeTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(ROOT_NODE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0, 0), LodUtil.BLOCK_DETAIL_LEVEL);
+		AbstractTestTreeParams treeParams = new MediumTestTree();
+		QuadTree<Integer> tree = new QuadTree<>(treeParams.getWidthInBlocks(), new DhBlockPos2D(0, 0), LodUtil.BLOCK_DETAIL_LEVEL);
 		// minimum size tree should be 3 root nodes wide
 		Assert.assertEquals("incorrect tree node width", 3, tree.ringListWidth());
-		Assert.assertEquals("incorrect tree width", ROOT_NODE_WIDTH_IN_BLOCKS, tree.diameterInBlocks());
+		Assert.assertEquals("incorrect tree width", treeParams.getWidthInBlocks(), tree.diameterInBlocks());
 		
 		
 		// 2x2 valid positions (overlap the tree's width)
@@ -437,7 +415,8 @@ public class QuadTreeTest
 	@Test
 	public void TreeDetailLevelLimitTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(ROOT_NODE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0, 0), (byte)8);
+		AbstractTestTreeParams treeParams = new MediumTestTree();
+		QuadTree<Integer> tree = new QuadTree<>(treeParams.getWidthInBlocks(), new DhBlockPos2D(0, 0), (byte)8);
 		Assert.assertEquals("Test detail level's need to be adjusted. This isn't necessarily a failed test.", 10, tree.treeMaxDetailLevel);
 		
 		// valid detail levels
@@ -458,7 +437,8 @@ public class QuadTreeTest
 	@Test
 	public void QuadNodeDetailLimitTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(ROOT_NODE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0, 0), (byte)6);
+		AbstractTestTreeParams treeParams = new MediumTestTree();
+		QuadTree<Integer> tree = new QuadTree<>(treeParams.getWidthInBlocks(), new DhBlockPos2D(0, 0), (byte)6);
 		Assert.assertEquals("Test detail level's need to be adjusted. This isn't necessarily a failed test.", 10, tree.treeMaxDetailLevel);
 		
 		// create the root node
@@ -547,7 +527,8 @@ public class QuadTreeTest
 	@Test
 	public void toStringTest()
 	{
-		QuadTree<Integer> tree = new QuadTree<>(ROOT_NODE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0, 0), (byte)6);
+		AbstractTestTreeParams treeParams = new MediumTestTree();
+		QuadTree<Integer> tree = new QuadTree<>(treeParams.getWidthInBlocks(), new DhBlockPos2D(0, 0), (byte)6);
 		
 		String treeString = tree.toString();
 		Assert.assertNotNull(treeString);
@@ -601,6 +582,39 @@ public class QuadTreeTest
 				Assert.fail("get failed "+pos+" with exception "+e.getClass()+", expected exception: "+expectedExceptionClass+". error: "+e.getMessage());
 			}
 		}
+	}
+	
+	
+	
+	//================//
+	// helper classes //
+	//================//
+	
+	private abstract static class AbstractTestTreeParams
+	{
+		public abstract int getWidthInBlocks();
+		
+		/** the tree should be slightly larger than the width in blocks to account for offset centers */
+		public int getWidthInRootNodes() { return MathUtil.log2(this.getWidthInBlocks()) + 2; }
+		public byte getMaxDetailLevel() { return (byte) MathUtil.log2(this.getWidthInBlocks()); }
+		/** @return the block pos so that the tree's negative corner lines up with (0,0) */
+		public DhBlockPos2D getPositiveEdgeCenterPos() { return new DhBlockPos2D(BitShiftUtil.powerOfTwo(this.getMaxDetailLevel())/2, BitShiftUtil.powerOfTwo(this.getMaxDetailLevel())/2); }
+	}
+	
+	private static class LargeTestTree extends AbstractTestTreeParams
+	{
+		public int getWidthInBlocks() { return 8192; }
+	}
+	
+	private static class MediumTestTree extends AbstractTestTreeParams
+	{
+		public int getWidthInBlocks() { return 1024; }
+		
+	}
+	
+	private static class TinyTestTree extends AbstractTestTreeParams
+	{
+		public int getWidthInBlocks() { return 32; }
 	}
 	
 	
