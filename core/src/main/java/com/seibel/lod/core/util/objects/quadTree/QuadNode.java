@@ -249,7 +249,7 @@ public class QuadNode<T>
 	 * Applies the given consumer to all 4 of this nodes' children. <br> 
 	 * Note: this will pass in null children.
 	 */
-	public void forEachDirectChild(BiConsumer<QuadNode<T>, DhSectionPos> callback)
+	public void forEachDirectChildNode(BiConsumer<QuadNode<T>, DhSectionPos> callback)
 	{
 		if (this.sectionPos.sectionDetailLevel != this.minimumDetailLevel)
 		{

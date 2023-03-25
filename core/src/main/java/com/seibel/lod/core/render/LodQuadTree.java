@@ -182,7 +182,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 			}
 			
 			
-			rootNode.forEachDirectChild((quadNode, sectionPos) ->
+			rootNode.forEachDirectChildNode((quadNode, sectionPos) ->
 			{
 				recursivelyUpdateRenderSectionNode(playerPos, rootNode, quadNode, sectionPos);
 			});
@@ -220,7 +220,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 			}
 			else
 			{
-				nullableQuadNode.forEachDirectChild((childQuadNode, childSectionPosition) ->
+				nullableQuadNode.forEachDirectChildNode((childQuadNode, childSectionPosition) ->
 				{
 					recursivelyUpdateRenderSectionNode(playerPos, rootNode, childQuadNode, childSectionPosition);
 				});
@@ -315,7 +315,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		
 		this.forEachRootNode((rootNode) ->
 		{
-			rootNode.forEachDirectChild((quadNode, sectionPos) ->
+			rootNode.forEachDirectChildNode((quadNode, sectionPos) ->
 			{
 				if (quadNode != null && quadNode.value != null)
 				{
@@ -326,7 +326,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		
 		this.forEachRootNode((rootNode) ->
 		{
-			rootNode.forEachDirectChild((quadNode, sectionPos) ->
+			rootNode.forEachDirectChildNode((quadNode, sectionPos) ->
 			{
 				if (quadNode != null && quadNode.value != null)
 				{
@@ -415,7 +415,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		
 		this.forEachRootNode((rootNode) -> 
 		{
-			rootNode.forEachDirectChild((quadNode, sectionPos) -> 
+			rootNode.forEachDirectChildNode((quadNode, sectionPos) -> 
 			{
 				if (quadNode != null && quadNode.value != null)
 				{

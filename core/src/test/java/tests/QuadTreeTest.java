@@ -448,13 +448,13 @@ public class QuadTreeTest
 		AtomicInteger minimumDetailLevelReachedRef = new AtomicInteger(tree.treeMaxDetailLevel);
 		tree.forEachRootNode((rootNode) -> 
 		{
-			rootNode.forEachDirectChild((quadNode, sectionPos) ->
+			rootNode.forEachDirectChildNode((quadNode, sectionPos) ->
 			{
 				// all sections will be null
 				rootNode.setValue(sectionPos, 0);
 			});
 			
-			rootNode.forEachDirectChild((quadNode, sectionPos) -> 
+			rootNode.forEachDirectChildNode((quadNode, sectionPos) -> 
 			{
 				recursivelyCreateNodeChildren(quadNode, tree.treeMinDetailLevel, minimumDetailLevelReachedRef);
 			});
@@ -469,14 +469,14 @@ public class QuadTreeTest
 		AtomicBoolean childNodesIteratedRef = new AtomicBoolean(false);
 		
 		// fill in the null children
-		node.forEachDirectChild((childNode, childSectionPos) ->
+		node.forEachDirectChildNode((childNode, childSectionPos) ->
 		{
 			node.setValue(childSectionPos, 0);
 			childNodesCreatedRef.set(true);
 		});
 		
 		// attempt to recurse down these new children
-		node.forEachDirectChild((childNode, childSectionPos) ->
+		node.forEachDirectChildNode((childNode, childSectionPos) ->
 		{
 			Assert.assertTrue("Child node recurred too low. Min detail level: "+minDetailLevel+", node detail level: "+childSectionPos.sectionDetailLevel, childSectionPos.sectionDetailLevel >= minDetailLevel);
 			recursivelyCreateNodeChildren(childNode, minDetailLevel, minimumDetailLevelReachedRef);
@@ -507,7 +507,7 @@ public class QuadTreeTest
 	public void quadNodeChildPositionIndexTest()
 	{
 		QuadNode<Integer> rootNode = new QuadNode<>(new DhSectionPos((byte)10, 0, 0), (byte)0);
-		rootNode.forEachDirectChild((child, childPos) ->
+		rootNode.forEachDirectChildNode((child, childPos) ->
 		{
 			rootNode.setValue(childPos, 1);
 		});
