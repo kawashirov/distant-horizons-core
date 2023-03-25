@@ -262,16 +262,18 @@ public class QuadNode<T>
 		}
 	}
 	
+	/** TODO comment */
+	public void forAllLeafValues(Consumer<? super T> consumer) { this.forAllLeafValues((value, sectionPos) -> { consumer.accept(value); }); }
 	/**
 	 * Applies the given consumer to all leaf nodes below this node. <br> 
 	 * Note: this will pass in null values.
 	 */
-	public void forAllLeafValues(Consumer<? super T> callback)
+	public void forAllLeafValues(BiConsumer<? super T, DhSectionPos> consumer)
 	{
 		if (this.getChildCount() == 0 || this.sectionPos.sectionDetailLevel == this.minimumDetailLevel)
 		{
 			// base case, bottom leaf node found
-			callback.accept(this.value);
+			consumer.accept(this.value, this.sectionPos);
 		}
 		else
 		{
@@ -281,7 +283,7 @@ public class QuadNode<T>
 				if (childNode != null)
 				{
 					// TODO should this pass in a null value if the child node is null?
-					childNode.forAllLeafValues(callback);
+					childNode.forAllLeafValues(consumer);
 				}
 			}
 		}

@@ -339,17 +339,16 @@ public class ColumnRenderSource
 	// Render Methods //
 	//================//
 	
-	private void tryBuildBuffer(IDhClientLevel level, LodQuadTree quadTree)
+	private void tryBuildBuffer(IDhClientLevel level, ColumnRenderSource renderSource)
 	{
 		if (this.buildRenderBufferFuture == null && !ColumnRenderBuffer.isBusy() && !this.isEmpty)
 		{
 			ColumnRenderSource[] columnRenderSources = new ColumnRenderSource[ELodDirection.ADJ_DIRECTIONS.length];
 			for (ELodDirection direction : ELodDirection.ADJ_DIRECTIONS)
 			{
-				LodRenderSection renderSection = quadTree.getSection(this.sectionPos.getAdjacentPos(direction)); //FIXME: Handle traveling through different detail levels
-				if (renderSection != null && renderSection.getRenderSource() != null && renderSection.getRenderSource() instanceof ColumnRenderSource)
+				if (renderSource != null)
 				{
-					columnRenderSources[direction.ordinal() - 2] = ((ColumnRenderSource) renderSection.getRenderSource());
+					columnRenderSources[direction.ordinal() - 2] = renderSource;
 					//LOGGER.info("attempting to build buffer for: "+renderSection.pos);
 				}
 			}
@@ -383,7 +382,7 @@ public class ColumnRenderSource
 	 * @param renderBufferToSwap The slot for swapping in the new buffer.
 	 * @return True if the swap was successful. False if swap is not needed or if it is in progress.
 	 */
-	public boolean trySwapRenderBufferAsync(LodQuadTree quadTree, AtomicReference<AbstractRenderBuffer> renderBufferToSwap)
+	public boolean trySwapRenderBufferAsync(ColumnRenderSource renderSource, AtomicReference<AbstractRenderBuffer> renderBufferToSwap)
 	{
 		// prevent swapping the buffer to quickly
 		if (this.lastNs != -1 && System.nanoTime() - this.lastNs < SWAP_TIMEOUT_IN_NS)
@@ -425,7 +424,7 @@ public class ColumnRenderSource
 				}
 				else
 				{
-					this.tryBuildBuffer(this.level, quadTree);
+					this.tryBuildBuffer(this.level, renderSource);
 				}
 			}
 		}

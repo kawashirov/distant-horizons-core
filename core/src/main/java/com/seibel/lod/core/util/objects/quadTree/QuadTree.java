@@ -201,7 +201,8 @@ public class QuadTree<T>
 		});
 	}
 	
-	public void forEachLeafValue(Consumer<? super T> consumer)
+	public void forEachLeafValue(Consumer<? super T> consumer) { this.forEachLeafValue((value, sectionPos) -> { consumer.accept(value); }); }
+	public void forEachLeafValue(BiConsumer<? super T, DhSectionPos> consumer)
 	{
 		this.forEachRootNode((rootNode) ->
 		{
@@ -260,7 +261,9 @@ public class QuadTree<T>
 		return count.get();
 	}
 	
-	public int ringListWidth() { return this.topRingList.getWidth(); }
+	// TODO comment, currently a tree will always have 9 root nodes, because the tree will grow all the way up to the top, if this is ever changed then these values must also change 
+	public int ringListWidth() { return 3; }
+	public int ringListHalfWidth() { return 1; }
 	public int diameterInBlocks() { return this.widthInBlocks; }
 	
 //	public String getDebugString()

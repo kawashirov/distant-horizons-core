@@ -9,6 +9,7 @@ import com.seibel.lod.core.util.objects.quadTree.QuadNode;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class LodRenderSection
 {
@@ -16,19 +17,16 @@ public class LodRenderSection
 	
     public final DhSectionPos pos;
 	
-	// TODO create an enum to represent the section's state instead of using magic numbers in the childCount
-	//      states (may not be a complete or correct list): loaded (childCount 4), unloaded (childCount 0), markedForDeletion/markedForFreeing (childCount -1)
-	
     private CompletableFuture<ColumnRenderSource> loadFuture;
     private boolean isRenderEnabled = false;
     
-	// TODO: Should I provide a way to change the render source?
 	private ColumnRenderSource renderSource;
 	private ILodRenderSourceProvider renderSourceProvider = null;
 	
+	public final AtomicReference<AbstractRenderBuffer> abstractRenderBufferRef = new AtomicReference<>();
 	
 	
-	// Create sub region
+	
     public LodRenderSection(DhSectionPos pos) { this.pos = pos; }
 	
 	
@@ -127,6 +125,12 @@ public class LodRenderSection
 			this.renderSource.disableRender();
 			this.renderSource.dispose();
 			this.renderSource = null;
+		}
+		
+		if (this.abstractRenderBufferRef.get() != null)
+		{
+			this.abstractRenderBufferRef.get().close();
+			this.abstractRenderBufferRef.set(null);
 		}
 		
 		if (this.loadFuture != null)
