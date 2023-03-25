@@ -45,4 +45,11 @@ public class MathUtil
 	
 	public static long pow2(long x) { return x * x; }
 	
+	/** Equivalent to Log_2(numb) */
+	public static int log2(int numb)
+	{
+		// properties of logs allow us to use the base Log_e() method
+		return (int)(Math.log(numb) / Math.log(2));
+	}
+	
 }

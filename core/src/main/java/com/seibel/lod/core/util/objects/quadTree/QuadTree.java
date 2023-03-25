@@ -8,6 +8,7 @@ import com.seibel.lod.core.pos.Pos2D;
 import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.DetailDistanceUtil;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.util.MathUtil;
 import com.seibel.lod.core.util.gridList.MovableGridRingList;
 import org.apache.logging.log4j.Logger;
 
@@ -48,8 +49,9 @@ public class QuadTree<T>
 		this.centerBlockPos = centerBlockPos;
 		this.widthInBlocks = widthInBlocks;
 		
-		this.treeMaxDetailLevel = 10; // TODO in the future we may need to make this dynamic // detail 10 = (2^10) 1024 blocks wide
 		this.treeMinDetailLevel = treeMinDetailLevel;
+		// the max detail level must be greater than 0 (to prevent divide by 0 errors) and greater than the minimum detail level
+		this.treeMaxDetailLevel = (byte) Math.max(Math.max(1, this.treeMinDetailLevel), MathUtil.log2(widthInBlocks));
 		
 		int halfSizeInRootNodes = Math.floorDiv(this.widthInBlocks, 2) / BitShiftUtil.powerOfTwo(this.treeMaxDetailLevel);
 		halfSizeInRootNodes = halfSizeInRootNodes + 1; // always add 1 so nodes will always have a parent, even if the tree's center is offset from the root node grid 
