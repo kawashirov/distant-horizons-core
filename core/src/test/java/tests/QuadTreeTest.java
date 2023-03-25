@@ -523,6 +523,26 @@ public class QuadTreeTest
 		}
 	}
 	
+	@Test
+	public void quadNodeChildPositionIndexTest()
+	{
+		QuadNode<Integer> rootNode = new QuadNode<>(new DhSectionPos((byte)10, 0, 0), (byte)0);
+		rootNode.forEachDirectChild((child, childPos) ->
+		{
+			rootNode.setValue(childPos, 1, null);
+		});
+		Assert.assertEquals("node not filled", rootNode.getChildValueCount(), 4);
+		
+		
+		for (int i = 0; i < 4; i++)
+		{
+			DhSectionPos childPos = rootNode.sectionPos.getChildByIndex(i);
+			QuadNode<Integer> childNode = rootNode.getChildByIndex(i);
+			Assert.assertEquals("child position not the same as "+DhSectionPos.class.getSimpleName()+"'s getChildByIndex()", childPos, childNode.sectionPos);
+		}
+		
+	}
+	
 	
 	
 	

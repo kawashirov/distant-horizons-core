@@ -74,10 +74,10 @@ public class QuadNode<T>
 	 * Returns the DhLodPos 1 detail level lower <br><br>
 	 *
 	 * Relative child positions returned for each index: <br>
-	 * 0 = (0,0) <br>
-	 * 1 = (1,0) <br>
-	 * 2 = (0,1) <br>
-	 * 3 = (1,1) <br>
+	 * 0 = (0,0) - North West <br>
+	 * 1 = (1,0) - South West <br>
+	 * 2 = (0,1) - North East <br>
+	 * 3 = (1,1) - South East <br>
 	 *
 	 * @param child0to3 must be an int between 0 and 3
 	 */
@@ -88,9 +88,9 @@ public class QuadNode<T>
 			case 0:
 				return nwChild;
 			case 1:
-				return neChild;
-			case 2:
 				return swChild;
+			case 2:
+				return neChild;
 			case 3:
 				return seChild;
 			
