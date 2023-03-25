@@ -5,6 +5,7 @@ import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.file.renderfile.ILodRenderSourceProvider;
+import com.seibel.lod.core.util.objects.quadTree.QuadNode;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
@@ -17,11 +18,6 @@ public class LodRenderSection
 	
 	// TODO create an enum to represent the section's state instead of using magic numbers in the childCount
 	//      states (may not be a complete or correct list): loaded (childCount 4), unloaded (childCount 0), markedForDeletion/markedForFreeing (childCount -1)
-	
-    /* Following used for LodQuadTree tick() method, and ONLY for that method! */
-    // the number of children of this section
-    // (Should always be 4 after tick() is done, or 0 only if this is an unloaded node)
-    public byte childCount = 0;
 	
     private CompletableFuture<ColumnRenderSource> loadFuture;
     private boolean isRenderEnabled = false;
@@ -41,13 +37,14 @@ public class LodRenderSection
 	// rendering //
 	//===========//
 	
-    public void loadRenderSourceAndEnableRendering()
+    public void loadRenderSourceAndEnableRendering(ILodRenderSourceProvider renderDataProvider)
 	{
         if (this.isRenderEnabled)
 		{
 			return;
 		}
 		
+		this.renderSourceProvider = renderDataProvider;
 		if (this.renderSourceProvider == null)
 		{
 			return;
@@ -75,8 +72,6 @@ public class LodRenderSection
 	//========================//
 	// render source provider //
 	//========================//
-	
-    public void setRenderSourceProvider(ILodRenderSourceProvider renderDataProvider) { this.renderSourceProvider = renderDataProvider; }
 	
     public void reload(ILodRenderSourceProvider renderDataProvider)
 	{
@@ -165,7 +160,6 @@ public class LodRenderSection
     public String toString() {
         return "LodRenderSection{" +
                 "pos=" + this.pos +
-                ", childCount=" + this.childCount +
                 ", lodRenderSource=" + this.renderSource +
                 ", loadFuture=" + this.loadFuture +
                 ", isRenderEnabled=" + this.isRenderEnabled +

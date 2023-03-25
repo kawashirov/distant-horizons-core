@@ -6,6 +6,7 @@ import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.Pos2D;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.renderer.LodRenderer;
+import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.gridList.MovableGridRingList;
 import com.seibel.lod.core.util.math.Vec3f;
@@ -13,11 +14,10 @@ import com.seibel.lod.core.util.objects.SortedArraySet;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Comparator;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * This object tells the {@link LodRenderer} what buffers to render
- */
+/** This object tells the {@link LodRenderer} what buffers to render */
 public class RenderBufferHandler
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
@@ -34,9 +34,11 @@ public class RenderBufferHandler
 	{
 		this.quadTree = quadTree;
 		
-		MovableGridRingList<LodRenderSection> referenceList = quadTree.getRingListForDetailLevel((byte) (quadTree.getNumbersOfSectionDetailLevels() - 1));
-		Pos2D center = referenceList.getCenter();
-		this.renderBufferNodesGridList = new MovableGridRingList<>(referenceList.getHalfWidth(), center);
+		Pos2D expectedCenterPos = new Pos2D(
+				BitShiftUtil.divideByPowerOfTwo(this.quadTree.getCenterBlockPos().x, this.quadTree.treeMaxDetailLevel),
+				BitShiftUtil.divideByPowerOfTwo(this.quadTree.getCenterBlockPos().z, this.quadTree.treeMaxDetailLevel));
+		
+		this.renderBufferNodesGridList = new MovableGridRingList<>(quadTree.ringListWidth()/4, expectedCenterPos);
 	}
 	
 	
@@ -52,7 +54,7 @@ public class RenderBufferHandler
 	{
 		ELodDirection[] axisDirections = new ELodDirection[3];
 		
-		// Do the axis that are longest first (i.e. the largest absolute value of the lookForwardVector),
+		// Do the axis that are the longest first (i.e. the largest absolute value of the lookForwardVector),
 		// with the sign being the opposite of the respective lookForwardVector component's sign
 		float absX = Math.abs(lookForwardVector.x);
 		float absY = Math.abs(lookForwardVector.y);
@@ -169,45 +171,46 @@ public class RenderBufferHandler
 	
 	public void update()
 	{
-		byte topDetailLevel = (byte) (this.quadTree.getNumbersOfSectionDetailLevels() - 1);
-		MovableGridRingList<LodRenderSection> renderSectionGridList = this.quadTree.getRingListForDetailLevel(topDetailLevel);
+		byte topDetailLevel = this.quadTree.treeMaxDetailLevel;
+		Pos2D expectedCenterPos = new Pos2D(
+				BitShiftUtil.divideByPowerOfTwo(this.quadTree.getCenterBlockPos().x, this.quadTree.treeMaxDetailLevel),
+				BitShiftUtil.divideByPowerOfTwo(this.quadTree.getCenterBlockPos().z, this.quadTree.treeMaxDetailLevel));
 		
-		Pos2D newCenterPos = renderSectionGridList.getCenter();
-		this.renderBufferNodesGridList.moveTo(newCenterPos.x, newCenterPos.y, RenderBufferNode::close); // Note: may lock the list
+		this.renderBufferNodesGridList.moveTo(expectedCenterPos.x, expectedCenterPos.y, RenderBufferNode::close); // Note: may lock the list
 		
 		
 		
-		this.renderBufferNodesGridList.forEachPosOrdered((renderBufferNode, pos2d) ->
+		this.renderBufferNodesGridList.forEachPosOrdered((rootRenderBufferNode, pos2d) ->
 		{
 			try
 			{
 			
-				DhSectionPos sectionPos = new DhSectionPos(topDetailLevel, pos2d.x, pos2d.y);
-				LodRenderSection renderSection = this.quadTree.getSection(sectionPos);
+				DhSectionPos rootSectionPos = new DhSectionPos(topDetailLevel, pos2d.x, pos2d.y);
+				LodRenderSection rootRenderSection = this.quadTree.getSection(rootSectionPos);
 				
-				if (renderSection == null && renderBufferNode != null)
+				if (rootRenderSection == null && rootRenderBufferNode != null)
 				{
 					// section is null, but a node exists, remove the node
 					this.renderBufferNodesGridList.remove(pos2d).close();
 				}
-				else if (renderSection != null)
+				else if (rootRenderSection != null)
 				{
 					
-					if (renderBufferNode == null)
+					if (rootRenderBufferNode == null)
 					{
 						// renderSection exists, but node does not
-						renderBufferNode = this.renderBufferNodesGridList.setChained(pos2d, new RenderBufferNode(sectionPos));
+						rootRenderBufferNode = this.renderBufferNodesGridList.setChained(pos2d, new RenderBufferNode(rootSectionPos));
 					}
 					
 					// Update the render node
-					renderBufferNode.update();
+					rootRenderBufferNode.update();
 				}
 			
 			}
 			catch (Exception e)
 			{
 				// TODO when we are stable this shouldn't be necessary
-				LOGGER.error(RenderBufferHandler.class.getSimpleName()+" exception in update for the quadTree: "+this.quadTree.toString()+", exception: "+e.getMessage(), e);
+				LOGGER.error(RenderBufferHandler.class.getSimpleName()+" exception in update for the quadTree: "+this.quadTree+", exception: "+e.getMessage(), e);
 				int breaker = 0;
 			}
 		});
@@ -286,15 +289,15 @@ public class RenderBufferHandler
 			if (!renderSection.shouldRender())
 			{
 				//TODO: Does this really need to force the old buffer to not be rendered?
-				AbstractRenderBuffer renderBuffer = this.renderBufferRef.getAndSet(null);
-				if (renderBuffer != null)
+				AbstractRenderBuffer previousRenderBuffer = this.renderBufferRef.getAndSet(null);
+				if (previousRenderBuffer != null)
 				{
-					renderBuffer.close();
+					previousRenderBuffer.close();
 				}
 			}
 			else
 			{
-				LodUtil.assertTrue(currentRenderSource != null); // section.isLoaded() should have ensured this
+				LodUtil.assertTrue(currentRenderSource != null); // section.shouldRender() should have ensured this
 				currentRenderSource.trySwapRenderBufferAsync(quadTree, this.renderBufferRef);
 			}
 			
@@ -303,15 +306,28 @@ public class RenderBufferHandler
 			// TODO: Improve this! (Checking section.isLoaded() as if its not loaded, it can only be because
 			//  it has children. (But this logic is... really hard to read!)
 			// FIXME: Above comment is COMPLETELY WRONG! I am an idiot!
-			boolean sectionHasChildren = renderSection.childCount > 0;
+			int loadedChildCount = quadTree.getNonNullChildCountAtPos(renderSection.pos);
+			boolean sectionHasChildren = loadedChildCount != 0;
 			if (sectionHasChildren)
 			{
 				if (this.children == null)
 				{
-					this.children = new RenderBufferNode[4];
-					for (int i = 0; i < 4; i++)
+					RenderBufferNode[] potentialChildren = new RenderBufferNode[loadedChildCount];
+					AtomicInteger childIndexRef = new AtomicInteger(0);
+					renderSection.pos.forEachChild((childSectionPos) -> 
 					{
-						this.children[i] = new RenderBufferNode(this.pos.getChildByIndex(i));
+						LodRenderSection childRenderSection = quadTree.get(childSectionPos);
+						if (childRenderSection != null)
+						{
+							int i = childIndexRef.get();
+							potentialChildren[i] = new RenderBufferNode(childSectionPos);
+							childIndexRef.getAndAdd(1);
+						}
+					});
+					
+					if (childIndexRef.get() != 0)
+					{
+						this.children = potentialChildren;
 					}
 				}
 				

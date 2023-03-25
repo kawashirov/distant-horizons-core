@@ -74,7 +74,9 @@ public class WorldGenerationQueue implements Closeable
 		this.maxDataDetail = generator.getMaxDataDetailLevel();
 		this.minDataDetail = generator.getMinDataDetailLevel();
 		
-		this.waitingTaskQuadTree = new QuadTree<>(Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH, DhBlockPos2D.ZERO /*the quad tree will be re-centered later*/);
+		int treeWidth = Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH;
+		byte treeMinDetailLevel = LodUtil.BLOCK_DETAIL_LEVEL; // the tree shouldn't need to go this low, but just in case
+		this.waitingTaskQuadTree = new QuadTree<>(treeWidth, DhBlockPos2D.ZERO /*the quad tree will be re-centered later*/, treeMinDetailLevel);
 		
 		
 		if (this.minGranularity < LodUtil.CHUNK_DETAIL_LEVEL)
@@ -117,10 +119,17 @@ public class WorldGenerationQueue implements Closeable
 		LodUtil.assertTrue(pos.detailLevel > requiredDataDetail + LodUtil.CHUNK_DETAIL_LEVEL/*TODO is chunkDetailLevel the correct replacement? otherwise the magic number was 4*/); 
 		
 		
-		
-		CompletableFuture<WorldGenResult> future = new CompletableFuture<>();
-		this.waitingTaskQuadTree.set(new DhSectionPos(pos.detailLevel, pos.x, pos.z), new WorldGenTask(pos, requiredDataDetail, tracker, future));
-		return future;
+		DhSectionPos requestPos = new DhSectionPos(pos.detailLevel, pos.x, pos.z);
+		if (this.waitingTaskQuadTree.isSectionPosInBounds(requestPos))
+		{
+			CompletableFuture<WorldGenResult> future = new CompletableFuture<>();
+			this.waitingTaskQuadTree.set(requestPos, new WorldGenTask(pos, requiredDataDetail, tracker, future));
+			return future;
+		}
+		else
+		{
+			return CompletableFuture.completedFuture(WorldGenResult.CreateFail());
+		}
 	}
 	
 	
