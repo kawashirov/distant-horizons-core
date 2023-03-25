@@ -153,6 +153,26 @@ public class QuadTree<T>
 	}
 	
 	
+	public int getNonNullChildCountAtPos(DhSectionPos pos) { return this.getChildCountAtPos(pos, false); }
+	public int getChildCountAtPos(DhSectionPos pos, boolean includeNullValues)
+	{
+		int childCount = 0;
+		for (int i = 0; i < 4; i++)
+		{
+			DhSectionPos childPos = pos.getChildByIndex(i);
+			if (this.isSectionPosInBounds(childPos))
+			{
+				T value = this.get(childPos);
+				if (includeNullValues || value != null)
+				{
+					childCount++;
+				}
+			}
+		}
+		
+		return childCount;
+	}
+	
 	
 	/** no nulls TODO comment/rename */
 	public void forEachRootNode(Consumer<QuadNode<T>> consumer)
@@ -253,5 +273,8 @@ public class QuadTree<T>
 //		}
 //		return sb.toString();
 //	}
+	
+	@Override
+	public String toString() { return "center block: "+this.centerBlockPos+", block width: "+this.widthInBlocks+", detail level range: ["+this.treeMinDetailLevel+"-"+this.treeMaxDetailLevel+"], leaf #: "+this.leafNodeCount(); }
 	
 }

@@ -529,7 +529,7 @@ public class QuadTreeTest
 		QuadNode<Integer> rootNode = new QuadNode<>(new DhSectionPos((byte)10, 0, 0), (byte)0);
 		rootNode.forEachDirectChild((child, childPos) ->
 		{
-			rootNode.setValue(childPos, 1, null);
+			rootNode.setValue(childPos, 1);
 		});
 		Assert.assertEquals("node not filled", rootNode.getChildValueCount(), 4);
 		
@@ -540,6 +540,18 @@ public class QuadTreeTest
 			QuadNode<Integer> childNode = rootNode.getChildByIndex(i);
 			Assert.assertEquals("child position not the same as "+DhSectionPos.class.getSimpleName()+"'s getChildByIndex()", childPos, childNode.sectionPos);
 		}
+		
+	}
+	
+	// this is here for quickly testing the toString method, it should never fail
+	@Test
+	public void toStringTest()
+	{
+		QuadTree<Integer> tree = new QuadTree<>(ROOT_NODE_WIDTH_IN_BLOCKS, new DhBlockPos2D(0, 0), (byte)6);
+		
+		String treeString = tree.toString();
+		Assert.assertNotNull(treeString);
+		Assert.assertNotEquals("", treeString);
 		
 	}
 	

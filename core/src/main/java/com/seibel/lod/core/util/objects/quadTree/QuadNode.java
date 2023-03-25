@@ -55,12 +55,27 @@ public class QuadNode<T>
 	
 	
 	/** @return the number of non-null child nodes */
-	public int childCount() 
+	public int getChildCount() 
 	{
 		int count = 0;
 		for (int i = 0; i < 4; i++)
 		{
 			if (this.getChildByIndex(i) != null)
+			{
+				count++;
+			}
+		}
+		return count;
+	}
+	
+	/** returns the number of children that have non-null values */
+	public int getChildValueCount()
+	{
+		int count = 0;
+		for (int i = 0; i < 4; i++)
+		{
+			QuadNode<T> child = this.getChildByIndex(i);
+			if (child != null && child.value != null)
 			{
 				count++;
 			}
@@ -241,7 +256,8 @@ public class QuadNode<T>
 			for (int i = 0; i < 4; i++)
 			{
 				DhSectionPos childPos = this.sectionPos.getChildByIndex(i);
-				callback.accept(this.getChildByIndex(i), childPos);
+				QuadNode<T> childNode = this.getChildByIndex(i);
+				callback.accept(childNode, childPos);
 			}
 		}
 	}
@@ -252,7 +268,7 @@ public class QuadNode<T>
 	 */
 	public void forAllLeafValues(Consumer<? super T> callback)
 	{
-		if (this.childCount() == 0 || this.sectionPos.sectionDetailLevel == this.minimumDetailLevel)
+		if (this.getChildCount() == 0 || this.sectionPos.sectionDetailLevel == this.minimumDetailLevel)
 		{
 			// base case, bottom leaf node found
 			callback.accept(this.value);
@@ -312,6 +328,6 @@ public class QuadNode<T>
 	
 	
 	@Override
-	public String toString() { return "pos: "+this.sectionPos+", value: "+this.value; }
+	public String toString() { return "pos: "+this.sectionPos+", children #: "+this.getChildCount()+", value: "+this.value; }
 	
 }
