@@ -19,12 +19,15 @@ public class DarkModeDetector {
     private static final String DARK_THEME_CMD = REGQUERY_UTIL + "\"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize\"" + " /v AppsUseLightTheme";
 
     public static boolean isDarkMode() {
-        switch (JarUtils.getOperatingSystem()) {
+        switch (Platform.get()) {
             case WINDOWS:
                 return isWindowsDarkMode();
             case MACOS:
                 return isMacOsDarkMode();
             case LINUX:
+            // Most Unix(-like) distros also use a lot of the same things as Linux (like desktop environments and window managers)
+            case BSD:
+            case UNIX:
                 return checkLinuxDark();
             default:
                 return false;

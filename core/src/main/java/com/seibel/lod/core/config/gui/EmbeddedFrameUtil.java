@@ -1,6 +1,6 @@
 package com.seibel.lod.core.config.gui;
 
-import org.lwjgl.system.*;
+import com.seibel.lod.core.jar.Platform;
 import org.lwjgl.system.jawt.JAWT;
 import org.lwjgl.system.macosx.*;
 
@@ -18,6 +18,12 @@ import static org.lwjgl.system.macosx.ObjCRuntime.*;
 // Some of the code is from https://github.com/LWJGL/lwjgl3/blob/master/modules/samples/src/test/java/org/lwjgl/demo/system/jawt/EmbeddedFrameUtil.java
 // which is licensed under https://www.lwjgl.org/license
 
+/**
+ * Some utils for embeding awt and swing items into lwjgl windows
+ *
+ * @author Ran
+ * @author coolGi
+ */
 public final class EmbeddedFrameUtil {
 
     private static final int JAVA_VERSION;
@@ -45,10 +51,10 @@ public final class EmbeddedFrameUtil {
         switch (Platform.get()) {
             case LINUX:
                 return "sun.awt.X11.XEmbeddedFrame";
-            case MACOSX:
-                return "sun.lwawt.macosx.CViewEmbeddedFrame";
             case WINDOWS:
                 return "sun.awt.windows.WEmbeddedFrame";
+            case MACOS:
+                return "sun.lwawt.macosx.CViewEmbeddedFrame";
             default:
                 throw new IllegalStateException();
         }
@@ -58,11 +64,11 @@ public final class EmbeddedFrameUtil {
         switch (Platform.get()) {
             case LINUX:
                 return glfwGetX11Window(window);
-            case MACOSX:
-                long objc_msgSend = ObjCRuntime.getLibrary().getFunctionAddress("objc_msgSend");
-                return invokePPP(glfwGetCocoaWindow(window), sel_getUid("contentView"), objc_msgSend);
             case WINDOWS:
                 return glfwGetWin32Window(window);
+            case MACOS:
+                long objc_msgSend = ObjCRuntime.getLibrary().getFunctionAddress("objc_msgSend");
+                return invokePPP(glfwGetCocoaWindow(window), sel_getUid("contentView"), objc_msgSend);
             default:
                 throw new IllegalStateException();
         }

@@ -105,17 +105,17 @@ public class JarUtils {
     }
 
 
+    /** Please use the Platform enum instead */
+    @Deprecated
     public enum OperatingSystem {WINDOWS, MACOS, LINUX, NONE} // Easy to use enum for the 3 main os's
+    /** Please use the Platform enum instead */
+    @Deprecated
     public static OperatingSystem getOperatingSystem() { // Get the os and turn it into that enum
-        String os = System.getProperty("os.name").toLowerCase();
-        if (os.contains("win")) {
-            return OperatingSystem.WINDOWS;
-        } else if (os.contains("mac")) {
-            return OperatingSystem.MACOS;
-        } else if (os.contains("nix") || os.contains("nux")) {
-            return OperatingSystem.LINUX;
-        } else {
-            return OperatingSystem.NONE;
+        switch (Platform.get()) {
+            case WINDOWS: return OperatingSystem.WINDOWS;
+            case LINUX: return OperatingSystem.LINUX;
+            case MACOS: return OperatingSystem.MACOS;
+            default: return OperatingSystem.NONE;
         }
     }
 }
