@@ -200,7 +200,7 @@
   "lod.config.client.graphics.advancedGraphics.lodBias":
     "LOD Bias §6(Effects vanilla terrain)§r",
   "lod.config.client.graphics.advancedGraphics.lodBias.@tooltip":
-    "Sets vanilla's lod bias value",
+    "Sets vanilla's lod bias value\nPlease press F3+T to reload the texture packs and apply this effect",
   "lod.config.client.graphics.advancedGraphics.noiseSettings":
     "Noise Settings",
   "lod.config.client.graphics.advancedGraphics.noiseSettings.noiseEnable":

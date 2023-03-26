@@ -501,7 +501,7 @@ public class Config
                             .build();
 
                     public static ConfigEntry<Double> noiseDropoff = new ConfigEntry.Builder<Double>()    // TODO: Make this a float (the ClassicConfigGUI doesnt support floats)
-                            .setMinDefaultMax(0d, 1d, null)
+                            .setMinDefaultMax(0d, 3d, null)
                             .comment(""
                                     + "How fast the noise should drop off to no noise based upon your lod render distance \n"
                                     + "Eg, if you set it to 3, then the noise effect would completely go away after 1/3 of your render distance")
