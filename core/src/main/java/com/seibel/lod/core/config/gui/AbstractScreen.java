@@ -13,6 +13,8 @@ public abstract class AbstractScreen {
     public long minecraftWindow;
     public int width;
     public int height;
+    public int scaledWidth;
+    public int scaledHeight;
     public int mouseX = 0;
     public int mouseY = 0;
     /** Weather it should close when you press the escape key */
@@ -27,6 +29,8 @@ public abstract class AbstractScreen {
     public abstract void render(float delta);
     public void tick() {}
 
+    /** Called every time the window gets re-sized */
+    public void onResize() {};
     /** What happens when the user closes the screen*/
     public void onClose() {}
 

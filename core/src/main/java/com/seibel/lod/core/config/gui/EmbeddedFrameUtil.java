@@ -1,6 +1,7 @@
 package com.seibel.lod.core.config.gui;
 
 import com.seibel.lod.core.jar.Platform;
+import org.jetbrains.annotations.NotNull;
 import org.lwjgl.system.jawt.JAWT;
 import org.lwjgl.system.macosx.*;
 
@@ -122,22 +123,16 @@ public final class EmbeddedFrameUtil {
         }
     }
 
-    // The code below is by Ran
 
-    public static void hideFrame(Frame embeddedFrame) {
-        if (embeddedFrame != null) {
-            embeddedFrame.setVisible(false);
-            embeddedFrameSynthesizeWindowActivation(embeddedFrame, false);
-        }
+    public static void hideFrame(@NotNull Frame embeddedFrame) {
+        embeddedFrame.setVisible(false);
+        embeddedFrameSynthesizeWindowActivation(embeddedFrame, false);
     }
 
-    public static void showFrame(Frame embeddedFrame) {
-        if (embeddedFrame != null) {
-            embeddedFrameSynthesizeWindowActivation(embeddedFrame, true);
-            embeddedFrame.setVisible(true);
-        }
+    public static void showFrame(@NotNull Frame embeddedFrame) {
+        embeddedFrameSynthesizeWindowActivation(embeddedFrame, true);
+        embeddedFrame.setVisible(true);
     }
-
     public static void placeAtCenter(Frame embeddedFrame, int windowWidth, int windowHeight, int frameWidth, int frameHeight, float scale) {
         float scaleFactor = (100.0F - scale) / 100.0F;
         float newWidth = frameWidth * scaleFactor;
