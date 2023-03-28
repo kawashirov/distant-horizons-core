@@ -245,6 +245,10 @@ public class QuadNode<T>
 	
 	
 	
+	// TODO comment section for iterators
+	// TODO make naming consistent with QuadTree
+	// TODO replace consumers with returned iterators, using consumers like this makes debugging painful because the stack traces become messy very quickly
+	
 	/** 
 	 * Applies the given consumer to all 4 of this nodes' children. <br> 
 	 * Note: this will pass in null children.

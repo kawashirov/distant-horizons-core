@@ -350,6 +350,8 @@ public class ColumnRenderSource
 					//LOGGER.info("attempting to build buffer for: "+renderSection.pos);
 				}
 			}
+			
+			// TODO this needs to allow generating partial sections to allow for non-full quadTree RenderSections to render
 			this.buildRenderBufferFuture = ColumnRenderBuffer.buildBuffers(level, this.columnRenderBufferRef, this, columnRenderSources);
 		}
 	}

@@ -170,6 +170,7 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 		// Variable initialization
 		EDebugMode debugMode = Config.Client.Advanced.Debugging.debugMode.get();
 		
+		// TODO pass in which child DhSectionPos should be built to allow generating partial sections so non-full quadTree RenderSections will render
 		byte detailLevel = region.getDataDetail();
 		for (int x = 0; x < ColumnRenderSource.SECTION_SIZE; x++)
 		{
