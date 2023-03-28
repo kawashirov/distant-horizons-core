@@ -66,7 +66,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 			int initialPlayerBlockX, int initialPlayerBlockZ, 
 			ILodRenderSourceProvider provider)
 	{
-		super(viewDistanceInBlocks, new DhBlockPos2D(initialPlayerBlockX, initialPlayerBlockZ), DhSectionPos.SECTION_BLOCK_DETAIL_LEVEL);
+		super(viewDistanceInBlocks, new DhBlockPos2D(initialPlayerBlockX, initialPlayerBlockZ), TREE_LOWEST_DETAIL_LEVEL);
 		
         DetailDistanceUtil.updateSettings(); //TODO: Move this to somewhere else
         this.level = level;
@@ -89,8 +89,6 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	
 	
 	
-	
-	
 	/**
      * This method will compute the detail level based on player position and section pos
      * Override this method if you want to use a different algorithm
@@ -100,10 +98,9 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
      */
     public byte calculateExpectedDetailLevel(DhBlockPos2D playerPos, DhSectionPos sectionPos)
 	{
-        return DetailDistanceUtil.getDetailLevelFromDistance(
-                playerPos.dist(sectionPos.getCenter().getCenterBlockPos()));
+        return DetailDistanceUtil.getDetailLevelFromDistance(playerPos.dist(sectionPos.getCenter().getCenterBlockPos()));
     }
-
+	
     /**
      * The method will return the highest detail level in a circle around the center
      * Override this method if you want to use a different algorithm
@@ -145,7 +142,6 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	
 	
 	
-	
 	// tick //
 	
     /**
@@ -167,9 +163,6 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 			LOGGER.error("Quad Tree tick exception for dimension: "+this.level.getClientLevelWrapper().getDimensionType().getDimensionName()+", exception: "+e.getMessage(), e);
 		}
 	}
-	
-	
-	
 	private void updateAllRenderSections(DhBlockPos2D playerPos)
 	{
 		this.forEachRootNodePos((rootNode, rootSectionPos) ->
@@ -195,6 +188,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		{
 			nullableRenderSection = nullableQuadNode.value;
 		}
+		
 		
 		
 		byte expectedDetailLevel = calculateExpectedDetailLevel(playerPos, sectionPos);
@@ -226,7 +220,8 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 				});
 			}
 		}
-		else if (sectionPos.sectionDetailLevel == expectedDetailLevel)
+		// TODO this should only equal the expected detail level, the (expectedDetailLevel-1) is a temporary fix to prevent corners from being cut out 
+		else if (sectionPos.sectionDetailLevel == expectedDetailLevel || sectionPos.sectionDetailLevel == expectedDetailLevel-1)
 		{
 			// this is the correct detail level and should be rendered
 			
@@ -265,7 +260,6 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 			}
 		}
 	}
-	
 	
 	private boolean areChildRenderSectionsLoaded(LodRenderSection renderSection)
 	{
@@ -353,40 +347,6 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		{
 			renderSection.reload(this.renderSourceProvider);
 		}
-	}
-	
-	
-	
-	
-	//=========================//
-	// internal helper methods //
-	//=========================//
-	
-	/** @return the renderSection set */
-	private LodRenderSection _setRenderSectionInGridList(MovableGridRingList<LodRenderSection> list, int x, int z, LodRenderSection renderSection)
-	{
-		LodUtil.assertTrue(renderSection != null, "setting null at [{},{}] in {}", x, z, list.toString());
-		LodUtil.assertTrue(renderSection.pos.sectionX == x && renderSection.pos.sectionZ == z, "pos {} != [{},{}] in {}", renderSection.pos, x, z, list.toString());
-		
-		LodRenderSection section = list.setChained(x,z,renderSection);
-		LodUtil.assertTrue(section != null, "returned null at [{},{}]: {}", x, z, list.toString());
-		LodUtil.assertTrue(section == renderSection,"{} != {} in {}",section,renderSection, list.toString());
-		return section;
-	}
-	private LodRenderSection _getNotNull(MovableGridRingList<LodRenderSection> list, int x, int z)
-	{
-		LodUtil.assertTrue(list.inRange(x,z), "[{},{}] not in range of {}", x, z, list.toString());
-		
-		LodRenderSection section = list.get(x,z);
-		LodUtil.assertTrue(section != null, "getting null at [{},{}] in {}", x, z, list.toString());
-		LodUtil.assertTrue(section.pos.sectionX == x && section.pos.sectionZ == z, "obj {} != [{},{}] in {}", section, x, z, list.toString());
-		return section;
-	}
-	private LodRenderSection _getRenderSectionFromGridList(MovableGridRingList<LodRenderSection> list, int x, int z)
-	{
-		LodRenderSection section = list.get(x,z);
-		LodUtil.assertTrue(section == null || (section.pos.sectionX == x && section.pos.sectionZ == z), "obj {} != [{},{}] in {}", section, x, z, list.toString());
-		return section;
 	}
 	
 	

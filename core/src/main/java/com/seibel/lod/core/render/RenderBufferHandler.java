@@ -158,6 +158,7 @@ public class RenderBufferHandler
 	{
 		if (LodRenderer.transparencyEnabled)
 		{
+			//TODO: Directional culling
 			this.loadedNearToFarBuffers.forEach(loadedBuffer -> loadedBuffer.buffer.renderTransparent(renderContext));
 		}
 	}
