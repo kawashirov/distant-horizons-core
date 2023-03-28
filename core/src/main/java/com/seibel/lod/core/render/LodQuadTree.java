@@ -199,7 +199,13 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 			
 			if (nullableRenderSection != null)
 			{
-				nullableRenderSection.disableAndDisposeRender();
+				// TODO this logic isn't ready
+				//  it can cause buffers to render on top of each other and doesn't completely solve the empty section rendering bug.
+				//  Some sort of logic to determine if the buffer has been uploaded is probably necessary
+//				if (areChildRenderSectionsLoaded(nullableRenderSection))
+				{
+					nullableRenderSection.disableAndDisposeRendering();
+				}
 			}
 			
 			if (nullableQuadNode == null)
@@ -274,16 +280,25 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		else
 		{
 			// recursively look for a loaded child
-			LodRenderSection child0 = this.getChildSection(renderSection.pos, 0);
-			LodRenderSection child1 = this.getChildSection(renderSection.pos, 1);
-			LodRenderSection child2 = this.getChildSection(renderSection.pos, 2);
-			LodRenderSection child3 = this.getChildSection(renderSection.pos, 3);
 			
-			// either the child section is loaded, or check the next section down
-			return (isSectionLoaded(child0) || areChildRenderSectionsLoaded(child0))
-					&& (isSectionLoaded(child1) || areChildRenderSectionsLoaded(child1))
-					&& (isSectionLoaded(child2) || areChildRenderSectionsLoaded(child2))
-					&& (isSectionLoaded(child3) || areChildRenderSectionsLoaded(child3));
+			try
+			{
+				LodRenderSection child0 = this.getChildSection(renderSection.pos, 0);
+				LodRenderSection child1 = this.getChildSection(renderSection.pos, 1);
+				LodRenderSection child2 = this.getChildSection(renderSection.pos, 2);
+				LodRenderSection child3 = this.getChildSection(renderSection.pos, 3);
+				
+				// either the child section is loaded, or check the next section down
+				return (isSectionLoaded(child0) || areChildRenderSectionsLoaded(child0))
+						&& (isSectionLoaded(child1) || areChildRenderSectionsLoaded(child1))
+						&& (isSectionLoaded(child2) || areChildRenderSectionsLoaded(child2))
+						&& (isSectionLoaded(child3) || areChildRenderSectionsLoaded(child3));
+			}
+			catch (IndexOutOfBoundsException e)
+			{
+				// FIXME will happen if children are outside the render distance
+				return true;
+			}
 		}
 	}
 	private static boolean isSectionLoaded(LodRenderSection renderSection)
