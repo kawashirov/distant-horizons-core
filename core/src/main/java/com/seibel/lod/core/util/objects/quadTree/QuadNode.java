@@ -268,7 +268,10 @@ public class QuadNode<T>
 	 * Applies the given consumer to all leaf nodes below this node. <br> 
 	 * Note: this will pass in null values.
 	 */
-	public void forAllLeafValues(BiConsumer<? super T, DhSectionPos> consumer)
+	public void forAllLeafValues(BiConsumer<? super T, DhSectionPos> consumer) { this.forAllChildValues(consumer, true, true); }
+	
+	public void forAllChildValues(BiConsumer<? super T, DhSectionPos> consumer) { this.forAllChildValues(consumer, false, true); }
+	private void forAllChildValues(BiConsumer<? super T, DhSectionPos> consumer, boolean onlyReturnLeafNodes, boolean topCaller) // TODO rename/refactor topCaller parameter
 	{
 		if (this.getChildCount() == 0 || this.sectionPos.sectionDetailLevel == this.minimumDetailLevel)
 		{
@@ -277,17 +280,23 @@ public class QuadNode<T>
 		}
 		else
 		{
+			if (!onlyReturnLeafNodes && !topCaller)
+			{
+				consumer.accept(this.value, this.sectionPos);
+			}
+			
 			for (int i = 0; i < 4; i++)
 			{
 				QuadNode<T> childNode = this.getChildByIndex(i);
 				if (childNode != null)
 				{
 					// TODO should this pass in a null value if the child node is null?
-					childNode.forAllLeafValues(consumer);
+					childNode.forAllChildValues(consumer, onlyReturnLeafNodes, false);
 				}
 			}
 		}
 	}
+	
 	
 	public void deleteAllChildren() { this.deleteAllChildren(null); }
 	/** @param removedItemConsumer is only fired for non-null nodes, however the value passed in may be null */

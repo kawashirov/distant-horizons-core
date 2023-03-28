@@ -135,7 +135,7 @@ public class RenderBufferHandler
 		
 		// Build the sorted list
 		this.loadedNearToFarBuffers = new SortedArraySet<>((a, b) -> -farToNearComparator.compare(a, b)); // TODO is the comparator named wrong?
-		this.quadTree.forEachLeafValue((renderSection, sectionPos) ->
+		this.quadTree.forEachValue((renderSection, sectionPos) ->
 		{
 			if (renderSection != null && renderSection.shouldRender())
 			{
@@ -166,7 +166,7 @@ public class RenderBufferHandler
 	public void update()
 	{
 		
-		this.quadTree.forEachLeafValue((renderSection, sectionPos) ->
+		this.quadTree.forEachValue((renderSection, sectionPos) ->
 		{
 			if (renderSection != null)
 			{
@@ -185,7 +185,7 @@ public class RenderBufferHandler
 				else
 				{
 					LodUtil.assertTrue(currentRenderSource != null); // section.shouldRender() should have ensured this
-					currentRenderSource.trySwapRenderBufferAsync(renderSection.getRenderSource(), renderSection.abstractRenderBufferRef);
+					currentRenderSource.trySwapRenderBuffer(renderSection.getRenderSource(), renderSection.abstractRenderBufferRef);
 				}
 			}
 		});
@@ -193,9 +193,9 @@ public class RenderBufferHandler
 	
     public void close() 
 	{ 
-		this.quadTree.forEachLeafValue((renderSection) -> 
+		this.quadTree.forEachValue((renderSection) -> 
 		{
-			if (renderSection.abstractRenderBufferRef.get() != null)
+			if (renderSection != null && renderSection.abstractRenderBufferRef.get() != null)
 			{
 				renderSection.abstractRenderBufferRef.get().close();
 				renderSection.abstractRenderBufferRef.set(null);

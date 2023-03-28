@@ -216,6 +216,15 @@ public class QuadTree<T>
 		});
 	}
 	
+	public void forEachValue(Consumer<? super T> consumer) { this.forEachValue((value, sectionPos) -> { consumer.accept(value); }); }
+	public void forEachValue(BiConsumer<? super T, DhSectionPos> consumer)
+	{
+		this.forEachRootNode((rootNode) ->
+		{
+			rootNode.forAllChildValues(consumer);
+		});
+	}
+	
 	
 	
 	

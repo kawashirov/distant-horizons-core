@@ -7,8 +7,6 @@ import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.file.renderfile.ILodRenderSourceProvider;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.DetailDistanceUtil;
-import com.seibel.lod.core.util.LodUtil;
-import com.seibel.lod.core.util.gridList.MovableGridRingList;
 import com.seibel.lod.core.util.objects.quadTree.QuadNode;
 import com.seibel.lod.core.util.objects.quadTree.QuadTree;
 import org.apache.logging.log4j.Logger;
@@ -247,14 +245,14 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 				// enable the render section
 				nullableRenderSection.loadRenderSourceAndEnableRendering(this.renderSourceProvider);
 				
-				nullableRenderSection.tick(this, this.level);
+				nullableRenderSection.tick(this.level);
 				
 				// delete/disable children
 				nullableQuadNode.deleteAllChildren((renderSection) ->
 				{
 					if (renderSection != null)
 					{
-						renderSection.disableAndDisposeRender();
+						renderSection.disableAndDisposeRendering();
 					}
 				});
 			}
@@ -290,7 +288,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	}
 	private static boolean isSectionLoaded(LodRenderSection renderSection)
 	{
-		return renderSection != null && renderSection.isLoaded() && !renderSection.getRenderSource().isEmpty();
+		return renderSection != null && renderSection.isLoaded() && renderSection.isRenderingEnabled() && !renderSection.getRenderSource().isEmpty();
 	}
 	
 	

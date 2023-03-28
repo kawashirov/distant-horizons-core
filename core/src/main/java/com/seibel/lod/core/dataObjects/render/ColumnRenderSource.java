@@ -13,8 +13,6 @@ import com.seibel.lod.core.render.AbstractRenderBuffer;
 import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.level.IDhLevel;
-import com.seibel.lod.core.render.LodQuadTree;
-import com.seibel.lod.core.render.LodRenderSection;
 import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.ColorUtil;
 import com.seibel.lod.core.util.RenderDataPointUtil;
@@ -366,10 +364,9 @@ public class ColumnRenderSource
 		}
 	}
 	
-	public void enableRender(IDhClientLevel level, LodQuadTree quadTree)
+	public void enableRender(IDhClientLevel level)
 	{
 		this.level = level;
-		//this.tryBuildBuffer(level, quadTree); // FIXME why was this commented out?
 	}
 	
 	public void disableRender() { this.cancelBuildBuffer(); }
@@ -382,7 +379,7 @@ public class ColumnRenderSource
 	 * @param renderBufferToSwap The slot for swapping in the new buffer.
 	 * @return True if the swap was successful. False if swap is not needed or if it is in progress.
 	 */
-	public boolean trySwapRenderBufferAsync(ColumnRenderSource renderSource, AtomicReference<AbstractRenderBuffer> renderBufferToSwap)
+	public boolean trySwapRenderBuffer(ColumnRenderSource renderSource, AtomicReference<AbstractRenderBuffer> renderBufferToSwap)
 	{
 		// prevent swapping the buffer to quickly
 		if (this.lastNs != -1 && System.nanoTime() - this.lastNs < SWAP_TIMEOUT_IN_NS)

@@ -53,7 +53,9 @@ public class LodRenderSection
 		}
 		this.isRenderEnabled = true;
     }
-    public void disableAndDisposeRender()
+	
+	
+    public void disableAndDisposeRendering()
 	{
         if (!this.isRenderEnabled)
 		{
@@ -102,7 +104,7 @@ public class LodRenderSection
 	// update methods //
 	//================//
 	
-    public void tick(LodQuadTree quadTree, IDhClientLevel level)
+    public void tick(IDhClientLevel level)
 	{
 		// get the renderSource if it has finished loading
         if (this.loadFuture != null && this.loadFuture.isDone())
@@ -112,7 +114,7 @@ public class LodRenderSection
 			
             if (this.isRenderEnabled)
 			{
-				this.renderSource.enableRender(level, quadTree);
+				this.renderSource.enableRender(level);
             }
         }
     }
