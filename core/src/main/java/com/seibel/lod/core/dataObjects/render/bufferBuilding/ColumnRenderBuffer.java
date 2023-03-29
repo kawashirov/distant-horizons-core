@@ -145,10 +145,10 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 						throw e3;
 					}
 				},
-				BUFFER_UPLOADER).handle((v, e) ->
+				BUFFER_UPLOADER).handle((columnRenderBuffer, ex) ->
 				{
 				//LOGGER.info("RenderRegion endBuild @ {}", renderSource.sectionPos);
-				if (e != null)
+				if (ex != null)
 				{
 					ColumnRenderBuffer buffer;
 					if (!usedBufferSlot.isEmpty())
@@ -161,7 +161,7 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 				}
 				else
 				{
-					return v;
+					return columnRenderBuffer;
 				}
 			});
 	}

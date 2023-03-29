@@ -146,7 +146,6 @@ public class RenderBufferHandler
 				}
 			}
 		});
-		
 	}
 	
     public void renderOpaque(LodRenderer renderContext)
@@ -156,16 +155,12 @@ public class RenderBufferHandler
 	}
     public void renderTransparent(LodRenderer renderContext)
 	{
-		if (LodRenderer.transparencyEnabled)
-		{
-			//TODO: Directional culling
-			this.loadedNearToFarBuffers.forEach(loadedBuffer -> loadedBuffer.buffer.renderTransparent(renderContext));
-		}
+		//TODO: Directional culling
+		this.loadedNearToFarBuffers.forEach(loadedBuffer -> loadedBuffer.buffer.renderTransparent(renderContext));
 	}
 	
 	public void update()
 	{
-		
 		this.quadTree.forEachValue((renderSection, sectionPos) ->
 		{
 			if (renderSection != null)
