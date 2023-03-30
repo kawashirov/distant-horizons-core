@@ -36,17 +36,23 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
     //TODO: Make the pool change thread count after the config value is changed
     public static final ExecutorService BUFFER_BUILDER_THREADS = ThreadUtil.makeThreadPool(Config.Client.Advanced.Threading.numberOfBufferBuilderThreads.get(), "BufferBuilder");
     public static final ExecutorService BUFFER_UPLOADER = ThreadUtil.makeSingleThreadPool("ColumnBufferUploader");
-    public static final int MAX_CONCURRENT_CALL = 8;
+    // TODO this should probably be based on the number of builder threads
+	public static final int MAX_CONCURRENT_CALL = 8;
 	
     public static final ConfigBasedLogger EVENT_LOGGER = new ConfigBasedLogger(LogManager.getLogger(),
             () -> Config.Client.Advanced.Debugging.DebugSwitch.logRendererBufferEvent.get());
-    private static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
-    private static final long MAX_BUFFER_UPLOAD_TIMEOUT_NANOSECONDS = 1_000_000;
-    GLVertexBuffer[] vbos;
-    GLVertexBuffer[] vbosTransparent;
-    public final DhBlockPos pos;
+    private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	private static final long MAX_BUFFER_UPLOAD_TIMEOUT_NANOSECONDS = 1_000_000;
 	
+	
+	public final DhBlockPos pos;
+	
+	private GLVertexBuffer[] vbos;
+    private GLVertexBuffer[] vbosTransparent;
+	private boolean buffersUploaded = false;
 	private boolean closed = false;
+	
+	
 	
 	
 	
@@ -63,8 +69,9 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 	// vbo building //
 	//==============//
 	
+	// TODO this is static, it should be moved to its own class to prevent confusion
 	/** @return null if busy */
-	public static CompletableFuture<ColumnRenderBuffer> buildBuffers(IDhClientLevel clientLevel, Reference<ColumnRenderBuffer> usedBufferSlot, ColumnRenderSource renderSource, ColumnRenderSource[] adjData)
+	public static CompletableFuture<ColumnRenderBuffer> buildBuffers(IDhClientLevel clientLevel, Reference<ColumnRenderBuffer> renderBufferRef, ColumnRenderSource renderSource, ColumnRenderSource[] adjData)
 	{
 		if (isBusy())
 		{
@@ -104,56 +111,59 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 				
 			}, BUFFER_BUILDER_THREADS)
 			.thenApplyAsync((quadBuilder) ->
+			{
+				try
 				{
+					EVENT_LOGGER.trace("RenderRegion start Upload @ "+renderSource.sectionPos);
+					GLProxy glProxy = GLProxy.getInstance();
+					EGpuUploadMethod method = GLProxy.getInstance().getGpuUploadMethod();
+					EGLProxyContext oldContext = glProxy.getGlContext();
+					glProxy.setGlContext(EGLProxyContext.LOD_BUILDER);
+					ColumnRenderBuffer buffer = renderBufferRef.swap(null);
+					
+					if (buffer == null)
+					{
+						buffer = new ColumnRenderBuffer(new DhBlockPos(renderSource.sectionPos.getCorner().getCornerBlockPos(), clientLevel.getMinY()));
+					}
+					buffer.buffersUploaded = false;
+					
 					try
 					{
-						EVENT_LOGGER.trace("RenderRegion start Upload @ {}", renderSource.sectionPos);
-						GLProxy glProxy = GLProxy.getInstance();
-						EGpuUploadMethod method = GLProxy.getInstance().getGpuUploadMethod();
-						EGLProxyContext oldContext = glProxy.getGlContext();
-						glProxy.setGlContext(EGLProxyContext.LOD_BUILDER);
-						ColumnRenderBuffer buffer = usedBufferSlot.swap(null);
-						
-						if (buffer == null)
-						{
-							buffer = new ColumnRenderBuffer(new DhBlockPos(renderSource.sectionPos.getCorner().getCornerBlockPos(), clientLevel.getMinY()));
-						}
-						
-						try
-						{
-							buffer.uploadBuffer(quadBuilder, method);
-							EVENT_LOGGER.trace("RenderRegion end Upload @ {}", renderSource.sectionPos);
-							return buffer;
-						}
-						catch (Exception e)
-						{
-							buffer.close();
-							throw e;
-						}
-						finally
-						{
-							glProxy.setGlContext(oldContext);
-						}
+						buffer.uploadBuffer(quadBuilder, method);
+						EVENT_LOGGER.trace("RenderRegion end Upload @ "+renderSource.sectionPos);
+						return buffer;
 					}
-					catch (InterruptedException e)
+					catch (Exception e)
 					{
-						throw UncheckedInterruptedException.convert(e);
+						buffer.close();
+						throw e;
 					}
-					catch (Throwable e3)
+					finally
 					{
-						LOGGER.error("\"LodNodeBufferBuilder\" was unable to upload buffer: ", e3);
-						throw e3;
+						glProxy.setGlContext(oldContext);
 					}
-				},
-				BUFFER_UPLOADER).handle((columnRenderBuffer, ex) ->
+				}
+				catch (InterruptedException e)
 				{
+					throw UncheckedInterruptedException.convert(e);
+				}
+				catch (Throwable e3)
+				{
+					LOGGER.error("\"LodNodeBufferBuilder\" was unable to upload buffer: ", e3);
+					throw e3;
+				}
+			},
+			BUFFER_UPLOADER).handle((columnRenderBuffer, ex) ->
+			{
 				//LOGGER.info("RenderRegion endBuild @ {}", renderSource.sectionPos);
 				if (ex != null)
 				{
+					LOGGER.warn("Buffer building failed: "+ex.getMessage(), ex);
+					
 					ColumnRenderBuffer buffer;
-					if (!usedBufferSlot.isEmpty())
+					if (!renderBufferRef.isEmpty())
 					{
-						buffer = usedBufferSlot.swap(null);
+						buffer = renderBufferRef.swap(null);
 						buffer.close();
 					}
 					
@@ -321,6 +331,8 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 		{
 			this.uploadBuffersDirect(builder, method);
 		}
+		
+		this.buffersUploaded = true;
 	}
 	
 	private void uploadBuffersMapped(LodQuadBuilder builder, EGpuUploadMethod method)
@@ -552,6 +564,7 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 			return;
 		}
 		this.closed = true;
+		this.buffersUploaded = false;
 		
         GLProxy.getInstance().recordOpenGlCall(() ->
 		{
@@ -578,13 +591,15 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 	// getters //
 	//=========//
 	
+	public boolean areBuffersUploaded() { return this.buffersUploaded; }
+	
+	// TODO move static methods to their own class to avoid confusion
     private static long getCurrentJobsCount()
 	{
         long jobs = ((ThreadPoolExecutor) BUFFER_BUILDER_THREADS).getQueue().stream().filter(runnable -> !((Future<?>) runnable).isDone()).count();
         jobs += ((ThreadPoolExecutor) BUFFER_UPLOADER).getQueue().stream().filter(runnable -> !((Future<?>) runnable).isDone()).count();
         return jobs;
     }
-	
     public static boolean isBusy() { return getCurrentJobsCount() > MAX_CONCURRENT_CALL; }
 	
 }

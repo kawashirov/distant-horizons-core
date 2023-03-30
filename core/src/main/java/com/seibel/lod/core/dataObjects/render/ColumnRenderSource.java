@@ -9,7 +9,6 @@ import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource
 import com.seibel.lod.core.dataObjects.transformers.FullToColumnTransformer;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
-import com.seibel.lod.core.render.AbstractRenderBuffer;
 import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.level.IDhLevel;
@@ -337,6 +336,7 @@ public class ColumnRenderSource
 	// Render Methods //
 	//================//
 	
+	// TODO return future?
 	private void tryBuildBuffer(IDhClientLevel level, ColumnRenderSource renderSource)
 	{
 		if (this.buildRenderBufferFuture == null && !ColumnRenderBuffer.isBusy() && !this.isEmpty)
@@ -378,10 +378,10 @@ public class ColumnRenderSource
 	/**
 	 * Try and swap in new render buffer for this section. Note that before this call, there should be no other
 	 * places storing or referencing the render buffer.
-	 * @param renderBufferToSwap The slot for swapping in the new buffer.
+	 * @param renderBufferRefToSwap The slot for swapping in the new buffer.
 	 * @return True if the swap was successful. False if swap is not needed or if it is in progress.
 	 */
-	public boolean trySwapRenderBuffer(ColumnRenderSource renderSource, AtomicReference<AbstractRenderBuffer> renderBufferToSwap)
+	public boolean trySwapInNewlyBuiltRenderBuffer(ColumnRenderSource renderSource, AtomicReference<ColumnRenderBuffer> renderBufferRefToSwap)
 	{
 		// prevent swapping the buffer to quickly
 		if (this.lastNs != -1 && System.nanoTime() - this.lastNs < SWAP_TIMEOUT_IN_NS)
@@ -397,18 +397,13 @@ public class ColumnRenderSource
 				this.lastNs = System.nanoTime();
 				//LOGGER.info("Swapping render buffer for {}", sectionPos);
 				
-				AbstractRenderBuffer newBuffer = this.buildRenderBufferFuture.join();
-				AbstractRenderBuffer oldBuffer = renderBufferToSwap.getAndSet(newBuffer);
-				if (oldBuffer instanceof ColumnRenderBuffer)
-				{
-					ColumnRenderBuffer swapped = this.columnRenderBufferRef.swap((ColumnRenderBuffer) oldBuffer);
-					LodUtil.assertTrue(swapped == null);
-				}
-				else if (oldBuffer != null)
-				{
-					throw new UnsupportedOperationException("swap buffer fail, Expected "+AbstractRenderBuffer.class.getSimpleName()+" of type: "+ColumnRenderBuffer.class.getSimpleName()+" class given: "+oldBuffer.getClass().getSimpleName());
-				}
+				ColumnRenderBuffer newBuffer = this.buildRenderBufferFuture.join();
+				ColumnRenderBuffer oldBuffer = renderBufferRefToSwap.getAndSet(newBuffer);
 				
+				ColumnRenderBuffer swapped = this.columnRenderBufferRef.swap(oldBuffer);
+				LodUtil.assertTrue(swapped == null);
+				
+					
 				this.buildRenderBufferFuture = null;
 				return true;
 			}

@@ -1,6 +1,7 @@
 package com.seibel.lod.core.render;
 
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
+import com.seibel.lod.core.dataObjects.render.bufferBuilding.ColumnRenderBuffer;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhSectionPos;
@@ -22,7 +23,7 @@ public class LodRenderSection
 	private ColumnRenderSource renderSource;
 	private ILodRenderSourceProvider renderSourceProvider = null;
 	
-	public final AtomicReference<AbstractRenderBuffer> abstractRenderBufferRef = new AtomicReference<>();
+	public final AtomicReference<ColumnRenderBuffer> renderBufferRef = new AtomicReference<>();
 	
 	
 	
@@ -128,10 +129,10 @@ public class LodRenderSection
 			this.renderSource = null;
 		}
 		
-		if (this.abstractRenderBufferRef.get() != null)
+		if (this.renderBufferRef.get() != null)
 		{
-			this.abstractRenderBufferRef.get().close();
-			this.abstractRenderBufferRef.set(null);
+			this.renderBufferRef.get().close();
+			this.renderBufferRef.set(null);
 		}
 		
 		if (this.loadFuture != null)

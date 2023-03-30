@@ -199,10 +199,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 			
 			if (nullableRenderSection != null)
 			{
-				// TODO this logic isn't ready
-				//  it can cause buffers to render on top of each other and doesn't completely solve the empty section rendering bug.
-				//  Some sort of logic to determine if the buffer has been uploaded is probably necessary
-//				if (areChildRenderSectionsLoaded(nullableRenderSection))
+				if (areChildRenderSectionsLoaded(nullableRenderSection))
 				{
 					nullableRenderSection.disableAndDisposeRendering();
 				}
@@ -250,21 +247,31 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 				
 				// enable the render section
 				nullableRenderSection.loadRenderSourceAndEnableRendering(this.renderSourceProvider);
-				
+				// determine if the section has loaded yet // TODO rename "tick" to check loading future or something?
 				nullableRenderSection.tick(this.level);
 				
+				
 				// delete/disable children
-				nullableQuadNode.deleteAllChildren((renderSection) ->
+				if (isSectionLoaded(nullableRenderSection))
 				{
-					if (renderSection != null)
+					nullableQuadNode.deleteAllChildren((renderSection) ->
 					{
-						renderSection.disableAndDisposeRendering();
-					}
-				});
+						if (renderSection != null)
+						{
+							renderSection.disableAndDisposeRendering();
+						}
+					});
+				}
 			}
 		}
 	}
-	
+	/** 
+	 * Used to determine if a section can unload or not. 
+	 * If this returns true, that means there are child render sections ready to render,
+	 * so there won't be any holes in the world by disabling the parent.
+	 * <br><Br>
+	 * FIXME sometimes sections will render on top of each other
+	 */
 	private boolean areChildRenderSectionsLoaded(LodRenderSection renderSection)
 	{
 		if (renderSection == null)
@@ -279,31 +286,40 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		}
 		else
 		{
-			// recursively look for a loaded child
+			// recursively check if all children are loaded
 			
-			try
+			for (int i = 0; i < 4; i++)
 			{
-				LodRenderSection child0 = this.getChildSection(renderSection.pos, 0);
-				LodRenderSection child1 = this.getChildSection(renderSection.pos, 1);
-				LodRenderSection child2 = this.getChildSection(renderSection.pos, 2);
-				LodRenderSection child3 = this.getChildSection(renderSection.pos, 3);
-				
-				// either the child section is loaded, or check the next section down
-				return (isSectionLoaded(child0) || areChildRenderSectionsLoaded(child0))
-						&& (isSectionLoaded(child1) || areChildRenderSectionsLoaded(child1))
-						&& (isSectionLoaded(child2) || areChildRenderSectionsLoaded(child2))
-						&& (isSectionLoaded(child3) || areChildRenderSectionsLoaded(child3));
+				DhSectionPos childPos = renderSection.pos.getChildByIndex(i);
+				// if a section is out of bounds, act like it is loaded
+				if (this.isSectionPosInBounds(childPos))
+				{
+					LodRenderSection child = this.getChildSection(renderSection.pos, i);
+					// check if either this child or all of its children are loaded
+					boolean childLoaded = isSectionLoaded(child) || areChildRenderSectionsLoaded(child);
+					if (!childLoaded)
+					{
+						// at least one child isn't loaded
+						return false;
+					}
+				}
 			}
-			catch (IndexOutOfBoundsException e)
-			{
-				// FIXME will happen if children are outside the render distance
-				return true;
-			}
+			
+			// all children are loaded
+			return true;
 		}
 	}
 	private static boolean isSectionLoaded(LodRenderSection renderSection)
 	{
-		return renderSection != null && renderSection.isLoaded() && renderSection.isRenderingEnabled() && !renderSection.getRenderSource().isEmpty();
+		return renderSection != null 
+				&& renderSection.isLoaded() 
+				&& renderSection.isRenderingEnabled()
+				
+				&& renderSection.renderBufferRef.get() != null
+				&& renderSection.renderBufferRef.get().areBuffersUploaded()
+				
+				&& renderSection.getRenderSource() != null 
+				&& !renderSection.getRenderSource().isEmpty();
 	}
 	
 	

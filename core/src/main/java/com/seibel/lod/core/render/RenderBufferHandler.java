@@ -139,10 +139,9 @@ public class RenderBufferHandler
 		{
 			if (renderSection != null && renderSection.shouldRender())
 			{
-				// this should always be true
-				if (renderSection.abstractRenderBufferRef.get() != null)
+				if (renderSection.renderBufferRef.get() != null && renderSection.renderBufferRef.get().areBuffersUploaded())
 				{
-					this.loadedNearToFarBuffers.add(new LoadedRenderBuffer(renderSection.abstractRenderBufferRef.get(), sectionPos));
+					this.loadedNearToFarBuffers.add(new LoadedRenderBuffer(renderSection.renderBufferRef.get(), sectionPos));
 				}
 			}
 		});
@@ -171,7 +170,7 @@ public class RenderBufferHandler
 				if (!renderSection.shouldRender())
 				{
 					//TODO: Does this really need to force the old buffer to not be rendered?
-					AbstractRenderBuffer previousRenderBuffer = renderSection.abstractRenderBufferRef.getAndSet(null);
+					AbstractRenderBuffer previousRenderBuffer = renderSection.renderBufferRef.getAndSet(null);
 					if (previousRenderBuffer != null)
 					{
 						previousRenderBuffer.close();
@@ -180,7 +179,7 @@ public class RenderBufferHandler
 				else
 				{
 					LodUtil.assertTrue(currentRenderSource != null); // section.shouldRender() should have ensured this
-					currentRenderSource.trySwapRenderBuffer(renderSection.getRenderSource(), renderSection.abstractRenderBufferRef);
+					currentRenderSource.trySwapInNewlyBuiltRenderBuffer(renderSection.getRenderSource(), renderSection.renderBufferRef);
 				}
 			}
 		});
@@ -190,10 +189,10 @@ public class RenderBufferHandler
 	{ 
 		this.quadTree.forEachValue((renderSection) -> 
 		{
-			if (renderSection != null && renderSection.abstractRenderBufferRef.get() != null)
+			if (renderSection != null && renderSection.renderBufferRef.get() != null)
 			{
-				renderSection.abstractRenderBufferRef.get().close();
-				renderSection.abstractRenderBufferRef.set(null);
+				renderSection.renderBufferRef.get().close();
+				renderSection.renderBufferRef.set(null);
 			}
 		});
 	}
