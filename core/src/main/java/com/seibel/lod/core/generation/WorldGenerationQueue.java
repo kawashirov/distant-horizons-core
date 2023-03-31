@@ -181,8 +181,8 @@ public class WorldGenerationQueue implements Closeable
 				{
 //					LOGGER.info("pre task count: " + this.numberOfTasksQueued);
 					
-					// done to prevent generating chunks where the player isn't
-					this.removeOutOfRangeTasks(this.generationTargetPos);
+					// recenter the generator tasks, this is done to prevent generating chunks where the player isn't
+					this.waitingTaskQuadTree.setCenterBlockPos(this.generationTargetPos);
 					
 					// queue generation tasks until the generator is full, or there are no more tasks to generate
 					boolean taskStarted = true;
@@ -213,18 +213,6 @@ public class WorldGenerationQueue implements Closeable
 				generationQueueStarted = false;
 			}
 		});
-	}
-	
-	private void removeOutOfRangeTasks(DhBlockPos2D targetBlockPos)
-	{
-		AtomicInteger numberOfTasksRemoved = new AtomicInteger();
-		
-		this.waitingTaskQuadTree.setCenterBlockPos(targetBlockPos, (worldGenTask) -> { numberOfTasksRemoved.getAndIncrement(); });
-		
-//		if (numberOfTasksRemoved.get() != 0)
-//		{
-//			LOGGER.info(numberOfTasksRemoved.get()+" world gen tasks removed.");
-//		}
 	}
 	
 //	/** Removes all {@link WorldGenTask}'s and {@link WorldGenTaskGroup}'s that have been garbage collected. */
