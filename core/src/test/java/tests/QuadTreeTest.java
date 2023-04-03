@@ -540,56 +540,60 @@ public class QuadTreeTest
 		
 	}
 	
-//	@Test
-//	public void QuadNodeDetailLimitTest()
-//	{
-//		AbstractTestTreeParams treeParams = new MediumTestTree();
-//		QuadTree<Integer> tree = new QuadTree<>(treeParams.getWidthInBlocks(), new DhBlockPos2D(0, 0), (byte)6);
-//		Assert.assertEquals("Test detail level's need to be adjusted. This isn't necessarily a failed test.", 10, tree.treeMaxDetailLevel);
-//		
-//		// create the root node
-//		testSet(tree, new DhSectionPos((byte)10, 0, 0), 1);
-//		
-//		// recurse down the tree
-//		AtomicInteger minimumDetailLevelReachedRef = new AtomicInteger(tree.treeMaxDetailLevel);
-//		tree.forEachRootNode((rootNode) -> 
-//		{
-//			rootNode.forEachDirectChildNode((quadNode, sectionPos) ->
-//			{
-//				// all sections will be null
-//				rootNode.setValue(sectionPos, 0);
-//			});
-//			
-//			rootNode.forEachDirectChildNode((quadNode, sectionPos) -> 
-//			{
-//				recursivelyCreateNodeChildren(quadNode, tree.treeMinDetailLevel, minimumDetailLevelReachedRef);
-//			});
-//		});
-//		
-//		// confirm that the tree can and did iterate all the way down to the minimum detail level
-//		Assert.assertEquals("Minimum detail level never reached", minimumDetailLevelReachedRef.get(), tree.treeMinDetailLevel);
-//	}
+	@Test
+	public void QuadNodeDetailLimitTest()
+	{
+		AbstractTestTreeParams treeParams = new MediumTestTree();
+		QuadTree<Integer> tree = new QuadTree<>(treeParams.getWidthInBlocks(), new DhBlockPos2D(0, 0), (byte)6);
+		Assert.assertEquals("Test detail level's need to be adjusted. This isn't necessarily a failed test.", 10, tree.treeMaxDetailLevel);
+
+		// create the root node
+		testSet(tree, new DhSectionPos((byte)10, 0, 0), 1);
+
+		// recurse down the tree
+		AtomicInteger minimumDetailLevelReachedRef = new AtomicInteger(tree.treeMaxDetailLevel);
+		Iterator<QuadNode<Integer>> rootNodeIterator = tree.rootNodeIterator();
+		while (rootNodeIterator.hasNext())
+		{
+			QuadNode<Integer> rootNode = rootNodeIterator.next();
+			Iterator<DhSectionPos> rootNodeDirectChildPosIterator = rootNode.getDirectChildPosIterator();
+			while (rootNodeDirectChildPosIterator.hasNext())
+			{
+				DhSectionPos sectionPos = rootNodeDirectChildPosIterator.next();
+				
+				// all sections will be null
+				rootNode.setValue(sectionPos, 0);
+			}
+			
+			Iterator<QuadNode<Integer>> rootNodeDirectChildIterator = rootNode.getDirectChildNodeIterator();
+			while (rootNodeDirectChildIterator.hasNext())
+			{
+				QuadNode<Integer> quadNode = rootNodeDirectChildIterator.next();
+				recursivelyCreateNodeChildren(quadNode, tree.treeMinDetailLevel, minimumDetailLevelReachedRef);
+			}
+		}
+		
+		// confirm that the tree can and did iterate all the way down to the minimum detail level
+		Assert.assertEquals("Incorrect minimum detail level reached.", tree.treeMinDetailLevel, minimumDetailLevelReachedRef.get());
+	}
 	private void recursivelyCreateNodeChildren(QuadNode<Integer> node, byte minDetailLevel, AtomicInteger minimumDetailLevelReachedRef)
 	{
 		boolean childNodesCreated = false;
 		boolean childNodesIterated = false;
-		Iterator<QuadNode<Integer>> directChildIterator;
 		
 		
 		
 		// fill in the null children
-		directChildIterator = node.getDirectChildNodeIterator();
-		while (directChildIterator.hasNext())
+		Iterator<DhSectionPos> directChildPosIterator = node.getDirectChildPosIterator();
+		while (directChildPosIterator.hasNext())
 		{
-			QuadNode<Integer> childNode = directChildIterator.next();
-			
-			node.setValue(childNode.sectionPos, 0);
+			node.setValue(directChildPosIterator.next(), 0);
 			childNodesCreated = true;
 		}
 		
 		
 		// attempt to recurse down these new children
-		directChildIterator = node.getDirectChildNodeIterator();
+		Iterator<QuadNode<Integer>> directChildIterator = node.getDirectChildNodeIterator();
 		while (directChildIterator.hasNext())
 		{
 			QuadNode<Integer> childNode = directChildIterator.next();
@@ -627,7 +631,10 @@ public class QuadTreeTest
 		Iterator<DhSectionPos> directChildIterator = rootNode.getDirectChildPosIterator();
 		while (directChildIterator.hasNext())
 		{
-			rootNode.setValue(directChildIterator.next(), 1);
+			DhSectionPos sectionPos = directChildIterator.next();
+			Assert.assertNotEquals("Root node pos shouldn't be included in direct child pos iteration", sectionPos, rootNode.sectionPos);
+			
+			rootNode.setValue(sectionPos, 1);
 		}
 		Assert.assertEquals("node not filled", rootNode.getChildValueCount(), 4);
 		

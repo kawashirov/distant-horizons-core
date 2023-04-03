@@ -20,11 +20,11 @@ class QuadNodeIterator<T> implements Iterator<QuadNode<T>>
 	
 	
 	
-	public QuadNodeIterator(QuadNode<T> rootNode, boolean onlyReturnLeafValues, byte highestDetailLevel)
+	public QuadNodeIterator(QuadNode<T> rootNode, boolean onlyReturnLeafValues)
 	{
 		this.onlyReturnLeafValues = onlyReturnLeafValues;
 		// TODO the naming conversion for these are flipped in a lot of places
-		this.highestDetailLevel = highestDetailLevel;
+		this.highestDetailLevel = rootNode.minimumDetailLevel;
 		this.iteratorDetailLevel = rootNode.sectionPos.sectionDetailLevel;
 		
 		
@@ -72,10 +72,7 @@ class QuadNodeIterator<T> implements Iterator<QuadNode<T>>
 	
 	
 	@Override
-	public boolean hasNext()
-	{
-		return this.iteratorNodeQueue.size() != 0;
-	}
+	public boolean hasNext() { return this.iteratorNodeQueue.size() != 0; }
 	
 	@Override
 	public QuadNode<T> next()

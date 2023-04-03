@@ -248,11 +248,11 @@ public class QuadNode<T>
 	// iterators //
 	//===========//
 	
-	public Iterator<QuadNode<T>> getNodeIterator() { return new QuadNodeIterator<>(this, false, this.minimumDetailLevel); }
-	public Iterator<QuadNode<T>> getLeafNodeIterator() { return new QuadNodeIterator<>(this, true, this.minimumDetailLevel); }
+	public Iterator<QuadNode<T>> getNodeIterator() { return new QuadNodeIterator<>(this, false); }
+	public Iterator<QuadNode<T>> getLeafNodeIterator() { return new QuadNodeIterator<>(this, true); }
 	
-	public Iterator<QuadNode<T>> getDirectChildNodeIterator() { return new QuadNodeIterator<>(this, false, this.sectionPos.sectionDetailLevel); }
-	public Iterator<DhSectionPos> getDirectChildPosIterator() { return new QuadNodeDirectChildPosIterator<>(this, true); }
+	public Iterator<QuadNode<T>> getDirectChildNodeIterator() { return new QuadNodeDirectChildNodeIterator<>(this); }
+	public Iterator<DhSectionPos> getDirectChildPosIterator() { return new QuadNodeDirectChildPosIterator<>(this); }
 	
 	
 	
