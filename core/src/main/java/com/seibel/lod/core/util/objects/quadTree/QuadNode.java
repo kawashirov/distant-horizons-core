@@ -5,7 +5,7 @@ import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
-import java.util.function.BiConsumer;
+import java.util.Iterator;
 import java.util.function.Consumer;
 
 public class QuadNode<T>
@@ -45,13 +45,12 @@ public class QuadNode<T>
 	
 	
 	
-	
-	
 	public QuadNode(DhSectionPos sectionPos, byte minimumDetailLevel)
 	{
 		this.sectionPos = sectionPos;
 		this.minimumDetailLevel = minimumDetailLevel;
 	}
+	
 	
 	
 	/** @return the number of non-null child nodes */
@@ -245,62 +244,21 @@ public class QuadNode<T>
 	
 	
 	
-	// TODO comment section for iterators
-	// TODO make naming consistent with QuadTree
-	// TODO replace consumers with returned iterators, using consumers like this makes debugging painful because the stack traces become messy very quickly
+	//===========//
+	// iterators //
+	//===========//
 	
-	/** 
-	 * Applies the given consumer to all 4 of this nodes' children. <br> 
-	 * Note: this will pass in null children.
-	 */
-	public void forEachDirectChildNode(BiConsumer<QuadNode<T>, DhSectionPos> callback)
-	{
-		if (this.sectionPos.sectionDetailLevel != this.minimumDetailLevel)
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				DhSectionPos childPos = this.sectionPos.getChildByIndex(i);
-				QuadNode<T> childNode = this.getChildByIndex(i);
-				callback.accept(childNode, childPos);
-			}
-		}
-	}
+	public Iterator<QuadNode<T>> getNodeIterator() { return new QuadNodeIterator<>(this, false, this.minimumDetailLevel); }
+	public Iterator<QuadNode<T>> getLeafNodeIterator() { return new QuadNodeIterator<>(this, true, this.minimumDetailLevel); }
 	
-	/** TODO comment */
-	public void forAllLeafValues(Consumer<? super T> consumer) { this.forAllLeafValues((value, sectionPos) -> { consumer.accept(value); }); }
-	/**
-	 * Applies the given consumer to all leaf nodes below this node. <br> 
-	 * Note: this will pass in null values.
-	 */
-	public void forAllLeafValues(BiConsumer<? super T, DhSectionPos> consumer) { this.forAllChildValues(consumer, true, true); }
+	public Iterator<QuadNode<T>> getDirectChildNodeIterator() { return new QuadNodeIterator<>(this, false, this.sectionPos.sectionDetailLevel); }
+	public Iterator<DhSectionPos> getDirectChildPosIterator() { return new QuadNodeDirectChildPosIterator<>(this, true); }
 	
-	public void forAllChildValues(BiConsumer<? super T, DhSectionPos> consumer) { this.forAllChildValues(consumer, false, true); }
-	private void forAllChildValues(BiConsumer<? super T, DhSectionPos> consumer, boolean onlyReturnLeafNodes, boolean topCaller) // TODO rename/refactor topCaller parameter
-	{
-		if (this.getChildCount() == 0 || this.sectionPos.sectionDetailLevel == this.minimumDetailLevel)
-		{
-			// base case, bottom leaf node found
-			consumer.accept(this.value, this.sectionPos);
-		}
-		else
-		{
-			if (!onlyReturnLeafNodes && !topCaller)
-			{
-				consumer.accept(this.value, this.sectionPos);
-			}
-			
-			for (int i = 0; i < 4; i++)
-			{
-				QuadNode<T> childNode = this.getChildByIndex(i);
-				if (childNode != null)
-				{
-					// TODO should this pass in a null value if the child node is null?
-					childNode.forAllChildValues(consumer, onlyReturnLeafNodes, false);
-				}
-			}
-		}
-	}
 	
+	
+	//==========//
+	// deletion //
+	//==========//
 	
 	public void deleteAllChildren() { this.deleteAllChildren(null); }
 	/** @param removedItemConsumer is only fired for non-null nodes, however the value passed in may be null */
@@ -341,6 +299,11 @@ public class QuadNode<T>
 		swChild = null;
 	}
 	
+	
+	
+	//==============//
+	// base methods //
+	//==============//
 	
 	@Override
 	public String toString() { return "pos: "+this.sectionPos+", children #: "+this.getChildCount()+", value: "+this.value; }
