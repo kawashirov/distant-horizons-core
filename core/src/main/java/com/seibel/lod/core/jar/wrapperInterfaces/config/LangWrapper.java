@@ -13,7 +13,7 @@ import java.util.Locale;
 public class LangWrapper implements ILangWrapper {
     public static final LangWrapper INSTANCE = new LangWrapper();
     private static final Config jsonObject = Config.inMemory();
-    private static final Logger logger = LogManager.getLogger(LangWrapper.class);
+    private static final Logger logger = LogManager.getLogger(LangWrapper.class.getSimpleName());
 
     public static void init() {
         try {
