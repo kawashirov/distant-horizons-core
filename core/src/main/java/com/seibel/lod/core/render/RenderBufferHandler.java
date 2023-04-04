@@ -9,9 +9,11 @@ import com.seibel.lod.core.render.renderer.LodRenderer;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.math.Vec3f;
 import com.seibel.lod.core.util.objects.SortedArraySet;
+import com.seibel.lod.core.util.objects.quadTree.QuadNode;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Comparator;
+import java.util.Iterator;
 
 /** 
  * This object tells the {@link LodRenderer} what buffers to render 
@@ -135,8 +137,15 @@ public class RenderBufferHandler
 		
 		// Build the sorted list
 		this.loadedNearToFarBuffers = new SortedArraySet<>((a, b) -> -farToNearComparator.compare(a, b)); // TODO is the comparator named wrong?
-		this.quadTree.forEachValue((renderSection, sectionPos) ->
+		
+		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.quadTree.nodeIterator();
+		while (nodeIterator.hasNext())
 		{
+			QuadNode<LodRenderSection> node = nodeIterator.next();
+			
+			DhSectionPos sectionPos = node.sectionPos;
+			LodRenderSection renderSection = node.value;
+			
 			if (renderSection != null && renderSection.shouldRender())
 			{
 				if (renderSection.renderBufferRef.get() != null && renderSection.renderBufferRef.get().areBuffersUploaded())
@@ -144,7 +153,7 @@ public class RenderBufferHandler
 					this.loadedNearToFarBuffers.add(new LoadedRenderBuffer(renderSection.renderBufferRef.get(), sectionPos));
 				}
 			}
-		});
+		}
 	}
 	
     public void renderOpaque(LodRenderer renderContext)
@@ -160,8 +169,10 @@ public class RenderBufferHandler
 	
 	public void update()
 	{
-		this.quadTree.forEachValue((renderSection, sectionPos) ->
+		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.quadTree.nodeIterator();
+		while (nodeIterator.hasNext())
 		{
+			LodRenderSection renderSection = nodeIterator.next().value;
 			if (renderSection != null)
 			{
 				ColumnRenderSource currentRenderSource = renderSection.getRenderSource();
@@ -182,19 +193,21 @@ public class RenderBufferHandler
 					currentRenderSource.trySwapInNewlyBuiltRenderBuffer(renderSection.getRenderSource(), renderSection.renderBufferRef);
 				}
 			}
-		});
+		}
 	}
 	
     public void close() 
-	{ 
-		this.quadTree.forEachValue((renderSection) -> 
+	{
+		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.quadTree.nodeIterator();
+		while (nodeIterator.hasNext())
 		{
+			LodRenderSection renderSection = nodeIterator.next().value;
 			if (renderSection != null && renderSection.renderBufferRef.get() != null)
 			{
 				renderSection.renderBufferRef.get().close();
 				renderSection.renderBufferRef.set(null);
 			}
-		});
+		}
 	}
 	
 	

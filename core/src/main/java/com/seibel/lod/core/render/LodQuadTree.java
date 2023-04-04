@@ -11,6 +11,8 @@ import com.seibel.lod.core.util.objects.quadTree.QuadNode;
 import com.seibel.lod.core.util.objects.quadTree.QuadTree;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Iterator;
+
 /**
  * This quadTree structure is our core data structure and holds
  * all rendering data. <br><br>
@@ -82,8 +84,8 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
      * @param z z coordinate of the section
      * @return the LodSection
      */
-    public LodRenderSection getSection(byte detailLevel, int x, int z) { return this.get(new DhSectionPos(detailLevel, x, z)); }
-    public LodRenderSection getSection(DhSectionPos pos) { return this.get(pos); }
+    public LodRenderSection getSection(byte detailLevel, int x, int z) { return this.getValue(new DhSectionPos(detailLevel, x, z)); }
+    public LodRenderSection getSection(DhSectionPos pos) { return this.getValue(pos); }
 	
 	
 	
@@ -163,21 +165,34 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	}
 	private void updateAllRenderSections(DhBlockPos2D playerPos)
 	{
-		this.forEachRootNodePos((rootNode, rootSectionPos) ->
+		// make sure all root nodes are created
+		Iterator<DhSectionPos> rootPosIterator = this.rootNodePosIterator();
+		while (rootPosIterator.hasNext())
 		{
-			if (rootNode == null)
+			DhSectionPos rootSectionPos = rootPosIterator.next();
+			if (this.getNode(rootSectionPos) == null)
 			{
 				LodRenderSection newRenderSection = new LodRenderSection(rootSectionPos);
-				this.set(rootSectionPos, newRenderSection);
-				return; // update next tick
+				this.setValue(rootSectionPos, newRenderSection);
 			}
+		}
+
+
+		// update all nodes in the tree
+		Iterator<DhSectionPos> rootNodeIterator = this.rootNodePosIterator();
+		while (rootNodeIterator.hasNext())
+		{
+			DhSectionPos rootPos = rootNodeIterator.next();
+			QuadNode<LodRenderSection> rootNode = this.getNode(rootPos); // should never be null
 			
-			
-			rootNode.forEachDirectChildNode((quadNode, sectionPos) ->
+			// iterate over nodes in this root
+			Iterator<QuadNode<LodRenderSection>> nodeIterator = rootNode.getNodeIterator();
+			while (nodeIterator.hasNext())
 			{
-				recursivelyUpdateRenderSectionNode(playerPos, rootNode, quadNode, sectionPos);
-			});
-		});
+				QuadNode<LodRenderSection> quadNode = nodeIterator.next();
+				recursivelyUpdateRenderSectionNode(playerPos, rootNode, quadNode, quadNode.sectionPos);
+			}
+		}
 	}
 	private void recursivelyUpdateRenderSectionNode(DhBlockPos2D playerPos, QuadNode<LodRenderSection> rootNode, QuadNode<LodRenderSection> nullableQuadNode, DhSectionPos sectionPos)
 	{
@@ -215,10 +230,15 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 			}
 			else
 			{
-				nullableQuadNode.forEachDirectChildNode((childQuadNode, childSectionPosition) ->
+				// TODO this never returns anything
+				Iterator<DhSectionPos> childPosIterator = nullableQuadNode.getChildPosIterator();
+				while (childPosIterator.hasNext())
 				{
-					recursivelyUpdateRenderSectionNode(playerPos, rootNode, childQuadNode, childSectionPosition);
-				});
+					DhSectionPos childPos = childPosIterator.next();
+					QuadNode<LodRenderSection> childNode = rootNode.getNode(childPos);
+					
+					recursivelyUpdateRenderSectionNode(playerPos, rootNode, childNode, childPos);
+				}
 			}
 		}
 		// TODO this should only equal the expected detail level, the (expectedDetailLevel-1) is a temporary fix to prevent corners from being cut out 
@@ -336,28 +356,16 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	{
 		LOGGER.info("Clearing render cache...");
 		
-		this.forEachRootNode((rootNode) ->
+		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.nodeIterator();
+		while (nodeIterator.hasNext())
 		{
-			rootNode.forEachDirectChildNode((quadNode, sectionPos) ->
+			QuadNode<LodRenderSection> quadNode = nodeIterator.next();
+			if (quadNode.value != null)
 			{
-				if (quadNode != null && quadNode.value != null)
-				{
-					quadNode.value.disposeRenderData();
-				}
-			});
-		});
-		
-		this.forEachRootNode((rootNode) ->
-		{
-			rootNode.forEachDirectChildNode((quadNode, sectionPos) ->
-			{
-				if (quadNode != null && quadNode.value != null)
-				{
-					quadNode.value.disposeRenderData();
-					quadNode.value = null;
-				}
-			});
-		});
+				quadNode.value.disposeRenderData();
+				quadNode.value = null;
+			}
+		}
 		
 		// delete the cache files
 		this.renderSourceProvider.deleteRenderCache();
@@ -402,16 +410,16 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	{
 		LOGGER.info("Shutting down "+ LodQuadTree.class.getSimpleName()+"...");
 		
-		this.forEachRootNode((rootNode) -> 
+		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.nodeIterator();
+		while (nodeIterator.hasNext())
 		{
-			rootNode.forEachDirectChildNode((quadNode, sectionPos) -> 
+			QuadNode<LodRenderSection> quadNode = nodeIterator.next();
+			if (quadNode.value != null)
 			{
-				if (quadNode != null && quadNode.value != null)
-				{
-					quadNode.value.disposeRenderData();
-				}
-			});
-		});
+				quadNode.value.disposeRenderData();
+				quadNode.value = null;
+			}
+		}
 		
 		LOGGER.info("Finished shutting down "+ LodQuadTree.class.getSimpleName());
 	}

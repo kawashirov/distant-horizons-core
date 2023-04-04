@@ -9,6 +9,7 @@ import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.generation.tasks.*;
 import com.seibel.lod.core.pos.*;
 import com.seibel.lod.core.util.ThreadUtil;
+import com.seibel.lod.core.util.objects.quadTree.QuadNode;
 import com.seibel.lod.core.util.objects.quadTree.QuadTree;
 import com.seibel.lod.core.util.objects.UncheckedInterruptedException;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
@@ -20,8 +21,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.Closeable;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 public class WorldGenerationQueue implements Closeable
@@ -123,7 +122,7 @@ public class WorldGenerationQueue implements Closeable
 		if (this.waitingTaskQuadTree.isSectionPosInBounds(requestPos))
 		{
 			CompletableFuture<WorldGenResult> future = new CompletableFuture<>();
-			this.waitingTaskQuadTree.set(requestPos, new WorldGenTask(pos, requiredDataDetail, tracker, future));
+			this.waitingTaskQuadTree.setValue(requestPos, new WorldGenTask(pos, requiredDataDetail, tracker, future));
 			return future;
 		}
 		else
@@ -241,73 +240,28 @@ public class WorldGenerationQueue implements Closeable
 	 */
 	private boolean startNextWorldGenTask(DhBlockPos2D targetPos)
 	{
-		final AtomicReference<WorldGenTask> closestTaskRef = new AtomicReference<>(null);
+		long closestGenDist = Long.MAX_VALUE;
 		
-		// TODO improve
-		this.waitingTaskQuadTree.forEachRootNode((rootQuadNode) -> 
+		WorldGenTask closestTask = null;
+		
+		// TODO improve, having to go over every item isn't super efficient
+		Iterator<QuadNode<WorldGenTask>> leafNodeIterator = this.waitingTaskQuadTree.leafNodeIterator();
+		while (leafNodeIterator.hasNext())
 		{
-			if (closestTaskRef.get() == null)
+			WorldGenTask newGenTask = leafNodeIterator.next().value;
+			if (newGenTask != null) // TODO add an option to skip leaves with null values and potentially auto-prune them
 			{
-				rootQuadNode.forAllLeafValues((worldGenTask) ->
+				
+				// use chebyShev distance in order to generate in rings around the target pos (also because it is a fast distance calculation)
+				int chebDistToTargetPos = newGenTask.pos.getCenterBlockPos().toPos2D().chebyshevDist(targetPos.toPos2D());
+				if (chebDistToTargetPos < closestGenDist)
 				{
-					if (closestTaskRef.get() == null)
-					{
-						closestTaskRef.set(worldGenTask);
-					}
-				});
+					// this task is closer than the last one
+					closestTask = newGenTask;
+					closestGenDist = chebDistToTargetPos;
+				}
 			}
-		});
-		
-		WorldGenTask closestTask = closestTaskRef.get();
-		
-		
-//		// look through the tree from lowest to highest detail level to find the next task to generate
-//		for (byte detailLevel = QuadTree.TREE_LOWEST_DETAIL_LEVEL; detailLevel < this.waitingTaskQuadTree.treeMaxDetailLevel; detailLevel++)
-//		{
-//			// look for the task that is closest to the targetPos
-//			long closestGenDist = Long.MAX_VALUE;
-//			
-//			MovableGridRingList<WorldGenTask> gridRingList = this.waitingTaskQuadTree.getRingList(detailLevel);
-//			for (WorldGenTask newGenTask : gridRingList)
-//			{
-//				if (newGenTask != null)
-//				{
-//					if (queueFirstGenerationRequestFound)
-//					{
-//						// queue the first task we can find
-//						closestTask = newGenTask;
-//						break;
-//					}
-//					else
-//					{
-//						// use chebyShev distance in order to generate in rings around the target pos (also because it is a fast distance calculation)
-//						int chebDistToTargetPos = newGenTask.pos.getCenterBlockPos().toPos2D().chebyshevDist(targetPos.toPos2D());
-//						if (chebDistToTargetPos < closestGenDist)
-//						{
-//							// this task is closer than the last one
-//							closestTask = newGenTask;
-//							closestGenDist = chebDistToTargetPos;
-//						}
-//						else if (closestTask != null)
-//						{
-//							// this task is farther than the last one, 
-//							// assume we have gotten as close as we can
-//							// and queue the task
-//							break;
-//						}
-//					}
-//				}
-//			}
-//			
-//			// a task has been found, don't look at the next detail level,
-//			// everything there will be farther away
-//			if (closestTask != null)
-//			{
-//				break;
-//			}
-//		}
-		
-		
+		}
 		
 		if (closestTask == null)
 		{
@@ -318,7 +272,7 @@ public class WorldGenerationQueue implements Closeable
 		
 		
 		// remove the task we found, we are going to start it and don't want to run it multiple times
-		WorldGenTask removedWorldGenTask = this.waitingTaskQuadTree.set(new DhSectionPos(closestTask.pos.detailLevel, closestTask.pos.x, closestTask.pos.z), null);
+		WorldGenTask removedWorldGenTask = this.waitingTaskQuadTree.setValue(new DhSectionPos(closestTask.pos.detailLevel, closestTask.pos.x, closestTask.pos.z), null);
 		// removedWorldGenTask can be null // TODO when? 
 		
 		
@@ -366,9 +320,9 @@ public class WorldGenerationQueue implements Closeable
 				childFutures.add(newFuture);
 						
 				WorldGenTask newGenTask = new WorldGenTask(new DhLodPos(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ), childDhSectionPos.sectionDetailLevel, removedWorldGenTask.taskTracker, newFuture);
-				this.waitingTaskQuadTree.set(new DhSectionPos(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ), newGenTask);
+				this.waitingTaskQuadTree.setValue(new DhSectionPos(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ), newGenTask);
 				
-				boolean valueAdded = this.waitingTaskQuadTree.get(new DhSectionPos(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ)) != null;
+				boolean valueAdded = this.waitingTaskQuadTree.getValue(new DhSectionPos(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ)) != null;
 				LodUtil.assertTrue(valueAdded); // failed to add world gen task to quad tree, this means the quad tree was the wrong size
 				
 //				LOGGER.info("split feature "+sectionPos+" into "+childDhSectionPos+" "+(valueAdded ? "added" : "notAdded"));
