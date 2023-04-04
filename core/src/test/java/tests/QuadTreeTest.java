@@ -277,11 +277,14 @@ public class QuadTreeTest
 		// root nodes
 		int rootNodeCount = 0;
 		
-		Iterator<QuadNode<Integer>> rootNodeIterator = tree.rootNodeIterator();
-		while (rootNodeIterator.hasNext())
+		Iterator<DhSectionPos> rootNodePosIterator = tree.rootNodePosIterator();
+		while (rootNodePosIterator.hasNext())
 		{
-			QuadNode<Integer> rootNode = rootNodeIterator.next();
-			rootNodeCount++;
+			QuadNode<Integer> rootNode = tree.getNode(rootNodePosIterator.next());
+			if (rootNode != null)
+			{
+				rootNodeCount++;	
+			}
 		}
 		Assert.assertEquals("incorrect root count", 1, rootNodeCount);
 		
@@ -391,25 +394,31 @@ public class QuadTreeTest
 		
 		// confirm the root node were added
 		int rootNodeCount = 0;
-		Iterator<QuadNode<Integer>> rootNodeIterator = tree.rootNodeIterator();
-		while (rootNodeIterator.hasNext())
+		Iterator<DhSectionPos> rootNodePosIterator = tree.rootNodePosIterator();
+		while (rootNodePosIterator.hasNext())
 		{
-			rootNodeIterator.next();
-			rootNodeCount++;
+			QuadNode<Integer> rootNode = tree.getNode(rootNodePosIterator.next());
+			if (rootNode != null)
+			{
+				rootNodeCount++;
+			}
 		}
 		Assert.assertEquals("incorrect root count", 1, rootNodeCount);
 		
 		// attempt to get and remove, each node in the tree
 		int rootNodePosCount = 0;
-		Iterator<DhSectionPos> rootNodePosIterator = tree.rootNodePosIterator();
+		rootNodePosIterator = tree.rootNodePosIterator();
 		while (rootNodePosIterator.hasNext())
 		{
 			DhSectionPos rootNodePos = rootNodePosIterator.next();
-			
-			testGet(tree, rootNodePos, 0);
-			testSet(tree, rootNodePos, null);
-			
-			rootNodePosCount++;
+			QuadNode<Integer> rootNode = tree.getNode(rootNodePos);
+			if (rootNode != null)
+			{
+				testGet(tree, rootNodePos, 0);
+				testSet(tree, rootNodePos, null);
+				
+				rootNodePosCount++;
+			}
 		}
 		Assert.assertEquals("incorrect root count", 1, rootNodePosCount);
 		
@@ -441,17 +450,20 @@ public class QuadTreeTest
 		Iterator<DhSectionPos> rootNodePosIterator = tree.rootNodePosIterator();
 		while (rootNodePosIterator.hasNext())
 		{
-			DhSectionPos sectionPos = rootNodePosIterator.next();
-			testSet(tree, sectionPos, 0);
+			testSet(tree, rootNodePosIterator.next(), 0);
 		}
+		
 		
 		// 4 root nodes should be added
 		int rootNodeCount = 0;
-		Iterator<QuadNode<Integer>> rootNodeIterator = tree.rootNodeIterator();
-		while (rootNodeIterator.hasNext())
+		rootNodePosIterator = tree.rootNodePosIterator();
+		while (rootNodePosIterator.hasNext())
 		{
-			QuadNode<Integer> rootNode = rootNodeIterator.next();
-			rootNodeCount++;
+			QuadNode<Integer> rootNode = tree.getNode(rootNodePosIterator.next());
+			if (rootNode != null)
+			{
+				rootNodeCount++;
+			}
 		}
 		Assert.assertEquals("incorrect root count", expectedRootNodeCount, rootNodeCount);
 	}
@@ -472,11 +484,14 @@ public class QuadTreeTest
 		testSet(tree, new DhSectionPos(tree.treeMaxDetailLevel, 1, 1), -1, IndexOutOfBoundsException.class);
 		
 		int rootNodeCount = 0;
-		Iterator<QuadNode<Integer>> rootNodeIterator = tree.rootNodeIterator();
+		Iterator<DhSectionPos> rootNodeIterator = tree.rootNodePosIterator();
 		while (rootNodeIterator.hasNext())
 		{
-			QuadNode<Integer> rootNode = rootNodeIterator.next();
-			rootNodeCount++;
+			QuadNode<Integer> rootNode = tree.getNode(rootNodeIterator.next());
+			if (rootNode != null)
+			{
+				rootNodeCount++;
+			}
 		}
 		Assert.assertEquals("incorrect leaf value sum", 1, rootNodeCount);
 		
@@ -508,11 +523,14 @@ public class QuadTreeTest
 		
 		
 		int rootNodeCount = 0;
-		Iterator<QuadNode<Integer>> rootNodeIterator = tree.rootNodeIterator();
+		Iterator<DhSectionPos> rootNodeIterator = tree.rootNodePosIterator();
 		while (rootNodeIterator.hasNext())
 		{
-			QuadNode<Integer> rootNode = rootNodeIterator.next();
-			rootNodeCount++;
+			QuadNode<Integer> rootNode = tree.getNode(rootNodeIterator.next());
+			if (rootNode != null)
+			{
+				rootNodeCount++;
+			}
 		}
 		Assert.assertEquals("incorrect leaf value sum", 4, rootNodeCount);
 		
@@ -550,26 +568,37 @@ public class QuadTreeTest
 		// create the root node
 		testSet(tree, new DhSectionPos((byte)10, 0, 0), 1);
 
-		// recurse down the tree
+		
+		
 		AtomicInteger minimumDetailLevelReachedRef = new AtomicInteger(tree.treeMaxDetailLevel);
-		Iterator<QuadNode<Integer>> rootNodeIterator = tree.rootNodeIterator();
-		while (rootNodeIterator.hasNext())
+		
+		// recurse down the tree
+		Iterator<DhSectionPos> rootNodePosIterator = tree.rootNodePosIterator();
+		while (rootNodePosIterator.hasNext())
 		{
-			QuadNode<Integer> rootNode = rootNodeIterator.next();
-			Iterator<DhSectionPos> rootNodeDirectChildPosIterator = rootNode.getDirectChildPosIterator();
-			while (rootNodeDirectChildPosIterator.hasNext())
+			DhSectionPos sectionPos = rootNodePosIterator.next();
+			QuadNode<Integer> rootNode = tree.getNode(sectionPos);
+			if (rootNode != null)
 			{
-				DhSectionPos sectionPos = rootNodeDirectChildPosIterator.next();
+				// fill in the root node's direct children
+				Iterator<DhSectionPos> childPosIterator = rootNode.getChildPosIterator();
+				while (childPosIterator.hasNext())
+				{
+					DhSectionPos rootChildPos = childPosIterator.next();
+					rootNode.setValue(rootChildPos, 0);
+				}
 				
-				// all sections will be null
-				rootNode.setValue(sectionPos, 0);
-			}
-			
-			Iterator<QuadNode<Integer>> rootNodeDirectChildIterator = rootNode.getDirectChildNodeIterator();
-			while (rootNodeDirectChildIterator.hasNext())
-			{
-				QuadNode<Integer> quadNode = rootNodeDirectChildIterator.next();
-				recursivelyCreateNodeChildren(quadNode, tree.treeMinDetailLevel, minimumDetailLevelReachedRef);
+				
+				
+				// recursively create child nodes down to the minimum detail level
+				Iterator<QuadNode<Integer>> ChildIterator = rootNode.getChildNodeIterator();
+				while (ChildIterator.hasNext())
+				{
+					QuadNode<Integer> childNode = ChildIterator.next();
+					Assert.assertNotNull(childNode); // TODO is this correct?
+					
+					recursivelyCreateNodeChildren(childNode, tree.treeMinDetailLevel, minimumDetailLevelReachedRef);
+				}
 			}
 		}
 		
@@ -584,19 +613,20 @@ public class QuadTreeTest
 		
 		
 		// fill in the null children
-		Iterator<DhSectionPos> directChildPosIterator = node.getDirectChildPosIterator();
-		while (directChildPosIterator.hasNext())
+		Iterator<DhSectionPos> directChildIterator = node.getChildPosIterator();
+		while (directChildIterator.hasNext())
 		{
-			node.setValue(directChildPosIterator.next(), 0);
+			node.setValue(directChildIterator.next(), 0);
 			childNodesCreated = true;
 		}
 		
 		
 		// attempt to recurse down these new children
-		Iterator<QuadNode<Integer>> directChildIterator = node.getDirectChildNodeIterator();
+		directChildIterator = node.getChildPosIterator();
 		while (directChildIterator.hasNext())
 		{
-			QuadNode<Integer> childNode = directChildIterator.next();
+			DhSectionPos sectionPos = directChildIterator.next();
+			QuadNode<Integer> childNode = node.getNode(sectionPos);
 			
 			Assert.assertTrue("Child node recurred too low. Min detail level: "+minDetailLevel+", node detail level: "+childNode.sectionPos.sectionDetailLevel, childNode.sectionPos.sectionDetailLevel >= minDetailLevel);
 			recursivelyCreateNodeChildren(childNode, minDetailLevel, minimumDetailLevelReachedRef);
@@ -628,15 +658,15 @@ public class QuadTreeTest
 	public void quadNodeChildPositionIndexTest()
 	{
 		QuadNode<Integer> rootNode = new QuadNode<>(new DhSectionPos((byte)10, 0, 0), (byte)0);
-		Iterator<DhSectionPos> directChildIterator = rootNode.getDirectChildPosIterator();
-		while (directChildIterator.hasNext())
+		Iterator<DhSectionPos> directChildPosIterator = rootNode.getChildPosIterator();
+		while (directChildPosIterator.hasNext())
 		{
-			DhSectionPos sectionPos = directChildIterator.next();
+			DhSectionPos sectionPos = directChildPosIterator.next();
 			Assert.assertNotEquals("Root node pos shouldn't be included in direct child pos iteration", sectionPos, rootNode.sectionPos);
 			
 			rootNode.setValue(sectionPos, 1);
 		}
-		Assert.assertEquals("node not filled", rootNode.getChildValueCount(), 4);
+		Assert.assertEquals("node not filled", 4, rootNode.getChildValueCount());
 		
 		
 		for (int i = 0; i < 4; i++)
@@ -645,6 +675,53 @@ public class QuadTreeTest
 			QuadNode<Integer> childNode = rootNode.getChildByIndex(i);
 			Assert.assertEquals("child position not the same as "+DhSectionPos.class.getSimpleName()+"'s getChildByIndex()", childPos, childNode.sectionPos);
 		}
+		
+	}
+	
+	@Test
+	public void quadNodeChildPositionOutOfBoundsTest()
+	{
+		int treeWidthInBlocks = 64;
+		QuadTree<Integer> tree = new QuadTree<>(treeWidthInBlocks, new DhBlockPos2D(-2, 0), (byte)0);
+		
+		
+		
+		// center root node
+		DhSectionPos centerNodePos = new DhSectionPos((byte)1, 0, 0);
+		
+		// create node
+		tree.setValue(centerNodePos, 0);
+		QuadNode<Integer> centerRootNode = tree.getNode(centerNodePos);
+		Assert.assertNotNull(centerRootNode);
+		
+		// child pos in bounds of the tree
+		Iterator<DhSectionPos> childPosIterator = centerRootNode.getChildPosIterator();
+		while (childPosIterator.hasNext())
+		{
+			DhSectionPos childPos = childPosIterator.next();
+			centerRootNode.setValue(childPos, 1);
+		}
+		Assert.assertEquals("center node not filled", 4, centerRootNode.getChildValueCount());
+		
+		
+		
+		// edge root node
+		DhSectionPos offsetNodePos = new DhSectionPos((byte)1, -17, -16);
+		
+		// create node
+		tree.setValue(offsetNodePos, 0);
+		QuadNode<Integer> offsetRootNode = tree.getNode(offsetNodePos);
+		Assert.assertNotNull(offsetRootNode);
+		
+		// child pos in bounds of the tree
+		childPosIterator = offsetRootNode.getChildPosIterator();
+		while (childPosIterator.hasNext())
+		{
+			DhSectionPos childPos = childPosIterator.next();
+			offsetRootNode.setValue(childPos, 1);
+		}
+		// TODO James thought this shouldn't work for all 4 nodes, but he must've thought wrong.
+		Assert.assertEquals("offset should only contain some children.", 4, offsetRootNode.getChildValueCount());
 		
 	}
 	
@@ -675,7 +752,7 @@ public class QuadTreeTest
 		// set
 		try
 		{
-			Integer previousValue = tree.set(pos, setValue);
+			Integer previousValue = tree.setValue(pos, setValue);
 		}
 		catch (Exception e)
 		{
@@ -696,7 +773,7 @@ public class QuadTreeTest
 	{
 		try
 		{
-			Integer getResult = tree.get(pos);
+			Integer getResult = tree.getValue(pos);
 			Assert.assertEquals("get failed "+pos, getValue, getResult);
 		}
 		catch (Exception e)
@@ -734,11 +811,11 @@ public class QuadTreeTest
 	private static class MediumTestTree extends AbstractTestTreeParams
 	{
 		public int getWidthInBlocks() { return 1024; }
-		
 	}
 	
 	private static class TinyTestTree extends AbstractTestTreeParams
 	{
+		// top detail level = 6
 		public int getWidthInBlocks() { return 32; }
 	}
 	

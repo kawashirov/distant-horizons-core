@@ -71,12 +71,28 @@ public class QuadTree<T>
 	// getters and setters //
 	//=====================//
 	
-    /** @return the value at the given section position */
-    public final T get(DhSectionPos pos) throws IndexOutOfBoundsException { return this.getOrSet(pos, false, null); }
-	/** @return the value that was previously in the given position, null if nothing */
-	public final T set(DhSectionPos pos, T value) throws IndexOutOfBoundsException { return this.getOrSet(pos, true, value); }
+    /** @return the node at the given section position */
+    public final QuadNode<T> getNode(DhSectionPos pos) throws IndexOutOfBoundsException { return this.getOrSetNode(pos, false, null); }
+	/** @return the value at the given section position */
+	public final T getValue(DhSectionPos pos) throws IndexOutOfBoundsException 
+	{
+		QuadNode<T> node = this.getNode(pos);
+		if (node != null)
+		{
+			return node.value;
+		}
+		return null; 
+	}
 	
-	protected final T getOrSet(DhSectionPos pos, boolean setNewValue, T newValue) throws IndexOutOfBoundsException
+	/** @return the value that was previously in the given position, null if nothing */
+	public final T setValue(DhSectionPos pos, T value) throws IndexOutOfBoundsException
+	{
+		T previousValue = this.getValue(pos);
+		this.getOrSetNode(pos, true, value);
+		return previousValue;
+	}
+	
+	protected final QuadNode<T> getOrSetNode(DhSectionPos pos, boolean setNewValue, T newValue) throws IndexOutOfBoundsException
 	{
 		if (this.isSectionPosInBounds(pos))
 		{
@@ -103,12 +119,12 @@ public class QuadTree<T>
 			}
 			
 			
-			T returnValue = topQuadNode.getValue(pos);
+			QuadNode<T> returnNode = topQuadNode.getNode(pos);
 			if (setNewValue)
 			{
 				topQuadNode.setValue(pos, newValue);
 			}
-			return returnValue;
+			return returnNode;
 		}
 		else
 		{
@@ -166,7 +182,7 @@ public class QuadTree<T>
 			DhSectionPos childPos = pos.getChildByIndex(i);
 			if (this.isSectionPosInBounds(childPos))
 			{
-				T value = this.get(childPos);
+				T value = this.getValue(childPos);
 				if (includeNullValues || value != null)
 				{
 					childCount++;
@@ -183,7 +199,7 @@ public class QuadTree<T>
 	// iterators //
 	//===========//
 	
-	public Iterator<QuadNode<T>> rootNodeIterator() { return new QuadTreeRootNodeIterator(); }
+	/** can include null nodes */
 	public Iterator<DhSectionPos> rootNodePosIterator() { return new QuadTreeRootPosIterator(true); }
 	
 	public Iterator<QuadNode<T>> nodeIterator() { return new QuadTreeNodeIterator(false); }
@@ -309,7 +325,8 @@ public class QuadTree<T>
 			}
 			
 			
-			return this.iteratorPosQueue.poll();
+			DhSectionPos sectionPos = this.iteratorPosQueue.poll();
+			return sectionPos;
 		}
 		
 		
@@ -321,40 +338,9 @@ public class QuadTree<T>
 		public void forEachRemaining(Consumer<? super DhSectionPos> action) { Iterator.super.forEachRemaining(action); }
 	}
 	
-	private class QuadTreeRootNodeIterator implements Iterator<QuadNode<T>>
-	{
-		private final QuadTreeRootPosIterator rootPosIterator;
-		
-		public QuadTreeRootNodeIterator() 
-		{
-			this.rootPosIterator = new QuadTreeRootPosIterator(false); 
-		}
-		
-		
-		
-		@Override
-		public boolean hasNext() { return this.rootPosIterator.hasNext(); }
-		
-		@Override
-		public QuadNode<T> next()
-		{
-			DhSectionPos pos = this.rootPosIterator.next();
-			return QuadTree.this.topRingList.get(pos.sectionX, pos.sectionZ);
-		}
-		
-		
-		/** Unimplemented */
-		@Override
-		public void remove() { throw new UnsupportedOperationException("remove"); }
-		
-		@Override
-		public void forEachRemaining(Consumer<? super QuadNode<T>> action) { Iterator.super.forEachRemaining(action); }
-		
-	}
-	
 	private class QuadTreeNodeIterator implements Iterator<QuadNode<T>>
 	{
-		private final QuadTreeRootNodeIterator rootNodeIterator;
+		private final QuadTreeRootPosIterator rootNodeIterator;
 		private Iterator<QuadNode<T>> currentNodeIterator;
 		
 		private final boolean onlyReturnLeaves; 
@@ -362,26 +348,54 @@ public class QuadTree<T>
 		
 		public QuadTreeNodeIterator(boolean onlyReturnLeaves)
 		{
-			this.rootNodeIterator = new QuadTreeRootNodeIterator();
+			this.rootNodeIterator = new QuadTreeRootPosIterator(false);
 			this.onlyReturnLeaves = onlyReturnLeaves;
 		}
 		
 		
 		
 		@Override
-		public boolean hasNext() { return this.rootNodeIterator.hasNext() || this.currentNodeIterator.hasNext(); }
+		public boolean hasNext() 
+		{
+			if (!this.rootNodeIterator.hasNext() && this.currentNodeIterator != null && !this.currentNodeIterator.hasNext())
+			{
+				return false;
+			}
+			
+			
+			if (this.currentNodeIterator == null || !this.currentNodeIterator.hasNext())
+			{
+				this.currentNodeIterator = this.getNextChildNodeIterator();
+			}
+			return this.currentNodeIterator != null && this.currentNodeIterator.hasNext(); 
+		}
 		
 		@Override
 		public QuadNode<T> next()
 		{
-			if (this.currentNodeIterator == null)
+			if (this.currentNodeIterator == null || !this.currentNodeIterator.hasNext())
 			{
-				QuadNode<T> rootNode = this.rootNodeIterator.next();
-				this.currentNodeIterator = this.onlyReturnLeaves ? rootNode.getLeafNodeIterator() : rootNode.getNodeIterator();
+				this.currentNodeIterator = this.getNextChildNodeIterator();
 			}
 			
 			
 			return this.currentNodeIterator.next();
+		}
+		
+		/** @return null if no new iterator could be found */
+		private Iterator<QuadNode<T>> getNextChildNodeIterator()
+		{
+			Iterator<QuadNode<T>> nodeIterator = null;
+			while((nodeIterator == null || !nodeIterator.hasNext()) && this.rootNodeIterator.hasNext())
+			{
+				DhSectionPos sectionPos = this.rootNodeIterator.next();
+				QuadNode<T> rootNode = QuadTree.this.getNode(sectionPos);
+				if (rootNode != null)
+				{
+					nodeIterator = this.onlyReturnLeaves ? rootNode.getLeafNodeIterator() : rootNode.getNodeIterator();
+				}
+			}
+			return nodeIterator;
 		}
 		
 		

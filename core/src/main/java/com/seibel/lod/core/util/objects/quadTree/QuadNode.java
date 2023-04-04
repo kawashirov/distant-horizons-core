@@ -3,6 +3,9 @@ package com.seibel.lod.core.util.objects.quadTree;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.util.objects.quadTree.iterators.QuadNodeDirectChildIterator;
+import com.seibel.lod.core.util.objects.quadTree.iterators.QuadNodeDirectChildPosIterator;
+import com.seibel.lod.core.util.objects.quadTree.iterators.QuadTreeNodeIterator;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Iterator;
@@ -119,19 +122,35 @@ public class QuadNode<T>
 	 * @throws IllegalArgumentException if childSectionPos has the wrong detail level or is outside the bounds of this node
 	 * @return the node at the given position
 	 */
-	public T getValue(DhSectionPos sectionPos) throws IllegalArgumentException { return this.getOrSetValue(sectionPos, false, null); }
+	public QuadNode<T> getNode(DhSectionPos sectionPos) throws IllegalArgumentException { return this.getOrSetValue(sectionPos, false, null); }
+	
 	/**
 	 * @param sectionPos must be 1 detail level lower than this node's detail level
 	 * @throws IllegalArgumentException if childSectionPos has the wrong detail level or is outside the bounds of this node
-	 * @return the node at the given position before the new node was set
+	 * @return the value at the given position before the new value was set
 	 */
-	public T setValue(DhSectionPos sectionPos, T newValue) throws IllegalArgumentException { return this.getOrSetValue(sectionPos, true, newValue); }
+	public T setValue(DhSectionPos sectionPos, T newValue) throws IllegalArgumentException 
+	{
+		QuadNode<T> previousNode = this.getNode(sectionPos);
+		if (previousNode != null)
+		{
+			T previousValue = previousNode.value;
+			previousNode.value = newValue;
+			return previousValue;
+		}
+		else
+		{
+			this.getOrSetValue(sectionPos, true, newValue);
+			return null;
+		}
+	}
+	
 	/**
 	 * @param inputSectionPos must be 1 detail level lower than this node's detail level
 	 * @throws IllegalArgumentException if childSectionPos has the wrong detail level or is outside the bounds of this 
 	 * @return the node at the given position before the new node was set (if the new node should be set)
 	 */
-	private T getOrSetValue(DhSectionPos inputSectionPos, boolean replaceValue, T newValue) throws IllegalArgumentException
+	private QuadNode<T> getOrSetValue(DhSectionPos inputSectionPos, boolean replaceValue, T newValue) throws IllegalArgumentException
 	{
 		// debug validation
 		
@@ -162,12 +181,11 @@ public class QuadNode<T>
 		if (inputSectionPos.sectionDetailLevel == this.sectionPos.sectionDetailLevel)
 		{
 			// this node is the requested position
-			T returnValue = this.value;
 			if (replaceValue)
 			{
 				this.value = newValue;
 			}
-			return returnValue;
+			return this;
 		}
 		else
 		{
@@ -248,11 +266,12 @@ public class QuadNode<T>
 	// iterators //
 	//===========//
 	
-	public Iterator<QuadNode<T>> getNodeIterator() { return new QuadNodeIterator<>(this, false); }
-	public Iterator<QuadNode<T>> getLeafNodeIterator() { return new QuadNodeIterator<>(this, true); }
+	public Iterator<QuadNode<T>> getNodeIterator() { return new QuadTreeNodeIterator<>(this, false); }
+	public Iterator<QuadNode<T>> getLeafNodeIterator() { return new QuadTreeNodeIterator<>(this, true); }
 	
-	public Iterator<QuadNode<T>> getDirectChildNodeIterator() { return new QuadNodeDirectChildNodeIterator<>(this); }
-	public Iterator<DhSectionPos> getDirectChildPosIterator() { return new QuadNodeDirectChildPosIterator<>(this); }
+	/** positions can point to null children */
+	public Iterator<DhSectionPos> getChildPosIterator() { return new QuadNodeDirectChildPosIterator<>(this); }
+	public Iterator<QuadNode<T>> getChildNodeIterator() { return new QuadNodeDirectChildIterator<>(this); }
 	
 	
 	

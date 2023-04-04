@@ -1,21 +1,22 @@
-package com.seibel.lod.core.util.objects.quadTree;
+package com.seibel.lod.core.util.objects.quadTree.iterators;
 
 import com.seibel.lod.core.pos.DhSectionPos;
+import com.seibel.lod.core.util.objects.quadTree.QuadNode;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 
-public class QuadNodeDirectChildPosIterator<T> implements Iterator<DhSectionPos>
+public class QuadNodeDirectChildIterator<T> implements Iterator<QuadNode<T>>
 {
 	private final QuadNodeChildIndexIterator<T> childIndexIterator;
 	private final QuadNode<T> parentNode;
 	
 	
-	public QuadNodeDirectChildPosIterator(QuadNode<T> parentNode)
+	public QuadNodeDirectChildIterator(QuadNode<T> parentNode)
 	{
 		this.parentNode = parentNode;
-		this.childIndexIterator = new QuadNodeChildIndexIterator<>(this.parentNode, true);
+		this.childIndexIterator = new QuadNodeChildIndexIterator<>(this.parentNode, false);
 	}
 	
 	
@@ -24,7 +25,7 @@ public class QuadNodeDirectChildPosIterator<T> implements Iterator<DhSectionPos>
 	public boolean hasNext() { return this.childIndexIterator.hasNext(); }
 	
 	@Override
-	public DhSectionPos next()
+	public QuadNode<T> next()
 	{
 		if (!this.hasNext())
 		{
@@ -33,7 +34,8 @@ public class QuadNodeDirectChildPosIterator<T> implements Iterator<DhSectionPos>
 		
 		
 		int childIndex = this.childIndexIterator.next();
-		return this.parentNode.sectionPos.getChildByIndex(childIndex);
+		QuadNode<T> node = this.parentNode.getChildByIndex(childIndex);
+		return node;
 	}
 	
 	
@@ -42,6 +44,6 @@ public class QuadNodeDirectChildPosIterator<T> implements Iterator<DhSectionPos>
 	public void remove() { throw new UnsupportedOperationException("remove"); }
 	
 	@Override
-	public void forEachRemaining(Consumer<? super DhSectionPos> action) { Iterator.super.forEachRemaining(action); }
+	public void forEachRemaining(Consumer<? super QuadNode<T>> action) { Iterator.super.forEachRemaining(action); }
 	
 }

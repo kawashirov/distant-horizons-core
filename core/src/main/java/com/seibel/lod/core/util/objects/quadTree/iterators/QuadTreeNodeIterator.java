@@ -1,4 +1,6 @@
-package com.seibel.lod.core.util.objects.quadTree;
+package com.seibel.lod.core.util.objects.quadTree.iterators;
+
+import com.seibel.lod.core.util.objects.quadTree.QuadNode;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -6,7 +8,7 @@ import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.function.Consumer;
 
-class QuadNodeIterator<T> implements Iterator<QuadNode<T>>
+public class QuadTreeNodeIterator<T> implements Iterator<QuadNode<T>>
 {
 	/** lowest numerical value, inclusive */
 	private final byte highestDetailLevel;
@@ -20,7 +22,7 @@ class QuadNodeIterator<T> implements Iterator<QuadNode<T>>
 	
 	
 	
-	public QuadNodeIterator(QuadNode<T> rootNode, boolean onlyReturnLeafValues)
+	public QuadTreeNodeIterator(QuadNode<T> rootNode, boolean onlyReturnLeafValues)
 	{
 		this.onlyReturnLeafValues = onlyReturnLeafValues;
 		// TODO the naming conversion for these are flipped in a lot of places
@@ -104,6 +106,7 @@ class QuadNodeIterator<T> implements Iterator<QuadNode<T>>
 				Queue<QuadNode<T>> parentNodes = new LinkedList<>(this.validNodesForDetailLevel);
 				this.validNodesForDetailLevel.clear();
 				
+				// populate the list of nodes for this level
 				for (QuadNode<T> parentNode : parentNodes)
 				{
 					for (int i = 0; i < 4; i++)
