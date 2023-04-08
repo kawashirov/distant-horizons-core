@@ -96,33 +96,30 @@ public class DhClientServerLevel extends AbstractDhClientLevel implements IDhCli
 	{
 		WorldGenState worldGenState = this.worldGenStateRef.get();
 		
-		// if the world generator config changes, add/remove the world generator
-		if (this.worldGeneratorEnabledConfig.pollNewValue())
+		// create/destroy the world generator as necessary
+		boolean shouldDoWorldGen = this.worldGeneratorEnabledConfig.get() && this.ClientRenderStateRef.get() != null;
+		if (shouldDoWorldGen && worldGenState == null)
 		{
-			boolean shouldDoWorldGen = this.worldGeneratorEnabledConfig.get() && this.ClientRenderStateRef.get() != null;
-			if (shouldDoWorldGen && worldGenState == null)
+			// create the new world generator
+			WorldGenState newWgs = new WorldGenState(this);
+			if (!this.worldGenStateRef.compareAndSet(null, newWgs))
 			{
-				// create the new world generator
-				WorldGenState newWgs = new WorldGenState(this);
-				if (!this.worldGenStateRef.compareAndSet(null, newWgs))
+				LOGGER.warn("Failed to start world gen due to concurrency");
+				newWgs.closeAsync(false);
+			}
+		}
+		else if (!shouldDoWorldGen && worldGenState != null)
+		{
+			// shut down the world generator
+			while (!this.worldGenStateRef.compareAndSet(worldGenState, null))
+			{
+				worldGenState = this.worldGenStateRef.get();
+				if (worldGenState == null)
 				{
-					LOGGER.warn("Failed to start world gen due to concurrency");
-					newWgs.closeAsync(false);
+					return;
 				}
 			}
-			else if (!shouldDoWorldGen && worldGenState != null)
-			{
-				// shut down the world generator
-				while (!this.worldGenStateRef.compareAndSet(worldGenState, null))
-				{
-					worldGenState = this.worldGenStateRef.get();
-					if (worldGenState == null)
-					{
-						return;
-					}
-				}
-				worldGenState.closeAsync(true).join(); //TODO: Make it async.
-			}
+			worldGenState.closeAsync(true).join(); //TODO: Make it async.
 		}
 		
 		
