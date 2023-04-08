@@ -146,30 +146,34 @@ public class QuadTree<T>
 		
 		
 		// check if the testPos is within the X,Z boundary of the tree
-		DhBlockPos2D blockCornerOfTree = this.centerBlockPos.add(new DhBlockPos2D(-this.widthInBlocks/2,-this.widthInBlocks/2));
-		DhLodPos cornerOfTreePos = new DhLodPos((byte)0, blockCornerOfTree.x, blockCornerOfTree.z);
+		DhBlockPos2D treeBlockCorner = this.centerBlockPos.add(new DhBlockPos2D(-this.widthInBlocks/2,-this.widthInBlocks/2));
+		DhLodPos treeCornerPos = new DhLodPos((byte)0, treeBlockCorner.x, treeBlockCorner.z);
 		
-		DhSectionPos sectionCornerOfInput = testPos.convertToDetailLevel((byte)0);
-		DhLodPos cornerOfInputPos = new DhLodPos((byte)0, sectionCornerOfInput.sectionX, sectionCornerOfInput.sectionZ);
-		int inputWidth = BitShiftUtil.powerOfTwo(testPos.sectionDetailLevel);
+		DhSectionPos inputSectionCorner = testPos.convertToDetailLevel((byte)0);
+		DhLodPos inputCornerPos = new DhLodPos((byte)0, inputSectionCorner.sectionX, inputSectionCorner.sectionZ);
+		int inputBlockWidth = BitShiftUtil.powerOfTwo(testPos.sectionDetailLevel);
 		
-		return DoSquaresOverlap(cornerOfTreePos, this.widthInBlocks, cornerOfInputPos, inputWidth);
+		return DoSquaresOverlap(treeCornerPos, this.widthInBlocks, inputCornerPos, inputBlockWidth);
 	}
-	private static boolean DoSquaresOverlap(DhLodPos rect1Min, int rect1Width, DhLodPos rect2Min, int rect2Width)
+	private static boolean DoSquaresOverlap(DhLodPos square1Min, int square1Width, DhLodPos square2Min, int square2Width)
 	{
-		// Determine the coordinates of the rectangles
-		float rect1MinX = rect1Min.x;
-		float rect1MaxX = rect1Min.x + rect1Width;
-		float rect1MinZ = rect1Min.z;
-		float rect1MaxZ = rect1Min.z + rect1Width;
-		
-		float rect2MinX = rect2Min.x;
-		float rect2MaxX = rect2Min.x + rect2Width;
-		float rect2MinZ = rect2Min.z;
-		float rect2MaxZ = rect2Min.z + rect2Width;
-		
-		// Check if the rectangles overlap
-		return rect1MinX < rect2MaxX && rect1MaxX > rect2MinX && rect1MinZ < rect2MaxZ && rect1MaxZ > rect2MinZ;
+		// Determine the coordinates of the squares (the variables say rect[angle] because this logic would also work there and was simplified to work for squares)
+		float rect1MinX = square1Min.x;
+		float rect1MaxX = square1Min.x + square1Width;
+		float rect1MinZ = square1Min.z;
+		float rect1MaxZ = square1Min.z + square1Width;
+
+		float rect2MinX = square2Min.x;
+		float rect2MaxX = square2Min.x + square2Width;
+		float rect2MinZ = square2Min.z;
+		float rect2MaxZ = square2Min.z + square2Width;
+
+		// Check if the squares overlap
+		return 
+			rect1MinX < rect2MaxX && 
+			rect1MaxX > rect2MinX && 
+			rect1MinZ < rect2MaxZ && 
+			rect1MaxZ > rect2MinZ;
 	}
 	
 	

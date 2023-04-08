@@ -165,6 +165,27 @@ public class QuadTreeTest
 		Assert.assertEquals("incorrect leaf node count", 4, tree.leafNodeCount());
 		
 	}
+	@Test
+	public void outOfBoundsInTreeTest()
+	{
+		// very specific tree parameters to match test results
+		QuadTree<Integer> tree = new QuadTree<>(512, new DhBlockPos2D(125, -516), (byte)6);
+		Assert.assertEquals("Test may need to be re-calculated for different max detail level.", 9, tree.treeMaxDetailLevel);
+		
+		
+		DhSectionPos rootPos = new DhSectionPos((byte)9, 0, -1);
+		testSet(tree, rootPos, 1);
+		
+		// pos is in tree, but out of range
+		DhSectionPos midPos = new DhSectionPos((byte)8, 0, -1);
+		testSet(tree, midPos, 2, IndexOutOfBoundsException.class);
+		
+		// pos is in tree, but out of range
+		DhSectionPos leafPos = new DhSectionPos((byte)7, 0, -2);
+		testSet(tree, leafPos, 3, IndexOutOfBoundsException.class);
+		
+	}
+	
 	
 	@Test
 	public void QuadTreeRootAlignedMovingTest()
@@ -735,6 +756,66 @@ public class QuadTreeTest
 		String treeString = tree.toString();
 		Assert.assertNotNull(treeString);
 		Assert.assertNotEquals("", treeString);
+		
+	}
+	
+	// null node auto-deletion not yet implemented
+	//@Test
+	public void autoDeleteNullQuadNodeChildTest()
+	{
+		QuadNode<Integer> rootNode = new QuadNode<>(new DhSectionPos((byte)10, 0, 0), LodUtil.BLOCK_DETAIL_LEVEL);
+		
+		
+		rootNode.setValue(new DhSectionPos((byte)10, 0, 0), 0);
+		
+		DhSectionPos midNodePos = new DhSectionPos((byte)9, 0, 0);
+		//rootNode.setValue(midNodePos, null); // holds detail 8
+		rootNode.setValue(new DhSectionPos((byte)9, 1, 0), 1);
+		rootNode.setValue(new DhSectionPos((byte)9, 0, 1), 1);
+		rootNode.setValue(new DhSectionPos((byte)9, 1, 1), 1);
+		
+		rootNode.setValue(new DhSectionPos((byte)8, 0, 0), 2);
+		rootNode.setValue(new DhSectionPos((byte)8, 1, 0), 2);
+		rootNode.setValue(new DhSectionPos((byte)8, 0, 1), 2);
+		rootNode.setValue(new DhSectionPos((byte)8, 1, 1), 2);
+		
+		
+		
+		// validate nodes were added
+		Assert.assertEquals(4, rootNode.getChildValueCount());
+		Assert.assertEquals(4, rootNode.getNode(midNodePos).getChildValueCount());
+		
+		
+		
+		// test removing nodes //
+		
+		// remove two leaf nodes from the root
+		DhSectionPos leafPos = new DhSectionPos((byte)9, 1, 1);
+		rootNode.setValue(leafPos, null);
+		Assert.assertEquals(3, rootNode.getChildValueCount());
+		Assert.assertNull("Node wasn't deleted", rootNode.getNode(leafPos));
+		
+		leafPos = new DhSectionPos((byte)9, 0, 1);
+		rootNode.setValue(leafPos, null);
+		Assert.assertEquals(2, rootNode.getChildValueCount());
+		Assert.assertNull("Node wasn't deleted", rootNode.getNode(leafPos));
+		
+		
+		// remove 
+		
+		// remove all child nodes
+		Assert.assertEquals(4, rootNode.getNode(midNodePos).getChildValueCount());
+		
+		// remove all but one, mid-node should still be present
+		rootNode.setValue(new DhSectionPos((byte)8, 0, 0), null);
+		rootNode.setValue(new DhSectionPos((byte)8, 0, 1), null);
+		rootNode.setValue(new DhSectionPos((byte)8, 1, 0), null);
+		Assert.assertEquals(1, rootNode.getNode(midNodePos).getChildValueCount());
+		
+		// remove last mid-node child, mid-node should now be removed
+		rootNode.setValue(new DhSectionPos((byte)8, 1, 1), null);
+		Assert.assertNull("Mid node not deleted.", rootNode.getNode(midNodePos));
+		Assert.assertEquals(3, rootNode.getChildValueCount());
 		
 	}
 	
