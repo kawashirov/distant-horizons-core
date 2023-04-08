@@ -73,7 +73,7 @@ public class WorldGenerationQueue implements Closeable
 		this.maxDataDetail = generator.getMaxDataDetailLevel();
 		this.minDataDetail = generator.getMinDataDetailLevel();
 		
-		int treeWidth = Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH;
+		int treeWidth = Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH * 2; // TODO the *2 is to allow for generation edge cases, and should probably be removed at some point
 		byte treeMinDetailLevel = LodUtil.BLOCK_DETAIL_LEVEL; // the tree shouldn't need to go this low, but just in case
 		this.waitingTaskQuadTree = new QuadTree<>(treeWidth, DhBlockPos2D.ZERO /*the quad tree will be re-centered later*/, treeMinDetailLevel);
 		
