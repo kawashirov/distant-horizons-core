@@ -253,50 +253,48 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 					// create new value and update next tick
 					rootNode.setValue(sectionPos, new LodRenderSection(sectionPos));
 				}
-				else
-				{
-					LodUtil.assertNotReach(this.getClass().getSimpleName()+" attempted to insert "+LodRenderSection.class.getSimpleName()+" out of bounds at pos: "+sectionPos);
-				}
 				
 				nullableQuadNode = rootNode.getNode(sectionPos);
 			}
 			
 			
 			
-			// create a new render section if missing
-			if (nullableRenderSection == null)
+			if (nullableQuadNode != null)
 			{
-				LodRenderSection newRenderSection = new LodRenderSection(sectionPos);
-				rootNode.setValue(sectionPos, newRenderSection);
-				
-				nullableRenderSection = newRenderSection;
-			}
-			
-			
-			// enable the render section
-			nullableRenderSection.loadRenderSourceAndEnableRendering(this.renderSourceProvider);
-			
-			// determine if the section has loaded yet // TODO rename "tick" to check loading future or something?
-			nullableRenderSection.tick(this.level);
-			
-			
-			// delete/disable children
-			if (isSectionLoaded(nullableRenderSection))
-			{
-				nullableQuadNode.deleteAllChildren((renderSection) ->
+				// create a new render section if missing
+				if (nullableRenderSection == null)
 				{
-					if (renderSection != null)
+					LodRenderSection newRenderSection = new LodRenderSection(sectionPos);
+					rootNode.setValue(sectionPos, newRenderSection);
+					
+					nullableRenderSection = newRenderSection;
+				}
+				
+				//if (!areParentRenderSectionsLoaded(sectionPos)) // TODO not functional yet
+				{
+					// enable the render section
+					nullableRenderSection.loadRenderSourceAndEnableRendering(this.renderSourceProvider);
+					
+					// determine if the section has loaded yet // TODO rename "tick" to check loading future or something?
+					nullableRenderSection.tick(this.level);
+				}
+				
+				
+				// delete/disable children
+				if (isSectionLoaded(nullableRenderSection))
+				{
+					nullableQuadNode.deleteAllChildren((renderSection) ->
 					{
-						renderSection.disableAndDisposeRendering();
-					}
-				});
+						if (renderSection != null)
+						{
+							renderSection.disableAndDisposeRendering();
+						}
+					});
+				}
 			}
 		}
 	}
 	
-			}
-		}
-	}
 	/** 
 	 * Used to determine if a section can unload or not. 
 	 * If this returns true, that means there are child render sections ready to render,
