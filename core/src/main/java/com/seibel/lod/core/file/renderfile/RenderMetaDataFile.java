@@ -134,28 +134,28 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 	public CompletableFuture<ColumnRenderSource> loadOrGetCached(Executor fileReaderThreads, IDhLevel level)
 	{
 		Object obj = this.data.get();
-	
+		
 		CompletableFuture<ColumnRenderSource> cached = this._readCached(obj);
 		if (cached != null)
 		{
 			return cached;
 		}
-	
+		
 		// Create an empty and non-completed future.
 		// Note: I do this before actually filling in the future so that I can ensure only
 		//   one task is submitted to the thread pool.
 		CompletableFuture<ColumnRenderSource> loadRenderSourceFuture = new CompletableFuture<>();
-	
+		
 		// Would use faster and non-nesting Compare and exchange. But java 8 doesn't have it! :(
 		boolean worked = this.data.compareAndSet(obj, loadRenderSourceFuture);
 		if (!worked)
 		{
 			return this.loadOrGetCached(fileReaderThreads, level);
 		}
-	
+		
 		// Now, there should only ever be one thread at a time here due to the CAS operation above.
-	
-	
+		
+		
 		// After cas. We are in exclusive control.
 		if (!this.doesFileExist)
 		{

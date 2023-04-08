@@ -42,7 +42,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 	//    SoftReference<LodDataSource>, or		    - Non-dirty file that can be GCed
 	//    CompletableFuture<LodDataSource>, or      - File that is being loaded. No guarantee that the type is promotable or not
 	//    null									    - Nothing is loaded or being loaded
-	AtomicReference<Object> data = new AtomicReference<Object>(null);
+	AtomicReference<Object> data = new AtomicReference<>(null);
 
 	//TODO: use ConcurrentAppendSingleSwapContainer<LodDataSource> instead of below:
 	private static class GuardedMultiAppendQueue {
