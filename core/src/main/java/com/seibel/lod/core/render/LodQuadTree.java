@@ -7,6 +7,7 @@ import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.file.renderfile.ILodRenderSourceProvider;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.DetailDistanceUtil;
+import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.objects.quadTree.QuadNode;
 import com.seibel.lod.core.util.objects.quadTree.QuadTree;
 import org.apache.logging.log4j.Logger;
@@ -230,7 +231,6 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 			}
 			else
 			{
-				// TODO this never returns anything
 				Iterator<DhSectionPos> childPosIterator = nullableQuadNode.getChildPosIterator();
 				while (childPosIterator.hasNext())
 				{
@@ -253,35 +253,47 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 					// create new value and update next tick
 					rootNode.setValue(sectionPos, new LodRenderSection(sectionPos));
 				}
+				else
+				{
+					LodUtil.assertNotReach(this.getClass().getSimpleName()+" attempted to insert "+LodRenderSection.class.getSimpleName()+" out of bounds at pos: "+sectionPos);
+				}
+				
+				nullableQuadNode = rootNode.getNode(sectionPos);
 			}
-			else
+			
+			
+			
+			// create a new render section if missing
+			if (nullableRenderSection == null)
 			{
-				// create a new render section if missing
-				if (nullableRenderSection == null)
+				LodRenderSection newRenderSection = new LodRenderSection(sectionPos);
+				rootNode.setValue(sectionPos, newRenderSection);
+				
+				nullableRenderSection = newRenderSection;
+			}
+			
+			
+			// enable the render section
+			nullableRenderSection.loadRenderSourceAndEnableRendering(this.renderSourceProvider);
+			
+			// determine if the section has loaded yet // TODO rename "tick" to check loading future or something?
+			nullableRenderSection.tick(this.level);
+			
+			
+			// delete/disable children
+			if (isSectionLoaded(nullableRenderSection))
+			{
+				nullableQuadNode.deleteAllChildren((renderSection) ->
 				{
-					LodRenderSection newRenderSection = new LodRenderSection(sectionPos);
-					rootNode.setValue(sectionPos, newRenderSection);
-					
-					nullableRenderSection = newRenderSection;
-				}
-				
-				// enable the render section
-				nullableRenderSection.loadRenderSourceAndEnableRendering(this.renderSourceProvider);
-				// determine if the section has loaded yet // TODO rename "tick" to check loading future or something?
-				nullableRenderSection.tick(this.level);
-				
-				
-				// delete/disable children
-				if (isSectionLoaded(nullableRenderSection))
-				{
-					nullableQuadNode.deleteAllChildren((renderSection) ->
+					if (renderSection != null)
 					{
-						if (renderSection != null)
-						{
-							renderSection.disableAndDisposeRendering();
-						}
-					});
-				}
+						renderSection.disableAndDisposeRendering();
+					}
+				});
+			}
+		}
+	}
+	
 			}
 		}
 	}
