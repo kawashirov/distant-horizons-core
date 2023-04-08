@@ -56,7 +56,10 @@ public class QuadNode<T>
 	
 	
 	
-	/** @return the number of non-null child nodes */
+	/** 
+	 * Use {@link QuadNode#getChildValueCount()} if you want the number of non-null child values.
+	 * @return the number of non-null child nodes 
+	 */
 	public int getChildCount() 
 	{
 		int count = 0;
@@ -70,14 +73,14 @@ public class QuadNode<T>
 		return count;
 	}
 	
-	/** returns the number of children that have non-null values */
+	/** @return the number of children that have non-null values */
 	public int getChildValueCount()
 	{
 		int count = 0;
 		for (int i = 0; i < 4; i++)
 		{
 			QuadNode<T> child = this.getChildByIndex(i);
-			if (child != null && child.value != null)
+			if (child != null && (child.value != null || child.getChildValueCount() != 0))
 			{
 				count++;
 			}
