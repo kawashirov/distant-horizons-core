@@ -143,10 +143,10 @@ public class ColumnRenderLoader
 	
 	public static class ParsedColumnData
 	{
-		byte detailLevel;
-		int verticalSize;
-		long[] dataContainer;
-		boolean isEmpty;
+		public final byte detailLevel;
+		public final int verticalSize;
+		public final long[] dataContainer;
+		public final boolean isEmpty;
 		
 		public ParsedColumnData(byte detailLevel, int verticalSize, long[] dataContainer, boolean isEmpty)
 		{
