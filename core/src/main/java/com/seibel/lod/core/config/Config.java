@@ -471,7 +471,7 @@ public class Config
                         .build();
 
                 public static ConfigEntry<Double> lodBias = new ConfigEntry.Builder<Double>()    // TODO: Make this a float (the ClassicConfigGUI doesnt support floats)
-                        .setMinDefaultMax(0d, 0.5d, null)
+                        .setMinDefaultMax(0d, 0d, null)
                         .comment(""
                                 + "What the value of vanilla's LodBias should be \n"
                                 + "If set to 0 the mod wont overwrite vanilla's default (which so happens to also be 0)")
