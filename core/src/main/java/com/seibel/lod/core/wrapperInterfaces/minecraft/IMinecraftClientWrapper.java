@@ -80,7 +80,9 @@ public interface IMinecraftClientWrapper extends IBindable
 	 * Returns null if the client isn't in a level.
 	 */
 	ILevelWrapper getWrappedClientWorld();
-	
+
+	/** Please move over to getInstallationDirectory() within the IMinecraftSharedWrapper */
+	@Deprecated
 	File getGameDirectory();
 	
 	IProfilerWrapper getProfiler();
