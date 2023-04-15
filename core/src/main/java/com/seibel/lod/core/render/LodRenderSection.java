@@ -35,25 +35,33 @@ public class LodRenderSection
 	// rendering //
 	//===========//
 	
-    public void loadRenderSourceAndEnableRendering(ILodRenderSourceProvider renderDataProvider)
+    public void loadRenderSource(ILodRenderSourceProvider renderDataProvider)
 	{
-        if (this.isRenderEnabled)
-		{
-			return;
-		}
-		
 		this.renderSourceProvider = renderDataProvider;
 		if (this.renderSourceProvider == null)
 		{
 			return;
 		}
 		
-		if (this.renderSource == null)
+		if (this.renderSource == null && this.loadFuture == null)
 		{
 			this.loadFuture = this.renderSourceProvider.read(this.pos);
+			this.loadFuture.whenComplete((renderSource, ex) -> 
+			{
+				this.renderSource = renderSource;
+				this.loadFuture = null;
+			});
 		}
-		this.isRenderEnabled = true;
     }
+	public void enableRendering(IDhClientLevel level)
+	{
+		this.isRenderEnabled = true;
+		
+		if (this.renderSource != null)
+		{
+			this.renderSource.enableRender(level);
+		}
+	}
 	
 	
     public void disableAndDisposeRendering()
@@ -104,21 +112,6 @@ public class LodRenderSection
 	//================//
 	// update methods //
 	//================//
-	
-    public void tick(IDhClientLevel level)
-	{
-		// get the renderSource if it has finished loading
-        if (this.loadFuture != null && this.loadFuture.isDone())
-		{
-			this.renderSource = this.loadFuture.join();
-			this.loadFuture = null;
-			
-            if (this.isRenderEnabled)
-			{
-				this.renderSource.enableRender(level);
-            }
-        }
-    }
 	
     public void disposeRenderData()
 	{
