@@ -273,10 +273,10 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 				//if (!areParentRenderSectionsLoaded(sectionPos)) // TODO not functional yet
 				{
 					// enable the render section
-					nullableRenderSection.loadRenderSourceAndEnableRendering(this.renderSourceProvider);
+					nullableRenderSection.loadRenderSource(this.renderSourceProvider);
 					
 					// determine if the section has loaded yet // TODO rename "tick" to check loading future or something?
-					nullableRenderSection.tick(this.level);
+					nullableRenderSection.enableRendering(this.level);
 				}
 				
 				
