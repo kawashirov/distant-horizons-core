@@ -7,7 +7,6 @@ import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.file.renderfile.ILodRenderSourceProvider;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.DetailDistanceUtil;
-import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.objects.quadTree.QuadNode;
 import com.seibel.lod.core.util.objects.quadTree.QuadTree;
 import org.apache.logging.log4j.Logger;
@@ -177,8 +176,8 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 				this.setValue(rootSectionPos, newRenderSection);
 			}
 		}
-
-
+		
+		
 		// update all nodes in the tree
 		Iterator<DhSectionPos> rootNodeIterator = this.rootNodePosIterator();
 		while (rootNodeIterator.hasNext())
@@ -205,6 +204,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		
 		
 		
+//		byte expectedDetailLevel = 6; // can be used instead of the following logic for testing
 		byte expectedDetailLevel = calculateExpectedDetailLevel(playerPos, sectionPos);
 		expectedDetailLevel += DhSectionPos.SECTION_BLOCK_DETAIL_LEVEL;
 		expectedDetailLevel = (byte) Math.min(expectedDetailLevel, this.treeMaxDetailLevel);
@@ -215,7 +215,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 			
 			if (nullableRenderSection != null)
 			{
-				if (areChildRenderSectionsLoaded(nullableRenderSection))
+				if (areChildRenderSectionsEnabled(nullableRenderSection))
 				{
 					nullableRenderSection.disableAndDisposeRendering();
 				}
@@ -302,7 +302,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	 * <br><Br>
 	 * FIXME sometimes sections will render on top of each other
 	 */
-	private boolean areChildRenderSectionsLoaded(LodRenderSection renderSection)
+	private boolean areChildRenderSectionsEnabled(LodRenderSection renderSection)
 	{
 		if (renderSection == null)
 		{
@@ -312,7 +312,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		if (renderSection.pos.sectionDetailLevel == TREE_LOWEST_DETAIL_LEVEL)
 		{
 			// this section is at the bottom detail level and has no children
-			return isSectionLoaded(renderSection);
+			return isSectionEnabled(renderSection);
 		}
 		else
 		{
@@ -326,7 +326,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 				{
 					LodRenderSection child = this.getChildSection(renderSection.pos, i);
 					// check if either this child or all of its children are loaded
-					boolean childLoaded = isSectionLoaded(child) || areChildRenderSectionsLoaded(child);
+					boolean childLoaded = isSectionEnabled(child) || areChildRenderSectionsEnabled(child);
 					if (!childLoaded)
 					{
 						// at least one child isn't loaded
@@ -339,14 +339,20 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 			return true;
 		}
 	}
+	
+	private static boolean isSectionEnabled(LodRenderSection renderSection)
+	{
+		return isSectionLoaded(renderSection) 
+				&& renderSection.isRenderingEnabled()
+
+				&& renderSection.renderBufferRef.get() != null
+				&& renderSection.renderBufferRef.get().areBuffersUploaded();
+	}
+	
 	private static boolean isSectionLoaded(LodRenderSection renderSection)
 	{
 		return renderSection != null 
 				&& renderSection.isLoaded() 
-				&& renderSection.isRenderingEnabled()
-				
-				&& renderSection.renderBufferRef.get() != null
-				&& renderSection.renderBufferRef.get().areBuffersUploaded()
 				
 				&& renderSection.getRenderSource() != null 
 				&& !renderSection.getRenderSource().isEmpty();
