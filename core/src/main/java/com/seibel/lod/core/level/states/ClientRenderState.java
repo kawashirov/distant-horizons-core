@@ -52,7 +52,7 @@ public class ClientRenderState
 		
 		this.renderer.close();
 		this.quadtree.close();
-		return this.renderSourceFileHandler.flushAndSave();
+		return this.renderSourceFileHandler.flushAndSaveAsync();
 	}
 	
 }

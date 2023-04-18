@@ -11,7 +11,6 @@ import com.seibel.lod.core.file.fullDatafile.RemoteFullDataFileHandler;
 import com.seibel.lod.core.file.structure.AbstractSaveStructure;
 import com.seibel.lod.core.level.states.ClientRenderState;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
-import com.seibel.lod.core.logging.f3.F3Screen;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
@@ -21,7 +20,6 @@ import com.seibel.lod.core.util.math.Mat4f;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IProfilerWrapper;
-import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import org.apache.logging.log4j.Logger;
 
@@ -104,7 +102,7 @@ public abstract class AbstractDhClientLevel implements IDhClientLevel
 		}
 		
 		clientRenderState.quadtree.tick(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
-		clientRenderState.renderer.bufferHandler.update();
+		clientRenderState.renderer.bufferHandler.updateQuadTreeRenderSources();
 		
 		return true;
 	}
@@ -186,7 +184,7 @@ public abstract class AbstractDhClientLevel implements IDhClientLevel
 		DhLodPos pos = data.getBBoxLodPos().convertToDetailLevel(FullDataSource.SECTION_SIZE_OFFSET);
 		if (ClientRenderState != null)
 		{
-			ClientRenderState.renderSourceFileHandler.write(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);
+			ClientRenderState.renderSourceFileHandler.writeChunkDataToFile(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);
 		}
 		else
 		{
@@ -200,7 +198,7 @@ public abstract class AbstractDhClientLevel implements IDhClientLevel
 		ClientRenderState ClientRenderState = this.ClientRenderStateRef.get();
 		if (ClientRenderState != null)
 		{
-			return ClientRenderState.renderSourceFileHandler.flushAndSave().thenCombine(this.fullDataFileHandler.flushAndSave(), (voidA, voidB) -> null);
+			return ClientRenderState.renderSourceFileHandler.flushAndSaveAsync().thenCombine(this.fullDataFileHandler.flushAndSave(), (voidA, voidB) -> null);
 		}
 		else
 		{

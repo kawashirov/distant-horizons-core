@@ -11,19 +11,24 @@ import org.apache.logging.log4j.Logger;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * A render section represents an area that could be rendered.
+ * For more information see {@link LodQuadTree}.
+ */
 public class LodRenderSection
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
+	
     public final DhSectionPos pos;
-	
-    private CompletableFuture<ColumnRenderSource> loadFuture;
-    private boolean isRenderEnabled = false;
-    
-	private ColumnRenderSource renderSource;
-	private ILodRenderSourceProvider renderSourceProvider = null;
-	
+	/** a reference is used so the render buffer can be swapped to and from the buffer builder */
 	public final AtomicReference<ColumnRenderBuffer> renderBufferRef = new AtomicReference<>();
+	
+	private boolean isRenderingEnabled = false;
+	
+	private ILodRenderSourceProvider renderSourceProvider = null;
+    private CompletableFuture<ColumnRenderSource> renderSourceLoadFuture;
+	private ColumnRenderSource renderSource;
 	
 	
 	
@@ -35,7 +40,17 @@ public class LodRenderSection
 	// rendering //
 	//===========//
 	
-    public void loadRenderSource(ILodRenderSourceProvider renderDataProvider)
+	public void enableRendering() { this.isRenderingEnabled = true; }
+	public void disableRendering() { this.isRenderingEnabled = false; }
+	
+	
+	
+	//=============//
+	// render data //
+	//=============//
+	
+	/** does nothing if a render source is already loaded or in the process of loading */
+	public void loadRenderSource(ILodRenderSourceProvider renderDataProvider, IDhClientLevel level)
 	{
 		this.renderSourceProvider = renderDataProvider;
 		if (this.renderSourceProvider == null)
@@ -43,48 +58,26 @@ public class LodRenderSection
 			return;
 		}
 		
-		if (this.renderSource == null && this.loadFuture == null)
+		if (this.renderSource == null && this.renderSourceLoadFuture == null)
 		{
-			this.loadFuture = this.renderSourceProvider.read(this.pos);
-			this.loadFuture.whenComplete((renderSource, ex) -> 
+			this.renderSourceLoadFuture = this.renderSourceProvider.readAsync(this.pos);
+			this.renderSourceLoadFuture.whenComplete((renderSource, ex) ->
 			{
 				this.renderSource = renderSource;
-				this.loadFuture = null;
+				this.renderSourceLoadFuture = null;
+				
+				if (this.renderSource != null)
+				{
+					this.renderSource.allowRendering(level);
+				}
 			});
 		}
-    }
-	public void enableRendering(IDhClientLevel level)
-	{
-		this.isRenderEnabled = true;
-		
-		if (this.renderSource != null)
-		{
-			this.renderSource.enableRender(level);
-		}
 	}
-	
-	
-    public void disableAndDisposeRendering()
-	{
-        if (!this.isRenderEnabled)
-		{
-			return;
-		}
-		
-		this.disposeRenderData();
-		this.isRenderEnabled = false;
-    }
-	
-	
-	
-	//========================//
-	// render source provider //
-	//========================//
 	
     public void reload(ILodRenderSourceProvider renderDataProvider)
 	{
 		// don't accidentally enable rendering for a disabled section
-		if (!this.isRenderEnabled)
+		if (!this.isRenderingEnabled)
 		{
 			return;
 		}
@@ -92,10 +85,10 @@ public class LodRenderSection
 		
 		this.renderSourceProvider = renderDataProvider;
 		
-        if (this.loadFuture != null)
+        if (this.renderSourceLoadFuture != null)
 		{
-			this.loadFuture.cancel(true);
-			this.loadFuture = null;
+			this.renderSourceLoadFuture.cancel(true);
+			this.renderSourceLoadFuture = null;
         }
 		
         if (this.renderSource != null)
@@ -104,14 +97,9 @@ public class LodRenderSection
 			this.renderSource = null;
         }
 		
-		this.loadFuture = this.renderSourceProvider.read(this.pos);
+		this.renderSourceLoadFuture = this.renderSourceProvider.readAsync(this.pos);
     }
 	
-	
-	
-	//================//
-	// update methods //
-	//================//
 	
     public void disposeRenderData()
 	{
@@ -128,28 +116,45 @@ public class LodRenderSection
 			this.renderBufferRef.set(null);
 		}
 		
-		if (this.loadFuture != null)
+		if (this.renderSourceLoadFuture != null)
 		{
-			this.loadFuture.cancel(true);
-			this.loadFuture = null;
+			this.renderSourceLoadFuture.cancel(true);
+			this.renderSourceLoadFuture = null;
 		}
 	}
-
+	
 	
 	
 	//========================//
 	// getters and properties //
 	//========================//
 	
-    public boolean shouldRender() { return this.isLoaded() && this.isRenderEnabled; }
-
-    public boolean isRenderingEnabled() { return this.isRenderEnabled; }
-    public boolean isLoaded() { return this.renderSource != null; }
-	public boolean isLoading() { return this.loadFuture != null; }
-    public boolean isOutdated() { return this.renderSource != null && !this.renderSource.isValid(); }
+	/** @return true if this section is loaded and set to render */
+    public boolean shouldRender() { return this.isRenderingEnabled && this.isRenderDataLoaded(); }
+	/** This can return true before the render data is loaded */
+    public boolean isRenderingEnabled() { return this.isRenderingEnabled; }
 	
     public ColumnRenderSource getRenderSource() { return this.renderSource; }
-    public CompletableFuture<ColumnRenderSource> getRenderSourceLoadingFuture() { return this.loadFuture; }
+	
+	public boolean isRenderDataLoaded()
+	{
+		return this.renderSource != null
+				&&
+				(
+					(
+						// if true; either this section represents empty chunks or un-generated chunks. 
+						// Either way, there isn't any data to render, but this should be considered "loaded"
+						this.renderSource.isEmpty()
+					)
+					||
+					(
+						// check if the buffers have been loaded
+						this.renderBufferRef.get() != null
+						&& this.renderBufferRef.get().areBuffersUploaded()
+					)
+				);
+	}
+	
 	
 	
 	//==============//
@@ -160,8 +165,8 @@ public class LodRenderSection
         return "LodRenderSection{" +
                 "pos=" + this.pos +
                 ", lodRenderSource=" + this.renderSource +
-                ", loadFuture=" + this.loadFuture +
-                ", isRenderEnabled=" + this.isRenderEnabled +
+                ", loadFuture=" + this.renderSourceLoadFuture +
+                ", isRenderEnabled=" + this.isRenderingEnabled +
                 '}';
     }
 	

@@ -7,6 +7,7 @@ import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.file.renderfile.ILodRenderSourceProvider;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.DetailDistanceUtil;
+import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.objects.quadTree.QuadNode;
 import com.seibel.lod.core.util.objects.quadTree.QuadTree;
 import org.apache.logging.log4j.Logger;
@@ -15,46 +16,16 @@ import java.util.Iterator;
 
 /**
  * This quadTree structure is our core data structure and holds
- * all rendering data. <br><br>
- * 
- * This class represent a circular quadTree of lodSections. <br>
- * Each section at level n is populated in one or more ways: <br> 
- *      -by constructing it from the data of all the children sections (lower levels) <br> 
- *      -by loading from file <br> 
- *      -by adding data with the lodBuilder <br> 
- * <br><br> 
- * The QuadTree is built from several layers of 2d ring buffers.
+ * all rendering data.
  */
 public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoCloseable
 {
-    /**
-     * Note: all config values should be via the class that extends this class, and
-     *          by implementing different abstract methods
-     */
     public static final byte TREE_LOWEST_DETAIL_LEVEL = ColumnRenderSource.SECTION_SIZE_OFFSET;
-	
-    private static final boolean SUPER_VERBOSE_LOGGING = false;
 	
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
-	
-	public final byte getLayerDataDetailOffset() { return ColumnRenderSource.SECTION_SIZE_OFFSET; }
-	public final byte getLayerDataDetail(byte sectionDetailLevel) { return (byte) (sectionDetailLevel - this.getLayerDataDetailOffset()); }
-	
-    public final byte getLayerSectionDetailOffset() { return ColumnRenderSource.SECTION_SIZE_OFFSET; }
-    public final byte getLayerSectionDetail(byte dataDetail) { return (byte) (dataDetail + this.getLayerSectionDetailOffset()); }
-	
-	
     public final int blockRenderDistance;
     private final ILodRenderSourceProvider renderSourceProvider;
-	
-	/** How many {@link LodRenderSection}'s are currently loading */
-	private int numberOfRenderSectionsLoading = 0;
-	/** 
-	 * Indicates how many {@link LodRenderSection}'s can load concurrently. <br>
-	 * Prevents large number of {@link ILodRenderSourceProvider} tasks from building up when initially loading. 
-	 */
-	private static final int MAX_NUMBER_OF_LOADING_RENDER_SECTIONS = 2;
 	
 	private final IDhClientLevel level; //FIXME: Proper hierarchy to remove this reference!
 	
@@ -76,73 +47,9 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
     }
 	
 	
-	
-    /**
-     * This method return the LodSection at the given detail level and level coordinate x and z
-     * @param detailLevel detail level of the section
-     * @param x x coordinate of the section
-     * @param z z coordinate of the section
-     * @return the LodSection
-     */
-    public LodRenderSection getSection(byte detailLevel, int x, int z) { return this.getValue(new DhSectionPos(detailLevel, x, z)); }
-    public LodRenderSection getSection(DhSectionPos pos) { return this.getValue(pos); }
-	
-	
-	
-	/**
-     * This method will compute the detail level based on player position and section pos
-     * Override this method if you want to use a different algorithm
-     * @param playerPos player position as a reference for calculating the detail level
-     * @param sectionPos section position
-     * @return detail level of this section pos
-     */
-    public byte calculateExpectedDetailLevel(DhBlockPos2D playerPos, DhSectionPos sectionPos)
-	{
-        return DetailDistanceUtil.getDetailLevelFromDistance(playerPos.dist(sectionPos.getCenter().getCenterBlockPos()));
-    }
-	
-    /**
-     * The method will return the highest detail level in a circle around the center
-     * Override this method if you want to use a different algorithm
-     * Note: the returned distance should always be the ceiling estimation of the distance
-     * //TODO: Make this input a bbox or a circle or something....
-     * @param distance the circle radius
-     * @return the highest detail level in the circle
-     */
-    public byte getMaxDetailInRange(double distance) { return DetailDistanceUtil.getDetailLevelFromDistance(distance); }
-
-    /**
-     * The method will return the furthest distance to the center for the given detail level
-     * Override this method if you want to use a different algorithm
-     * Note: the returned distance should always be the ceiling estimation of the distance
-     * //TODO: Make this return a bbox instead of a distance in circle
-     * @param detailLevel detail level
-     * @return the furthest distance to the center, in blocks
-     */
-    public int getFurthestDistance(byte detailLevel)
-	{
-        return (int)Math.ceil(DetailDistanceUtil.getDrawDistanceFromDetail(detailLevel + 1));
-        // +1 because that's the border to the next detail level, and we want to include up to it.
-    }
-    
-    /**
-     * Given a section pos at level n this method returns the parent section at level n+1
-     * @param pos the section position
-     * @return the parent LodSection
-     */
-    public LodRenderSection getParentSection(DhSectionPos pos) { return this.getSection(pos.getParentPos()); }
-    
-    /**
-     * Given a section pos at level n and a child index this method return the
-     * child section at level n-1
-     * @param child0to3 since there are 4 possible children this index identify which one we are getting
-     * @return one of the child LodSection
-     */
-    public LodRenderSection getChildSection(DhSectionPos pos, int child0to3) { return this.getSection(pos.getChildByIndex(child0to3)); }
-	
-	
-	
-	// tick //
+	//=============//
+	// tick update //
+	//=============//
 	
     /**
      * This function updates the quadTree based on the playerPos and the current game configs (static and global)
@@ -150,59 +57,80 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
      */
     public void tick(DhBlockPos2D playerPos)
 	{
+		if (this.level == null)
+		{
+			// the level hasn't finished loading yet
+			// TODO sometimes null pointers still happen, when logging back into a world (maybe the old level isn't null but isn't valid either?)
+			return;
+		}
+		
+		
 		try
 		{
-			// recenter if necessary
+			// recenter if necessary, removing out of bounds sections
 			this.setCenterBlockPos(playerPos, LodRenderSection::disposeRenderData);
 			
 			updateAllRenderSections(playerPos);
 		}
 		catch (Exception e)
 		{
-			// TODO when we are stable this shouldn't be necessary
 			LOGGER.error("Quad Tree tick exception for dimension: "+this.level.getClientLevelWrapper().getDimensionType().getDimensionName()+", exception: "+e.getMessage(), e);
 		}
 	}
 	private void updateAllRenderSections(DhBlockPos2D playerPos)
 	{
-		// make sure all root nodes are created
+		// walk through each root node
 		Iterator<DhSectionPos> rootPosIterator = this.rootNodePosIterator();
 		while (rootPosIterator.hasNext())
 		{
-			DhSectionPos rootSectionPos = rootPosIterator.next();
-			if (this.getNode(rootSectionPos) == null)
+			// make sure all root nodes have been created
+			DhSectionPos rootPos = rootPosIterator.next();
+			if (this.getNode(rootPos) == null)
 			{
-				LodRenderSection newRenderSection = new LodRenderSection(rootSectionPos);
-				this.setValue(rootSectionPos, newRenderSection);
+				this.setValue(rootPos, new LodRenderSection(rootPos));
 			}
-		}
-		
-		
-		// update all nodes in the tree
-		Iterator<DhSectionPos> rootNodeIterator = this.rootNodePosIterator();
-		while (rootNodeIterator.hasNext())
-		{
-			DhSectionPos rootPos = rootNodeIterator.next();
-			QuadNode<LodRenderSection> rootNode = this.getNode(rootPos); // should never be null
 			
-			// iterate over nodes in this root
-			Iterator<QuadNode<LodRenderSection>> nodeIterator = rootNode.getNodeIterator();
-			while (nodeIterator.hasNext())
-			{
-				QuadNode<LodRenderSection> quadNode = nodeIterator.next();
-				recursivelyUpdateRenderSectionNode(playerPos, rootNode, quadNode, quadNode.sectionPos);
-			}
+			QuadNode<LodRenderSection> rootNode = this.getNode(rootPos);
+			recursivelyUpdateRenderSectionNode(playerPos, rootNode, rootNode, rootNode.sectionPos, false);
 		}
 	}
-	private void recursivelyUpdateRenderSectionNode(DhBlockPos2D playerPos, QuadNode<LodRenderSection> rootNode, QuadNode<LodRenderSection> nullableQuadNode, DhSectionPos sectionPos)
+	/** @return whether the current position is able to render (note: not if it IS rendering, just if it is ABLE to.) */
+	private boolean recursivelyUpdateRenderSectionNode(DhBlockPos2D playerPos, QuadNode<LodRenderSection> rootNode, QuadNode<LodRenderSection> quadNode, DhSectionPos sectionPos, boolean parentRenderSectionIsEnabled)
 	{
-		LodRenderSection nullableRenderSection = null;
-		if (nullableQuadNode != null)
+		//===============================//
+		// node and render section setup //
+		//===============================//
+		
+		// make sure the node is created
+		if (quadNode == null && this.isSectionPosInBounds(sectionPos)) // the position bounds should only fail when at the edge of the user's render distance
 		{
-			nullableRenderSection = nullableQuadNode.value;
+			rootNode.setValue(sectionPos, new LodRenderSection(sectionPos));
+			quadNode = rootNode.getNode(sectionPos);
+		}
+		if (quadNode == null)
+		{
+			// this node must be out of bounds, or there was an issue adding it to the tree
+			return false;
+		}
+		
+		// make sure the render section is created
+		LodRenderSection renderSection = quadNode.value;
+		// create a new render section if missing
+		if (renderSection == null)
+		{
+			LodRenderSection newRenderSection = new LodRenderSection(sectionPos);
+			rootNode.setValue(sectionPos, newRenderSection);
+			
+			renderSection = newRenderSection;
 		}
 		
 		
+		
+		
+		//===============================//
+		// handle enabling, loading,     //
+		// and disabling render sections //
+		//===============================//
 		
 //		byte expectedDetailLevel = 6; // can be used instead of the following logic for testing
 		byte expectedDetailLevel = calculateExpectedDetailLevel(playerPos, sectionPos);
@@ -211,151 +139,129 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		
 		if (sectionPos.sectionDetailLevel > expectedDetailLevel)
 		{
-			// section detail level too high...
+			// section detail level too high //
 			
-			if (nullableRenderSection != null)
+			
+			boolean isThisPositionBeingRendered = renderSection.isRenderingEnabled();
+			boolean allChildrenSectionsAreLoaded = true;
+			
+			// recursively update all child render sections
+			Iterator<DhSectionPos> childPosIterator = quadNode.getChildPosIterator();
+			while (childPosIterator.hasNext())
 			{
-				if (areChildRenderSectionsEnabled(nullableRenderSection))
-				{
-					nullableRenderSection.disableAndDisposeRendering();
-				}
+				DhSectionPos childPos = childPosIterator.next();
+				QuadNode<LodRenderSection> childNode = rootNode.getNode(childPos);
+				
+				boolean childSectionLoaded = this.recursivelyUpdateRenderSectionNode(playerPos, rootNode, childNode, childPos, isThisPositionBeingRendered || parentRenderSectionIsEnabled);
+				allChildrenSectionsAreLoaded = childSectionLoaded && allChildrenSectionsAreLoaded;
 			}
 			
-			if (nullableQuadNode == null)
+			
+			
+			if (!allChildrenSectionsAreLoaded)
 			{
-				// ...create self
-				if (this.isSectionPosInBounds(sectionPos)) // this should only fail when at the edge of the user's render distance
-				{
-					rootNode.setValue(sectionPos, new LodRenderSection(sectionPos));
-				}
+				// not all child positions are loaded yet, or this section is out of render range
+				return isThisPositionBeingRendered;
 			}
 			else
 			{
-				Iterator<DhSectionPos> childPosIterator = nullableQuadNode.getChildPosIterator();
+				// all child positions are loaded, disable this section and enable the children.
+				renderSection.disposeRenderData();
+				renderSection.disableRendering();
+				
+				
+				
+				// walk back down the tree and enable the child sections //TODO there are probably more efficient ways of doing this, but this will work for now
+				childPosIterator = quadNode.getChildPosIterator();
 				while (childPosIterator.hasNext())
 				{
 					DhSectionPos childPos = childPosIterator.next();
 					QuadNode<LodRenderSection> childNode = rootNode.getNode(childPos);
 					
-					recursivelyUpdateRenderSectionNode(playerPos, rootNode, childNode, childPos);
+					boolean childSectionLoaded = this.recursivelyUpdateRenderSectionNode(playerPos, rootNode, childNode, childPos, parentRenderSectionIsEnabled);
+					allChildrenSectionsAreLoaded = childSectionLoaded && allChildrenSectionsAreLoaded;
 				}
+				LodUtil.assertTrue(allChildrenSectionsAreLoaded, "Potential QuadTree concurrency issue. All child sections should be enabled and ready to render.");
+				
+				
+				// this section is now being rendered via its children
+				return true;
 			}
 		}
 		// TODO this should only equal the expected detail level, the (expectedDetailLevel-1) is a temporary fix to prevent corners from being cut out 
 		else if (sectionPos.sectionDetailLevel == expectedDetailLevel || sectionPos.sectionDetailLevel == expectedDetailLevel-1)
 		{
-			// this is the correct detail level and should be rendered
+			// this is the detail level we want to render //
 			
-			if (nullableQuadNode == null)
+			
+			// prepare this section for rendering
+			renderSection.loadRenderSource(this.renderSourceProvider, this.level);
+			
+			// wait for the parent to disable before enabling this section, so we don't overdraw/overlap render sections
+			if (!parentRenderSectionIsEnabled && renderSection.isRenderDataLoaded())
 			{
-				if (this.isSectionPosInBounds(sectionPos))
-				{
-					// create new value and update next tick
-					rootNode.setValue(sectionPos, new LodRenderSection(sectionPos));
-				}
-				
-				nullableQuadNode = rootNode.getNode(sectionPos);
-			}
-			
-			
-			
-			if (nullableQuadNode != null)
-			{
-				// create a new render section if missing
-				if (nullableRenderSection == null)
-				{
-					LodRenderSection newRenderSection = new LodRenderSection(sectionPos);
-					rootNode.setValue(sectionPos, newRenderSection);
-					
-					nullableRenderSection = newRenderSection;
-				}
-				
-				//if (!areParentRenderSectionsLoaded(sectionPos)) // TODO not functional yet
-				{
-					// enable the render section
-					nullableRenderSection.loadRenderSource(this.renderSourceProvider);
-					
-					// determine if the section has loaded yet // TODO rename "tick" to check loading future or something?
-					nullableRenderSection.enableRendering(this.level);
-				}
+				renderSection.enableRendering();
 				
 				
-				// delete/disable children
-				if (isSectionLoaded(nullableRenderSection))
+				// delete/disable children, all of them will be a lower detail level than requested
+				quadNode.deleteAllChildren((childRenderSection) ->
 				{
-					nullableQuadNode.deleteAllChildren((renderSection) ->
+					if (childRenderSection != null)
 					{
-						if (renderSection != null)
-						{
-							renderSection.disableAndDisposeRendering();
-						}
-					});
-				}
+						childRenderSection.disposeRenderData();
+						childRenderSection.disableRendering();
+					}
+				});
 			}
-		}
-	}
-	
-	/** 
-	 * Used to determine if a section can unload or not. 
-	 * If this returns true, that means there are child render sections ready to render,
-	 * so there won't be any holes in the world by disabling the parent.
-	 * <br><Br>
-	 * FIXME sometimes sections will render on top of each other
-	 */
-	private boolean areChildRenderSectionsEnabled(LodRenderSection renderSection)
-	{
-		if (renderSection == null)
-		{
-			// this section isn't loaded
-			return false;
-		}
-		if (renderSection.pos.sectionDetailLevel == TREE_LOWEST_DETAIL_LEVEL)
-		{
-			// this section is at the bottom detail level and has no children
-			return isSectionEnabled(renderSection);
+			
+			return renderSection.isRenderDataLoaded();
 		}
 		else
 		{
-			// recursively check if all children are loaded
-			
-			for (int i = 0; i < 4; i++)
-			{
-				DhSectionPos childPos = renderSection.pos.getChildByIndex(i);
-				// if a section is out of bounds, act like it is loaded
-				if (this.isSectionPosInBounds(childPos))
-				{
-					LodRenderSection child = this.getChildSection(renderSection.pos, i);
-					// check if either this child or all of its children are loaded
-					boolean childLoaded = isSectionEnabled(child) || areChildRenderSectionsEnabled(child);
-					if (!childLoaded)
-					{
-						// at least one child isn't loaded
-						return false;
-					}
-				}
-			}
-			
-			// all children are loaded
-			return true;
+			throw new IllegalStateException("LodQuadTree shouldn't be updating renderSections below the expected detail level: ["+expectedDetailLevel+"].");
 		}
 	}
 	
-	private static boolean isSectionEnabled(LodRenderSection renderSection)
+	
+	
+	//====================//
+	// detail level logic //
+	//====================//
+	
+	/**
+	 * This method will compute the detail level based on player position and section pos
+	 * Override this method if you want to use a different algorithm
+	 * @param playerPos player position as a reference for calculating the detail level
+	 * @param sectionPos section position
+	 * @return detail level of this section pos
+	 */
+	public byte calculateExpectedDetailLevel(DhBlockPos2D playerPos, DhSectionPos sectionPos)
 	{
-		return isSectionLoaded(renderSection) 
-				&& renderSection.isRenderingEnabled()
-
-				&& renderSection.renderBufferRef.get() != null
-				&& renderSection.renderBufferRef.get().areBuffersUploaded();
+		return DetailDistanceUtil.getDetailLevelFromDistance(playerPos.dist(sectionPos.getCenter().getCenterBlockPos()));
 	}
 	
-	private static boolean isSectionLoaded(LodRenderSection renderSection)
+	/**
+	 * The method will return the highest detail level in a circle around the center
+	 * Override this method if you want to use a different algorithm
+	 * Note: the returned distance should always be the ceiling estimation of the distance
+	 * //TODO: Make this input a bbox or a circle or something....
+	 * @param distance the circle radius
+	 * @return the highest detail level in the circle
+	 */
+	public byte getMaxDetailInRange(double distance) { return DetailDistanceUtil.getDetailLevelFromDistance(distance); }
+	
+	/**
+	 * The method will return the furthest distance to the center for the given detail level
+	 * Override this method if you want to use a different algorithm
+	 * Note: the returned distance should always be the ceiling estimation of the distance
+	 * //TODO: Make this return a bbox instead of a distance in circle
+	 * @param detailLevel detail level
+	 * @return the furthest distance to the center, in blocks
+	 */
+	public int getFurthestDistance(byte detailLevel)
 	{
-		return renderSection != null 
-				&& renderSection.isLoaded() 
-				
-				&& renderSection.getRenderSource() != null 
-				&& !renderSection.getRenderSource().isEmpty();
+		return (int)Math.ceil(DetailDistanceUtil.getDrawDistanceFromDetail(detailLevel + 1));
+		// +1 because that's the border to the next detail level, and we want to include up to it.
 	}
 	
 	
@@ -370,6 +276,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	 */
 	public void clearRenderDataCache()
 	{
+		// TODO this causes some (harmless) file errors when called
 		LOGGER.info("Clearing render cache...");
 		
 		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.nodeIterator();
@@ -395,7 +302,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	 */
 	public void reloadPos(DhSectionPos pos)
 	{
-		LodRenderSection renderSection = this.getSection(pos);
+		LodRenderSection renderSection = this.getValue(pos);
 		if (renderSection != null)
 		{
 			renderSection.reload(this.renderSourceProvider);

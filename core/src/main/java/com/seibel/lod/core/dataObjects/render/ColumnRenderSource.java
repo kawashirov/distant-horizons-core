@@ -250,7 +250,6 @@ public class ColumnRenderSource
 			// the source is empty, don't attempt to update anything
 			return;
 		}
-		
 		// the source isn't empty, this object won't be empty after the method finishes
 		this.isEmpty = false;
 		
@@ -366,10 +365,7 @@ public class ColumnRenderSource
 		}
 	}
 	
-	public void enableRender(IDhClientLevel level)
-	{
-		this.level = level;
-	}
+	public void allowRendering(IDhClientLevel level) { this.level = level; }
 	
 	public void disableRender() { this.cancelBuildBuffer(); }
 	
@@ -397,8 +393,16 @@ public class ColumnRenderSource
 				this.lastNs = System.nanoTime();
 				//LOGGER.info("Swapping render buffer for {}", sectionPos);
 				
+				
 				ColumnRenderBuffer newBuffer = this.buildRenderBufferFuture.join();
+				LodUtil.assertTrue(newBuffer.areBuffersUploaded(), "The buffer future for "+renderSource.sectionPos+" returned an un-built buffer.");
+				
 				ColumnRenderBuffer oldBuffer = renderBufferRefToSwap.getAndSet(newBuffer);
+				if (oldBuffer != null)
+				{
+					// the old buffer is now considered unloaded, it will need to be freshly re-loaded
+					oldBuffer.setBuffersUploaded(false);
+				}
 				
 				ColumnRenderBuffer swapped = this.columnRenderBufferRef.swap(oldBuffer);
 				LodUtil.assertTrue(swapped == null);

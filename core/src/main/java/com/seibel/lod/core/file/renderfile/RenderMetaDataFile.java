@@ -117,8 +117,9 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 			Object inner = ((SoftReference<?>) obj).get();
 			if (inner != null)
 			{
-				fileHandler.onReadRenderSourceFromCache(this, (ColumnRenderSource) inner);
-				return CompletableFuture.completedFuture((ColumnRenderSource) inner);
+				return fileHandler.onReadRenderSourceLoadedFromCacheAsync(this, (ColumnRenderSource) inner)
+						// wait for the handler to finish before returning the renderSource
+						.handle((voidObj, ex) -> (ColumnRenderSource) inner);
 			}
 		}
 		
@@ -159,7 +160,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 		// After cas. We are in exclusive control.
 		if (!this.doesFileExist)
 		{
-			this.fileHandler.onCreateRenderFile(this)
+			this.fileHandler.onCreateRenderFileAsync(this)
 				.thenApply((data) -> 
 				{
 					this.metaData = makeMetaData(data);

@@ -6,7 +6,6 @@ import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.Pos2D;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.renderer.LodRenderer;
-import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.math.Vec3f;
 import com.seibel.lod.core.util.objects.SortedArraySet;
 import com.seibel.lod.core.util.objects.quadTree.QuadNode;
@@ -24,14 +23,14 @@ public class RenderBufferHandler
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
 	/** contains all relevant data */
-	public final LodQuadTree quadTree;
+	public final LodQuadTree lodQuadTree;
 	
 	// TODO: Make sorting go into the update loop instead of the render loop as it doesn't need to be done every frame
 	private SortedArraySet<LoadedRenderBuffer> loadedNearToFarBuffers = null;
 	
 	
 	
-	public RenderBufferHandler(LodQuadTree lodQuadTree) { this.quadTree = lodQuadTree; }
+	public RenderBufferHandler(LodQuadTree lodQuadTree) { this.lodQuadTree = lodQuadTree; }
 	
 	
 	
@@ -138,7 +137,7 @@ public class RenderBufferHandler
 		// Build the sorted list
 		this.loadedNearToFarBuffers = new SortedArraySet<>((a, b) -> -farToNearComparator.compare(a, b)); // TODO is the comparator named wrong?
 		
-		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.quadTree.nodeIterator();
+		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.lodQuadTree.nodeIterator();
 		while (nodeIterator.hasNext())
 		{
 			QuadNode<LodRenderSection> node = nodeIterator.next();
@@ -167,30 +166,20 @@ public class RenderBufferHandler
 		this.loadedNearToFarBuffers.forEach(loadedBuffer -> loadedBuffer.buffer.renderTransparent(renderContext));
 	}
 	
-	public void update()
+	public void updateQuadTreeRenderSources()
 	{
-		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.quadTree.nodeIterator();
+		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.lodQuadTree.nodeIterator();
 		while (nodeIterator.hasNext())
 		{
 			LodRenderSection renderSection = nodeIterator.next().value;
 			if (renderSection != null)
 			{
-				ColumnRenderSource currentRenderSource = renderSection.getRenderSource();
-				
-				// Update self's render buffer state
-				if (!renderSection.shouldRender())
+				ColumnRenderSource sectionRenderSource = renderSection.getRenderSource();
+				// if the render source is present, attempt to load it
+				if (sectionRenderSource != null)
 				{
-					//TODO: Does this really need to force the old buffer to not be rendered?
-					AbstractRenderBuffer previousRenderBuffer = renderSection.renderBufferRef.getAndSet(null);
-					if (previousRenderBuffer != null)
-					{
-						previousRenderBuffer.close();
-					}
-				}
-				else
-				{
-					LodUtil.assertTrue(currentRenderSource != null); // section.shouldRender() should have ensured this
-					currentRenderSource.trySwapInNewlyBuiltRenderBuffer(renderSection.getRenderSource(), renderSection.renderBufferRef);
+					// TODO why are we always trying to swap the buffers? shouldn't we only swap them when a new buffer has been built? we have a future object specifically for that in ColumnRenderSource
+					sectionRenderSource.trySwapInNewlyBuiltRenderBuffer(renderSection.getRenderSource(), renderSection.renderBufferRef);
 				}
 			}
 		}
@@ -198,7 +187,7 @@ public class RenderBufferHandler
 	
     public void close() 
 	{
-		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.quadTree.nodeIterator();
+		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.lodQuadTree.nodeIterator();
 		while (nodeIterator.hasNext())
 		{
 			LodRenderSection renderSection = nodeIterator.next().value;

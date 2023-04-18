@@ -54,12 +54,16 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	
 	
 	
-    /**
-     * Caller must ensure that this method is called only once,
-     * and that the given files are not used before this method is called.
-     */
-    @Override
-    public void addScannedFile(Collection<File> newRenderFiles)
+	//===============//
+	// file handling //
+	//===============//
+	
+	/**
+	 * Caller must ensure that this method is called only once,
+	 * and that the given files are not used before this method is called.
+	 */
+	@Override
+	public void addScannedFile(Collection<File> newRenderFiles)
 	{
 		HashMultimap<DhSectionPos, RenderMetaDataFile> filesByPos = HashMultimap.create();
 		
@@ -90,7 +94,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 				//fileToUse = metaFiles.stream().findFirst().orElse(null); // use the first file in the list
 				
 				// use the file's last modified date
-				fileToUse = Collections.max(metaFiles, Comparator.comparingLong(renderMetaDataFile -> 
+				fileToUse = Collections.max(metaFiles, Comparator.comparingLong(renderMetaDataFile ->
 						renderMetaDataFile.file.lastModified()));
 				
 //				fileToUse = Collections.max(metaFiles, Comparator.comparingLong(renderMetaDataFile -> 
@@ -111,7 +115,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 					sb.append("\n");
 					sb.append("(Other files will be renamed by appending \".old\" to their name.)");
 					LOGGER.warn(sb.toString());
-				
+					
 					// Rename all other files with the same pos to .old
 					for (RenderMetaDataFile metaFile : metaFiles)
 					{
@@ -143,15 +147,9 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		}
 	}
 	
-	
-	
-	//===============//
-	// file handling //
-	//===============//
-	
-    /** This call is concurrent. I.e. it supports multiple threads calling this method at the same time. */
+	/** This call is concurrent. I.e. it supports multiple threads calling this method at the same time. */
     @Override
-    public CompletableFuture<ColumnRenderSource> read(DhSectionPos pos)
+    public CompletableFuture<ColumnRenderSource> readAsync(DhSectionPos pos)
 	{
         RenderMetaDataFile metaFile = this.filesBySectionPos.get(pos);
 		if (metaFile == null)
@@ -196,14 +194,32 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 			});
     }
 	
-    /* This call is concurrent. I.e. it supports multiple threads calling this method at the same time. */
-    @Override
-    public void write(DhSectionPos sectionPos, ChunkSizedFullDataSource chunkData)
+	public CompletableFuture<ColumnRenderSource> onCreateRenderFileAsync(RenderMetaDataFile file)
 	{
-        this.writeRecursively(sectionPos,chunkData);
-		this.fullDataSourceProvider.write(sectionPos, chunkData); // TODO why is there fullData handling in the render file handler?
+		final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get()
+				.calculateMaxVerticalData((byte) (file.pos.sectionDetailLevel - ColumnRenderSource.SECTION_SIZE_OFFSET));
+		
+		return CompletableFuture.completedFuture(
+				new ColumnRenderSource(file.pos, vertSize, this.level.getMinY()));
+	}
+	
+	
+	
+	//=============//
+	// data saving //
+	//=============//
+	
+    /**
+	 * This call is concurrent. I.e. it supports multiple threads calling this method at the same time. <br>
+	 * TODO why is there fullData handling in the render file handler? 
+	 */
+    @Override
+    public void writeChunkDataToFile(DhSectionPos sectionPos, ChunkSizedFullDataSource chunkData)
+	{
+        this.writeChunkDataToFileRecursively(sectionPos,chunkData);
+		this.fullDataSourceProvider.write(sectionPos, chunkData);
     }
-    private void writeRecursively(DhSectionPos sectPos, ChunkSizedFullDataSource chunkData)
+    private void writeChunkDataToFileRecursively(DhSectionPos sectPos, ChunkSizedFullDataSource chunkData)
 	{
 		if (!sectPos.getSectionBBoxPos().overlapsExactly(new DhLodPos((byte) (4 + chunkData.dataDetail), chunkData.x, chunkData.z)))
 		{
@@ -213,10 +229,10 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		
 		if (sectPos.sectionDetailLevel > ColumnRenderSource.SECTION_SIZE_OFFSET)
 		{
-			this.writeRecursively(sectPos.getChildByIndex(0), chunkData);
-			this.writeRecursively(sectPos.getChildByIndex(1), chunkData);
-			this.writeRecursively(sectPos.getChildByIndex(2), chunkData);
-			this.writeRecursively(sectPos.getChildByIndex(3), chunkData);
+			this.writeChunkDataToFileRecursively(sectPos.getChildByIndex(0), chunkData);
+			this.writeChunkDataToFileRecursively(sectPos.getChildByIndex(1), chunkData);
+			this.writeChunkDataToFileRecursively(sectPos.getChildByIndex(2), chunkData);
+			this.writeChunkDataToFileRecursively(sectPos.getChildByIndex(3), chunkData);
 		}
 		
 		RenderMetaDataFile metaFile = this.filesBySectionPos.get(sectPos);
@@ -227,9 +243,10 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		}
 	}
 	
+	
     /** This call is concurrent. I.e. it supports multiple threads calling this method at the same time. */
     @Override
-	public CompletableFuture<Void> flushAndSave()
+	public CompletableFuture<Void> flushAndSaveAsync()
 	{
 		LOGGER.info("Shutting down "+ RenderSourceFileHandler.class.getSimpleName()+"...");
 		
@@ -242,36 +259,21 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
 				.whenComplete((voidObj, exception) -> LOGGER.info("Finished shutting down "+ RenderSourceFileHandler.class.getSimpleName()) );
 	}
-
-    @Override
-    public void close()
-	{
-        ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
-        for (RenderMetaDataFile metaFile : this.filesBySectionPos.values())
-		{
-            futures.add(metaFile.flushAndSave(this.renderCacheThread));
-        }
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-    }
-
-    public File computeRenderFilePath(DhSectionPos pos) { return new File(this.saveDir, pos.serialize() + RENDER_FILE_EXTENSION);}
-
-    public CompletableFuture<ColumnRenderSource> onCreateRenderFile(RenderMetaDataFile file)
-	{
-		final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get()
-				.calculateMaxVerticalData((byte) (file.pos.sectionDetailLevel - ColumnRenderSource.SECTION_SIZE_OFFSET));
-		
-		return CompletableFuture.completedFuture(
-				new ColumnRenderSource(file.pos, vertSize, this.level.getMinY()));
-	}
-
-    private void updateCache(ColumnRenderSource renderSource, RenderMetaDataFile file)
+	
+	
+	
+	//================//
+	// cache updating //
+	//================//
+	
+    private CompletableFuture<Void> updateCacheAsync(ColumnRenderSource renderSource, RenderMetaDataFile file)
 	{
 		if (this.cacheUpdateLockBySectionPos.putIfAbsent(file.pos, new Object()) != null)
 		{
-			return;
+			return CompletableFuture.completedFuture(null);
 		}
 		
+		// get the full data source loading future
 		final WeakReference<ColumnRenderSource> renderSourceReference = new WeakReference<>(renderSource); // TODO why is this a week reference?
 		CompletableFuture<IFullDataSource> fullDataSourceFuture = this.fullDataSourceProvider.read(renderSource.getSectionPos());
 		fullDataSourceFuture = fullDataSourceFuture.thenApply((fullDataSource) -> 
@@ -289,51 +291,59 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 				return null;
 			});
 		
+		
+		// future returned 
+		CompletableFuture<Void> transformationCompleteFuture = new CompletableFuture<>();
+		
+		// convert the full data source into a render source
 		//LOGGER.info("Recreating cache for {}", data.getSectionPos());
 		DataRenderTransformer.transformDataSourceAsync(fullDataSourceFuture, this.level)
-				.thenAccept((newRenderSource) -> this.write(renderSourceReference.get(), file, newRenderSource))
-				.exceptionally((ex) -> 
+				.whenComplete((newRenderSource, ex) -> 
 				{
-					if (ex instanceof InterruptedException)
+					if (ex == null)
 					{
-						// expected if the transformer is shut down, the exception can be ignored
-//						LOGGER.warn("RenderSource file transforming interrupted.");
+						this.writeRenderSourceToFile(renderSourceReference.get(), file, newRenderSource);
 					}
-					else if (ex instanceof RejectedExecutionException || ex.getCause() instanceof RejectedExecutionException)
+					else
 					{
-						// expected if the transformer was already shut down, the exception can be ignored
-//						LOGGER.warn("RenderSource file transforming interrupted.");
-					}
-					else if (!UncheckedInterruptedException.isThrowableInterruption(ex))
-					{
-						LOGGER.error("Exception when updating render file using data source: ", ex);
+						if (ex instanceof InterruptedException)
+						{
+							// expected if the transformer is shut down, the exception can be ignored
+//							LOGGER.warn("RenderSource file transforming interrupted.");
+							
+							int ignoreEmptyWarning = 0; // explicitly handling these exceptions is important so we know where they are going and if there is an issue we can easily re-enable the logging
+						}
+						else if (ex instanceof RejectedExecutionException || ex.getCause() instanceof RejectedExecutionException)
+						{
+							// expected if the transformer was already shut down, the exception can be ignored
+//							LOGGER.warn("RenderSource file transforming interrupted.");
+							
+							int ignoreEmptyWarning = 0;
+						}
+						else if (!UncheckedInterruptedException.isThrowableInterruption(ex))
+						{
+							LOGGER.error("Exception when updating render file using data source: ", ex);
+						}
 					}
 					
-					return null;
+					transformationCompleteFuture.complete(null);
 				})
 				.thenRun(() -> this.cacheUpdateLockBySectionPos.remove(file.pos));
+		
+		
+		return transformationCompleteFuture;
 	}
 	
+	/** TODO at some point this method may need to be made "async" like {@link RenderSourceFileHandler#onReadRenderSourceLoadedFromCacheAsync} since the insides are async */ 
     public ColumnRenderSource onRenderFileLoaded(ColumnRenderSource renderSource, RenderMetaDataFile file)
 	{
-//		if (!this.fullDataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get()))
-//		{
-			this.updateCache(renderSource, file);
-//		}
-		
+		this.updateCacheAsync(renderSource, file).join();
         return renderSource;
     }
 	
-	public void onReadRenderSourceFromCache(RenderMetaDataFile file, ColumnRenderSource data)
-	{
-//        if (!this.fullDataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get()))
-//		{
-		this.updateCache(data, file);
-//        }
-	}
+	public CompletableFuture<Void> onReadRenderSourceLoadedFromCacheAsync(RenderMetaDataFile file, ColumnRenderSource data) { return this.updateCacheAsync(data, file); }
 	
-    private void write(ColumnRenderSource currentRenderSource, RenderMetaDataFile file,
-			ColumnRenderSource newRenderSource)
+    private void writeRenderSourceToFile(ColumnRenderSource currentRenderSource, RenderMetaDataFile file, ColumnRenderSource newRenderSource)
 	{
         if (currentRenderSource == null || newRenderSource == null)
 		{
@@ -364,12 +374,29 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
         LodUtil.assertTrue(file.metaData != null);
 //        if (!this.fullDataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get()))
 //		{
-			this.updateCache(renderSource, file);
+			this.updateCacheAsync(renderSource, file).join();
             return true;
 //        }
 		
 //        return false;
     }
+	
+	
+	
+	//=====================//
+	// clearing / shutdown //
+	//=====================//
+	
+	@Override
+	public void close()
+	{
+		ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
+		for (RenderMetaDataFile metaFile : this.filesBySectionPos.values())
+		{
+			futures.add(metaFile.flushAndSave(this.renderCacheThread));
+		}
+		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+	}
 	
 	
 	public void deleteRenderCache()
@@ -390,5 +417,14 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		// clear the cached files
 		this.filesBySectionPos.clear();
 	}
+	
+	
+	
+	//================//
+	// helper methods //
+	//================//
+	
+	public File computeRenderFilePath(DhSectionPos pos) { return new File(this.saveDir, pos.serialize() + RENDER_FILE_EXTENSION);}
+	
 	
 }

@@ -2,6 +2,7 @@ package com.seibel.lod.core.dataObjects.render.bufferBuilding;
 
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.dataObjects.render.columnViews.ColumnArrayView;
+import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.RenderDataPointUtil;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.render.renderer.LodRenderer;
@@ -591,6 +592,7 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 	// getters //
 	//=========//
 	
+	public void setBuffersUploaded(boolean value) { this.buffersUploaded = value; }
 	public boolean areBuffersUploaded() { return this.buffersUploaded; }
 	
 	// TODO move static methods to their own class to avoid confusion
