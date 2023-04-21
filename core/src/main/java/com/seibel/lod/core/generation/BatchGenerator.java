@@ -20,6 +20,7 @@
 package com.seibel.lod.core.generation;
 
 import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenThreadMode;
+import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
 import com.seibel.lod.core.interfaces.dependencyInjection.IOverrideInjector;
 import com.seibel.lod.core.level.IDhLevel;
@@ -31,8 +32,7 @@ import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
-import com.seibel.lod.core.wrapperInterfaces.worldGeneration.AbstractBatchGenerationEnvionmentWrapper;
-import com.seibel.lod.core.wrapperInterfaces.worldGeneration.AbstractBatchGenerationEnvionmentWrapper.EGenerationStep;
+import com.seibel.lod.core.wrapperInterfaces.worldGeneration.AbstractBatchGenerationEnvironmentWrapper;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
@@ -47,7 +47,7 @@ public class BatchGenerator implements IDhApiWorldGenerator
 	private static final IWrapperFactory FACTORY = SingletonInjector.INSTANCE.get(IWrapperFactory.class);
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
-	public AbstractBatchGenerationEnvionmentWrapper generationGroup;
+	public AbstractBatchGenerationEnvironmentWrapper generationGroup;
 	public IDhLevel targetDhLevel;
 	
 	
@@ -98,24 +98,24 @@ public class BatchGenerator implements IDhApiWorldGenerator
 	@Override
 	public CompletableFuture<Void> generateChunks(int chunkPosMinX, int chunkPosMinZ, byte granularity, byte targetDataDetail, EDhApiDistantGeneratorMode generatorMode, Consumer<Object[]> resultConsumer)
 	{
-		EGenerationStep targetStep = null;
+		EDhApiWorldGenerationStep targetStep = null;
 		switch (generatorMode)
 		{
 			case PRE_EXISTING_ONLY:
-				targetStep = EGenerationStep.Empty; // NOTE: Only load in existing chunks. No new chunk generation
+				targetStep = EDhApiWorldGenerationStep.EMPTY; // NOTE: Only load in existing chunks. No new chunk generation
 				break;
 			case BIOME_ONLY:
-				targetStep = EGenerationStep.Biomes; // NOTE: No blocks. Require fake height in LodBuilder
+				targetStep = EDhApiWorldGenerationStep.BIOMES; // NOTE: No blocks. Require fake height in LodBuilder
 				break;
 			case BIOME_ONLY_SIMULATE_HEIGHT:
-				targetStep = EGenerationStep.Noise; // NOTE: Stone only. Require fake surface
+				targetStep = EDhApiWorldGenerationStep.NOISE; // NOTE: Stone only. Require fake surface
 				break;
 			case SURFACE:
-				targetStep = EGenerationStep.Surface; // Carvers or Surface???
+				targetStep = EDhApiWorldGenerationStep.SURFACE; // Carvers or Surface???
 				break;
 			case FEATURES:
 			case FULL:
-				targetStep = EGenerationStep.Features;
+				targetStep = EDhApiWorldGenerationStep.FEATURES;
 				break;
 		}
 		

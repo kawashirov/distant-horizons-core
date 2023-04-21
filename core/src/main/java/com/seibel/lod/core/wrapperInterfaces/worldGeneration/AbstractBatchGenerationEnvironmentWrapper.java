@@ -19,29 +19,25 @@
  
 package com.seibel.lod.core.wrapperInterfaces.worldGeneration;
 
+import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
-public abstract class AbstractBatchGenerationEnvionmentWrapper
+public abstract class AbstractBatchGenerationEnvironmentWrapper
 {
-	public enum EGenerationStep 
-	{
-		Empty, StructureStart, StructureReference, Biomes, Noise, Surface, Carvers, LiquidCarvers, Features, Light,
-	}
-
-	public AbstractBatchGenerationEnvionmentWrapper(IDhLevel level) { }
-
+	public AbstractBatchGenerationEnvironmentWrapper(IDhLevel level) { }
+	
 	public abstract void resizeThreadPool(int newThreadCount);
-
+	
 	public abstract void updateAllFutures();
-
+	
 	public abstract int getEventCount();
-
+	
 	public abstract void stop(boolean blocking);
-
-	public abstract CompletableFuture<Void> generateChunks(int minX, int minZ, int genSize, EGenerationStep targetStep, double runTimeRatio, Consumer<IChunkWrapper> resultConsumer);
+	
+	public abstract CompletableFuture<Void> generateChunks(int minX, int minZ, int genSize, EDhApiWorldGenerationStep targetStep, double runTimeRatio, Consumer<IChunkWrapper> resultConsumer);
 	
 }
