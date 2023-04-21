@@ -36,7 +36,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 	private final IFullDataSourceProvider handler;
 	private boolean doesFileExist;
 
-	public AbstractFullDataSourceLoader loader;
+	public AbstractFullDataSourceLoader fullDataSourceLoader;
 	public Class<? extends IFullDataSource> dataType;
 	// The '?' type should either be:
 	//    SoftReference<LodDataSource>, or		    - Non-dirty file that can be GCed
@@ -99,12 +99,12 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 		this.handler = handler;
 		this.level = level;
 		LodUtil.assertTrue(metaData != null);
-		loader = AbstractFullDataSourceLoader.getLoader(metaData.dataTypeId, metaData.loaderVersion);
-		if (loader == null) {
+		fullDataSourceLoader = AbstractFullDataSourceLoader.getLoader(metaData.dataTypeId, metaData.loaderVersion);
+		if (fullDataSourceLoader == null) {
 			throw new IOException("Invalid file: Data type loader not found: "
 					+ metaData.dataTypeId + "(v" + metaData.loaderVersion + ")");
 		}
-		dataType = loader.clazz;
+		dataType = fullDataSourceLoader.clazz;
 		doesFileExist = true;
 	}
 	
@@ -229,11 +229,11 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 					}
 					
 					// Load the file.
-					IFullDataSource data;
+					IFullDataSource fullDataSource;
 					try (FileInputStream fileInputStream = this.getFileInputStream();
 						BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream))
 					{
-						data = this.loader.loadData(this, bufferedInputStream, this.level);
+						fullDataSource = this.fullDataSourceLoader.loadData(this, bufferedInputStream, this.level);
 					}
 					catch (Exception ex)
 					{
@@ -252,8 +252,8 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 							"No one should be writing to the cache while we are in the process of " +
 									"loading one into the cache! Is this a deadlock?");
 					
-					data = this.handler.onDataFileLoaded(data, this.metaData, this::saveChanges, this::applyWriteQueue);
-					return data;
+					fullDataSource = this.handler.onDataFileLoaded(fullDataSource, this.metaData, this::saveChanges, this::applyWriteQueue);
+					return fullDataSource;
 				}, this.handler.getIOExecutor())
 				.exceptionally((ex) ->
 				{
@@ -399,10 +399,10 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 				// Write/Update data
 				LodUtil.assertTrue(metaData != null);
 				metaData.dataLevel = fullDataSource.getDataDetail();
-				loader = AbstractFullDataSourceLoader.getLoader(fullDataSource.getClass(), fullDataSource.getDataVersion());
-				LodUtil.assertTrue(loader != null, "No loader for "+fullDataSource.getClass()+" (v"+fullDataSource.getDataVersion()+")");
+				fullDataSourceLoader = AbstractFullDataSourceLoader.getLoader(fullDataSource.getClass(), fullDataSource.getDataVersion());
+				LodUtil.assertTrue(fullDataSourceLoader != null, "No loader for "+fullDataSource.getClass()+" (v"+fullDataSource.getDataVersion()+")");
 				dataType = fullDataSource.getClass();
-				metaData.dataTypeId = (loader == null) ? 0 : loader.datatypeId;
+				metaData.dataTypeId = (fullDataSourceLoader == null) ? 0 : fullDataSourceLoader.datatypeId;
 				metaData.loaderVersion = fullDataSource.getDataVersion();
 				super.writeData((outputStream) -> fullDataSource.saveData(level, this, outputStream));
 				doesFileExist = true;

@@ -85,7 +85,7 @@ public class FullDataPointUtil
     public static int getBottomY(long data) { return (int) ((data >> Y_OFFSET) & Y_MASK); }
     public static int getLight(long data) { return (int) ((data >> LIGHT_OFFSET) & LIGHT_MASK); }
 	
-    public static String toString(long data) { return "[ID:" + getId(data) + ",Y:" + getBottomY(data) + ",Height:" + getBottomY(data) + ",Light:" + getLight(data) + "]"; }
+    public static String toString(long data) { return "[ID:" + getId(data) + ",Y:" + getBottomY(data) + ",Height:" + getHeight(data) + ",Light:" + getLight(data) + "]"; }
 	
 	/** Remaps the biome/blockState ID of the given datapoint */
     @Contract(pure = true)

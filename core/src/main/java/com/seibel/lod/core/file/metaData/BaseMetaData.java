@@ -17,7 +17,7 @@ public class BaseMetaData
 	public byte dataLevel;
 	
 	// Loader stuff //
-	/** indicates what data is held in this file, is generally a hash of the data's name */
+	/** indicates what data is held in this file, this is generally a hash of the data's name */
 	public long dataTypeId;
 	public byte loaderVersion;
 	
