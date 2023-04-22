@@ -1,14 +1,14 @@
 package com.seibel.lod.core.dataObjects.transformers;
 
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
+import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.IIncompleteFullDataSource;
 import com.seibel.lod.core.util.RenderDataPointUtil;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.dataObjects.render.columnViews.ColumnArrayView;
 import com.seibel.lod.core.dataObjects.render.columnViews.ColumnQuadView;
-import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullArrayView;
-import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.config.Config;
@@ -75,10 +75,10 @@ public class FullToColumnTransformer
 					throwIfThreadInterrupted();
 					
                     ColumnArrayView columnArrayView = columnSource.getVerticalDataPointView(x, z);
-                    SingleFullArrayView fullArrayView = fullDataSource.get(x, z);
+                    SingleFullDataAccessor fullArrayView = fullDataSource.get(x, z);
                     convertColumnData(level, baseX + x, baseZ + z, columnArrayView, fullArrayView, 1);
                     
-					if (fullArrayView.doesItExist())
+					if (fullArrayView.doesColumnExist())
 					{
 						LodUtil.assertTrue(columnSource.doesDataPointExist(x, z));
 					}
@@ -96,7 +96,7 @@ public class FullToColumnTransformer
 //            for (int x = 0; x < pos.getWidth(dataDetail).value; x++) {
 //                for (int z = 0; z < pos.getWidth(dataDetail).value; z++) {
 //                    ColumnArrayView columnArrayView = columnSource.getVerticalDataView(x, z);
-//                    SingleFullArrayView fullArrayView = data.get(x, z);
+//                    SingleFullDataAccessor fullArrayView = data.get(x, z);
 //                    convertColumnData(level, columnArrayView, fullArrayView);
 //                }
 //            }
@@ -136,7 +136,7 @@ public class FullToColumnTransformer
 				{
 					throwIfThreadInterrupted();
 					
-					SingleFullArrayView fullArrayView = data.tryGet(x, z);
+					SingleFullDataAccessor fullArrayView = data.tryGet(x, z);
 					if (fullArrayView == null)
 					{
 						continue;
@@ -145,7 +145,7 @@ public class FullToColumnTransformer
 					ColumnArrayView columnArrayView = columnSource.getVerticalDataPointView(x, z);
 					convertColumnData(level, baseX + x, baseZ + z, columnArrayView, fullArrayView, 1);
 					columnSource.fillDebugFlag(x, z, 1, 1, ColumnRenderSource.DebugSourceFlag.SPARSE);
-					if (fullArrayView.doesItExist())
+					if (fullArrayView.doesColumnExist())
 						LodUtil.assertTrue(columnSource.doesDataPointExist(x, z));
 				}
 			}
@@ -162,7 +162,7 @@ public class FullToColumnTransformer
 	 * @throws InterruptedException Can be caused by interrupting the thread upstream.
 	 * 								Generally thrown if the method is running after the client leaves the current world.
 	 */
-	public static void writeFullDataChunkToColumnData(ColumnRenderSource render, IDhClientLevel level, ChunkSizedFullDataView chunkDataView) throws InterruptedException
+	public static void writeFullDataChunkToColumnData(ColumnRenderSource render, IDhClientLevel level, ChunkSizedFullDataAccessor chunkDataView) throws InterruptedException
 	{
 		final DhSectionPos pos = render.getSectionPos();
 		final int renderOffsetX = (chunkDataView.pos.x * LodUtil.CHUNK_WIDTH) - pos.getCorner().getCornerBlockPos().x;
@@ -188,12 +188,12 @@ public class FullToColumnTransformer
 					throwIfThreadInterrupted();
 					
 					ColumnArrayView columnArrayView = render.getVerticalDataPointView(renderOffsetX + x, renderOffsetZ + z);
-					SingleFullArrayView fullArrayView = chunkDataView.get(x, z);
+					SingleFullDataAccessor fullArrayView = chunkDataView.get(x, z);
 					convertColumnData(level, blockX + perRenderWidth * (renderOffsetX + x),
 							blockZ + perRenderWidth * (renderOffsetZ + z),
 							columnArrayView, fullArrayView, 2);
 					
-					if (fullArrayView.doesItExist())
+					if (fullArrayView.doesColumnExist())
 					{
 						LodUtil.assertTrue(render.doesDataPointExist(renderOffsetX + x, renderOffsetZ + z));
 					}
@@ -226,7 +226,7 @@ public class FullToColumnTransformer
 							
 							
 							ColumnArrayView columnArrayView = tempQuadView.get(ox, oz);
-							SingleFullArrayView fullArrayView = chunkDataView.get(x * dataPerRender + ox, z * dataPerRender + oz);
+							SingleFullDataAccessor fullArrayView = chunkDataView.get(x * dataPerRender + ox, z * dataPerRender + oz);
 							convertColumnData(level, blockX + perRenderWidth * (renderOffsetX + x) + perDataWidth * ox,
 									blockZ + perRenderWidth * (renderOffsetZ + z) + perDataWidth * oz,
 									columnArrayView, fullArrayView, 2);
@@ -240,9 +240,9 @@ public class FullToColumnTransformer
 		}
 	}
 
-    private static void convertColumnData(IDhClientLevel level, int blockX, int blockZ, ColumnArrayView columnArrayView, SingleFullArrayView fullArrayView, int genMode)
+    private static void convertColumnData(IDhClientLevel level, int blockX, int blockZ, ColumnArrayView columnArrayView, SingleFullDataAccessor fullArrayView, int genMode)
 	{
-        if (!fullArrayView.doesItExist())
+        if (!fullArrayView.doesColumnExist())
 		{
 			return;
 		}
@@ -265,7 +265,7 @@ public class FullToColumnTransformer
 		}
     }
 	
-	private static void iterateAndConvert(IDhClientLevel level, int blockX, int blockZ, int genMode, ColumnArrayView column, SingleFullArrayView data)
+	private static void iterateAndConvert(IDhClientLevel level, int blockX, int blockZ, int genMode, ColumnArrayView column, SingleFullDataAccessor data)
 	{
 		FullDataPointIdMap mapping = data.getMapping();
 		boolean isVoid = true;

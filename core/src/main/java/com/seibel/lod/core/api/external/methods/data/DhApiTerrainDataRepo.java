@@ -7,10 +7,10 @@ import com.seibel.lod.api.objects.data.DhApiTerrainDataPoint;
 import com.seibel.lod.api.interfaces.data.IDhApiTerrainDataRepo;
 import com.seibel.lod.api.objects.math.DhApiVec3i;
 import com.seibel.lod.core.api.internal.SharedApi;
+import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
 import com.seibel.lod.core.util.FullDataPointUtil;
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
-import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullArrayView;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
@@ -209,7 +209,7 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 			{
 				// attempt to get the LOD data from the data source
 				FullDataPointIdMap mapping = dataSource.getMapping();
-				SingleFullArrayView dataColumn = dataSource.tryGet(relativePos.x, relativePos.z);
+				SingleFullDataAccessor dataColumn = dataSource.tryGet(relativePos.x, relativePos.z);
 				if (dataColumn != null)
 				{
 					int dataColumnIndexCount = dataColumn.getSingleLength();

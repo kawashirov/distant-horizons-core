@@ -1,8 +1,8 @@
 package com.seibel.lod.core.file.renderfile;
 
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderLoader;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
-import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
 import com.seibel.lod.core.file.metaData.BaseMetaData;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.level.IDhLevel;
@@ -77,7 +77,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 	
 	// FIXME: This can cause concurrent modification of LodRenderSource.
     //       Not sure if it will cause issues or not.
-	public void updateChunkIfNeeded(ChunkSizedFullDataView chunkDataView, IDhClientLevel level)
+	public void updateChunkIfNeeded(ChunkSizedFullDataAccessor chunkDataView, IDhClientLevel level)
 	{
 		DhLodPos chunkPos = chunkDataView.getLodPos();
 		LodUtil.assertTrue(this.pos.getSectionBBoxPos().overlapsExactly(chunkPos), "Chunk pos {} doesn't overlap with section {}", chunkPos, pos);

@@ -1,6 +1,6 @@
 package com.seibel.lod.core.generation.tasks;
 
-import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -52,6 +52,6 @@ public class SplitWorldGenTaskTracker implements IWorldGenTaskTracker
 	public boolean isMemoryAddressValid() { return this.isValid; }
 	
 	@Override
-	public Consumer<ChunkSizedFullDataView> getOnGenTaskCompleteConsumer() { return this.parentTracker.getOnGenTaskCompleteConsumer(); }
+	public Consumer<ChunkSizedFullDataAccessor> getOnGenTaskCompleteConsumer() { return this.parentTracker.getOnGenTaskCompleteConsumer(); }
 	
 }

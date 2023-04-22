@@ -2,9 +2,9 @@ package com.seibel.lod.core.dataObjects.fullData.sources;
 
 import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
-import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
-import com.seibel.lod.core.dataObjects.fullData.accessor.FullDataArrayView;
-import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullArrayView;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
+import com.seibel.lod.core.dataObjects.fullData.accessor.FullDataArrayAccessor;
+import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullDataAccessor;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
@@ -20,7 +20,7 @@ import java.util.BitSet;
  * more data than sparse, less than complete.
  * TODO there has to be a better way to name these
  */
-public class SpottyFullDataSource extends FullDataArrayView implements IIncompleteFullDataSource
+public class SpottyFullDataSource extends FullDataArrayAccessor implements IIncompleteFullDataSource
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     public static final byte SECTION_SIZE_OFFSET = 6;
@@ -218,7 +218,7 @@ public class SpottyFullDataSource extends FullDataArrayView implements IIncomple
 	//===============//
 	
 	@Override
-	public void update(ChunkSizedFullDataView data)
+	public void update(ChunkSizedFullDataAccessor data)
 	{
 		LodUtil.assertTrue(this.sectionPos.getSectionBBoxPos().overlapsExactly(data.getLodPos()));
 		
@@ -289,7 +289,7 @@ public class SpottyFullDataSource extends FullDataArrayView implements IIncomple
 			{
                 for (int zOffset = 0; zOffset < dataSpan; zOffset++)
 				{
-                    SingleFullArrayView column = sparseSource.tryGet(
+                    SingleFullDataAccessor column = sparseSource.tryGet(
                             xOffset * chunksPerData * sparseSource.dataPerChunk,
                             zOffset * chunksPerData * sparseSource.dataPerChunk);
 					
@@ -311,7 +311,7 @@ public class SpottyFullDataSource extends FullDataArrayView implements IIncomple
             dataPos = dataPos.convertToDetailLevel(this.getDataDetailLevel());
             int offsetX = dataPos.x - basePos.x;
             int offsetZ = dataPos.z - basePos.z;
-            SingleFullArrayView column = sparseSource.tryGet(0, 0);
+            SingleFullDataAccessor column = sparseSource.tryGet(0, 0);
             if (column != null) {
                 column.deepCopyTo(this.get(offsetX, offsetZ));
 				this.isColumnNotEmpty.set(offsetX * SECTION_SIZE + offsetZ, true);
@@ -382,7 +382,7 @@ public class SpottyFullDataSource extends FullDataArrayView implements IIncomple
 	//
 	
     @Override
-    public SingleFullArrayView tryGet(int relativeX, int relativeZ) { return this.isColumnNotEmpty.get(relativeX * SECTION_SIZE + relativeZ) ? this.get(relativeX, relativeZ) : null; }
+    public SingleFullDataAccessor tryGet(int relativeX, int relativeZ) { return this.isColumnNotEmpty.get(relativeX * SECTION_SIZE + relativeZ) ? this.get(relativeX, relativeZ) : null; }
 	
 	
 	

@@ -2,9 +2,9 @@ package com.seibel.lod.core.dataObjects.fullData.sources;
 
 import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
-import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
-import com.seibel.lod.core.dataObjects.fullData.accessor.FullDataArrayView;
-import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullArrayView;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
+import com.seibel.lod.core.dataObjects.fullData.accessor.FullDataArrayAccessor;
+import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullDataAccessor;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhLodPos;
@@ -18,12 +18,12 @@ import org.apache.logging.log4j.Logger;
 import java.io.*;
 
 /**
- * 
+ * This data source contains every datapoint over its given {@link DhSectionPos}.
  */
-public class CompleteFullDataSource extends FullDataArrayView implements IFullDataSource
+public class CompleteFullDataSource extends FullDataArrayAccessor implements IFullDataSource
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
-    public static final byte SECTION_SIZE_OFFSET = 6;
+    public static final byte SECTION_SIZE_OFFSET = DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL;
     public static final int SECTION_SIZE = 1 << SECTION_SIZE_OFFSET;
     public static final byte LATEST_VERSION = 0;
     public static final long TYPE_ID = "CompleteFullDataSource".hashCode();
@@ -63,10 +63,10 @@ public class CompleteFullDataSource extends FullDataArrayView implements IFullDa
 	public EDhApiWorldGenerationStep getWorldGenStep() { return EDhApiWorldGenerationStep.EMPTY; }
 	
 	@Override
-	public SingleFullArrayView tryGet(int relativeX, int relativeZ) { return this.get(relativeX, relativeZ); }
+	public SingleFullDataAccessor tryGet(int relativeX, int relativeZ) { return this.get(relativeX, relativeZ); }
 	
 	@Override
-	public void update(ChunkSizedFullDataView chunkDataView)
+	public void update(ChunkSizedFullDataAccessor chunkDataView)
 	{
 		LodUtil.assertTrue(this.sectionPos.getSectionBBoxPos().overlapsExactly(chunkDataView.getLodPos()));
 		if (this.getDataDetailLevel() == 0)
@@ -81,8 +81,8 @@ public class CompleteFullDataSource extends FullDataArrayView implements IFullDa
 				{
 					for (int z = 0; z < 16; z++)
 					{
-						SingleFullArrayView column = this.get(x + blockOffset.x, z + blockOffset.z);
-						LodUtil.assertTrue(column.doesItExist());
+						SingleFullDataAccessor column = this.get(x + blockOffset.x, z + blockOffset.z);
+						LodUtil.assertTrue(column.doesColumnExist());
 					}
 				}
 			}
@@ -101,7 +101,7 @@ public class CompleteFullDataSource extends FullDataArrayView implements IFullDa
 			{
 				for (int oz = 0; oz < fullSize; oz++)
 				{
-					SingleFullArrayView column = this.get(ox + offsetX, oz + offsetZ);
+					SingleFullDataAccessor column = this.get(ox + offsetX, oz + offsetZ);
 					column.downsampleFrom(chunkDataView.subView(dataPerFull, ox * dataPerFull, oz * dataPerFull));
 				}
 			}
@@ -246,8 +246,8 @@ public class CompleteFullDataSource extends FullDataArrayView implements IFullDa
 		{
 			for (int z = 0; z < this.width; z++)
 			{
-				SingleFullArrayView column = this.get(x, z);
-				if (!column.doesItExist())
+				SingleFullDataAccessor column = this.get(x, z);
+				if (!column.doesColumnExist())
 					continue;
 				
 				long[] raw = column.getRaw();
@@ -322,7 +322,7 @@ public class CompleteFullDataSource extends FullDataArrayView implements IFullDa
 			{
 				for (int oz = 0; oz < count; oz++)
 				{
-					SingleFullArrayView column = this.get(ox + dataOffsetX, oz + dataOffsetZ);
+					SingleFullDataAccessor column = this.get(ox + dataOffsetX, oz + dataOffsetZ);
 					column.downsampleFrom(subData.subView(dataPerCount, ox * dataPerCount, oz * dataPerCount));
 				}
 			}

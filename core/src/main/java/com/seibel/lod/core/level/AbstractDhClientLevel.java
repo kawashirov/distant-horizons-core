@@ -1,7 +1,7 @@
 package com.seibel.lod.core.level;
 
 import com.seibel.lod.core.config.Config;
-import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.transformers.ChunkToLodBuilder;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
@@ -172,13 +172,13 @@ public abstract class AbstractDhClientLevel implements IDhClientLevel
 	@Override
 	public void updateChunkAsync(IChunkWrapper chunk)
 	{
-		CompletableFuture<ChunkSizedFullDataView> future = this.chunkToLodBuilder.tryGenerateData(chunk);
+		CompletableFuture<ChunkSizedFullDataAccessor> future = this.chunkToLodBuilder.tryGenerateData(chunk);
 		if (future != null)
 		{
 			future.thenAccept(this::saveWrites);
 		}
 	}
-	private void saveWrites(ChunkSizedFullDataView data)
+	private void saveWrites(ChunkSizedFullDataAccessor data)
 	{
 		ClientRenderState ClientRenderState = this.ClientRenderStateRef.get();
 		DhLodPos pos = data.getLodPos().convertToDetailLevel(CompleteFullDataSource.SECTION_SIZE_OFFSET);

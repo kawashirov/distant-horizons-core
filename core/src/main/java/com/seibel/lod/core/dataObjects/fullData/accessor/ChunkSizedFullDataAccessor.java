@@ -6,9 +6,10 @@ import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.util.LodUtil;
 
 /**
- * Contains the Full Data for a single chunk.
+ * A more specific version of {@link FullDataArrayAccessor} 
+ * that only contains full data for a single chunk.
  */
-public class ChunkSizedFullDataView extends FullDataArrayView
+public class ChunkSizedFullDataAccessor extends FullDataArrayAccessor
 {
 	public final DhChunkPos pos;
 	// TODO replace this var with LodUtil.BLOCK_DETAIL_LEVEL 
@@ -16,7 +17,7 @@ public class ChunkSizedFullDataView extends FullDataArrayView
 	
 	
 	
-	public ChunkSizedFullDataView(DhChunkPos pos)
+	public ChunkSizedFullDataAccessor(DhChunkPos pos)
 	{
 		super(new FullDataPointIdMap(), 
 				new long[LodUtil.CHUNK_WIDTH * LodUtil.CHUNK_WIDTH][0], 
@@ -27,15 +28,12 @@ public class ChunkSizedFullDataView extends FullDataArrayView
 	
 	
 	
-	public void setSingleColumn(long[] data, int x, int z)
-	{
-		dataArrays[x * LodUtil.CHUNK_WIDTH + z] = data;
-	}
+	public void setSingleColumn(long[] data, int xRelative, int zRelative) { this.dataArrays[xRelative * LodUtil.CHUNK_WIDTH + zRelative] = data; }
 	
 	public long nonEmptyCount()
 	{
 		long count = 0;
-		for (long[] data : dataArrays)
+		for (long[] data : this.dataArrays)
 		{
 			if (data.length != 0)
 			{
@@ -45,8 +43,8 @@ public class ChunkSizedFullDataView extends FullDataArrayView
 		return count;
 	}
 	
-	public long emptyCount() { return LodUtil.CHUNK_WIDTH * LodUtil.CHUNK_WIDTH - nonEmptyCount(); }
+	public long emptyCount() { return (LodUtil.CHUNK_WIDTH * LodUtil.CHUNK_WIDTH) - this.nonEmptyCount(); }
 	
-	public DhLodPos getLodPos() { return new DhLodPos(LodUtil.CHUNK_DETAIL_LEVEL, pos.x, pos.z); }
+	public DhLodPos getLodPos() { return new DhLodPos(LodUtil.CHUNK_DETAIL_LEVEL, this.pos.x, this.pos.z); }
 	
 }

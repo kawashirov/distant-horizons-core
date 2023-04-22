@@ -1,7 +1,7 @@
 package com.seibel.lod.core.file.fullDatafile;
 
 import com.google.common.collect.HashMultimap;
-import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.sources.*;
 import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.lod.core.util.FileUtil;
@@ -273,7 +273,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	
     /** This call is concurrent. I.e. it supports being called by multiple threads at the same time. */
     @Override
-    public void write(DhSectionPos sectionPos, ChunkSizedFullDataView chunkDataView)
+    public void write(DhSectionPos sectionPos, ChunkSizedFullDataAccessor chunkDataView)
 	{
         DhLodPos chunkPos = chunkDataView.getLodPos();
         LodUtil.assertTrue(chunkPos.overlapsExactly(sectionPos.getSectionBBoxPos()), "Chunk "+chunkPos+" does not overlap section "+sectionPos);
@@ -281,7 +281,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
         chunkPos = chunkPos.convertToDetailLevel((byte) this.minDetailLevel);
 		this.writeChunkDataToMetaFile(new DhSectionPos(chunkPos.detailLevel, chunkPos.x, chunkPos.z), chunkDataView);
     }
-    private void writeChunkDataToMetaFile(DhSectionPos sectionPos, ChunkSizedFullDataView chunkData)
+    private void writeChunkDataToMetaFile(DhSectionPos sectionPos, ChunkSizedFullDataAccessor chunkData)
 	{
         FullDataMetaFile metaFile = this.files.get(sectionPos);
         if (metaFile != null)

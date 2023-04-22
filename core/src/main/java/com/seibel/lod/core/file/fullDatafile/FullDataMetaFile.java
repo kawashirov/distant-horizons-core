@@ -9,9 +9,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.loader.AbstractFullDataSourceLoader;
-import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.file.metaData.BaseMetaData;
 import com.seibel.lod.core.pos.DhLodPos;
@@ -47,7 +47,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 	//TODO: use ConcurrentAppendSingleSwapContainer<LodDataSource> instead of below:
 	private static class GuardedMultiAppendQueue {
 		ReentrantReadWriteLock appendLock = new ReentrantReadWriteLock();
-		ConcurrentLinkedQueue<ChunkSizedFullDataView> queue = new ConcurrentLinkedQueue<>();
+		ConcurrentLinkedQueue<ChunkSizedFullDataAccessor> queue = new ConcurrentLinkedQueue<>();
 	}
 
 	// ===Concurrent Write stuff===
@@ -146,7 +146,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 //		}
 //	}
 	
-	public void addToWriteQueue(ChunkSizedFullDataView chunkDataSource)
+	public void addToWriteQueue(ChunkSizedFullDataAccessor chunkDataSource)
 	{
 		debugCheck();
 		DhLodPos chunkLodPos = new DhLodPos(LodUtil.CHUNK_DETAIL_LEVEL, chunkDataSource.pos.x, chunkDataSource.pos.z);
@@ -430,7 +430,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 		{
 			this.swapWriteQueue();
 			int count = this._backQueue.queue.size();
-			for (ChunkSizedFullDataView chunk : this._backQueue.queue)
+			for (ChunkSizedFullDataAccessor chunk : this._backQueue.queue)
 			{
 				fullDataSource.update(chunk);
 			}

@@ -1,6 +1,6 @@
 package com.seibel.lod.core.dataObjects.transformers;
 
-import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.util.FullDataPointUtil;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.util.LodUtil;
@@ -12,10 +12,10 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 
 public class LodDataBuilder {
     private static final IBlockStateWrapper AIR = SingletonInjector.INSTANCE.get(IWrapperFactory.class).getAirBlockStateWrapper();
-    public static ChunkSizedFullDataView createChunkData(IChunkWrapper chunkWrapper) {
+    public static ChunkSizedFullDataAccessor createChunkData(IChunkWrapper chunkWrapper) {
         if (!canGenerateLodFromChunk(chunkWrapper)) return null;
 
-        ChunkSizedFullDataView chunkData = new ChunkSizedFullDataView(chunkWrapper.getChunkPos());
+        ChunkSizedFullDataAccessor chunkData = new ChunkSizedFullDataAccessor(chunkWrapper.getChunkPos());
 
         for (int x=0; x<16; x++) {
             for (int z=0; z<16; z++) {

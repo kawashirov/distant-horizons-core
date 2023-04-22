@@ -1,8 +1,8 @@
 package com.seibel.lod.core.file.fullDatafile;
 
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.IIncompleteFullDataSource;
-import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
 import com.seibel.lod.core.dataObjects.fullData.sources.SparseFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.SpottyFullDataSource;
 import com.seibel.lod.core.generation.tasks.IWorldGenTaskTracker;
@@ -218,7 +218,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		public boolean isMemoryAddressValid() { return this.targetFullDataSourceRef.get() != null; }
 		
 		@Override
-		public Consumer<ChunkSizedFullDataView> getOnGenTaskCompleteConsumer()
+		public Consumer<ChunkSizedFullDataAccessor> getOnGenTaskCompleteConsumer()
 		{
 			if (this.loadedTargetFullDataSource == null)
 			{

@@ -1,6 +1,6 @@
 package com.seibel.lod.core.generation.tasks;
 
-import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 
 import java.util.function.Consumer;
 
@@ -13,6 +13,6 @@ public interface IWorldGenTaskTracker
 	/**  Returns true if the task hasn't been garbage collected. */
 	boolean isMemoryAddressValid();
 	
-	Consumer<ChunkSizedFullDataView> getOnGenTaskCompleteConsumer();
+	Consumer<ChunkSizedFullDataAccessor> getOnGenTaskCompleteConsumer();
 	
 }

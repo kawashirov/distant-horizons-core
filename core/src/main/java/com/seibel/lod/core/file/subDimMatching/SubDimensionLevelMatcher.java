@@ -2,9 +2,9 @@ package com.seibel.lod.core.file.subDimMatching;
 
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
-import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.util.FullDataPointUtil;
-import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullArrayView;
+import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullDataAccessor;
 import com.seibel.lod.core.dataObjects.transformers.LodDataBuilder;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.file.fullDatafile.FullDataFileHandler;
@@ -165,7 +165,7 @@ public class SubDimensionLevelMatcher implements AutoCloseable
         LOGGER.info("Player block pos in dimension: [" + playerData.playerBlockPos.getX() + "," + playerData.playerBlockPos.getY() + "," + playerData.playerBlockPos.getZ() + "]");
 
         // new chunk data
-		ChunkSizedFullDataView newChunkSizedFullDataView = LodDataBuilder.createChunkData(newlyLoadedChunk);
+		ChunkSizedFullDataAccessor newChunkSizedFullDataView = LodDataBuilder.createChunkData(newlyLoadedChunk);
 		long[][][] newChunkData = new long[LodUtil.CHUNK_WIDTH][LodUtil.CHUNK_WIDTH][];
 		if (newChunkSizedFullDataView != null)
 		{
@@ -233,7 +233,7 @@ public class SubDimensionLevelMatcher implements AutoCloseable
 				{
 					for (int z = 0; z < LodUtil.CHUNK_WIDTH; z++)
 					{
-						SingleFullArrayView singleDataColumn = lodDataSource.tryGet(x, z);
+						SingleFullDataAccessor singleDataColumn = lodDataSource.tryGet(x, z);
 						if (singleDataColumn != null)
 						{
 							long[] rawSingleColumn = singleDataColumn.getRaw();

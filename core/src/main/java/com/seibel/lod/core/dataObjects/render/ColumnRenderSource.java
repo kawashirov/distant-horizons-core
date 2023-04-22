@@ -2,11 +2,11 @@ package com.seibel.lod.core.dataObjects.render;
 
 import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.core.ModInfo;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.render.columnViews.ColumnArrayView;
 import com.seibel.lod.core.dataObjects.render.columnViews.ColumnQuadView;
 import com.seibel.lod.core.dataObjects.render.columnViews.IColumnDataView;
 import com.seibel.lod.core.dataObjects.render.bufferBuilding.ColumnRenderBuffer;
-import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
 import com.seibel.lod.core.dataObjects.transformers.FullToColumnTransformer;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
@@ -296,7 +296,7 @@ public class ColumnRenderSource
 		}
 	}
 	
-	public void fastWrite(ChunkSizedFullDataView chunkData, IDhClientLevel level) 
+	public void fastWrite(ChunkSizedFullDataAccessor chunkData, IDhClientLevel level) 
 	{
 		try
 		{

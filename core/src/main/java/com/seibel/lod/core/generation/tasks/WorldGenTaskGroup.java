@@ -1,6 +1,6 @@
 package com.seibel.lod.core.generation.tasks;
 
-import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.pos.DhLodPos;
 
 import java.util.Iterator;
@@ -28,13 +28,13 @@ public final class WorldGenTaskGroup
 	
 	
 	
-	public void onGenerationComplete(ChunkSizedFullDataView chunkSizedFullDataView)
+	public void onGenerationComplete(ChunkSizedFullDataAccessor chunkSizedFullDataView)
 	{
 		Iterator<WorldGenTask> tasks = this.worldGenTasks.iterator();
 		while (tasks.hasNext())
 		{
 			WorldGenTask task = tasks.next();
-			Consumer<ChunkSizedFullDataView> onGenTaskCompleteConsumer = task.taskTracker.getOnGenTaskCompleteConsumer();
+			Consumer<ChunkSizedFullDataAccessor> onGenTaskCompleteConsumer = task.taskTracker.getOnGenTaskCompleteConsumer();
 			if (onGenTaskCompleteConsumer == null)
 			{
 				tasks.remove();

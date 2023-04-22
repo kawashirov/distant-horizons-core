@@ -3,13 +3,24 @@ package com.seibel.lod.core.dataObjects.fullData.accessor;
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
 import com.seibel.lod.core.util.FullDataPointUtil;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.SpottyFullDataSource;
 
 /**
+ * Contains Full Data points and basic methods for getting and setting them. <br>
+ * Can be used standalone or as the base for Full data sources.
  * 
+ * @see CompleteFullDataSource
+ * @see SpottyFullDataSource
  */
-public class FullDataArrayView implements IFullDataView
+public class FullDataArrayAccessor implements IFullDataAccessor
 {
 	protected final FullDataPointIdMap mapping;
+	
+	/** 
+	 * A flattened 2D array (for the X and Z directions) containing an array for the Y direction.  
+	 * TODO the flattened array is probably to reduce garbage collection overhead, but is doing it this way worth while? Having a 3D array would be much easier to understand
+	 */
 	protected final long[][] dataArrays;
 	
 	/** measured in data points */
@@ -17,6 +28,7 @@ public class FullDataArrayView implements IFullDataView
 	/** measured in data points */
 	protected final int dataWidth;
 	
+	/** index offset used when getting/setting data in {@link FullDataArrayAccessor#dataArrays}. */
 	protected final int offset;
 	
 	
@@ -25,7 +37,7 @@ public class FullDataArrayView implements IFullDataView
 	// constructors //
 	//==============//
 	
-	public FullDataArrayView(FullDataPointIdMap mapping, long[][] dataArrays, int width)
+	public FullDataArrayAccessor(FullDataPointIdMap mapping, long[][] dataArrays, int width)
 	{
 		if (dataArrays.length != width * width)
 		{
@@ -39,7 +51,7 @@ public class FullDataArrayView implements IFullDataView
 		this.offset = 0;
 	}
 	
-	public FullDataArrayView(FullDataArrayView source, int width, int offsetX, int offsetZ)
+	public FullDataArrayAccessor(FullDataArrayAccessor source, int width, int offsetX, int offsetZ)
 	{
 		if (source.width < width || source.width < width + offsetX || source.width < width + offsetZ)
 		{
@@ -60,10 +72,10 @@ public class FullDataArrayView implements IFullDataView
 	//=========//
 	
 	@Override
-	public FullDataArrayView subView(int size, int xOffset, int zOffset) { return new FullDataArrayView(this, size, xOffset, zOffset); }
+	public FullDataArrayAccessor subView(int width, int xOffset, int zOffset) { return new FullDataArrayAccessor(this, width, xOffset, zOffset); }
 	
 	/** WARNING: This will potentially share the underlying array object! */
-	public void shadowCopyTo(FullDataArrayView target)
+	public void shadowCopyTo(FullDataArrayAccessor target)
 	{
 		if (target.width != this.width)
 		{
@@ -99,7 +111,7 @@ public class FullDataArrayView implements IFullDataView
 		}
 	}
 	
-	public void downsampleFrom(FullDataArrayView arrayView)
+	public void downsampleFrom(FullDataArrayAccessor arrayView)
 	{
 		LodUtil.assertTrue(arrayView.width > this.width && arrayView.width % this.width == 0);
 		
@@ -108,7 +120,7 @@ public class FullDataArrayView implements IFullDataView
 		{
 			for (int zOffset = 0; zOffset < this.width; zOffset++)
 			{
-				SingleFullArrayView column = this.get(xOffset, zOffset);
+				SingleFullDataAccessor column = this.get(xOffset, zOffset);
 				column.downsampleFrom(arrayView.subView(dataPerUnit, xOffset * dataPerUnit, zOffset * dataPerUnit));
 			}
 		}
@@ -124,9 +136,9 @@ public class FullDataArrayView implements IFullDataView
 	public FullDataPointIdMap getMapping() { return this.mapping; }
 	
 	@Override
-	public SingleFullArrayView get(int index) { return this.get(index / this.width, index % this.width); }
+	public SingleFullDataAccessor get(int index) { return this.get(index / this.width, index % this.width); }
 	@Override
-	public SingleFullArrayView get(int relativeX, int relativeZ) { return new SingleFullArrayView(this.mapping, this.dataArrays, relativeX * this.width + relativeZ + this.offset); }
+	public SingleFullDataAccessor get(int relativeX, int relativeZ) { return new SingleFullDataAccessor(this.mapping, this.dataArrays, relativeX * this.width + relativeZ + this.offset); }
 	
 	@Override
 	public int width() { return this.width; }

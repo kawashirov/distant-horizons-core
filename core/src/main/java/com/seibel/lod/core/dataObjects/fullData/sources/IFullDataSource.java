@@ -2,18 +2,26 @@ package com.seibel.lod.core.dataObjects.fullData.sources;
 
 import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
-import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
-import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullArrayView;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
+import com.seibel.lod.core.dataObjects.fullData.accessor.IFullDataAccessor;
+import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullDataAccessor;
+import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
+import com.seibel.lod.core.util.FullDataPointUtil;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 
 // TODO make into an abstract class so the read(stream) method can be used as a constructor
 // TODO validate how we know which file to use when (probably, TYPE_ID)
-// TODO merge with FullDataArrayView and IFullDataView
+/**
+ * Contains full DH data, methods related to file/stream reading/writing, and the data necessary to create {@link ColumnRenderSource}'s. <br>
+ * {@link IFullDataSource}'s will either implement or contain {@link IFullDataAccessor}'s.
+ * 
+ * @see IFullDataAccessor
+ */
 public interface IFullDataSource
 {
 	/**
@@ -32,7 +40,7 @@ public interface IFullDataSource
 	public abstract byte getDataVersion();
 	public abstract EDhApiWorldGenerationStep getWorldGenStep();
 	
-	public abstract void update(ChunkSizedFullDataView data);
+	public abstract void update(ChunkSizedFullDataAccessor data);
 	
 	public abstract boolean isEmpty();
 	
@@ -69,7 +77,7 @@ public interface IFullDataSource
 	 * Attempts to get the data column for the given relative x and z position.
 	 * @return null if the data doesn't exist
 	 */
-	public abstract SingleFullArrayView tryGet(int relativeX, int relativeZ);
+	public abstract SingleFullDataAccessor tryGet(int relativeX, int relativeZ);
 	
 	public abstract FullDataPointIdMap getMapping();
 	

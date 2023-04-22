@@ -1,13 +1,12 @@
 package com.seibel.lod.core.file.renderfile;
 
 import com.google.common.collect.HashMultimap;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
-import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
 import com.seibel.lod.core.dataObjects.transformers.DataRenderTransformer;
 import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.lod.core.level.IDhClientLevel;
-import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.FileUtil;
 import com.seibel.lod.core.util.ThreadUtil;
@@ -214,12 +213,12 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	 * TODO why is there fullData handling in the render file handler? 
 	 */
     @Override
-    public void writeChunkDataToFile(DhSectionPos sectionPos, ChunkSizedFullDataView chunkDataView)
+    public void writeChunkDataToFile(DhSectionPos sectionPos, ChunkSizedFullDataAccessor chunkDataView)
 	{
         this.writeChunkDataToFileRecursively(sectionPos,chunkDataView);
 		this.fullDataSourceProvider.write(sectionPos, chunkDataView);
     }
-    private void writeChunkDataToFileRecursively(DhSectionPos sectPos, ChunkSizedFullDataView chunkDataView)
+    private void writeChunkDataToFileRecursively(DhSectionPos sectPos, ChunkSizedFullDataAccessor chunkDataView)
 	{
 		if (!sectPos.getSectionBBoxPos().overlapsExactly(chunkDataView.getLodPos()))
 		{

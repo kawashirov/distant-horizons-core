@@ -1,6 +1,6 @@
 package com.seibel.lod.core.dataObjects.fullData;
 
-import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullArrayView;
+import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
 import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
@@ -101,7 +101,7 @@ public class FullDataDownSampler {
 
             for (int ox = 0; ox < overlappedTrgDataSize; ox++) {
                 for (int oz = 0; oz < overlappedTrgDataSize; oz++) {
-                    SingleFullArrayView column = target.get(ox + offsetX, oz + offsetZ);
+                    SingleFullDataAccessor column = target.get(ox + offsetX, oz + offsetZ);
                     column.downsampleFrom(source.subView(srcDataPerTrgData, ox * srcDataPerTrgData, oz * srcDataPerTrgData));
                 }
             }
