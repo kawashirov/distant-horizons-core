@@ -2,7 +2,7 @@ package com.seibel.lod.core.file.subDimMatching;
 
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
-import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
 import com.seibel.lod.core.util.FullDataPointUtil;
 import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullArrayView;
 import com.seibel.lod.core.dataObjects.transformers.LodDataBuilder;
@@ -165,20 +165,20 @@ public class SubDimensionLevelMatcher implements AutoCloseable
         LOGGER.info("Player block pos in dimension: [" + playerData.playerBlockPos.getX() + "," + playerData.playerBlockPos.getY() + "," + playerData.playerBlockPos.getZ() + "]");
 
         // new chunk data
-		ChunkSizedFullDataSource newChunkSizedFullDataSource = LodDataBuilder.createChunkData(newlyLoadedChunk);
+		ChunkSizedFullDataView newChunkSizedFullDataView = LodDataBuilder.createChunkData(newlyLoadedChunk);
 		long[][][] newChunkData = new long[LodUtil.CHUNK_WIDTH][LodUtil.CHUNK_WIDTH][];
-		if (newChunkSizedFullDataSource != null)
+		if (newChunkSizedFullDataView != null)
 		{
 			for (int x = 0; x < LodUtil.CHUNK_WIDTH; x++)
 			{
 				for (int z = 0; z < LodUtil.CHUNK_WIDTH; z++)
 				{
-					long[] array = newChunkSizedFullDataSource.get(x, z).getRaw();
+					long[] array = newChunkSizedFullDataView.get(x, z).getRaw();
 					newChunkData[x][z] = array;
 				}
 			}
 		}
-        boolean newChunkHasData = newChunkSizedFullDataSource != null && newChunkSizedFullDataSource.nonEmptyCount() != 0;
+        boolean newChunkHasData = newChunkSizedFullDataView != null && newChunkSizedFullDataView.nonEmptyCount() != 0;
 
         // check if the chunk is actually empty
         if (!newChunkHasData)

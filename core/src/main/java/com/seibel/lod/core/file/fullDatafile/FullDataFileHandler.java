@@ -1,12 +1,9 @@
 package com.seibel.lod.core.file.fullDatafile;
 
 import com.google.common.collect.HashMultimap;
-import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
-import com.seibel.lod.core.dataObjects.fullData.sources.IIncompleteFullDataSource;
-import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource;
-import com.seibel.lod.core.dataObjects.fullData.sources.FullDataSource;
-import com.seibel.lod.core.dataObjects.fullData.sources.SingleChunkFullDataSource;
-import com.seibel.lod.core.dataObjects.fullData.sources.SparseFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
+import com.seibel.lod.core.dataObjects.fullData.sources.*;
+import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.lod.core.util.FileUtil;
 import com.seibel.lod.core.file.metaData.BaseMetaData;
 import com.seibel.lod.core.level.IDhLevel;
@@ -37,7 +34,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
     final IDhLevel level;
     final File saveDir;
     AtomicInteger topDetailLevel = new AtomicInteger(-1);
-    final int minDetailLevel = FullDataSource.SECTION_SIZE_OFFSET;
+    final int minDetailLevel = CompleteFullDataSource.SECTION_SIZE_OFFSET;
 	
 	
 	
@@ -185,7 +182,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 
                     //TODO: The following check is temporary as we only sample corner points, which means
                     // on a very different level, we may not need the entire section at all.
-                    if (!FullDataSource.firstDataPosCanAffectSecond(basePos, subPos))
+                    if (!CompleteFullDataSource.firstDataPosCanAffectSecond(basePos, subPos))
 					{
 						continue;
 					}
@@ -217,7 +214,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	private void recursiveGetDataFilesForPosition(int childIndex, DhSectionPos basePos, DhSectionPos pos, ArrayList<FullDataMetaFile> preexistingFiles, ArrayList<DhSectionPos> missingFilePositions)
 	{
 		DhSectionPos childPos = pos.getChildByIndex(childIndex);
-		if (FullDataSource.firstDataPosCanAffectSecond(basePos, childPos))
+		if (CompleteFullDataSource.firstDataPosCanAffectSecond(basePos, childPos))
 		{
 			FullDataMetaFile metaFile = this.files.get(childPos);
 			if (metaFile != null)
@@ -276,15 +273,15 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	
     /** This call is concurrent. I.e. it supports being called by multiple threads at the same time. */
     @Override
-    public void write(DhSectionPos sectionPos, ChunkSizedFullDataSource chunkData)
+    public void write(DhSectionPos sectionPos, ChunkSizedFullDataView chunkDataView)
 	{
-        DhLodPos chunkPos = new DhLodPos((byte) (chunkData.dataDetail+4), chunkData.x, chunkData.z);
+        DhLodPos chunkPos = chunkDataView.getLodPos();
         LodUtil.assertTrue(chunkPos.overlapsExactly(sectionPos.getSectionBBoxPos()), "Chunk "+chunkPos+" does not overlap section "+sectionPos);
 		
         chunkPos = chunkPos.convertToDetailLevel((byte) this.minDetailLevel);
-		this.writeChunkDataToMetaFile(new DhSectionPos(chunkPos.detailLevel, chunkPos.x, chunkPos.z), chunkData);
+		this.writeChunkDataToMetaFile(new DhSectionPos(chunkPos.detailLevel, chunkPos.x, chunkPos.z), chunkDataView);
     }
-    private void writeChunkDataToMetaFile(DhSectionPos sectionPos, ChunkSizedFullDataSource chunkData)
+    private void writeChunkDataToMetaFile(DhSectionPos sectionPos, ChunkSizedFullDataView chunkData)
 	{
         FullDataMetaFile metaFile = this.files.get(sectionPos);
         if (metaFile != null)
@@ -346,7 +343,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		{
             // None exist.
             IIncompleteFullDataSource incompleteDataSource = pos.sectionDetailLevel <= SparseFullDataSource.MAX_SECTION_DETAIL ?
-                    SparseFullDataSource.createEmpty(pos) : SingleChunkFullDataSource.createEmpty(pos);
+                    SparseFullDataSource.createEmpty(pos) : SpottyFullDataSource.createEmpty(pos);
             return CompletableFuture.completedFuture(incompleteDataSource);
         }
 		else
@@ -362,7 +359,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
             final ArrayList<CompletableFuture<Void>> futures = new ArrayList<>(existFiles.size());
             final IIncompleteFullDataSource dataSource = pos.sectionDetailLevel <= SparseFullDataSource.MAX_SECTION_DETAIL ?
                     SparseFullDataSource.createEmpty(pos) : 
-					SingleChunkFullDataSource.createEmpty(pos);
+					SpottyFullDataSource.createEmpty(pos);
 
             for (FullDataMetaFile metaFile : existFiles)
 			{
@@ -383,7 +380,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
                 );
             }
             return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                    .thenApply((v) -> dataSource.trySelfPromote());
+                    .thenApply((v) -> dataSource.tryPromotingToCompleteDataSource());
      
         }
     }
@@ -410,7 +407,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		
         if (source instanceof IIncompleteFullDataSource)
 		{
-            IFullDataSource newSource = ((IIncompleteFullDataSource) source).trySelfPromote();
+            IFullDataSource newSource = ((IIncompleteFullDataSource) source).tryPromotingToCompleteDataSource();
             changed |= newSource != source;
             source = newSource;
         }
@@ -437,7 +434,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 			
             if (sourceLocal instanceof IIncompleteFullDataSource)
 			{
-                IFullDataSource newSource = ((IIncompleteFullDataSource) sourceLocal).trySelfPromote();
+                IFullDataSource newSource = ((IIncompleteFullDataSource) sourceLocal).tryPromotingToCompleteDataSource();
                 changed |= newSource != sourceLocal;
                 sourceLocal = newSource;
             }

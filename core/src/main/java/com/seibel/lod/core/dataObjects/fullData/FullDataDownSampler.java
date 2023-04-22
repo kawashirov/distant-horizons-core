@@ -1,7 +1,7 @@
 package com.seibel.lod.core.dataObjects.fullData;
 
 import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullArrayView;
-import com.seibel.lod.core.dataObjects.fullData.sources.FullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
 import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.lod.core.pos.DhLodPos;
@@ -17,23 +17,23 @@ public class FullDataDownSampler {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     public static CompletableFuture<IFullDataSource> createDownSamplingFuture(DhSectionPos newTarget, IFullDataSourceProvider provider) {
         // TODO: Make this future somehow run with lowest priority (to ensure ram usage stays low)
-        return createDownSamplingFuture(FullDataSource.createEmpty(newTarget), provider);
+        return createDownSamplingFuture(CompleteFullDataSource.createEmpty(newTarget), provider);
     }
 
-    public static CompletableFuture<IFullDataSource> createDownSamplingFuture(FullDataSource target, IFullDataSourceProvider provider) {
-        int sectionSizeNeeded = 1 << target.getDataDetail();
+    public static CompletableFuture<IFullDataSource> createDownSamplingFuture(CompleteFullDataSource target, IFullDataSourceProvider provider) {
+        int sectionSizeNeeded = 1 << target.getDataDetailLevel();
 
         ArrayList<CompletableFuture<IFullDataSource>> futures;
-        DhLodPos basePos = target.getSectionPos().getSectionBBoxPos().getCornerLodPos(FullDataSource.SECTION_SIZE_OFFSET);
-        if (sectionSizeNeeded <= FullDataSource.SECTION_SIZE_OFFSET) {
+        DhLodPos basePos = target.getSectionPos().getSectionBBoxPos().getCornerLodPos(CompleteFullDataSource.SECTION_SIZE_OFFSET);
+        if (sectionSizeNeeded <= CompleteFullDataSource.SECTION_SIZE_OFFSET) {
             futures = new ArrayList<>(sectionSizeNeeded * sectionSizeNeeded);
             for (int ox = 0; ox < sectionSizeNeeded; ox++) {
                 for (int oz = 0; oz < sectionSizeNeeded; oz++) {
                     CompletableFuture<IFullDataSource> future = provider.read(new DhSectionPos(
-                            FullDataSource.SECTION_SIZE_OFFSET, basePos.x + ox, basePos.z + oz));
+                            CompleteFullDataSource.SECTION_SIZE_OFFSET, basePos.x + ox, basePos.z + oz));
                     future = future.whenComplete((source, ex) -> {
-                        if (ex == null && source != null && source instanceof FullDataSource) {
-                            downSample(target, (FullDataSource) source);
+                        if (ex == null && source != null && source instanceof CompleteFullDataSource) {
+                            downSample(target, (CompleteFullDataSource) source);
                         } else if (ex != null) {
                             LOGGER.error("Error while down sampling", ex);
                         }
@@ -42,15 +42,15 @@ public class FullDataDownSampler {
                 }
             }
         } else {
-            futures = new ArrayList<>(FullDataSource.SECTION_SIZE * FullDataSource.SECTION_SIZE);
-            int multiplier = sectionSizeNeeded / FullDataSource.SECTION_SIZE;
-            for (int ox = 0; ox < FullDataSource.SECTION_SIZE; ox++) {
-                for (int oz = 0; oz < FullDataSource.SECTION_SIZE; oz++) {
+            futures = new ArrayList<>(CompleteFullDataSource.SECTION_SIZE * CompleteFullDataSource.SECTION_SIZE);
+            int multiplier = sectionSizeNeeded / CompleteFullDataSource.SECTION_SIZE;
+            for (int ox = 0; ox < CompleteFullDataSource.SECTION_SIZE; ox++) {
+                for (int oz = 0; oz < CompleteFullDataSource.SECTION_SIZE; oz++) {
                     CompletableFuture<IFullDataSource> future = provider.read(new DhSectionPos(
-                            FullDataSource.SECTION_SIZE_OFFSET, basePos.x + ox * multiplier, basePos.z + oz * multiplier));
+                            CompleteFullDataSource.SECTION_SIZE_OFFSET, basePos.x + ox * multiplier, basePos.z + oz * multiplier));
                     future = future.whenComplete((source, ex) -> {
-                        if (ex == null && source != null && source instanceof FullDataSource) {
-                            downSample(target, (FullDataSource) source);
+                        if (ex == null && source != null && source instanceof CompleteFullDataSource) {
+                            downSample(target, (CompleteFullDataSource) source);
                         } else if (ex != null) {
                             LOGGER.error("Error while down sampling", ex);
                         }
@@ -62,41 +62,41 @@ public class FullDataDownSampler {
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenApply(v -> target);
     }
 
-    public static void downSample(FullDataSource target, FullDataSource source) {
+    public static void downSample(CompleteFullDataSource target, CompleteFullDataSource source) {
         LodUtil.assertTrue(target.getSectionPos().overlaps(source.getSectionPos()));
-        LodUtil.assertTrue(target.getDataDetail() > source.getDataDetail());
+        LodUtil.assertTrue(target.getDataDetailLevel() > source.getDataDetailLevel());
 
-        byte detailDiff = (byte) (target.getDataDetail() - source.getDataDetail());
+        byte detailDiff = (byte) (target.getDataDetailLevel() - source.getDataDetailLevel());
         DhSectionPos trgPos = target.getSectionPos();
         DhSectionPos srcPos = source.getSectionPos();
 
-        if (detailDiff >= FullDataSource.SECTION_SIZE_OFFSET) {
+        if (detailDiff >= CompleteFullDataSource.SECTION_SIZE_OFFSET) {
             // The source occupies only 1 datapoint in the target
             // FIXME: TEMP method for down-sampling: take only the corner column
-            int sourceSectionPerTargetData = 1 << (detailDiff - FullDataSource.SECTION_SIZE_OFFSET);
+            int sourceSectionPerTargetData = 1 << (detailDiff - CompleteFullDataSource.SECTION_SIZE_OFFSET);
             if (srcPos.sectionX % sourceSectionPerTargetData != 0 || srcPos.sectionZ % sourceSectionPerTargetData != 0) {
                 return;
             }
-            DhLodPos trgOffset = trgPos.getCorner(target.getDataDetail());
-            DhLodPos srcOffset = srcPos.getSectionBBoxPos().convertToDetailLevel(target.getDataDetail());
+            DhLodPos trgOffset = trgPos.getCorner(target.getDataDetailLevel());
+            DhLodPos srcOffset = srcPos.getSectionBBoxPos().convertToDetailLevel(target.getDataDetailLevel());
             int offsetX = trgOffset.x - srcOffset.x;
             int offsetZ = trgOffset.z - srcOffset.z;
-            LodUtil.assertTrue(offsetX >= 0 && offsetX < FullDataSource.SECTION_SIZE
-                    && offsetZ >= 0 && offsetZ < FullDataSource.SECTION_SIZE);
+            LodUtil.assertTrue(offsetX >= 0 && offsetX < CompleteFullDataSource.SECTION_SIZE
+                    && offsetZ >= 0 && offsetZ < CompleteFullDataSource.SECTION_SIZE);
             target.markNotEmpty();
             source.get(0,0).deepCopyTo(target.get(offsetX, offsetZ));
 
         } else if (detailDiff > 0) {
             // The source occupies multiple data-points in the target
             int srcDataPerTrgData = 1 << detailDiff;
-            int overlappedTrgDataSize = FullDataSource.SECTION_SIZE / srcDataPerTrgData;
+            int overlappedTrgDataSize = CompleteFullDataSource.SECTION_SIZE / srcDataPerTrgData;
 
-            DhLodPos trgOffset = trgPos.getCorner(target.getDataDetail());
-            DhLodPos srcOffset = srcPos.getSectionBBoxPos().getCornerLodPos(target.getDataDetail());
+            DhLodPos trgOffset = trgPos.getCorner(target.getDataDetailLevel());
+            DhLodPos srcOffset = srcPos.getSectionBBoxPos().getCornerLodPos(target.getDataDetailLevel());
             int offsetX = trgOffset.x - srcOffset.x;
             int offsetZ = trgOffset.z - srcOffset.z;
-            LodUtil.assertTrue(offsetX >= 0 && offsetX < FullDataSource.SECTION_SIZE
-                    && offsetZ >= 0 && offsetZ < FullDataSource.SECTION_SIZE);
+            LodUtil.assertTrue(offsetX >= 0 && offsetX < CompleteFullDataSource.SECTION_SIZE
+                    && offsetZ >= 0 && offsetZ < CompleteFullDataSource.SECTION_SIZE);
             target.markNotEmpty();
 
             for (int ox = 0; ox < overlappedTrgDataSize; ox++) {

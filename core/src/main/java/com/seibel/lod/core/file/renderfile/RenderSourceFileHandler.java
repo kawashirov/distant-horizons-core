@@ -3,7 +3,7 @@ package com.seibel.lod.core.file.renderfile;
 import com.google.common.collect.HashMultimap;
 import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
-import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
 import com.seibel.lod.core.dataObjects.transformers.DataRenderTransformer;
 import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.lod.core.level.IDhClientLevel;
@@ -214,14 +214,14 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	 * TODO why is there fullData handling in the render file handler? 
 	 */
     @Override
-    public void writeChunkDataToFile(DhSectionPos sectionPos, ChunkSizedFullDataSource chunkData)
+    public void writeChunkDataToFile(DhSectionPos sectionPos, ChunkSizedFullDataView chunkDataView)
 	{
-        this.writeChunkDataToFileRecursively(sectionPos,chunkData);
-		this.fullDataSourceProvider.write(sectionPos, chunkData);
+        this.writeChunkDataToFileRecursively(sectionPos,chunkDataView);
+		this.fullDataSourceProvider.write(sectionPos, chunkDataView);
     }
-    private void writeChunkDataToFileRecursively(DhSectionPos sectPos, ChunkSizedFullDataSource chunkData)
+    private void writeChunkDataToFileRecursively(DhSectionPos sectPos, ChunkSizedFullDataView chunkDataView)
 	{
-		if (!sectPos.getSectionBBoxPos().overlapsExactly(new DhLodPos((byte) (4 + chunkData.dataDetail), chunkData.x, chunkData.z)))
+		if (!sectPos.getSectionBBoxPos().overlapsExactly(chunkDataView.getLodPos()))
 		{
 			return;
 		}
@@ -229,17 +229,17 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		
 		if (sectPos.sectionDetailLevel > ColumnRenderSource.SECTION_SIZE_OFFSET)
 		{
-			this.writeChunkDataToFileRecursively(sectPos.getChildByIndex(0), chunkData);
-			this.writeChunkDataToFileRecursively(sectPos.getChildByIndex(1), chunkData);
-			this.writeChunkDataToFileRecursively(sectPos.getChildByIndex(2), chunkData);
-			this.writeChunkDataToFileRecursively(sectPos.getChildByIndex(3), chunkData);
+			this.writeChunkDataToFileRecursively(sectPos.getChildByIndex(0), chunkDataView);
+			this.writeChunkDataToFileRecursively(sectPos.getChildByIndex(1), chunkDataView);
+			this.writeChunkDataToFileRecursively(sectPos.getChildByIndex(2), chunkDataView);
+			this.writeChunkDataToFileRecursively(sectPos.getChildByIndex(3), chunkDataView);
 		}
 		
 		RenderMetaDataFile metaFile = this.filesBySectionPos.get(sectPos);
 		// Fast path: if there is a file for this section, just write to it.
 		if (metaFile != null)
 		{
-			metaFile.updateChunkIfNeeded(chunkData, this.level);
+			metaFile.updateChunkIfNeeded(chunkDataView, this.level);
 		}
 	}
 	

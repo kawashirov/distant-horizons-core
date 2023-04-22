@@ -1,14 +1,14 @@
 package com.seibel.lod.core.dataObjects.transformers;
 
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
+import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.IIncompleteFullDataSource;
 import com.seibel.lod.core.util.RenderDataPointUtil;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.dataObjects.render.columnViews.ColumnArrayView;
 import com.seibel.lod.core.dataObjects.render.columnViews.ColumnQuadView;
 import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullArrayView;
-import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource;
-import com.seibel.lod.core.dataObjects.fullData.sources.FullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.config.Config;
@@ -50,13 +50,13 @@ public class FullToColumnTransformer
 	 * @throws InterruptedException Can be caused by interrupting the thread upstream.
 	 * 								Generally thrown if the method is running after the client leaves the current world.
      */
-    public static ColumnRenderSource transformFullDataToColumnData(IDhClientLevel level, FullDataSource data) throws InterruptedException 
+    public static ColumnRenderSource transformFullDataToColumnData(IDhClientLevel level, CompleteFullDataSource fullDataSource) throws InterruptedException 
 	{
-        final DhSectionPos pos = data.getSectionPos();
-        final byte dataDetail = data.getDataDetail();
-        final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(data.getDataDetail());
+        final DhSectionPos pos = fullDataSource.getSectionPos();
+        final byte dataDetail = fullDataSource.getDataDetailLevel();
+        final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(fullDataSource.getDataDetailLevel());
         final ColumnRenderSource columnSource = new ColumnRenderSource(pos, vertSize, level.getMinY());
-        if (data.isEmpty())
+        if (fullDataSource.isEmpty())
 		{
 			return columnSource;
 		}
@@ -75,7 +75,7 @@ public class FullToColumnTransformer
 					throwIfThreadInterrupted();
 					
                     ColumnArrayView columnArrayView = columnSource.getVerticalDataPointView(x, z);
-                    SingleFullArrayView fullArrayView = data.get(x, z);
+                    SingleFullArrayView fullArrayView = fullDataSource.get(x, z);
                     convertColumnData(level, baseX + x, baseZ + z, columnArrayView, fullArrayView, 1);
                     
 					if (fullArrayView.doesItExist())
@@ -116,8 +116,8 @@ public class FullToColumnTransformer
     public static ColumnRenderSource transformIncompleteDataToColumnData(IDhClientLevel level, IIncompleteFullDataSource data) throws InterruptedException
 	{
         final DhSectionPos pos = data.getSectionPos();
-        final byte dataDetail = data.getDataDetail();
-        final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(data.getDataDetail());
+        final byte dataDetail = data.getDataDetailLevel();
+        final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(data.getDataDetailLevel());
         final ColumnRenderSource columnSource = new ColumnRenderSource(pos, vertSize, level.getMinY());
         if (data.isEmpty())
 		{
@@ -162,37 +162,33 @@ public class FullToColumnTransformer
 	 * @throws InterruptedException Can be caused by interrupting the thread upstream.
 	 * 								Generally thrown if the method is running after the client leaves the current world.
 	 */
-	public static void writeFullDataChunkToColumnData(ColumnRenderSource render, IDhClientLevel level, ChunkSizedFullDataSource data) throws InterruptedException
+	public static void writeFullDataChunkToColumnData(ColumnRenderSource render, IDhClientLevel level, ChunkSizedFullDataView chunkDataView) throws InterruptedException
 	{
-		if (data.dataDetail != 0)
-		{
-			throw new UnsupportedOperationException("To be implemented");
-		}
-		
 		final DhSectionPos pos = render.getSectionPos();
-		final int renderOffsetX = (data.x * 16) - pos.getCorner().getCornerBlockPos().x;
-		final int renderOffsetZ = (data.z * 16) - pos.getCorner().getCornerBlockPos().z;
+		final int renderOffsetX = (chunkDataView.pos.x * LodUtil.CHUNK_WIDTH) - pos.getCorner().getCornerBlockPos().x;
+		final int renderOffsetZ = (chunkDataView.pos.z * LodUtil.CHUNK_WIDTH) - pos.getCorner().getCornerBlockPos().z;
 		final int blockX = pos.getCorner().getCornerBlockPos().x;
 		final int blockZ = pos.getCorner().getCornerBlockPos().z;
 		final int perRenderWidth = 1 << render.getDataDetail();
-		final int perDataWidth = 1 << data.dataDetail;
+		final int perDataWidth = 1 << chunkDataView.detailLevel;
 		render.markNotEmpty();
-		if (data.dataDetail == render.getDataDetail())
+		
+		if (chunkDataView.detailLevel == render.getDataDetail())
 		{
-			if (renderOffsetX < 0 || renderOffsetX + 16 > render.getDataSize() || renderOffsetZ < 0 || renderOffsetZ + 16 > render.getDataSize())
+			if (renderOffsetX < 0 || renderOffsetX + LodUtil.CHUNK_WIDTH > render.getDataSize() || renderOffsetZ < 0 || renderOffsetZ + LodUtil.CHUNK_WIDTH > render.getDataSize())
 			{
 				throw new IllegalArgumentException("Data offset is out of bounds");
 			}
 			
 			
-			for (int x = 0; x < 16; x++)
+			for (int x = 0; x < LodUtil.CHUNK_WIDTH; x++)
 			{
-				for (int z = 0; z < 16; z++)
+				for (int z = 0; z < LodUtil.CHUNK_WIDTH; z++)
 				{
 					throwIfThreadInterrupted();
 					
 					ColumnArrayView columnArrayView = render.getVerticalDataPointView(renderOffsetX + x, renderOffsetZ + z);
-					SingleFullArrayView fullArrayView = data.get(x, z);
+					SingleFullArrayView fullArrayView = chunkDataView.get(x, z);
 					convertColumnData(level, blockX + perRenderWidth * (renderOffsetX + x),
 							blockZ + perRenderWidth * (renderOffsetZ + z),
 							columnArrayView, fullArrayView, 2);
@@ -203,12 +199,12 @@ public class FullToColumnTransformer
 					}
 				}
 			}
-			render.fillDebugFlag(renderOffsetX, renderOffsetZ, 16, 16, ColumnRenderSource.DebugSourceFlag.DIRECT);
+			render.fillDebugFlag(renderOffsetX, renderOffsetZ, LodUtil.CHUNK_WIDTH, LodUtil.CHUNK_WIDTH, ColumnRenderSource.DebugSourceFlag.DIRECT);
 		}
 		else
 		{
-			final int dataPerRender = 1 << (render.getDataDetail() - data.dataDetail);
-			final int dataSize = 16 / dataPerRender;
+			final int dataPerRender = 1 << (render.getDataDetail() - chunkDataView.detailLevel);
+			final int dataSize = LodUtil.CHUNK_WIDTH / dataPerRender;
 			final int vertSize = render.getVerticalSize();
 			long[] tempRender = new long[dataPerRender * dataPerRender * vertSize];
 			if (renderOffsetX < 0 || renderOffsetX + dataSize > render.getDataSize() || renderOffsetZ < 0 || renderOffsetZ + dataSize > render.getDataSize())
@@ -230,7 +226,7 @@ public class FullToColumnTransformer
 							
 							
 							ColumnArrayView columnArrayView = tempQuadView.get(ox, oz);
-							SingleFullArrayView fullArrayView = data.get(x * dataPerRender + ox, z * dataPerRender + oz);
+							SingleFullArrayView fullArrayView = chunkDataView.get(x * dataPerRender + ox, z * dataPerRender + oz);
 							convertColumnData(level, blockX + perRenderWidth * (renderOffsetX + x) + perDataWidth * ox,
 									blockZ + perRenderWidth * (renderOffsetZ + z) + perDataWidth * oz,
 									columnArrayView, fullArrayView, 2);

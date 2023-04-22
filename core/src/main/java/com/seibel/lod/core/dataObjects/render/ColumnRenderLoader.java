@@ -1,9 +1,9 @@
 package com.seibel.lod.core.dataObjects.render;
 
 import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
+import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.IIncompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
-import com.seibel.lod.core.dataObjects.fullData.sources.FullDataSource;
 import com.seibel.lod.core.dataObjects.transformers.FullToColumnTransformer;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.level.IDhLevel;
@@ -58,16 +58,16 @@ public class ColumnRenderLoader
 		}
     }
 	
-	/** @throws InterruptedException see {@link FullToColumnTransformer#transformFullDataToColumnData(IDhClientLevel, FullDataSource) FullToColumnTransformer#transformFullDataToColumnData} for documentation */
-    public ColumnRenderSource createRenderSource(IFullDataSource dataSource, IDhClientLevel level) throws InterruptedException
+	/** @throws InterruptedException see {@link FullToColumnTransformer#transformFullDataToColumnData(IDhClientLevel, CompleteFullDataSource) FullToColumnTransformer#transformFullDataToColumnData} for documentation */
+    public ColumnRenderSource createRenderSource(IFullDataSource fullDataSource, IDhClientLevel level) throws InterruptedException
 	{
-		if (dataSource instanceof FullDataSource)
+		if (fullDataSource instanceof CompleteFullDataSource)
 		{
-			return FullToColumnTransformer.transformFullDataToColumnData(level, (FullDataSource) dataSource);
+			return FullToColumnTransformer.transformFullDataToColumnData(level, (CompleteFullDataSource) fullDataSource);
 		}
-		else if (dataSource instanceof IIncompleteFullDataSource)
+		else if (fullDataSource instanceof IIncompleteFullDataSource)
 		{
-			return FullToColumnTransformer.transformIncompleteDataToColumnData(level, (IIncompleteFullDataSource) dataSource);
+			return FullToColumnTransformer.transformIncompleteDataToColumnData(level, (IIncompleteFullDataSource) fullDataSource);
 		}
 		
 		LodUtil.assertNotReach();

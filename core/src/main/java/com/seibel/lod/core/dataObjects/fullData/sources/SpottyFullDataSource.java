@@ -2,7 +2,8 @@ package com.seibel.lod.core.dataObjects.fullData.sources;
 
 import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
-import com.seibel.lod.core.dataObjects.fullData.accessor.FullArrayView;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
+import com.seibel.lod.core.dataObjects.fullData.accessor.FullDataArrayView;
 import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullArrayView;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.level.IDhLevel;
@@ -16,15 +17,16 @@ import java.io.*;
 import java.util.BitSet;
 
 /**
- * 1 chunk of full data (formerly SpottyDataSource)
+ * more data than sparse, less than complete.
+ * TODO there has to be a better way to name these
  */
-public class SingleChunkFullDataSource extends FullArrayView implements IIncompleteFullDataSource
+public class SpottyFullDataSource extends FullDataArrayView implements IIncompleteFullDataSource
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     public static final byte SECTION_SIZE_OFFSET = 6;
     public static final int SECTION_SIZE = 1 << SECTION_SIZE_OFFSET;
     public static final byte LATEST_VERSION = 0;
-    public static final long TYPE_ID = "SingleChunkFullDataSource".hashCode();
+    public static final long TYPE_ID = "SpottyFullDataSource".hashCode();
 	
     private final DhSectionPos sectionPos;
 	private final BitSet isColumnNotEmpty;
@@ -38,7 +40,7 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
 	// constructors //
 	//==============//
 	
-    protected SingleChunkFullDataSource(DhSectionPos sectionPos)
+    protected SpottyFullDataSource(DhSectionPos sectionPos)
 	{
         super(new FullDataPointIdMap(), new long[SECTION_SIZE*SECTION_SIZE][0], SECTION_SIZE);
         LodUtil.assertTrue(sectionPos.sectionDetailLevel > SparseFullDataSource.MAX_SECTION_DETAIL);
@@ -48,7 +50,7 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
 		this.worldGenStep = EDhApiWorldGenerationStep.EMPTY;
     }
 	
-	private SingleChunkFullDataSource(DhSectionPos pos, FullDataPointIdMap mapping, EDhApiWorldGenerationStep worldGenStep, BitSet isColumnNotEmpty, long[][] data)
+	private SpottyFullDataSource(DhSectionPos pos, FullDataPointIdMap mapping, EDhApiWorldGenerationStep worldGenStep, BitSet isColumnNotEmpty, long[][] data)
 	{
 		super(mapping, data, SECTION_SIZE);
 		LodUtil.assertTrue(data.length == SECTION_SIZE*SECTION_SIZE);
@@ -59,7 +61,7 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
 		this.isEmpty = false;
 	}
 	
-	public static SingleChunkFullDataSource createEmpty(DhSectionPos pos) { return new SingleChunkFullDataSource(pos); }
+	public static SpottyFullDataSource createEmpty(DhSectionPos pos) { return new SpottyFullDataSource(pos); }
 	
 	
 	
@@ -67,7 +69,7 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
 	// file handling //
 	//===============//
 	
-	public static SingleChunkFullDataSource loadData(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException, InterruptedException
+	public static SpottyFullDataSource loadData(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException, InterruptedException
 	{
 		DataInputStream dataInputStream = new DataInputStream(bufferedInputStream); // DO NOT CLOSE
 		
@@ -91,7 +93,7 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
 		if (end == IFullDataSource.NO_DATA_FLAG_BYTE)
 		{
 			// Section is empty
-			return new SingleChunkFullDataSource(dataFile.pos);
+			return new SpottyFullDataSource(dataFile.pos);
 		}
 		
 		
@@ -160,7 +162,7 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
 		
 		
 		
-		return new SingleChunkFullDataSource(dataFile.pos, mapping, worldGenStep, isColumnNotEmpty, data);
+		return new SpottyFullDataSource(dataFile.pos, mapping, worldGenStep, isColumnNotEmpty, data);
 	}
 	
 	@Override
@@ -169,8 +171,8 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
 		DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream); // DO NOT CLOSE
 		
 		
-		dataOutputStream.writeInt(this.getDataDetail());
-		dataOutputStream.writeInt(this.size);
+		dataOutputStream.writeInt(this.getDataDetailLevel());
+		dataOutputStream.writeInt(this.width);
 		dataOutputStream.writeInt(level.getMinY());
 		if (this.isEmpty)
 		{
@@ -216,18 +218,21 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
 	//===============//
 	
 	@Override
-	public void update(ChunkSizedFullDataSource data)
+	public void update(ChunkSizedFullDataView data)
 	{
-		LodUtil.assertTrue(this.sectionPos.getSectionBBoxPos().overlapsExactly(data.getBBoxLodPos()));
+		LodUtil.assertTrue(this.sectionPos.getSectionBBoxPos().overlapsExactly(data.getLodPos()));
 		
-		if (data.dataDetail == 0 && this.getDataDetail() >= 4)
+		if (this.getDataDetailLevel() >= 4)
 		{
 			//FIXME: TEMPORARY
-			int chunkPerFull = 1 << (this.getDataDetail() - 4);
-			if (data.x % chunkPerFull != 0 || data.z % chunkPerFull != 0)
+			int chunkPerFull = 1 << (this.getDataDetailLevel() - 4);
+			if (data.pos.x % chunkPerFull != 0 || data.pos.z % chunkPerFull != 0)
+			{
 				return;
-			DhLodPos baseOffset = this.sectionPos.getCorner(this.getDataDetail());
-			DhLodPos dataOffset = data.getBBoxLodPos().convertToDetailLevel(this.getDataDetail());
+			}
+			
+			DhLodPos baseOffset = this.sectionPos.getCorner(this.getDataDetailLevel());
+			DhLodPos dataOffset = data.getLodPos().convertToDetailLevel(this.getDataDetailLevel());
 			int offsetX = dataOffset.x - baseOffset.x;
 			int offsetZ = dataOffset.z - baseOffset.z;
 			LodUtil.assertTrue(offsetX >= 0 && offsetX < SECTION_SIZE && offsetZ >= 0 && offsetZ < SECTION_SIZE);
@@ -255,9 +260,9 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
 		{
 			this.sampleFrom((SparseFullDataSource) source);
         }
-		else if (source instanceof FullDataSource)
+		else if (source instanceof CompleteFullDataSource)
 		{
-			this.sampleFrom((FullDataSource) source);
+			this.sampleFrom((CompleteFullDataSource) source);
         }
 		else
 		{
@@ -270,15 +275,15 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
         DhSectionPos pos = sparseSource.getSectionPos();
 		this.isEmpty = false;
 
-        if (this.getDataDetail() > this.sectionPos.sectionDetailLevel)
+        if (this.getDataDetailLevel() > this.sectionPos.sectionDetailLevel)
 		{
-            DhLodPos basePos = this.sectionPos.getCorner(this.getDataDetail());
-            DhLodPos dataPos = pos.getCorner(this.getDataDetail());
+            DhLodPos basePos = this.sectionPos.getCorner(this.getDataDetailLevel());
+            DhLodPos dataPos = pos.getCorner(this.getDataDetailLevel());
             int offsetX = dataPos.x - basePos.x;
             int offsetZ = dataPos.z - basePos.z;
             LodUtil.assertTrue(offsetX >= 0 && offsetX < SECTION_SIZE && offsetZ >= 0 && offsetZ < SECTION_SIZE);
-            int chunksPerData = 1 << (this.getDataDetail() - SparseFullDataSource.SPARSE_UNIT_DETAIL);
-            int dataSpan = this.sectionPos.getWidth(this.getDataDetail()).numberOfLodSectionsWide;
+            int chunksPerData = 1 << (this.getDataDetailLevel() - SparseFullDataSource.SPARSE_UNIT_DETAIL);
+            int dataSpan = this.sectionPos.getWidth(this.getDataDetailLevel()).numberOfLodSectionsWide;
 
             for (int xOffset = 0; xOffset < dataSpan; xOffset++)
 			{
@@ -302,8 +307,8 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
             int lowerSectionsPerData = this.sectionPos.getWidth(dataPos.detailLevel).numberOfLodSectionsWide;
             if (dataPos.x % lowerSectionsPerData != 0 || dataPos.z % lowerSectionsPerData != 0) return;
 
-            DhLodPos basePos = this.sectionPos.getCorner(this.getDataDetail());
-            dataPos = dataPos.convertToDetailLevel(this.getDataDetail());
+            DhLodPos basePos = this.sectionPos.getCorner(this.getDataDetailLevel());
+            dataPos = dataPos.convertToDetailLevel(this.getDataDetailLevel());
             int offsetX = dataPos.x - basePos.x;
             int offsetZ = dataPos.z - basePos.z;
             SingleFullArrayView column = sparseSource.tryGet(0, 0);
@@ -314,19 +319,19 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
         }
     }
 	
-    private void sampleFrom(FullDataSource fullSource)
+    private void sampleFrom(CompleteFullDataSource fullSource)
 	{
         DhSectionPos pos = fullSource.getSectionPos();
 		this.isEmpty = false;
 		this.downsampleFrom(fullSource);
 		
-		if (this.getDataDetail() > this.sectionPos.sectionDetailLevel)
+		if (this.getDataDetailLevel() > this.sectionPos.sectionDetailLevel)
 		{
-			DhLodPos basePos = this.sectionPos.getCorner(this.getDataDetail());
-			DhLodPos dataPos = pos.getCorner(this.getDataDetail());
+			DhLodPos basePos = this.sectionPos.getCorner(this.getDataDetailLevel());
+			DhLodPos dataPos = pos.getCorner(this.getDataDetailLevel());
 			int offsetX = dataPos.x - basePos.x;
 			int offsetZ = dataPos.z - basePos.z;
-			int dataSpan = this.sectionPos.getWidth(this.getDataDetail()).numberOfLodSectionsWide;
+			int dataSpan = this.sectionPos.getWidth(this.getDataDetailLevel()).numberOfLodSectionsWide;
 			
 			for (int xOffset = 0; xOffset < dataSpan; xOffset++)
 			{
@@ -345,8 +350,8 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
 				return;
 			}
 			
-            DhLodPos basePos = this.sectionPos.getCorner(this.getDataDetail());
-            dataPos = dataPos.convertToDetailLevel(this.getDataDetail());
+            DhLodPos basePos = this.sectionPos.getCorner(this.getDataDetailLevel());
+            dataPos = dataPos.convertToDetailLevel(this.getDataDetailLevel());
             int offsetX = dataPos.x - basePos.x;
             int offsetZ = dataPos.z - basePos.z;
 			this.isColumnNotEmpty.set(offsetX * SECTION_SIZE + offsetZ, true);
@@ -355,19 +360,19 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
     }
 	
     @Override
-    public IFullDataSource trySelfPromote()
+    public IFullDataSource tryPromotingToCompleteDataSource()
 	{
+		// promotion can only be completed if every column has data
         if (this.isEmpty)
 		{
 			return this;
 		}
-		
-        if (this.isColumnNotEmpty.cardinality() != SECTION_SIZE * SECTION_SIZE)
+        else if (this.isColumnNotEmpty.cardinality() != SECTION_SIZE * SECTION_SIZE)
 		{
 			return this;
 		}
 		
-        return new FullDataSource(this.sectionPos, this.mapping, this.dataArrays);
+        return new CompleteFullDataSource(this.sectionPos, this.mapping, this.dataArrays);
     }
 	
 	
@@ -377,7 +382,7 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
 	//
 	
     @Override
-    public SingleFullArrayView tryGet(int x, int z) { return this.isColumnNotEmpty.get(x * SECTION_SIZE + z) ? this.get(x, z) : null; }
+    public SingleFullArrayView tryGet(int relativeX, int relativeZ) { return this.isColumnNotEmpty.get(relativeX * SECTION_SIZE + relativeZ) ? this.get(relativeX, relativeZ) : null; }
 	
 	
 	
@@ -388,7 +393,7 @@ public class SingleChunkFullDataSource extends FullArrayView implements IIncompl
 	@Override
 	public DhSectionPos getSectionPos() { return this.sectionPos; }
 	@Override
-	public byte getDataDetail() { return (byte) (this.sectionPos.sectionDetailLevel -SECTION_SIZE_OFFSET); }
+	public byte getDataDetailLevel() { return (byte) (this.sectionPos.sectionDetailLevel -SECTION_SIZE_OFFSET); }
 	@Override
 	public byte getDataVersion() { return LATEST_VERSION;  }
 	

@@ -3,7 +3,7 @@ package com.seibel.lod.core.generation;
 import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
 import com.seibel.lod.core.config.Config;
-import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
 import com.seibel.lod.core.dataObjects.transformers.LodDataBuilder;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.generation.tasks.*;
@@ -345,7 +345,7 @@ public class WorldGenerationQueue implements Closeable
 		LodUtil.assertTrue(taskDetailLevel >= this.minDataDetail && taskDetailLevel <= this.maxDataDetail);
 		
 		DhChunkPos chunkPosMin = new DhChunkPos(taskPos.getCornerBlockPos());
-		LOGGER.info("Generating section "+taskPos+" with granularity "+granularity+" at "+chunkPosMin);
+		//LOGGER.info("Generating section "+taskPos+" with granularity "+granularity+" at "+chunkPosMin);
 		
 		this.numberOfTasksQueued++;
 		inProgressTaskGroup.genFuture = startGenerationEvent(this.generator, chunkPosMin, granularity, taskDetailLevel, inProgressTaskGroup.group::onGenerationComplete);
@@ -500,7 +500,7 @@ public class WorldGenerationQueue implements Closeable
 	private static CompletableFuture<Void> startGenerationEvent(IDhApiWorldGenerator worldGenerator,
 			DhChunkPos chunkPosMin,
 			byte granularity, byte targetDataDetail,
-			Consumer<ChunkSizedFullDataSource> generationCompleteConsumer)
+			Consumer<ChunkSizedFullDataView> generationCompleteConsumer)
 	{
 		EDhApiDistantGeneratorMode generatorMode = Config.Client.WorldGenerator.distantGeneratorMode.get();
 		return worldGenerator.generateChunks(chunkPosMin.x, chunkPosMin.z, granularity, targetDataDetail, generatorMode, (objectArray) ->

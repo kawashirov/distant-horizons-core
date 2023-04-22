@@ -3,7 +3,7 @@ package com.seibel.lod.core.dataObjects.transformers;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.pos.DhChunkPos;
@@ -25,9 +25,9 @@ public class ChunkToLodBuilder
     private static class Task
 	{
         final DhChunkPos chunkPos;
-        final CompletableFuture<ChunkSizedFullDataSource> future;
+        final CompletableFuture<ChunkSizedFullDataView> future;
 		
-        Task(DhChunkPos chunkPos, CompletableFuture<ChunkSizedFullDataSource> future)
+        Task(DhChunkPos chunkPos, CompletableFuture<ChunkSizedFullDataView> future)
 		{
             this.chunkPos = chunkPos;
             this.future = future;
@@ -44,14 +44,14 @@ public class ChunkToLodBuilder
 	
 	
 	
-    public CompletableFuture<ChunkSizedFullDataSource> tryGenerateData(IChunkWrapper chunk)
+    public CompletableFuture<ChunkSizedFullDataView> tryGenerateData(IChunkWrapper chunkWrapper)
 	{
-        if (chunk == null)
+        if (chunkWrapper == null)
 		{
 			throw new NullPointerException("ChunkWrapper cannot be null!");
 		}
 		
-        IChunkWrapper oldChunk = this.latestChunkToBuild.put(chunk.getChunkPos(), chunk); // an Exchange operation
+        IChunkWrapper oldChunk = this.latestChunkToBuild.put(chunkWrapper.getChunkPos(), chunkWrapper); // an Exchange operation
         // If there's old chunk, that means we just replaced an unprocessed old request on generating data on this pos.
         //   if so, we can just return null to signal this, as the old request's future will instead be the proper one
         //   that will return the latest generated data.
@@ -61,8 +61,8 @@ public class ChunkToLodBuilder
 		}
 		
         // Otherwise, it means we're the first to do so. Let's submit our task to this entry.
-        CompletableFuture<ChunkSizedFullDataSource> future = new CompletableFuture<>();
-		this.taskToBuild.addLast(new Task(chunk.getChunkPos(), future));
+        CompletableFuture<ChunkSizedFullDataView> future = new CompletableFuture<>();
+		this.taskToBuild.addLast(new Task(chunkWrapper.getChunkPos(), future));
         return future;
     }
 	
@@ -135,7 +135,7 @@ public class ChunkToLodBuilder
 			{
                 if (LodDataBuilder.canGenerateLodFromChunk(latestChunk))
 				{
-                    ChunkSizedFullDataSource data = LodDataBuilder.createChunkData(latestChunk);
+                    ChunkSizedFullDataView data = LodDataBuilder.createChunkData(latestChunk);
                     if (data != null)
 					{
                         task.future.complete(data);

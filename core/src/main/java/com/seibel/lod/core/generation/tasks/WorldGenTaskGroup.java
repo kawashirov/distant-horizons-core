@@ -1,8 +1,7 @@
 package com.seibel.lod.core.generation.tasks;
 
-import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
 import com.seibel.lod.core.pos.DhLodPos;
-import com.seibel.lod.core.pos.DhSectionPos;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -29,13 +28,13 @@ public final class WorldGenTaskGroup
 	
 	
 	
-	public void onGenerationComplete(ChunkSizedFullDataSource chunkSizedFullDataSource)
+	public void onGenerationComplete(ChunkSizedFullDataView chunkSizedFullDataView)
 	{
 		Iterator<WorldGenTask> tasks = this.worldGenTasks.iterator();
 		while (tasks.hasNext())
 		{
 			WorldGenTask task = tasks.next();
-			Consumer<ChunkSizedFullDataSource> onGenTaskCompleteConsumer = task.taskTracker.getOnGenTaskCompleteConsumer();
+			Consumer<ChunkSizedFullDataView> onGenTaskCompleteConsumer = task.taskTracker.getOnGenTaskCompleteConsumer();
 			if (onGenTaskCompleteConsumer == null)
 			{
 				tasks.remove();
@@ -44,7 +43,7 @@ public final class WorldGenTaskGroup
 			else
 			{
 				// TODO why aren't we removing the task if it has a consumer?
-				onGenTaskCompleteConsumer.accept(chunkSizedFullDataSource);
+				onGenTaskCompleteConsumer.accept(chunkSizedFullDataView);
 			}
 		}
 	}

@@ -2,7 +2,7 @@ package com.seibel.lod.core.file.renderfile;
 
 import com.seibel.lod.core.dataObjects.render.ColumnRenderLoader;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
-import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
 import com.seibel.lod.core.file.metaData.BaseMetaData;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.level.IDhLevel;
@@ -77,9 +77,9 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 	
 	// FIXME: This can cause concurrent modification of LodRenderSource.
     //       Not sure if it will cause issues or not.
-	public void updateChunkIfNeeded(ChunkSizedFullDataSource chunkData, IDhClientLevel level)
+	public void updateChunkIfNeeded(ChunkSizedFullDataView chunkDataView, IDhClientLevel level)
 	{
-		DhLodPos chunkPos = new DhLodPos((byte) (chunkData.dataDetail + 4), chunkData.x, chunkData.z);
+		DhLodPos chunkPos = chunkDataView.getLodPos();
 		LodUtil.assertTrue(this.pos.getSectionBBoxPos().overlapsExactly(chunkPos), "Chunk pos {} doesn't overlap with section {}", chunkPos, pos);
 			
 		CompletableFuture<ColumnRenderSource> source = this._readCached(this.data.get());
@@ -88,7 +88,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 			return;
 		}
 		
-		source.thenAccept((renderSource) -> renderSource.fastWrite(chunkData, level));
+		source.thenAccept((renderSource) -> renderSource.fastWrite(chunkDataView, level));
 	}
 	
     public CompletableFuture<Void> flushAndSave(ExecutorService renderCacheThread)

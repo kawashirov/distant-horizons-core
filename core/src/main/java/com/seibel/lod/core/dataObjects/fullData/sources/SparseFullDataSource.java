@@ -2,7 +2,8 @@ package com.seibel.lod.core.dataObjects.fullData.sources;
 
 import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
-import com.seibel.lod.core.dataObjects.fullData.accessor.FullArrayView;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
+import com.seibel.lod.core.dataObjects.fullData.accessor.FullDataArrayView;
 import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullArrayView;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.level.IDhLevel;
@@ -18,7 +19,7 @@ import java.util.BitSet;
 
 /**
  * Handles full data with the detail level {@link SparseFullDataSource#SPARSE_UNIT_DETAIL}.
- * In other words, this is the middle ground between {@link SingleChunkFullDataSource} and {@link FullDataSource}
+ * In other words, this is the middle ground between {@link SpottyFullDataSource} and {@link CompleteFullDataSource}
  */
 public class SparseFullDataSource implements IIncompleteFullDataSource
 {
@@ -42,7 +43,7 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 	
 	protected final FullDataPointIdMap mapping;
     private final DhSectionPos sectionPos;
-    private final FullArrayView[] sparseData;
+    private final FullDataArrayView[] sparseData;
     private final DhLodPos chunkPos;
 	
 	public final int chunks;
@@ -63,12 +64,12 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
         this.sectionPos = sectionPos;
 		this.chunks = 1 << (byte) (sectionPos.sectionDetailLevel - SPARSE_UNIT_DETAIL);
 		this.dataPerChunk = SECTION_SIZE / this.chunks;
-		this.sparseData = new FullArrayView[this.chunks * this.chunks];
+		this.sparseData = new FullDataArrayView[this.chunks * this.chunks];
 		this.chunkPos = sectionPos.getCorner(SPARSE_UNIT_DETAIL);
 		this.mapping = new FullDataPointIdMap();
     }
 	
-    protected SparseFullDataSource(DhSectionPos sectionPos, FullDataPointIdMap mapping, FullArrayView[] data)
+    protected SparseFullDataSource(DhSectionPos sectionPos, FullDataPointIdMap mapping, FullDataArrayView[] data)
 	{
         LodUtil.assertTrue(sectionPos.sectionDetailLevel > SPARSE_UNIT_DETAIL);
         LodUtil.assertTrue(sectionPos.sectionDetailLevel <= MAX_SECTION_DETAIL);
@@ -91,7 +92,7 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
     @Override
     public DhSectionPos getSectionPos() { return this.sectionPos; }
     @Override
-    public byte getDataDetail() { return (byte) (this.sectionPos.sectionDetailLevel -SECTION_SIZE_OFFSET); }
+    public byte getDataDetailLevel() { return (byte) (this.sectionPos.sectionDetailLevel - SECTION_SIZE_OFFSET); }
 
     @Override
     public byte getDataVersion() { return LATEST_VERSION; }
@@ -113,19 +114,13 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 	
 	
     @Override
-    public void update(ChunkSizedFullDataSource data)
+    public void update(ChunkSizedFullDataView chunkDataView)
 	{
-		if (data.dataDetail != 0)
+		int arrayOffset = this.calculateOffset(chunkDataView.pos.x, chunkDataView.pos.z);
+		FullDataArrayView newArray = new FullDataArrayView(this.mapping, new long[this.dataPerChunk * this.dataPerChunk][], this.dataPerChunk);
+		if (this.getDataDetailLevel() == chunkDataView.detailLevel)
 		{
-			//TODO: Disable the throw and instead just ignore the data.
-			throw new IllegalArgumentException("SparseFullDataSource only supports dataDetail 0!");
-		}
-		
-		int arrayOffset = this.calculateOffset(data.x, data.z);
-		FullArrayView newArray = new FullArrayView(this.mapping, new long[this.dataPerChunk * this.dataPerChunk][], this.dataPerChunk);
-		if (this.getDataDetail() == data.dataDetail)
-		{
-			data.shadowCopyTo(newArray);
+			chunkDataView.shadowCopyTo(newArray);
 		}
 		else
 		{
@@ -137,10 +132,11 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 				for (int zOffset = 0; zOffset < count; zOffset++)
 				{
 					SingleFullArrayView column = newArray.get(xOffset, zOffset);
-					column.downsampleFrom(data.subView(dataPerCount, xOffset * dataPerCount, zOffset * dataPerCount));
+					column.downsampleFrom(chunkDataView.subView(dataPerCount, xOffset * dataPerCount, zOffset * dataPerCount));
 				}
 			}
 		}
+		
 		this.isEmpty = false;
 		this.sparseData[arrayOffset] = newArray;
     }
@@ -165,9 +161,9 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 		{
 			this.sampleFrom((SparseFullDataSource) source);
 		}
-		else if (source instanceof FullDataSource)
+		else if (source instanceof CompleteFullDataSource)
 		{
-			this.sampleFrom((FullDataSource) source);
+			this.sampleFrom((CompleteFullDataSource) source);
 		}
 		else
 		{
@@ -190,17 +186,17 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 		{
 			for (int zOffset = 0; zOffset < sparseSource.chunks; zOffset++)
 			{
-				FullArrayView sourceChunk = sparseSource.sparseData[xOffset * sparseSource.chunks + zOffset];
+				FullDataArrayView sourceChunk = sparseSource.sparseData[xOffset * sparseSource.chunks + zOffset];
 				if (sourceChunk != null)
 				{
-					FullArrayView buff = new FullArrayView(this.mapping, new long[this.dataPerChunk * this.dataPerChunk][], this.dataPerChunk);
+					FullDataArrayView buff = new FullDataArrayView(this.mapping, new long[this.dataPerChunk * this.dataPerChunk][], this.dataPerChunk);
 					buff.downsampleFrom(sourceChunk);
 					this.sparseData[(xOffset + offsetX) * this.chunks + (zOffset + offsetZ)] = buff;
 				}
 			}
 		}
     }
-    private void sampleFrom(FullDataSource fullSource)
+    private void sampleFrom(CompleteFullDataSource fullSource)
 	{
         DhSectionPos pos = fullSource.getSectionPos();
 		this.isEmpty = false;
@@ -208,8 +204,8 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
         DhLodPos basePos = this.sectionPos.getCorner(SPARSE_UNIT_DETAIL);
         DhLodPos dataPos = pos.getCorner(SPARSE_UNIT_DETAIL);
         int coveredChunks = pos.getWidth(SPARSE_UNIT_DETAIL).numberOfLodSectionsWide;
-        int sourceDataPerChunk = SPARSE_UNIT_SIZE >>> fullSource.getDataDetail();
-        LodUtil.assertTrue(coveredChunks*sourceDataPerChunk == FullDataSource.SECTION_SIZE);
+        int sourceDataPerChunk = SPARSE_UNIT_SIZE >>> fullSource.getDataDetailLevel();
+        LodUtil.assertTrue(coveredChunks*sourceDataPerChunk == CompleteFullDataSource.SECTION_SIZE);
         int offsetX = dataPos.x-basePos.x;
         int offsetZ = dataPos.z-basePos.z;
         LodUtil.assertTrue(offsetX >=0 && offsetX < this.chunks && offsetZ >=0 && offsetZ < this.chunks);
@@ -218,8 +214,8 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 		{
 			for (int zOffset = 0; zOffset < coveredChunks; zOffset++)
 			{
-				FullArrayView sourceChunk = fullSource.subView(sourceDataPerChunk, xOffset * sourceDataPerChunk, zOffset * sourceDataPerChunk);
-				FullArrayView buff = new FullArrayView(this.mapping, new long[this.dataPerChunk * this.dataPerChunk][], this.dataPerChunk);
+				FullDataArrayView sourceChunk = fullSource.subView(sourceDataPerChunk, xOffset * sourceDataPerChunk, zOffset * sourceDataPerChunk);
+				FullDataArrayView buff = new FullDataArrayView(this.mapping, new long[this.dataPerChunk * this.dataPerChunk][], this.dataPerChunk);
 				buff.downsampleFrom(sourceChunk);
 				this.sparseData[(xOffset + offsetX) * this.chunks + (zOffset + offsetZ)] = buff;
 			}
@@ -238,7 +234,7 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
         DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream);
 		
 			
-		dataOutputStream.writeShort(this.getDataDetail());
+		dataOutputStream.writeShort(this.getDataDetailLevel());
 		dataOutputStream.writeShort(SPARSE_UNIT_DETAIL);
 		dataOutputStream.writeInt(SECTION_SIZE);
 		dataOutputStream.writeInt(level.getMinY());
@@ -266,7 +262,7 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 			 i = dataArrayIndexHasData.nextSetBit(i+1))
 		{
 			// column data length
-			FullArrayView array = this.sparseData[i];
+			FullDataArrayView array = this.sparseData[i];
 			LodUtil.assertTrue(array != null);
 			for (int x = 0; x < array.width(); x++)
 			{
@@ -451,12 +447,12 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 				throw new IOException("invalid id mapping end guard");
 			}
 			
-			FullArrayView[] fullDataArrays = new FullArrayView[chunks * chunks];
+			FullDataArrayView[] fullDataArrays = new FullDataArrayView[chunks * chunks];
 			for (int i = 0; i < rawFullDataArrays.length; i++)
 			{
 				if (rawFullDataArrays[i] != null)
 				{
-					fullDataArrays[i] = new FullArrayView(mapping, rawFullDataArrays[i], dataPointsPerChunk);
+					fullDataArrays[i] = new FullDataArrayView(mapping, rawFullDataArrays[i], dataPointsPerChunk);
 				}
 			}
 			
@@ -466,53 +462,58 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 	
 	
 	
-    private void applyToFullDataSource(FullDataSource dataSource)
+    private void applyToFullDataSource(CompleteFullDataSource dataSource)
 	{
         LodUtil.assertTrue(dataSource.getSectionPos().equals(this.sectionPos));
-        LodUtil.assertTrue(dataSource.getDataDetail() == this.getDataDetail());
+        LodUtil.assertTrue(dataSource.getDataDetailLevel() == this.getDataDetailLevel());
 		for (int x = 0; x < this.chunks; x++)
 		{
 			for (int z = 0; z < this.chunks; z++)
 			{
-				FullArrayView array = this.sparseData[x * this.chunks + z];
+				FullDataArrayView array = this.sparseData[x * this.chunks + z];
 				if (array == null)
 					continue;
 				
 				// Otherwise, apply data to dataSource
 				dataSource.markNotEmpty();
-				FullArrayView view = dataSource.subView(this.dataPerChunk, x * this.dataPerChunk, z * this.dataPerChunk);
+				FullDataArrayView view = dataSource.subView(this.dataPerChunk, x * this.dataPerChunk, z * this.dataPerChunk);
 				array.shadowCopyTo(view);
 			}
 		}
     }
 
-    public IFullDataSource trySelfPromote()
+    public IFullDataSource tryPromotingToCompleteDataSource()
 	{
         if (this.isEmpty)
 		{
 			return this;
 		}
 		
-        for (FullArrayView array : this.sparseData)
+		// promotion can only succeed if every data column is present
+        for (FullDataArrayView array : this.sparseData)
 		{
-            if (array == null) return this;
-        }
-        FullDataSource newSource = FullDataSource.createEmpty(this.sectionPos);
-		this.applyToFullDataSource(newSource);
-        return newSource;
+			if (array == null)
+			{
+				return this;
+			}
+		}
+		
+        CompleteFullDataSource fullDataSource = CompleteFullDataSource.createEmpty(this.sectionPos);
+		this.applyToFullDataSource(fullDataSource);
+        return fullDataSource;
     }
 	
-    public SingleFullArrayView tryGet(int x, int z)
+    public SingleFullArrayView tryGet(int relativeX, int relativeZ)
 	{
-        LodUtil.assertTrue(x>=0 && x<SECTION_SIZE && z>=0 && z<SECTION_SIZE);
-        int chunkX = x / this.dataPerChunk;
-        int chunkZ = z / this.dataPerChunk;
-        FullArrayView chunk = this.sparseData[chunkX * this.chunks + chunkZ];
+        LodUtil.assertTrue(relativeX >=0 && relativeX <SECTION_SIZE && relativeZ >=0 && relativeZ <SECTION_SIZE);
+        int chunkX = relativeX / this.dataPerChunk;
+        int chunkZ = relativeZ / this.dataPerChunk;
+        FullDataArrayView chunk = this.sparseData[chunkX * this.chunks + chunkZ];
         if (chunk == null)
 		{
 			return null;
 		}
-        return chunk.get(x % this.dataPerChunk, z % this.dataPerChunk);
+        return chunk.get(relativeX % this.dataPerChunk, relativeZ % this.dataPerChunk);
     }
 	
 }

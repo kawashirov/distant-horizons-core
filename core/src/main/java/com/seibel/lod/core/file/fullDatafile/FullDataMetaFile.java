@@ -11,7 +11,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.loader.AbstractFullDataSourceLoader;
-import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.file.metaData.BaseMetaData;
 import com.seibel.lod.core.pos.DhLodPos;
@@ -47,7 +47,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 	//TODO: use ConcurrentAppendSingleSwapContainer<LodDataSource> instead of below:
 	private static class GuardedMultiAppendQueue {
 		ReentrantReadWriteLock appendLock = new ReentrantReadWriteLock();
-		ConcurrentLinkedQueue<ChunkSizedFullDataSource> queue = new ConcurrentLinkedQueue<>();
+		ConcurrentLinkedQueue<ChunkSizedFullDataView> queue = new ConcurrentLinkedQueue<>();
 	}
 
 	// ===Concurrent Write stuff===
@@ -146,11 +146,11 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 //		}
 //	}
 	
-	public void addToWriteQueue(ChunkSizedFullDataSource chunkDataSource)
+	public void addToWriteQueue(ChunkSizedFullDataView chunkDataSource)
 	{
 		debugCheck();
-		DhLodPos chunkPos = new DhLodPos((byte) (chunkDataSource.dataDetail + 4), chunkDataSource.x, chunkDataSource.z);
-		LodUtil.assertTrue(pos.getSectionBBoxPos().overlapsExactly(chunkPos), "Chunk pos "+chunkPos+" doesn't overlap with section "+pos);
+		DhLodPos chunkLodPos = new DhLodPos(LodUtil.CHUNK_DETAIL_LEVEL, chunkDataSource.pos.x, chunkDataSource.pos.z);
+		LodUtil.assertTrue(pos.getSectionBBoxPos().overlapsExactly(chunkLodPos), "Chunk pos "+chunkLodPos+" doesn't overlap with section "+pos);
 		//LOGGER.info("Write Chunk {} to file {}", chunkPos, pos);
 		
 		GuardedMultiAppendQueue writeQueue = this.writeQueue.get();
@@ -293,7 +293,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 	private static BaseMetaData makeMetaData(IFullDataSource data) {
 		AbstractFullDataSourceLoader loader = AbstractFullDataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
 		return new BaseMetaData(data.getSectionPos(), -1,
-				data.getDataDetail(), data.getWorldGenStep(), (loader == null ? 0 : loader.datatypeId), data.getDataVersion());
+				data.getDataDetailLevel(), data.getWorldGenStep(), (loader == null ? 0 : loader.datatypeId), data.getDataVersion());
 	}
 
 	// "unchecked": Suppress casting of CompletableFuture<?> to CompletableFuture<LodDataSource>
@@ -398,7 +398,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 			{
 				// Write/Update data
 				LodUtil.assertTrue(metaData != null);
-				metaData.dataLevel = fullDataSource.getDataDetail();
+				metaData.dataLevel = fullDataSource.getDataDetailLevel();
 				fullDataSourceLoader = AbstractFullDataSourceLoader.getLoader(fullDataSource.getClass(), fullDataSource.getDataVersion());
 				LodUtil.assertTrue(fullDataSourceLoader != null, "No loader for "+fullDataSource.getClass()+" (v"+fullDataSource.getDataVersion()+")");
 				dataType = fullDataSource.getClass();
@@ -430,7 +430,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 		{
 			this.swapWriteQueue();
 			int count = this._backQueue.queue.size();
-			for (ChunkSizedFullDataSource chunk : this._backQueue.queue)
+			for (ChunkSizedFullDataView chunk : this._backQueue.queue)
 			{
 				fullDataSource.update(chunk);
 			}

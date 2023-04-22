@@ -1,7 +1,7 @@
 package com.seibel.lod.core.file.renderfile;
 
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
-import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
 import com.seibel.lod.core.pos.DhSectionPos;
 
 import java.io.File;
@@ -18,7 +18,7 @@ public interface ILodRenderSourceProvider extends AutoCloseable
 {
     CompletableFuture<ColumnRenderSource> readAsync(DhSectionPos pos);
     void addScannedFile(Collection<File> detectedFiles);
-    void writeChunkDataToFile(DhSectionPos sectionPos, ChunkSizedFullDataSource chunkData);
+    void writeChunkDataToFile(DhSectionPos sectionPos, ChunkSizedFullDataView chunkData);
     CompletableFuture<Void> flushAndSaveAsync();
 	
 	/** Returns true if the data was refreshed, false otherwise */

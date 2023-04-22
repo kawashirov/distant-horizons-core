@@ -37,9 +37,9 @@ public class SingleFullArrayView implements IFullDataView
 	}
 	
 	@Override
-	public SingleFullArrayView get(int x, int z)
+	public SingleFullArrayView get(int relativeX, int relativeZ)
 	{
-		if (x != 0 || z != 0)
+		if (relativeX != 0 || relativeZ != 0)
 		{
 			throw new IllegalArgumentException("Only contains 1 column of full data!");
 		}

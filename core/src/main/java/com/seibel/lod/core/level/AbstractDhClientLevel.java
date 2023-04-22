@@ -1,8 +1,8 @@
 package com.seibel.lod.core.level;
 
 import com.seibel.lod.core.config.Config;
-import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource;
-import com.seibel.lod.core.dataObjects.fullData.sources.FullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
+import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.transformers.ChunkToLodBuilder;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.file.fullDatafile.FullDataFileHandler;
@@ -172,16 +172,16 @@ public abstract class AbstractDhClientLevel implements IDhClientLevel
 	@Override
 	public void updateChunkAsync(IChunkWrapper chunk)
 	{
-		CompletableFuture<ChunkSizedFullDataSource> future = this.chunkToLodBuilder.tryGenerateData(chunk);
+		CompletableFuture<ChunkSizedFullDataView> future = this.chunkToLodBuilder.tryGenerateData(chunk);
 		if (future != null)
 		{
 			future.thenAccept(this::saveWrites);
 		}
 	}
-	private void saveWrites(ChunkSizedFullDataSource data)
+	private void saveWrites(ChunkSizedFullDataView data)
 	{
 		ClientRenderState ClientRenderState = this.ClientRenderStateRef.get();
-		DhLodPos pos = data.getBBoxLodPos().convertToDetailLevel(FullDataSource.SECTION_SIZE_OFFSET);
+		DhLodPos pos = data.getLodPos().convertToDetailLevel(CompleteFullDataSource.SECTION_SIZE_OFFSET);
 		if (ClientRenderState != null)
 		{
 			ClientRenderState.renderSourceFileHandler.writeChunkDataToFile(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);

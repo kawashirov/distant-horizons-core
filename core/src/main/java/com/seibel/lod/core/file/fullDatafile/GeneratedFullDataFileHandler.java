@@ -2,9 +2,9 @@ package com.seibel.lod.core.file.fullDatafile;
 
 import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.IIncompleteFullDataSource;
-import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataView;
 import com.seibel.lod.core.dataObjects.fullData.sources.SparseFullDataSource;
-import com.seibel.lod.core.dataObjects.fullData.sources.SingleChunkFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.SpottyFullDataSource;
 import com.seibel.lod.core.generation.tasks.IWorldGenTaskTracker;
 import com.seibel.lod.core.generation.WorldGenerationQueue;
 import com.seibel.lod.core.generation.tasks.WorldGenResult;
@@ -92,7 +92,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		}
 		else
 		{
-			incompleteFullDataSource = SingleChunkFullDataSource.createEmpty(pos);
+			incompleteFullDataSource = SpottyFullDataSource.createEmpty(pos);
 		}
 		
 		
@@ -105,7 +105,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 			{
 				// queue this section to be generated
 				GenTask genTask = new GenTask(pos, new WeakReference<>(incompleteFullDataSource));
-				worldGenQueue.submitGenTask(incompleteFullDataSource.getSectionPos().getSectionBBoxPos(), incompleteFullDataSource.getDataDetail(), genTask)
+				worldGenQueue.submitGenTask(incompleteFullDataSource.getSectionPos().getSectionBBoxPos(), incompleteFullDataSource.getDataDetailLevel(), genTask)
 							 .whenComplete((genTaskResult, ex) -> this.onWorldGenTaskComplete(genTaskResult, ex, genTask, pos));
             }
 			
@@ -146,7 +146,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
             }
 			
             return CompletableFuture.allOf(loadDataFutures.toArray(new CompletableFuture[0]))
-                    .thenApply((voidValue) -> incompleteFullDataSource.trySelfPromote());
+                    .thenApply((voidValue) -> incompleteFullDataSource.tryPromotingToCompleteDataSource());
         }
     }
 	
@@ -218,7 +218,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		public boolean isMemoryAddressValid() { return this.targetFullDataSourceRef.get() != null; }
 		
 		@Override
-		public Consumer<ChunkSizedFullDataSource> getOnGenTaskCompleteConsumer()
+		public Consumer<ChunkSizedFullDataView> getOnGenTaskCompleteConsumer()
 		{
 			if (this.loadedTargetFullDataSource == null)
 			{
@@ -231,7 +231,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 			
 			return (chunkSizedFullDataSource) ->
 			{
-				if (chunkSizedFullDataSource.getBBoxLodPos().overlapsExactly(this.loadedTargetFullDataSource.getSectionPos().getSectionBBoxPos()))
+				if (chunkSizedFullDataSource.getLodPos().overlapsExactly(this.loadedTargetFullDataSource.getSectionPos().getSectionBBoxPos()))
 				{
 					GeneratedFullDataFileHandler.this.write(this.loadedTargetFullDataSource.getSectionPos(), chunkSizedFullDataSource);
 				}

@@ -9,10 +9,17 @@ public interface IFullDataView
 {
 	FullDataPointIdMap getMapping();
 	
+	/** generally used for iterating through the whole data set */
 	SingleFullArrayView get(int index);
-	SingleFullArrayView get(int x, int z);
+	SingleFullArrayView get(int relativeX, int relativeZ);
 	
+	/** measured in full data points */
 	int width();
+	
+	IFullDataView subView(int size, int xOffset, int zOffset);
+	
+	
+	
 	
 	/** Returns an iterator that goes over each data column */
 	default Iterator<SingleFullArrayView> iterator()
@@ -33,7 +40,5 @@ public interface IFullDataView
 			}
 		};
 	}
-	
-	IFullDataView subView(int size, int xOffset, int zOffset);
 	
 }
