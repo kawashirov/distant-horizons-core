@@ -17,7 +17,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.*;
 
 /**
- * 1 chunk
+ * 
  */
 public class FullDataSource extends FullArrayView implements IFullDataSource
 {
@@ -106,7 +106,10 @@ public class FullDataSource extends FullArrayView implements IFullDataSource
 			//FIXME: TEMPORARY
 			int chunkPerFull = 1 << (this.getDataDetail() - 4);
 			if (data.x % chunkPerFull != 0 || data.z % chunkPerFull != 0)
+			{
 				return;
+			}
+			
 			DhLodPos baseOffset = this.sectionPos.getCorner(this.getDataDetail());
 			DhLodPos dataOffset = data.getBBoxLodPos().convertToDetailLevel(this.getDataDetail());
 			int offsetX = dataOffset.x - baseOffset.x;
@@ -227,7 +230,6 @@ public class FullDataSource extends FullArrayView implements IFullDataSource
 		{
 			throw new IOException("invalid data length end guard");
 		}
-		
 		for (int i = 0; i < data.length; i++)
 		{
 			if (data[i].length == 0)
@@ -237,6 +239,7 @@ public class FullDataSource extends FullArrayView implements IFullDataSource
 				data[i][j] = dataInputStream.readLong();
 			}
 		}
+		
 		// Id mapping
 		end = dataInputStream.readInt();
 		if (end != 0xFFFFFFFF)

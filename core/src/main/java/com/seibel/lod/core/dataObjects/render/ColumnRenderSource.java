@@ -215,7 +215,6 @@ public class ColumnRenderSource
 		{
 			// data is present
 			dataOutputStream.writeByte(DATA_GUARD_BYTE);
-			
 			dataOutputStream.writeInt(this.yOffset);
 			
 			// write the data for each column

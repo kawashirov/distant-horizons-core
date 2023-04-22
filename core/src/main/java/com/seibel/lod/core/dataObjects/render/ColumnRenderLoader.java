@@ -118,10 +118,12 @@ public class ColumnRenderLoader
 				throw new IOException("Invalid data: yOffset is incorrect. Expected: ["+expectedYOffset+"], found: ["+fileYOffset+"].");
 			}
 			
+			
 			// read the column data
 			byte[] rawByteData = new byte[maxNumberOfDataPoints * Long.BYTES];
 			ByteBuffer columnDataByteBuffer = ByteBuffer.wrap(rawByteData).order(ByteOrder.LITTLE_ENDIAN);
 			inputStream.readFully(rawByteData);
+			
 			
 			// parse the column data
 			long[] dataPoints = new long[maxNumberOfDataPoints];

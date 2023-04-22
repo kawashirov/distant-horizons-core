@@ -1,15 +1,11 @@
 package com.seibel.lod.core.dataObjects.fullData;
 
 import com.google.common.collect.HashMultimap;
-import com.seibel.lod.core.dataObjects.fullData.sources.FullDataSource;
-import com.seibel.lod.core.dataObjects.transformers.FullToColumnTransformer;
-import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 public abstract class AbstractFullDataSourceLoader

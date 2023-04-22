@@ -10,6 +10,8 @@ public class ChunkSizedFullDataSource extends FullArrayView
 	public final int x;
 	public final int z;
 	
+	
+	
 	public ChunkSizedFullDataSource(byte dataDetail, int x, int z)
 	{
 		super(new FullDataPointIdMap(), new long[16 * 16][0], 16);
@@ -17,6 +19,8 @@ public class ChunkSizedFullDataSource extends FullArrayView
 		this.x = x;
 		this.z = z;
 	}
+	
+	
 	
 	public void setSingleColumn(long[] data, int x, int z)
 	{

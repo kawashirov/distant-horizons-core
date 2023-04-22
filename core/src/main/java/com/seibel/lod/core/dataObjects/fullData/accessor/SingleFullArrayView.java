@@ -9,12 +9,16 @@ public class SingleFullArrayView implements IFullDataView
 	private final int offset;
 	private final FullDataPointIdMap mapping;
 	
+	
+	
 	public SingleFullArrayView(FullDataPointIdMap mapping, long[][] dataArrays, int offset)
 	{
 		this.dataArrays = dataArrays;
 		this.offset = offset;
 		this.mapping = mapping;
 	}
+	
+	
 	
 	public boolean doesItExist() { return this.dataArrays[this.offset].length != 0; }
 	
@@ -25,7 +29,9 @@ public class SingleFullArrayView implements IFullDataView
 	public SingleFullArrayView get(int index)
 	{
 		if (index != 0)
+		{
 			throw new IllegalArgumentException("Only contains 1 column of full data!");
+		}
 		
 		return this;
 	}
@@ -34,7 +40,9 @@ public class SingleFullArrayView implements IFullDataView
 	public SingleFullArrayView get(int x, int z)
 	{
 		if (x != 0 || z != 0)
+		{
 			throw new IllegalArgumentException("Only contains 1 column of full data!");
+		}
 		
 		return this;
 	}
@@ -56,7 +64,10 @@ public class SingleFullArrayView implements IFullDataView
 	public IFullDataView subView(int size, int ox, int oz)
 	{
 		if (size != 1 || ox != 1 || oz != 1)
+		{
 			throw new IllegalArgumentException("Getting invalid range of subView from SingleFullArrayView!");
+		}
+		
 		return this;
 	}
 	

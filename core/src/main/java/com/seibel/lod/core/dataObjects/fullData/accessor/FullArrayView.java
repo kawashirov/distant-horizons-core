@@ -12,11 +12,15 @@ public class FullArrayView implements IFullDataView
 	protected final int dataSize;
 	protected final FullDataPointIdMap mapping;
 	
+	
+	
 	public FullArrayView(FullDataPointIdMap mapping, long[][] dataArrays, int size)
 	{
 		if (dataArrays.length != size * size)
-			throw new IllegalArgumentException(
-					"tried constructing dataArrayView with invalid input!");
+		{
+			throw new IllegalArgumentException("tried constructing dataArrayView with invalid input!");
+		}
+		
 		this.dataArrays = dataArrays;
 		this.size = size;
 		this.dataSize = size;
@@ -28,8 +32,7 @@ public class FullArrayView implements IFullDataView
 	{
 		if (source.size < size || source.size < size + offsetX || source.size < size + offsetZ)
 		{
-			throw new IllegalArgumentException(
-					"tried constructing dataArrayView subview with invalid input!");
+			throw new IllegalArgumentException("tried constructing dataArrayView subview with invalid input!");
 		}
 		
 		this.dataArrays = source.dataArrays;
@@ -38,6 +41,8 @@ public class FullArrayView implements IFullDataView
 		this.mapping = source.mapping;
 		this.offset = source.offset + offsetX * this.dataSize + offsetZ;
 	}
+	
+	
 	
 	@Override
 	public FullDataPointIdMap getMapping() { return this.mapping; }
@@ -52,7 +57,7 @@ public class FullArrayView implements IFullDataView
 	public int width() { return this.size; }
 	
 	@Override
-	public FullArrayView subView(int size, int ox, int oz) { return new FullArrayView(this, size, ox, oz); }
+	public FullArrayView subView(int size, int xOffset, int zOffset) { return new FullArrayView(this, size, xOffset, zOffset); }
 	
 	/** WARNING: This will potentially share the underlying array object! */
 	public void shadowCopyTo(FullArrayView target)
@@ -61,6 +66,7 @@ public class FullArrayView implements IFullDataView
 		{
 			throw new IllegalArgumentException("Target view must have same size as this view");
 		}
+		
 		if (target.mapping.equals(this.mapping))
 		{
 			for (int x = 0; x < this.size; x++)
@@ -82,6 +88,7 @@ public class FullArrayView implements IFullDataView
 					{
 						newData[i] = FullDataPointUtil.remap(remappedIds, sourceData[i]);
 					}
+					
 					target.dataArrays[target.offset + x * target.dataSize + o] = newData;
 				}
 			}
@@ -92,12 +99,12 @@ public class FullArrayView implements IFullDataView
 	{
 		LodUtil.assertTrue(source.size > this.size && source.size % this.size == 0);
 		int dataPerUnit = source.size / this.size;
-		for (int ox = 0; ox < this.size; ox++)
+		for (int xOffset = 0; xOffset < this.size; xOffset++)
 		{
-			for (int oz = 0; oz < this.size; oz++)
+			for (int zOffset = 0; zOffset < this.size; zOffset++)
 			{
-				SingleFullArrayView column = this.get(ox, oz);
-				column.downsampleFrom(source.subView(dataPerUnit, ox * dataPerUnit, oz * dataPerUnit));
+				SingleFullArrayView column = this.get(xOffset, zOffset);
+				column.downsampleFrom(source.subView(dataPerUnit, xOffset * dataPerUnit, zOffset * dataPerUnit));
 			}
 		}
 	}

@@ -10,7 +10,6 @@ public interface IFullDataView
 	FullDataPointIdMap getMapping();
 	
 	SingleFullArrayView get(int index);
-	
 	SingleFullArrayView get(int x, int z);
 	
 	int width();
@@ -35,6 +34,6 @@ public interface IFullDataView
 		};
 	}
 	
-	IFullDataView subView(int size, int ox, int oz);
+	IFullDataView subView(int size, int xOffset, int zOffset);
 	
 }

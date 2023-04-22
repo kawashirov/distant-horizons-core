@@ -56,7 +56,6 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 	//==============//
 	
     public static SparseFullDataSource createEmpty(DhSectionPos pos) { return new SparseFullDataSource(pos); }
-
     protected SparseFullDataSource(DhSectionPos sectionPos)
 	{
         LodUtil.assertTrue(sectionPos.sectionDetailLevel > SPARSE_UNIT_DETAIL);
@@ -68,6 +67,7 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 		this.chunkPos = sectionPos.getCorner(SPARSE_UNIT_DETAIL);
 		this.mapping = new FullDataPointIdMap();
     }
+	
     protected SparseFullDataSource(DhSectionPos sectionPos, FullDataPointIdMap mapping, FullArrayView[] data)
 	{
         LodUtil.assertTrue(sectionPos.sectionDetailLevel > SPARSE_UNIT_DETAIL);
@@ -124,12 +124,12 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 			int count = this.dataPerChunk;
 			int dataPerCount = SPARSE_UNIT_SIZE / this.dataPerChunk;
 	
-			for (int ox = 0; ox < count; ox++)
+			for (int xOffset = 0; xOffset < count; xOffset++)
 			{
-				for (int oz = 0; oz < count; oz++)
+				for (int zOffset = 0; zOffset < count; zOffset++)
 				{
-					SingleFullArrayView column = newArray.get(ox, oz);
-					column.downsampleFrom(data.subView(dataPerCount, ox * dataPerCount, oz * dataPerCount));
+					SingleFullArrayView column = newArray.get(xOffset, zOffset);
+					column.downsampleFrom(data.subView(dataPerCount, xOffset * dataPerCount, zOffset * dataPerCount));
 				}
 			}
 		}
@@ -148,7 +148,10 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 		LodUtil.assertTrue(pos.sectionDetailLevel < this.sectionPos.sectionDetailLevel);
 		LodUtil.assertTrue(pos.overlaps(this.sectionPos));
 		if (source.isEmpty())
+		{
 			return;
+		}
+		
 		
 		if (source instanceof SparseFullDataSource)
 		{
@@ -175,16 +178,16 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
         int offsetZ = dataPos.z-basePos.z;
 		LodUtil.assertTrue(offsetX >= 0 && offsetX < this.chunks && offsetZ >= 0 && offsetZ < this.chunks);
 	
-		for (int ox = 0; ox < sparseSource.chunks; ox++)
+		for (int xOffset = 0; xOffset < sparseSource.chunks; xOffset++)
 		{
-			for (int oz = 0; oz < sparseSource.chunks; oz++)
+			for (int zOffset = 0; zOffset < sparseSource.chunks; zOffset++)
 			{
-				FullArrayView sourceChunk = sparseSource.sparseData[ox * sparseSource.chunks + oz];
+				FullArrayView sourceChunk = sparseSource.sparseData[xOffset * sparseSource.chunks + zOffset];
 				if (sourceChunk != null)
 				{
 					FullArrayView buff = new FullArrayView(this.mapping, new long[this.dataPerChunk * this.dataPerChunk][], this.dataPerChunk);
 					buff.downsampleFrom(sourceChunk);
-					this.sparseData[(ox + offsetX) * this.chunks + (oz + offsetZ)] = buff;
+					this.sparseData[(xOffset + offsetX) * this.chunks + (zOffset + offsetZ)] = buff;
 				}
 			}
 		}
@@ -203,14 +206,14 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
         int offsetZ = dataPos.z-basePos.z;
         LodUtil.assertTrue(offsetX >=0 && offsetX < this.chunks && offsetZ >=0 && offsetZ < this.chunks);
 	
-		for (int ox = 0; ox < coveredChunks; ox++)
+		for (int xOffset = 0; xOffset < coveredChunks; xOffset++)
 		{
-			for (int oz = 0; oz < coveredChunks; oz++)
+			for (int zOffset = 0; zOffset < coveredChunks; zOffset++)
 			{
-				FullArrayView sourceChunk = fullSource.subView(sourceDataPerChunk, ox * sourceDataPerChunk, oz * sourceDataPerChunk);
+				FullArrayView sourceChunk = fullSource.subView(sourceDataPerChunk, xOffset * sourceDataPerChunk, zOffset * sourceDataPerChunk);
 				FullArrayView buff = new FullArrayView(this.mapping, new long[this.dataPerChunk * this.dataPerChunk][], this.dataPerChunk);
 				buff.downsampleFrom(sourceChunk);
-				this.sparseData[(ox + offsetX) * this.chunks + (oz + offsetZ)] = buff;
+				this.sparseData[(xOffset + offsetX) * this.chunks + (zOffset + offsetZ)] = buff;
 			}
 		}
     }

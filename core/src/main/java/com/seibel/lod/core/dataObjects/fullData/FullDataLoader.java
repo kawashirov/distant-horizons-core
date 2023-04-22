@@ -6,7 +6,6 @@ import com.seibel.lod.core.level.IDhLevel;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 public class FullDataLoader extends AbstractFullDataSourceLoader
 {
