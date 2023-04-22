@@ -1,5 +1,6 @@
 package com.seibel.lod.core.dataObjects.render;
 
+import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.core.ModInfo;
 import com.seibel.lod.core.dataObjects.render.columnViews.ColumnArrayView;
 import com.seibel.lod.core.dataObjects.render.columnViews.ColumnQuadView;
@@ -58,6 +59,7 @@ public class ColumnRenderSource
 	public final DebugSourceFlag[] debugSourceFlags;
 	
 	private boolean isEmpty = true;
+	public EDhApiWorldGenerationStep worldGenStep;
 	
 	private IDhClientLevel level = null; //FIXME: hack to pass level into tryBuildBuffer
 	
@@ -91,6 +93,7 @@ public class ColumnRenderSource
 		this.debugSourceFlags = new DebugSourceFlag[SECTION_SIZE * SECTION_SIZE];
 		this.sectionPos = sectionPos;
 		this.yOffset = yOffset;
+		this.worldGenStep = EDhApiWorldGenerationStep.EMPTY;
 	}
 	
 	/**
@@ -109,6 +112,7 @@ public class ColumnRenderSource
 		this.yOffset = level.getMinY();
 		this.verticalDataCount = parsedColumnData.verticalSize;
 		this.renderDataContainer = parsedColumnData.dataContainer;
+		this.worldGenStep = parsedColumnData.worldGenStep;
 		
 		this.debugSourceFlags = new DebugSourceFlag[SECTION_SIZE * SECTION_SIZE];
 		this.fillDebugFlag(0, 0, SECTION_SIZE, SECTION_SIZE, DebugSourceFlag.FILE);
@@ -227,6 +231,9 @@ public class ColumnRenderSource
 				}
 			}
 		}
+		
+		dataOutputStream.writeByte(DATA_GUARD_BYTE);
+		dataOutputStream.writeByte(this.worldGenStep.value);
 		
 		bufferedOutputStream.flush();
 	}

@@ -12,6 +12,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.zip.Adler32;
 import java.util.zip.CheckedOutputStream;
 
+import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.core.util.FileUtil;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.objects.DhUnclosableOutputStream;
@@ -147,13 +148,13 @@ public abstract class AbstractMetaDataContainerFile
             byte detailLevel = byteBuffer.get();
             byte dataLevel = byteBuffer.get();
             byte loaderVersion = byteBuffer.get();
-            byte unused = byteBuffer.get();
+			EDhApiWorldGenerationStep worldGenStep = EDhApiWorldGenerationStep.fromValue(byteBuffer.get());
             long dataTypeId = byteBuffer.getLong();
             long unusedTimestamp = byteBuffer.getLong(); // not currently implemented
             LodUtil.assertTrue(byteBuffer.remaining() == METADATA_RESERVED_SIZE);
             DhSectionPos dataPos = new DhSectionPos(detailLevel, x, z);
 			
-            return new BaseMetaData(dataPos, checksum, dataLevel, dataTypeId, loaderVersion);
+            return new BaseMetaData(dataPos, checksum, dataLevel, worldGenStep, dataTypeId, loaderVersion);
         }
     }
 	
@@ -221,13 +222,13 @@ public abstract class AbstractMetaDataContainerFile
 			ByteBuffer buffer = ByteBuffer.allocate(METADATA_SIZE_IN_BYTES);
 			buffer.putInt(METADATA_IDENTITY_BYTES);
 			buffer.putInt(this.pos.sectionX);
-			buffer.putInt(Integer.MIN_VALUE); // Unused
+			buffer.putInt(Integer.MIN_VALUE); // Unused - y pos
 			buffer.putInt(this.pos.sectionZ);
 			buffer.putInt(checksum);
 			buffer.put(this.pos.sectionDetailLevel);
 			buffer.put(this.metaData.dataLevel);
 			buffer.put(this.metaData.loaderVersion);
-			buffer.put(Byte.MIN_VALUE); // Unused
+			buffer.put(this.metaData.worldGenStep != null ? this.metaData.worldGenStep.value : EDhApiWorldGenerationStep.EMPTY.value); // TODO this null check shouldn't be necessary
 			buffer.putLong(this.metaData.dataTypeId);
 			buffer.putLong(Long.MAX_VALUE); //buff.putLong(this.metaData.dataVersion.get()); // not currently implemented
 			LodUtil.assertTrue(buffer.remaining() == METADATA_RESERVED_SIZE);

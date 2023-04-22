@@ -293,7 +293,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 	private static BaseMetaData makeMetaData(IFullDataSource data) {
 		AbstractFullDataSourceLoader loader = AbstractFullDataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
 		return new BaseMetaData(data.getSectionPos(), -1,
-				data.getDataDetail(), loader == null ? 0 : loader.datatypeId, data.getDataVersion());
+				data.getDataDetail(), data.getWorldGenStep(), (loader == null ? 0 : loader.datatypeId), data.getDataVersion());
 	}
 
 	// "unchecked": Suppress casting of CompletableFuture<?> to CompletableFuture<LodDataSource>
@@ -404,7 +404,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 				dataType = fullDataSource.getClass();
 				metaData.dataTypeId = (fullDataSourceLoader == null) ? 0 : fullDataSourceLoader.datatypeId;
 				metaData.loaderVersion = fullDataSource.getDataVersion();
-				super.writeData((outputStream) -> fullDataSource.saveData(level, this, outputStream));
+				super.writeData((outputStream) -> fullDataSource.writeToStream(level, this, outputStream));
 				doesFileExist = true;
 			}
 			catch (ClosedByInterruptException e) // thrown by buffers that are interrupted

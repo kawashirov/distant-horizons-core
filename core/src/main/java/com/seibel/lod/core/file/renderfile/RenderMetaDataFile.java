@@ -228,7 +228,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
     private static BaseMetaData makeMetaData(ColumnRenderSource renderSource)
 	{
 		return new BaseMetaData(renderSource.getSectionPos(), -1,
-				renderSource.getDataDetail(), RenderSourceFileHandler.RENDER_SOURCE_TYPE_ID, renderSource.getRenderDataFormatVersion());
+				renderSource.getDataDetail(), renderSource.worldGenStep, RenderSourceFileHandler.RENDER_SOURCE_TYPE_ID, renderSource.getRenderDataFormatVersion());
 	}
 	
     private FileInputStream getDataContent() throws IOException

@@ -12,19 +12,41 @@ package com.seibel.lod.api.enums.worldGeneration;
  * FEATURES, <br>
  * LIGHT, <br>
  *
- *  @author James Seibel
- * @version 2022-7-14
+ * @author James Seibel
+ * @version 2023-4-20
  */
 public enum EDhApiWorldGenerationStep
 {
-	EMPTY,
-	STRUCTURE_START,
-	STRUCTURE_REFERENCE,
-	BIOMES,
-	NOISE,
-	SURFACE,
-	CARVERS,
-	LIQUID_CARVERS,
-	FEATURES,
-	LIGHT,
+	EMPTY(0),
+	STRUCTURE_START(1),
+	STRUCTURE_REFERENCE(2),
+	BIOMES(3),
+	NOISE(4),
+	SURFACE(5),
+	CARVERS(6),
+	LIQUID_CARVERS(7),
+	FEATURES(8),
+	LIGHT(9);
+	
+	
+	
+	/** used when serializing this enum. */
+	public final byte value;
+	
+	EDhApiWorldGenerationStep(int value) { this.value = (byte) value; }
+	
+	/** @return null if the value doesn't correspond to a {@link EDhApiWorldGenerationStep}. */
+	public static EDhApiWorldGenerationStep fromValue(int value)
+	{
+		for (EDhApiWorldGenerationStep genStep : EDhApiWorldGenerationStep.values())
+		{
+			if (genStep.value == value)
+			{
+				return genStep;
+			}
+		}
+		
+		return null;
+	}
+	
 }

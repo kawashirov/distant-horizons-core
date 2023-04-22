@@ -1,5 +1,6 @@
 package com.seibel.lod.core.dataObjects.fullData.sources;
 
+import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.core.dataObjects.fullData.IIncompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.IFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
@@ -18,7 +19,8 @@ import java.io.*;
 import java.util.BitSet;
 
 /**
- * Handles full data with the detail level {@link SparseFullDataSource#SPARSE_UNIT_DETAIL}
+ * Handles full data with the detail level {@link SparseFullDataSource#SPARSE_UNIT_DETAIL}.
+ * In other words, this is the middle ground between {@link SingleChunkFullDataSource} and {@link FullDataSource}
  */
 public class SparseFullDataSource implements IIncompleteFullDataSource
 {
@@ -84,6 +86,10 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 	
 	
 	
+	//==============//
+	// data getters // 
+	//==============//
+	
     @Override
     public DhSectionPos getSectionPos() { return this.sectionPos; }
     @Override
@@ -91,6 +97,10 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 
     @Override
     public byte getDataVersion() { return LATEST_VERSION; }
+	
+	// TODO implement
+	@Override 
+	public EDhApiWorldGenerationStep getWorldGenStep() { return EDhApiWorldGenerationStep.EMPTY; }
 	
 	@Override
 	public FullDataPointIdMap getMapping() { return this.mapping; }
@@ -225,7 +235,7 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 	//===============//
 	
     @Override
-    public void saveData(IDhLevel level, FullDataMetaFile file, BufferedOutputStream bufferedOutputStream) throws IOException
+    public void writeToStream(IDhLevel level, FullDataMetaFile file, BufferedOutputStream bufferedOutputStream) throws IOException
 	{
         DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream);
 		

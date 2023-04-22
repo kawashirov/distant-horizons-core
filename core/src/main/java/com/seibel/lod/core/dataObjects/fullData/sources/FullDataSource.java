@@ -1,5 +1,6 @@
 package com.seibel.lod.core.dataObjects.fullData.sources;
 
+import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.core.dataObjects.fullData.IFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
 import com.seibel.lod.core.dataObjects.fullData.accessor.FullArrayView;
@@ -56,6 +57,10 @@ public class FullDataSource extends FullArrayView implements IFullDataSource
 
     @Override
     public byte getDataVersion() { return LATEST_VERSION; }
+	
+	// TODO implement
+	@Override
+	public EDhApiWorldGenerationStep getWorldGenStep() { return EDhApiWorldGenerationStep.EMPTY; }
 	
 	@Override
 	public SingleFullArrayView tryGet(int x, int z) { return this.get(x, z); }
@@ -130,8 +135,88 @@ public class FullDataSource extends FullArrayView implements IFullDataSource
     public boolean isEmpty() { return this.isEmpty; }
     public void markNotEmpty() { this.isEmpty = false; }
 	
+	
+	
+	public static FullDataSource loadData(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException, InterruptedException
+	{
+		DataInputStream dataInputStream = new DataInputStream(bufferedInputStream); // DO NOT CLOSE
+		
+		int dataDetail = dataInputStream.readInt();
+		if (dataDetail != dataFile.metaData.dataLevel)
+		{
+			throw new IOException(LodUtil.formatLog("Data level mismatch: {} != {}", dataDetail, dataFile.metaData.dataLevel));
+		}
+		
+		int size = dataInputStream.readInt();
+		if (size != SECTION_SIZE)
+		{
+			throw new IOException(LodUtil.formatLog(
+					"Section size mismatch: {} != {} (Currently only 1 section size is supported)", size, SECTION_SIZE));
+		}
+		
+		int minY = dataInputStream.readInt();
+		if (minY != level.getMinY())
+		{
+			LOGGER.warn("Data minY mismatch: {} != {}. Will ignore data's y level", minY, level.getMinY());
+		}
+		int end = dataInputStream.readInt();
+		
+		// Data array length
+		if (end == IFullDataSource.NO_DATA_FLAG_BYTE)
+		{
+			// Section is empty
+			return new FullDataSource(dataFile.pos);
+		}
+		// Non-empty section
+		if (end != IFullDataSource.DATA_GUARD_BYTE)
+		{
+			throw new IOException("invalid header end guard");
+		}
+		
+		long[][] data = new long[size * size][];
+		for (int x = 0; x < size; x++)
+		{
+			for (int z = 0; z < size; z++)
+			{
+				data[x * size + z] = new long[dataInputStream.readInt()];
+			}
+		}
+		// Data array content (only on non-empty columns)
+		end = dataInputStream.readInt();
+		if (end != IFullDataSource.DATA_GUARD_BYTE)
+		{
+			throw new IOException("invalid data length end guard");
+		}
+		for (int i = 0; i < data.length; i++)
+		{
+			if (data[i].length != 0)
+			{
+				for (int j = 0; j < data[i].length; j++)
+				{
+					data[i][j] = dataInputStream.readLong();
+				}
+			}
+		}
+		
+		// Id mapping
+		end = dataInputStream.readInt();
+		if (end != IFullDataSource.DATA_GUARD_BYTE)
+		{
+			throw new IOException("invalid data content end guard");
+		}
+		
+		FullDataPointIdMap mapping = FullDataPointIdMap.deserialize(bufferedInputStream);
+		end = dataInputStream.readInt();
+		if (end != IFullDataSource.DATA_GUARD_BYTE)
+		{
+			throw new IOException("invalid id mapping end guard");
+		}
+		
+		return new FullDataSource(dataFile.pos, mapping, data);
+	}
+	
 	@Override
-	public void saveData(IDhLevel level, FullDataMetaFile file, BufferedOutputStream bufferedOutputStream) throws IOException
+	public void writeToStream(IDhLevel level, FullDataMetaFile file, BufferedOutputStream bufferedOutputStream) throws IOException
 	{
 		DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream); // DO NOT CLOSE
 		
@@ -179,83 +264,6 @@ public class FullDataSource extends FullArrayView implements IFullDataSource
 		dataOutputStream.writeInt(0xFFFFFFFF);
 	}
 	
-	
-	public static FullDataSource loadData(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException, InterruptedException
-	{
-		DataInputStream dataInputStream = new DataInputStream(bufferedInputStream); // DO NOT CLOSE
-		
-		int dataDetail = dataInputStream.readInt();
-		if (dataDetail != dataFile.metaData.dataLevel)
-		{
-			throw new IOException(LodUtil.formatLog("Data level mismatch: {} != {}", dataDetail, dataFile.metaData.dataLevel));
-		}
-		
-		int size = dataInputStream.readInt();
-		if (size != SECTION_SIZE)
-		{
-			throw new IOException(LodUtil.formatLog(
-					"Section size mismatch: {} != {} (Currently only 1 section size is supported)", size, SECTION_SIZE));
-		}
-		
-		int minY = dataInputStream.readInt();
-		if (minY != level.getMinY())
-		{
-			LOGGER.warn("Data minY mismatch: {} != {}. Will ignore data's y level", minY, level.getMinY());
-		}
-		int end = dataInputStream.readInt();
-		
-		// Data array length
-		if (end == 0x00000001)
-		{
-			// Section is empty
-			return new FullDataSource(dataFile.pos);
-		}
-		// Non-empty section
-		if (end != 0xFFFFFFFF)
-		{
-			throw new IOException("invalid header end guard");
-		}
-		
-		long[][] data = new long[size * size][];
-		for (int x = 0; x < size; x++)
-		{
-			for (int z = 0; z < size; z++)
-			{
-				data[x * size + z] = new long[dataInputStream.readInt()];
-			}
-		}
-		// Data array content (only on non-empty columns)
-		end = dataInputStream.readInt();
-		if (end != 0xFFFFFFFF)
-		{
-			throw new IOException("invalid data length end guard");
-		}
-		for (int i = 0; i < data.length; i++)
-		{
-			if (data[i].length == 0)
-				continue;
-			for (int j = 0; j < data[i].length; j++)
-			{
-				data[i][j] = dataInputStream.readLong();
-			}
-		}
-		
-		// Id mapping
-		end = dataInputStream.readInt();
-		if (end != 0xFFFFFFFF)
-		{
-			throw new IOException("invalid data content end guard");
-		}
-		
-		FullDataPointIdMap mapping = FullDataPointIdMap.deserialize(bufferedInputStream);
-		end = dataInputStream.readInt();
-		if (end != 0xFFFFFFFF)
-		{
-			throw new IOException("invalid id mapping end guard");
-		}
-		
-		return new FullDataSource(dataFile.pos, mapping, data);
-	}
 	
     public static FullDataSource createEmpty(DhSectionPos pos) { return new FullDataSource(pos); }
 	

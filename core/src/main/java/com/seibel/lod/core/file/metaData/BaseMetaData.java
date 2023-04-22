@@ -1,5 +1,6 @@
 package com.seibel.lod.core.file.metaData;
 
+import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.core.dataObjects.fullData.IFullDataSource;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
@@ -14,7 +15,8 @@ public class BaseMetaData
 	public DhSectionPos pos;
 	public int checksum;
 //	public AtomicLong dataVersion; // currently broken
-	public byte dataLevel;
+	public byte dataLevel; // TODO what does this represent?
+	public EDhApiWorldGenerationStep worldGenStep;
 	
 	// Loader stuff //
 	/** indicates what data is held in this file, this is generally a hash of the data's name */
@@ -23,12 +25,14 @@ public class BaseMetaData
 	
 	
 	
-	public BaseMetaData(DhSectionPos pos, int checksum, byte dataLevel, long dataTypeId, byte loaderVersion)
+	public BaseMetaData(DhSectionPos pos, int checksum, byte dataLevel, EDhApiWorldGenerationStep worldGenStep, long dataTypeId, byte loaderVersion)
 	{
 		this.pos = pos;
 		this.checksum = checksum;
 //		this.dataVersion = new AtomicLong(dataVersion);
 		this.dataLevel = dataLevel;
+		this.worldGenStep = worldGenStep;
+		
 		this.dataTypeId = dataTypeId;
 		this.loaderVersion = loaderVersion;
 	}

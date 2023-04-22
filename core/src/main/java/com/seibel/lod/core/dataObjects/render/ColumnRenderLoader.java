@@ -1,5 +1,6 @@
 package com.seibel.lod.core.dataObjects.render;
 
+import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.core.dataObjects.fullData.IIncompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.IFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.FullDataSource;
@@ -14,7 +15,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -87,6 +87,8 @@ public class ColumnRenderLoader
 	 */
 	private static ParsedColumnData readDataV1(DataInputStream inputStream, int expectedYOffset) throws IOException
 	{
+		// TODO move into ColumnRenderSource
+		
 		byte detailLevel = inputStream.readByte();
 		
 		int verticalDataCount = inputStream.readInt();
@@ -106,7 +108,7 @@ public class ColumnRenderLoader
 		else if (dataPresentFlag == ColumnRenderSource.NO_DATA_FLAG_BYTE)
 		{
 			// no data is present
-			return new ParsedColumnData(detailLevel, verticalDataCount, new long[maxNumberOfDataPoints], true);
+			return new ParsedColumnData(detailLevel, verticalDataCount, EDhApiWorldGenerationStep.EMPTY, new long[maxNumberOfDataPoints], true);
 		}
 		else
 		{
@@ -139,7 +141,23 @@ public class ColumnRenderLoader
 				}
 			}
 			
-			return new ParsedColumnData(detailLevel, verticalDataCount, dataPoints, isEmpty);
+			
+			
+			byte guardByteFlag = inputStream.readByte();
+			if (guardByteFlag != ColumnRenderSource.DATA_GUARD_BYTE)
+			{
+				throw new IOException("invalid world gen step end guard");
+			}
+			EDhApiWorldGenerationStep worldGenStep = EDhApiWorldGenerationStep.fromValue(inputStream.readByte());
+			if (worldGenStep == null)
+			{
+				LOGGER.warn("Missing WorldGenStep, defaulting to: "+EDhApiWorldGenerationStep.SURFACE.name());
+				worldGenStep = EDhApiWorldGenerationStep.SURFACE;
+			}
+			
+			
+			
+			return new ParsedColumnData(detailLevel, verticalDataCount, worldGenStep, dataPoints, isEmpty);
 		}
 	}
 	
@@ -147,13 +165,15 @@ public class ColumnRenderLoader
 	{
 		public final byte detailLevel;
 		public final int verticalSize;
+		public final EDhApiWorldGenerationStep worldGenStep;
 		public final long[] dataContainer;
 		public final boolean isEmpty;
 		
-		public ParsedColumnData(byte detailLevel, int verticalSize, long[] dataContainer, boolean isEmpty)
+		public ParsedColumnData(byte detailLevel, int verticalSize, EDhApiWorldGenerationStep worldGenStep, long[] dataContainer, boolean isEmpty)
 		{
 			this.detailLevel = detailLevel;
 			this.verticalSize = verticalSize;
+			this.worldGenStep = worldGenStep;
 			this.dataContainer = dataContainer;
 			this.isEmpty = isEmpty;
 		}
