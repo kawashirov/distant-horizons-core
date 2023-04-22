@@ -1,6 +1,6 @@
 package com.seibel.lod.core.dataObjects.transformers;
 
-import com.seibel.lod.core.dataObjects.fullData.IFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderLoader;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;

@@ -1,8 +1,8 @@
 package com.seibel.lod.core.dataObjects.render;
 
 import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
-import com.seibel.lod.core.dataObjects.fullData.IIncompleteFullDataSource;
-import com.seibel.lod.core.dataObjects.fullData.IFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.IIncompleteFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.FullDataSource;
 import com.seibel.lod.core.dataObjects.transformers.FullToColumnTransformer;
 import com.seibel.lod.core.level.IDhClientLevel;

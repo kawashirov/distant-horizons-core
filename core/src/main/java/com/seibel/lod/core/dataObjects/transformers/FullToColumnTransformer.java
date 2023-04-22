@@ -1,7 +1,7 @@
 package com.seibel.lod.core.dataObjects.transformers;
 
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
-import com.seibel.lod.core.dataObjects.fullData.IIncompleteFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.IIncompleteFullDataSource;
 import com.seibel.lod.core.util.RenderDataPointUtil;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.dataObjects.render.columnViews.ColumnArrayView;

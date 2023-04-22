@@ -1,8 +1,6 @@
 package com.seibel.lod.core.dataObjects.fullData.sources;
 
 import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
-import com.seibel.lod.core.dataObjects.fullData.IFullDataSource;
-import com.seibel.lod.core.dataObjects.fullData.IIncompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
 import com.seibel.lod.core.dataObjects.fullData.accessor.FullArrayView;
 import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullArrayView;

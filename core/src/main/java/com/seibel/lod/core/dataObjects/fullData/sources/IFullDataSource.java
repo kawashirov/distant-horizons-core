@@ -1,6 +1,7 @@
-package com.seibel.lod.core.dataObjects.fullData;
+package com.seibel.lod.core.dataObjects.fullData.sources;
 
 import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
+import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
 import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullArrayView;
 import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;

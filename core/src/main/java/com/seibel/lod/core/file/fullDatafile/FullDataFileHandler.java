@@ -1,8 +1,8 @@
 package com.seibel.lod.core.file.fullDatafile;
 
 import com.google.common.collect.HashMultimap;
-import com.seibel.lod.core.dataObjects.fullData.IFullDataSource;
-import com.seibel.lod.core.dataObjects.fullData.IIncompleteFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.IIncompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.FullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.SingleChunkFullDataSource;

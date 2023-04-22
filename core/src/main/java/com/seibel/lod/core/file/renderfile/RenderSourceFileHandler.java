@@ -1,7 +1,7 @@
 package com.seibel.lod.core.file.renderfile;
 
 import com.google.common.collect.HashMultimap;
-import com.seibel.lod.core.dataObjects.fullData.IFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.ChunkSizedFullDataSource;
 import com.seibel.lod.core.dataObjects.transformers.DataRenderTransformer;
