@@ -112,8 +112,8 @@ public class FullDataArrayAccessor implements IFullDataAccessor
 	}
 	
 	/**
-	 * Takes a higher detail {@link FullDataArrayAccessor}'s to a lower detail.
-	 * @param fullDataAccessor must be larger than this {@link FullDataArrayAccessor} and its width must a power of two 
+	 * Takes a higher detail {@link FullDataArrayAccessor}'s and converts the data to a lower detail level.
+	 * @param fullDataAccessor must be larger than this {@link FullDataArrayAccessor} and its width must a power of two larger (example: this.width = 4, other.width = 8)
 	 */
 	public void downsampleFrom(FullDataArrayAccessor fullDataAccessor)
 	{

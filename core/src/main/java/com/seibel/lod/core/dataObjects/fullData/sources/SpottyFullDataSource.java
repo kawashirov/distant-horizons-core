@@ -330,13 +330,13 @@ public class SpottyFullDataSource extends FullDataArrayAccessor implements IInco
         }
     }
 	
-    private void sampleFrom(CompleteFullDataSource fullSource)
+    private void sampleFrom(CompleteFullDataSource completeSource)
 	{
-        DhSectionPos pos = fullSource.getSectionPos();
+        DhSectionPos pos = completeSource.getSectionPos();
 		this.isEmpty = false;
-		this.downsampleFrom(fullSource);
+		this.downsampleFrom(completeSource);
 		
-		if (this.getDataDetailLevel() > this.sectionPos.sectionDetailLevel)
+		if (this.getDataDetailLevel() > this.sectionPos.sectionDetailLevel) // TODO what does this mean?
 		{
 			DhLodPos thisLodPos = this.sectionPos.getCorner(this.getDataDetailLevel());
 			DhLodPos dataLodPos = pos.getCorner(this.getDataDetailLevel());
@@ -406,7 +406,7 @@ public class SpottyFullDataSource extends FullDataArrayAccessor implements IInco
 	@Override
 	public DhSectionPos getSectionPos() { return this.sectionPos; }
 	@Override
-	public byte getDataDetailLevel() { return (byte) (this.sectionPos.sectionDetailLevel -SECTION_SIZE_OFFSET); }
+	public byte getDataDetailLevel() { return (byte) (this.sectionPos.sectionDetailLevel - SECTION_SIZE_OFFSET); }
 	@Override
 	public byte getDataVersion() { return LATEST_VERSION;  }
 	
