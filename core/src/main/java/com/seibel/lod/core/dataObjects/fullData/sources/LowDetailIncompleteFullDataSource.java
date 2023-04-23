@@ -10,6 +10,7 @@ import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
+import com.seibel.lod.core.util.FullDataPointUtil;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
@@ -17,16 +18,21 @@ import java.io.*;
 import java.util.BitSet;
 
 /**
- * more data than sparse, less than complete.
- * TODO there has to be a better way to name these
+ * Used for large incomplete LOD blocks. <Br>
+ * Handles incomplete full data with a detail level higher than 
+ * {@link HighDetailIncompleteFullDataSource#MAX_SECTION_DETAIL}.
+ * 
+ * @see HighDetailIncompleteFullDataSource
+ * @see CompleteFullDataSource
+ * @see FullDataPointUtil
  */
-public class SpottyFullDataSource extends FullDataArrayAccessor implements IIncompleteFullDataSource
+public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor implements IIncompleteFullDataSource
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     public static final byte SECTION_SIZE_OFFSET = 6;
     public static final int SECTION_SIZE = 1 << SECTION_SIZE_OFFSET;
     public static final byte LATEST_VERSION = 0;
-    public static final long TYPE_ID = "SpottyFullDataSource".hashCode();
+    public static final long TYPE_ID = "LowDetailIncompleteFullDataSource".hashCode();
 	
     private final DhSectionPos sectionPos;
 	private final BitSet isColumnNotEmpty;
@@ -40,18 +46,18 @@ public class SpottyFullDataSource extends FullDataArrayAccessor implements IInco
 	// constructors //
 	//==============//
 	
-	public static SpottyFullDataSource createEmpty(DhSectionPos pos) { return new SpottyFullDataSource(pos); }
-    private SpottyFullDataSource(DhSectionPos sectionPos)
+	public static LowDetailIncompleteFullDataSource createEmpty(DhSectionPos pos) { return new LowDetailIncompleteFullDataSource(pos); }
+    private LowDetailIncompleteFullDataSource(DhSectionPos sectionPos)
 	{
         super(new FullDataPointIdMap(), new long[SECTION_SIZE*SECTION_SIZE][0], SECTION_SIZE);
-        LodUtil.assertTrue(sectionPos.sectionDetailLevel > SparseFullDataSource.MAX_SECTION_DETAIL);
+        LodUtil.assertTrue(sectionPos.sectionDetailLevel > HighDetailIncompleteFullDataSource.MAX_SECTION_DETAIL);
 		
         this.sectionPos = sectionPos;
 		this.isColumnNotEmpty = new BitSet(SECTION_SIZE*SECTION_SIZE);
 		this.worldGenStep = EDhApiWorldGenerationStep.EMPTY;
     }
 	
-	private SpottyFullDataSource(DhSectionPos pos, FullDataPointIdMap mapping, EDhApiWorldGenerationStep worldGenStep, BitSet isColumnNotEmpty, long[][] data)
+	private LowDetailIncompleteFullDataSource(DhSectionPos pos, FullDataPointIdMap mapping, EDhApiWorldGenerationStep worldGenStep, BitSet isColumnNotEmpty, long[][] data)
 	{
 		super(mapping, data, SECTION_SIZE);
 		LodUtil.assertTrue(data.length == SECTION_SIZE*SECTION_SIZE);
@@ -68,7 +74,7 @@ public class SpottyFullDataSource extends FullDataArrayAccessor implements IInco
 	// file handling //
 	//===============//
 	
-	public static SpottyFullDataSource loadData(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException, InterruptedException
+	public static LowDetailIncompleteFullDataSource loadData(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException, InterruptedException
 	{
 		DataInputStream dataInputStream = new DataInputStream(bufferedInputStream); // DO NOT CLOSE
 		
@@ -92,7 +98,7 @@ public class SpottyFullDataSource extends FullDataArrayAccessor implements IInco
 		if (end == IFullDataSource.NO_DATA_FLAG_BYTE)
 		{
 			// Section is empty
-			return new SpottyFullDataSource(dataFile.pos);
+			return new LowDetailIncompleteFullDataSource(dataFile.pos);
 		}
 		
 		
@@ -161,7 +167,7 @@ public class SpottyFullDataSource extends FullDataArrayAccessor implements IInco
 		
 		
 		
-		return new SpottyFullDataSource(dataFile.pos, mapping, worldGenStep, isColumnNotEmpty, data);
+		return new LowDetailIncompleteFullDataSource(dataFile.pos, mapping, worldGenStep, isColumnNotEmpty, data);
 	}
 	
 	@Override
@@ -259,9 +265,9 @@ public class SpottyFullDataSource extends FullDataArrayAccessor implements IInco
 		}
 		
 		
-        if (fullDataSource instanceof SparseFullDataSource)
+        if (fullDataSource instanceof HighDetailIncompleteFullDataSource)
 		{
-			this.sampleFrom((SparseFullDataSource) fullDataSource);
+			this.sampleFrom((HighDetailIncompleteFullDataSource) fullDataSource);
         }
 		else if (fullDataSource instanceof CompleteFullDataSource)
 		{
@@ -273,7 +279,7 @@ public class SpottyFullDataSource extends FullDataArrayAccessor implements IInco
         }
     }
 	
-    private void sampleFrom(SparseFullDataSource sparseSource)
+    private void sampleFrom(HighDetailIncompleteFullDataSource sparseSource)
 	{
 		DhLodPos thisLodPos = this.sectionPos.getCorner(this.getDataDetailLevel());
         DhSectionPos pos = sparseSource.getSectionPos();
@@ -288,7 +294,7 @@ public class SpottyFullDataSource extends FullDataArrayAccessor implements IInco
             int offsetZ = dataLodPos.z - thisLodPos.z;
             LodUtil.assertTrue(offsetX >= 0 && offsetX < SECTION_SIZE && offsetZ >= 0 && offsetZ < SECTION_SIZE);
             
-			int chunksPerData = 1 << (this.getDataDetailLevel() - SparseFullDataSource.SPARSE_UNIT_DETAIL);
+			int chunksPerData = 1 << (this.getDataDetailLevel() - HighDetailIncompleteFullDataSource.SPARSE_UNIT_DETAIL);
             int dataSpan = this.sectionPos.getWidth(this.getDataDetailLevel()).numberOfLodSectionsWide;
 
             for (int xOffset = 0; xOffset < dataSpan; xOffset++)

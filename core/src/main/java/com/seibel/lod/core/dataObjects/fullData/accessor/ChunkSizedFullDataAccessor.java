@@ -3,11 +3,14 @@ package com.seibel.lod.core.dataObjects.fullData.accessor;
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
 import com.seibel.lod.core.pos.DhChunkPos;
 import com.seibel.lod.core.pos.DhLodPos;
+import com.seibel.lod.core.util.FullDataPointUtil;
 import com.seibel.lod.core.util.LodUtil;
 
 /**
  * A more specific version of {@link FullDataArrayAccessor} 
  * that only contains full data for a single chunk.
+ * 
+ * @see FullDataPointUtil
  */
 public class ChunkSizedFullDataAccessor extends FullDataArrayAccessor
 {

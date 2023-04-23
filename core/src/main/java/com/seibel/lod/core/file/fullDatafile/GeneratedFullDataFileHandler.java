@@ -1,10 +1,10 @@
 package com.seibel.lod.core.file.fullDatafile;
 
 import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
+import com.seibel.lod.core.dataObjects.fullData.sources.HighDetailIncompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.IIncompleteFullDataSource;
-import com.seibel.lod.core.dataObjects.fullData.sources.SparseFullDataSource;
-import com.seibel.lod.core.dataObjects.fullData.sources.SpottyFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.LowDetailIncompleteFullDataSource;
 import com.seibel.lod.core.generation.tasks.IWorldGenTaskTracker;
 import com.seibel.lod.core.generation.WorldGenerationQueue;
 import com.seibel.lod.core.generation.tasks.WorldGenResult;
@@ -86,13 +86,13 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		
 		// determine the type of dataSource that should be used for this position
 		IIncompleteFullDataSource incompleteFullDataSource;
-		if (pos.sectionDetailLevel <= SparseFullDataSource.MAX_SECTION_DETAIL)
+		if (pos.sectionDetailLevel <= HighDetailIncompleteFullDataSource.MAX_SECTION_DETAIL)
 		{
-			incompleteFullDataSource = SparseFullDataSource.createEmpty(pos);
+			incompleteFullDataSource = HighDetailIncompleteFullDataSource.createEmpty(pos);
 		}
 		else
 		{
-			incompleteFullDataSource = SpottyFullDataSource.createEmpty(pos);
+			incompleteFullDataSource = LowDetailIncompleteFullDataSource.createEmpty(pos);
 		}
 		
 		

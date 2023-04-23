@@ -342,8 +342,8 @@ public class FullDataFileHandler implements IFullDataSourceProvider
         if (missing.size() == 1 && existFiles.isEmpty() && missing.get(0).equals(pos))
 		{
             // None exist.
-            IIncompleteFullDataSource incompleteDataSource = pos.sectionDetailLevel <= SparseFullDataSource.MAX_SECTION_DETAIL ?
-                    SparseFullDataSource.createEmpty(pos) : SpottyFullDataSource.createEmpty(pos);
+            IIncompleteFullDataSource incompleteDataSource = pos.sectionDetailLevel <= HighDetailIncompleteFullDataSource.MAX_SECTION_DETAIL ?
+                    HighDetailIncompleteFullDataSource.createEmpty(pos) : LowDetailIncompleteFullDataSource.createEmpty(pos);
             return CompletableFuture.completedFuture(incompleteDataSource);
         }
 		else
@@ -357,9 +357,9 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 				}
             }
             final ArrayList<CompletableFuture<Void>> futures = new ArrayList<>(existFiles.size());
-            final IIncompleteFullDataSource incompleteFullDataSource = pos.sectionDetailLevel <= SparseFullDataSource.MAX_SECTION_DETAIL ? 
-					SparseFullDataSource.createEmpty(pos) : 
-					SpottyFullDataSource.createEmpty(pos);
+            final IIncompleteFullDataSource incompleteFullDataSource = pos.sectionDetailLevel <= HighDetailIncompleteFullDataSource.MAX_SECTION_DETAIL ? 
+					HighDetailIncompleteFullDataSource.createEmpty(pos) : 
+					LowDetailIncompleteFullDataSource.createEmpty(pos);
 
             for (FullDataMetaFile metaFile : existFiles)
 			{

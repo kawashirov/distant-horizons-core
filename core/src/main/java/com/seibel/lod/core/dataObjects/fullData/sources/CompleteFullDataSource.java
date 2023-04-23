@@ -12,6 +12,7 @@ import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
+import com.seibel.lod.core.util.FullDataPointUtil;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
@@ -19,6 +20,10 @@ import java.io.*;
 
 /**
  * This data source contains every datapoint over its given {@link DhSectionPos}.
+ * 
+ * @see FullDataPointUtil
+ * @see LowDetailIncompleteFullDataSource
+ * @see HighDetailIncompleteFullDataSource
  */
 public class CompleteFullDataSource extends FullDataArrayAccessor implements IFullDataSource
 {

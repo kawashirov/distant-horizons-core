@@ -4,14 +4,14 @@ import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
 import com.seibel.lod.core.util.FullDataPointUtil;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
-import com.seibel.lod.core.dataObjects.fullData.sources.SpottyFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.LowDetailIncompleteFullDataSource;
 
 /**
  * Contains Full Data points and basic methods for getting and setting them. <br>
  * Can be used standalone or as the base for Full data sources.
  * 
  * @see CompleteFullDataSource
- * @see SpottyFullDataSource
+ * @see LowDetailIncompleteFullDataSource
  */
 public class FullDataArrayAccessor implements IFullDataAccessor
 {

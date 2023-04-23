@@ -11,6 +11,7 @@ import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.BitShiftUtil;
+import com.seibel.lod.core.util.FullDataPointUtil;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
@@ -18,22 +19,27 @@ import java.io.*;
 import java.util.BitSet;
 
 /**
- * Handles full data with the detail level {@link SparseFullDataSource#SPARSE_UNIT_DETAIL}.
- * In other words, this is the middle ground between {@link SpottyFullDataSource} and {@link CompleteFullDataSource}
- * TODO there has to be a better way to name these
+ * Used for small incomplete LOD blocks.<br>
+ * Handles incomplete full data with a detail level equal to or lower than 
+ * {@link HighDetailIncompleteFullDataSource#MAX_SECTION_DETAIL}.
+ * 
+ * @see LowDetailIncompleteFullDataSource
+ * @see CompleteFullDataSource
+ * @see FullDataPointUtil
  */
-public class SparseFullDataSource implements IIncompleteFullDataSource
+public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSource
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
     public static final byte SPARSE_UNIT_DETAIL = LodUtil.CHUNK_DETAIL_LEVEL;
     public static final byte SPARSE_UNIT_SIZE = (byte) BitShiftUtil.powerOfTwo(SPARSE_UNIT_DETAIL);
-
+	
     public static final byte SECTION_SIZE_OFFSET = 6;
     public static final int SECTION_SIZE = (byte) BitShiftUtil.powerOfTwo(SECTION_SIZE_OFFSET);
+	/** aka max detail level */
     public static final byte MAX_SECTION_DETAIL = SECTION_SIZE_OFFSET + SPARSE_UNIT_DETAIL;
     public static final byte LATEST_VERSION = 0;
-    public static final long TYPE_ID = "SparseFullDataSource".hashCode();
+    public static final long TYPE_ID = "HighDetailIncompleteFullDataSource".hashCode();
 	
 	/**
 	 * This is the byte put between different sections in the binary save file.
@@ -58,8 +64,8 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 	// constructors //
 	//==============//
 	
-    public static SparseFullDataSource createEmpty(DhSectionPos pos) { return new SparseFullDataSource(pos); }
-    protected SparseFullDataSource(DhSectionPos sectionPos)
+    public static HighDetailIncompleteFullDataSource createEmpty(DhSectionPos pos) { return new HighDetailIncompleteFullDataSource(pos); }
+    private HighDetailIncompleteFullDataSource(DhSectionPos sectionPos)
 	{
         LodUtil.assertTrue(sectionPos.sectionDetailLevel > SPARSE_UNIT_DETAIL);
         LodUtil.assertTrue(sectionPos.sectionDetailLevel <= MAX_SECTION_DETAIL);
@@ -73,7 +79,7 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 		this.mapping = new FullDataPointIdMap();
     }
 	
-    protected SparseFullDataSource(DhSectionPos sectionPos, FullDataPointIdMap mapping, FullDataArrayAccessor[] data)
+    protected HighDetailIncompleteFullDataSource(DhSectionPos sectionPos, FullDataPointIdMap mapping, FullDataArrayAccessor[] data)
 	{
         LodUtil.assertTrue(sectionPos.sectionDetailLevel > SPARSE_UNIT_DETAIL);
         LodUtil.assertTrue(sectionPos.sectionDetailLevel <= MAX_SECTION_DETAIL);
@@ -163,9 +169,9 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 		}
 		
 		
-		if (fullDataSource instanceof SparseFullDataSource)
+		if (fullDataSource instanceof HighDetailIncompleteFullDataSource)
 		{
-			this.sampleFrom((SparseFullDataSource) fullDataSource);
+			this.sampleFrom((HighDetailIncompleteFullDataSource) fullDataSource);
 		}
 		else if (fullDataSource instanceof CompleteFullDataSource)
 		{
@@ -177,7 +183,7 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 		}
 	}
 	
-    private void sampleFrom(SparseFullDataSource sparseDataSource)
+    private void sampleFrom(HighDetailIncompleteFullDataSource sparseDataSource)
 	{
         DhSectionPos pos = sparseDataSource.getSectionPos();
 		this.isEmpty = false;
@@ -307,7 +313,7 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 		dataOutputStream.writeInt(DATA_GUARD_BYTE);
     }
 
-    public static SparseFullDataSource loadData(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException, InterruptedException
+    public static HighDetailIncompleteFullDataSource loadData(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException, InterruptedException
 	{
         LodUtil.assertTrue(dataFile.pos.sectionDetailLevel > SPARSE_UNIT_DETAIL);
         LodUtil.assertTrue(dataFile.pos.sectionDetailLevel <= MAX_SECTION_DETAIL);
@@ -465,7 +471,7 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 				}
 			}
 			
-			return new SparseFullDataSource(dataFile.pos, mapping, fullDataArrays);
+			return new HighDetailIncompleteFullDataSource(dataFile.pos, mapping, fullDataArrays);
 		}
     }
 	
