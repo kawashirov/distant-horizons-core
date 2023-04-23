@@ -111,17 +111,21 @@ public class FullDataArrayAccessor implements IFullDataAccessor
 		}
 	}
 	
-	public void downsampleFrom(FullDataArrayAccessor arrayView)
+	/**
+	 * Takes a higher detail {@link FullDataArrayAccessor}'s to a lower detail.
+	 * @param fullDataAccessor must be larger than this {@link FullDataArrayAccessor} and its width must a power of two 
+	 */
+	public void downsampleFrom(FullDataArrayAccessor fullDataAccessor)
 	{
-		LodUtil.assertTrue(arrayView.width > this.width && arrayView.width % this.width == 0);
+		LodUtil.assertTrue(fullDataAccessor.width > this.width && fullDataAccessor.width % this.width == 0);
 		
-		int dataPerUnit = arrayView.width / this.width;
+		int dataPointsPerWidthUnit = fullDataAccessor.width / this.width;
 		for (int xOffset = 0; xOffset < this.width; xOffset++)
 		{
 			for (int zOffset = 0; zOffset < this.width; zOffset++)
 			{
 				SingleFullDataAccessor column = this.get(xOffset, zOffset);
-				column.downsampleFrom(arrayView.subView(dataPerUnit, xOffset * dataPerUnit, zOffset * dataPerUnit));
+				column.downsampleFrom(fullDataAccessor.subView(dataPointsPerWidthUnit, xOffset * dataPointsPerWidthUnit, zOffset * dataPointsPerWidthUnit));
 			}
 		}
 	}

@@ -4,7 +4,9 @@ import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
 import com.seibel.lod.core.util.FullDataPointUtil;
 
 /**
+ * Represents a single column of Full LOD data.
  * 
+ * @see FullDataPointUtil
  */
 public class SingleFullDataAccessor implements IFullDataAccessor
 {
@@ -56,10 +58,11 @@ public class SingleFullDataAccessor implements IFullDataAccessor
 		return this;
 	}
 	
+	/** @return the entire array of raw full data points. */
 	public long[] getRaw() { return this.dataArrays[this.dataArrayIndex]; }
 	
 	public long getSingle(int yIndex) { return this.dataArrays[this.dataArrayIndex][yIndex]; }
-	public void setSingle(int yIndex, long value) { this.dataArrays[this.dataArrayIndex][yIndex] = value; }
+	public void setSingle(int yIndex, long fullDataPoint) { this.dataArrays[this.dataArrayIndex][yIndex] = fullDataPoint; }
 	
 	public void setNew(long[] newArray) { this.dataArrays[this.dataArrayIndex] = newArray; }
 	
@@ -80,7 +83,7 @@ public class SingleFullDataAccessor implements IFullDataAccessor
 		return this;
 	}
 	
-	/** WARNING: It may potentially share the underlying array object! */
+	/** WARNING: This may potentially share the underlying array objects! */
 	public void shadowCopyTo(SingleFullDataAccessor target)
 	{
 		if (target.mapping.equals(this.mapping))
@@ -92,6 +95,7 @@ public class SingleFullDataAccessor implements IFullDataAccessor
 			int[] remappedEntryIds = target.mapping.mergeAndReturnRemappedEntityIds(this.mapping);
 			long[] sourceData = this.dataArrays[this.dataArrayIndex];
 			long[] newData = new long[sourceData.length];
+			
 			for (int i = 0; i < newData.length; i++)
 			{
 				newData[i] = FullDataPointUtil.remap(remappedEntryIds, sourceData[i]);
@@ -100,6 +104,7 @@ public class SingleFullDataAccessor implements IFullDataAccessor
 		}
 	}
 	
+	/** Copies both ID data and mapping data. */
 	public void deepCopyTo(SingleFullDataAccessor target)
 	{
 		if (target.mapping.equals(this.mapping))
@@ -119,9 +124,13 @@ public class SingleFullDataAccessor implements IFullDataAccessor
 		}
 	}
 	
+	/** 
+	 * Replaces this column's data with data from the input {@link IFullDataAccessor}. <br> 
+	 * This is used to convert higher detail LOD data to lower detail LOD data.
+	 */
 	public void downsampleFrom(IFullDataAccessor source)
 	{
-		//TODO: Temp downsample method
+		//TODO: average the data instead of just picking the first column
 		SingleFullDataAccessor firstColumn = source.get(0);
 		firstColumn.deepCopyTo(this);
 	}

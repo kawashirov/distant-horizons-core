@@ -9,7 +9,6 @@ import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
-import com.seibel.lod.core.util.FullDataPointUtil;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;

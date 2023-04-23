@@ -2,6 +2,11 @@ package com.seibel.lod.core.dataObjects.fullData.sources;
 
 public interface IIncompleteFullDataSource extends IFullDataSource
 {
+	/**
+	 * Overwrites data in this object with non-null data from the input {@link IFullDataSource}.
+	 * 
+	 * This can be used to either merge same sized data sources or
+	 */
 	void sampleFrom(IFullDataSource fullDataSource);
 	
 	/** 

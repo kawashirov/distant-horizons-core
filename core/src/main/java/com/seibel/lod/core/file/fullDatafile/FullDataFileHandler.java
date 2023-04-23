@@ -357,8 +357,8 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 				}
             }
             final ArrayList<CompletableFuture<Void>> futures = new ArrayList<>(existFiles.size());
-            final IIncompleteFullDataSource dataSource = pos.sectionDetailLevel <= SparseFullDataSource.MAX_SECTION_DETAIL ?
-                    SparseFullDataSource.createEmpty(pos) : 
+            final IIncompleteFullDataSource incompleteFullDataSource = pos.sectionDetailLevel <= SparseFullDataSource.MAX_SECTION_DETAIL ? 
+					SparseFullDataSource.createEmpty(pos) : 
 					SpottyFullDataSource.createEmpty(pos);
 
             for (FullDataMetaFile metaFile : existFiles)
@@ -369,7 +369,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
                             if (data != null)
 							{
                                 //LOGGER.info("Merging data from {} into {}", data.getSectionPos(), pos);
-                                dataSource.sampleFrom(data);
+                                incompleteFullDataSource.sampleFrom(data);
                             }
                         })
 						.exceptionally((e) ->
@@ -380,7 +380,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
                 );
             }
             return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                    .thenApply((v) -> dataSource.tryPromotingToCompleteDataSource());
+                    .thenApply((v) -> incompleteFullDataSource.tryPromotingToCompleteDataSource());
      
         }
     }

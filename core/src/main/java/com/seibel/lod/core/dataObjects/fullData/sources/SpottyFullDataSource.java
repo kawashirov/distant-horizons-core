@@ -40,7 +40,8 @@ public class SpottyFullDataSource extends FullDataArrayAccessor implements IInco
 	// constructors //
 	//==============//
 	
-    protected SpottyFullDataSource(DhSectionPos sectionPos)
+	public static SpottyFullDataSource createEmpty(DhSectionPos pos) { return new SpottyFullDataSource(pos); }
+    private SpottyFullDataSource(DhSectionPos sectionPos)
 	{
         super(new FullDataPointIdMap(), new long[SECTION_SIZE*SECTION_SIZE][0], SECTION_SIZE);
         LodUtil.assertTrue(sectionPos.sectionDetailLevel > SparseFullDataSource.MAX_SECTION_DETAIL);
@@ -57,11 +58,9 @@ public class SpottyFullDataSource extends FullDataArrayAccessor implements IInco
 		
 		this.sectionPos = pos;
 		this.isColumnNotEmpty = isColumnNotEmpty;
-		this.worldGenStep = EDhApiWorldGenerationStep.EMPTY;
+		this.worldGenStep = worldGenStep;
 		this.isEmpty = false;
 	}
-	
-	public static SpottyFullDataSource createEmpty(DhSectionPos pos) { return new SpottyFullDataSource(pos); }
 	
 	
 	
@@ -248,41 +247,48 @@ public class SpottyFullDataSource extends FullDataArrayAccessor implements IInco
 	}
 	
 	@Override
-    public void sampleFrom(IFullDataSource source)
+    public void sampleFrom(IFullDataSource fullDataSource)
 	{
-        DhSectionPos pos = source.getSectionPos();
+        DhSectionPos pos = fullDataSource.getSectionPos();
         LodUtil.assertTrue(pos.sectionDetailLevel < this.sectionPos.sectionDetailLevel);
         LodUtil.assertTrue(pos.overlaps(this.sectionPos));
-        if (source.isEmpty()) 
-			return;
 		
-        if (source instanceof SparseFullDataSource)
+        if (fullDataSource.isEmpty())
 		{
-			this.sampleFrom((SparseFullDataSource) source);
+			return;
+		}
+		
+		
+        if (fullDataSource instanceof SparseFullDataSource)
+		{
+			this.sampleFrom((SparseFullDataSource) fullDataSource);
         }
-		else if (source instanceof CompleteFullDataSource)
+		else if (fullDataSource instanceof CompleteFullDataSource)
 		{
-			this.sampleFrom((CompleteFullDataSource) source);
+			this.sampleFrom((CompleteFullDataSource) fullDataSource);
         }
 		else
 		{
-            LodUtil.assertNotReach();
+			LodUtil.assertNotReach("SampleFrom not implemented for ["+IFullDataSource.class.getSimpleName()+"] with class ["+fullDataSource.getClass().getSimpleName()+"].");
         }
     }
 	
     private void sampleFrom(SparseFullDataSource sparseSource)
 	{
+		DhLodPos thisLodPos = this.sectionPos.getCorner(this.getDataDetailLevel());
         DhSectionPos pos = sparseSource.getSectionPos();
+		
 		this.isEmpty = false;
-
+		
         if (this.getDataDetailLevel() > this.sectionPos.sectionDetailLevel)
 		{
-            DhLodPos basePos = this.sectionPos.getCorner(this.getDataDetailLevel());
-            DhLodPos dataPos = pos.getCorner(this.getDataDetailLevel());
-            int offsetX = dataPos.x - basePos.x;
-            int offsetZ = dataPos.z - basePos.z;
+            DhLodPos dataLodPos = pos.getCorner(this.getDataDetailLevel());
+            
+			int offsetX = dataLodPos.x - thisLodPos.x;
+            int offsetZ = dataLodPos.z - thisLodPos.z;
             LodUtil.assertTrue(offsetX >= 0 && offsetX < SECTION_SIZE && offsetZ >= 0 && offsetZ < SECTION_SIZE);
-            int chunksPerData = 1 << (this.getDataDetailLevel() - SparseFullDataSource.SPARSE_UNIT_DETAIL);
+            
+			int chunksPerData = 1 << (this.getDataDetailLevel() - SparseFullDataSource.SPARSE_UNIT_DETAIL);
             int dataSpan = this.sectionPos.getWidth(this.getDataDetailLevel()).numberOfLodSectionsWide;
 
             for (int xOffset = 0; xOffset < dataSpan; xOffset++)
@@ -303,16 +309,21 @@ public class SpottyFullDataSource extends FullDataArrayAccessor implements IInco
         }
 		else
 		{
-            DhLodPos dataPos = pos.getSectionBBoxPos();
-            int lowerSectionsPerData = this.sectionPos.getWidth(dataPos.detailLevel).numberOfLodSectionsWide;
-            if (dataPos.x % lowerSectionsPerData != 0 || dataPos.z % lowerSectionsPerData != 0) return;
-
-            DhLodPos basePos = this.sectionPos.getCorner(this.getDataDetailLevel());
-            dataPos = dataPos.convertToDetailLevel(this.getDataDetailLevel());
-            int offsetX = dataPos.x - basePos.x;
-            int offsetZ = dataPos.z - basePos.z;
-            SingleFullDataAccessor column = sparseSource.tryGet(0, 0);
-            if (column != null) {
+            DhLodPos dataLodPos = pos.getSectionBBoxPos();
+            int lowerSectionsPerData = this.sectionPos.getWidth(dataLodPos.detailLevel).numberOfLodSectionsWide;
+            if (dataLodPos.x % lowerSectionsPerData != 0 || dataLodPos.z % lowerSectionsPerData != 0)
+			{
+				return;
+			}
+			
+			
+            dataLodPos = dataLodPos.convertToDetailLevel(this.getDataDetailLevel());
+            int offsetX = dataLodPos.x - thisLodPos.x;
+            int offsetZ = dataLodPos.z - thisLodPos.z;
+            
+			SingleFullDataAccessor column = sparseSource.tryGet(0, 0);
+            if (column != null)
+			{
                 column.deepCopyTo(this.get(offsetX, offsetZ));
 				this.isColumnNotEmpty.set(offsetX * SECTION_SIZE + offsetZ, true);
             }
@@ -327,15 +338,16 @@ public class SpottyFullDataSource extends FullDataArrayAccessor implements IInco
 		
 		if (this.getDataDetailLevel() > this.sectionPos.sectionDetailLevel)
 		{
-			DhLodPos basePos = this.sectionPos.getCorner(this.getDataDetailLevel());
-			DhLodPos dataPos = pos.getCorner(this.getDataDetailLevel());
-			int offsetX = dataPos.x - basePos.x;
-			int offsetZ = dataPos.z - basePos.z;
-			int dataSpan = this.sectionPos.getWidth(this.getDataDetailLevel()).numberOfLodSectionsWide;
+			DhLodPos thisLodPos = this.sectionPos.getCorner(this.getDataDetailLevel());
+			DhLodPos dataLodPos = pos.getCorner(this.getDataDetailLevel());
 			
-			for (int xOffset = 0; xOffset < dataSpan; xOffset++)
+			int offsetX = dataLodPos.x - thisLodPos.x;
+			int offsetZ = dataLodPos.z - thisLodPos.z;
+			int dataWidth = this.sectionPos.getWidth(this.getDataDetailLevel()).numberOfLodSectionsWide;
+			
+			for (int xOffset = 0; xOffset < dataWidth; xOffset++)
 			{
-				for (int zOffset = 0; zOffset < dataSpan; zOffset++)
+				for (int zOffset = 0; zOffset < dataWidth; zOffset++)
 				{
 					this.isColumnNotEmpty.set((offsetX + xOffset) * SECTION_SIZE + offsetZ + zOffset, true);
 				}
@@ -349,6 +361,7 @@ public class SpottyFullDataSource extends FullDataArrayAccessor implements IInco
 			{
 				return;
 			}
+			
 			
             DhLodPos basePos = this.sectionPos.getCorner(this.getDataDetailLevel());
             dataPos = dataPos.convertToDetailLevel(this.getDataDetailLevel());

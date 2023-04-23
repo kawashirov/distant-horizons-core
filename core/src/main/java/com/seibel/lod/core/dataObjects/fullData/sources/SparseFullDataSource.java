@@ -25,7 +25,8 @@ import java.util.BitSet;
 public class SparseFullDataSource implements IIncompleteFullDataSource
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
-    public static final byte SPARSE_UNIT_DETAIL = 4;
+	
+    public static final byte SPARSE_UNIT_DETAIL = LodUtil.CHUNK_DETAIL_LEVEL;
     public static final byte SPARSE_UNIT_SIZE = (byte) BitShiftUtil.powerOfTwo(SPARSE_UNIT_DETAIL);
 
     public static final byte SECTION_SIZE_OFFSET = 6;
@@ -62,9 +63,11 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 	{
         LodUtil.assertTrue(sectionPos.sectionDetailLevel > SPARSE_UNIT_DETAIL);
         LodUtil.assertTrue(sectionPos.sectionDetailLevel <= MAX_SECTION_DETAIL);
+		
         this.sectionPos = sectionPos;
 		this.chunks = 1 << (byte) (sectionPos.sectionDetailLevel - SPARSE_UNIT_DETAIL);
 		this.dataPerChunk = SECTION_SIZE / this.chunks;
+		
 		this.sparseData = new FullDataArrayAccessor[this.chunks * this.chunks];
 		this.chunkPos = sectionPos.getCorner(SPARSE_UNIT_DETAIL);
 		this.mapping = new FullDataPointIdMap();
@@ -74,9 +77,11 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 	{
         LodUtil.assertTrue(sectionPos.sectionDetailLevel > SPARSE_UNIT_DETAIL);
         LodUtil.assertTrue(sectionPos.sectionDetailLevel <= MAX_SECTION_DETAIL);
+		
         this.sectionPos = sectionPos;
 		this.chunks = 1 << (byte) (sectionPos.sectionDetailLevel - SPARSE_UNIT_DETAIL);
 		this.dataPerChunk = SECTION_SIZE / this.chunks;
+		
 		LodUtil.assertTrue(this.chunks * this.chunks == data.length);
 		this.sparseData = data;
 		this.chunkPos = sectionPos.getCorner(SPARSE_UNIT_DETAIL);
@@ -147,78 +152,81 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 	
 	
     @Override
-	public void sampleFrom(IFullDataSource source)
+	public void sampleFrom(IFullDataSource fullDataSource)
 	{
-		DhSectionPos pos = source.getSectionPos();
+		DhSectionPos pos = fullDataSource.getSectionPos();
 		LodUtil.assertTrue(pos.sectionDetailLevel < this.sectionPos.sectionDetailLevel);
 		LodUtil.assertTrue(pos.overlaps(this.sectionPos));
-		if (source.isEmpty())
+		if (fullDataSource.isEmpty())
 		{
 			return;
 		}
 		
 		
-		if (source instanceof SparseFullDataSource)
+		if (fullDataSource instanceof SparseFullDataSource)
 		{
-			this.sampleFrom((SparseFullDataSource) source);
+			this.sampleFrom((SparseFullDataSource) fullDataSource);
 		}
-		else if (source instanceof CompleteFullDataSource)
+		else if (fullDataSource instanceof CompleteFullDataSource)
 		{
-			this.sampleFrom((CompleteFullDataSource) source);
+			this.sampleFrom((CompleteFullDataSource) fullDataSource);
 		}
 		else
 		{
-			LodUtil.assertNotReach();
+			LodUtil.assertNotReach("SampleFrom not implemented for ["+IFullDataSource.class.getSimpleName()+"] with class ["+fullDataSource.getClass().getSimpleName()+"].");
 		}
 	}
-
-    private void sampleFrom(SparseFullDataSource sparseSource)
+	
+    private void sampleFrom(SparseFullDataSource sparseDataSource)
 	{
-        DhSectionPos pos = sparseSource.getSectionPos();
+        DhSectionPos pos = sparseDataSource.getSectionPos();
 		this.isEmpty = false;
 		
         DhLodPos basePos = this.sectionPos.getCorner(SPARSE_UNIT_DETAIL);
         DhLodPos dataPos = pos.getCorner(SPARSE_UNIT_DETAIL);
+       
         int offsetX = dataPos.x-basePos.x;
         int offsetZ = dataPos.z-basePos.z;
 		LodUtil.assertTrue(offsetX >= 0 && offsetX < this.chunks && offsetZ >= 0 && offsetZ < this.chunks);
 	
-		for (int xOffset = 0; xOffset < sparseSource.chunks; xOffset++)
+		for (int xOffset = 0; xOffset < sparseDataSource.chunks; xOffset++)
 		{
-			for (int zOffset = 0; zOffset < sparseSource.chunks; zOffset++)
+			for (int zOffset = 0; zOffset < sparseDataSource.chunks; zOffset++)
 			{
-				FullDataArrayAccessor sourceChunk = sparseSource.sparseData[xOffset * sparseSource.chunks + zOffset];
+				FullDataArrayAccessor sourceChunk = sparseDataSource.sparseData[xOffset * sparseDataSource.chunks + zOffset];
 				if (sourceChunk != null)
 				{
-					FullDataArrayAccessor buff = new FullDataArrayAccessor(this.mapping, new long[this.dataPerChunk * this.dataPerChunk][], this.dataPerChunk);
-					buff.downsampleFrom(sourceChunk);
-					this.sparseData[(xOffset + offsetX) * this.chunks + (zOffset + offsetZ)] = buff;
+					FullDataArrayAccessor newFullDataAccessor = new FullDataArrayAccessor(this.mapping, new long[this.dataPerChunk * this.dataPerChunk][], this.dataPerChunk);
+					newFullDataAccessor.downsampleFrom(sourceChunk);
+					this.sparseData[(xOffset + offsetX) * this.chunks + (zOffset + offsetZ)] = newFullDataAccessor;
 				}
 			}
 		}
     }
-    private void sampleFrom(CompleteFullDataSource fullSource)
+    private void sampleFrom(CompleteFullDataSource completeDataSource)
 	{
-        DhSectionPos pos = fullSource.getSectionPos();
+        DhSectionPos pos = completeDataSource.getSectionPos();
 		this.isEmpty = false;
 
         DhLodPos basePos = this.sectionPos.getCorner(SPARSE_UNIT_DETAIL);
         DhLodPos dataPos = pos.getCorner(SPARSE_UNIT_DETAIL);
-        int coveredChunks = pos.getWidth(SPARSE_UNIT_DETAIL).numberOfLodSectionsWide;
-        int sourceDataPerChunk = SPARSE_UNIT_SIZE >>> fullSource.getDataDetailLevel();
-        LodUtil.assertTrue(coveredChunks*sourceDataPerChunk == CompleteFullDataSource.SECTION_SIZE);
-        int offsetX = dataPos.x-basePos.x;
-        int offsetZ = dataPos.z-basePos.z;
-        LodUtil.assertTrue(offsetX >=0 && offsetX < this.chunks && offsetZ >=0 && offsetZ < this.chunks);
+        
+		int coveredChunks = pos.getWidth(SPARSE_UNIT_DETAIL).numberOfLodSectionsWide;
+        int sourceDataPerChunk = SPARSE_UNIT_SIZE >>> completeDataSource.getDataDetailLevel();
+        LodUtil.assertTrue((coveredChunks * sourceDataPerChunk) == CompleteFullDataSource.SECTION_SIZE);
+        
+		int xDataOffset = dataPos.x - basePos.x;
+        int zDataOffset = dataPos.z - basePos.z;
+        LodUtil.assertTrue(xDataOffset >= 0 && xDataOffset < this.chunks && zDataOffset >= 0 && zDataOffset < this.chunks);
 	
 		for (int xOffset = 0; xOffset < coveredChunks; xOffset++)
 		{
 			for (int zOffset = 0; zOffset < coveredChunks; zOffset++)
 			{
-				FullDataArrayAccessor sourceChunk = fullSource.subView(sourceDataPerChunk, xOffset * sourceDataPerChunk, zOffset * sourceDataPerChunk);
-				FullDataArrayAccessor buff = new FullDataArrayAccessor(this.mapping, new long[this.dataPerChunk * this.dataPerChunk][], this.dataPerChunk);
-				buff.downsampleFrom(sourceChunk);
-				this.sparseData[(xOffset + offsetX) * this.chunks + (zOffset + offsetZ)] = buff;
+				FullDataArrayAccessor sourceChunk = completeDataSource.subView(sourceDataPerChunk, xOffset * sourceDataPerChunk, zOffset * sourceDataPerChunk);
+				FullDataArrayAccessor newFullDataAccessor = new FullDataArrayAccessor(this.mapping, new long[this.dataPerChunk * this.dataPerChunk][], this.dataPerChunk);
+				newFullDataAccessor.downsampleFrom(sourceChunk);
+				this.sparseData[(xOffset + xDataOffset) * this.chunks + (zOffset + zDataOffset)] = newFullDataAccessor;
 			}
 		}
     }
