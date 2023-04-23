@@ -124,7 +124,7 @@ public class FullDataArrayAccessor implements IFullDataAccessor
 		{
 			for (int zOffset = 0; zOffset < this.width; zOffset++)
 			{
-				SingleFullDataAccessor column = this.get(xOffset, zOffset);
+				SingleColumnFullDataAccessor column = this.get(xOffset, zOffset);
 				column.downsampleFrom(fullDataAccessor.subView(dataPointsPerWidthUnit, xOffset * dataPointsPerWidthUnit, zOffset * dataPointsPerWidthUnit));
 			}
 		}
@@ -140,9 +140,9 @@ public class FullDataArrayAccessor implements IFullDataAccessor
 	public FullDataPointIdMap getMapping() { return this.mapping; }
 	
 	@Override
-	public SingleFullDataAccessor get(int index) { return this.get(index / this.width, index % this.width); }
+	public SingleColumnFullDataAccessor get(int index) { return this.get(index / this.width, index % this.width); }
 	@Override
-	public SingleFullDataAccessor get(int relativeX, int relativeZ) { return new SingleFullDataAccessor(this.mapping, this.dataArrays, relativeX * this.width + relativeZ + this.offset); }
+	public SingleColumnFullDataAccessor get(int relativeX, int relativeZ) { return new SingleColumnFullDataAccessor(this.mapping, this.dataArrays, relativeX * this.width + relativeZ + this.offset); }
 	
 	@Override
 	public int width() { return this.width; }

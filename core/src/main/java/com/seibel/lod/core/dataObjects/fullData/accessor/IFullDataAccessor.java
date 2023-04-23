@@ -19,8 +19,8 @@ public interface IFullDataAccessor
 	FullDataPointIdMap getMapping();
 	
 	/** generally used for iterating through the whole data set */
-	SingleFullDataAccessor get(int index);
-	SingleFullDataAccessor get(int relativeX, int relativeZ);
+	SingleColumnFullDataAccessor get(int index);
+	SingleColumnFullDataAccessor get(int relativeX, int relativeZ);
 	
 	/** measured in full data points */
 	int width();
@@ -35,9 +35,9 @@ public interface IFullDataAccessor
 	
 	
 	/** Returns an iterator that goes over each data column */
-	default Iterator<SingleFullDataAccessor> iterator()
+	default Iterator<SingleColumnFullDataAccessor> iterator()
 	{
-		return new Iterator<SingleFullDataAccessor>()
+		return new Iterator<SingleColumnFullDataAccessor>()
 		{
 			private int index = 0;
 			private final int size = width() * width();
@@ -46,7 +46,7 @@ public interface IFullDataAccessor
 			public boolean hasNext() { return this.index < this.size; }
 			
 			@Override
-			public SingleFullDataAccessor next()
+			public SingleColumnFullDataAccessor next()
 			{
 				LodUtil.assertTrue(this.hasNext(), "No more data to iterate!");
 				return get(this.index++);

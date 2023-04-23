@@ -1,7 +1,7 @@
 package com.seibel.lod.core.dataObjects.transformers;
 
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
-import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullDataAccessor;
+import com.seibel.lod.core.dataObjects.fullData.accessor.SingleColumnFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.IIncompleteFullDataSource;
 import com.seibel.lod.core.util.RenderDataPointUtil;
@@ -75,7 +75,7 @@ public class FullToColumnTransformer
 					throwIfThreadInterrupted();
 					
                     ColumnArrayView columnArrayView = columnSource.getVerticalDataPointView(x, z);
-                    SingleFullDataAccessor fullArrayView = fullDataSource.get(x, z);
+                    SingleColumnFullDataAccessor fullArrayView = fullDataSource.get(x, z);
                     convertColumnData(level, baseX + x, baseZ + z, columnArrayView, fullArrayView, 1);
                     
 					if (fullArrayView.doesColumnExist())
@@ -96,7 +96,7 @@ public class FullToColumnTransformer
 //            for (int x = 0; x < pos.getWidth(dataDetail).value; x++) {
 //                for (int z = 0; z < pos.getWidth(dataDetail).value; z++) {
 //                    ColumnArrayView columnArrayView = columnSource.getVerticalDataView(x, z);
-//                    SingleFullDataAccessor fullArrayView = data.get(x, z);
+//                    SingleColumnFullDataAccessor fullArrayView = data.get(x, z);
 //                    convertColumnData(level, columnArrayView, fullArrayView);
 //                }
 //            }
@@ -136,7 +136,7 @@ public class FullToColumnTransformer
 				{
 					throwIfThreadInterrupted();
 					
-					SingleFullDataAccessor fullArrayView = data.tryGet(x, z);
+					SingleColumnFullDataAccessor fullArrayView = data.tryGet(x, z);
 					if (fullArrayView == null)
 					{
 						continue;
@@ -188,7 +188,7 @@ public class FullToColumnTransformer
 					throwIfThreadInterrupted();
 					
 					ColumnArrayView columnArrayView = render.getVerticalDataPointView(renderOffsetX + x, renderOffsetZ + z);
-					SingleFullDataAccessor fullArrayView = chunkDataView.get(x, z);
+					SingleColumnFullDataAccessor fullArrayView = chunkDataView.get(x, z);
 					convertColumnData(level, blockX + perRenderWidth * (renderOffsetX + x),
 							blockZ + perRenderWidth * (renderOffsetZ + z),
 							columnArrayView, fullArrayView, 2);
@@ -226,7 +226,7 @@ public class FullToColumnTransformer
 							
 							
 							ColumnArrayView columnArrayView = tempQuadView.get(ox, oz);
-							SingleFullDataAccessor fullArrayView = chunkDataView.get(x * dataPerRender + ox, z * dataPerRender + oz);
+							SingleColumnFullDataAccessor fullArrayView = chunkDataView.get(x * dataPerRender + ox, z * dataPerRender + oz);
 							convertColumnData(level, blockX + perRenderWidth * (renderOffsetX + x) + perDataWidth * ox,
 									blockZ + perRenderWidth * (renderOffsetZ + z) + perDataWidth * oz,
 									columnArrayView, fullArrayView, 2);
@@ -240,7 +240,7 @@ public class FullToColumnTransformer
 		}
 	}
 
-    private static void convertColumnData(IDhClientLevel level, int blockX, int blockZ, ColumnArrayView columnArrayView, SingleFullDataAccessor fullArrayView, int genMode)
+    private static void convertColumnData(IDhClientLevel level, int blockX, int blockZ, ColumnArrayView columnArrayView, SingleColumnFullDataAccessor fullArrayView, int genMode)
 	{
         if (!fullArrayView.doesColumnExist())
 		{
@@ -265,7 +265,7 @@ public class FullToColumnTransformer
 		}
     }
 	
-	private static void iterateAndConvert(IDhClientLevel level, int blockX, int blockZ, int genMode, ColumnArrayView column, SingleFullDataAccessor data)
+	private static void iterateAndConvert(IDhClientLevel level, int blockX, int blockZ, int genMode, ColumnArrayView column, SingleColumnFullDataAccessor data)
 	{
 		FullDataPointIdMap mapping = data.getMapping();
 		boolean isVoid = true;

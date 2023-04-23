@@ -4,7 +4,7 @@ import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
 import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.accessor.FullDataArrayAccessor;
-import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullDataAccessor;
+import com.seibel.lod.core.dataObjects.fullData.accessor.SingleColumnFullDataAccessor;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhLodPos;
@@ -137,7 +137,7 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 			{
 				for (int zOffset = 0; zOffset < count; zOffset++)
 				{
-					SingleFullDataAccessor column = newArray.get(xOffset, zOffset);
+					SingleColumnFullDataAccessor column = newArray.get(xOffset, zOffset);
 					column.downsampleFrom(chunkDataView.subView(dataPerCount, xOffset * dataPerCount, zOffset * dataPerCount));
 				}
 			}
@@ -286,7 +286,7 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
 			{
 				for (int z = 0; z < array.width(); z++)
 				{
-					SingleFullDataAccessor column = array.get(x, z);
+					SingleColumnFullDataAccessor column = array.get(x, z);
 					LodUtil.assertTrue(column.getMapping() == this.mapping); // the mappings must be exactly equal!
 					
 					if (column.doesColumnExist())
@@ -512,7 +512,7 @@ public class SparseFullDataSource implements IIncompleteFullDataSource
         return fullDataSource;
     }
 	
-    public SingleFullDataAccessor tryGet(int relativeX, int relativeZ)
+    public SingleColumnFullDataAccessor tryGet(int relativeX, int relativeZ)
 	{
         LodUtil.assertTrue(relativeX >=0 && relativeX <SECTION_SIZE && relativeZ >=0 && relativeZ <SECTION_SIZE);
         int chunkX = relativeX / this.dataPerChunk;

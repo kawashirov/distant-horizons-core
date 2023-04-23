@@ -4,7 +4,7 @@ import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
 import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.accessor.IFullDataAccessor;
-import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullDataAccessor;
+import com.seibel.lod.core.dataObjects.fullData.accessor.SingleColumnFullDataAccessor;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.level.IDhLevel;
@@ -76,7 +76,7 @@ public interface IFullDataSource
 	 * Attempts to get the data column for the given relative x and z position.
 	 * @return null if the data doesn't exist
 	 */
-	public abstract SingleFullDataAccessor tryGet(int relativeX, int relativeZ);
+	public abstract SingleColumnFullDataAccessor tryGet(int relativeX, int relativeZ);
 	
 	public abstract FullDataPointIdMap getMapping();
 	

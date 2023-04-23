@@ -4,7 +4,7 @@ import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
 import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.accessor.FullDataArrayAccessor;
-import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullDataAccessor;
+import com.seibel.lod.core.dataObjects.fullData.accessor.SingleColumnFullDataAccessor;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
@@ -295,7 +295,7 @@ public class SpottyFullDataSource extends FullDataArrayAccessor implements IInco
 			{
                 for (int zOffset = 0; zOffset < dataSpan; zOffset++)
 				{
-                    SingleFullDataAccessor column = sparseSource.tryGet(
+                    SingleColumnFullDataAccessor column = sparseSource.tryGet(
                             xOffset * chunksPerData * sparseSource.dataPerChunk,
                             zOffset * chunksPerData * sparseSource.dataPerChunk);
 					
@@ -321,7 +321,7 @@ public class SpottyFullDataSource extends FullDataArrayAccessor implements IInco
             int offsetX = dataLodPos.x - thisLodPos.x;
             int offsetZ = dataLodPos.z - thisLodPos.z;
             
-			SingleFullDataAccessor column = sparseSource.tryGet(0, 0);
+			SingleColumnFullDataAccessor column = sparseSource.tryGet(0, 0);
             if (column != null)
 			{
                 column.deepCopyTo(this.get(offsetX, offsetZ));
@@ -395,7 +395,7 @@ public class SpottyFullDataSource extends FullDataArrayAccessor implements IInco
 	//
 	
     @Override
-    public SingleFullDataAccessor tryGet(int relativeX, int relativeZ) { return this.isColumnNotEmpty.get(relativeX * SECTION_SIZE + relativeZ) ? this.get(relativeX, relativeZ) : null; }
+    public SingleColumnFullDataAccessor tryGet(int relativeX, int relativeZ) { return this.isColumnNotEmpty.get(relativeX * SECTION_SIZE + relativeZ) ? this.get(relativeX, relativeZ) : null; }
 	
 	
 	

@@ -8,7 +8,7 @@ import com.seibel.lod.core.util.FullDataPointUtil;
  * 
  * @see FullDataPointUtil
  */
-public class SingleFullDataAccessor implements IFullDataAccessor
+public class SingleColumnFullDataAccessor implements IFullDataAccessor
 {
 	/**
 	 * A flattened 2D array (for the X and Z directions) containing an array for the Y direction.  
@@ -16,13 +16,13 @@ public class SingleFullDataAccessor implements IFullDataAccessor
 	 * @see FullDataArrayAccessor#dataArrays
 	 */
 	private final long[][] dataArrays;
-	/** indicates what index of the {@link SingleFullDataAccessor#dataArrays} is used by this accessor */
+	/** indicates what index of the {@link SingleColumnFullDataAccessor#dataArrays} is used by this accessor */
 	private final int dataArrayIndex;
 	private final FullDataPointIdMap mapping;
 	
 	
 	
-	public SingleFullDataAccessor(FullDataPointIdMap mapping, long[][] dataArrays, int dataArrayIndex)
+	public SingleColumnFullDataAccessor(FullDataPointIdMap mapping, long[][] dataArrays, int dataArrayIndex)
 	{
 		this.dataArrays = dataArrays;
 		this.dataArrayIndex = dataArrayIndex;
@@ -37,7 +37,7 @@ public class SingleFullDataAccessor implements IFullDataAccessor
 	public FullDataPointIdMap getMapping() { return this.mapping; }
 	
 	@Override
-	public SingleFullDataAccessor get(int index)
+	public SingleColumnFullDataAccessor get(int index)
 	{
 		if (index != 0)
 		{
@@ -48,7 +48,7 @@ public class SingleFullDataAccessor implements IFullDataAccessor
 	}
 	
 	@Override
-	public SingleFullDataAccessor get(int relativeX, int relativeZ)
+	public SingleColumnFullDataAccessor get(int relativeX, int relativeZ)
 	{
 		if (relativeX != 0 || relativeZ != 0)
 		{
@@ -77,14 +77,14 @@ public class SingleFullDataAccessor implements IFullDataAccessor
 	{
 		if (width != 1 || xOffset != 1 || zOffset != 1)
 		{
-			throw new IllegalArgumentException("Getting invalid range of subView from SingleFullDataAccessor!");
+			throw new IllegalArgumentException("Getting invalid range of subView from SingleColumnFullDataAccessor!");
 		}
 		
 		return this;
 	}
 	
 	/** WARNING: This may potentially share the underlying array objects! */
-	public void shadowCopyTo(SingleFullDataAccessor target)
+	public void shadowCopyTo(SingleColumnFullDataAccessor target)
 	{
 		if (target.mapping.equals(this.mapping))
 		{
@@ -105,7 +105,7 @@ public class SingleFullDataAccessor implements IFullDataAccessor
 	}
 	
 	/** Copies both ID data and mapping data. */
-	public void deepCopyTo(SingleFullDataAccessor target)
+	public void deepCopyTo(SingleColumnFullDataAccessor target)
 	{
 		if (target.mapping.equals(this.mapping))
 		{
@@ -131,7 +131,7 @@ public class SingleFullDataAccessor implements IFullDataAccessor
 	public void downsampleFrom(IFullDataAccessor source)
 	{
 		//TODO: average the data instead of just picking the first column
-		SingleFullDataAccessor firstColumn = source.get(0);
+		SingleColumnFullDataAccessor firstColumn = source.get(0);
 		firstColumn.deepCopyTo(this);
 	}
 	

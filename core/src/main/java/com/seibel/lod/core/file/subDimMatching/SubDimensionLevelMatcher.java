@@ -1,7 +1,7 @@
 package com.seibel.lod.core.file.subDimMatching;
 
 import com.seibel.lod.core.config.Config;
-import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullDataAccessor;
+import com.seibel.lod.core.dataObjects.fullData.accessor.SingleColumnFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.util.FullDataPointUtil;
@@ -233,7 +233,7 @@ public class SubDimensionLevelMatcher implements AutoCloseable
 				{
 					for (int z = 0; z < LodUtil.CHUNK_WIDTH; z++)
 					{
-						SingleFullDataAccessor singleDataColumn = lodDataSource.tryGet(x, z);
+						SingleColumnFullDataAccessor singleDataColumn = lodDataSource.tryGet(x, z);
 						if (singleDataColumn != null)
 						{
 							long[] rawSingleColumn = singleDataColumn.getRaw();

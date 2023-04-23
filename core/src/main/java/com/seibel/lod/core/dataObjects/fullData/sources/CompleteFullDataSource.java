@@ -4,7 +4,7 @@ import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
 import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.accessor.FullDataArrayAccessor;
-import com.seibel.lod.core.dataObjects.fullData.accessor.SingleFullDataAccessor;
+import com.seibel.lod.core.dataObjects.fullData.accessor.SingleColumnFullDataAccessor;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhLodPos;
@@ -65,7 +65,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 	public EDhApiWorldGenerationStep getWorldGenStep() { return EDhApiWorldGenerationStep.EMPTY; }
 	
 	@Override
-	public SingleFullDataAccessor tryGet(int relativeX, int relativeZ) { return this.get(relativeX, relativeZ); }
+	public SingleColumnFullDataAccessor tryGet(int relativeX, int relativeZ) { return this.get(relativeX, relativeZ); }
 	
 	@Override
 	public void update(ChunkSizedFullDataAccessor chunkDataView)
@@ -86,7 +86,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 				{
 					for (int z = 0; z < LodUtil.CHUNK_WIDTH; z++)
 					{
-						SingleFullDataAccessor column = this.get(x + blockOffset.x, z + blockOffset.z);
+						SingleColumnFullDataAccessor column = this.get(x + blockOffset.x, z + blockOffset.z);
 						LodUtil.assertTrue(column.doesColumnExist());
 					}
 				}
@@ -108,7 +108,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 			{
 				for (int zOffset = 0; zOffset < fullSize; zOffset++)
 				{
-					SingleFullDataAccessor column = this.get(xOffset + offsetX, zOffset + offsetZ);
+					SingleColumnFullDataAccessor column = this.get(xOffset + offsetX, zOffset + offsetZ);
 					column.downsampleFrom(chunkDataView.subView(dataPerFull, xOffset * dataPerFull, zOffset * dataPerFull));
 				}
 			}
@@ -255,7 +255,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 		{
 			for (int z = 0; z < this.width; z++)
 			{
-				SingleFullDataAccessor column = this.get(x, z);
+				SingleColumnFullDataAccessor column = this.get(x, z);
 				if (!column.doesColumnExist())
 					continue;
 				
@@ -332,7 +332,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 			{
 				for (int zOffset = 0; zOffset < count; zOffset++)
 				{
-					SingleFullDataAccessor column = this.get(xOffset + dataOffsetX, zOffset + dataOffsetZ);
+					SingleColumnFullDataAccessor column = this.get(xOffset + dataOffsetX, zOffset + dataOffsetZ);
 					column.downsampleFrom(subData.subView(dataPerCount, xOffset * dataPerCount, zOffset * dataPerCount));
 				}
 			}
