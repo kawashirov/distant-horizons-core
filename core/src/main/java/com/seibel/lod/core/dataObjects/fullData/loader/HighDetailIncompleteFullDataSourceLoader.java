@@ -1,6 +1,5 @@
 package com.seibel.lod.core.dataObjects.fullData.loader;
 
-import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.HighDetailIncompleteFullDataSource;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
@@ -13,7 +12,7 @@ public class HighDetailIncompleteFullDataSourceLoader extends AbstractFullDataSo
 {
 	public HighDetailIncompleteFullDataSourceLoader()
 	{
-		super(HighDetailIncompleteFullDataSource.class, HighDetailIncompleteFullDataSource.TYPE_ID, new byte[] { HighDetailIncompleteFullDataSource.LATEST_VERSION });
+		super(HighDetailIncompleteFullDataSource.class, HighDetailIncompleteFullDataSource.TYPE_ID, new byte[] { HighDetailIncompleteFullDataSource.DATA_FORMAT_VERSION });
 	}
 
     @Override

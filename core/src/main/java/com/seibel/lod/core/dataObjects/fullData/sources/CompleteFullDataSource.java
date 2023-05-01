@@ -28,9 +28,13 @@ import java.io.*;
 public class CompleteFullDataSource extends FullDataArrayAccessor implements IFullDataSource, IStreamableFullDataSource<IStreamableFullDataSource.FullDataSourceSummaryData, long[][]>
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	
     public static final byte SECTION_SIZE_OFFSET = DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL;
-    public static final int SECTION_SIZE = BitShiftUtil.powerOfTwo(SECTION_SIZE_OFFSET);
-    public static final byte LATEST_VERSION = 0;
+    /** measured in dataPoints */
+	public static final int WIDTH = BitShiftUtil.powerOfTwo(SECTION_SIZE_OFFSET);
+    
+	public static final byte DATA_FORMAT_VERSION = 0;
+	/** written to the binary file to mark what {@link IFullDataSource} the binary file corresponds to */
     public static final long TYPE_ID = "CompleteFullDataSource".hashCode();
 	
     private final DhSectionPos sectionPos;
@@ -46,14 +50,14 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 	public static CompleteFullDataSource createEmpty(DhSectionPos pos) { return new CompleteFullDataSource(pos); }
 	private CompleteFullDataSource(DhSectionPos sectionPos)
 	{
-        super(new FullDataPointIdMap(), new long[SECTION_SIZE*SECTION_SIZE][0], SECTION_SIZE);
+        super(new FullDataPointIdMap(), new long[WIDTH * WIDTH][0], WIDTH);
         this.sectionPos = sectionPos;
     }
 	
 	public CompleteFullDataSource(DhSectionPos pos, FullDataPointIdMap mapping, long[][] data)
 	{
-		super(mapping, data, SECTION_SIZE);
-		LodUtil.assertTrue(data.length == SECTION_SIZE * SECTION_SIZE);
+		super(mapping, data, WIDTH);
+		LodUtil.assertTrue(data.length == WIDTH * WIDTH);
 		
 		this.sectionPos = pos;
 		this.isEmpty = false;
@@ -90,9 +94,9 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 		}
 		
 		int width = dataInputStream.readInt();
-		if (width != SECTION_SIZE)
+		if (width != WIDTH)
 		{
-			throw new IOException(LodUtil.formatLog("Section width mismatch: "+width+" != "+SECTION_SIZE+" (Currently only 1 section width is supported)"));
+			throw new IOException(LodUtil.formatLog("Section width mismatch: "+width+" != "+ WIDTH +" (Currently only 1 section width is supported)"));
 		}
 		
 		int minY = dataInputStream.readInt();
@@ -274,7 +278,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 		{
 			DhBlockPos2D chunkBlockPos = new DhBlockPos2D(chunkDataView.pos.x * LodUtil.CHUNK_WIDTH, chunkDataView.pos.z * LodUtil.CHUNK_WIDTH);
 			DhBlockPos2D blockOffset = chunkBlockPos.subtract(this.sectionPos.getCorner().getCornerBlockPos());
-			LodUtil.assertTrue(blockOffset.x >= 0 && blockOffset.x < SECTION_SIZE && blockOffset.z >= 0 && blockOffset.z < SECTION_SIZE);
+			LodUtil.assertTrue(blockOffset.x >= 0 && blockOffset.x < WIDTH && blockOffset.z >= 0 && blockOffset.z < WIDTH);
 			this.isEmpty = false;
 			
 			chunkDataView.shadowCopyTo(this.subView(LodUtil.CHUNK_WIDTH, blockOffset.x, blockOffset.z));
@@ -300,7 +304,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 			
 			int offsetX = dataOffset.x - baseOffset.x;
 			int offsetZ = dataOffset.z - baseOffset.z;
-			LodUtil.assertTrue(offsetX >= 0 && offsetX < SECTION_SIZE && offsetZ >= 0 && offsetZ < SECTION_SIZE);
+			LodUtil.assertTrue(offsetX >= 0 && offsetX < WIDTH && offsetZ >= 0 && offsetZ < WIDTH);
 			
 			this.isEmpty = false;
 			for (int xOffset = 0; xOffset < fullSize; xOffset++)
@@ -326,7 +330,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 			
 			int offsetX = dataOffset.x - baseOffset.x;
 			int offsetZ = dataOffset.z - baseOffset.z;
-			LodUtil.assertTrue(offsetX >= 0 && offsetX < SECTION_SIZE && offsetZ >= 0 && offsetZ < SECTION_SIZE);
+			LodUtil.assertTrue(offsetX >= 0 && offsetX < WIDTH && offsetZ >= 0 && offsetZ < WIDTH);
 			
 			this.isEmpty = false;
 			chunkDataView.get(0, 0).deepCopyTo(this.get(offsetX, offsetZ));
@@ -389,7 +393,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 	public byte getDataDetailLevel() { return (byte) (this.sectionPos.sectionDetailLevel -SECTION_SIZE_OFFSET); }
 	
 	@Override
-	public byte getDataVersion() { return LATEST_VERSION; }
+	public byte getBinaryDataFormatVersion() { return DATA_FORMAT_VERSION; }
 	
 	@Override
 	public EDhApiWorldGenerationStep getWorldGenStep() { return this.worldGenStep; }
@@ -420,11 +424,11 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 		if (detailDiff <= SECTION_SIZE_OFFSET)
 		{
 			int count = 1 << detailDiff;
-			int dataPerCount = SECTION_SIZE / count;
+			int dataPerCount = WIDTH / count;
 			DhLodPos subDataPos = lowerSectPos.getSectionBBoxPos().getCornerLodPos(targetDataDetail);
 			int dataOffsetX = subDataPos.x - minDataPos.x;
 			int dataOffsetZ = subDataPos.z - minDataPos.z;
-			LodUtil.assertTrue(dataOffsetX >= 0 && dataOffsetX < SECTION_SIZE && dataOffsetZ >= 0 && dataOffsetZ < SECTION_SIZE);
+			LodUtil.assertTrue(dataOffsetX >= 0 && dataOffsetX < WIDTH && dataOffsetZ >= 0 && dataOffsetZ < WIDTH);
 			
 			for (int xOffset = 0; xOffset < count; xOffset++)
 			{
@@ -441,7 +445,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 			DhLodPos subDataPos = lowerSectPos.getSectionBBoxPos().convertToDetailLevel(targetDataDetail);
 			int dataOffsetX = subDataPos.x - minDataPos.x;
 			int dataOffsetZ = subDataPos.z - minDataPos.z;
-			LodUtil.assertTrue(dataOffsetX >= 0 && dataOffsetX < SECTION_SIZE && dataOffsetZ >= 0 && dataOffsetZ < SECTION_SIZE);
+			LodUtil.assertTrue(dataOffsetX >= 0 && dataOffsetX < WIDTH && dataOffsetZ >= 0 && dataOffsetZ < WIDTH);
 			subData.get(0, 0).deepCopyTo(get(dataOffsetX, dataOffsetZ));
 		}
 	}

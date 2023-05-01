@@ -1,6 +1,5 @@
 package com.seibel.lod.core.dataObjects.fullData.loader;
 
-import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.LowDetailIncompleteFullDataSource;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
@@ -12,7 +11,7 @@ import java.io.IOException;
 public class LowDetailIncompleteFullDataSourceLoader extends AbstractFullDataSourceLoader
 {
     public LowDetailIncompleteFullDataSourceLoader() {
-        super(LowDetailIncompleteFullDataSource.class, LowDetailIncompleteFullDataSource.TYPE_ID, new byte[]{ LowDetailIncompleteFullDataSource.LATEST_VERSION});
+        super(LowDetailIncompleteFullDataSource.class, LowDetailIncompleteFullDataSource.TYPE_ID, new byte[]{ LowDetailIncompleteFullDataSource.DATA_FORMAT_VERSION });
     }
 
     @Override

@@ -12,7 +12,7 @@ public class CompleteFullDataSourceLoader extends AbstractFullDataSourceLoader
 {
     public CompleteFullDataSourceLoader()
 	{
-        super(CompleteFullDataSource.class, CompleteFullDataSource.TYPE_ID, new byte[]{ CompleteFullDataSource.LATEST_VERSION});
+        super(CompleteFullDataSource.class, CompleteFullDataSource.TYPE_ID, new byte[]{ CompleteFullDataSource.DATA_FORMAT_VERSION });
     }
 	
     @Override

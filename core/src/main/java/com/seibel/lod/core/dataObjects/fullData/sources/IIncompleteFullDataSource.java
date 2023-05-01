@@ -12,8 +12,8 @@ public interface IIncompleteFullDataSource extends IFullDataSource
 	/** 
 	 * Attempts to convert this {@link IIncompleteFullDataSource} into a {@link CompleteFullDataSource}. 
 	 * 
-	 * @return this if the promotion failed, a new {@link CompleteFullDataSource} if successful.
+	 * @return a new {@link CompleteFullDataSource} if successful, this if the promotion failed, .
 	 */
-	IFullDataSource tryPromotingToCompleteDataSource(); // TODO make this return CompleteFullDataSource instead, if it fails just return null
+	IFullDataSource tryPromotingToCompleteDataSource();
 	
 }

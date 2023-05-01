@@ -291,9 +291,9 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 	}
 
 	private static BaseMetaData makeMetaData(IFullDataSource data) {
-		AbstractFullDataSourceLoader loader = AbstractFullDataSourceLoader.getLoader(data.getClass(), data.getDataVersion());
+		AbstractFullDataSourceLoader loader = AbstractFullDataSourceLoader.getLoader(data.getClass(), data.getBinaryDataFormatVersion());
 		return new BaseMetaData(data.getSectionPos(), -1,
-				data.getDataDetailLevel(), data.getWorldGenStep(), (loader == null ? 0 : loader.datatypeId), data.getDataVersion());
+				data.getDataDetailLevel(), data.getWorldGenStep(), (loader == null ? 0 : loader.datatypeId), data.getBinaryDataFormatVersion());
 	}
 
 	// "unchecked": Suppress casting of CompletableFuture<?> to CompletableFuture<LodDataSource>
@@ -399,11 +399,11 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 				// Write/Update data
 				LodUtil.assertTrue(metaData != null);
 				metaData.dataLevel = fullDataSource.getDataDetailLevel();
-				fullDataSourceLoader = AbstractFullDataSourceLoader.getLoader(fullDataSource.getClass(), fullDataSource.getDataVersion());
-				LodUtil.assertTrue(fullDataSourceLoader != null, "No loader for "+fullDataSource.getClass()+" (v"+fullDataSource.getDataVersion()+")");
+				fullDataSourceLoader = AbstractFullDataSourceLoader.getLoader(fullDataSource.getClass(), fullDataSource.getBinaryDataFormatVersion());
+				LodUtil.assertTrue(fullDataSourceLoader != null, "No loader for "+fullDataSource.getClass()+" (v"+fullDataSource.getBinaryDataFormatVersion()+")");
 				dataType = fullDataSource.getClass();
 				metaData.dataTypeId = (fullDataSourceLoader == null) ? 0 : fullDataSourceLoader.datatypeId;
-				metaData.loaderVersion = fullDataSource.getDataVersion();
+				metaData.loaderVersion = fullDataSource.getBinaryDataFormatVersion();
 				super.writeData((outputStream) -> fullDataSource.writeToStream(outputStream, level));
 				doesFileExist = true;
 			}

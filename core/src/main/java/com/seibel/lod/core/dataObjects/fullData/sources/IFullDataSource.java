@@ -9,7 +9,6 @@ import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
-import com.seibel.lod.core.dataObjects.fullData.accessor.FullDataArrayAccessor;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -37,7 +36,7 @@ public interface IFullDataSource
 	DhSectionPos getSectionPos();
 	
 	byte getDataDetailLevel();
-	byte getDataVersion();
+	byte getBinaryDataFormatVersion();
 	EDhApiWorldGenerationStep getWorldGenStep();
 	
 	void update(ChunkSizedFullDataAccessor data);

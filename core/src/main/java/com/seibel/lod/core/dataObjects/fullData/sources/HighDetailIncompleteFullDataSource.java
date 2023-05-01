@@ -23,8 +23,8 @@ import java.util.BitSet;
  * Handles incomplete full data with a detail level equal to or lower than 
  * {@link HighDetailIncompleteFullDataSource#MAX_SECTION_DETAIL}. <br><br>
  * 
- * Different then other {@link IIncompleteFullDataSource}'s, this object doesn't extend {@link FullDataArrayAccessor},
- * instead it contains several {@link FullDataArrayAccessor}s.
+ * Compared to other {@link IIncompleteFullDataSource}'s, this object doesn't extend {@link FullDataArrayAccessor},
+ * instead it contains several "sections" of data, represented by {@link FullDataArrayAccessor}s. <br><br>
  * 
  * Formerly "SparseFullDataSource".
  * 
@@ -36,23 +36,28 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
+	// TODO James would like to rename, comment, and potentially remove some of these constants. 
+	//  But he doesn't currently have the understanding to do so.
     public static final byte SPARSE_UNIT_DETAIL = LodUtil.CHUNK_DETAIL_LEVEL;
     public static final byte SPARSE_UNIT_SIZE = (byte) BitShiftUtil.powerOfTwo(SPARSE_UNIT_DETAIL);
 	
-    public static final byte SECTION_SIZE_OFFSET = 6;
+    public static final byte SECTION_SIZE_OFFSET = DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL;
     public static final int SECTION_SIZE = (byte) BitShiftUtil.powerOfTwo(SECTION_SIZE_OFFSET);
 	/** aka max detail level */
     public static final byte MAX_SECTION_DETAIL = SECTION_SIZE_OFFSET + SPARSE_UNIT_DETAIL;
-    public static final byte LATEST_VERSION = 0;
+	
+    public static final byte DATA_FORMAT_VERSION = 0;
+	/** written to the binary file to mark what {@link IFullDataSource} the binary file corresponds to */
     public static final long TYPE_ID = "HighDetailIncompleteFullDataSource".hashCode();
+	
 	
 	protected final FullDataPointIdMap mapping;
     private final DhSectionPos sectionPos;
     private final FullDataArrayAccessor[] sparseData;
     private final DhLodPos chunkPos;
 	
-	public final int chunks;
-	public final int dataPerChunk;
+	public final int sectionCount;
+	public final int dataPointsPerSection;
     public boolean isEmpty = true;
 	public EDhApiWorldGenerationStep worldGenStep = EDhApiWorldGenerationStep.EMPTY;
 	
@@ -69,10 +74,10 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
         LodUtil.assertTrue(sectionPos.sectionDetailLevel <= MAX_SECTION_DETAIL);
 		
         this.sectionPos = sectionPos;
-		this.chunks = 1 << (byte) (sectionPos.sectionDetailLevel - SPARSE_UNIT_DETAIL);
-		this.dataPerChunk = SECTION_SIZE / this.chunks;
+		this.sectionCount = BitShiftUtil.powerOfTwo(sectionPos.sectionDetailLevel - SPARSE_UNIT_DETAIL);
+		this.dataPointsPerSection = SECTION_SIZE / this.sectionCount;
 		
-		this.sparseData = new FullDataArrayAccessor[this.chunks * this.chunks];
+		this.sparseData = new FullDataArrayAccessor[this.sectionCount * this.sectionCount];
 		this.chunkPos = sectionPos.getCorner(SPARSE_UNIT_DETAIL);
 		this.mapping = new FullDataPointIdMap();
     }
@@ -83,10 +88,10 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
         LodUtil.assertTrue(sectionPos.sectionDetailLevel <= MAX_SECTION_DETAIL);
 		
         this.sectionPos = sectionPos;
-		this.chunks = 1 << (byte) (sectionPos.sectionDetailLevel - SPARSE_UNIT_DETAIL);
-		this.dataPerChunk = SECTION_SIZE / this.chunks;
+		this.sectionCount = 1 << (byte) (sectionPos.sectionDetailLevel - SPARSE_UNIT_DETAIL);
+		this.dataPointsPerSection = SECTION_SIZE / this.sectionCount;
 		
-		LodUtil.assertTrue(this.chunks * this.chunks == data.length);
+		LodUtil.assertTrue(this.sectionCount * this.sectionCount == data.length);
 		this.sparseData = data;
 		this.chunkPos = sectionPos.getCorner(SPARSE_UNIT_DETAIL);
 		this.isEmpty = false;
@@ -393,7 +398,7 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
     public byte getDataDetailLevel() { return (byte) (this.sectionPos.sectionDetailLevel - SECTION_SIZE_OFFSET); }
 
     @Override
-    public byte getDataVersion() { return LATEST_VERSION; }
+    public byte getBinaryDataFormatVersion() { return DATA_FORMAT_VERSION; }
 	
 	@Override 
 	public EDhApiWorldGenerationStep getWorldGenStep() { return this.worldGenStep; }
@@ -405,8 +410,8 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 	{
         int offsetX = chunkX - this.chunkPos.x;
         int offsetZ = chunkZ - this.chunkPos.z;
-        LodUtil.assertTrue(offsetX >= 0 && offsetZ >= 0 && offsetX < this.chunks && offsetZ < this.chunks);
-        return offsetX * this.chunks + offsetZ;
+        LodUtil.assertTrue(offsetX >= 0 && offsetZ >= 0 && offsetX < this.sectionCount && offsetZ < this.sectionCount);
+        return offsetX * this.sectionCount + offsetZ;
     }
 	
 	
@@ -414,15 +419,15 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
     public void update(ChunkSizedFullDataAccessor chunkDataView)
 	{
 		int arrayOffset = this.calculateOffset(chunkDataView.pos.x, chunkDataView.pos.z);
-		FullDataArrayAccessor newArray = new FullDataArrayAccessor(this.mapping, new long[this.dataPerChunk * this.dataPerChunk][], this.dataPerChunk);
+		FullDataArrayAccessor newArray = new FullDataArrayAccessor(this.mapping, new long[this.dataPointsPerSection * this.dataPointsPerSection][], this.dataPointsPerSection);
 		if (this.getDataDetailLevel() == chunkDataView.detailLevel)
 		{
 			chunkDataView.shadowCopyTo(newArray);
 		}
 		else
 		{
-			int count = this.dataPerChunk;
-			int dataPerCount = SPARSE_UNIT_SIZE / this.dataPerChunk;
+			int count = this.dataPointsPerSection;
+			int dataPerCount = SPARSE_UNIT_SIZE / this.dataPointsPerSection;
 	
 			for (int xOffset = 0; xOffset < count; xOffset++)
 			{
@@ -478,18 +483,18 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
        
         int offsetX = dataPos.x-basePos.x;
         int offsetZ = dataPos.z-basePos.z;
-		LodUtil.assertTrue(offsetX >= 0 && offsetX < this.chunks && offsetZ >= 0 && offsetZ < this.chunks);
+		LodUtil.assertTrue(offsetX >= 0 && offsetX < this.sectionCount && offsetZ >= 0 && offsetZ < this.sectionCount);
 	
-		for (int xOffset = 0; xOffset < sparseDataSource.chunks; xOffset++)
+		for (int xOffset = 0; xOffset < sparseDataSource.sectionCount; xOffset++)
 		{
-			for (int zOffset = 0; zOffset < sparseDataSource.chunks; zOffset++)
+			for (int zOffset = 0; zOffset < sparseDataSource.sectionCount; zOffset++)
 			{
-				FullDataArrayAccessor sourceChunk = sparseDataSource.sparseData[xOffset * sparseDataSource.chunks + zOffset];
+				FullDataArrayAccessor sourceChunk = sparseDataSource.sparseData[xOffset * sparseDataSource.sectionCount + zOffset];
 				if (sourceChunk != null)
 				{
-					FullDataArrayAccessor newFullDataAccessor = new FullDataArrayAccessor(this.mapping, new long[this.dataPerChunk * this.dataPerChunk][], this.dataPerChunk);
+					FullDataArrayAccessor newFullDataAccessor = new FullDataArrayAccessor(this.mapping, new long[this.dataPointsPerSection * this.dataPointsPerSection][], this.dataPointsPerSection);
 					newFullDataAccessor.downsampleFrom(sourceChunk);
-					this.sparseData[(xOffset + offsetX) * this.chunks + (zOffset + offsetZ)] = newFullDataAccessor;
+					this.sparseData[(xOffset + offsetX) * this.sectionCount + (zOffset + offsetZ)] = newFullDataAccessor;
 				}
 			}
 		}
@@ -504,20 +509,20 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
         
 		int coveredChunks = pos.getWidth(SPARSE_UNIT_DETAIL).numberOfLodSectionsWide;
         int sourceDataPerChunk = SPARSE_UNIT_SIZE >>> completeDataSource.getDataDetailLevel();
-        LodUtil.assertTrue((coveredChunks * sourceDataPerChunk) == CompleteFullDataSource.SECTION_SIZE);
+        LodUtil.assertTrue((coveredChunks * sourceDataPerChunk) == CompleteFullDataSource.WIDTH);
         
 		int xDataOffset = dataPos.x - basePos.x;
         int zDataOffset = dataPos.z - basePos.z;
-        LodUtil.assertTrue(xDataOffset >= 0 && xDataOffset < this.chunks && zDataOffset >= 0 && zDataOffset < this.chunks);
+        LodUtil.assertTrue(xDataOffset >= 0 && xDataOffset < this.sectionCount && zDataOffset >= 0 && zDataOffset < this.sectionCount);
 	
 		for (int xOffset = 0; xOffset < coveredChunks; xOffset++)
 		{
 			for (int zOffset = 0; zOffset < coveredChunks; zOffset++)
 			{
 				FullDataArrayAccessor sourceChunk = completeDataSource.subView(sourceDataPerChunk, xOffset * sourceDataPerChunk, zOffset * sourceDataPerChunk);
-				FullDataArrayAccessor newFullDataAccessor = new FullDataArrayAccessor(this.mapping, new long[this.dataPerChunk * this.dataPerChunk][], this.dataPerChunk);
+				FullDataArrayAccessor newFullDataAccessor = new FullDataArrayAccessor(this.mapping, new long[this.dataPointsPerSection * this.dataPointsPerSection][], this.dataPointsPerSection);
 				newFullDataAccessor.downsampleFrom(sourceChunk);
-				this.sparseData[(xOffset + xDataOffset) * this.chunks + (zOffset + zDataOffset)] = newFullDataAccessor;
+				this.sparseData[(xOffset + xDataOffset) * this.sectionCount + (zOffset + zDataOffset)] = newFullDataAccessor;
 			}
 		}
     }
@@ -531,17 +536,17 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 	{
         LodUtil.assertTrue(dataSource.getSectionPos().equals(this.sectionPos));
         LodUtil.assertTrue(dataSource.getDataDetailLevel() == this.getDataDetailLevel());
-		for (int x = 0; x < this.chunks; x++)
+		for (int x = 0; x < this.sectionCount; x++)
 		{
-			for (int z = 0; z < this.chunks; z++)
+			for (int z = 0; z < this.sectionCount; z++)
 			{
-				FullDataArrayAccessor array = this.sparseData[x * this.chunks + z];
+				FullDataArrayAccessor array = this.sparseData[x * this.sectionCount + z];
 				if (array == null)
 					continue;
 				
 				// Otherwise, apply data to dataSource
 				dataSource.markNotEmpty();
-				FullDataArrayAccessor view = dataSource.subView(this.dataPerChunk, x * this.dataPerChunk, z * this.dataPerChunk);
+				FullDataArrayAccessor view = dataSource.subView(this.dataPointsPerSection, x * this.dataPointsPerSection, z * this.dataPointsPerSection);
 				array.shadowCopyTo(view);
 			}
 		}
@@ -570,16 +575,16 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 	
     public SingleColumnFullDataAccessor tryGet(int relativeX, int relativeZ)
 	{
-        LodUtil.assertTrue(relativeX >=0 && relativeX <SECTION_SIZE && relativeZ >=0 && relativeZ <SECTION_SIZE);
-        int chunkX = relativeX / this.dataPerChunk;
-        int chunkZ = relativeZ / this.dataPerChunk;
-        FullDataArrayAccessor chunk = this.sparseData[chunkX * this.chunks + chunkZ];
+        LodUtil.assertTrue(relativeX >=0 && relativeX < SECTION_SIZE && relativeZ >=0 && relativeZ < SECTION_SIZE);
+        int chunkX = relativeX / this.dataPointsPerSection;
+        int chunkZ = relativeZ / this.dataPointsPerSection;
+        FullDataArrayAccessor chunk = this.sparseData[chunkX * this.sectionCount + chunkZ];
         if (chunk == null)
 		{
 			return null;
 		}
 		
-        return chunk.get(relativeX % this.dataPerChunk, relativeZ % this.dataPerChunk);
+        return chunk.get(relativeX % this.dataPointsPerSection, relativeZ % this.dataPointsPerSection);
     }
 	
 }

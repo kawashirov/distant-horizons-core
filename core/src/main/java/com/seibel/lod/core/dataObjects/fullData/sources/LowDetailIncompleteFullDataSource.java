@@ -10,6 +10,7 @@ import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
+import com.seibel.lod.core.util.BitShiftUtil;
 import com.seibel.lod.core.util.FullDataPointUtil;
 import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
@@ -31,10 +32,15 @@ import java.util.BitSet;
 public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor implements IIncompleteFullDataSource, IStreamableFullDataSource<IStreamableFullDataSource.FullDataSourceSummaryData, long[][]>
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
-    public static final byte SECTION_SIZE_OFFSET = 6;
-    public static final int SECTION_SIZE = 1 << SECTION_SIZE_OFFSET; // TODO this is width not size
-    public static final byte LATEST_VERSION = 0; // TODO rename to data format version
+	
+    public static final byte SECTION_SIZE_OFFSET = DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL;
+	/** measured in dataPoints */
+    public static final int WIDTH = BitShiftUtil.powerOfTwo(SECTION_SIZE_OFFSET);
+	
+    public static final byte DATA_FORMAT_VERSION = 0; // TODO rename to data format version
+	/** written to the binary file to mark what {@link IFullDataSource} the binary file corresponds to */
     public static final long TYPE_ID = "LowDetailIncompleteFullDataSource".hashCode();
+	
 	
     private final DhSectionPos sectionPos;
 	private final BitSet isColumnNotEmpty;
@@ -51,18 +57,18 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 	public static LowDetailIncompleteFullDataSource createEmpty(DhSectionPos pos) { return new LowDetailIncompleteFullDataSource(pos); }
     private LowDetailIncompleteFullDataSource(DhSectionPos sectionPos)
 	{
-        super(new FullDataPointIdMap(), new long[SECTION_SIZE*SECTION_SIZE][0], SECTION_SIZE);
+        super(new FullDataPointIdMap(), new long[WIDTH * WIDTH][0], WIDTH);
         LodUtil.assertTrue(sectionPos.sectionDetailLevel > HighDetailIncompleteFullDataSource.MAX_SECTION_DETAIL);
 		
         this.sectionPos = sectionPos;
-		this.isColumnNotEmpty = new BitSet(SECTION_SIZE*SECTION_SIZE);
+		this.isColumnNotEmpty = new BitSet(WIDTH * WIDTH);
 		this.worldGenStep = EDhApiWorldGenerationStep.EMPTY;
     }
 	
 	private LowDetailIncompleteFullDataSource(DhSectionPos pos, FullDataPointIdMap mapping, EDhApiWorldGenerationStep worldGenStep, BitSet isColumnNotEmpty, long[][] data)
 	{
-		super(mapping, data, SECTION_SIZE);
-		LodUtil.assertTrue(data.length == SECTION_SIZE*SECTION_SIZE);
+		super(mapping, data, WIDTH);
+		LodUtil.assertTrue(data.length == WIDTH * WIDTH);
 		
 		this.sectionPos = pos;
 		this.isColumnNotEmpty = isColumnNotEmpty;
@@ -102,9 +108,9 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 		}
 		
 		int width = dataInputStream.readInt();
-		if (width != SECTION_SIZE)
+		if (width != WIDTH)
 		{
-			throw new IOException(LodUtil.formatLog("Section size mismatch: "+width+" != "+SECTION_SIZE+" (Currently only 1 section size is supported)"));
+			throw new IOException(LodUtil.formatLog("Section size mismatch: "+width+" != "+ WIDTH +" (Currently only 1 section size is supported)"));
 		}
 		
 		int minY = dataInputStream.readInt();
@@ -185,10 +191,10 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 		
 		// data column presence
 		int length = dataInputStream.readInt();
-		if (length < 0 || length > (SECTION_SIZE*SECTION_SIZE/8+64)*2) // TODO replace magic numbers or comment what they mean
+		if (length < 0 || length > (WIDTH * WIDTH /8+64)*2) // TODO replace magic numbers or comment what they mean
 		{
 			throw new IOException(LodUtil.formatLog("Spotty Flag BitSet size outside reasonable range: {} (expects {} to {})",
-					length, 1, SECTION_SIZE * SECTION_SIZE / 8 + 63));
+					length, 1, WIDTH * WIDTH / 8 + 63));
 		}
 		
 		byte[] bytes = new byte[length];
@@ -198,7 +204,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 		
 		
 		// Data array content
-		long[][] dataPointArray = new long[SECTION_SIZE*SECTION_SIZE][];
+		long[][] dataPointArray = new long[WIDTH * WIDTH][];
 		dataPresentFlag = dataInputStream.readInt();
 		if (dataPresentFlag != IFullDataSource.DATA_GUARD_BYTE)
 		{
@@ -279,7 +285,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 			DhLodPos dataOffset = data.getLodPos().convertToDetailLevel(this.getDataDetailLevel());
 			int offsetX = dataOffset.x - baseOffset.x;
 			int offsetZ = dataOffset.z - baseOffset.z;
-			LodUtil.assertTrue(offsetX >= 0 && offsetX < SECTION_SIZE && offsetZ >= 0 && offsetZ < SECTION_SIZE);
+			LodUtil.assertTrue(offsetX >= 0 && offsetX < WIDTH && offsetZ >= 0 && offsetZ < WIDTH);
 			this.isEmpty = false;
 			data.get(0,0).deepCopyTo(this.get(offsetX, offsetZ));
 		}
@@ -331,7 +337,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
             
 			int offsetX = dataLodPos.x - thisLodPos.x;
             int offsetZ = dataLodPos.z - thisLodPos.z;
-            LodUtil.assertTrue(offsetX >= 0 && offsetX < SECTION_SIZE && offsetZ >= 0 && offsetZ < SECTION_SIZE);
+            LodUtil.assertTrue(offsetX >= 0 && offsetX < WIDTH && offsetZ >= 0 && offsetZ < WIDTH);
             
 			int chunksPerData = 1 << (this.getDataDetailLevel() - HighDetailIncompleteFullDataSource.SPARSE_UNIT_DETAIL);
             int dataSpan = this.sectionPos.getWidth(this.getDataDetailLevel()).numberOfLodSectionsWide;
@@ -341,13 +347,13 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
                 for (int zOffset = 0; zOffset < dataSpan; zOffset++)
 				{
                     SingleColumnFullDataAccessor column = sparseSource.tryGet(
-                            xOffset * chunksPerData * sparseSource.dataPerChunk,
-                            zOffset * chunksPerData * sparseSource.dataPerChunk);
+                            xOffset * chunksPerData * sparseSource.dataPointsPerSection,
+                            zOffset * chunksPerData * sparseSource.dataPointsPerSection);
 					
                     if (column != null)
 					{
                         column.deepCopyTo(this.get(offsetX + xOffset, offsetZ + zOffset));
-						this.isColumnNotEmpty.set((offsetX + xOffset) * SECTION_SIZE + offsetZ + zOffset, true);
+						this.isColumnNotEmpty.set((offsetX + xOffset) * WIDTH + offsetZ + zOffset, true);
                     }
                 }
             }
@@ -370,7 +376,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
             if (column != null)
 			{
                 column.deepCopyTo(this.get(offsetX, offsetZ));
-				this.isColumnNotEmpty.set(offsetX * SECTION_SIZE + offsetZ, true);
+				this.isColumnNotEmpty.set(offsetX * WIDTH + offsetZ, true);
             }
         }
     }
@@ -394,7 +400,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 			{
 				for (int zOffset = 0; zOffset < dataWidth; zOffset++)
 				{
-					this.isColumnNotEmpty.set((offsetX + xOffset) * SECTION_SIZE + offsetZ + zOffset, true);
+					this.isColumnNotEmpty.set((offsetX + xOffset) * WIDTH + offsetZ + zOffset, true);
 				}
 			}
 		}
@@ -412,7 +418,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
             dataPos = dataPos.convertToDetailLevel(this.getDataDetailLevel());
             int offsetX = dataPos.x - basePos.x;
             int offsetZ = dataPos.z - basePos.z;
-			this.isColumnNotEmpty.set(offsetX * SECTION_SIZE + offsetZ, true);
+			this.isColumnNotEmpty.set(offsetX * WIDTH + offsetZ, true);
         }
 
     }
@@ -425,7 +431,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 		{
 			return this;
 		}
-        else if (this.isColumnNotEmpty.cardinality() != SECTION_SIZE * SECTION_SIZE)
+        else if (this.isColumnNotEmpty.cardinality() != WIDTH * WIDTH)
 		{
 			return this;
 		}
@@ -440,7 +446,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 	//======//
 	
     @Override
-    public SingleColumnFullDataAccessor tryGet(int relativeX, int relativeZ) { return this.isColumnNotEmpty.get(relativeX * SECTION_SIZE + relativeZ) ? this.get(relativeX, relativeZ) : null; }
+    public SingleColumnFullDataAccessor tryGet(int relativeX, int relativeZ) { return this.isColumnNotEmpty.get(relativeX * WIDTH + relativeZ) ? this.get(relativeX, relativeZ) : null; }
 	
 	
 	
@@ -453,7 +459,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 	@Override
 	public byte getDataDetailLevel() { return (byte) (this.sectionPos.sectionDetailLevel - SECTION_SIZE_OFFSET); }
 	@Override
-	public byte getDataVersion() { return LATEST_VERSION;  }
+	public byte getBinaryDataFormatVersion() { return DATA_FORMAT_VERSION;  }
 	
 	@Override
 	public EDhApiWorldGenerationStep getWorldGenStep() { return this.worldGenStep; }
