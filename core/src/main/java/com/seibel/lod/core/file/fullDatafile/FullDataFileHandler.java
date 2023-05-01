@@ -4,6 +4,8 @@ import com.google.common.collect.HashMultimap;
 import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.sources.*;
 import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IIncompleteFullDataSource;
 import com.seibel.lod.core.util.FileUtil;
 import com.seibel.lod.core.file.metaData.BaseMetaData;
 import com.seibel.lod.core.level.IDhLevel;

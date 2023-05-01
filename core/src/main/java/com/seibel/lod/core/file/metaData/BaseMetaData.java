@@ -1,7 +1,7 @@
 package com.seibel.lod.core.file.metaData;
 
 import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
-import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 

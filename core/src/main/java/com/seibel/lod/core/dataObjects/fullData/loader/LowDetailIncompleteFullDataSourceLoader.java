@@ -1,6 +1,6 @@
 package com.seibel.lod.core.dataObjects.fullData.loader;
 
-import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.LowDetailIncompleteFullDataSource;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.level.IDhLevel;

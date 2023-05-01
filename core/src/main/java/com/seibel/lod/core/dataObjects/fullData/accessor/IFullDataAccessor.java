@@ -2,7 +2,7 @@ package com.seibel.lod.core.dataObjects.fullData.accessor;
 
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
 import com.seibel.lod.core.util.LodUtil;
-import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.lod.core.util.FullDataPointUtil;
 
 import java.util.Iterator;

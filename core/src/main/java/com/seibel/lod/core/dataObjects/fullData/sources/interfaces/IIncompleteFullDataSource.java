@@ -1,4 +1,6 @@
-package com.seibel.lod.core.dataObjects.fullData.sources;
+package com.seibel.lod.core.dataObjects.fullData.sources.interfaces;
+
+import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
 
 public interface IIncompleteFullDataSource extends IFullDataSource
 {

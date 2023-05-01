@@ -2,8 +2,8 @@ package com.seibel.lod.core.file.fullDatafile;
 
 import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.sources.HighDetailIncompleteFullDataSource;
-import com.seibel.lod.core.dataObjects.fullData.sources.IFullDataSource;
-import com.seibel.lod.core.dataObjects.fullData.sources.IIncompleteFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IIncompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.LowDetailIncompleteFullDataSource;
 import com.seibel.lod.core.generation.tasks.IWorldGenTaskTracker;
 import com.seibel.lod.core.generation.WorldGenerationQueue;

@@ -1,4 +1,4 @@
-package com.seibel.lod.core.dataObjects.fullData.sources;
+package com.seibel.lod.core.dataObjects.fullData.sources.interfaces;
 
 import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
@@ -15,10 +15,13 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 
 /**
+ * Base for all Full Data Source objects. <br><br>
+ * 
  * Contains full DH data, methods related to file/stream reading/writing, and the data necessary to create {@link ColumnRenderSource}'s. <br>
  * {@link IFullDataSource}'s will either implement or contain {@link IFullDataAccessor}'s.
  * 
  * @see IFullDataAccessor
+ * @see IIncompleteFullDataSource
  * @see IStreamableFullDataSource
  */
 public interface IFullDataSource

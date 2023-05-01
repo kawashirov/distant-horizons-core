@@ -5,6 +5,8 @@ import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
 import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.accessor.FullDataArrayAccessor;
 import com.seibel.lod.core.dataObjects.fullData.accessor.SingleColumnFullDataAccessor;
+import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IStreamableFullDataSource;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhLodPos;
