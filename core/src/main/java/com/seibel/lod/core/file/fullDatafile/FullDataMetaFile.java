@@ -404,7 +404,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 				dataType = fullDataSource.getClass();
 				metaData.dataTypeId = (fullDataSourceLoader == null) ? 0 : fullDataSourceLoader.datatypeId;
 				metaData.loaderVersion = fullDataSource.getDataVersion();
-				super.writeData((outputStream) -> fullDataSource.writeToStream(level, this, outputStream));
+				super.writeData((outputStream) -> fullDataSource.writeToStream(outputStream, level));
 				doesFileExist = true;
 			}
 			catch (ClosedByInterruptException e) // thrown by buffers that are interrupted

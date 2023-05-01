@@ -8,9 +8,9 @@ import com.seibel.lod.core.level.IDhLevel;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 
-public class FullDataLoader extends AbstractFullDataSourceLoader
+public class CompleteFullDataSourceLoader extends AbstractFullDataSourceLoader
 {
-    public FullDataLoader()
+    public CompleteFullDataSourceLoader()
 	{
         super(CompleteFullDataSource.class, CompleteFullDataSource.TYPE_ID, new byte[]{ CompleteFullDataSource.LATEST_VERSION});
     }
@@ -19,7 +19,10 @@ public class FullDataLoader extends AbstractFullDataSourceLoader
     public IFullDataSource loadData(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException, InterruptedException
 	{
         //TODO: Add decompressor here
-        return CompleteFullDataSource.loadData(dataFile, bufferedInputStream, level);
+		
+		CompleteFullDataSource dataSource = CompleteFullDataSource.createEmpty(dataFile.pos);
+		dataSource.populateFromStream(dataFile, bufferedInputStream, level);
+        return dataSource;
     }
 	
 }

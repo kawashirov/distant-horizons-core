@@ -20,18 +20,20 @@ import java.util.BitSet;
 /**
  * Used for large incomplete LOD blocks. <Br>
  * Handles incomplete full data with a detail level higher than 
- * {@link HighDetailIncompleteFullDataSource#MAX_SECTION_DETAIL}.
+ * {@link HighDetailIncompleteFullDataSource#MAX_SECTION_DETAIL}. <br><br>
+ *  
+ * Formerly "SpottyFullDataSource".
  * 
  * @see HighDetailIncompleteFullDataSource
  * @see CompleteFullDataSource
  * @see FullDataPointUtil
  */
-public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor implements IIncompleteFullDataSource
+public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor implements IIncompleteFullDataSource, IStreamableFullDataSource<IStreamableFullDataSource.FullDataSourceSummaryData, long[][]>
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     public static final byte SECTION_SIZE_OFFSET = 6;
-    public static final int SECTION_SIZE = 1 << SECTION_SIZE_OFFSET;
-    public static final byte LATEST_VERSION = 0;
+    public static final int SECTION_SIZE = 1 << SECTION_SIZE_OFFSET; // TODO this is width not size
+    public static final byte LATEST_VERSION = 0; // TODO rename to data format version
     public static final long TYPE_ID = "LowDetailIncompleteFullDataSource".hashCode();
 	
     private final DhSectionPos sectionPos;
@@ -70,46 +72,119 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 	
 	
 	
-	//===============//
-	// file handling //
-	//===============//
+	//=================//
+	// stream handling //
+	//=================//
 	
-	public static LowDetailIncompleteFullDataSource loadData(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException, InterruptedException
+	
+	@Override
+	public void writeSourceSummaryInfo(IDhLevel level, BufferedOutputStream bufferedOutputStream) throws IOException
+	{
+		DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream); // Don't close, this stream is handled outside this method
+		
+		
+		dataOutputStream.writeInt(this.getDataDetailLevel());
+		dataOutputStream.writeInt(this.width);
+		dataOutputStream.writeInt(level.getMinY());
+		dataOutputStream.writeByte(this.worldGenStep.value);
+		
+	}
+	@Override
+	public FullDataSourceSummaryData readSourceSummaryInfo(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException
 	{
 		DataInputStream dataInputStream = new DataInputStream(bufferedInputStream); // DO NOT CLOSE
+		
 		
 		int dataDetail = dataInputStream.readInt();
 		if(dataDetail != dataFile.metaData.dataLevel)
 		{
-			throw new IOException(LodUtil.formatLog("Data level mismatch: {} != {}", dataDetail, dataFile.metaData.dataLevel));
+			throw new IOException(LodUtil.formatLog("Data level mismatch: "+dataDetail+" != "+dataFile.metaData.dataLevel));
 		}
-		int size = dataInputStream.readInt();
-		if (size != SECTION_SIZE)
+		
+		int width = dataInputStream.readInt();
+		if (width != SECTION_SIZE)
 		{
-			throw new IOException(LodUtil.formatLog("Section size mismatch: {} != {} (Currently only 1 section size is supported)", size, SECTION_SIZE));
+			throw new IOException(LodUtil.formatLog("Section size mismatch: "+width+" != "+SECTION_SIZE+" (Currently only 1 section size is supported)"));
 		}
+		
 		int minY = dataInputStream.readInt();
 		if (minY != level.getMinY())
 		{
-			LOGGER.warn("Data minY mismatch: {} != {}. Will ignore data's y level", minY, level.getMinY());
+			LOGGER.warn("Data minY mismatch: "+minY+" != "+level.getMinY()+". Will ignore data's y level");
 		}
-		// Data array length
-		int end = dataInputStream.readInt();
-		if (end == IFullDataSource.NO_DATA_FLAG_BYTE)
+		
+		EDhApiWorldGenerationStep worldGenStep = EDhApiWorldGenerationStep.fromValue(dataInputStream.readByte());
+		if (worldGenStep == null)
+		{
+			worldGenStep = EDhApiWorldGenerationStep.SURFACE;
+			LOGGER.warn("Missing WorldGenStep, defaulting to: "+worldGenStep.name());
+		}
+		
+		
+		return new FullDataSourceSummaryData(this.width, worldGenStep);
+	}
+	public void setSourceSummaryData(FullDataSourceSummaryData summaryData)
+	{
+		this.worldGenStep = summaryData.worldGenStep;
+	}
+	
+	
+	@Override
+	public boolean writeDataPoints(BufferedOutputStream bufferedOutputStream) throws IOException
+	{
+		DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream); // Don't close, this stream is handled outside this method
+		
+		
+		if (this.isEmpty)
+		{
+			dataOutputStream.writeInt(IFullDataSource.NO_DATA_FLAG_BYTE);
+			return false;
+		}
+		dataOutputStream.writeInt(IFullDataSource.DATA_GUARD_BYTE);
+		
+		
+		// data column presence
+		byte[] bytes = this.isColumnNotEmpty.toByteArray();
+		dataOutputStream.writeInt(bytes.length);
+		dataOutputStream.write(bytes);
+		
+		
+		// Data content
+		dataOutputStream.writeInt(IFullDataSource.DATA_GUARD_BYTE);
+		for (int i = this.isColumnNotEmpty.nextSetBit(0); i >= 0; i = this.isColumnNotEmpty.nextSetBit(i + 1))
+		{
+			dataOutputStream.writeByte(this.dataArrays[i].length);
+			for (long dataPoint : this.dataArrays[i])
+			{
+				dataOutputStream.writeLong(dataPoint);
+			}
+		}
+		
+		
+		return true;
+	}
+	@Override
+	public long[][] readDataPoints(FullDataMetaFile dataFile, int width, BufferedInputStream bufferedInputStream) throws IOException
+	{
+		DataInputStream dataInputStream = new DataInputStream(bufferedInputStream); // DO NOT CLOSE
+		
+		
+		
+		// is source empty flag
+		int dataPresentFlag = dataInputStream.readInt();
+		if (dataPresentFlag == IFullDataSource.NO_DATA_FLAG_BYTE)
 		{
 			// Section is empty
-			return new LowDetailIncompleteFullDataSource(dataFile.pos);
+			return null;
 		}
-		
-		
-		
-		// Is column not empty
-		if (end != IFullDataSource.DATA_GUARD_BYTE)
+		else if (dataPresentFlag != IFullDataSource.DATA_GUARD_BYTE)
 		{
-			throw new IOException("invalid header end guard");
+			throw new IOException("Invalid file format. Data Points guard byte expected: (no data) ["+IFullDataSource.NO_DATA_FLAG_BYTE+"] or (data present) ["+IFullDataSource.DATA_GUARD_BYTE+"], but found ["+dataPresentFlag+"].");
 		}
-		int length = dataInputStream.readInt();
 		
+		
+		// data column presence
+		int length = dataInputStream.readInt();
 		if (length < 0 || length > (SECTION_SIZE*SECTION_SIZE/8+64)*2) // TODO replace magic numbers or comment what they mean
 		{
 			throw new IOException(LodUtil.formatLog("Spotty Flag BitSet size outside reasonable range: {} (expects {} to {})",
@@ -123,98 +198,62 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 		
 		
 		// Data array content
-		long[][] data = new long[SECTION_SIZE*SECTION_SIZE][];
-		end = dataInputStream.readInt();
-		if (end != IFullDataSource.DATA_GUARD_BYTE)
+		long[][] dataPointArray = new long[SECTION_SIZE*SECTION_SIZE][];
+		dataPresentFlag = dataInputStream.readInt();
+		if (dataPresentFlag != IFullDataSource.DATA_GUARD_BYTE)
 		{
 			throw new IOException("invalid spotty flag end guard");
 		}
 		
-		for (int i = isColumnNotEmpty.nextSetBit(0); i >= 0; i = isColumnNotEmpty.nextSetBit(i + 1))
+		for (int xz = isColumnNotEmpty.nextSetBit(0); xz >= 0; xz = isColumnNotEmpty.nextSetBit(xz + 1))
 		{
 			long[] array = new long[dataInputStream.readByte()];
-			for (int j = 0; j < array.length; j++)
+			for (int y = 0; y < array.length; y++)
 			{
-				array[j] = dataInputStream.readLong();
+				array[y] = dataInputStream.readLong();
 			}
-			data[i] = array;
+			dataPointArray[xz] = array;
 		}
 		
 		
+		return dataPointArray;
+	}
+	@Override
+	public void setDataPoints(long[][] dataPoints)
+	{
+		LodUtil.assertTrue(this.dataArrays.length == dataPoints.length, "Data point array length mismatch.");
 		
-		// Id mapping
-		end = dataInputStream.readInt();
-		if (end != IFullDataSource.DATA_GUARD_BYTE)
-		{
-			throw new IOException("invalid ID mapping end guard");
-		}
-		FullDataPointIdMap mapping = FullDataPointIdMap.deserialize(bufferedInputStream);
-		
-		
-		
-		// world gen step
-		end = dataInputStream.readInt();
-		if (end != IFullDataSource.DATA_GUARD_BYTE)
-		{
-			throw new IOException("invalid world gen step end guard");
-		}
-		EDhApiWorldGenerationStep worldGenStep = EDhApiWorldGenerationStep.fromValue(dataInputStream.readByte());
-		if (worldGenStep == null)
-		{
-			LOGGER.warn("Missing WorldGenStep, defaulting to: "+EDhApiWorldGenerationStep.SURFACE.name());
-			worldGenStep = EDhApiWorldGenerationStep.SURFACE;
-		}
-		
-		
-		
-		return new LowDetailIncompleteFullDataSource(dataFile.pos, mapping, worldGenStep, isColumnNotEmpty, data);
+		this.isEmpty = false;
+		System.arraycopy(dataPoints, 0, this.dataArrays, 0, dataPoints.length);
 	}
 	
+	
 	@Override
-	public void writeToStream(IDhLevel level, FullDataMetaFile file, BufferedOutputStream bufferedOutputStream) throws IOException
+	public void writeIdMappings(BufferedOutputStream bufferedOutputStream) throws IOException
 	{
-		DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream); // DO NOT CLOSE
+		DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream); // Don't close, this stream is handled outside this method
 		
 		
-		dataOutputStream.writeInt(this.getDataDetailLevel());
-		dataOutputStream.writeInt(this.width);
-		dataOutputStream.writeInt(level.getMinY());
-		if (this.isEmpty)
-		{
-			dataOutputStream.writeInt(IFullDataSource.NO_DATA_FLAG_BYTE);
-			return;
-		}
-		
-		// Is column not empty bits
-		dataOutputStream.writeInt(IFullDataSource.DATA_GUARD_BYTE);
-		byte[] bytes = this.isColumnNotEmpty.toByteArray();
-		dataOutputStream.writeInt(bytes.length);
-		dataOutputStream.write(bytes);
-		
-		// Data array content
-		dataOutputStream.writeInt(IFullDataSource.DATA_GUARD_BYTE);
-		for (int i = this.isColumnNotEmpty.nextSetBit(0); i >= 0; i = this.isColumnNotEmpty.nextSetBit(i + 1))
-		{
-			dataOutputStream.writeByte(this.dataArrays[i].length);
-			if (this.dataArrays[i].length != 0)
-			{
-				for (long dataPoint : this.dataArrays[i])
-				{
-					dataOutputStream.writeLong(dataPoint);
-				}
-			}
-		}
-		
-		// Id mapping
 		dataOutputStream.writeInt(IFullDataSource.DATA_GUARD_BYTE);
 		this.mapping.serialize(bufferedOutputStream);
 		
-		
-		// world Gen step
-		dataOutputStream.writeInt(IFullDataSource.DATA_GUARD_BYTE);
-		dataOutputStream.writeByte(this.worldGenStep.value);
-		
 	}
+	@Override
+	public FullDataPointIdMap readIdMappings(long[][] dataPoints, BufferedInputStream bufferedInputStream) throws IOException, InterruptedException
+	{
+		DataInputStream dataInputStream = new DataInputStream(bufferedInputStream); // Don't close, this stream is handled outside this method
+		
+		
+		// Id mapping
+		int dataPresentFlag = dataInputStream.readInt();
+		if (dataPresentFlag != IFullDataSource.DATA_GUARD_BYTE)
+		{
+			throw new IOException("invalid ID mapping end guard");
+		}
+		return FullDataPointIdMap.deserialize(bufferedInputStream);
+	}
+	@Override
+	public void setIdMapping(FullDataPointIdMap mappings) { this.mapping.mergeAndReturnRemappedEntityIds(mappings); }
 	
 	
 	
@@ -396,9 +435,9 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 	
 	
 	
-	//
-	// data 
-	//
+	//======//
+	// data //
+	//======//
 	
     @Override
     public SingleColumnFullDataAccessor tryGet(int relativeX, int relativeZ) { return this.isColumnNotEmpty.get(relativeX * SECTION_SIZE + relativeZ) ? this.get(relativeX, relativeZ) : null; }
