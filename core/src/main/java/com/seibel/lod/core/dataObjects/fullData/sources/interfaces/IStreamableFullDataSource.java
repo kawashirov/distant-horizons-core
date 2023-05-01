@@ -113,7 +113,7 @@ public interface IStreamableFullDataSource<SummaryDataType extends IStreamableFu
 	class FullDataSourceSummaryData
 	{
 		public final int dataWidth;
-		EDhApiWorldGenerationStep worldGenStep;
+		public EDhApiWorldGenerationStep worldGenStep;
 		
 		
 		public FullDataSourceSummaryData(int dataWidth, EDhApiWorldGenerationStep worldGenStep)
