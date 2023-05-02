@@ -239,7 +239,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	
 	
 	/**
-	 * Returns the 64 x 64 data source for the given section position. <Br>
+	 * Returns the {@link IFullDataSource} for the given section position. <Br>
 	 * If the section hasn't been generated this will also send a generation call, which may take a while. <Br>
 	 * The returned data source may be null. <Br> <Br>
 	 * 

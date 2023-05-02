@@ -13,6 +13,7 @@ import com.seibel.lod.core.pos.DhSectionPos;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * Base for all Full Data Source objects. <br><br>
@@ -59,6 +60,9 @@ public interface IFullDataSource
 	SingleColumnFullDataAccessor tryGet(int relativeX, int relativeZ);
 	
 	FullDataPointIdMap getMapping();
+	
+	/** @return the list of {@link DhSectionPos} that aren't generated in this data source. */
+	ArrayList<DhSectionPos> getUngeneratedPosList();
 	
 	
 	

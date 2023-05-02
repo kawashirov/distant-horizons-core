@@ -19,6 +19,7 @@ import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
+import java.util.ArrayList;
 
 /**
  * This data source contains every datapoint over its given {@link DhSectionPos}.
@@ -271,6 +272,25 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 	@Override
 	public SingleColumnFullDataAccessor tryGet(int relativeX, int relativeZ) { return this.get(relativeX, relativeZ); }
 	
+	@Override
+	public ArrayList<DhSectionPos> getUngeneratedPosList()
+	{
+		ArrayList<DhSectionPos> posList = new ArrayList<>();
+		
+		for (int x = 0; x < this.width; x++)
+		{
+			for (int z = 0; z < this.width; z++)
+			{
+				SingleColumnFullDataAccessor column = this.get(x,z);
+				if (column == null || !column.doesColumnExist())
+				{
+					posList.add(new DhSectionPos(this.sectionPos.sectionDetailLevel, this.sectionPos.sectionX + x, this.sectionPos.sectionZ + z));
+				}
+			}
+		}
+		
+		return posList;
+	}
 	
 	@Override
 	public void update(ChunkSizedFullDataAccessor chunkDataView)
