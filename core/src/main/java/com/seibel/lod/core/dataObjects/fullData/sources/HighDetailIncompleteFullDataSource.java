@@ -19,6 +19,7 @@ import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.BitSet;
 
 /**
@@ -391,9 +392,29 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 	
 	
 	
-	//==============//
-	// data getters // 
-	//==============//
+	//======//
+	// data //
+	//======//
+	
+	public SingleColumnFullDataAccessor tryGet(int relativeX, int relativeZ)
+	{
+		LodUtil.assertTrue(relativeX >=0 && relativeX < SECTION_SIZE && relativeZ >=0 && relativeZ < SECTION_SIZE);
+		int chunkX = relativeX / this.dataPointsPerSection;
+		int chunkZ = relativeZ / this.dataPointsPerSection;
+		FullDataArrayAccessor chunk = this.sparseData[chunkX * this.sectionCount + chunkZ];
+		if (chunk == null)
+		{
+			return null;
+		}
+		
+		return chunk.get(relativeX % this.dataPointsPerSection, relativeZ % this.dataPointsPerSection);
+	}
+	
+	
+	
+	//=========//
+	// getters // 
+	//=========//
 	
     @Override
     public DhSectionPos getSectionPos() { return this.sectionPos; }
@@ -409,7 +430,11 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 	@Override
 	public FullDataPointIdMap getMapping() { return this.mapping; }
 	
-    private int calculateOffset(int chunkX, int chunkZ)
+	@Override
+	public boolean isEmpty() { return this.isEmpty; }
+	
+	
+	private int calculateOffset(int chunkX, int chunkZ)
 	{
         int offsetX = chunkX - this.chunkPos.x;
         int offsetZ = chunkZ - this.chunkPos.z;
@@ -417,6 +442,11 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
         return offsetX * this.sectionCount + offsetZ;
     }
 	
+	
+	
+	//=============//
+	// data update //
+	//=============//
 	
     @Override
     public void update(ChunkSizedFullDataAccessor chunkDataView)
@@ -446,9 +476,8 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 		this.sparseData[arrayOffset] = newArray;
     }
 	
-    @Override
-    public boolean isEmpty() { return this.isEmpty; }
 	
+	// data sampling //
 	
     @Override
 	public void sampleFrom(IFullDataSource fullDataSource)
@@ -531,10 +560,6 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
     }
 	
 	
-	
-	
-	
-	
     private void applyToFullDataSource(CompleteFullDataSource dataSource)
 	{
         LodUtil.assertTrue(dataSource.getSectionPos().equals(this.sectionPos));
@@ -574,20 +599,6 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
         CompleteFullDataSource fullDataSource = CompleteFullDataSource.createEmpty(this.sectionPos);
 		this.applyToFullDataSource(fullDataSource);
         return fullDataSource;
-    }
-	
-    public SingleColumnFullDataAccessor tryGet(int relativeX, int relativeZ)
-	{
-        LodUtil.assertTrue(relativeX >=0 && relativeX < SECTION_SIZE && relativeZ >=0 && relativeZ < SECTION_SIZE);
-        int chunkX = relativeX / this.dataPointsPerSection;
-        int chunkZ = relativeZ / this.dataPointsPerSection;
-        FullDataArrayAccessor chunk = this.sparseData[chunkX * this.sectionCount + chunkZ];
-        if (chunk == null)
-		{
-			return null;
-		}
-		
-        return chunk.get(relativeX % this.dataPointsPerSection, relativeZ % this.dataPointsPerSection);
     }
 	
 }

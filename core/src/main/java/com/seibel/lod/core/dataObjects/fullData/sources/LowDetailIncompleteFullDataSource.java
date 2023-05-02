@@ -266,6 +266,36 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 	
 	
 	
+	//======//
+	// data //
+	//======//
+	
+    @Override
+    public SingleColumnFullDataAccessor tryGet(int relativeX, int relativeZ) { return this.isColumnNotEmpty.get(relativeX * WIDTH + relativeZ) ? this.get(relativeX, relativeZ) : null; }
+	
+	
+	
+	
+	//=====================//
+	// getters and setters //
+	//=====================//
+	
+	@Override
+	public DhSectionPos getSectionPos() { return this.sectionPos; }
+	@Override
+	public byte getDataDetailLevel() { return (byte) (this.sectionPos.sectionDetailLevel - SECTION_SIZE_OFFSET); }
+	@Override
+	public byte getBinaryDataFormatVersion() { return DATA_FORMAT_VERSION;  }
+	
+	@Override
+	public EDhApiWorldGenerationStep getWorldGenStep() { return this.worldGenStep; }
+	
+	@Override
+	public boolean isEmpty() { return this.isEmpty; }
+	public void markNotEmpty() { this.isEmpty = false;  }
+	
+	
+	
 	//===============//
 	// Data updating //
 	//===============//
@@ -301,92 +331,92 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 	}
 	
 	@Override
-    public void sampleFrom(IFullDataSource fullDataSource)
+	public void sampleFrom(IFullDataSource fullDataSource)
 	{
-        DhSectionPos pos = fullDataSource.getSectionPos();
-        LodUtil.assertTrue(pos.sectionDetailLevel < this.sectionPos.sectionDetailLevel);
-        LodUtil.assertTrue(pos.overlaps(this.sectionPos));
+		DhSectionPos pos = fullDataSource.getSectionPos();
+		LodUtil.assertTrue(pos.sectionDetailLevel < this.sectionPos.sectionDetailLevel);
+		LodUtil.assertTrue(pos.overlaps(this.sectionPos));
 		
-        if (fullDataSource.isEmpty())
+		if (fullDataSource.isEmpty())
 		{
 			return;
 		}
 		
 		
-        if (fullDataSource instanceof HighDetailIncompleteFullDataSource)
+		if (fullDataSource instanceof HighDetailIncompleteFullDataSource)
 		{
 			this.sampleFrom((HighDetailIncompleteFullDataSource) fullDataSource);
-        }
+		}
 		else if (fullDataSource instanceof CompleteFullDataSource)
 		{
 			this.sampleFrom((CompleteFullDataSource) fullDataSource);
-        }
+		}
 		else
 		{
 			LodUtil.assertNotReach("SampleFrom not implemented for ["+IFullDataSource.class.getSimpleName()+"] with class ["+fullDataSource.getClass().getSimpleName()+"].");
-        }
-    }
+		}
+	}
 	
-    private void sampleFrom(HighDetailIncompleteFullDataSource sparseSource)
+	private void sampleFrom(HighDetailIncompleteFullDataSource sparseSource)
 	{
 		DhLodPos thisLodPos = this.sectionPos.getCorner(this.getDataDetailLevel());
-        DhSectionPos pos = sparseSource.getSectionPos();
+		DhSectionPos pos = sparseSource.getSectionPos();
 		
 		this.isEmpty = false;
 		
-        if (this.getDataDetailLevel() > this.sectionPos.sectionDetailLevel)
+		if (this.getDataDetailLevel() > this.sectionPos.sectionDetailLevel)
 		{
-            DhLodPos dataLodPos = pos.getCorner(this.getDataDetailLevel());
-            
+			DhLodPos dataLodPos = pos.getCorner(this.getDataDetailLevel());
+			
 			int offsetX = dataLodPos.x - thisLodPos.x;
-            int offsetZ = dataLodPos.z - thisLodPos.z;
-            LodUtil.assertTrue(offsetX >= 0 && offsetX < WIDTH && offsetZ >= 0 && offsetZ < WIDTH);
-            
+			int offsetZ = dataLodPos.z - thisLodPos.z;
+			LodUtil.assertTrue(offsetX >= 0 && offsetX < WIDTH && offsetZ >= 0 && offsetZ < WIDTH);
+			
 			int chunksPerData = 1 << (this.getDataDetailLevel() - HighDetailIncompleteFullDataSource.SPARSE_UNIT_DETAIL);
-            int dataSpan = this.sectionPos.getWidth(this.getDataDetailLevel()).numberOfLodSectionsWide;
-
-            for (int xOffset = 0; xOffset < dataSpan; xOffset++)
+			int dataSpan = this.sectionPos.getWidth(this.getDataDetailLevel()).numberOfLodSectionsWide;
+			
+			for (int xOffset = 0; xOffset < dataSpan; xOffset++)
 			{
-                for (int zOffset = 0; zOffset < dataSpan; zOffset++)
+				for (int zOffset = 0; zOffset < dataSpan; zOffset++)
 				{
-                    SingleColumnFullDataAccessor column = sparseSource.tryGet(
-                            xOffset * chunksPerData * sparseSource.dataPointsPerSection,
-                            zOffset * chunksPerData * sparseSource.dataPointsPerSection);
+					SingleColumnFullDataAccessor column = sparseSource.tryGet(
+							xOffset * chunksPerData * sparseSource.dataPointsPerSection,
+							zOffset * chunksPerData * sparseSource.dataPointsPerSection);
 					
-                    if (column != null)
+					if (column != null)
 					{
-                        column.deepCopyTo(this.get(offsetX + xOffset, offsetZ + zOffset));
+						column.deepCopyTo(this.get(offsetX + xOffset, offsetZ + zOffset));
 						this.isColumnNotEmpty.set((offsetX + xOffset) * WIDTH + offsetZ + zOffset, true);
-                    }
-                }
-            }
-        }
+					}
+				}
+			}
+		}
 		else
 		{
-            DhLodPos dataLodPos = pos.getSectionBBoxPos();
-            int lowerSectionsPerData = this.sectionPos.getWidth(dataLodPos.detailLevel).numberOfLodSectionsWide;
-            if (dataLodPos.x % lowerSectionsPerData != 0 || dataLodPos.z % lowerSectionsPerData != 0)
+			DhLodPos dataLodPos = pos.getSectionBBoxPos();
+			int lowerSectionsPerData = this.sectionPos.getWidth(dataLodPos.detailLevel).numberOfLodSectionsWide;
+			if (dataLodPos.x % lowerSectionsPerData != 0 || dataLodPos.z % lowerSectionsPerData != 0)
 			{
 				return;
 			}
 			
 			
-            dataLodPos = dataLodPos.convertToDetailLevel(this.getDataDetailLevel());
-            int offsetX = dataLodPos.x - thisLodPos.x;
-            int offsetZ = dataLodPos.z - thisLodPos.z;
-            
+			dataLodPos = dataLodPos.convertToDetailLevel(this.getDataDetailLevel());
+			int offsetX = dataLodPos.x - thisLodPos.x;
+			int offsetZ = dataLodPos.z - thisLodPos.z;
+			
 			SingleColumnFullDataAccessor column = sparseSource.tryGet(0, 0);
-            if (column != null)
+			if (column != null)
 			{
-                column.deepCopyTo(this.get(offsetX, offsetZ));
+				column.deepCopyTo(this.get(offsetX, offsetZ));
 				this.isColumnNotEmpty.set(offsetX * WIDTH + offsetZ, true);
-            }
-        }
-    }
+			}
+		}
+	}
 	
-    private void sampleFrom(CompleteFullDataSource completeSource)
+	private void sampleFrom(CompleteFullDataSource completeSource)
 	{
-        DhSectionPos pos = completeSource.getSectionPos();
+		DhSectionPos pos = completeSource.getSectionPos();
 		this.isEmpty = false;
 		this.downsampleFrom(completeSource);
 		
@@ -409,67 +439,38 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 		}
 		else
 		{
-            DhLodPos dataPos = pos.getSectionBBoxPos();
-            int lowerSectionsPerData = this.sectionPos.getWidth(dataPos.detailLevel).numberOfLodSectionsWide;
-            if (dataPos.x % lowerSectionsPerData != 0 || dataPos.z % lowerSectionsPerData != 0)
+			DhLodPos dataPos = pos.getSectionBBoxPos();
+			int lowerSectionsPerData = this.sectionPos.getWidth(dataPos.detailLevel).numberOfLodSectionsWide;
+			if (dataPos.x % lowerSectionsPerData != 0 || dataPos.z % lowerSectionsPerData != 0)
 			{
 				return;
 			}
 			
 			
-            DhLodPos basePos = this.sectionPos.getCorner(this.getDataDetailLevel());
-            dataPos = dataPos.convertToDetailLevel(this.getDataDetailLevel());
-            int offsetX = dataPos.x - basePos.x;
-            int offsetZ = dataPos.z - basePos.z;
+			DhLodPos basePos = this.sectionPos.getCorner(this.getDataDetailLevel());
+			dataPos = dataPos.convertToDetailLevel(this.getDataDetailLevel());
+			int offsetX = dataPos.x - basePos.x;
+			int offsetZ = dataPos.z - basePos.z;
 			this.isColumnNotEmpty.set(offsetX * WIDTH + offsetZ, true);
-        }
-
-    }
+		}
+		
+	}
 	
-    @Override
-    public IFullDataSource tryPromotingToCompleteDataSource()
+	@Override
+	public IFullDataSource tryPromotingToCompleteDataSource()
 	{
 		// promotion can only be completed if every column has data
-        if (this.isEmpty)
+		if (this.isEmpty)
 		{
 			return this;
 		}
-        else if (this.isColumnNotEmpty.cardinality() != WIDTH * WIDTH)
+		else if (this.isColumnNotEmpty.cardinality() != WIDTH * WIDTH)
 		{
 			return this;
 		}
 		
-        return new CompleteFullDataSource(this.sectionPos, this.mapping, this.dataArrays);
-    }
-	
-	
-	
-	//======//
-	// data //
-	//======//
-	
-    @Override
-    public SingleColumnFullDataAccessor tryGet(int relativeX, int relativeZ) { return this.isColumnNotEmpty.get(relativeX * WIDTH + relativeZ) ? this.get(relativeX, relativeZ) : null; }
-	
-	
-	
-	//=====================//
-	// getters and setters //
-	//=====================//
-	
-	@Override
-	public DhSectionPos getSectionPos() { return this.sectionPos; }
-	@Override
-	public byte getDataDetailLevel() { return (byte) (this.sectionPos.sectionDetailLevel - SECTION_SIZE_OFFSET); }
-	@Override
-	public byte getBinaryDataFormatVersion() { return DATA_FORMAT_VERSION;  }
-	
-	@Override
-	public EDhApiWorldGenerationStep getWorldGenStep() { return this.worldGenStep; }
-	
-	@Override
-	public boolean isEmpty() { return this.isEmpty; }
-	public void markNotEmpty() { this.isEmpty = false;  }
+		return new CompleteFullDataSource(this.sectionPos, this.mapping, this.dataArrays);
+	}
 	
 	
 	
