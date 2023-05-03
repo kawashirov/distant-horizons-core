@@ -25,6 +25,12 @@ public class LodRenderSection
 	public final AtomicReference<ColumnRenderBuffer> renderBufferRef = new AtomicReference<>();
 	
 	private boolean isRenderingEnabled = false;
+	/** 
+	 * If this is true, then {@link LodRenderSection#reload(ILodRenderSourceProvider)} was called while 
+	 * a {@link ILodRenderSourceProvider} was already being loaded.
+	 */
+	private boolean reloadRenderSourceOnceLoaded = false;
+	
 	
 	private ILodRenderSourceProvider renderSourceProvider = null;
     private CompletableFuture<ColumnRenderSource> renderSourceLoadFuture;
@@ -58,47 +64,80 @@ public class LodRenderSection
 			return;
 		}
 		
-		if (this.renderSource == null && this.renderSourceLoadFuture == null)
+		// don't re-load or double load the render source
+		if (this.renderSource != null || this.renderSourceLoadFuture != null)
 		{
-			this.renderSourceLoadFuture = this.renderSourceProvider.readAsync(this.pos);
-			this.renderSourceLoadFuture.whenComplete((renderSource, ex) ->
-			{
-				this.renderSource = renderSource;
-				this.renderSourceLoadFuture = null;
-				
-				if (this.renderSource != null)
-				{
-					this.renderSource.allowRendering(level);
-				}
-			});
+			return;
 		}
+		
+		
+		
+		this.renderSourceLoadFuture = this.renderSourceProvider.readAsync(this.pos);
+		this.renderSourceLoadFuture.whenComplete((renderSource, ex) ->
+		{
+			this.renderSourceLoadFuture = null;
+			
+			this.renderSource = renderSource;
+			if (this.renderSource != null)
+			{
+				this.renderSource.allowRendering(level);
+			}
+			
+			
+			if (this.reloadRenderSourceOnceLoaded)
+			{
+				this.reloadRenderSourceOnceLoaded = false;
+				reload(this.renderSourceProvider);
+			}
+		});
 	}
 	
     public void reload(ILodRenderSourceProvider renderDataProvider)
 	{
+		this.renderSourceProvider = renderDataProvider;
+		if (this.renderSourceProvider == null)
+		{
+			return;
+		}
+		
+		
 		// don't accidentally enable rendering for a disabled section
 		if (!this.isRenderingEnabled)
 		{
 			return;
 		}
 		
-		
-		this.renderSourceProvider = renderDataProvider;
-		
-        if (this.renderSourceLoadFuture != null)
+		// wait for the current load future to finish before re-loading
+		if (this.renderSourceLoadFuture != null)
 		{
-			this.renderSourceLoadFuture.cancel(true);
-			this.renderSourceLoadFuture = null;
-        }
+			reloadRenderSourceOnceLoaded = true;
+			return;
+		}
 		
-        if (this.renderSource != null)
-		{
-			this.renderSource.dispose();
-			this.renderSource = null;
-        }
+		
 		
 		this.renderSourceLoadFuture = this.renderSourceProvider.readAsync(this.pos);
-    }
+		this.renderSourceLoadFuture.whenComplete((renderSource, ex) ->
+		{
+			this.renderSourceLoadFuture = null;
+			
+			// swap in the new render source
+			ColumnRenderSource oldRenderSource = this.renderSource;
+			this.renderSource = renderSource;
+			if (oldRenderSource != null)
+			{
+				// only clear the render source after we have a new one, otherwise flickering can happen 
+				oldRenderSource.dispose();
+			}
+			
+			
+			if (this.reloadRenderSourceOnceLoaded)
+			{
+				this.reloadRenderSourceOnceLoaded = false;
+				reload(this.renderSourceProvider);
+			}
+		});
+	}
 	
 	
     public void disposeRenderData()
