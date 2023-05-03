@@ -316,6 +316,13 @@ public class WorldGenerationQueue implements Closeable
 			DhSectionPos sectionPos = new DhSectionPos(closestTask.pos.detailLevel, closestTask.pos.x, closestTask.pos.z);
 			sectionPos.forEachChild((childDhSectionPos) -> 
 			{
+				if (!this.waitingTaskQuadTree.isSectionPosInBounds(childDhSectionPos))
+				{
+					// don't attempt to generate terrain outside the user's render distance
+					return;
+				}
+				
+				
 				CompletableFuture<WorldGenResult> newFuture = new CompletableFuture<>();
 				childFutures.add(newFuture);
 						
