@@ -244,11 +244,11 @@ public class WorldGenerationQueue implements Closeable
 		
 		WorldGenTask closestTask = null;
 		
-		// TODO improve, having to go over every item isn't super efficient
-		Iterator<QuadNode<WorldGenTask>> leafNodeIterator = this.waitingTaskQuadTree.leafNodeIterator();
-		while (leafNodeIterator.hasNext())
+		// TODO improve, having to go over every node isn't super efficient, removing null nodes from the tree would help
+		Iterator<QuadNode<WorldGenTask>> nodeIterator = this.waitingTaskQuadTree.nodeIterator();
+		while (nodeIterator.hasNext())
 		{
-			WorldGenTask newGenTask = leafNodeIterator.next().value;
+			WorldGenTask newGenTask = nodeIterator.next().value;
 			if (newGenTask != null) // TODO add an option to skip leaves with null values and potentially auto-prune them
 			{
 				
