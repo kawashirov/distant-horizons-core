@@ -30,9 +30,29 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	
 	private final ArrayList<IOnWorldGenCompleteListener> onWorldGenTaskCompleteListeners = new ArrayList<>();
 	
+	/** 
+	 * Keeps track of which partially generated {@link IFullDataSource} {@link DhSectionPos}' are waiting to be generated.
+	 * This is done to prevent sending duplicate generation requests for the same position.
+	 */
+	private final HashSet<DhSectionPos> incompleteSourceGenRequests = new HashSet<>();
+	
 	
 	
     public GeneratedFullDataFileHandler(IDhServerLevel level, File saveRootDir) { super(level, saveRootDir); }
+	
+	
+	
+	//======//
+	// data //
+	//======//
+	
+	public CompletableFuture<IFullDataSource> read(DhSectionPos pos)
+	{
+		return super.read(pos).whenComplete((fullDataSource, ex) -> 
+		{
+			this.checkIfSectionNeedsAdditionalGeneration(pos, fullDataSource);
+		});
+	}
 	
 	
 	
@@ -55,15 +75,8 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	// event listeners //
 	//=================//
 	
-	public void addWorldGenCompleteListener(IOnWorldGenCompleteListener listener)
-	{
-		this.onWorldGenTaskCompleteListeners.add(listener);
-	}
-	
-	public void removeWorldGenCompleteListener(IOnWorldGenCompleteListener listener)
-	{
-		this.onWorldGenTaskCompleteListeners.remove(listener);
-	}
+	public void addWorldGenCompleteListener(IOnWorldGenCompleteListener listener) { this.onWorldGenTaskCompleteListeners.add(listener); }
+	public void removeWorldGenCompleteListener(IOnWorldGenCompleteListener listener) { this.onWorldGenTaskCompleteListeners.remove(listener); }
 	
 	
 	
@@ -126,22 +139,26 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 				}
             }
 			
-            LOGGER.debug("Creating {} from sampling {} files: {}", pos, existingFiles.size(), existingFiles);
+//            LOGGER.debug("Creating "+pos+" from sampling "+existingFiles.size()+" files: "+existingFiles);
 			
 			// read in the existing data
 			final ArrayList<CompletableFuture<Void>> loadDataFutures = new ArrayList<>(existingFiles.size());
             for (FullDataMetaFile existingFile : existingFiles)
 			{
                 loadDataFutures.add(existingFile.loadOrGetCachedAsync()
-                        .exceptionally((ex) -> /*Ignore file read errors*/null)
-                        .thenAccept((data) ->
+					.exceptionally((ex) -> /*Ignore file read errors*/null)
+					.thenAccept((fullDataSource) ->
+					{
+						if (fullDataSource == null)
 						{
-                            if (data != null)
-							{
-                                //LOGGER.info("Merging data from {} into {}", data.getSectionPos(), pos);
-                                incompleteFullDataSource.sampleFrom(data);
-                            }
-                        })
+							return;
+						}
+						
+						this.checkIfSectionNeedsAdditionalGeneration(pos, fullDataSource);
+						
+						//LOGGER.info("Merging data from {} into {}", data.getSectionPos(), pos);
+						incompleteFullDataSource.sampleFrom(fullDataSource);
+					})
                 );
             }
 			
@@ -149,6 +166,34 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
                     .thenApply((voidValue) -> incompleteFullDataSource.tryPromotingToCompleteDataSource());
         }
     }
+	
+	/** 
+	 * Checks if the given {@link IFullDataSource} is fully generated and
+	 * if it isn't, new world gen request(s) will be created.
+	 */
+	private void checkIfSectionNeedsAdditionalGeneration(DhSectionPos pos, IFullDataSource fullDataSource)
+	{
+		if (!fullDataSource.isCompletelyGenerated() && !incompleteSourceGenRequests.contains(pos))
+		{
+			WorldGenerationQueue worldGenQueue = this.worldGenQueueRef.get();
+			if (worldGenQueue != null)
+			{
+				incompleteSourceGenRequests.add(pos);
+				//LOGGER.info("["+ungeneratedPosList.size()+"] missing sub positions for pos: ["+pos+"]. Number of gen requests queued: ["+queuedGenRequests.size()+"].");
+				
+				// note: this will potentially re-generate terrain, however due to the generator setup this is currently unavoidable and probably not worth worrying about
+				GenTask genTask = new GenTask(pos, new WeakReference<>(fullDataSource));
+				worldGenQueue.submitGenTask(fullDataSource.getSectionPos().getSectionBBoxPos(), fullDataSource.getDataDetailLevel(), genTask)
+						.whenComplete((genTaskResult, ex) ->
+						{
+							incompleteSourceGenRequests.remove(pos);
+							//LOGGER.info("Partial generation completed for pos: ["+pos+"]. Remaining gen requests queued: ["+queuedGenRequests.size()+"].");
+							
+							this.onWorldGenTaskComplete(genTaskResult, ex, genTask, pos);
+						});
+			}
+		}
+	}
 	
 	private void onWorldGenTaskComplete(WorldGenResult genTaskResult, Throwable exception, GenTask genTask, DhSectionPos pos)
 	{
@@ -164,6 +209,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		{
 			// generation completed, update the files and listener(s)
 			
+//			LOGGER.info("gen task completed for pos: ["+pos+"].");
 			this.files.get(genTask.pos).flushAndSaveAsync();
 			
 			// fire the event listeners 

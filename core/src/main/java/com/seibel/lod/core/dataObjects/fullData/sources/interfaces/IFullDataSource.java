@@ -61,6 +61,8 @@ public interface IFullDataSource
 	
 	FullDataPointIdMap getMapping();
 	
+	/** @return true if every datapoint in this object has been generated, false otherwise. */
+	default boolean isCompletelyGenerated() { return this.getUngeneratedPosList().size() == 0; }
 	/** @return the list of {@link DhSectionPos} that aren't generated in this data source. */
 	ArrayList<DhSectionPos> getUngeneratedPosList();
 	
