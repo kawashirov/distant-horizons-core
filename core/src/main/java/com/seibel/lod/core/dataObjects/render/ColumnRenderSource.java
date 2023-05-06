@@ -65,8 +65,8 @@ public class ColumnRenderSource
 	
 	//FIXME: Temp Hack to prevent swapping buffers too quickly
 	private long lastNs = -1;
-	/** 10 sec */
-	private static final long SWAP_TIMEOUT_IN_NS = 10_000000000L;
+	/** 2 sec */
+	private static final long SWAP_TIMEOUT_IN_NS = 2_000000000L;
 	/** 1 sec */
 	private static final long SWAP_BUSY_COLLISION_TIMEOUT_IN_NS = 1_000000000L;
 	
