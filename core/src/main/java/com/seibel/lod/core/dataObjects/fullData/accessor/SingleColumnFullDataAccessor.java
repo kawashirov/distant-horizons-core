@@ -31,7 +31,11 @@ public class SingleColumnFullDataAccessor implements IFullDataAccessor
 	
 	
 	
-	public boolean doesColumnExist() { return this.dataArrays[this.dataArrayIndex].length != 0; }
+	public boolean doesColumnExist() 
+	{
+		long[] dataColumn = this.dataArrays[this.dataArrayIndex];
+		return dataColumn != null && dataColumn.length != 0;
+	}
 	
 	@Override
 	public FullDataPointIdMap getMapping() { return this.mapping; }
