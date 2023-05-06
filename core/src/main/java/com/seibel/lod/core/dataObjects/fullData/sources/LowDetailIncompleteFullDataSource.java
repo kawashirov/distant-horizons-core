@@ -340,7 +340,11 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 			int offsetZ = dataOffset.z - baseOffset.z;
 			LodUtil.assertTrue(offsetX >= 0 && offsetX < WIDTH && offsetZ >= 0 && offsetZ < WIDTH);
 			this.isEmpty = false;
-			data.get(0,0).deepCopyTo(this.get(offsetX, offsetZ));
+			
+			SingleColumnFullDataAccessor columnFullDataAccessor = this.get(offsetX, offsetZ);
+			data.get(0,0).deepCopyTo(columnFullDataAccessor);
+
+			this.isColumnNotEmpty.set(offsetX * WIDTH + offsetZ, columnFullDataAccessor.doesColumnExist());
 		}
 		else
 		{
