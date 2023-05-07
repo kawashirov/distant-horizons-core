@@ -39,15 +39,13 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 	public Class<? extends IFullDataSource> dataType;
 	
 	/**
-	 * Deprecated: this should be split up into multiple variables to prevent datatype confusion
+	 * Can be cleared if the garbage collector determines there isn't enough space. <br><br>
 	 * 
-	 * The '?' type should either be:
-	 *    SoftReference<LodDataSource>, or		    - Non-dirty file that can be GCed
-	 *    CompletableFuture<LodDataSource>, or      - File that is being loaded. No guarantee that the type is promotable or not
-	 *    null									    - Nothing is loaded or being loaded
+	 * When clearing, don't set to null, instead create a SoftReference containing null. 
+	 * This will make null checks simpler.
 	 */
-	@Deprecated
-	AtomicReference<Object> data = new AtomicReference<>(null);
+	private SoftReference<IFullDataSource> cachedFullDataSource = new SoftReference<>(null);
+	private CompletableFuture<IFullDataSource> dataSourceWriteQueueFuture;
 	
 	
 	
@@ -144,9 +142,8 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 	public CompletableFuture<IFullDataSource> loadOrGetCachedDataSourceAsync()
 	{
 		debugPhantomLifeCycleCheck();
-		Object obj = this.data.get();
 		
-		CompletableFuture<IFullDataSource> cached = this.getCachedDataSourceAsync(obj);
+		CompletableFuture<IFullDataSource> cached = this.getCachedDataSourceAsync();
 		if (cached != null)
 		{
 			return cached;
@@ -155,42 +152,30 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 		
 		
 		CompletableFuture<IFullDataSource> future = new CompletableFuture<>();
-		
-		// Would use faster and non-nesting Compare and exchange. But java 8 doesn't have it! :(
-		boolean worked = this.data.compareAndSet(obj, future); // TODO if data was a future it would have a different memory address, would this ever return true?
-		if (!worked)
-		{
-			// TODO wouldn't this cause an infinite loop?
-			return this.loadOrGetCachedDataSourceAsync();
-		}
-		
-		
-		
-		// After cas. We are in exclusive control.
 		if (!this.doesFileExist)
 		{
 			// create a new Meta file
 			
 			this.fullDataSourceProvider.onCreateDataFile(this)
-				.thenApply((data) -> 
+				.thenApply((fullDataSource) -> 
 				{
-					this.baseMetaData = this._makeBaseMetaData(data);
-					return data;
+					this.baseMetaData = this._makeBaseMetaData(fullDataSource);
+					return fullDataSource;
 				})
-				.thenApply((data) -> this.fullDataSourceProvider.onDataFileLoaded(data, this.baseMetaData, this::_updateAndWriteDataSource, this::_applyWriteQueueToFullDataSource))
+				.thenApply((fullDataSource) -> this.fullDataSourceProvider.onDataFileLoaded(fullDataSource, this.baseMetaData, this::_updateAndWriteDataSource, this::_applyWriteQueueToFullDataSource))
 				.whenComplete((fullDataSource, exception) ->
 				{
 					if (exception != null)
 					{
 						LOGGER.error("Uncaught error on creation "+this.file+": ", exception);
 						future.complete(null);
-						this.data.set(null);
+						this.cachedFullDataSource = new SoftReference<>(null);
 					}
 					else
 					{
 						future.complete(fullDataSource);
 						new DataObjTracker(fullDataSource);
-						this.data.set(new SoftReference<>(fullDataSource));
+						this.cachedFullDataSource = new SoftReference<>(fullDataSource);
 					}
 				});
 		}
@@ -253,16 +238,16 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 					
 					
 					LOGGER.error("Error loading file "+this.file+": ", ex);
-					this.data.set(null);
+					this.cachedFullDataSource = new SoftReference<>(null);
 					
 					future.completeExceptionally(ex);
 					return null; // the return value here doesn't matter
 				})
-				.whenComplete((dataSource, e) -> 
+				.whenComplete((fullDataSource, e) -> 
 				{
-					future.complete(dataSource);
-					new DataObjTracker(dataSource);
-					this.data.set(new SoftReference<>(dataSource));
+					future.complete(fullDataSource);
+					new DataObjTracker(fullDataSource);
+					this.cachedFullDataSource = new SoftReference<>(fullDataSource);
 				});
 		}
 		
@@ -299,89 +284,80 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 				data.getDataDetailLevel(), data.getWorldGenStep(), (loader == null ? 0 : loader.datatypeId), data.getBinaryDataFormatVersion());
 	}
 	/**
-	 * @return either the cached {@link IFullDataSource}, 
+	 * @return one of the following:
+	 * 		the cached {@link IFullDataSource}, 
 	 * 		a future that will complete once the {@link FullDataMetaFile#writeQueueRef} has been written, 
-	 * 		or null if something went wrong
+	 * 		or null if nothing has been cached and nothing is being loaded
 	 */
-	private CompletableFuture<IFullDataSource> getCachedDataSourceAsync(Object obj)
+	private CompletableFuture<IFullDataSource> getCachedDataSourceAsync()
 	{
-		if ((obj instanceof SoftReference<?>))
+		// this data source is being written to, use the existing future
+		if (this.dataSourceWriteQueueFuture != null)
+		{
+			return this.dataSourceWriteQueueFuture;
+		}
+		
+		
+		
+		// attempt to get the cached data source
+		IFullDataSource cachedFullDataSource = this.cachedFullDataSource.get();
+		if (cachedFullDataSource != null)
 		{
 			// The file is cached in RAM
+			boolean writeQueueEmpty = this.writeQueueRef.get().queue.isEmpty();
 			
-			IFullDataSource innerFullDataSource = (IFullDataSource) ((SoftReference<?>)obj).get();
-			if (innerFullDataSource != null)
+			
+			if (writeQueueEmpty)
 			{
-				boolean writeQueueEmpty = this.writeQueueRef.get().queue.isEmpty();
+				// return the cached data
+				return CompletableFuture.completedFuture(cachedFullDataSource);
+			}
+			else
+			{
+				// either write the queue or return the future that is waiting for the queue write
 				
-				// If the queue is empty, and the CAS on inCacheWriteLock succeeds, then we are the thread
-				// that will be applying the changes to the cache.
-				if (writeQueueEmpty)
+				// Do a CAS on inCacheWriteLock to ensure that we are the only thread that is writing to the cache,
+				// or if we fail, then that means someone else is already doing it, and we can just return the future
+				CompletableFuture<IFullDataSource> future = new CompletableFuture<>();
+				CompletableFuture<IFullDataSource> compareAndSwapFuture = AtomicsUtil.compareAndExchange(this.inCacheWriteAccessFuture, null, future);
+				if (compareAndSwapFuture != null)
 				{
-					// return the cached data
-					return CompletableFuture.completedFuture(innerFullDataSource);
+					// a write is already in progress, return its future.
+					return compareAndSwapFuture;
 				}
 				else
 				{
-					// either write the queue or return the future that is waiting for the queue write
+					// write the queue to the data source
 					
-					// Do a CAS on inCacheWriteLock to ensure that we are the only thread that is writing to the cache,
-					// or if we fail, then that means someone else is already doing it, and we can just return the future
-					CompletableFuture<IFullDataSource> future = new CompletableFuture<>();
-					CompletableFuture<IFullDataSource> compareAndSwapFuture = AtomicsUtil.compareAndExchange(this.inCacheWriteAccessFuture, null, future);
-					if (compareAndSwapFuture != null)
-					{
-						// a write is already in progress, return its future.
-						return compareAndSwapFuture;
-					}
-					else
-					{
-						// write the queue to the data source
-						
-//						try // TODO is this try necessary?
-//						{
-							this.data.set(future);
+					this.dataSourceWriteQueueFuture = future;
+					
+					this.fullDataSourceProvider.onDataFileRefresh(cachedFullDataSource, this.baseMetaData, this::_applyWriteQueueToFullDataSource, this::_updateAndWriteDataSource)
+						.handle((fullDataSource, exception) -> 
+						{
+							if (exception != null)
+							{
+								LOGGER.error("Error refreshing data "+this.pos+": "+exception+" "+exception.getMessage());
+								future.complete(null);
+								this.cachedFullDataSource = new SoftReference<>(null);
+							}
+							else
+							{
+								future.complete(fullDataSource);
+								new DataObjTracker(fullDataSource);
+								this.cachedFullDataSource = new SoftReference<>(fullDataSource);
+							}
 							
-							this.fullDataSourceProvider.onDataFileRefresh(innerFullDataSource, this.baseMetaData, this::_applyWriteQueueToFullDataSource, this::_updateAndWriteDataSource)
-								.handle((fullDataSource, exception) -> 
-								{
-									if (exception != null)
-									{
-										LOGGER.error("Error refreshing data "+this.pos+": "+exception+" "+exception.getMessage());
-										future.complete(null);
-										this.data.set(null);
-									}
-									else
-									{
-										future.complete(fullDataSource);
-										new DataObjTracker(fullDataSource);
-										this.data.set(new SoftReference<>(fullDataSource));
-									}
-									
-									this.inCacheWriteAccessFuture.set(null);
-									return fullDataSource;
-								});
-							return future;
-//						}
-//						catch (Exception e)
-//						{
-//							LOGGER.error("Error while doing refreshes to LodDataSource at "+this.pos+": "+e);
-//							return CompletableFuture.completedFuture(innerFullDataSource);
-//						}
-					}
+							this.inCacheWriteAccessFuture.set(null);
+							return fullDataSource;
+						});
+					return future;
 				}
 			}
 		}
 		
 		
-		//==== Cached file out of scope ====
-		// Someone is already trying to complete it. so return the in-progress future.
-		if ((obj instanceof CompletableFuture<?>))
-		{
-			return (CompletableFuture<IFullDataSource>) obj;
-		}
-		
-		
+		// the data source hasn't been loaded 
+		// and isn't in the process of being loaded
 		return null;
 	}
 	
