@@ -173,26 +173,49 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	 */
 	private void checkIfSectionNeedsAdditionalGeneration(DhSectionPos pos, IFullDataSource fullDataSource)
 	{
-		if (!fullDataSource.isCompletelyGenerated() && !incompleteSourceGenRequests.contains(pos))
+		boolean generateSection = fullDataSource == null || (!fullDataSource.isCompletelyGenerated() && !incompleteSourceGenRequests.contains(pos));
+		if (!generateSection)
 		{
-			WorldGenerationQueue worldGenQueue = this.worldGenQueueRef.get();
-			if (worldGenQueue != null)
+			// this section doesn't need to be generated
+			return;
+		}
+		
+		WorldGenerationQueue worldGenQueue = this.worldGenQueueRef.get();
+		if (worldGenQueue == null)
+		{
+			// world generation is disabled
+			return;
+		}
+		
+		
+		// the data source could be null if no file exists for this position
+		if (fullDataSource == null)
+		{
+			if (pos.sectionDetailLevel <= HighDetailIncompleteFullDataSource.MAX_SECTION_DETAIL)
 			{
-				incompleteSourceGenRequests.add(pos);
-				//LOGGER.info("["+ungeneratedPosList.size()+"] missing sub positions for pos: ["+pos+"]. Number of gen requests queued: ["+queuedGenRequests.size()+"].");
-				
-				// note: this will potentially re-generate terrain, however due to the generator setup this is currently unavoidable and probably not worth worrying about
-				GenTask genTask = new GenTask(pos, new WeakReference<>(fullDataSource));
-				worldGenQueue.submitGenTask(fullDataSource.getSectionPos().getSectionBBoxPos(), fullDataSource.getDataDetailLevel(), genTask)
-						.whenComplete((genTaskResult, ex) ->
-						{
-							incompleteSourceGenRequests.remove(pos);
-							//LOGGER.info("Partial generation completed for pos: ["+pos+"]. Remaining gen requests queued: ["+queuedGenRequests.size()+"].");
-							
-							this.onWorldGenTaskComplete(genTaskResult, ex, genTask, pos);
-						});
+				fullDataSource = HighDetailIncompleteFullDataSource.createEmpty(pos);
+			}
+			else
+			{
+				fullDataSource = LowDetailIncompleteFullDataSource.createEmpty(pos);
 			}
 		}
+		
+		
+		
+		incompleteSourceGenRequests.add(pos);
+		//LOGGER.info("["+ungeneratedPosList.size()+"] missing sub positions for pos: ["+pos+"]. Number of gen requests queued: ["+queuedGenRequests.size()+"].");
+
+		// note: this will potentially re-generate terrain, however due to the generator setup this is currently unavoidable and probably not worth worrying about
+		GenTask genTask = new GenTask(pos, new WeakReference<>(fullDataSource));
+		worldGenQueue.submitGenTask(fullDataSource.getSectionPos().getSectionBBoxPos(), fullDataSource.getDataDetailLevel(), genTask)
+				.whenComplete((genTaskResult, ex) ->
+				{
+					incompleteSourceGenRequests.remove(pos);
+					//LOGGER.info("Partial generation completed for pos: ["+pos+"]. Remaining gen requests queued: ["+queuedGenRequests.size()+"].");
+
+					this.onWorldGenTaskComplete(genTaskResult, ex, genTask, pos);
+				});
 	}
 	
 	private void onWorldGenTaskComplete(WorldGenResult genTaskResult, Throwable exception, GenTask genTask, DhSectionPos pos)
