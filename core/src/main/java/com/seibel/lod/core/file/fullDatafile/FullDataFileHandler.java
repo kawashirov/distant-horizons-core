@@ -258,7 +258,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		
 		// future wrapper necessary in order to handle file read errors
 		CompletableFuture<IFullDataSource> futureWrapper = new CompletableFuture<>();
-		metaFile.loadOrGetCachedAsync().exceptionally((e) ->
+		metaFile.loadOrGetCachedDataSourceAsync().exceptionally((e) ->
 			{
 				FullDataMetaFile newMetaFile = this.removeCorruptedFile(pos, metaFile, e);
 				
@@ -365,7 +365,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 
             for (FullDataMetaFile metaFile : existFiles)
 			{
-                futures.add(metaFile.loadOrGetCachedAsync()
+                futures.add(metaFile.loadOrGetCachedDataSourceAsync()
                         .thenAccept((data) ->
 						{
                             if (data != null)
@@ -458,7 +458,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
     @Override
     public void close()
 	{
-        FullDataMetaFile.debugCheck();
+        FullDataMetaFile.debugPhantomLifeCycleCheck();
 		
 		// stop any existing file tasks
 		fileReaderThread.shutdownNow();

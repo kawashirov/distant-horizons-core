@@ -39,7 +39,7 @@ public class ColumnRenderLoader
     public ColumnRenderSource loadRenderSource(RenderMetaDataFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException
 	{
 		DataInputStream inputDataStream = new DataInputStream(bufferedInputStream); // DO NOT CLOSE
-		int dataFileVersion = dataFile.metaData.loaderVersion;
+		int dataFileVersion = dataFile.baseMetaData.binaryDataFormatVersion;
 		
 		switch (dataFileVersion)
 		{

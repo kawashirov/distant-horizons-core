@@ -21,11 +21,11 @@ public class BaseMetaData
 	// Loader stuff //
 	/** indicates what data is held in this file, this is generally a hash of the data's name */
 	public long dataTypeId;
-	public byte loaderVersion;
+	public byte binaryDataFormatVersion;
 	
 	
 	
-	public BaseMetaData(DhSectionPos pos, int checksum, byte dataLevel, EDhApiWorldGenerationStep worldGenStep, long dataTypeId, byte loaderVersion)
+	public BaseMetaData(DhSectionPos pos, int checksum, byte dataLevel, EDhApiWorldGenerationStep worldGenStep, long dataTypeId, byte binaryDataFormatVersion)
 	{
 		this.pos = pos;
 		this.checksum = checksum;
@@ -34,7 +34,7 @@ public class BaseMetaData
 		this.worldGenStep = worldGenStep;
 		
 		this.dataTypeId = dataTypeId;
-		this.loaderVersion = loaderVersion;
+		this.binaryDataFormatVersion = binaryDataFormatVersion;
 	}
 	
 }

@@ -52,7 +52,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 	{
 		super(fileHandler.computeRenderFilePath(pos), pos);
 		this.fileHandler = fileHandler;
-		LodUtil.assertTrue(this.metaData == null);
+		LodUtil.assertTrue(this.baseMetaData == null);
 		this.doesFileExist = this.file.exists();
 	}
 	
@@ -68,7 +68,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 	{
 		super(path);
 		this.fileHandler = fileHandler;
-		LodUtil.assertTrue(this.metaData != null);
+		LodUtil.assertTrue(this.baseMetaData != null);
 		
 		this.doesFileExist = this.file.exists();
 	}
@@ -163,7 +163,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 			this.fileHandler.onCreateRenderFileAsync(this)
 				.thenApply((data) -> 
 				{
-					this.metaData = makeMetaData(data);
+					this.baseMetaData = makeMetaData(data);
 					return data;
 				})
 				.thenApply((renderSource) -> this.fileHandler.onRenderFileLoaded(renderSource, this))
@@ -187,7 +187,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 		{
 			CompletableFuture.supplyAsync(() -> 
 				{
-					if (this.metaData == null)
+					if (this.baseMetaData == null)
 					{
 						throw new IllegalStateException("Meta data not loaded!");
 					}

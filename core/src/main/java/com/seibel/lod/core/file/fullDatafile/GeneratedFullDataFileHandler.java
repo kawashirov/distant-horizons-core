@@ -145,7 +145,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 			final ArrayList<CompletableFuture<Void>> loadDataFutures = new ArrayList<>(existingFiles.size());
             for (FullDataMetaFile existingFile : existingFiles)
 			{
-                loadDataFutures.add(existingFile.loadOrGetCachedAsync()
+                loadDataFutures.add(existingFile.loadOrGetCachedDataSourceAsync()
 					.exceptionally((ex) -> /*Ignore file read errors*/null)
 					.thenAccept((fullDataSource) ->
 					{

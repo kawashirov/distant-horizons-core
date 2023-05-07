@@ -73,9 +73,9 @@ public abstract class AbstractMetaDataContainerFile
 	 * Will be null if no file exists for this object. <br>
 	 * NOTE: Only use {@link BaseMetaData#pos} when initially setting up this object, afterwards the standalone {@link AbstractMetaDataContainerFile#pos} should be used. 
 	 */
-	public volatile BaseMetaData metaData = null;
+	public volatile BaseMetaData baseMetaData = null;
 	
-	/** Should be used instead of the position inside {@link AbstractMetaDataContainerFile#metaData} */
+	/** Should be used instead of the position inside {@link AbstractMetaDataContainerFile#baseMetaData} */
     public final DhSectionPos pos;
 	
     public File file;
@@ -86,8 +86,11 @@ public abstract class AbstractMetaDataContainerFile
 	// constructors //
 	//==============//
 	
-	/** Create a metaFile in this path. If the path has a file, throws FileAlreadyExistsException */
-	protected AbstractMetaDataContainerFile(File file, DhSectionPos pos) throws IOException
+	/** 
+	 * Create a metaFile in this path. 
+	 * @throws FileAlreadyExistsException If the path already has a file.
+	 */
+	protected AbstractMetaDataContainerFile(File file, DhSectionPos pos) throws FileAlreadyExistsException
 	{
 		this.file = file;
 		this.pos = pos;
@@ -98,7 +101,7 @@ public abstract class AbstractMetaDataContainerFile
 	}
 	
 	/** 
-	 * Creates a {@link AbstractMetaDataContainerFile} with the file at the given path. 
+	 * Creates an {@link AbstractMetaDataContainerFile} with the file at the given path. 
 	 * @throws IOException if the file was formatted incorrectly
 	 * @throws FileNotFoundException if no file exists for the given path
 	 */
@@ -111,8 +114,8 @@ public abstract class AbstractMetaDataContainerFile
 		}
 		
 		validateMetaDataFile(this.file);
-		this.metaData = readMetaDataFromFile(file);
-		this.pos = this.metaData.pos;
+		this.baseMetaData = readMetaDataFromFile(file);
+		this.pos = this.baseMetaData.pos;
 	}
 	/**
 	 * Attempts to create a new {@link AbstractMetaDataContainerFile} from the given file. 
@@ -173,21 +176,21 @@ public abstract class AbstractMetaDataContainerFile
 		if (!file.canWrite()) throw new IOException("File not writable");
 	}
 	
-	/** Sets this object's {@link AbstractMetaDataContainerFile#metaData} using the set {@link AbstractMetaDataContainerFile#file} */
+	/** Sets this object's {@link AbstractMetaDataContainerFile#baseMetaData} using the set {@link AbstractMetaDataContainerFile#file} */
 	protected void loadMetaData() throws IOException
 	{
 		validateMetaDataFile(this.file);
-		this.metaData = readMetaDataFromFile(this.file);
-		if (!this.metaData.pos.equals(this.pos))
+		this.baseMetaData = readMetaDataFromFile(this.file);
+		if (!this.baseMetaData.pos.equals(this.pos))
 		{
-			LOGGER.warn("The file is from a different location than expected! Expected: ["+this.pos+"] but got ["+this.metaData.pos+"]. Ignoring file tag.");
-			this.metaData.pos = this.pos;
+			LOGGER.warn("The file is from a different location than expected! Expected: ["+this.pos+"] but got ["+this.baseMetaData.pos+"]. Ignoring file tag.");
+			this.baseMetaData.pos = this.pos;
 		}
 	}
 	
 	protected void writeData(IMetaDataWriterFunc<BufferedOutputStream> dataWriterFunc) throws IOException
 	{
-		LodUtil.assertTrue(this.metaData != null);
+		LodUtil.assertTrue(this.baseMetaData != null);
 		if (this.file.exists())
 		{
 			validateMetaDataFile(this.file);
@@ -226,10 +229,10 @@ public abstract class AbstractMetaDataContainerFile
 			buffer.putInt(this.pos.sectionZ);
 			buffer.putInt(checksum);
 			buffer.put(this.pos.sectionDetailLevel);
-			buffer.put(this.metaData.dataLevel);
-			buffer.put(this.metaData.loaderVersion);
-			buffer.put(this.metaData.worldGenStep != null ? this.metaData.worldGenStep.value : EDhApiWorldGenerationStep.EMPTY.value); // TODO this null check shouldn't be necessary
-			buffer.putLong(this.metaData.dataTypeId);
+			buffer.put(this.baseMetaData.dataLevel);
+			buffer.put(this.baseMetaData.binaryDataFormatVersion);
+			buffer.put(this.baseMetaData.worldGenStep != null ? this.baseMetaData.worldGenStep.value : EDhApiWorldGenerationStep.EMPTY.value); // TODO this null check shouldn't be necessary
+			buffer.putLong(this.baseMetaData.dataTypeId);
 			buffer.putLong(Long.MAX_VALUE); //buff.putLong(this.metaData.dataVersion.get()); // not currently implemented
 			LodUtil.assertTrue(buffer.remaining() == METADATA_RESERVED_SIZE);
 			buffer.flip();

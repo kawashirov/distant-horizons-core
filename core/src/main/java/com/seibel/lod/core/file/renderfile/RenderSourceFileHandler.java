@@ -352,9 +352,9 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
         currentRenderSource.updateFromRenderSource(newRenderSource);
 		
         //file.metaData.dataVersion.set(newDataVersion);
-        file.metaData.dataLevel = currentRenderSource.getDataDetail();
-        file.metaData.dataTypeId = RENDER_SOURCE_TYPE_ID;
-        file.metaData.loaderVersion = currentRenderSource.getRenderDataFormatVersion();
+        file.baseMetaData.dataLevel = currentRenderSource.getDataDetail();
+        file.baseMetaData.dataTypeId = RENDER_SOURCE_TYPE_ID;
+        file.baseMetaData.binaryDataFormatVersion = currentRenderSource.getRenderDataFormatVersion();
         file.save(currentRenderSource);
     }
 	
@@ -363,14 +363,14 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
         RenderMetaDataFile file = this.filesBySectionPos.get(renderSource.getSectionPos());
         if (renderSource.isEmpty())
 		{
-            if (file == null || file.metaData == null)
+            if (file == null || file.baseMetaData == null)
 			{
                 return false;
             }
         }
 		
         LodUtil.assertTrue(file != null);
-        LodUtil.assertTrue(file.metaData != null);
+        LodUtil.assertTrue(file.baseMetaData != null);
 //        if (!this.fullDataSourceProvider.isCacheVersionValid(file.pos, file.metaData.dataVersion.get()))
 //		{
 			this.updateCacheAsync(renderSource, file).join();
