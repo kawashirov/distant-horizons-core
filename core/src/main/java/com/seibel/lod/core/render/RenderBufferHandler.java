@@ -35,9 +35,9 @@ public class RenderBufferHandler
 	
 	
 	/**
-     * The following buildRenderList sorting method is based on the following reddit post:
-     * https://www.reddit.com/r/VoxelGameDev/comments/a0l8zc/correct_depthordering_for_translucent_discrete/
-	 * 
+	 * The following buildRenderList sorting method is based on the following reddit post: <br>
+	 * <a href="https://www.reddit.com/r/VoxelGameDev/comments/a0l8zc/correct_depthordering_for_translucent_discrete/">correct_depth_ordering_for_translucent_discrete</a> <br><br>
+	 *
 	 * TODO: This might get locked by update() causing move() call. Is there a way to avoid this?
 	 *       Maybe dupe the base list and use atomic swap on render? Or is this not worth it?
 	 */
@@ -147,7 +147,7 @@ public class RenderBufferHandler
 			
 			if (renderSection != null && renderSection.shouldRender())
 			{
-				if (renderSection.renderBufferRef.get() != null && renderSection.renderBufferRef.get().areBuffersUploaded())
+				if (renderSection.renderBufferRef.get() != null && renderSection.renderBufferRef.get().buffersUploaded)
 				{
 					this.loadedNearToFarBuffers.add(new LoadedRenderBuffer(renderSection.renderBufferRef.get(), sectionPos));
 				}

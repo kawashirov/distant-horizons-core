@@ -189,7 +189,7 @@ public class LodRenderSection
 					(
 						// check if the buffers have been loaded
 						this.renderBufferRef.get() != null
-						&& this.renderBufferRef.get().areBuffersUploaded()
+						&& this.renderBufferRef.get().buffersUploaded
 					)
 				);
 	}

@@ -1,6 +1,7 @@
 package com.seibel.lod.core.dataObjects.render;
 
 import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
+import com.seibel.lod.core.dataObjects.render.bufferBuilding.ColumnRenderBufferBuilder;
 import com.seibel.lod.coreapi.ModInfo;
 import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.render.columnViews.ColumnArrayView;
@@ -344,7 +345,7 @@ public class ColumnRenderSource
 	// TODO return future?
 	private void tryBuildBuffer(IDhClientLevel level, ColumnRenderSource renderSource)
 	{
-		if (this.buildRenderBufferFuture == null && !ColumnRenderBuffer.isBusy() && !this.isEmpty)
+		if (this.buildRenderBufferFuture == null && !ColumnRenderBufferBuilder.isBusy() && !this.isEmpty)
 		{
 			ColumnRenderSource[] columnRenderSources = new ColumnRenderSource[ELodDirection.ADJ_DIRECTIONS.length];
 			for (ELodDirection direction : ELodDirection.ADJ_DIRECTIONS)
@@ -357,7 +358,7 @@ public class ColumnRenderSource
 			}
 			
 			// TODO this needs to allow generating partial sections to allow for non-full quadTree RenderSections to render
-			this.buildRenderBufferFuture = ColumnRenderBuffer.buildBuffers(level, this.columnRenderBufferRef, this, columnRenderSources);
+			this.buildRenderBufferFuture = ColumnRenderBufferBuilder.buildBuffers(level, this.columnRenderBufferRef, this, columnRenderSources);
 		}
 	}
 	
@@ -401,13 +402,13 @@ public class ColumnRenderSource
 				
 				
 				ColumnRenderBuffer newBuffer = this.buildRenderBufferFuture.join();
-				LodUtil.assertTrue(newBuffer.areBuffersUploaded(), "The buffer future for "+renderSource.sectionPos+" returned an un-built buffer.");
+				LodUtil.assertTrue(newBuffer.buffersUploaded, "The buffer future for "+renderSource.sectionPos+" returned an un-built buffer.");
 				
 				ColumnRenderBuffer oldBuffer = renderBufferRefToSwap.getAndSet(newBuffer);
 				if (oldBuffer != null)
 				{
 					// the old buffer is now considered unloaded, it will need to be freshly re-loaded
-					oldBuffer.setBuffersUploaded(false);
+					oldBuffer.buffersUploaded = false;
 				}
 				
 				ColumnRenderBuffer swapped = this.columnRenderBufferRef.swap(oldBuffer);
@@ -422,7 +423,7 @@ public class ColumnRenderSource
 		{
 			if (!this.isEmpty)
 			{
-				if (ColumnRenderBuffer.isBusy())
+				if (ColumnRenderBufferBuilder.isBusy())
 				{
 					this.lastNs += (long) (SWAP_BUSY_COLLISION_TIMEOUT_IN_NS * Math.random());
 				}
