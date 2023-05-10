@@ -33,7 +33,7 @@ import java.util.BitSet;
  * @see CompleteFullDataSource
  * @see FullDataPointUtil
  */
-public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor implements IIncompleteFullDataSource, IStreamableFullDataSource<IStreamableFullDataSource.FullDataSourceSummaryData, long[][]>
+public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor implements IIncompleteFullDataSource, IStreamableFullDataSource<IStreamableFullDataSource.FullDataSourceSummaryData, LowDetailIncompleteFullDataSource.StreamDataPointContainer>
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
@@ -174,7 +174,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 		return true;
 	}
 	@Override
-	public long[][] readDataPoints(FullDataMetaFile dataFile, int width, BufferedInputStream bufferedInputStream) throws IOException
+	public StreamDataPointContainer readDataPoints(FullDataMetaFile dataFile, int width, BufferedInputStream bufferedInputStream) throws IOException
 	{
 		DataInputStream dataInputStream = new DataInputStream(bufferedInputStream); // DO NOT CLOSE
 		
@@ -226,15 +226,24 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 		}
 		
 		
-		return dataPointArray;
+		return new StreamDataPointContainer(dataPointArray, isColumnNotEmpty);
 	}
 	@Override
-	public void setDataPoints(long[][] dataPoints)
+	public void setDataPoints(StreamDataPointContainer streamDataPointContainer)
 	{
+		long[][] dataPoints = streamDataPointContainer.dataPoints;
+		
+		// copy over the datapoints
 		LodUtil.assertTrue(this.dataArrays.length == dataPoints.length, "Data point array length mismatch.");
+		System.arraycopy(dataPoints, 0, this.dataArrays, 0, dataPoints.length);
+		
+		// overwrite the bitset
+		for (int i = 0; i < streamDataPointContainer.isColumnNotEmpty.length(); i++)
+		{
+			this.isColumnNotEmpty.set(i, streamDataPointContainer.isColumnNotEmpty.get(i));
+		}
 		
 		this.isEmpty = false;
-		System.arraycopy(dataPoints, 0, this.dataArrays, 0, dataPoints.length);
 	}
 	
 	
@@ -249,7 +258,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 		
 	}
 	@Override
-	public FullDataPointIdMap readIdMappings(long[][] dataPoints, BufferedInputStream bufferedInputStream) throws IOException, InterruptedException
+	public FullDataPointIdMap readIdMappings(StreamDataPointContainer streamDataPointContainer, BufferedInputStream bufferedInputStream) throws IOException, InterruptedException
 	{
 		DataInputStream dataInputStream = new DataInputStream(bufferedInputStream); // Don't close, this stream is handled outside this method
 		
@@ -494,6 +503,25 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 		}
 		
 		return new CompleteFullDataSource(this.sectionPos, this.mapping, this.dataArrays);
+	}
+	
+	
+	
+	//================//
+	// helper classes //
+	//================//
+	
+	/** used when reading the datapoints to and from the {@link IStreamableFullDataSource} */
+	public static class StreamDataPointContainer
+	{
+		public long[][] dataPoints;
+		public BitSet isColumnNotEmpty;
+		
+		public StreamDataPointContainer(long[][] dataPoints, BitSet isColumnNotEmpty)
+		{
+			this.dataPoints = dataPoints;
+			this.isColumnNotEmpty = isColumnNotEmpty;
+		}
 	}
 	
 	
