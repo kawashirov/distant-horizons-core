@@ -19,17 +19,18 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
-    // The '?' type should either be:
-    //    SoftReference<LodRenderSource>, or	- File that may still be loaded
-    //    CompletableFuture<LodRenderSource>,or - File that is being loaded
-    //    null									- Nothing is loaded or being loaded
-    AtomicReference<Object> data = new AtomicReference<>(null);
+	/**
+	 * Can be cleared if the garbage collector determines there isn't enough space. <br><br>
+	 *
+	 * When clearing, don't set to null, instead create a SoftReference containing null. 
+	 * This will make null checks simpler.
+	 */
+	private SoftReference<ColumnRenderSource> cachedRenderDataSource = new SoftReference<>(null);
 	
 	private final RenderSourceFileHandler fileHandler;
 	private boolean doesFileExist;
@@ -77,28 +78,28 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 	
 	// FIXME: This can cause concurrent modification of LodRenderSource.
     //       Not sure if it will cause issues or not.
-	public void updateChunkIfNeeded(ChunkSizedFullDataAccessor chunkDataView, IDhClientLevel level)
+	public void updateChunkIfSourceExists(ChunkSizedFullDataAccessor chunkDataView, IDhClientLevel level)
 	{
 		DhLodPos chunkPos = chunkDataView.getLodPos();
-		LodUtil.assertTrue(this.pos.getSectionBBoxPos().overlapsExactly(chunkPos), "Chunk pos {} doesn't overlap with section {}", chunkPos, pos);
-			
-		CompletableFuture<ColumnRenderSource> source = this._readCached(this.data.get());
-		if (source == null)
+		LodUtil.assertTrue(this.pos.getSectionBBoxPos().overlapsExactly(chunkPos), "Chunk pos "+chunkPos+" doesn't overlap with section "+this.pos);
+		
+		// update the render source if one exists
+		CompletableFuture<ColumnRenderSource> readSourceFuture = this.getCachedDataSourceAsync();
+		if (readSourceFuture != null)
 		{
-			return;
+			readSourceFuture.thenAccept((renderSource) -> renderSource.fastWrite(chunkDataView, level));
 		}
 		
-		source.thenAccept((renderSource) -> renderSource.fastWrite(chunkDataView, level));
 	}
 	
     public CompletableFuture<Void> flushAndSave(ExecutorService renderCacheThread)
 	{
-		if (!file.exists())
+		if (!this.file.exists())
 		{
 			return CompletableFuture.completedFuture(null); // No need to save if the file doesn't exist.
 		}
 		
-		CompletableFuture<ColumnRenderSource> source = this._readCached(this.data.get());
+		CompletableFuture<ColumnRenderSource> source = this.getCachedDataSourceAsync();
 		if (source == null)
 		{
 			return CompletableFuture.completedFuture(null); // If there is no cached data, there is no need to save.
@@ -106,80 +107,62 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 		
 		return source.thenAccept((columnRenderSource) -> { }); // Otherwise, wait for the data to be read (which also flushes changes to the file).
 	}
-	
-    // Suppress casting of CompletableFuture<?> to CompletableFuture<LodRenderSource>
-    @SuppressWarnings("unchecked")
-	private CompletableFuture<ColumnRenderSource> _readCached(Object obj)
+	private CompletableFuture<ColumnRenderSource> getCachedDataSourceAsync()
 	{
-		// Has file cached in RAM and not freed yet.
-		if ((obj instanceof SoftReference<?>))
+		// attempt to get the cached data source
+		ColumnRenderSource cachedRenderDataSource = this.cachedRenderDataSource.get();
+		if (cachedRenderDataSource != null)
 		{
-			Object inner = ((SoftReference<?>) obj).get();
-			if (inner != null)
-			{
-				return fileHandler.onReadRenderSourceLoadedFromCacheAsync(this, (ColumnRenderSource) inner)
-						// wait for the handler to finish before returning the renderSource
-						.handle((voidObj, ex) -> (ColumnRenderSource) inner);
-			}
+			return this.fileHandler.onReadRenderSourceLoadedFromCacheAsync(this, cachedRenderDataSource)
+					// wait for the handler to finish before returning the renderSource
+					.handle((voidObj, ex) -> cachedRenderDataSource);
 		}
 		
-		//==== Cached file out of scope. ====
-		// Someone is already trying to complete it. so just return the obj.
-		if ((obj instanceof CompletableFuture<?>))
-		{
-			return (CompletableFuture<ColumnRenderSource>) obj;
-		}
+		
+		
+		// the data source hasn't been loaded 
+		// and isn't in the process of being loaded
 		return null;
 	}
 	
-	public CompletableFuture<ColumnRenderSource> loadOrGetCached(Executor fileReaderThreads, IDhLevel level)
+	public CompletableFuture<ColumnRenderSource> loadOrGetCachedDataSourceAsync(Executor fileReaderThreads, IDhLevel level)
 	{
-		Object obj = this.data.get();
 		
-		CompletableFuture<ColumnRenderSource> cached = this._readCached(obj);
-		if (cached != null)
+		CompletableFuture<ColumnRenderSource> getCachedFuture = this.getCachedDataSourceAsync();
+		if (getCachedFuture != null)
 		{
-			return cached;
+			return getCachedFuture;
 		}
+		
+		
 		
 		// Create an empty and non-completed future.
 		// Note: I do this before actually filling in the future so that I can ensure only
 		//   one task is submitted to the thread pool.
 		CompletableFuture<ColumnRenderSource> loadRenderSourceFuture = new CompletableFuture<>();
-		
-		// Would use faster and non-nesting Compare and exchange. But java 8 doesn't have it! :(
-		boolean worked = this.data.compareAndSet(obj, loadRenderSourceFuture);
-		if (!worked)
-		{
-			return this.loadOrGetCached(fileReaderThreads, level);
-		}
-		
-		// Now, there should only ever be one thread at a time here due to the CAS operation above.
-		
-		
-		// After cas. We are in exclusive control.
 		if (!this.doesFileExist)
 		{
+			// create a new Meta file
+			
 			this.fileHandler.onCreateRenderFileAsync(this)
-				.thenApply((data) -> 
+				.thenApply((renderSource) -> 
 				{
-					this.baseMetaData = makeMetaData(data);
-					return data;
+					this.baseMetaData = this.makeMetaData(renderSource);
+					return renderSource;
 				})
 				.thenApply((renderSource) -> this.fileHandler.onRenderFileLoaded(renderSource, this))
-				.whenComplete((renderSource, exception) -> 
+				.whenComplete((renderSource, ex) -> 
 				{
-					if (exception != null)
+					if (ex != null)
 					{
-						LOGGER.error("Uncaught error on creation {}: ", this.file, exception);
+						LOGGER.error("Uncaught error on creation {}: ", this.file, ex);
 						loadRenderSourceFuture.complete(null);
-						this.data.set(null);
+						this.cachedRenderDataSource = new SoftReference<>(null);
 					}
 					else
 					{
 						loadRenderSourceFuture.complete(renderSource);
-						//new DataObjTracker(v); //TODO: Obj Tracker??? For debug?
-						this.data.set(new SoftReference<>(renderSource));
+						this.cachedRenderDataSource = new SoftReference<>(renderSource);
 					}
 				});
 		}
@@ -199,33 +182,36 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 					{
 						renderSource = ColumnRenderLoader.INSTANCE.loadRenderSource(this, bufferedInputStream, level);
 					}
-					catch (IOException e)
+					catch (IOException ex)
 					{
-						throw new CompletionException(e);
+						throw new CompletionException(ex);
 					}
 					
 					renderSource = this.fileHandler.onRenderFileLoaded(renderSource, this);
 					return renderSource;
 				}, fileReaderThreads)
-				.whenComplete((renderSource, e) -> 
+				.whenComplete((renderSource, ex) -> 
 				{
-					if (e != null)
+					if (ex != null)
 					{
-						LOGGER.error("Error loading file {}: ", this.file, e);
+						LOGGER.error("Error loading file {}: ", this.file, ex);
 						loadRenderSourceFuture.complete(null);
-						this.data.set(null);
+						this.cachedRenderDataSource = new SoftReference<>(null);
 					}
 					else
 					{
 						loadRenderSourceFuture.complete(renderSource);
-						this.data.set(new SoftReference<>(renderSource));
+						this.cachedRenderDataSource = new SoftReference<>(renderSource);
 					}
 				});
 		}
+		
+		
+		
 		return loadRenderSourceFuture;
 	}
 	
-    private static BaseMetaData makeMetaData(ColumnRenderSource renderSource)
+    private BaseMetaData makeMetaData(ColumnRenderSource renderSource)
 	{
 		return new BaseMetaData(renderSource.getSectionPos(), -1,
 				renderSource.getDataDetail(), renderSource.worldGenStep, RenderSourceFileHandler.RENDER_SOURCE_TYPE_ID, renderSource.getRenderDataFormatVersion());
