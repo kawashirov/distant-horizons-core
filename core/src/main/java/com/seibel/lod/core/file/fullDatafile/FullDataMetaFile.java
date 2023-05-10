@@ -143,10 +143,10 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 	{
 		debugPhantomLifeCycleCheck();
 		
-		CompletableFuture<IFullDataSource> cached = this.getCachedDataSourceAsync();
-		if (cached != null)
+		CompletableFuture<IFullDataSource> getCachedFuture = this.getCachedDataSourceAsync();
+		if (getCachedFuture != null)
 		{
-			return cached;
+			return getCachedFuture;
 		}
 		
 		
@@ -346,6 +346,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 								new DataObjTracker(fullDataSource);
 								this.cachedFullDataSource = new SoftReference<>(fullDataSource);
 							}
+							this.dataSourceWriteQueueFuture = null;
 							
 							this.inCacheWriteAccessFuture.set(null);
 							return fullDataSource;
@@ -354,6 +355,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 				}
 			}
 		}
+		
 		
 		
 		// the data source hasn't been loaded 
