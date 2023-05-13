@@ -125,14 +125,4 @@ public class DhClientLevel extends AbstractDhClientLevel implements IDhClientLev
 	@Override
 	public IFullDataSourceProvider getFileHandler() { return this.fullDataFileHandler; }
 	
-	@Override
-	public void clearRenderDataCache()
-	{
-		ClientRenderState ClientRenderState = this.ClientRenderStateRef.get();
-		if (ClientRenderState != null && ClientRenderState.quadtree != null)
-		{
-			ClientRenderState.quadtree.clearRenderDataCache();
-		}
-	}
-	
 }

@@ -135,9 +135,10 @@ public abstract class AbstractDhClientLevel implements IDhClientLevel
 		ClientRenderState ClientRenderState = this.ClientRenderStateRef.get();
 		if (ClientRenderState == null)
 		{
-			LOGGER.error("Tried to call render() on "+this+" when renderer has not been started!");
+			// either the renderer hasn't been started yet, or is being reloaded
 			return;
 		}
+		
 		ClientRenderState.renderer.drawLODs(mcModelViewMatrix, mcProjectionMatrix, partialTicks, profiler);
 	}
 	
