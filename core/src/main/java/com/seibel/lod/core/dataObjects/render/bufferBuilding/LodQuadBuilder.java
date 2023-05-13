@@ -387,61 +387,64 @@ public class LodQuadBuilder
 		{
 			final ByteBuffer bb = ByteBuffer.allocateDirect(AbstractRenderBuffer.FULL_SIZED_BUFFER)
 					.order(ByteOrder.nativeOrder());
-			int dir = skipEmpty(0);
+			int directionIndex = this.skipEmptyDirectionIndices(0);
 			int quad = 0;
-
-			private int skipEmpty(int d)
+			
+			private int skipEmptyDirectionIndices(int directionIndex)
 			{
-				while (d < 6 && transparentQuads[d].isEmpty())
-					d++;
-				return d;
+				while (directionIndex < 6 &&
+						(LodQuadBuilder.this.transparentQuads[directionIndex] == null 
+						|| LodQuadBuilder.this.transparentQuads[directionIndex].isEmpty()))
+				{
+					directionIndex++;
+				}
+				
+				return directionIndex;
 			}
-
+			
 			@Override
-			public boolean hasNext()
-			{
-				return dir < 6;
-			}
-
+			public boolean hasNext() { return this.directionIndex < 6; }
+			
 			@Override
 			public ByteBuffer next()
 			{
-				if (dir >= 6)
+				if (this.directionIndex >= 6)
 				{
 					return null;
 				}
-				bb.clear();
-				bb.limit(AbstractRenderBuffer.FULL_SIZED_BUFFER);
-				while (bb.hasRemaining() && dir < 6)
+				
+				this.bb.clear();
+				this.bb.limit(AbstractRenderBuffer.FULL_SIZED_BUFFER);
+				while (this.bb.hasRemaining() && this.directionIndex < 6)
 				{
-					writeData();
+					this.writeData();
 				}
-				bb.limit(bb.position());
-				bb.rewind();
-				return bb;
+				this.bb.limit(this.bb.position());
+				this.bb.rewind();
+				return this.bb;
 			}
 
 			private void writeData()
 			{
-				int i = quad;
-				for (; i < transparentQuads[dir].size(); i++)
+				int i = this.quad;
+				for (; i < LodQuadBuilder.this.transparentQuads[this.directionIndex].size(); i++)
 				{
-					if (!bb.hasRemaining())
+					if (!this.bb.hasRemaining())
 					{
 						break;
 					}
-					putQuad(bb, transparentQuads[dir].get(i));
+					putQuad(this.bb, LodQuadBuilder.this.transparentQuads[this.directionIndex].get(i));
 				}
 
-				if (i >= transparentQuads[dir].size())
+				if (i >= LodQuadBuilder.this.transparentQuads[this.directionIndex].size())
 				{
-					quad = 0;
-					dir++;
-					dir = skipEmpty(dir);
+					this.quad = 0;
+					this.directionIndex++;
+					this.directionIndex = this.skipEmptyDirectionIndices(this.directionIndex);
 				}
 				else
 				{
-					quad = i;
+					this.quad = i;
 				}
 			}
 		};
@@ -634,7 +637,11 @@ public class LodQuadBuilder
 	/** Returns how many Buffers will be needed to render transparent quads in this builder. */
 	public int getCurrentNeededTransparentVertexBufferCount()
 	{
-		if (!doTransparency) return 0;
-		return MathUtil.ceilDiv(getCurrentTransparentQuadsCount(), AbstractRenderBuffer.MAX_QUADS_PER_BUFFER);
+		if (!this.doTransparency)
+		{
+			return 0;
+		}
+		
+		return MathUtil.ceilDiv(this.getCurrentTransparentQuadsCount(), AbstractRenderBuffer.MAX_QUADS_PER_BUFFER);
 	}
 }
