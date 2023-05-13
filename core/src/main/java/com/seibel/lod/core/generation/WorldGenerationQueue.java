@@ -272,12 +272,13 @@ public class WorldGenerationQueue implements Closeable
 		
 		
 		// remove the task we found, we are going to start it and don't want to run it multiple times
+		// TODO the setValue can fail if the user is moving and the task that was once in range is no longer in range
 		WorldGenTask removedWorldGenTask = this.waitingTaskQuadTree.setValue(new DhSectionPos(closestTask.pos.detailLevel, closestTask.pos.x, closestTask.pos.z), null);
-		// removedWorldGenTask can be null // TODO when? 
+		
 		
 		
 		// do we need to modify this task to generate it?
-		if(canGeneratePos((byte) 0, closestTask.pos)) // TODO should 0 be replaced?
+		if(this.canGeneratePos((byte) 0, closestTask.pos)) // TODO should detail level 0 be replaced?
 		{
 			// detail level is correct for generation, start generation
 			
@@ -307,9 +308,6 @@ public class WorldGenerationQueue implements Closeable
 			// detail level is too high (if the detail level was too low, the generator would've ignored the request),
 			// split up the task
 			
-			// make sure that we have a task to split up
-			LodUtil.assertTrue(closestTask == removedWorldGenTask);
-			
 			
 			// split up the task and add each one to the tree
 			LinkedList<CompletableFuture<WorldGenResult>> childFutures = new LinkedList<>();
@@ -325,7 +323,7 @@ public class WorldGenerationQueue implements Closeable
 				
 				CompletableFuture<WorldGenResult> newFuture = new CompletableFuture<>();
 				childFutures.add(newFuture);
-						
+				
 				WorldGenTask newGenTask = new WorldGenTask(new DhLodPos(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ), childDhSectionPos.sectionDetailLevel, removedWorldGenTask.taskTracker, newFuture);
 				this.waitingTaskQuadTree.setValue(new DhSectionPos(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ), newGenTask);
 				

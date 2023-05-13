@@ -12,7 +12,9 @@ import com.seibel.lod.core.util.objects.quadTree.QuadNode;
 import com.seibel.lod.core.util.objects.quadTree.QuadTree;
 import org.apache.logging.log4j.Logger;
 
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This quadTree structure is our core data structure and holds
@@ -26,6 +28,12 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	
     public final int blockRenderDistance;
     private final ILodRenderSourceProvider renderSourceProvider;
+	
+	/** 
+	 * This holds every {@link DhSectionPos} that should be reloaded next tick. <br>
+	 * This is a {@link ConcurrentHashMap} because new sections can be added to this list via the world generator threads.
+	 */
+	private final ConcurrentHashMap<DhSectionPos, Boolean> sectionsToReload = new ConcurrentHashMap<>();
 	
 	private final IDhClientLevel level; //FIXME: Proper hierarchy to remove this reference!
 	
@@ -79,6 +87,23 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	}
 	private void updateAllRenderSections(DhBlockPos2D playerPos)
 	{
+		// reload any sections that need reloading
+		DhSectionPos[] reloadSectionArray = this.sectionsToReload.keySet().toArray(new DhSectionPos[0]);
+		this.sectionsToReload.clear();
+		for (DhSectionPos pos : reloadSectionArray)
+		{
+			try
+			{
+				LodRenderSection renderSection = this.getValue(pos);
+				if (renderSection != null)
+				{
+					renderSection.reload(this.renderSourceProvider);
+				}
+			}
+			catch (IndexOutOfBoundsException e) { /* the section is now out of bounds, it doesn't need to be reloaded */ }
+		}
+		
+		
 		// walk through each root node
 		Iterator<DhSectionPos> rootPosIterator = this.rootNodePosIterator();
 		while (rootPosIterator.hasNext())
@@ -91,7 +116,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 			}
 			
 			QuadNode<LodRenderSection> rootNode = this.getNode(rootPos);
-			recursivelyUpdateRenderSectionNode(playerPos, rootNode, rootNode, rootNode.sectionPos, false);
+			this.recursivelyUpdateRenderSectionNode(playerPos, rootNode, rootNode, rootNode.sectionPos, false);
 		}
 	}
 	/** @return whether the current position is able to render (note: not if it IS rendering, just if it is ABLE to.) */
@@ -165,7 +190,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 			}
 			else
 			{
-				// all child positions are loaded, disable this section and enable the children.
+				// all child positions are loaded, disable this section and enable its children.
 				renderSection.disposeRenderData();
 				renderSection.disableRendering();
 				
@@ -181,9 +206,12 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 					boolean childSectionLoaded = this.recursivelyUpdateRenderSectionNode(playerPos, rootNode, childNode, childPos, parentRenderSectionIsEnabled);
 					allChildrenSectionsAreLoaded = childSectionLoaded && allChildrenSectionsAreLoaded;
 				}
-				// FIXME having world generation enabled in a pre-generated world that doesn't have any DH data can cause this to happen
-				//  surprisingly reloadPos() doesn't appear to be the culprit, maybe there is an issue with reloading/changing the full data source?
-				LodUtil.assertTrue(allChildrenSectionsAreLoaded, "Potential QuadTree concurrency issue. All child sections should be enabled and ready to render.");
+				if (!allChildrenSectionsAreLoaded)
+				{
+					// FIXME having world generation enabled in a pre-generated world that doesn't have any DH data can cause this to happen
+					//  surprisingly reloadPos() doesn't appear to be the culprit, maybe there is an issue with reloading/changing the full data source?
+					LOGGER.warn("Potential QuadTree concurrency issue. All child sections should be enabled and ready to render for pos: "+sectionPos);
+				}
 				
 				
 				// this section is now being rendered via its children
@@ -304,11 +332,14 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	 */
 	public void reloadPos(DhSectionPos pos)
 	{
-		LodRenderSection renderSection = this.getValue(pos);
-		if (renderSection != null)
+		if (pos == null)
 		{
-			renderSection.reload(this.renderSourceProvider);
+			// shouldn't happen, but James saw it happen once, so this is here just in case
+			LOGGER.warn("reloadPos given a null pos.");
+			return;
 		}
+		
+		this.sectionsToReload.put(pos, true);
 	}
 	
 	
