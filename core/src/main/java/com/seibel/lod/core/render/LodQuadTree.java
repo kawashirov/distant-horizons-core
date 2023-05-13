@@ -133,7 +133,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		//===============================//
 		
 //		byte expectedDetailLevel = 6; // can be used instead of the following logic for testing
-		byte expectedDetailLevel = calculateExpectedDetailLevel(playerPos, sectionPos);
+		byte expectedDetailLevel = this.calculateExpectedDetailLevel(playerPos, sectionPos);
 		expectedDetailLevel += DhSectionPos.SECTION_BLOCK_DETAIL_LEVEL;
 		expectedDetailLevel = (byte) Math.min(expectedDetailLevel, this.treeMaxDetailLevel);
 		

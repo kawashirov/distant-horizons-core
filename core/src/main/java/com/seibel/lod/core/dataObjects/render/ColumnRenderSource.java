@@ -303,6 +303,11 @@ public class ColumnRenderSource
 		{
 			FullDataToRenderDataTransformer.writeFullDataChunkToColumnData(this, level, chunkData);
 		}
+		catch (IllegalArgumentException e)
+		{
+			// shouldn't happen, but just in case
+			LOGGER.warn("Unable to complete fastWrite for RenderSource pos: ["+this.sectionPos+"] and chunk pos: ["+chunkData.pos+"].");
+		}
 		catch (InterruptedException e)
 		{
 			// expected if the transformer is shut down, the exception can be ignored
@@ -333,7 +338,8 @@ public class ColumnRenderSource
 	
 	public byte getDataDetail() { return (byte) (this.sectionPos.sectionDetailLevel - SECTION_SIZE_OFFSET); }
 	
-	public int getDataSize() { return BitShiftUtil.powerOfTwo(this.getDetailOffset()); }
+	/** @return how many data points wide this {@link ColumnRenderSource} is. */
+	public int getWidthInDataPoints() { return BitShiftUtil.powerOfTwo(this.getDetailOffset()); }
 	public byte getDetailOffset() { return SECTION_SIZE_OFFSET; }
 	
 	
@@ -455,11 +461,11 @@ public class ColumnRenderSource
 	//=======//
 	
 	/** Sets the debug flag for the given area */
-	public void fillDebugFlag(int startX, int startZ, int width, int height, DebugSourceFlag flag)
+	public void fillDebugFlag(int xStart, int zStart, int xWidth, int zWidth, DebugSourceFlag flag)
 	{
-		for (int x = startX; x < startX + width; x++)
+		for (int x = xStart; x < xStart + xWidth; x++)
 		{
-			for (int z = startZ; z < startZ + height; z++)
+			for (int z = zStart; z < zStart + zWidth; z++)
 			{
 				this.debugSourceFlags[x * SECTION_SIZE + z] = flag;
 			}

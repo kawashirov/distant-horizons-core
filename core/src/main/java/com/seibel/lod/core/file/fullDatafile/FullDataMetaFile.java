@@ -466,8 +466,6 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 	/** @return true if the queue was not empty and data was applied to the {@link IFullDataSource}. */
 	private boolean _applyWriteQueueToFullDataSource(IFullDataSource fullDataSource)
 	{
-		// TODO this isn't being called enough
-		
 		// Poll the write queue
 		// First check if write queue is empty, then swap the write queue.
 		// Must be done in this order to ensure isMemoryAddressValid work properly. See isMemoryAddressValid() for details.
