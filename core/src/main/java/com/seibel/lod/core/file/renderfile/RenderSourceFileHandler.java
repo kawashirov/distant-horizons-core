@@ -18,12 +18,12 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class RenderSourceFileHandler implements ILodRenderSourceProvider
 {
@@ -37,6 +37,8 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	
 	private final IDhClientLevel level;
 	private final File saveDir;
+	/** This is the lowest (highest numeric) detail level that this {@link RenderSourceFileHandler} is keeping track of. */
+	AtomicInteger lowestDetailLevel = new AtomicInteger(6);
 	private final IFullDataSourceProvider fullDataSourceProvider;
 	
 	private final ConcurrentHashMap<DhSectionPos, Object> cacheUpdateLockBySectionPos = new ConcurrentHashMap<>();
@@ -141,8 +143,15 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 				fileToUse = metaFiles.iterator().next();
 			}
 			
+			
 			// Add this file to the list of files.
 			this.filesBySectionPos.put(pos, fileToUse);
+			
+			// increase the lowest detail level if a new lower detail file is found
+			if (this.lowestDetailLevel.get() < pos.sectionDetailLevel)
+			{
+				this.lowestDetailLevel.set(pos.sectionDetailLevel);
+			}
 		}
 	}
 	
@@ -174,14 +183,21 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 				return null;
 			}
 			
+			
 			metaFile = this.filesBySectionPos.putIfAbsent(pos, newMetaFile); // This is a CAS with expected null value.
 			if (metaFile == null)
 			{
 				metaFile = newMetaFile;
 			}
+			
+			// increase the lowest detail level if a new lower detail file was added
+			if (this.lowestDetailLevel.get() < pos.sectionDetailLevel)
+			{
+				this.lowestDetailLevel.set(pos.sectionDetailLevel);
+			}
 		}
 		
-        return metaFile.loadOrGetCached(this.renderCacheThread, this.level).handle(
+        return metaFile.loadOrGetCachedDataSourceAsync(this.renderCacheThread, this.level).handle(
 			(renderSource, exception) ->
 			{
 				if (exception != null)
@@ -215,30 +231,43 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
     @Override
     public void writeChunkDataToFile(DhSectionPos sectionPos, ChunkSizedFullDataAccessor chunkDataView)
 	{
-        this.writeChunkDataToFileRecursively(sectionPos,chunkDataView);
+		// convert to the lowest detail level so all detail levels are updated
+        this.writeChunkDataToFileRecursively(sectionPos.convertToDetailLevel((byte) this.lowestDetailLevel.get()), chunkDataView);
 		this.fullDataSourceProvider.write(sectionPos, chunkDataView);
     }
-    private void writeChunkDataToFileRecursively(DhSectionPos sectPos, ChunkSizedFullDataAccessor chunkDataView)
+    private void writeChunkDataToFileRecursively(DhSectionPos sectionPos, ChunkSizedFullDataAccessor chunkDataView)
 	{
-		if (!sectPos.getSectionBBoxPos().overlapsExactly(chunkDataView.getLodPos()))
+		// only continue if the chunk data is in this sectionPos
+		if (!sectionPos.getSectionBBoxPos().overlapsExactly(chunkDataView.getLodPos()))
 		{
 			return;
 		}
 		
 		
-		if (sectPos.sectionDetailLevel > ColumnRenderSource.SECTION_SIZE_OFFSET)
+		
+		if (sectionPos.sectionDetailLevel > ColumnRenderSource.SECTION_SIZE_OFFSET)
 		{
-			this.writeChunkDataToFileRecursively(sectPos.getChildByIndex(0), chunkDataView);
-			this.writeChunkDataToFileRecursively(sectPos.getChildByIndex(1), chunkDataView);
-			this.writeChunkDataToFileRecursively(sectPos.getChildByIndex(2), chunkDataView);
-			this.writeChunkDataToFileRecursively(sectPos.getChildByIndex(3), chunkDataView);
+			this.writeChunkDataToFileRecursively(sectionPos.getChildByIndex(0), chunkDataView);
+			this.writeChunkDataToFileRecursively(sectionPos.getChildByIndex(1), chunkDataView);
+			this.writeChunkDataToFileRecursively(sectionPos.getChildByIndex(2), chunkDataView);
+			this.writeChunkDataToFileRecursively(sectionPos.getChildByIndex(3), chunkDataView);
 		}
 		
-		RenderMetaDataFile metaFile = this.filesBySectionPos.get(sectPos);
-		// Fast path: if there is a file for this section, just write to it.
+		
+		
+		RenderMetaDataFile metaFile = this.filesBySectionPos.get(sectionPos);
 		if (metaFile != null)
 		{
-			metaFile.updateChunkIfNeeded(chunkDataView, this.level);
+			metaFile.updateChunkIfSourceExists(chunkDataView, this.level);
+		}
+		else
+		{
+			// create a new file if necessary
+			this.readAsync(sectionPos).whenComplete((renderSource, ex) ->
+			{
+				RenderMetaDataFile newMetaFile = this.filesBySectionPos.get(sectionPos);
+				newMetaFile.updateChunkIfSourceExists(chunkDataView, this.level);
+			});
 		}
 	}
 	
@@ -273,15 +302,9 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		}
 		
 		// get the full data source loading future
-		final WeakReference<ColumnRenderSource> renderSourceReference = new WeakReference<>(renderSource); // TODO why is this a week reference?
 		CompletableFuture<IFullDataSource> fullDataSourceFuture = this.fullDataSourceProvider.read(renderSource.getSectionPos());
 		fullDataSourceFuture = fullDataSourceFuture.thenApply((fullDataSource) -> 
 			{
-				if (renderSourceReference.get() == null)
-				{
-					throw new UncheckedInterruptedException();
-				}
-				
 				// the fullDataSource can be null if the thread this was running on was interrupted
 				return fullDataSource;
 			}).exceptionally((ex) -> 
@@ -301,7 +324,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 				{
 					if (ex == null)
 					{
-						this.writeRenderSourceToFile(renderSourceReference.get(), file, newRenderSource);
+						this.writeRenderSourceToFile(renderSource, file, newRenderSource);
 					}
 					else
 					{
