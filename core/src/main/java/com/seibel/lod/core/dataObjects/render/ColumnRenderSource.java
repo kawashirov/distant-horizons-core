@@ -2,13 +2,13 @@ package com.seibel.lod.core.dataObjects.render;
 
 import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.core.dataObjects.render.bufferBuilding.ColumnRenderBufferBuilder;
+import com.seibel.lod.core.dataObjects.transformers.FullDataToRenderDataTransformer;
 import com.seibel.lod.coreapi.ModInfo;
 import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.render.columnViews.ColumnArrayView;
 import com.seibel.lod.core.dataObjects.render.columnViews.ColumnQuadView;
 import com.seibel.lod.core.dataObjects.render.columnViews.IColumnDataView;
 import com.seibel.lod.core.dataObjects.render.bufferBuilding.ColumnRenderBuffer;
-import com.seibel.lod.core.dataObjects.transformers.FullToColumnTransformer;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.enums.ELodDirection;
@@ -301,7 +301,7 @@ public class ColumnRenderSource
 	{
 		try
 		{
-			FullToColumnTransformer.writeFullDataChunkToColumnData(this, level, chunkData);
+			FullDataToRenderDataTransformer.writeFullDataChunkToColumnData(this, level, chunkData);
 		}
 		catch (InterruptedException e)
 		{

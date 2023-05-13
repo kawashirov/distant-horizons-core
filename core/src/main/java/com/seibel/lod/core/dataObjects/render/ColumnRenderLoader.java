@@ -4,7 +4,7 @@ import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IIncompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
-import com.seibel.lod.core.dataObjects.transformers.FullToColumnTransformer;
+import com.seibel.lod.core.dataObjects.transformers.FullDataToRenderDataTransformer;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.file.renderfile.RenderMetaDataFile;
@@ -58,16 +58,16 @@ public class ColumnRenderLoader
 		}
     }
 	
-	/** @throws InterruptedException see {@link FullToColumnTransformer#transformFullDataToColumnData(IDhClientLevel, CompleteFullDataSource) FullToColumnTransformer#transformFullDataToColumnData} for documentation */
+	/** @throws InterruptedException see {@link FullDataToRenderDataTransformer#transformFullDataToColumnData(IDhClientLevel, CompleteFullDataSource) FullDataToRenderDataTransformer#transformFullDataToColumnData} for documentation */
     public ColumnRenderSource createRenderSource(IFullDataSource fullDataSource, IDhClientLevel level) throws InterruptedException
 	{
 		if (fullDataSource instanceof CompleteFullDataSource)
 		{
-			return FullToColumnTransformer.transformFullDataToColumnData(level, (CompleteFullDataSource) fullDataSource);
+			return FullDataToRenderDataTransformer.transformFullDataToColumnData(level, (CompleteFullDataSource) fullDataSource);
 		}
 		else if (fullDataSource instanceof IIncompleteFullDataSource)
 		{
-			return FullToColumnTransformer.transformIncompleteDataToColumnData(level, (IIncompleteFullDataSource) fullDataSource);
+			return FullDataToRenderDataTransformer.transformIncompleteDataToColumnData(level, (IIncompleteFullDataSource) fullDataSource);
 		}
 		
 		LodUtil.assertNotReach();

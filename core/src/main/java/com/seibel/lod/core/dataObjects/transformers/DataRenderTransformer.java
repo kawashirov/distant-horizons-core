@@ -13,7 +13,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
-/** TODO: Merge this with {@link FullToColumnTransformer} */
+/** TODO: Merge this with {@link FullDataToRenderDataTransformer} */
 public class DataRenderTransformer
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();

@@ -3,13 +3,11 @@ package com.seibel.lod.core.dataObjects.transformers;
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
 import com.seibel.lod.core.dataObjects.fullData.accessor.SingleColumnFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
+import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IIncompleteFullDataSource;
-import com.seibel.lod.core.logging.DhLoggerBuilder;
-import com.seibel.lod.core.pos.DhChunkPos;
 import com.seibel.lod.core.util.RenderDataPointUtil;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.dataObjects.render.columnViews.ColumnArrayView;
-import com.seibel.lod.core.dataObjects.render.columnViews.ColumnQuadView;
 import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
@@ -22,9 +20,12 @@ import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.lod.coreapi.util.BitShiftUtil;
-import org.apache.logging.log4j.Logger;
 
-public class FullToColumnTransformer
+/**
+ * Handles converting {@link ChunkSizedFullDataAccessor}, {@link IIncompleteFullDataSource},
+ * and {@link IFullDataSource}'s to {@link ColumnRenderSource}.
+ */
+public class FullDataToRenderDataTransformer
 {
     private static final IBlockStateWrapper AIR = SingletonInjector.INSTANCE.get(IWrapperFactory.class).getAirBlockStateWrapper();
 	
@@ -39,7 +40,7 @@ public class FullToColumnTransformer
 	{
 		if (Thread.interrupted())
 		{
-			throw new InterruptedException(FullToColumnTransformer.class.getSimpleName()+" task interrupted.");
+			throw new InterruptedException(FullDataToRenderDataTransformer.class.getSimpleName()+" task interrupted.");
 		}
 	}
 	
