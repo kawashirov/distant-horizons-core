@@ -119,12 +119,15 @@ public class SingleColumnFullDataAccessor implements IFullDataAccessor
 		{
 			int[] remappedEntryIds = target.mapping.mergeAndReturnRemappedEntityIds(this.mapping);
 			long[] sourceData = this.dataArrays[this.dataArrayIndex];
-			long[] newData = new long[sourceData.length];
-			for (int i = 0; i < newData.length; i++)
+			if (sourceData != null)
 			{
-				newData[i] = FullDataPointUtil.remap(remappedEntryIds, sourceData[i]);
+				long[] newData = new long[sourceData.length];
+				for (int i = 0; i < newData.length; i++)
+				{
+					newData[i] = FullDataPointUtil.remap(remappedEntryIds, sourceData[i]);
+				}
+				target.dataArrays[target.dataArrayIndex] = newData;
 			}
-			target.dataArrays[target.dataArrayIndex] = newData;
 		}
 	}
 	

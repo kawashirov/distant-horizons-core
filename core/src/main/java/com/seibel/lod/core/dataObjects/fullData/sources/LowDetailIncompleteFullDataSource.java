@@ -376,17 +376,23 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 		}
 		
 		
-		if (fullDataSource instanceof HighDetailIncompleteFullDataSource)
-		{
-			this.sampleFrom((HighDetailIncompleteFullDataSource) fullDataSource);
-		}
-		else if (fullDataSource instanceof CompleteFullDataSource)
+		if (fullDataSource instanceof CompleteFullDataSource)
 		{
 			this.sampleFrom((CompleteFullDataSource) fullDataSource);
 		}
+		else if (fullDataSource instanceof HighDetailIncompleteFullDataSource)
+		{
+			this.sampleFrom((HighDetailIncompleteFullDataSource) fullDataSource);
+		}
+		else if (fullDataSource instanceof LowDetailIncompleteFullDataSource)
+		{
+			this.sampleFrom((LowDetailIncompleteFullDataSource) fullDataSource);
+//			LodUtil.assertNotReach("SampleFrom not implemented for ["+IFullDataSource.class.getSimpleName()+"] with class ["+fullDataSource.getClass().getSimpleName()+"].");
+		}
 		else
 		{
-			LodUtil.assertNotReach("SampleFrom not implemented for ["+IFullDataSource.class.getSimpleName()+"] with class ["+fullDataSource.getClass().getSimpleName()+"].");
+			// TODO implement
+			LodUtil.assertNotReach("SampleFrom not implemented for ["+this.getClass().getSimpleName()+"] with class ["+fullDataSource.getClass().getSimpleName()+"].");
 		}
 	}
 	
@@ -487,6 +493,48 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 			this.isColumnNotEmpty.set(offsetX * WIDTH + offsetZ, true);
 		}
 		
+	}
+	
+	private void sampleFrom(LowDetailIncompleteFullDataSource spottySource)
+	{
+		DhSectionPos pos = spottySource.getSectionPos();
+		this.isEmpty = false;
+		this.downsampleFrom(spottySource);
+		
+		
+		if (this.getDataDetailLevel() > this.sectionPos.sectionDetailLevel)
+		{
+			DhLodPos thisLodPos = this.sectionPos.getCorner(this.getDataDetailLevel());
+			DhLodPos dataLodPos = pos.getCorner(this.getDataDetailLevel());
+			
+			int offsetX = dataLodPos.x - thisLodPos.x;
+			int offsetZ = dataLodPos.z - thisLodPos.z;
+			int dataWidth = this.sectionPos.getWidth(this.getDataDetailLevel()).numberOfLodSectionsWide;
+			
+			for (int xOffset = 0; xOffset < dataWidth; xOffset++)
+			{
+				for (int zOffset = 0; zOffset < dataWidth; zOffset++)
+				{
+					this.isColumnNotEmpty.set((offsetX + xOffset) * WIDTH + offsetZ + zOffset, true);
+				}
+			}
+		}
+		else
+		{
+			DhLodPos dataPos = pos.getSectionBBoxPos();
+			int lowerSectionsPerData = this.sectionPos.getWidth(dataPos.detailLevel).numberOfLodSectionsWide;
+			if (dataPos.x % lowerSectionsPerData != 0 || dataPos.z % lowerSectionsPerData != 0)
+			{
+				return;
+			}
+			
+			
+			DhLodPos basePos = this.sectionPos.getCorner(this.getDataDetailLevel());
+			dataPos = dataPos.convertToDetailLevel(this.getDataDetailLevel());
+			int offsetX = dataPos.x - basePos.x;
+			int offsetZ = dataPos.z - basePos.z;
+			this.isColumnNotEmpty.set(offsetX * WIDTH + offsetZ, true);
+		}
 	}
 	
 	@Override

@@ -117,7 +117,8 @@ public class FullDataArrayAccessor implements IFullDataAccessor
 	 */
 	public void downsampleFrom(FullDataArrayAccessor fullDataAccessor)
 	{
-		LodUtil.assertTrue(fullDataAccessor.width > this.width && fullDataAccessor.width % this.width == 0);
+		// validate that the incoming data isn't smaller than this accessor
+		LodUtil.assertTrue(fullDataAccessor.width >= this.width && fullDataAccessor.width % this.width == 0);
 		
 		int dataPointsPerWidthUnit = fullDataAccessor.width / this.width;
 		for (int xOffset = 0; xOffset < this.width; xOffset++)

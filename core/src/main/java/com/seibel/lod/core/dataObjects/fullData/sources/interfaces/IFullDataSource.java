@@ -39,6 +39,7 @@ public interface IFullDataSource
 	
 	DhSectionPos getSectionPos();
 	
+	/** Returns the detail level of the data contained by this {@link IFullDataSource}. */
 	byte getDataDetailLevel();
 	byte getBinaryDataFormatVersion();
 	EDhApiWorldGenerationStep getWorldGenStep();
