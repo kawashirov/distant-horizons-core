@@ -104,6 +104,7 @@ public class Config
                                 + "\n"
                                 + "Lowest Quality: " + EHorizontalResolution.CHUNK + "\n"
                                 + "Highest Quality: " + EHorizontalResolution.BLOCK)
+						.addListener(RenderCacheConfigEventHandler.INSTANCE)
                         .build();
 
                 public static ConfigEntry<Integer> lodChunkRenderDistance = new ConfigEntry.Builder<Integer>()

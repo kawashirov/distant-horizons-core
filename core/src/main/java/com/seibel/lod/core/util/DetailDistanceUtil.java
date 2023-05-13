@@ -31,7 +31,8 @@ import com.seibel.lod.coreapi.util.MathUtil;
 @Deprecated
 public class DetailDistanceUtil
 {
-	private static byte minDetail = Config.Client.Graphics.Quality.drawResolution.get().detailLevel;
+	public static byte minDetail = Config.Client.Graphics.Quality.drawResolution.get().detailLevel;
+	
 	private static final byte maxDetail =  Byte.MAX_VALUE;
 	private static final double minDistance = 0;
 	private static double distanceUnit = 16 * Config.Client.Graphics.Quality.horizontalScale.get();
@@ -92,13 +93,5 @@ public class DetailDistanceUtil
 	{
 		return baseInverseFunction(distance);
 	}
-	
-	// NOTE: The recent LodWorldGenerator changes assumes that this value doesn't change with 'detail'.
-	// If this is changed, LodWorldGenerator needs to be fixed!
-	/*
-	public static DistanceGenerationMode getDistanceGenerationMode(int detail)
-	{
-		return CONFIG.client().worldGenerator().getDistanceGenerationMode();
-	}*/
 	
 }

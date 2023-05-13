@@ -20,8 +20,10 @@
 package com.seibel.lod.api.enums.config;
 
 /**
- * heightmap <br>
- * multi_lod <br>
+ * LOW <br>
+ * MEDIUM <br>
+ * HIGH <br>
+ * ULTRA <br>
  *
  * @author Leonardo Amato
  * @version 2023-2-5
@@ -34,6 +36,7 @@ public enum EVerticalQuality
 	HIGH(new int[] { 8, 6, 4, 2, 2, 2, 2, 1, 1, 1, 1 }),
 	ULTRA(new int[] { 16, 8, 4, 2, 2, 2, 2, 1, 1, 1, 1 });
 	
+	/** represents how many LODs can be rendered in a single vertical slice */
 	public final int[] maxVerticalData;
 	
 	
@@ -41,40 +44,6 @@ public enum EVerticalQuality
 	EVerticalQuality(int[] maxVerticalData) { this.maxVerticalData = maxVerticalData; }
 	
 	
-	
-	/** returns null if out of range */
-	public static EVerticalQuality previous(EVerticalQuality mode)
-	{
-		switch (mode)
-		{
-		case ULTRA:
-			return EVerticalQuality.HIGH;
-		case HIGH:
-			return EVerticalQuality.MEDIUM;
-		case MEDIUM:
-			return EVerticalQuality.LOW;
-		case LOW:
-		default:
-			return null;
-		}
-	}
-	
-	/** returns null if out of range */
-	public static EVerticalQuality next(EVerticalQuality mode)
-	{
-		switch (mode)
-		{
-		case MEDIUM:
-			return EVerticalQuality.HIGH;
-		case LOW:
-			return EVerticalQuality.MEDIUM;
-		case HIGH:
-			return EVerticalQuality.ULTRA;
-		case ULTRA:
-		default:
-			return null;
-		}
-	}
 	
     public int calculateMaxVerticalData(byte dataDetail)
 	{
