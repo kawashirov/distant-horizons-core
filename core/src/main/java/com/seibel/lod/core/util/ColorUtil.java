@@ -33,10 +33,11 @@ public class ColorUtil
 	//________ DH mod color format is: 0xAA RR GG BB
 	//OpenGL RGBA format native order: 0xRR GG BB AA
 	//_ OpenGL RGBA format Java Order: 0xAA BB GG RR
-
+	
+	public static final int INVISIBLE = rgbToInt(0, 0, 0, 0);
+	
 	public static final int BLACK = rgbToInt(0,0,0);
 	public static final int WHITE = rgbToInt(255,255,255);
-	public static final int TRANSPARENT = rgbToInt(0, 0, 0, 0);
 	public static final int RED = rgbToInt(255,0,0);
 	public static final int GREEN = rgbToInt(0,255,0);
 	public static final int BLUE = rgbToInt(0,0,255);

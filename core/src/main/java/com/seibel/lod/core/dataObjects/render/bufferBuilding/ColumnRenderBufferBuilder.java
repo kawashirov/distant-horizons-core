@@ -13,6 +13,7 @@ import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhBlockPos;
 import com.seibel.lod.core.render.glObject.GLProxy;
 import com.seibel.lod.core.render.glObject.buffer.GLVertexBuffer;
+import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.RenderDataPointUtil;
 import com.seibel.lod.core.util.ThreadUtil;
 import com.seibel.lod.core.util.objects.Reference;
@@ -155,28 +156,27 @@ public class ColumnRenderBufferBuilder
 					}
 				});
 	}
-	private static void makeLodRenderData(LodQuadBuilder quadBuilder, ColumnRenderSource region, ColumnRenderSource[] adjRegions)
+	private static void makeLodRenderData(LodQuadBuilder quadBuilder, ColumnRenderSource renderSource, ColumnRenderSource[] adjRegions)
 	{
 		// Variable initialization
 		EDebugMode debugMode = Config.Client.Advanced.Debugging.debugMode.get();
 		
-		// TODO pass in which child DhSectionPos should be built to allow generating partial sections so non-full quadTree RenderSections will render
-		byte detailLevel = region.getDataDetail();
+		byte detailLevel = renderSource.getDataDetail();
 		for (int x = 0; x < ColumnRenderSource.SECTION_SIZE; x++)
 		{
 			for (int z = 0; z < ColumnRenderSource.SECTION_SIZE; z++)
 			{
 				UncheckedInterruptedException.throwIfInterrupted();
 				
-				ColumnArrayView posData = region.getVerticalDataPointView(x, z);
-				if (posData.size() == 0
-						|| !RenderDataPointUtil.doesDataPointExist(posData.get(0))
-						|| RenderDataPointUtil.isVoid(posData.get(0)))
+				ColumnArrayView columnRenderData = renderSource.getVerticalDataPointView(x, z);
+				if (columnRenderData.size() == 0
+						|| !RenderDataPointUtil.doesDataPointExist(columnRenderData.get(0))
+						|| RenderDataPointUtil.isVoid(columnRenderData.get(0)))
 				{
 					continue;
 				}
 				
-				ColumnRenderSource.DebugSourceFlag debugSourceFlag = region.debugGetFlag(x, z);
+				ColumnRenderSource.DebugSourceFlag debugSourceFlag = renderSource.debugGetFlag(x, z);
 				
 				ColumnArrayView[][] adjData = new ColumnArrayView[4][];
 				// We extract the adj data in the four cardinal direction
@@ -185,6 +185,7 @@ public class ColumnRenderBufferBuilder
 				// border when we have transparent block like water or glass
 				// to avoid having a "darker border" underground
 				// Arrays.fill(adjShadeDisabled, false);
+				
 				
 				// We check every adj block in each direction
 				
@@ -202,24 +203,24 @@ public class ColumnRenderBufferBuilder
 						int zAdj = z + lodDirection.getNormal().z;
 						boolean isCrossRegionBoundary =
 								(xAdj < 0 || xAdj >= ColumnRenderSource.SECTION_SIZE) ||
-										(zAdj < 0 || zAdj >= ColumnRenderSource.SECTION_SIZE);
+								(zAdj < 0 || zAdj >= ColumnRenderSource.SECTION_SIZE);
 						
-						ColumnRenderSource adjRegion;
-						byte adjDetail;
+						ColumnRenderSource adjRenderSource;
+						byte adjDetailLevel;
 						
 						//we check if the detail of the adjPos is equal to the correct one (region border fix)
 						//or if the detail is wrong by 1 value (region+circle border fix)
 						if (isCrossRegionBoundary)
 						{
 							//we compute at which detail that position should be rendered
-							adjRegion = adjRegions[lodDirection.ordinal() - 2];
-							if (adjRegion == null)
+							adjRenderSource = adjRegions[lodDirection.ordinal() - 2];
+							if (adjRenderSource == null)
 							{
 								continue;
 							}
 							
-							adjDetail = adjRegion.getDataDetail();
-							if (adjDetail != detailLevel)
+							adjDetailLevel = adjRenderSource.getDataDetail();
+							if (adjDetailLevel != detailLevel)
 							{
 								//TODO: Implement this
 							}
@@ -240,50 +241,51 @@ public class ColumnRenderBufferBuilder
 						}
 						else
 						{
-							adjRegion = region;
-							adjDetail = detailLevel;
+							adjRenderSource = renderSource;
+							adjDetailLevel = detailLevel;
 						}
 						
-						if (adjDetail < detailLevel - 1 || adjDetail > detailLevel + 1)
+						if (adjDetailLevel < detailLevel - 1 || adjDetailLevel > detailLevel + 1)
 						{
 							continue;
 						}
 						
-						if (adjDetail == detailLevel || adjDetail > detailLevel)
+						if (adjDetailLevel == detailLevel || adjDetailLevel > detailLevel)
 						{
 							adjData[lodDirection.ordinal() - 2] = new ColumnArrayView[1];
-							adjData[lodDirection.ordinal() - 2][0] = adjRegion.getVerticalDataPointView(xAdj, zAdj);
+							adjData[lodDirection.ordinal() - 2][0] = adjRenderSource.getVerticalDataPointView(xAdj, zAdj);
 						}
 						else
 						{
 							adjData[lodDirection.ordinal() - 2] = new ColumnArrayView[2];
-							adjData[lodDirection.ordinal() - 2][0] = adjRegion.getVerticalDataPointView(xAdj, zAdj);
-							adjData[lodDirection.ordinal() - 2][1] = adjRegion.getVerticalDataPointView(
+							adjData[lodDirection.ordinal() - 2][0] = adjRenderSource.getVerticalDataPointView(xAdj, zAdj);
+							adjData[lodDirection.ordinal() - 2][1] = adjRenderSource.getVerticalDataPointView(
 									xAdj + (lodDirection.getAxis() == ELodDirection.Axis.X ? 0 : 1),
 									zAdj + (lodDirection.getAxis() == ELodDirection.Axis.Z ? 0 : 1));
 						}
 					}
 					catch (RuntimeException e)
 					{
-						EVENT_LOGGER.warn("Failed to get adj data for [{}:{},{}] at [{}]", detailLevel, x, z, lodDirection);
+						EVENT_LOGGER.warn("Failed to get adj data for ["+detailLevel+":"+x+","+z+"] at ["+lodDirection+"]");
 						EVENT_LOGGER.warn("Detail exception: ", e);
 					}
 				} // for adjacent directions
 				
+				
 				// We render every vertical lod present in this position
 				// We only stop when we find a block that is void or non-existing block
-				for (int i = 0; i < posData.size(); i++)
+				for (int i = 0; i < columnRenderData.size(); i++)
 				{
-					long data = posData.get(i);
-					// If the data is not renderable (Void or non-existing) we stop since there is
+					long data = columnRenderData.get(i);
+					// If the data is not render-able (Void or non-existing) we stop since there is
 					// no data left in this position
 					if (RenderDataPointUtil.isVoid(data) || !RenderDataPointUtil.doesDataPointExist(data))
 					{
 						break;
 					}
 					
-					long adjDataTop = i - 1 >= 0 ? posData.get(i - 1) : RenderDataPointUtil.EMPTY_DATA;
-					long adjDataBot = i + 1 < posData.size() ? posData.get(i + 1) : RenderDataPointUtil.EMPTY_DATA;
+					long adjDataTop = (i - 1) >= 0 ? columnRenderData.get(i - 1) : RenderDataPointUtil.EMPTY_DATA;
+					long adjDataBot = (i + 1) < columnRenderData.size() ? columnRenderData.get(i + 1) : RenderDataPointUtil.EMPTY_DATA;
 					
 					CubicLodTemplate.addLodToBuffer(data, adjDataTop, adjDataBot, adjData, detailLevel,
 							x, z, quadBuilder, debugMode, debugSourceFlag);
@@ -292,7 +294,7 @@ public class ColumnRenderBufferBuilder
 			}// for z
 		}// for x
 		
-		quadBuilder.mergeQuads();
+		quadBuilder.finalizeData();
 	}
 	
 	

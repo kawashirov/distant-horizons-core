@@ -21,28 +21,33 @@ package com.seibel.lod.core.dataObjects.render.bufferBuilding;
 
 import com.seibel.lod.core.enums.ELodDirection;
 
-/**
- * Represents a render-able quad.
- */
+/** Represents a render-able quad. */
 public final class BufferQuad
 {
-	final short x;
-	final short y;
-	final short z;
-	short widthEastWest;
+	public final short x;
+	public final short y;
+	public final short z;
+	
+	public short widthEastWest;
 	/** This is both North/South and Up/Down since the merging logic is the same either way */
-	short widthNorthSouthOrUpDown;
-	final int color;
-	final byte skyLight;
-	final byte blockLight;
-	final ELodDirection direction;
-
-	boolean hasError = false;
+	public short widthNorthSouthOrUpDown;
+	
+	/** 
+	 * not final since it may need to be modified to be opaque 
+	 * @see LodQuadBuilder#fixTransparencyOverVoid
+	 */
+	public int color;
+	
+	public final byte skyLight;
+	public final byte blockLight;
+	public final ELodDirection direction;
+	
+	public boolean hasError = false;
 	
 	
 	
 	BufferQuad(short x, short y, short z, short widthEastWest, short widthNorthSouthOrUpDown,
-			int color, byte skylight, byte blocklight,
+			int color, byte skylight, byte blockLight,
 			ELodDirection direction)
 	{
 		if (widthEastWest == 0 || widthNorthSouthOrUpDown == 0)
@@ -57,7 +62,7 @@ public final class BufferQuad
 		this.widthNorthSouthOrUpDown = widthNorthSouthOrUpDown;
 		this.color = color;
 		this.skyLight = skylight;
-		this.blockLight = blocklight;
+		this.blockLight = blockLight;
 		this.direction = direction;
 	}
 	
@@ -66,43 +71,43 @@ public final class BufferQuad
 	/** a rough but fast calculation */
 	double calculateDistance(double relativeX, double relativeY, double relativeZ)
 	{
-		return Math.pow(relativeX - x, 2) + Math.pow(relativeY - y, 2) + Math.pow(relativeZ - z, 2);
+		return Math.pow(relativeX - this.x, 2) + Math.pow(relativeY - this.y, 2) + Math.pow(relativeZ - this.z, 2);
 	}
 	
 	/** compares this quad's position to the given quad */
 	public int compare(BufferQuad quad, BufferMergeDirectionEnum compareDirection)
 	{
-		if (direction != quad.direction)
-			throw new IllegalArgumentException("The other quad is not in the same direction: " + quad.direction + " vs " + direction);
+		if (this.direction != quad.direction)
+			throw new IllegalArgumentException("The other quad is not in the same direction: " + quad.direction + " vs " + this.direction);
 		
 		if (compareDirection == BufferMergeDirectionEnum.EastWest)
 		{
-			switch (direction.getAxis())
+			switch (this.direction.getAxis())
 			{
 			case X:
-				return threeDimensionalCompare(x, y, z, quad.x, quad.y, quad.z);
+				return threeDimensionalCompare(this.x, this.y, this.z, quad.x, quad.y, quad.z);
 			case Y:
-				return threeDimensionalCompare(y, z, x, quad.y, quad.z, quad.x);
+				return threeDimensionalCompare(this.y, this.z, this.x, quad.y, quad.z, quad.x);
 			case Z:
-				return threeDimensionalCompare(z, y, x, quad.z, quad.y, quad.x);
+				return threeDimensionalCompare(this.z, this.y, this.x, quad.z, quad.y, quad.x);
 				
 			default:
-				throw new IllegalArgumentException("Invalid Axis enum: " + direction.getAxis());
+				throw new IllegalArgumentException("Invalid Axis enum: " + this.direction.getAxis());
 			}
 		}
-		else // if ()
+		else
 		{
-			switch (direction.getAxis())
+			switch (this.direction.getAxis())
 			{
 			case X:
-				return threeDimensionalCompare(x, z, y, quad.x, quad.z, quad.y);
+				return threeDimensionalCompare(this.x, this.z, this.y, quad.x, quad.z, quad.y);
 			case Y:
-				return threeDimensionalCompare(y, x, z, quad.y, quad.x, quad.z);
+				return threeDimensionalCompare(this.y, this.x, this.z, quad.y, quad.x, quad.z);
 			case Z:
-				return threeDimensionalCompare(z, x, y, quad.z, quad.x, quad.y);
+				return threeDimensionalCompare(this.z, this.x, this.y, quad.z, quad.x, quad.y);
 			
 			default:
-				throw new IllegalArgumentException("Invalid Axis enum: " + direction.getAxis());
+				throw new IllegalArgumentException("Invalid Axis enum: " + this.direction.getAxis());
 			}
 		}
 	}
@@ -128,7 +133,7 @@ public final class BufferQuad
 	{
 		if (quad.hasError || this.hasError) return false;
 		// only merge quads that are in the same direction
-		if (direction != quad.direction)
+		if (this.direction != quad.direction)
 			return false;
 		
 		// make sure these quads share the same perpendicular axis
@@ -228,9 +233,16 @@ public final class BufferQuad
 		}
 
 		// FIXME: TEMP: Hard limit for width
-		if (thisPerpendicularCompareWidth >= 16) return false;
+		if (thisPerpendicularCompareWidth >= 16)
+		{
+			return false;
+		}
 		if (Math.floorDiv(otherPerpendicularCompareStartPos, 16)
-				!= Math.floorDiv(thisPerpendicularCompareStartPos, 16)) return false;
+				!= Math.floorDiv(thisPerpendicularCompareStartPos, 16))
+		{
+			return false;
+		}
+		
 		
 		// check if these quads are adjacent
 		if (thisPerpendicularCompareStartPos + thisPerpendicularCompareWidth < otherPerpendicularCompareStartPos ||
@@ -257,9 +269,9 @@ public final class BufferQuad
 		}
 		
 		// do the quads' color, light, etc. match?
-		if (color != quad.color ||
-			skyLight != quad.skyLight ||
-			blockLight != quad.blockLight)
+		if (this.color != quad.color ||
+			this.skyLight != quad.skyLight ||
+			this.blockLight != quad.blockLight)
 		{
 			// we can only merge identically colored/lit quads
 			return false;
@@ -268,11 +280,11 @@ public final class BufferQuad
 		// merge the two quads
 		if (mergeDirection == BufferMergeDirectionEnum.NorthSouthOrUpDown)
 		{
-			widthNorthSouthOrUpDown += quad.widthNorthSouthOrUpDown;
+			this.widthNorthSouthOrUpDown += quad.widthNorthSouthOrUpDown;
 		}
 		else // if (mergeDirection == MergeDirection.EastWest)
 		{
-			widthEastWest += quad.widthEastWest;
+			this.widthEastWest += quad.widthEastWest;
 		}
 		
 		// merge successful
