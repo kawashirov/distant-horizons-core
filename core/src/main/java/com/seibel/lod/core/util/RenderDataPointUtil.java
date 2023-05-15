@@ -208,7 +208,7 @@ public class RenderDataPointUtil
 	
     public static boolean isVoid(long dataPoint) { return (((dataPoint >>> DEPTH_SHIFT) & HEIGHT_DEPTH_MASK) == 0); }
 	
-    public static boolean doesDataPointExist(long dataPoint) { return dataPoint != 0; }
+    public static boolean doesDataPointExist(long dataPoint) { return dataPoint != EMPTY_DATA; }
 	
     public static int getColor(long dataPoint)
 	{

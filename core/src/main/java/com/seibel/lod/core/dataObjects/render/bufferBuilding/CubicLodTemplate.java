@@ -37,8 +37,10 @@ import com.seibel.lod.core.util.LodUtil;
 public class CubicLodTemplate
 {
 
-	public static void addLodToBuffer(long data, long topData, long botData, ColumnArrayView[][] adjData,
-									  byte detailLevel, int offsetPosX, int offsetOosZ, LodQuadBuilder quadBuilder, EDebugMode debugging, ColumnRenderSource.DebugSourceFlag debugSource)
+	public static void addLodToBuffer(
+			long data, long topData, long bottomData, ColumnArrayView[][] adjData,
+			byte detailLevel, int offsetPosX, int offsetOosZ, LodQuadBuilder quadBuilder, 
+			EDebugMode debugging, ColumnRenderSource.DebugSourceFlag debugSource)
 	{
 		DhLodPos blockOffsetPos = new DhLodPos(detailLevel, offsetPosX, offsetOosZ).convertToDetailLevel(LodUtil.BLOCK_DETAIL_LEVEL);
 		
@@ -46,17 +48,19 @@ public class CubicLodTemplate
 		short x = (short) blockOffsetPos.x;
 		short y = RenderDataPointUtil.getDepth(data);
 		short z = (short) (short) blockOffsetPos.z;
-		short dy = (short) (RenderDataPointUtil.getHeight(data) - y);
+		short yHeight = (short) (RenderDataPointUtil.getHeight(data) - y);
 		
-		if (dy == 0)
+		if (yHeight == 0)
 		{
 			return;
 		}
-		else if (dy < 0)
+		else if (yHeight < 0)
 		{
 			throw new IllegalArgumentException("Negative y size for the data! Data: " + RenderDataPointUtil.toString(data));
 		}
-
+		
+		
+		
 		int color;
 		boolean fullBright = false;
 		switch (debugging) {
@@ -65,9 +69,12 @@ public class CubicLodTemplate
 			{
 				float saturationMultiplier = Config.Client.Graphics.AdvancedGraphics.saturationMultiplier.get().floatValue();
 				float brightnessMultiplier = Config.Client.Graphics.AdvancedGraphics.brightnessMultiplier.get().floatValue();
-				if (saturationMultiplier == 1.0 && brightnessMultiplier == 1.0) {
+				if (saturationMultiplier == 1.0 && brightnessMultiplier == 1.0)
+				{
 					color = RenderDataPointUtil.getColor(data);
-				} else {
+				}
+				else
+				{
 					float[] ahsv = ColorUtil.argbToAhsv(RenderDataPointUtil.getColor(data));
 					color = ColorUtil.ahsvToArgb(ahsv[0], ahsv[1], ahsv[2] * saturationMultiplier, ahsv[3] * brightnessMultiplier);
 					//ApiShared.LOGGER.info("Raw color:[{}], AHSV:{}, Out color:[{}]",
@@ -107,12 +114,14 @@ public class CubicLodTemplate
 			default:
 				throw new IllegalArgumentException("Unknown debug mode: " + debugging);
 		}
-		ColumnBox.addBoxQuadsToBuilder(quadBuilder, // buffer
-				width, dy, width, // setWidth
+		
+		ColumnBox.addBoxQuadsToBuilder(
+				quadBuilder, // buffer
+				width, yHeight, width, // setWidth
 				x, y, z, // setOffset
 				color, // setColor
 				RenderDataPointUtil.getLightSky(data), // setSkyLights
 				fullBright ? 15 : RenderDataPointUtil.getLightBlock(data), // setBlockLights
-				topData, botData, adjData); // setAdjData
+				topData, bottomData, adjData); // setAdjData
 	}
 }

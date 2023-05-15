@@ -211,11 +211,11 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	
 	public CompletableFuture<ColumnRenderSource> onCreateRenderFileAsync(RenderMetaDataFile file)
 	{
-		final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get()
+		final int verticalSize = Config.Client.Graphics.Quality.verticalQuality.get()
 				.calculateMaxVerticalData((byte) (file.pos.sectionDetailLevel - ColumnRenderSource.SECTION_SIZE_OFFSET));
 		
 		return CompletableFuture.completedFuture(
-				new ColumnRenderSource(file.pos, vertSize, this.level.getMinY()));
+				new ColumnRenderSource(file.pos, verticalSize, this.level.getMinY()));
 	}
 	
 	
