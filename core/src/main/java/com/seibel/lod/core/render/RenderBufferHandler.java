@@ -168,20 +168,27 @@ public class RenderBufferHandler
 	
 	public void updateQuadTreeRenderSources()
 	{
-		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.lodQuadTree.nodeIterator();
-		while (nodeIterator.hasNext())
+		try
 		{
-			LodRenderSection renderSection = nodeIterator.next().value;
-			if (renderSection != null)
+			Iterator<QuadNode<LodRenderSection>> nodeIterator = this.lodQuadTree.nodeIterator();
+			while (nodeIterator.hasNext())
 			{
-				ColumnRenderSource sectionRenderSource = renderSection.getRenderSource();
-				// if the render source is present, attempt to load it
-				if (sectionRenderSource != null)
+				LodRenderSection renderSection = nodeIterator.next().value;
+				if (renderSection != null)
 				{
-					// TODO why are we always trying to swap the buffers? shouldn't we only swap them when a new buffer has been built? we have a future object specifically for that in ColumnRenderSource
-					sectionRenderSource.trySwapInNewlyBuiltRenderBuffer(renderSection.getRenderSource(), renderSection.renderBufferRef);
+					ColumnRenderSource sectionRenderSource = renderSection.getRenderSource();
+					// if the render source is present, attempt to load it
+					if (sectionRenderSource != null)
+					{
+						// TODO why are we always trying to swap the buffers? shouldn't we only swap them when a new buffer has been built? we have a future object specifically for that in ColumnRenderSource
+						sectionRenderSource.trySwapInNewlyBuiltRenderBuffer(renderSection.getRenderSource(), renderSection.renderBufferRef);
+					}
 				}
 			}
+		}
+		catch (Exception e)
+		{
+			LOGGER.error("Error updating QuadTree render sources. Error: "+e.getMessage(), e);
 		}
 	}
 	
