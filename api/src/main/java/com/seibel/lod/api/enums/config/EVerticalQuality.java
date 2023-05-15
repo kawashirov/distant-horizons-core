@@ -19,6 +19,8 @@
 
 package com.seibel.lod.api.enums.config;
 
+import com.seibel.lod.coreapi.util.MathUtil;
+
 /**
  * LOW <br>
  * MEDIUM <br>
@@ -47,11 +49,9 @@ public enum EVerticalQuality
 	
     public int calculateMaxVerticalData(byte dataDetail)
 	{
-		if (dataDetail >= this.maxVerticalData.length)
-		{
-			dataDetail = (byte) (this.maxVerticalData.length - 1);
-		}
-		return this.maxVerticalData[dataDetail];
+		// for detail levels lower than what the enum defines, use the lowest quality item
+		int index = MathUtil.clamp(0, dataDetail, this.maxVerticalData.length - 1);
+		return this.maxVerticalData[index];
     }
 	
 }
