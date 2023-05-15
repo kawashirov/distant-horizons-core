@@ -22,6 +22,7 @@ package com.seibel.lod.api.enums.config;
 import com.seibel.lod.coreapi.util.MathUtil;
 
 /**
+ * HEIGHT_MAP <br>
  * LOW <br>
  * MEDIUM <br>
  * HIGH <br>
@@ -32,7 +33,7 @@ import com.seibel.lod.coreapi.util.MathUtil;
  */
 public enum EVerticalQuality
 {
-//	HEIGHT_MAP(new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }), // commented out for now since it causes issues with transparency, may be re-added if the transparency issue is fixed
+	HEIGHT_MAP(new int[] { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }),
 	LOW(new int[] { 4, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1 }),
 	MEDIUM(new int[] { 6, 4, 3, 2, 2, 1, 1, 1, 1, 1, 1 }),
 	HIGH(new int[] { 8, 6, 4, 2, 2, 2, 2, 1, 1, 1, 1 }),
