@@ -20,10 +20,12 @@
 package com.seibel.lod.core.util;
 
 /**
+ * Handles the bit-wise math used when
+ * dealing with colors stored as integers.
  * 
  * @author Cola
  * @author Leonardo Amato
- * @version 2022-11-7
+ * @version 2023-5-15
  */
 public class ColorUtil
 {
@@ -59,12 +61,23 @@ public class ColorUtil
 	
 	/** Returns a value between 0 and 255 */
 	public static int getAlpha(int color) { return (color >>> 24) & 0xFF; }
+	/** @param newAlpha should be a value between 0 and 255 */
+	public static int setAlpha(int color, int newAlpha) { return (newAlpha << 24) | (getRed(color) << 16) | (getGreen(color) << 8) | getBlue(color); }
+	
 	/** Returns a value between 0 and 255 */
 	public static int getRed(int color) { return (color >> 16) & 0xFF; }
+	/** @param newRed should be a value between 0 and 255 */
+	public static int setRed(int color, int newRed) { return (getAlpha(color) << 24) | (newRed << 16) | (getGreen(color) << 8) | getBlue(color); }
+	
 	/** Returns a value between 0 and 255 */
 	public static int getGreen(int color) { return (color >> 8) & 0xFF; }
+	/** @param newGreen should be a value between 0 and 255 */
+	public static int setGreen(int color, int newGreen) { return (getAlpha(color) << 24) | (getRed(color) << 16) | (newGreen << 8) | getBlue(color); }
+	
 	/** Returns a value between 0 and 255 */
 	public static int getBlue(int color) { return color & 0xFF; }
+	/** @param newBlue should be a value between 0 and 255 */
+	public static int setBlue(int color, int newBlue) { return (getAlpha(color) << 24) | (getRed(color) << 16) | (getGreen(color) << 8) | newBlue; }
 	
 	
 	
@@ -93,7 +106,7 @@ public class ColorUtil
 				| ((getGreen(argb) * getGreen(rgb) / 255) << 8) | (getBlue(argb) * getBlue(rgb) / 255));
 	}
 	
-	/** Multiply 2 RGB colors */
+	/** Multiply 2 ARGB colors */
 	public static int multiplyARGBwithARGB(int color1, int color2)
 	{
 		return ((getAlpha(color1) * getAlpha(color2) / 255) << 24) | ((getRed(color1) * getRed(color2) / 255) << 16) | ((getGreen(color1) * getGreen(color2) / 255) << 8) | (getBlue(color1) * getBlue(color2) / 255);
@@ -158,13 +171,24 @@ public class ColorUtil
 			case 4: return ColorUtil.rgbToInt(a, t, p, v);
 			default: return ColorUtil.rgbToInt(a, v, p, q);  // case 5
 		}
-}
-
+}	
+	
+	/** Returns the hex value for the Alpha, Red, Green, and Blue channels. */
+	public static String toHexString(int color)
+	{
+		return "A:"+Integer.toHexString(getAlpha(color)) +
+				",R:" +Integer.toHexString(getRed(color)) +
+				",G:" +Integer.toHexString(getGreen(color)) +
+				",B:" +Integer.toHexString(getBlue(color));
+	}
+	
+	/** Returns the int value (0-255) for the Alpha, Red, Green, and Blue channels. */
 	public static String toString(int color)
 	{
-		return "A:"+Integer.toHexString(getAlpha(color)) + ",R:" +
-				Integer.toHexString(getRed(color)) + ",G:" +
-				Integer.toHexString(getGreen(color)) + ",B:" +
-				Integer.toHexString(getBlue(color));
+		return "A:"+getAlpha(color) +
+				",R:" +getRed(color) +
+				",G:" +getGreen(color) +
+				",B:" +getBlue(color);
 	}
+	
 }
