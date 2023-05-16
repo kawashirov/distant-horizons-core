@@ -93,7 +93,14 @@ public class ColumnBox
 		boolean skipTop = RenderDataPointUtil.doesDataPointExist(topData) && (RenderDataPointUtil.getDepth(topData) == maxY) && !isTopTransparent;
         if (!skipTop)
 		{
-			builder.addQuadUp(x, maxY, z, xSize, zSize, ColorUtil.applyShade(color, MC.getShade(ELodDirection.UP)), skyLightTop, blockLight);
+			// if there isn't any data below this LOD, make it opaque to prevent seeing void through transparent blocks
+			int topColor = color;
+			if (!RenderDataPointUtil.doesDataPointExist(bottomData))
+			{
+				topColor = ColorUtil.setAlpha(color, 255);
+			}
+			
+			builder.addQuadUp(x, maxY, z, xSize, zSize, ColorUtil.applyShade(topColor, MC.getShade(ELodDirection.UP)), skyLightTop, blockLight);
 		}
 		
 		boolean skipBottom = RenderDataPointUtil.doesDataPointExist(bottomData) && (RenderDataPointUtil.getHeight(bottomData) == y) && !isBottomTransparent;
