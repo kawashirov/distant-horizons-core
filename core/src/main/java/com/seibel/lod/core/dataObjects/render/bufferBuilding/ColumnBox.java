@@ -235,9 +235,9 @@ public class ColumnBox
 			 i++)
 		{
 			long adjPoint = adjData.get(i);
-			boolean isAdjTransparent = RenderDataPointUtil.getAlpha(adjPoint) < 255;
+			boolean isAdjTransparent = RenderDataPointUtil.getAlpha(adjPoint) < 255 && LodRenderer.transparencyEnabled;
 			
-			if (!(!isTransparent && isAdjTransparent && LodRenderer.transparencyEnabled))
+			if (!(!isTransparent && isAdjTransparent))
 			{
 				short height = RenderDataPointUtil.getHeight(adjPoint);
 				short depth = RenderDataPointUtil.getDepth(adjPoint);
