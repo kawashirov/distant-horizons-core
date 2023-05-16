@@ -19,11 +19,27 @@
 
 package com.seibel.lod.core.dataObjects.render.bufferBuilding;
 
+import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.enums.ELodDirection;
+import com.seibel.lod.core.util.LodUtil;
 
 /** Represents a render-able quad. */
 public final class BufferQuad
 {
+	/** 
+	 * The maximum number of blocks wide a quad can be. <br><br> 
+	 * 
+	 * This could be increased beyond 2048, for use with 
+	 * extremely low detail levels if the need arises.
+	 */
+	public static final int NORMAL_MAX_QUAD_WIDTH = 2048;
+	/** The maximum number of blocks wide a quad can be
+	 * when {@link com.seibel.lod.core.config.Config.Client.Graphics.AdvancedGraphics#earthCurveRatio earthCurveRatio} 
+	 * is enabled. 
+	 */
+	public static final int MAX_QUAD_WIDTH_FOR_EARTH_CURVATURE = LodUtil.CHUNK_WIDTH;
+	
+	
 	public final short x;
 	public final short y;
 	public final short z;
@@ -232,13 +248,22 @@ public final class BufferQuad
 			otherParallelCompareWidth = quad.widthEastWest;
 		}
 
+		
+		
+		// quad width should only be limited when earth curvature is enabled
+		int maxQuadWidth = NORMAL_MAX_QUAD_WIDTH;
+		if (Config.Client.Graphics.AdvancedGraphics.earthCurveRatio.get() != 0)
+		{
+			maxQuadWidth = MAX_QUAD_WIDTH_FOR_EARTH_CURVATURE;
+		}
+		
 		// FIXME: TEMP: Hard limit for width
-		if (thisPerpendicularCompareWidth >= 16)
+		if (thisPerpendicularCompareWidth >= maxQuadWidth)
 		{
 			return false;
 		}
-		if (Math.floorDiv(otherPerpendicularCompareStartPos, 16)
-				!= Math.floorDiv(thisPerpendicularCompareStartPos, 16))
+		if (Math.floorDiv(otherPerpendicularCompareStartPos, maxQuadWidth)
+			!= Math.floorDiv(thisPerpendicularCompareStartPos, maxQuadWidth))
 		{
 			return false;
 		}
