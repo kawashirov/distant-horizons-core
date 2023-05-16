@@ -46,7 +46,13 @@ public class ColumnBox
         byte skyLightBot = RenderDataPointUtil.doesDataPointExist(bottomData) ? RenderDataPointUtil.getLightSky(bottomData) : 0;
 		
         boolean isTransparent = ColorUtil.getAlpha(color) < 255 && LodRenderer.transparencyEnabled;
+		boolean isTopTransparent = RenderDataPointUtil.getAlpha(topData) < 255 && LodRenderer.transparencyEnabled;
+		boolean isBottomTransparent = RenderDataPointUtil.getAlpha(bottomData) < 255 && LodRenderer.transparencyEnabled;
         
+		
+		
+		// cave culling prevention
+		// prevents certain faces from being culled underground that should be allowed
 		if (builder.skipQuadsWithZeroSkylight
                 && 0 == skyLight
                 && builder.skyLightCullingBelow > maxY
@@ -60,9 +66,6 @@ public class ColumnBox
 		{
             maxY = builder.skyLightCullingBelow;
         }
-		
-        boolean isTopTransparent = RenderDataPointUtil.getAlpha(topData) < 255 && LodRenderer.transparencyEnabled;
-        boolean isBottomTransparent = RenderDataPointUtil.getAlpha(bottomData) < 255 && LodRenderer.transparencyEnabled;
 		
 		
 		
@@ -217,12 +220,15 @@ public class ColumnBox
 		}
 		
 		
-		for (i = 0; i < dataPoint.size() && RenderDataPointUtil.doesDataPointExist(adjData.get(i))
-				&& !RenderDataPointUtil.isVoid(adjData.get(i)); i++)
+		// Add adjacent faces if this LOD is are surrounded by transparent LODs
+		// (prevents invisible sides underwater)
+		for (i = 0;
+			i < dataPoint.size() && RenderDataPointUtil.doesDataPointExist(adjData.get(i))
+				&& !RenderDataPointUtil.isVoid(adjData.get(i));
+			 i++)
 		{
 			long adjPoint = adjData.get(i);
-			
-			boolean isAdjTransparent = RenderDataPointUtil.getAlpha(adjPoint) < 255 && LodRenderer.transparencyEnabled;
+			boolean isAdjTransparent = RenderDataPointUtil.getAlpha(adjPoint) < 255;
 			
 			if (!(!isTransparent && isAdjTransparent && LodRenderer.transparencyEnabled))
 			{
