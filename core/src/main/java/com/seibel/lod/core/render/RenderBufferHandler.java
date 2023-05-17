@@ -180,8 +180,29 @@ public class RenderBufferHandler
 					// if the render source is present, attempt to load it
 					if (sectionRenderSource != null)
 					{
+						ColumnRenderSource[] adjacentRenderSources = new ColumnRenderSource[ELodDirection.ADJ_DIRECTIONS.length];
+						for (ELodDirection direction : ELodDirection.ADJ_DIRECTIONS)
+						{
+							try
+							{
+								DhSectionPos adjPos = sectionRenderSource.sectionPos.getAdjacentPos(direction);
+								LodRenderSection adjRenderSection = this.lodQuadTree.getValue(adjPos);
+								// adjacent render sources can be null
+								if (adjRenderSection != null)
+								{
+									ColumnRenderSource adjRenderSource = adjRenderSection.getRenderSource();
+									adjacentRenderSources[direction.ordinal() - 2] = adjRenderSource;
+								}
+							}
+							catch (IndexOutOfBoundsException e)
+							{
+								// adjacent positions can be out of bounds, in that case a null render source will be used
+							}
+						}
+						
+						
 						// TODO why are we always trying to swap the buffers? shouldn't we only swap them when a new buffer has been built? we have a future object specifically for that in ColumnRenderSource
-						sectionRenderSource.trySwapInNewlyBuiltRenderBuffer(renderSection.getRenderSource(), renderSection.renderBufferRef);
+						sectionRenderSource.trySwapInNewlyBuiltRenderBuffer(renderSection.renderBufferRef, adjacentRenderSources);
 					}
 				}
 			}

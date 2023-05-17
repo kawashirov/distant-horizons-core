@@ -349,22 +349,11 @@ public class ColumnRenderSource
 	//================//
 	
 	// TODO return future?
-	private void tryBuildBuffer(IDhClientLevel level, ColumnRenderSource renderSource)
+	private void tryBuildBuffer(IDhClientLevel level, ColumnRenderSource[] adjacentRenderSources)
 	{
 		if (this.buildRenderBufferFuture == null && !ColumnRenderBufferBuilder.isBusy() && !this.isEmpty)
 		{
-			ColumnRenderSource[] columnRenderSources = new ColumnRenderSource[ELodDirection.ADJ_DIRECTIONS.length];
-			for (ELodDirection direction : ELodDirection.ADJ_DIRECTIONS)
-			{
-				if (renderSource != null)
-				{
-					columnRenderSources[direction.ordinal() - 2] = renderSource;
-					//LOGGER.info("attempting to build buffer for: "+renderSection.pos);
-				}
-			}
-			
-			// TODO this needs to allow generating partial sections to allow for non-full quadTree RenderSections to render
-			this.buildRenderBufferFuture = ColumnRenderBufferBuilder.buildBuffers(level, this.columnRenderBufferRef, this, columnRenderSources);
+			this.buildRenderBufferFuture = ColumnRenderBufferBuilder.buildBuffers(level, this.columnRenderBufferRef, this, adjacentRenderSources);
 		}
 	}
 	
@@ -390,7 +379,7 @@ public class ColumnRenderSource
 	 * @param renderBufferRefToSwap The slot for swapping in the new buffer.
 	 * @return True if the swap was successful. False if swap is not needed or if it is in progress.
 	 */
-	public boolean trySwapInNewlyBuiltRenderBuffer(ColumnRenderSource renderSource, AtomicReference<ColumnRenderBuffer> renderBufferRefToSwap)
+	public boolean trySwapInNewlyBuiltRenderBuffer(AtomicReference<ColumnRenderBuffer> renderBufferRefToSwap, ColumnRenderSource[] adjacentRenderSources)
 	{
 		// prevent swapping the buffer to quickly
 		if (this.lastNs != -1 && System.nanoTime() - this.lastNs < SWAP_TIMEOUT_IN_NS)
@@ -408,7 +397,7 @@ public class ColumnRenderSource
 				
 				
 				ColumnRenderBuffer newBuffer = this.buildRenderBufferFuture.join();
-				LodUtil.assertTrue(newBuffer.buffersUploaded, "The buffer future for "+renderSource.sectionPos+" returned an un-built buffer.");
+				LodUtil.assertTrue(newBuffer.buffersUploaded, "The buffer future for "+this.sectionPos+" returned an un-built buffer.");
 				
 				ColumnRenderBuffer oldBuffer = renderBufferRefToSwap.getAndSet(newBuffer);
 				if (oldBuffer != null)
@@ -435,7 +424,7 @@ public class ColumnRenderSource
 				}
 				else
 				{
-					this.tryBuildBuffer(this.level, renderSource);
+					this.tryBuildBuffer(this.level, adjacentRenderSources);
 				}
 			}
 		}
