@@ -216,6 +216,7 @@ public class DhClientServerLevel extends AbstractDhClientLevel implements IDhCli
 	public void close()
 	{
 		super.baseClose();
+		this.f3Message.close();
 		
 		WorldGenState worldGenState = this.worldGenStateRef.get();
 		if (worldGenState != null)

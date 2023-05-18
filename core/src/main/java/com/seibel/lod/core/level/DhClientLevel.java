@@ -105,6 +105,8 @@ public class DhClientLevel extends AbstractDhClientLevel implements IDhClientLev
 	@Override
 	public void close()
 	{
+		this.f3Message.close();
+		
 		this.baseClose();
 		LOGGER.info("Closed "+DhClientLevel.class.getSimpleName()+" for "+this.clientLevelWrapper);
 	}
