@@ -248,9 +248,20 @@ public class WorldGenerationQueue implements Closeable
 		Iterator<QuadNode<WorldGenTask>> nodeIterator = this.waitingTaskQuadTree.nodeIterator();
 		while (nodeIterator.hasNext())
 		{
-			WorldGenTask newGenTask = nodeIterator.next().value;
+			QuadNode<WorldGenTask> taskNode = nodeIterator.next();
+			WorldGenTask newGenTask = taskNode.value;
+			DhSectionPos taskSectionPos = taskNode.sectionPos;
+			
 			if (newGenTask != null) // TODO add an option to skip leaves with null values and potentially auto-prune them
 			{
+				// TODO this isn't a long term fix, in the long term the tree should automatically remove out of bound nodes when moved
+				if (!this.waitingTaskQuadTree.isSectionPosInBounds(taskSectionPos))
+				{
+					// skip and remove out-of-bound tasks
+					taskNode.value = null;
+					continue;
+				}
+				
 				
 				// use chebyShev distance in order to generate in rings around the target pos (also because it is a fast distance calculation)
 				int chebDistToTargetPos = newGenTask.pos.getCenterBlockPos().toPos2D().chebyshevDist(targetPos.toPos2D());
