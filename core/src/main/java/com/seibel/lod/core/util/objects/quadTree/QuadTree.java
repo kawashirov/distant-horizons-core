@@ -241,6 +241,45 @@ public class QuadTree<T>
 			}
 		});
 		
+		
+//		// remove out of bound nodes and clean up empty nodes
+//		// Note: this will iterate over a lot of unnecessary nodes, hopefully speed won't be an issue
+//		Iterator<DhSectionPos> rootNodePosIterator = this.rootNodePosIterator();
+//		while (rootNodePosIterator.hasNext())
+//		{
+//			// get the root node (regular nodeIterators won't return them if they are out of bounds)
+//			DhSectionPos rootPos = rootNodePosIterator.next();
+//			QuadNode<T> rootNode = this.getOrSetNode(rootPos, false, null, false);
+//			if (rootNode == null)
+//			{
+//				continue;
+//			}
+//			
+//			// remove any child nodes that are out of bounds
+//			Iterator<QuadNode<T>> nodeIterator = this.nodeIterator();
+//			while (nodeIterator.hasNext())
+//			{
+//				QuadNode<T> node = nodeIterator.next();
+//				if(!this.isSectionPosInBounds(node.sectionPos))
+//				{
+//					// node is out of bounds
+//					
+//					// FIXME(?) this appears to potentially return large nodes that are partially or entirely in bounds
+//					
+//					if (node.getNonNullChildCount() == 0)
+//					{
+//						// no child nodes, can be safely removed
+//						nodeIterator.remove();
+//					}
+//					else
+//					{
+//						// node can't be removed, but its value can be set to null
+//						node.value = null;
+//					}
+//				}
+//			}
+//		}
+		
 	}
 	
 	public final DhBlockPos2D getCenterBlockPos() { return this.centerBlockPos; }
