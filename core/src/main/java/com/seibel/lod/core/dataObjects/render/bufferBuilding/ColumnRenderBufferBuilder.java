@@ -161,11 +161,32 @@ public class ColumnRenderBufferBuilder
 		// Variable initialization
 		EDebugMode debugMode = Config.Client.Advanced.Debugging.debugMode.get();
 		
+		// can be uncommented to limit which section positions are build and thus, rendered
+		// useful when debugging a specific section
+//		if (renderSource.sectionPos.sectionDetailLevel == 6 
+//			&& renderSource.sectionPos.sectionZ == 0 && renderSource.sectionPos.sectionX == 3)
+//		{
+//			int test = 4;
+//		}
+//		else
+//		{
+//			return;
+//		}
+		
 		byte detailLevel = renderSource.getDataDetail();
 		for (int x = 0; x < ColumnRenderSource.SECTION_SIZE; x++)
 		{
 			for (int z = 0; z < ColumnRenderSource.SECTION_SIZE; z++)
 			{
+				// can be uncommented to limit the buffer building to a specific
+				// relative position in this section.
+				// useful for debugging a single column's rendering
+//				if (x != 1 || z != 1)
+//				{
+//					continue;
+//				}
+				
+				
 				UncheckedInterruptedException.throwIfInterrupted();
 				
 				ColumnArrayView columnRenderData = renderSource.getVerticalDataPointView(x, z);

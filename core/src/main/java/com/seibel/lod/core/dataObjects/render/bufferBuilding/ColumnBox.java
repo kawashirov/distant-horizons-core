@@ -112,6 +112,7 @@ public class ColumnBox
 		
 		// add North, south, east, and west faces if requested //
 		
+		// TODO merge duplicate code
         //NORTH face vertex creation
         {
 			ColumnArrayView[] adjDataNorth = adjData[ELodDirection.NORTH.ordinal() - 2]; // TODO can we use something other than ordinal-2?
