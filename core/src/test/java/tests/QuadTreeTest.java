@@ -759,6 +759,26 @@ public class QuadTreeTest
 		
 	}
 	
+	// removing out of bound nodes is only partially implemented
+	// if a root node is removed from the tree, those nodes will be removed,
+	// but if the root node is still in bounds, but some of the children aren't,
+	// they won't be removed
+	//@Test
+	public void RemoveOutOfBoundsNodeQuadTreeTest()
+	{
+		AbstractTestTreeParams treeParams = new TinyTestTree();
+		QuadTree<Integer> tree = new QuadTree<>(treeParams.getWidthInBlocks(), treeParams.getPositiveEdgeCenterPos(), LodUtil.BLOCK_DETAIL_LEVEL);
+		int treeWidth = treeParams.getWidthInBlocks();
+		
+		
+		// 
+		testSet(tree, new DhSectionPos((byte)0, 0, 0), 1);
+		Assert.assertEquals(1, tree.count());
+		tree.setCenterBlockPos(new DhBlockPos2D(treeWidth + (treeWidth/2), 0));
+		Assert.assertEquals(0, tree.count());
+		
+	}
+	
 	// null node auto-deletion not yet implemented
 	//@Test
 	public void autoDeleteNullQuadNodeChildTest()
