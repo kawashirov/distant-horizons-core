@@ -209,7 +209,7 @@ public class WorldGenerationQueue implements Closeable
 			catch (Exception e)
 			{
 				LOGGER.error("queueing exception: "+e.getMessage(), e);
-				generationQueueStarted = false;
+				this.generationQueueStarted = false;
 			}
 		});
 	}

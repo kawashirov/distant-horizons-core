@@ -56,7 +56,7 @@ public class QuadTreeNodeIterator<T> implements Iterator<QuadNode<T>>
 					QuadNode<T> childNode = parentNode.getChildByIndex(i);
 					if (childNode != null)
 					{
-						if (childNode.getChildCount() == 0)
+						if (childNode.getTotalChildCount() == 0)
 						{
 							this.iteratorNodeQueue.add(childNode);
 						}

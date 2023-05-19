@@ -57,10 +57,10 @@ public class QuadNode<T>
 	
 	
 	/** 
-	 * Use {@link QuadNode#getChildValueCount()} if you want the number of non-null child values.
+	 * Use {@link QuadNode#getNonNullChildCount()} if you want the number of non-null child values.
 	 * @return the number of non-null child nodes 
 	 */
-	public int getChildCount() 
+	public int getTotalChildCount() 
 	{
 		int count = 0;
 		for (int i = 0; i < 4; i++)
@@ -74,13 +74,13 @@ public class QuadNode<T>
 	}
 	
 	/** @return the number of children that have non-null values */
-	public int getChildValueCount()
+	public int getNonNullChildCount()
 	{
 		int count = 0;
 		for (int i = 0; i < 4; i++)
 		{
 			QuadNode<T> child = this.getChildByIndex(i);
-			if (child != null && (child.value != null || child.getChildValueCount() != 0))
+			if (child != null && (child.value != null || child.getNonNullChildCount() != 0))
 			{
 				count++;
 			}
@@ -296,29 +296,30 @@ public class QuadNode<T>
 		}
 		
 		
-		if (nwChild != null)
-		{
-			removedItemConsumer.accept(nwChild.value);
-		}
-		nwChild = null;
 		
-		if (neChild != null)
+		if (this.nwChild != null && removedItemConsumer != null)
 		{
-			removedItemConsumer.accept(neChild.value);
+			removedItemConsumer.accept(this.nwChild.value);
 		}
-		neChild = null;
+		this.nwChild = null;
 		
-		if (seChild != null)
+		if (this.neChild != null && removedItemConsumer != null)
 		{
-			removedItemConsumer.accept(seChild.value);
+			removedItemConsumer.accept(this.neChild.value);
 		}
-		seChild = null;
+		this.neChild = null;
 		
-		if (swChild != null)
+		if (this.seChild != null && removedItemConsumer != null)
 		{
-			removedItemConsumer.accept(swChild.value);
+			removedItemConsumer.accept(this.seChild.value);
 		}
-		swChild = null;
+		this.seChild = null;
+		
+		if (this.swChild != null && removedItemConsumer != null)
+		{
+			removedItemConsumer.accept(this.swChild.value);
+		}
+		this.swChild = null;
 	}
 	
 	
@@ -328,6 +329,6 @@ public class QuadNode<T>
 	//==============//
 	
 	@Override
-	public String toString() { return "pos: "+this.sectionPos+", children #: "+this.getChildCount()+", value: "+this.value; }
+	public String toString() { return "pos: "+this.sectionPos+", children #: "+this.getTotalChildCount()+", value: "+this.value; }
 	
 }

@@ -177,7 +177,7 @@ public class RenderBufferHandler
 				if (renderSection != null)
 				{
 					ColumnRenderSource sectionRenderSource = renderSection.getRenderSource();
-					// if the render source is present, attempt to load it
+					// if the render source is present, attempt to build it
 					if (sectionRenderSource != null)
 					{
 						ColumnRenderSource[] adjacentRenderSources = new ColumnRenderSource[ELodDirection.ADJ_DIRECTIONS.length];

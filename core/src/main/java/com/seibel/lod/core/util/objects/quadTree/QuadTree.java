@@ -72,7 +72,7 @@ public class QuadTree<T>
 	//=====================//
 	
     /** @return the node at the given section position */
-    public final QuadNode<T> getNode(DhSectionPos pos) throws IndexOutOfBoundsException { return this.getOrSetNode(pos, false, null); }
+    public final QuadNode<T> getNode(DhSectionPos pos) throws IndexOutOfBoundsException { return this.getOrSetNode(pos, false, null, false); }
 	/** @return the value at the given section position */
 	public final T getValue(DhSectionPos pos) throws IndexOutOfBoundsException 
 	{
@@ -88,13 +88,14 @@ public class QuadTree<T>
 	public final T setValue(DhSectionPos pos, T value) throws IndexOutOfBoundsException
 	{
 		T previousValue = this.getValue(pos);
-		this.getOrSetNode(pos, true, value);
+		this.getOrSetNode(pos, true, value, true);
 		return previousValue;
 	}
 	
-	protected final QuadNode<T> getOrSetNode(DhSectionPos pos, boolean setNewValue, T newValue) throws IndexOutOfBoundsException
+	/** @param runBoundaryChecks should only ever be set to true internally for removing out of bound nodes */
+	protected final QuadNode<T> getOrSetNode(DhSectionPos pos, boolean setNewValue, T newValue, boolean runBoundaryChecks) throws IndexOutOfBoundsException
 	{
-		if (this.isSectionPosInBounds(pos))
+		if (!runBoundaryChecks || this.isSectionPosInBounds(pos))
 		{
 			DhSectionPos rootPos = pos.convertToDetailLevel(this.treeMaxDetailLevel);
 			int ringListPosX = rootPos.sectionX;
@@ -224,16 +225,22 @@ public class QuadTree<T>
 				BitShiftUtil.divideByPowerOfTwo(this.centerBlockPos.x, this.treeMaxDetailLevel), 
 				BitShiftUtil.divideByPowerOfTwo(this.centerBlockPos.z, this.treeMaxDetailLevel));
 		
-		if (!this.topRingList.getCenter().equals(expectedCenterPos))
+		if (this.topRingList.getCenter().equals(expectedCenterPos))
 		{
-			this.topRingList.moveTo(expectedCenterPos.x, expectedCenterPos.y, (quadNode) -> 
-			{
-				if (quadNode != null && removedItemConsumer != null)
-				{
-					removedItemConsumer.accept(quadNode.value);
-				}
-			});
+			// tree doesn't need to be moved
+			return;
 		}
+		
+		
+		// remove out of bounds root nodes
+		this.topRingList.moveTo(expectedCenterPos.x, expectedCenterPos.y, (quadNode) -> 
+		{
+			if (quadNode != null && removedItemConsumer != null)
+			{
+				removedItemConsumer.accept(quadNode.value);
+			}
+		});
+		
 	}
 	
 	public final DhBlockPos2D getCenterBlockPos() { return this.centerBlockPos; }
@@ -246,26 +253,54 @@ public class QuadTree<T>
 	// base methods //
 	//==============//
 	
-	public boolean isEmpty() { return this.leafNodeCount() == 0; } // TODO this should be rewritten to short-circuit
+	public boolean isEmpty() { return this.count() == 0; } // TODO this should be rewritten to short-circuit
 	
-	public int leafNodeCount() 
+	/** @return the number of non-null nodes in the tree */
+	public int count()
 	{
 		int count = 0;
 		for (QuadNode<T> node : this.topRingList)
 		{
-			if (node != null)
+			if (node == null)
 			{
-				Iterator<QuadNode<T>> leafNodeIterator = node.getLeafNodeIterator();
-				while (leafNodeIterator.hasNext())
+				continue;
+			}
+			
+			Iterator<QuadNode<T>> nodeIterator = node.getNodeIterator();
+			while (nodeIterator.hasNext())
+			{
+				if(nodeIterator.next().value != null)
 				{
-					leafNodeIterator.next();
-					count++;
+					count++;	
 				}
 			}
 		}
-
+		
 		return count;
 	}
+	
+	/** @return the number of leaf nodes in the tree */
+	public int leafNodeCount()
+	{
+		int count = 0;
+		for (QuadNode<T> node : this.topRingList)
+		{
+			if (node == null)
+			{
+				continue;
+			}
+			
+			Iterator<QuadNode<T>> leafNodeIterator = node.getLeafNodeIterator();
+			while (leafNodeIterator.hasNext())
+			{
+				leafNodeIterator.next();
+				count++;
+			}
+		}
+		
+		return count;
+	}
+	
 	
 	// TODO comment, currently a tree will always have 9 root nodes, because the tree will grow all the way up to the top, if this is ever changed then these values must also change 
 	public int ringListWidth() { return 3; }
@@ -309,7 +344,7 @@ public class QuadTree<T>
 					DhSectionPos rootPos = new DhSectionPos(QuadTree.this.treeMaxDetailLevel, pos2D.x, pos2D.y);
 					if (QuadTree.this.isSectionPosInBounds(rootPos))
 					{
-						iteratorPosQueue.add(rootPos);
+						this.iteratorPosQueue.add(rootPos);
 					}
 				}
 			});
@@ -347,7 +382,10 @@ public class QuadTree<T>
 		private final QuadTreeRootPosIterator rootNodeIterator;
 		private Iterator<QuadNode<T>> currentNodeIterator;
 		
+		private QuadNode<T> lastNode = null;
+		
 		private final boolean onlyReturnLeaves; 
+		
 		
 		
 		public QuadTreeNodeIterator(boolean onlyReturnLeaves)
@@ -383,7 +421,8 @@ public class QuadTree<T>
 			}
 			
 			
-			return this.currentNodeIterator.next();
+			this.lastNode = this.currentNodeIterator.next(); 
+			return this.lastNode;
 		}
 		
 		/** @return null if no new iterator could be found */
@@ -403,9 +442,21 @@ public class QuadTree<T>
 		}
 		
 		
-		/** Unimplemented */
 		@Override
-		public void remove() { throw new UnsupportedOperationException("remove"); }
+		public void remove() 
+		{
+			if (this.lastNode == null)
+			{
+				throw new NoSuchElementException("No last node found.");
+			}
+			
+			
+			QuadNode<T> node = QuadTree.this.getOrSetNode(this.lastNode.sectionPos, true, null, false);
+			if (node != null)
+			{
+				node.deleteAllChildren();
+			}
+		}
 		
 		@Override
 		public void forEachRemaining(Consumer<? super QuadNode<T>> action) { Iterator.super.forEachRemaining(action); }
