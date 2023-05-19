@@ -44,7 +44,6 @@ import org.apache.logging.log4j.Logger;
 public class ServerApi
 {
 	public static final ServerApi INSTANCE = new ServerApi();
-	public static final boolean ENABLE_EVENT_LOGGING = true;
 	
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
@@ -89,20 +88,13 @@ public class ServerApi
 
 	public void serverLoadEvent(boolean isDedicatedEnvironment)
 	{
-		if (ENABLE_EVENT_LOGGING)
-		{
-			LOGGER.info("Server World loading with (dedicated?:{})", isDedicatedEnvironment);
-		}
-		
+		LOGGER.debug("Server World loading with (dedicated?:"+isDedicatedEnvironment+")");
 		SharedApi.setDhWorld(isDedicatedEnvironment ? new DhServerWorld() : new DhClientServerWorld());
 	}
 	
 	public void serverUnloadEvent()
 	{
-		if (ENABLE_EVENT_LOGGING)
-		{
-			LOGGER.info("Server World "+SharedApi.getAbstractDhWorld()+" unloading");
-		}
+		LOGGER.debug("Server World "+SharedApi.getAbstractDhWorld()+" unloading");
 		
 		SharedApi.getAbstractDhWorld().close();
 		SharedApi.setDhWorld(null);
@@ -110,10 +102,7 @@ public class ServerApi
 	
 	public void serverLevelLoadEvent(IServerLevelWrapper level)
 	{
-		if (ENABLE_EVENT_LOGGING)
-		{
-			LOGGER.info("Server Level "+level+" loading");
-		}
+		LOGGER.debug("Server Level "+level+" loading");
 		
 		AbstractDhWorld serverWorld = SharedApi.getAbstractDhWorld();
 		if (serverWorld != null)
@@ -124,10 +113,7 @@ public class ServerApi
 	}
 	public void serverLevelUnloadEvent(IServerLevelWrapper level)
 	{
-		if (ENABLE_EVENT_LOGGING)
-		{
-			LOGGER.info("Server Level {} unloading", level);
-		}
+		LOGGER.debug("Server Level "+level+" unloading");
 		
 		AbstractDhWorld serverWorld = SharedApi.getAbstractDhWorld();
 		if (serverWorld != null)
@@ -140,10 +126,7 @@ public class ServerApi
 	@Deprecated // TODO not implemented, remove
 	public void serverSaveEvent()
 	{
-		if (ENABLE_EVENT_LOGGING)
-		{
-			LOGGER.info("Server world "+SharedApi.getAbstractDhWorld()+" saving");
-		}
+		LOGGER.debug("Server world "+SharedApi.getAbstractDhWorld()+" saving");
 		
 		AbstractDhWorld serverWorld = SharedApi.getAbstractDhWorld();
 		if (serverWorld != null)
