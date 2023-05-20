@@ -159,6 +159,14 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
     @Override
     public CompletableFuture<ColumnRenderSource> readAsync(DhSectionPos pos)
 	{
+		// don't continue if the handler has been shut down
+		if (this.renderCacheThread.isTerminated())
+		{
+			return CompletableFuture.completedFuture(null);
+		}
+		
+		
+		
         RenderMetaDataFile metaFile = this.filesBySectionPos.get(pos);
 		if (metaFile == null)
 		{

@@ -9,6 +9,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -27,6 +28,6 @@ public interface IFullDataSourceProvider extends AutoCloseable
     IFullDataSource onDataFileLoaded(IFullDataSource source, BaseMetaData metaData, Consumer<IFullDataSource> onUpdated, Function<IFullDataSource, Boolean> updater);
     CompletableFuture<IFullDataSource> onDataFileRefresh(IFullDataSource source, BaseMetaData metaData, Function<IFullDataSource, Boolean> updater, Consumer<IFullDataSource> onUpdated);
     File computeDataFilePath(DhSectionPos pos);
-    Executor getIOExecutor();
+    ExecutorService getIOExecutor();
 
 }

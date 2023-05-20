@@ -29,10 +29,9 @@ import java.util.function.Function;
 
 public class FullDataFileHandler implements IFullDataSourceProvider
 {
-    // Note: Single main thread only for now. May make it multi-thread later, depending on the usage.
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
     
-	final ExecutorService fileReaderThread = ThreadUtil.makeThreadPool(4, FullDataFileHandler.class.getSimpleName()+"Thread");
+	final ExecutorService fileHandlerThread = ThreadUtil.makeThreadPool(4, FullDataFileHandler.class.getSimpleName()+"Thread");
     final ConcurrentHashMap<DhSectionPos, FullDataMetaFile> files = new ConcurrentHashMap<>();
     final IDhLevel level;
     final File saveDir;
@@ -423,6 +422,12 @@ public class FullDataFileHandler implements IFullDataSourceProvider
     @Override
     public CompletableFuture<IFullDataSource> onDataFileRefresh(IFullDataSource source, BaseMetaData metaData, Function<IFullDataSource, Boolean> updater, Consumer<IFullDataSource> onUpdated)
 	{
+		if (this.fileHandlerThread.isTerminated())
+		{
+			return CompletableFuture.completedFuture(source);
+		}
+		
+		
         return CompletableFuture.supplyAsync(() ->
 		{
             IFullDataSource sourceLocal = source;
@@ -446,14 +451,14 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 				onUpdated.accept(sourceLocal);
 			}
             return sourceLocal;
-        }, this.fileReaderThread);
+        }, this.fileHandlerThread);
     }
 	
     @Override
     public File computeDataFilePath(DhSectionPos pos) { return new File(this.saveDir, pos.serialize() + ".lod"); }
 	
     @Override
-    public Executor getIOExecutor() { return this.fileReaderThread; }
+    public ExecutorService getIOExecutor() { return this.fileHandlerThread; }
 	
     @Override
     public void close()
@@ -461,7 +466,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
         FullDataMetaFile.debugPhantomLifeCycleCheck();
 		
 		// stop any existing file tasks
-		fileReaderThread.shutdownNow();
+		this.fileHandlerThread.shutdownNow();
     }
 	
 }

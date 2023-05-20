@@ -188,6 +188,14 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 				throw new IllegalStateException("Meta data not loaded!");
 			}
 			
+			// don't continue if the provider has been shut down
+			ExecutorService executorService = this.fullDataSourceProvider.getIOExecutor(); 
+			if (executorService.isTerminated())
+			{
+				future.complete(null);
+				return future;
+			}
+			
 			
 			CompletableFuture.supplyAsync(() ->
 				{
@@ -220,7 +228,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 					fullDataSource = this.fullDataSourceProvider.onDataFileLoaded(fullDataSource, this.baseMetaData, this::_updateAndWriteDataSource, this::_applyWriteQueueToFullDataSource);
 					return fullDataSource;
 					
-				}, this.fullDataSourceProvider.getIOExecutor())
+				}, executorService)
 				.exceptionally((ex) ->
 				{
 					if (ex instanceof InterruptedException)
