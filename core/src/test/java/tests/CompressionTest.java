@@ -85,14 +85,15 @@ import java.util.ArrayList;
  * 
  * <strong>Note:</strong>
  * In order to test the compressors that aren't currently in use: <br>
- * 1. uncomment the tests in this file <br>
- * 2. add the following to build.gradle's dependencies block: <br>
+ * 1. Generate DH data and point the {@link CompressionTest#TEST_DIR} variable to the "Distant_Horizons" folder.
+ * 2. Add the following to build.gradle's dependencies block: <br>
  * <code>
  * shadowMe("org.tukaani:xz:1.9")
  * shadowMe("org.apache.commons:commons-compress:1.21")
  * shadowMe("com.github.luben:zstd-jni:1.5.5-3")
- * </code>
- * 
+ * </code><br>
+ * 3. Uncomment the tests in this file <br>
+ * 4. Run the tests like normal
  */
 public class CompressionTest
 {
@@ -105,7 +106,7 @@ public class CompressionTest
 	
 	
 	
-	@Test
+//	@Test
 	public void NoCompression()
 	{
 		String compressorName = "Uncompressed";
@@ -120,7 +121,7 @@ public class CompressionTest
 		this.testCompressor(compressorName, FULL_DATA_PATH, createInputStreamFunc, createOutputStreamFunc);
 	}
 	
-	@Test
+//	@Test
 	public void Lz4()
 	{
 		String compressorName = "LZ4";
