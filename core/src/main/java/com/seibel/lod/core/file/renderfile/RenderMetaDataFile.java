@@ -11,9 +11,9 @@ import com.seibel.lod.core.file.metaData.AbstractMetaDataContainerFile;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.util.objects.dataStreams.DhDataInputStream;
 import org.apache.logging.log4j.Logger;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -177,10 +177,10 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 					
 					// Load the file.
 					ColumnRenderSource renderSource;
-					try (FileInputStream fileInputStream = this.getDataContent();
-						BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream))
+					try (FileInputStream fileInputStream = this.getFileInputStream();
+						DhDataInputStream compressedStream = new DhDataInputStream(fileInputStream))
 					{
-						renderSource = ColumnRenderLoader.INSTANCE.loadRenderSource(this, bufferedInputStream, level);
+						renderSource = ColumnRenderLoader.INSTANCE.loadRenderSource(this, compressedStream, level);
 					}
 					catch (IOException ex)
 					{
@@ -217,7 +217,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 				renderSource.getDataDetail(), renderSource.worldGenStep, RenderSourceFileHandler.RENDER_SOURCE_TYPE_ID, renderSource.getRenderDataFormatVersion());
 	}
 	
-    private FileInputStream getDataContent() throws IOException
+    private FileInputStream getFileInputStream() throws IOException
 	{
 		FileInputStream fin = new FileInputStream(this.file);
 		int toSkip = METADATA_SIZE_IN_BYTES;

@@ -10,10 +10,9 @@ import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.file.renderfile.RenderMetaDataFile;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.util.objects.dataStreams.DhDataInputStream;
 import org.apache.logging.log4j.Logger;
 
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -36,9 +35,8 @@ public class ColumnRenderLoader
 	
 	
 	
-    public ColumnRenderSource loadRenderSource(RenderMetaDataFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException
+    public ColumnRenderSource loadRenderSource(RenderMetaDataFile dataFile, DhDataInputStream inputStream, IDhLevel level) throws IOException
 	{
-		DataInputStream inputDataStream = new DataInputStream(bufferedInputStream); // DO NOT CLOSE
 		int dataFileVersion = dataFile.baseMetaData.binaryDataFormatVersion;
 		
 		switch (dataFileVersion)
@@ -46,7 +44,7 @@ public class ColumnRenderLoader
 			case 1:
 				//LOGGER.info("loading render source "+dataFile.pos);
 				
-				ParsedColumnData parsedColumnData = readDataV1(inputDataStream, level.getMinY());
+				ParsedColumnData parsedColumnData = readDataV1(inputStream, level.getMinY());
 				if (parsedColumnData.isEmpty)
 				{
 					LOGGER.warn("Empty render file "+dataFile.pos);
@@ -85,7 +83,7 @@ public class ColumnRenderLoader
 	 * 
 	 * @throws IOException if there was an issue reading the stream 
 	 */
-	private static ParsedColumnData readDataV1(DataInputStream inputStream, int expectedYOffset) throws IOException
+	private static ParsedColumnData readDataV1(DhDataInputStream inputStream, int expectedYOffset) throws IOException
 	{
 		// TODO move into ColumnRenderSource
 		

@@ -1,6 +1,7 @@
 package com.seibel.lod.core.dataObjects.fullData;
 
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
+import com.seibel.lod.core.util.objects.dataStreams.*;
 import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
@@ -60,25 +61,23 @@ public class FullDataPointIdMap
 	}
 	
 	/** Serializes all contained entries into the given stream, formatted in UTF */
-	public void serialize(BufferedOutputStream bufferedOutputStream) throws IOException
+	public void serialize(DhDataOutputStream outputStream) throws IOException
 	{
-		DataOutputStream dataStream = new DataOutputStream(bufferedOutputStream); // DO NOT CLOSE! It would close all related streams
-		dataStream.writeInt(this.entries.size());
+		outputStream.writeInt(this.entries.size());
 		for (Entry entry : this.entries)
 		{
-			dataStream.writeUTF(entry.serialize());
+			outputStream.writeUTF(entry.serialize());
 		}
 	}
 	
 	/** Creates a new IdBiomeBlockStateMap from the given UTF formatted stream */
-	public static FullDataPointIdMap deserialize(BufferedInputStream bufferedInputStream) throws IOException, InterruptedException
+	public static FullDataPointIdMap deserialize(DhDataInputStream inputStream) throws IOException, InterruptedException
 	{
-		DataInputStream dataStream = new DataInputStream(bufferedInputStream); // DO NOT CLOSE! It would close all related streams
-		int entityCount = dataStream.readInt();
+		int entityCount = inputStream.readInt();
 		FullDataPointIdMap newMap = new FullDataPointIdMap();
 		for (int i = 0; i < entityCount; i++)
 		{
-			newMap.entries.add(Entry.deserialize(dataStream.readUTF()));
+			newMap.entries.add(Entry.deserialize(inputStream.readUTF()));
 		}
 		return newMap;
 	}

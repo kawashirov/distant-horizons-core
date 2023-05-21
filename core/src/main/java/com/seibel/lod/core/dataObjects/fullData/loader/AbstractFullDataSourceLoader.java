@@ -4,8 +4,8 @@ import com.google.common.collect.HashMultimap;
 import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
+import com.seibel.lod.core.util.objects.dataStreams.DhDataInputStream;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.util.*;
 
@@ -57,7 +57,7 @@ public abstract class AbstractFullDataSourceLoader
 	 * Can return null if any of the requirements aren't met.
 	 * @throws InterruptedException if the loader thread is interrupted, generally happens when the level is shutting down
 	 */
-	public abstract IFullDataSource loadData(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException, InterruptedException;
+	public abstract IFullDataSource loadData(FullDataMetaFile dataFile, DhDataInputStream inputStream, IDhLevel level) throws IOException, InterruptedException;
 	
 	
 	

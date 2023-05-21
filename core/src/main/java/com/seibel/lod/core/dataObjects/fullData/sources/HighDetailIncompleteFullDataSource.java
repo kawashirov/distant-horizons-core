@@ -13,6 +13,7 @@ import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
+import com.seibel.lod.core.util.objects.dataStreams.*;
 import com.seibel.lod.coreapi.util.BitShiftUtil;
 import com.seibel.lod.core.util.FullDataPointUtil;
 import com.seibel.lod.core.util.LodUtil;
@@ -110,11 +111,8 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 	
 	
 	@Override
-	public void writeSourceSummaryInfo(IDhLevel level, BufferedOutputStream bufferedOutputStream) throws IOException
+	public void writeSourceSummaryInfo(IDhLevel level, DhDataOutputStream dataOutputStream) throws IOException
 	{
-		DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream); // Don't close, this stream is handled outside this method
-		
-		
 		dataOutputStream.writeShort(this.getDataDetailLevel());
 		dataOutputStream.writeShort(SPARSE_UNIT_DETAIL);
 		dataOutputStream.writeInt(SECTION_SIZE);
@@ -123,22 +121,19 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 		
 	}
 	@Override
-	public FullDataSourceSummaryData readSourceSummaryInfo(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException
+	public FullDataSourceSummaryData readSourceSummaryInfo(FullDataMetaFile dataFile, DhDataInputStream inputStream, IDhLevel level) throws IOException
 	{
-		DataInputStream dataInputStream = new DataInputStream(bufferedInputStream); // DO NOT CLOSE
-		
-		
 		LodUtil.assertTrue(dataFile.pos.sectionDetailLevel > SPARSE_UNIT_DETAIL);
 		LodUtil.assertTrue(dataFile.pos.sectionDetailLevel <= MAX_SECTION_DETAIL);
 		
-		int dataDetail = dataInputStream.readShort();
+		int dataDetail = inputStream.readShort();
 		if(dataDetail != dataFile.baseMetaData.dataLevel)
 		{
 			throw new IOException(LodUtil.formatLog("Data level mismatch: {} != {}", dataDetail, dataFile.baseMetaData.dataLevel));
 		}
 		
 		// confirm that the detail level is correct
-		int sparseDetail = dataInputStream.readShort();
+		int sparseDetail = inputStream.readShort();
 		if (sparseDetail != SPARSE_UNIT_DETAIL)
 		{
 			throw new IOException((LodUtil.formatLog("Unexpected sparse detail level: {} != {}",
@@ -146,20 +141,20 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 		}
 		
 		// confirm the scale of the data points is correct
-		int sectionSize = dataInputStream.readInt();
+		int sectionSize = inputStream.readInt();
 		if (sectionSize != SECTION_SIZE)
 		{
 			throw new IOException(LodUtil.formatLog(
 					"Section size mismatch: {} != {} (Currently only 1 section size is supported)", sectionSize, SECTION_SIZE));
 		}
 		
-		int minY = dataInputStream.readInt();
+		int minY = inputStream.readInt();
 		if (minY != level.getMinY())
 		{
 			LOGGER.warn("Data minY mismatch: "+minY+" != "+level.getMinY()+". Will ignore data's y level");
 		}
 		
-		EDhApiWorldGenerationStep worldGenStep = EDhApiWorldGenerationStep.fromValue(dataInputStream.readByte());
+		EDhApiWorldGenerationStep worldGenStep = EDhApiWorldGenerationStep.fromValue(inputStream.readByte());
 		if (worldGenStep == null)
 		{
 			worldGenStep = EDhApiWorldGenerationStep.SURFACE;
@@ -173,11 +168,8 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 	
 	
 	@Override
-	public boolean writeDataPoints(BufferedOutputStream bufferedOutputStream) throws IOException
+	public boolean writeDataPoints(DhDataOutputStream dataOutputStream) throws IOException
 	{
-		DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream); // Don't close, this stream is handled outside this method
-		
-		
 		if (this.isEmpty)
 		{
 			dataOutputStream.writeInt(IFullDataSource.NO_DATA_FLAG_BYTE);
@@ -238,12 +230,8 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 		return true;
 	}
 	@Override
-	public long[][][] readDataPoints(FullDataMetaFile dataFile, int width, BufferedInputStream bufferedInputStream) throws IOException
+	public long[][][] readDataPoints(FullDataMetaFile dataFile, int width, DhDataInputStream inputStream) throws IOException
 	{
-		DataInputStream dataInputStream = new DataInputStream(bufferedInputStream); // DO NOT CLOSE
-		
-		
-		
 		// calculate the number of chunks and dataPoints based on the sparseDetail and sectionSize
 		// TODO these values should be constant, should we still be calculating them like this?
 		int chunks = BitShiftUtil.powerOfTwo(dataFile.pos.sectionDetailLevel - SPARSE_UNIT_DETAIL);
@@ -251,7 +239,7 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 		
 		
 		// check if this file has any data
-		int dataPresentFlag = dataInputStream.readInt();
+		int dataPresentFlag = inputStream.readInt();
 		if (dataPresentFlag == IFullDataSource.NO_DATA_FLAG_BYTE)
 		{
 			// this file is empty
@@ -265,7 +253,7 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 		
 		
 		// get the number of columns (IE the bitSet from before)
-		int numberOfDataColumns = dataInputStream.readInt();
+		int numberOfDataColumns = inputStream.readInt();
 		// validate the number of data columns
 		int maxNumberOfDataColumns = (chunks * chunks / 8 + 64) * 2; // TODO what do these values represent?
 		if (numberOfDataColumns < 0 || numberOfDataColumns > maxNumberOfDataColumns)
@@ -276,7 +264,7 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 		
 		// read in the presence of each data column
 		byte[] bytes = new byte[numberOfDataColumns];
-		dataInputStream.readFully(bytes, 0, numberOfDataColumns);
+		inputStream.readFully(bytes, 0, numberOfDataColumns);
 		BitSet dataArrayIndexHasData = BitSet.valueOf(bytes);
 		
 		
@@ -286,7 +274,7 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 		//====================//
 		
 		//  (only on non-empty columns)
-		int dataArrayStartByte = dataInputStream.readInt();
+		int dataArrayStartByte = inputStream.readInt();
 		// confirm the column data is starting
 		if (dataArrayStartByte != IFullDataSource.DATA_GUARD_BYTE)
 		{
@@ -309,7 +297,7 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 			for (int x = 0; x < dataColumn.length; x++)
 			{
 				// this should be zero if the column doesn't have any data
-				int dataColumnLength = dataInputStream.readInt();
+				int dataColumnLength = inputStream.readInt();
 				dataColumn[x] = new long[dataColumnLength];
 			}
 			
@@ -321,7 +309,7 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 					// read in the data columns
 					for (int z = 0; z < dataColumn[x].length; z++)
 					{
-						dataColumn[x][z] = dataInputStream.readLong();
+						dataColumn[x][z] = inputStream.readLong();
 					}
 				}
 			}
@@ -361,23 +349,17 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 	
 	
 	@Override
-	public void writeIdMappings(BufferedOutputStream bufferedOutputStream) throws IOException
+	public void writeIdMappings(DhDataOutputStream dataOutputStream) throws IOException
 	{
-		DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream); // Don't close, this stream is handled outside this method
-		
-		
 		dataOutputStream.writeInt(IFullDataSource.DATA_GUARD_BYTE);
-		this.mapping.serialize(bufferedOutputStream);
+		this.mapping.serialize(dataOutputStream);
 		
 	}
 	@Override
-	public FullDataPointIdMap readIdMappings(long[][][] dataPoints, BufferedInputStream bufferedInputStream) throws IOException, InterruptedException
+	public FullDataPointIdMap readIdMappings(long[][][] dataPoints, DhDataInputStream inputStream) throws IOException, InterruptedException
 	{
-		DataInputStream dataInputStream = new DataInputStream(bufferedInputStream); // Don't close, this stream is handled outside this method
-		
-		
 		// mark the start of the ID data
-		int idMappingStartByte = dataInputStream.readInt();
+		int idMappingStartByte = inputStream.readInt();
 		if (idMappingStartByte != DATA_GUARD_BYTE)
 		{
 			// the file format is incorrect
@@ -385,7 +367,7 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 		}
 		
 		// deserialize the ID data
-		return FullDataPointIdMap.deserialize(bufferedInputStream);
+		return FullDataPointIdMap.deserialize(inputStream);
 	}
 	@Override
 	public void setIdMapping(FullDataPointIdMap mappings) { this.mapping.mergeAndReturnRemappedEntityIds(mappings); }

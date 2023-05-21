@@ -12,6 +12,7 @@ import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.pos.DhSectionPos;
+import com.seibel.lod.core.util.objects.dataStreams.*;
 import com.seibel.lod.coreapi.util.BitShiftUtil;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.FullDataPointUtil;
@@ -74,41 +75,36 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 	
 	
 	@Override
-	public void writeSourceSummaryInfo(IDhLevel level, BufferedOutputStream bufferedOutputStream) throws IOException
+	public void writeSourceSummaryInfo(IDhLevel level, DhDataOutputStream outputStream) throws IOException
 	{
-		DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream); // Don't close, this stream is handled outside this method
-		
-		dataOutputStream.writeInt(this.getDataDetailLevel());
-		dataOutputStream.writeInt(this.width);
-		dataOutputStream.writeInt(level.getMinY());
-		dataOutputStream.writeByte(this.worldGenStep.value);
+		outputStream.writeInt(this.getDataDetailLevel());
+		outputStream.writeInt(this.width);
+		outputStream.writeInt(level.getMinY());
+		outputStream.writeByte(this.worldGenStep.value);
 		
 	}
 	@Override
-	public FullDataSourceSummaryData readSourceSummaryInfo(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException
-	{
-		DataInputStream dataInputStream = new DataInputStream(bufferedInputStream); // DO NOT CLOSE
-		
-		
-		int dataDetail = dataInputStream.readInt();
+	public FullDataSourceSummaryData readSourceSummaryInfo(FullDataMetaFile dataFile, DhDataInputStream inputStream, IDhLevel level) throws IOException
+	{	
+		int dataDetail = inputStream.readInt();
 		if (dataDetail != dataFile.baseMetaData.dataLevel)
 		{
 			throw new IOException(LodUtil.formatLog("Data level mismatch: "+dataDetail+" != "+dataFile.baseMetaData.dataLevel));
 		}
 		
-		int width = dataInputStream.readInt();
+		int width = inputStream.readInt();
 		if (width != WIDTH)
 		{
 			throw new IOException(LodUtil.formatLog("Section width mismatch: "+width+" != "+ WIDTH +" (Currently only 1 section width is supported)"));
 		}
 		
-		int minY = dataInputStream.readInt();
+		int minY = inputStream.readInt();
 		if (minY != level.getMinY())
 		{
 			LOGGER.warn("Data minY mismatch: "+minY+" != "+level.getMinY()+". Will ignore data's y level");
 		}
 		
-		byte worldGenByte = dataInputStream.readByte();
+		byte worldGenByte = inputStream.readByte();
 		EDhApiWorldGenerationStep worldGenStep = EDhApiWorldGenerationStep.fromValue(worldGenByte);
 		if (worldGenStep == null)
 		{
@@ -126,17 +122,14 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 	
 	
 	@Override
-	public boolean writeDataPoints(BufferedOutputStream bufferedOutputStream) throws IOException
+	public boolean writeDataPoints(DhDataOutputStream outputStream) throws IOException
 	{
-		DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream); // Don't close, this stream is handled outside this method
-		
-		
 		if (this.isEmpty())
 		{
-			dataOutputStream.writeInt(IFullDataSource.NO_DATA_FLAG_BYTE);
+			outputStream.writeInt(IFullDataSource.NO_DATA_FLAG_BYTE);
 			return false;
 		}
-		dataOutputStream.writeInt(IFullDataSource.DATA_GUARD_BYTE);
+		outputStream.writeInt(IFullDataSource.DATA_GUARD_BYTE);
 		
 		
 		
@@ -145,14 +138,14 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 		{
 			for (int z = 0; z < this.width; z++)
 			{
-				dataOutputStream.writeInt(this.get(x, z).getSingleLength());
+				outputStream.writeInt(this.get(x, z).getSingleLength());
 			}
 		}
 		
 		
 		
 		// Data array content (only on non-empty columns)
-		dataOutputStream.writeInt(IFullDataSource.DATA_GUARD_BYTE);
+		outputStream.writeInt(IFullDataSource.DATA_GUARD_BYTE);
 		for (int x = 0; x < this.width; x++)
 		{
 			for (int z = 0; z < this.width; z++)
@@ -163,7 +156,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 					long[] dataPointArray = columnAccessor.getRaw();
 					for (long dataPoint : dataPointArray)
 					{
-						dataOutputStream.writeLong(dataPoint);
+						outputStream.writeLong(dataPoint);
 					}
 				}
 			}
@@ -173,12 +166,8 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 		return true;
 	}
 	@Override
-	public long[][] readDataPoints(FullDataMetaFile dataFile, int width, BufferedInputStream bufferedInputStream) throws IOException
+	public long[][] readDataPoints(FullDataMetaFile dataFile, int width, DhDataInputStream dataInputStream) throws IOException
 	{
-		DataInputStream dataInputStream = new DataInputStream(bufferedInputStream); // DO NOT CLOSE
-		
-		
-		
 		// Data array length
 		int dataPresentFlag = dataInputStream.readInt();
 		if (dataPresentFlag == IFullDataSource.NO_DATA_FLAG_BYTE)
@@ -237,28 +226,22 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 	
 	
 	@Override
-	public void writeIdMappings(BufferedOutputStream bufferedOutputStream) throws IOException
+	public void writeIdMappings(DhDataOutputStream outputStream) throws IOException
 	{
-		DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream); // Don't close, this stream is handled outside this method
-		
-		dataOutputStream.writeInt(IFullDataSource.DATA_GUARD_BYTE);
-		this.mapping.serialize(bufferedOutputStream);
+		outputStream.writeInt(IFullDataSource.DATA_GUARD_BYTE);
+		this.mapping.serialize(outputStream);
 		
 	}
 	@Override
-	public FullDataPointIdMap readIdMappings(long[][] dataPoints, BufferedInputStream bufferedInputStream) throws IOException, InterruptedException
+	public FullDataPointIdMap readIdMappings(long[][] dataPoints, DhDataInputStream inputStream) throws IOException, InterruptedException
 	{
-		DataInputStream dataInputStream = new DataInputStream(bufferedInputStream); // Don't close, this stream is handled outside this method
-		
-		
-		
-		int guardByte = dataInputStream.readInt();
+		int guardByte = inputStream.readInt();
 		if (guardByte != IFullDataSource.DATA_GUARD_BYTE)
 		{
 			throw new IOException("Invalid data content end guard for ID mapping");
 		}
 		
-		return FullDataPointIdMap.deserialize(bufferedInputStream);
+		return FullDataPointIdMap.deserialize(inputStream);
 	}
 	@Override 
 	public void setIdMapping(FullDataPointIdMap mappings) { this.mapping.mergeAndReturnRemappedEntityIds(mappings); }

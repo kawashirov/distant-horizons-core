@@ -15,9 +15,9 @@ import java.util.zip.CheckedOutputStream;
 import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.core.util.FileUtil;
 import com.seibel.lod.core.pos.DhSectionPos;
-import com.seibel.lod.core.util.objects.DhUnclosableOutputStream;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.util.objects.dataStreams.DhDataOutputStream;
 import org.apache.logging.log4j.Logger;
 
 /**
@@ -188,7 +188,7 @@ public abstract class AbstractMetaDataContainerFile
 		}
 	}
 	
-	protected void writeData(IMetaDataWriterFunc<BufferedOutputStream> dataWriterFunc) throws IOException
+	protected void writeData(IMetaDataWriterFunc<DhDataOutputStream> dataWriterFunc) throws IOException
 	{
 		LodUtil.assertTrue(this.baseMetaData != null);
 		if (this.file.exists())
@@ -212,10 +212,10 @@ public abstract class AbstractMetaDataContainerFile
 			fileChannel.position(METADATA_SIZE_IN_BYTES);
 			int checksum;
 			
-			try(DhUnclosableOutputStream bufferedOut = new DhUnclosableOutputStream(Channels.newOutputStream(fileChannel)); // Prevent closing the channel by anything but closing the file channel
-				CheckedOutputStream checkedOut = new CheckedOutputStream(bufferedOut, new Adler32())) // TODO: Is Adler32 ok?
+			try(DhDataOutputStream compressedOut = new DhDataOutputStream(Channels.newOutputStream(fileChannel));
+				CheckedOutputStream checkedOut = new CheckedOutputStream(compressedOut, new Adler32())) // TODO: Is Adler32 ok?
 			{
-				dataWriterFunc.writeBufferToFile(bufferedOut); // TODO it might be nice to have a DH stream we pass in instead of the base BufferedOutputStream to make it clear the streams can't be closed
+				dataWriterFunc.writeBufferToFile(compressedOut);
 				checksum = (int) checkedOut.getChecksum().getValue();
 			}
 			

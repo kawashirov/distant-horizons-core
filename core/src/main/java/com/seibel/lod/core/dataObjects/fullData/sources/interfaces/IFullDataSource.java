@@ -9,9 +9,9 @@ import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
+import com.seibel.lod.core.util.objects.dataStreams.DhDataInputStream;
+import com.seibel.lod.core.util.objects.dataStreams.DhDataOutputStream;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -73,16 +73,17 @@ public interface IFullDataSource
 	// basic stream handling // 
 	//=======================//
 	
+	// TODO make this blow up in IStreamableFullDataSource instead of the children
 	/** 
 	 * Should only be implemented by {@link IStreamableFullDataSource} to prevent potential stream read/write inconsistencies. 
-	 * @see IStreamableFullDataSource#writeToStream(BufferedOutputStream, IDhLevel)
+	 * @see IStreamableFullDataSource#writeToStream(DhDataOutputStream, IDhLevel)
 	 */
-	void writeToStream(BufferedOutputStream bufferedOutputStream, IDhLevel level) throws IOException;
+	void writeToStream(DhDataOutputStream outputStream, IDhLevel level) throws IOException;
 	
 	/** 
 	 * Should only be implemented by {@link IStreamableFullDataSource} to prevent potential stream read/write inconsistencies. 
-	 * @see IStreamableFullDataSource#populateFromStream(FullDataMetaFile, BufferedInputStream, IDhLevel)
+	 * @see IStreamableFullDataSource#populateFromStream(FullDataMetaFile, DhDataInputStream, IDhLevel)
 	 */
-	void populateFromStream(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException, InterruptedException;
+	void populateFromStream(FullDataMetaFile dataFile, DhDataInputStream inputStream, IDhLevel level) throws IOException, InterruptedException;
 	
 }

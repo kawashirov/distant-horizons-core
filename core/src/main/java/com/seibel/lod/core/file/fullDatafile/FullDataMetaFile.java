@@ -20,6 +20,7 @@ import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.AtomicsUtil;
 import com.seibel.lod.core.util.LodUtil;
+import com.seibel.lod.core.util.objects.dataStreams.DhDataInputStream;
 import org.apache.logging.log4j.Logger;
 
 /**
@@ -201,23 +202,22 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 				{
 					// Load the file.
 					IFullDataSource fullDataSource;
-					try (FileInputStream fileInputStream = this._getFileInputStream();
-						BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream))
+					try (FileInputStream fileInputStream = this.getFileInputStream();
+						DhDataInputStream compressedStream = new DhDataInputStream(fileInputStream))
 					{
-						fullDataSource = this.fullDataSourceLoader.loadData(this, bufferedInputStream, this.level);
+						fullDataSource = this.fullDataSourceLoader.loadData(this, compressedStream, this.level);
 					}
 					catch (Exception ex)
 					{
 						if (ex instanceof InterruptedException)
 						{
-//							LOGGER.warn(FullDataMetaFile.class.getSimpleName()+" loadOrGetCachedAsync interrupted.");
+							//LOGGER.warn(FullDataMetaFile.class.getSimpleName()+" loadOrGetCachedAsync interrupted.");
 							return null;
 						}
 						
 						// can happen if there is a missing file or the file was incorrectly formatted
 						throw new CompletionException(ex);
 					}
-					
 					
 					// confirm that this thread is in control
 					LodUtil.assertTrue(this.inCacheWriteAccessFuture.get() == null,
@@ -263,7 +263,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 		return future;
 	}
 	/** @return a stream for the data contained in this file, skips the metadata from {@link AbstractMetaDataContainerFile}. */
-	private FileInputStream _getFileInputStream() throws IOException
+	private FileInputStream getFileInputStream() throws IOException
 	{
 		FileInputStream fileInputStream = new FileInputStream(this.file);
 		
@@ -456,7 +456,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 				this.baseMetaData.dataTypeId = (this.fullDataSourceLoader == null) ? 0 : this.fullDataSourceLoader.datatypeId;
 				this.baseMetaData.binaryDataFormatVersion = fullDataSource.getBinaryDataFormatVersion();
 				
-				super.writeData((outputStream) -> fullDataSource.writeToStream(outputStream, this.level));
+				super.writeData((bufferedOutputStream) -> fullDataSource.writeToStream((bufferedOutputStream), this.level));
 				this.doesFileExist = true;
 			}
 			catch (ClosedByInterruptException e) // thrown by buffers that are interrupted

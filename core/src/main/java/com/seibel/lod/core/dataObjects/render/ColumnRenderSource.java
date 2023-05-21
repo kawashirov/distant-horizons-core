@@ -3,6 +3,7 @@ package com.seibel.lod.core.dataObjects.render;
 import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.lod.core.dataObjects.render.bufferBuilding.ColumnRenderBufferBuilder;
 import com.seibel.lod.core.dataObjects.transformers.FullDataToRenderDataTransformer;
+import com.seibel.lod.core.util.objects.dataStreams.DhDataOutputStream;
 import com.seibel.lod.coreapi.ModInfo;
 import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.render.columnViews.ColumnArrayView;
@@ -11,7 +12,6 @@ import com.seibel.lod.core.dataObjects.render.columnViews.IColumnDataView;
 import com.seibel.lod.core.dataObjects.render.bufferBuilding.ColumnRenderBuffer;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
-import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.coreapi.util.BitShiftUtil;
@@ -203,24 +203,23 @@ public class ColumnRenderSource
 	// data update and output //
 	//========================//
 	
-	public void writeData(BufferedOutputStream bufferedOutputStream) throws IOException
+	public void writeData(DhDataOutputStream outputStream) throws IOException
 	{
-		bufferedOutputStream.flush();
-		DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream);
+		outputStream.flush();
 		
-		dataOutputStream.writeByte(this.getDataDetail());
-		dataOutputStream.writeInt(this.verticalDataCount);
+		outputStream.writeByte(this.getDataDetail());
+		outputStream.writeInt(this.verticalDataCount);
 		
 		if (this.isEmpty)
 		{
 			// no data is present
-			dataOutputStream.writeByte(NO_DATA_FLAG_BYTE);
+			outputStream.writeByte(NO_DATA_FLAG_BYTE);
 		}
 		else
 		{
 			// data is present
-			dataOutputStream.writeByte(DATA_GUARD_BYTE);
-			dataOutputStream.writeInt(this.yOffset);
+			outputStream.writeByte(DATA_GUARD_BYTE);
+			outputStream.writeInt(this.yOffset);
 			
 			// write the data for each column
 			for (int xz = 0; xz < SECTION_SIZE * SECTION_SIZE; xz++)
@@ -228,15 +227,15 @@ public class ColumnRenderSource
 				for (int y = 0; y < this.verticalDataCount; y++)
 				{
 					long currentDatapoint = this.renderDataContainer[xz * this.verticalDataCount + y];
-					dataOutputStream.writeLong(Long.reverseBytes(currentDatapoint)); // the reverse bytes is necessary to ensure the data is read in correctly
+					outputStream.writeLong(Long.reverseBytes(currentDatapoint)); // the reverse bytes is necessary to ensure the data is read in correctly
 				}
 			}
 		}
 		
-		dataOutputStream.writeByte(DATA_GUARD_BYTE);
-		dataOutputStream.writeByte(this.worldGenStep.value);
+		outputStream.writeByte(DATA_GUARD_BYTE);
+		outputStream.writeByte(this.worldGenStep.value);
 		
-		bufferedOutputStream.flush();
+		outputStream.flush();
 	}
 	
 	/** Overrides any data that has not been written directly using write(). Skips empty source dataPoints. */

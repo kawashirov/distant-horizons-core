@@ -5,9 +5,8 @@ import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
 import com.seibel.lod.core.dataObjects.fullData.accessor.FullDataArrayAccessor;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.level.IDhLevel;
+import com.seibel.lod.core.util.objects.dataStreams.*;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 
 /**
@@ -19,7 +18,7 @@ import java.io.IOException;
  * 
  * @apiNote James would've preferred to have this as an abstract class, 
  * however that is impossible. See the apiNote in
- * {@link IStreamableFullDataSource#populateFromStream(FullDataMetaFile, BufferedInputStream, IDhLevel) populateFromStream} 
+ * {@link IStreamableFullDataSource#populateFromStream(FullDataMetaFile, DhDataInputStream, IDhLevel) populateFromStream} 
  * for the full reasoning.
  * 
  * @param <SummaryDataType> defines the object holding this data source's summary data, extends {@link IStreamableFullDataSource.FullDataSourceSummaryData}. 
@@ -40,13 +39,13 @@ public interface IStreamableFullDataSource<SummaryDataType extends IStreamableFu
 	 * so this could've been a constructor.
 	 * However, several inheritors of this interface already extend {@link FullDataArrayAccessor}, making that impossible.
 	 */
-	default void populateFromStream(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException, InterruptedException
+	default void populateFromStream(FullDataMetaFile dataFile, DhDataInputStream inputStream, IDhLevel level) throws IOException, InterruptedException
 	{
-		SummaryDataType summaryData = this.readSourceSummaryInfo(dataFile, bufferedInputStream, level);
+		SummaryDataType summaryData = this.readSourceSummaryInfo(dataFile, inputStream, level);
 		this.setSourceSummaryData(summaryData);
 		
 		
-		DataContainerType dataPoints = this.readDataPoints(dataFile, summaryData.dataWidth, bufferedInputStream);
+		DataContainerType dataPoints = this.readDataPoints(dataFile, summaryData.dataWidth, inputStream);
 		if (dataPoints == null)
 		{
 			return;
@@ -54,23 +53,22 @@ public interface IStreamableFullDataSource<SummaryDataType extends IStreamableFu
 		this.setDataPoints(dataPoints);
 		
 		
-		FullDataPointIdMap mapping = this.readIdMappings(dataPoints, bufferedInputStream);
+		FullDataPointIdMap mapping = this.readIdMappings(dataPoints, inputStream);
 		this.setIdMapping(mapping);
 		
 	}
 	
-	default void writeToStream(BufferedOutputStream bufferedOutputStream, IDhLevel level) throws IOException
+	default void writeToStream(DhDataOutputStream outputStream, IDhLevel level) throws IOException
 	{
-		this.writeSourceSummaryInfo(level, bufferedOutputStream);
+		this.writeSourceSummaryInfo(level, outputStream);
 		
-		boolean hasData = this.writeDataPoints(bufferedOutputStream);
+		boolean hasData = this.writeDataPoints(outputStream);
 		if (!hasData)
 		{
 			return;
 		}
 		
-		this.writeIdMappings(bufferedOutputStream);
-		
+		this.writeIdMappings(outputStream);
 	}
 	
 	
@@ -78,26 +76,26 @@ public interface IStreamableFullDataSource<SummaryDataType extends IStreamableFu
 	/**
 	 * Includes information about the source file that doesn't need to be saved in each data point. Like the source's size and y-level.
 	 */
-	void writeSourceSummaryInfo(IDhLevel level, BufferedOutputStream bufferedOutputStream) throws IOException;
+	void writeSourceSummaryInfo(IDhLevel level, DhDataOutputStream outputStream) throws IOException;
 	/**
 	 * Confirms that the given {@link FullDataMetaFile} is valid for this {@link IStreamableFullDataSource}. <br>
 	 * This specifically checks any fields that should be set when the {@link IStreamableFullDataSource} was first constructed.
 	 * 
 	 * @throws IOException if the {@link FullDataMetaFile} isn't valid for this object.
 	 */
-	SummaryDataType readSourceSummaryInfo(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException;
+	SummaryDataType readSourceSummaryInfo(FullDataMetaFile dataFile, DhDataInputStream inputStream, IDhLevel level) throws IOException;
 	void setSourceSummaryData(SummaryDataType summaryData);
 	
 	
 	/** @return true if any data points were present and written, false if this object was empty */
-	boolean writeDataPoints(BufferedOutputStream bufferedOutputStream) throws IOException;
+	boolean writeDataPoints(DhDataOutputStream outputStream) throws IOException;
 	/** @return null if no data points were present */
-	DataContainerType readDataPoints(FullDataMetaFile dataFile, int width, BufferedInputStream bufferedInputStream) throws IOException;
+	DataContainerType readDataPoints(FullDataMetaFile dataFile, int width, DhDataInputStream inputStream) throws IOException;
 	void setDataPoints(DataContainerType dataPoints);
 	
 	
-	void writeIdMappings(BufferedOutputStream bufferedOutputStream) throws IOException;
-	FullDataPointIdMap readIdMappings(DataContainerType dataPoints, BufferedInputStream bufferedInputStream) throws IOException, InterruptedException;
+	void writeIdMappings(DhDataOutputStream outputStream) throws IOException;
+	FullDataPointIdMap readIdMappings(DataContainerType dataPoints, DhDataInputStream inputStream) throws IOException, InterruptedException;
 	void setIdMapping(FullDataPointIdMap mappings);
 	
 	

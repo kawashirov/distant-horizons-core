@@ -4,8 +4,8 @@ import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IFullDataSour
 import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.level.IDhLevel;
+import com.seibel.lod.core.util.objects.dataStreams.DhDataInputStream;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 
 public class CompleteFullDataSourceLoader extends AbstractFullDataSourceLoader
@@ -16,12 +16,10 @@ public class CompleteFullDataSourceLoader extends AbstractFullDataSourceLoader
     }
 	
     @Override
-    public IFullDataSource loadData(FullDataMetaFile dataFile, BufferedInputStream bufferedInputStream, IDhLevel level) throws IOException, InterruptedException
+    public IFullDataSource loadData(FullDataMetaFile dataFile, DhDataInputStream inputStream, IDhLevel level) throws IOException, InterruptedException
 	{
-        //TODO: Add decompressor here
-		
 		CompleteFullDataSource dataSource = CompleteFullDataSource.createEmpty(dataFile.pos);
-		dataSource.populateFromStream(dataFile, bufferedInputStream, level);
+		dataSource.populateFromStream(dataFile, inputStream, level);
         return dataSource;
     }
 	
