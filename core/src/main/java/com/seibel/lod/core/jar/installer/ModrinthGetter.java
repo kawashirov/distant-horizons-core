@@ -16,6 +16,7 @@ import java.util.*;
 public class ModrinthGetter {
     public static final String ModrinthAPI = "https://api.modrinth.com/v2/project/";
     public static final String projectID = "distanthorizons";
+    public static boolean initted = false;
     public static ArrayList<Config> projectRelease;
 
     public static List<String> releaseID = new ArrayList<>(); // This list contains the release ID's
@@ -36,6 +37,7 @@ public class ModrinthGetter {
 
     public static boolean init() {
         try {
+            initted = false;
             projectRelease = JsonFormat.fancyInstance().createParser().parse("{\"E\":" + WebDownloader.downloadAsString(new URL(ModrinthAPI+projectID+"/version")) + "}").get("E");
 
 
@@ -69,6 +71,7 @@ public class ModrinthGetter {
             Collections.sort(mcVersions);
             Collections.reverse(mcVersions);
 
+            initted = true;
             return true;
         } catch (Exception e) {
             e.printStackTrace();
