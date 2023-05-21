@@ -72,7 +72,7 @@ public class QuadTree<T>
 	//=====================//
 	
     /** @return the node at the given section position */
-    public final QuadNode<T> getNode(DhSectionPos pos) throws IndexOutOfBoundsException { return this.getOrSetNode(pos, false, null, false); }
+    public final QuadNode<T> getNode(DhSectionPos pos) throws IndexOutOfBoundsException { return this.getOrSetNode(pos, false, null, true); }
 	/** @return the value at the given section position */
 	public final T getValue(DhSectionPos pos) throws IndexOutOfBoundsException 
 	{
