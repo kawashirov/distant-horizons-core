@@ -123,10 +123,7 @@ public class LodQuadBuilder
 		for (int i = 0; i < 6; i++)
 		{
 			this.opaqueQuads[i] = new ArrayList<>();
-			if (doTransparency)
-			{
-				this.transparentQuads[i] = new ArrayList<>();
-			}
+			this.transparentQuads[i] = new ArrayList<>();
 		}
 		
 		this.skipQuadsWithZeroSkylight = enableSkylightCulling;
@@ -327,7 +324,10 @@ public class LodQuadBuilder
 	public void finalizeData()
 	{
 		this.mergeQuads();
-		this.fixTransparencyOverVoid(); // should happen after merging
+		if (this.doTransparency)
+		{
+			this.fixTransparencyOverVoid(); // should happen after merging
+		}
 	}
 	
 	/** Uses Greedy meshing to merge this builder's Quads. */
