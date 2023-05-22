@@ -73,7 +73,8 @@ public class DataRenderTransformer
 		if (transformerThreads == null || transformerThreads.isTerminated())
 		{
 			LOGGER.info("Starting "+DataRenderTransformer.class.getSimpleName());
-			transformerThreads = ThreadUtil.makeThreadPool(4, "Data/Render Transformer");
+			// TODO add config option to set pool size
+			transformerThreads = ThreadUtil.makeThreadPool(1, "Data/Render Transformer");
 		}
 	}
 	
