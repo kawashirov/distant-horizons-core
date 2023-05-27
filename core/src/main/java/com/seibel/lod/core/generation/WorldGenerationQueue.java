@@ -446,6 +446,12 @@ public class WorldGenerationQueue implements Closeable
 		this.inProgressGenTasksByLodPos.values().forEach(runningTaskGroup ->
 			{
 				CompletableFuture<Void> genFuture = runningTaskGroup.genFuture; // Do this to prevent it getting swapped out
+				if (genFuture == null)
+				{
+					// genFuture's shouldn't be null, but sometimes they are...
+					return;
+				}
+				
 				
 				if (cancelCurrentGeneration)
 				{
