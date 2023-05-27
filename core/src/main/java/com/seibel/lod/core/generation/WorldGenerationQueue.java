@@ -387,6 +387,30 @@ public class WorldGenerationQueue implements Closeable
 			LodUtil.assertTrue(worked);
 		});
 	}
+	/**
+	 * The chunkPos is always aligned to the granularity.
+	 * For example: if the granularity is 4 (chunk sized) with a data detail level of 0 (block sized), the chunkPos will be aligned to 16x16 blocks.
+	 */
+	private static CompletableFuture<Void> startGenerationEvent(IDhApiWorldGenerator worldGenerator,
+			DhChunkPos chunkPosMin,
+			byte granularity, byte targetDataDetail,
+			Consumer<ChunkSizedFullDataAccessor> generationCompleteConsumer)
+	{
+		EDhApiDistantGeneratorMode generatorMode = Config.Client.WorldGenerator.distantGeneratorMode.get();
+		return worldGenerator.generateChunks(chunkPosMin.x, chunkPosMin.z, granularity, targetDataDetail, generatorMode, (objectArray) ->
+		{
+			try
+			{
+				IChunkWrapper chunk = SingletonInjector.INSTANCE.get(IWrapperFactory.class).createChunkWrapper(objectArray);
+				generationCompleteConsumer.accept(LodDataBuilder.createChunkData(chunk));
+			}
+			catch (ClassCastException e)
+			{
+				DhLoggerBuilder.getLogger().error("World generator return type incorrect. Error: [" + e.getMessage() + "].", e);
+				Config.Client.WorldGenerator.enableDistantGeneration.set(false);
+			}
+		});
+	}
 	
 	
 	
@@ -508,30 +532,5 @@ public class WorldGenerationQueue implements Closeable
 		return index;
 	}
 	
-	
-	/**
-	 * The chunkPos is always aligned to the granularity.
-	 * For example: if the granularity is 4 (chunk sized) with a data detail level of 0 (block sized), the chunkPos will be aligned to 16x16 blocks.
-	 */
-	private static CompletableFuture<Void> startGenerationEvent(IDhApiWorldGenerator worldGenerator,
-			DhChunkPos chunkPosMin,
-			byte granularity, byte targetDataDetail,
-			Consumer<ChunkSizedFullDataAccessor> generationCompleteConsumer)
-	{
-		EDhApiDistantGeneratorMode generatorMode = Config.Client.WorldGenerator.distantGeneratorMode.get();
-		return worldGenerator.generateChunks(chunkPosMin.x, chunkPosMin.z, granularity, targetDataDetail, generatorMode, (objectArray) ->
-		{
-			try
-			{
-				IChunkWrapper chunk = SingletonInjector.INSTANCE.get(IWrapperFactory.class).createChunkWrapper(objectArray);
-				generationCompleteConsumer.accept(LodDataBuilder.createChunkData(chunk));
-			}
-			catch (ClassCastException e)
-			{
-				DhLoggerBuilder.getLogger().error("World generator return type incorrect. Error: [" + e.getMessage() + "].", e);
-				Config.Client.WorldGenerator.enableDistantGeneration.set(false);
-			}
-		});
-	}
 	
 }
