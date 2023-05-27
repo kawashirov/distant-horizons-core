@@ -61,100 +61,99 @@ public class ColumnRenderBufferBuilder
 		
 		//LOGGER.info("RenderRegion startBuild @ {}", renderSource.sectionPos);
 		return CompletableFuture.supplyAsync(() ->
+			{
+				try
+				{
+					boolean enableTransparency = Config.Client.Graphics.Quality.transparency.get().tranparencyEnabled;
+					
+					EVENT_LOGGER.trace("RenderRegion start QuadBuild @ "+renderSource.sectionPos);
+					boolean enableSkyLightCulling = Config.Client.Graphics.AdvancedGraphics.enableCaveCulling.get();
+					
+					int skyLightCullingBelow = Config.Client.Graphics.AdvancedGraphics.caveCullingHeight.get();
+					// FIXME: Clamp also to the max world height.
+					skyLightCullingBelow = Math.max(skyLightCullingBelow, clientLevel.getMinY());
+					
+					LodQuadBuilder builder = new LodQuadBuilder(enableSkyLightCulling,
+							(short) (skyLightCullingBelow - clientLevel.getMinY()), enableTransparency);
+					
+					makeLodRenderData(builder, renderSource, adjData);
+					EVENT_LOGGER.trace("RenderRegion end QuadBuild @ "+renderSource.sectionPos);
+					return builder;
+				}
+				catch (UncheckedInterruptedException e)
+				{
+					throw e;
+				}
+				catch (Throwable e3)
+				{
+					LOGGER.error("\"LodNodeBufferBuilder\" was unable to build quads: ", e3);
+					throw e3;
+				}
+				
+			}, BUFFER_BUILDER_THREADS)
+			.thenApplyAsync((quadBuilder) ->
 				{
 					try
 					{
-						boolean enableTransparency = Config.Client.Graphics.Quality.transparency.get().tranparencyEnabled;
+						EVENT_LOGGER.trace("RenderRegion start Upload @ "+renderSource.sectionPos);
+						GLProxy glProxy = GLProxy.getInstance();
+						EGpuUploadMethod method = GLProxy.getInstance().getGpuUploadMethod();
+						EGLProxyContext oldContext = glProxy.getGlContext();
+						glProxy.setGlContext(EGLProxyContext.LOD_BUILDER);
+						ColumnRenderBuffer buffer = renderBufferRef.swap(null);
 						
-						EVENT_LOGGER.trace("RenderRegion start QuadBuild @ "+renderSource.sectionPos);
-						boolean enableSkyLightCulling = Config.Client.Graphics.AdvancedGraphics.enableCaveCulling.get();
+						if (buffer == null)
+						{
+							buffer = new ColumnRenderBuffer(new DhBlockPos(renderSource.sectionPos.getCorner().getCornerBlockPos(), clientLevel.getMinY()));
+						}
+						buffer.buffersUploaded = false;
 						
-						int skyLightCullingBelow = Config.Client.Graphics.AdvancedGraphics.caveCullingHeight.get();
-						// FIXME: Clamp also to the max world height.
-						skyLightCullingBelow = Math.max(skyLightCullingBelow, clientLevel.getMinY());
-						
-						LodQuadBuilder builder = new LodQuadBuilder(enableSkyLightCulling,
-								(short) (skyLightCullingBelow - clientLevel.getMinY()), enableTransparency);
-						
-						makeLodRenderData(builder, renderSource, adjData);
-						EVENT_LOGGER.trace("RenderRegion end QuadBuild @ "+renderSource.sectionPos);
-						return builder;
+						try
+						{
+							buffer.uploadBuffer(quadBuilder, method);
+							EVENT_LOGGER.trace("RenderRegion end Upload @ "+renderSource.sectionPos);
+							return buffer;
+						}
+						catch (Exception e)
+						{
+							buffer.close();
+							throw e;
+						}
+						finally
+						{
+							glProxy.setGlContext(oldContext);
+						}
 					}
-					catch (UncheckedInterruptedException e)
+					catch (InterruptedException e)
 					{
-						throw e;
+						throw UncheckedInterruptedException.convert(e);
 					}
 					catch (Throwable e3)
 					{
-						LOGGER.error("\"LodNodeBufferBuilder\" was unable to build quads: ", e3);
+						LOGGER.error("\"LodNodeBufferBuilder\" was unable to upload buffer: ", e3);
 						throw e3;
 					}
-					
-				}, BUFFER_BUILDER_THREADS)
-				.thenApplyAsync((quadBuilder) ->
+				},
+				BUFFER_UPLOADER).handle((columnRenderBuffer, ex) ->
+					{
+						//LOGGER.info("RenderRegion endBuild @ {}", renderSource.sectionPos);
+						if (ex != null)
 						{
-							try
+							LOGGER.warn("Buffer building failed: "+ex.getMessage(), ex);
+							
+							if (!renderBufferRef.isEmpty())
 							{
-								EVENT_LOGGER.trace("RenderRegion start Upload @ "+renderSource.sectionPos);
-								GLProxy glProxy = GLProxy.getInstance();
-								EGpuUploadMethod method = GLProxy.getInstance().getGpuUploadMethod();
-								EGLProxyContext oldContext = glProxy.getGlContext();
-								glProxy.setGlContext(EGLProxyContext.LOD_BUILDER);
 								ColumnRenderBuffer buffer = renderBufferRef.swap(null);
-								
-								if (buffer == null)
-								{
-									buffer = new ColumnRenderBuffer(new DhBlockPos(renderSource.sectionPos.getCorner().getCornerBlockPos(), clientLevel.getMinY()));
-								}
-								buffer.buffersUploaded = false;
-								
-								try
-								{
-									buffer.uploadBuffer(quadBuilder, method);
-									EVENT_LOGGER.trace("RenderRegion end Upload @ "+renderSource.sectionPos);
-									return buffer;
-								}
-								catch (Exception e)
-								{
-									buffer.close();
-									throw e;
-								}
-								finally
-								{
-									glProxy.setGlContext(oldContext);
-								}
+								buffer.close();
 							}
-							catch (InterruptedException e)
-							{
-								throw UncheckedInterruptedException.convert(e);
-							}
-							catch (Throwable e3)
-							{
-								LOGGER.error("\"LodNodeBufferBuilder\" was unable to upload buffer: ", e3);
-								throw e3;
-							}
-						},
-						BUFFER_UPLOADER).handle((columnRenderBuffer, ex) ->
-				{
-					//LOGGER.info("RenderRegion endBuild @ {}", renderSource.sectionPos);
-					if (ex != null)
-					{
-						LOGGER.warn("Buffer building failed: "+ex.getMessage(), ex);
-						
-						ColumnRenderBuffer buffer;
-						if (!renderBufferRef.isEmpty())
-						{
-							buffer = renderBufferRef.swap(null);
-							buffer.close();
+							
+							return null;
 						}
-						
-						return null;
-					}
-					else
-					{
-						return columnRenderBuffer;
-					}
-				});
+						else
+						{
+							return columnRenderBuffer;
+						}
+					});
 	}
 	private static void makeLodRenderData(LodQuadBuilder quadBuilder, ColumnRenderSource renderSource, ColumnRenderSource[] adjRegions)
 	{
