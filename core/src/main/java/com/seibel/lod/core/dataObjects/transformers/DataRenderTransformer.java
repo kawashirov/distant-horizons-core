@@ -74,7 +74,7 @@ public class DataRenderTransformer
 		{
 			LOGGER.info("Starting "+DataRenderTransformer.class.getSimpleName());
 			// TODO add config option to set pool size
-			transformerThreads = ThreadUtil.makeThreadPool(1, "Data/Render Transformer");
+			transformerThreads = ThreadUtil.makeThreadPool(4, "Data/Render Transformer");
 		}
 	}
 	
