@@ -435,6 +435,9 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 	@Override
 	public boolean isEmpty() { return this.isEmpty; }
 	
+	@Override
+	public int getWidthInDataPoints() { return SECTION_SIZE; }
+	
 	
 	private int calculateOffset(int chunkX, int chunkZ)
 	{

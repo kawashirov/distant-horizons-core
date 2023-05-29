@@ -407,6 +407,9 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 	public boolean isEmpty() { return this.isEmpty; }
 	public void markNotEmpty() { this.isEmpty = false; }
 	
+	@Override
+	public int getWidthInDataPoints() { return this.width; }
+	
 	
 	
 	//========//

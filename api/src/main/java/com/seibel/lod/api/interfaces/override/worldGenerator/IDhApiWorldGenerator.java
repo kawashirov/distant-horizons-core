@@ -35,7 +35,7 @@ public interface IDhApiWorldGenerator extends Closeable, IDhApiOverrideable
 	 * 
 	 * @see	EDhApiDetailLevel
 	 */
-	default byte getMinDataDetailLevel() { return EDhApiDetailLevel.BLOCK.detailLevel; }
+	default byte getSmallestDataDetailLevel() { return EDhApiDetailLevel.BLOCK.detailLevel; }
 	/**
 	 * Defines the largest datapoint size that can be generated at a time. <br>
 	 * Minimum detail level is 0 (1 block) <br>
@@ -44,7 +44,7 @@ public interface IDhApiWorldGenerator extends Closeable, IDhApiOverrideable
 	 * 
 	 * @see	EDhApiDetailLevel
 	 */
-	default byte getMaxDataDetailLevel() { return EDhApiDetailLevel.BLOCK.detailLevel; }
+	default byte getLargestDataDetailLevel() { return EDhApiDetailLevel.BLOCK.detailLevel; }
 	
 	/**
 	 * When creating generation requests the system will attempt to group nearby tasks together. <br><br>

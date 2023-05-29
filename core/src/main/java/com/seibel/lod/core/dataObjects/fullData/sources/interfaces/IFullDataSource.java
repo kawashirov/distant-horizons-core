@@ -48,6 +48,9 @@ public interface IFullDataSource
 	
 	boolean isEmpty();
 	
+	/** AKA; the max relative position that {@link IFullDataSource#tryGet(int, int)} can accept for either X or Z */
+	int getWidthInDataPoints();
+	
 	
 	
 	//======//

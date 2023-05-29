@@ -70,8 +70,8 @@ public class WorldGenerationQueue implements Closeable
 		this.generator = generator;
 		this.maxGranularity = generator.getMaxGenerationGranularity();
 		this.minGranularity = generator.getMinGenerationGranularity();
-		this.maxDataDetail = generator.getMaxDataDetailLevel();
-		this.minDataDetail = generator.getMinDataDetailLevel();
+		this.maxDataDetail = generator.getLargestDataDetailLevel();
+		this.minDataDetail = generator.getSmallestDataDetailLevel();
 		
 		int treeWidth = Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH * 2; // TODO the *2 is to allow for generation edge cases, and should probably be removed at some point
 		byte treeMinDetailLevel = LodUtil.BLOCK_DETAIL_LEVEL; // the tree shouldn't need to go this low, but just in case

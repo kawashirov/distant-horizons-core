@@ -31,6 +31,7 @@ public class SingleColumnFullDataAccessor implements IFullDataAccessor
 	
 	
 	
+	/** @return true if any data exists in this column. */
 	public boolean doesColumnExist() 
 	{
 		long[] dataColumn = this.dataArrays[this.dataArrayIndex];

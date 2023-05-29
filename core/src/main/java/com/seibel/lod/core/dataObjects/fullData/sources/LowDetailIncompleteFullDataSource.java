@@ -305,6 +305,9 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 	public boolean isEmpty() { return this.isEmpty; }
 	public void markNotEmpty() { this.isEmpty = false;  }
 	
+	@Override
+	public int getWidthInDataPoints() { return WIDTH; }
+	
 	
 	
 	//===============//
