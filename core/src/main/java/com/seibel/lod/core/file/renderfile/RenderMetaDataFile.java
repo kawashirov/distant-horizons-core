@@ -30,7 +30,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 	 * When clearing, don't set to null, instead create a SoftReference containing null. 
 	 * This will make null checks simpler.
 	 */
-	private SoftReference<ColumnRenderSource> cachedRenderDataSource = new SoftReference<>(null);
+	private SoftReference<ColumnRenderSource> cachedRenderDataSourceRef = new SoftReference<>(null);
 	
 	private final RenderSourceFileHandler fileHandler;
 	private boolean doesFileExist;
@@ -110,7 +110,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 	private CompletableFuture<ColumnRenderSource> getCachedDataSourceAsync()
 	{
 		// attempt to get the cached data source
-		ColumnRenderSource cachedRenderDataSource = this.cachedRenderDataSource.get();
+		ColumnRenderSource cachedRenderDataSource = this.cachedRenderDataSourceRef.get();
 		if (cachedRenderDataSource != null)
 		{
 			return this.fileHandler.onReadRenderSourceLoadedFromCacheAsync(this, cachedRenderDataSource)
@@ -127,7 +127,6 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 	
 	public CompletableFuture<ColumnRenderSource> loadOrGetCachedDataSourceAsync(Executor fileReaderThreads, IDhLevel level)
 	{
-		
 		CompletableFuture<ColumnRenderSource> getCachedFuture = this.getCachedDataSourceAsync();
 		if (getCachedFuture != null)
 		{
@@ -157,12 +156,12 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 					{
 						LOGGER.error("Uncaught error on creation {}: ", this.file, ex);
 						loadRenderSourceFuture.complete(null);
-						this.cachedRenderDataSource = new SoftReference<>(null);
+						this.cachedRenderDataSourceRef = new SoftReference<>(null);
 					}
 					else
 					{
 						loadRenderSourceFuture.complete(renderSource);
-						this.cachedRenderDataSource = new SoftReference<>(renderSource);
+						this.cachedRenderDataSourceRef = new SoftReference<>(renderSource);
 					}
 				});
 		}
@@ -196,12 +195,12 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 					{
 						LOGGER.error("Error loading file {}: ", this.file, ex);
 						loadRenderSourceFuture.complete(null);
-						this.cachedRenderDataSource = new SoftReference<>(null);
+						this.cachedRenderDataSourceRef = new SoftReference<>(null);
 					}
 					else
 					{
 						loadRenderSourceFuture.complete(renderSource);
-						this.cachedRenderDataSource = new SoftReference<>(renderSource);
+						this.cachedRenderDataSourceRef = new SoftReference<>(renderSource);
 					}
 				});
 		}

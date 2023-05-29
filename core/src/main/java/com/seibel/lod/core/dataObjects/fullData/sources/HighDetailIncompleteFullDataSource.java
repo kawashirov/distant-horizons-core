@@ -392,26 +392,6 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 		return chunk.get(relativeX % this.dataPointsPerSection, relativeZ % this.dataPointsPerSection);
 	}
 	
-	@Override
-	public ArrayList<DhSectionPos> getUngeneratedPosList()
-	{
-		ArrayList<DhSectionPos> posList = new ArrayList<>();
-		
-		for (int x = 0; x < SECTION_SIZE; x++)
-		{
-			for (int z = 0; z < SECTION_SIZE; z++)
-			{
-				SingleColumnFullDataAccessor column = this.tryGet(x,z);
-				if (column == null || !column.doesColumnExist())
-				{
-					posList.add(new DhSectionPos(this.sectionPos.sectionDetailLevel, this.sectionPos.sectionX + x, this.sectionPos.sectionZ + z));
-				}
-			}
-		}
-		
-		return posList;
-	}
-	
 	
 	
 	//=========//

@@ -6,6 +6,7 @@ import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.transformers.LodDataBuilder;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
+import com.seibel.lod.core.file.fullDatafile.GeneratedFullDataFileHandler;
 import com.seibel.lod.core.generation.tasks.*;
 import com.seibel.lod.core.pos.*;
 import com.seibel.lod.core.util.ThreadUtil;
@@ -19,6 +20,7 @@ import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import org.apache.logging.log4j.Logger;
 
 import java.io.Closeable;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
@@ -35,11 +37,13 @@ public class WorldGenerationQueue implements Closeable
 	private final ConcurrentHashMap<DhLodPos, InProgressWorldGenTaskGroup> inProgressGenTasksByLodPos = new ConcurrentHashMap<>();
 	
 	// granularity is the detail level for batching world generator requests together
-	private final byte maxGranularity;
-	private final byte minGranularity;
+	public final byte maxGranularity;
+	public final byte minGranularity;
 	
-	private final byte maxDataDetail;
-	private final byte minDataDetail;
+	/** largest numerical detail level allowed */
+	 final byte largestDataDetail;
+	/** lowest numerical detail level allowed */
+	public final byte smallestDataDetail;
 	
 	/** If not null this generator is in the process of shutting down */
 	private volatile CompletableFuture<Void> generatorClosingFuture = null;
@@ -54,24 +58,26 @@ public class WorldGenerationQueue implements Closeable
 	private DhBlockPos2D generationTargetPos = DhBlockPos2D.ZERO;
 	/** can be used for debugging how many tasks are currently in the queue */
 	private int numberOfTasksQueued = 0;
-	/** 
-	 * Settings this to true will cause the system to queue the first generation request it can find, 
-	 * this improves generation thread feeding efficiency, but can potentially cause generation requests to queue out of order (IE they may not be closest to farthest). <br><br>
-	 * 
-	 * Setting this to false will cause the system to queue the closest generation request it can find. <br>
-	 * This will reduce generation queuing efficiency.
-	 */
-	private boolean queueFirstGenerationRequestFound = true; 
+	
+	// debug variables to test for duplicate world generator requests //
+	/** limits how many of the previous world gen requests we should track */
+	private static final int MAX_ALREADY_GENERATED_COUNT = 400;
+	private final HashSet<DhLodPos> alreadyGeneratedPosHashSet = new HashSet<>(MAX_ALREADY_GENERATED_COUNT);
+	private final Queue<DhLodPos> alreadyGeneratedPosQueue = new LinkedList<>();
 	
 	
+	
+	//==============//
+	// constructors //
+	//==============//
 	
 	public WorldGenerationQueue(IDhApiWorldGenerator generator)
 	{
 		this.generator = generator;
 		this.maxGranularity = generator.getMaxGenerationGranularity();
 		this.minGranularity = generator.getMinGenerationGranularity();
-		this.maxDataDetail = generator.getLargestDataDetailLevel();
-		this.minDataDetail = generator.getSmallestDataDetailLevel();
+		this.largestDataDetail = generator.getLargestDataDetailLevel();
+		this.smallestDataDetail = generator.getSmallestDataDetailLevel();
 		
 		int treeWidth = Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH * 2; // TODO the *2 is to allow for generation edge cases, and should probably be removed at some point
 		byte treeMinDetailLevel = LodUtil.BLOCK_DETAIL_LEVEL; // the tree shouldn't need to go this low, but just in case
@@ -105,13 +111,13 @@ public class WorldGenerationQueue implements Closeable
 		
 		
 		// make sure the generator can provide the requested position
-		if (requiredDataDetail < this.minDataDetail)
+		if (requiredDataDetail < this.smallestDataDetail)
 		{
 			throw new UnsupportedOperationException("Current generator does not meet requiredDataDetail level");
 		}
-		if (requiredDataDetail > this.maxDataDetail)
+		if (requiredDataDetail > this.largestDataDetail)
 		{
-			requiredDataDetail = this.maxDataDetail;
+			requiredDataDetail = this.largestDataDetail;
 		}
 		
 		// TODO what does this assert mean?
@@ -358,9 +364,36 @@ public class WorldGenerationQueue implements Closeable
 		DhLodPos taskPos = inProgressTaskGroup.group.pos;
 		byte granularity = (byte) (taskPos.detailLevel - taskDetailLevel);
 		LodUtil.assertTrue(granularity >= this.minGranularity && granularity <= this.maxGranularity);
-		LodUtil.assertTrue(taskDetailLevel >= this.minDataDetail && taskDetailLevel <= this.maxDataDetail);
+		LodUtil.assertTrue(taskDetailLevel >= this.smallestDataDetail && taskDetailLevel <= this.largestDataDetail);
 		
 		DhChunkPos chunkPosMin = new DhChunkPos(taskPos.getCornerBlockPos());
+		
+		
+		// Could be enabled (change the if-false to true) to test for duplicate world generator requests
+		if (false)
+		{
+			if (this.alreadyGeneratedPosHashSet.contains(inProgressTaskGroup.group.pos))
+			{
+				// temporary solution to prevent generating the same section multiple times
+				LOGGER.warn("Duplicate generation section " + taskPos + " with granularity [" + granularity + "] at " + chunkPosMin + ". Skipping...");
+				
+				// FIXME this prevents sections from generating, or from being updated in the LodQuadTree, James isn't sure which issue it is
+				inProgressTaskGroup.group.worldGenTasks.forEach(worldGenTask -> worldGenTask.future.complete(WorldGenResult.CreateFail()));
+				return;
+			}
+			
+			this.alreadyGeneratedPosHashSet.add(inProgressTaskGroup.group.pos);
+			this.alreadyGeneratedPosQueue.add(inProgressTaskGroup.group.pos);
+			
+			
+			// remove extra tracked positions
+			while (this.alreadyGeneratedPosQueue.size() > MAX_ALREADY_GENERATED_COUNT)
+			{
+				DhLodPos posToRemove = this.alreadyGeneratedPosQueue.poll();
+				this.alreadyGeneratedPosHashSet.remove(posToRemove);
+			}
+		}
+		
 		//LOGGER.info("Generating section "+taskPos+" with granularity "+granularity+" at "+chunkPosMin);
 		
 		this.numberOfTasksQueued++;
@@ -371,7 +404,8 @@ public class WorldGenerationQueue implements Closeable
 			if (exception != null)
 			{
 				// don't log the shutdown exceptions
-				if (!UncheckedInterruptedException.isThrowableInterruption(exception) && !(exception instanceof CancellationException || exception.getCause() instanceof CancellationException))
+				if (!UncheckedInterruptedException.isThrowableInterruption(exception)
+					&& !(exception instanceof CancellationException || exception.getCause() instanceof CancellationException))
 				{
 					LOGGER.error("Error generating data for section "+taskPos, exception);
 				}

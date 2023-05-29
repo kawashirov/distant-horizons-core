@@ -30,14 +30,14 @@ import java.util.function.Function;
 public class FullDataFileHandler implements IFullDataSourceProvider
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
-    
+	
 	// TODO add config option to set pool size
-	final ExecutorService fileHandlerThread = ThreadUtil.makeThreadPool(4, FullDataFileHandler.class.getSimpleName()+"Thread");
-    final ConcurrentHashMap<DhSectionPos, FullDataMetaFile> files = new ConcurrentHashMap<>();
-    final IDhLevel level;
-    final File saveDir;
-    AtomicInteger topDetailLevel = new AtomicInteger(-1);
-    final int minDetailLevel = CompleteFullDataSource.SECTION_SIZE_OFFSET;
+	protected final ExecutorService fileHandlerThread = ThreadUtil.makeThreadPool(4, FullDataFileHandler.class.getSimpleName()+"Thread");
+	protected final ConcurrentHashMap<DhSectionPos, FullDataMetaFile> fileBySectionPos = new ConcurrentHashMap<>();
+	protected final IDhLevel level;
+	protected final File saveDir;
+	protected final AtomicInteger topDetailLevel = new AtomicInteger(-1);
+	protected final int minDetailLevel = CompleteFullDataSource.SECTION_SIZE_OFFSET;
 	
 	
 	
@@ -130,13 +130,13 @@ public class FullDataFileHandler implements IFullDataSourceProvider
             }
             // Add file to the list of files.
 			this.topDetailLevel.updateAndGet(v -> Math.max(v, fileToUse.pos.sectionDetailLevel));
-			this.files.put(pos, fileToUse);
+			this.fileBySectionPos.put(pos, fileToUse);
         }
     }
 	
     protected FullDataMetaFile getOrMakeFile(DhSectionPos pos)
 	{
-        FullDataMetaFile metaFile = this.files.get(pos);
+        FullDataMetaFile metaFile = this.fileBySectionPos.get(pos);
         if (metaFile == null)
 		{
             FullDataMetaFile newMetaFile;
@@ -149,7 +149,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
                 LOGGER.error("IOException on creating new data file at {}", pos, e);
                 return null;
             }
-            metaFile = this.files.putIfAbsent(pos, newMetaFile); // This is a CAS with expected null value.
+            metaFile = this.fileBySectionPos.putIfAbsent(pos, newMetaFile); // This is a CAS with expected null value.
             if (metaFile == null) 
 			{
 				metaFile = newMetaFile;
@@ -190,7 +190,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 						continue;
 					}
 					
-                    if (this.files.containsKey(subPos))
+                    if (this.fileBySectionPos.containsKey(subPos))
 					{
                         allEmpty = false;
                         break outerLoop;
@@ -219,7 +219,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		DhSectionPos childPos = pos.getChildByIndex(childIndex);
 		if (CompleteFullDataSource.firstDataPosCanAffectSecond(basePos, childPos))
 		{
-			FullDataMetaFile metaFile = this.files.get(childPos);
+			FullDataMetaFile metaFile = this.fileBySectionPos.get(childPos);
 			if (metaFile != null)
 			{
 				// we have reached a populated leaf node in the quad tree
@@ -285,7 +285,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
     }
     private void writeChunkDataToMetaFile(DhSectionPos sectionPos, ChunkSizedFullDataAccessor chunkData)
 	{
-        FullDataMetaFile metaFile = this.files.get(sectionPos);
+        FullDataMetaFile metaFile = this.fileBySectionPos.get(sectionPos);
         if (metaFile != null)
 		{ 
 			// there is a file for this position
@@ -304,7 +304,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
     public CompletableFuture<Void> flushAndSave()
 	{
         ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
-        for (FullDataMetaFile metaFile : this.files.values())
+        for (FullDataMetaFile metaFile : this.fileBySectionPos.values())
 		{
             futures.add(metaFile.flushAndSaveAsync());
         }
@@ -392,7 +392,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		
 		FileUtil.renameCorruptedFile(metaFile.file);
 		// remove the FullDataMetaFile since the old one was corrupted
-		this.files.remove(pos);
+		this.fileBySectionPos.remove(pos);
 		// create a new FullDataMetaFile to write new data to
 		return this.getOrMakeFile(pos);
 	}

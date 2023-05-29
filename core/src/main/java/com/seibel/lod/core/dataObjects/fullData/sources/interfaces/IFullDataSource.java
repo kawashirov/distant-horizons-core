@@ -5,15 +5,18 @@ import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
 import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.accessor.IFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.accessor.SingleColumnFullDataAccessor;
+import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.objects.dataStreams.DhDataInputStream;
 import com.seibel.lod.core.util.objects.dataStreams.DhDataOutputStream;
+import com.seibel.lod.coreapi.util.BitShiftUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 /**
  * Base for all Full Data Source objects. <br><br>
@@ -65,10 +68,185 @@ public interface IFullDataSource
 	
 	FullDataPointIdMap getMapping();
 	
-	/** @return true if every datapoint in this object has been generated, false otherwise. */
-	default boolean isCompletelyGenerated() { return this.getUngeneratedPosList().size() == 0; }
-	/** @return the list of {@link DhSectionPos} that aren't generated in this data source. */
-	ArrayList<DhSectionPos> getUngeneratedPosList();
+	/** 
+	 * @param highestGeneratorDetailLevel the smallest numerical detail level that the un-generated positions should be split into
+	 * @return the list of {@link DhSectionPos} that aren't generated in this data source. 
+	 */
+	default ArrayList<DhSectionPos> getUngeneratedPosList(byte highestGeneratorDetailLevel, boolean onlyReturnPositionsTheGeneratorCanAccept) 
+	{
+		ArrayList<DhSectionPos> posArray = this.getUngeneratedPosList(this.getSectionPos(), highestGeneratorDetailLevel);
+		
+		if (onlyReturnPositionsTheGeneratorCanAccept)
+		{
+			LinkedList<DhSectionPos> posList = new LinkedList<>(posArray);
+			
+			ArrayList<DhSectionPos> cleanedPosArray = new ArrayList<>();
+			while (posList.size() > 0)
+			{
+				DhSectionPos pos = posList.remove();
+				if (pos.sectionDetailLevel > highestGeneratorDetailLevel)
+				{
+					pos.forEachChild((childPos) -> { posList.push(childPos); });
+				}
+				else
+				{
+					cleanedPosArray.add(pos);
+				}
+			}
+			
+			return cleanedPosArray;
+		}
+		else
+		{
+			return posArray;
+		}
+	}
+	default ArrayList<DhSectionPos> getUngeneratedPosList(DhSectionPos quadrantPos, byte highestGeneratorDetailLevel)
+	{
+		ArrayList<DhSectionPos> ungeneratedPosList = new ArrayList<>();
+		
+		int sourceRelWidth = this.getWidthInDataPoints();
+		
+		
+		if (quadrantPos.sectionDetailLevel < highestGeneratorDetailLevel)
+		{
+			throw new IllegalArgumentException("detail level lower than world generator can accept.");
+		}
+		else if (quadrantPos.sectionDetailLevel == highestGeneratorDetailLevel)
+		{
+			// we are at the highest detail level the world generator can accept,
+			// we either need to generate this whole section, or not at all
+			
+			// TODO combine duplicate code
+			
+			byte childDetailLevel = (byte) (quadrantPos.sectionDetailLevel);
+			
+			int quadrantDetailLevelDiff = this.getSectionPos().sectionDetailLevel - childDetailLevel;
+			int widthInSecPos = BitShiftUtil.powerOfTwo(quadrantDetailLevelDiff);
+			int relWidthForSecPos = sourceRelWidth / widthInSecPos;
+			
+			DhSectionPos minSecPos = this.getSectionPos().convertToDetailLevel(childDetailLevel);
+			DhSectionPos inputPos = quadrantPos;
+			
+			
+			
+			int minRelX = inputPos.sectionX - minSecPos.sectionX;
+			int minRelZ = inputPos.sectionZ - minSecPos.sectionZ;
+			int maxRelX = minRelX + 1;
+			int maxRelZ = minRelZ + 1;
+			
+			minRelX = minRelX * relWidthForSecPos;
+			minRelZ = minRelZ * relWidthForSecPos;
+			maxRelX = maxRelX * relWidthForSecPos;
+			maxRelZ = maxRelZ * relWidthForSecPos;
+			
+			if (this.getClass() != CompleteFullDataSource.class)
+			{
+				int breakpoint= 0;
+			}
+			
+			
+			boolean quadrantFullyGenerated = true;
+			for (int relX = minRelX; relX < maxRelX; relX++)
+			{
+				for (int relZ = minRelZ; relZ < maxRelZ; relZ++)
+				{
+					SingleColumnFullDataAccessor column = this.tryGet(relX, relZ);
+					if (column == null)
+					{
+						int breakpoi= 0;
+					}
+					
+					if (column == null || !column.doesColumnExist())// || column.hasNullDataPoints())
+					{
+						// no data for this relative position
+						quadrantFullyGenerated = false;
+						break;
+					}
+				}
+			}
+
+			if (!quadrantFullyGenerated)
+			{
+				// at least 1 data point is missing,
+				// this whole section must be regenerated
+				ungeneratedPosList.add(quadrantPos);
+			}
+		}
+		else
+		{
+			// TODO comment
+			// TODO combine duplicate code
+			
+			byte childDetailLevel = (byte) (quadrantPos.sectionDetailLevel-1);
+			
+			for (int i = 0; i < 4; i++)
+			{
+				int quadrantDetailLevelDiff = this.getSectionPos().sectionDetailLevel - childDetailLevel;
+				int widthInSecPos = BitShiftUtil.powerOfTwo(quadrantDetailLevelDiff);
+				int relWidthForSecPos = sourceRelWidth / widthInSecPos;
+				
+				DhSectionPos minSecPos = this.getSectionPos().convertToDetailLevel(childDetailLevel);
+				DhSectionPos inputPos = quadrantPos.getChildByIndex(i);
+				
+				
+				
+				int minRelX = inputPos.sectionX - minSecPos.sectionX;
+				int minRelZ = inputPos.sectionZ - minSecPos.sectionZ;
+				int maxRelX = minRelX + 1;
+				int maxRelZ = minRelZ + 1;
+				
+				minRelX = minRelX * relWidthForSecPos;
+				minRelZ = minRelZ * relWidthForSecPos;
+				maxRelX = maxRelX * relWidthForSecPos;
+				maxRelZ = maxRelZ * relWidthForSecPos;
+				
+				
+				
+				boolean quadrantFullyGenerated = true;
+				boolean quadrantEmpty = true;
+				for (int relX = minRelX; relX < maxRelX; relX++)
+				{
+					for (int relZ = minRelZ; relZ < maxRelZ; relZ++)
+					{
+						SingleColumnFullDataAccessor column = this.tryGet(relX, relZ);
+						if (column == null || !column.doesColumnExist()) // || column.hasNullDataPoints())
+						{
+							// no data for this relative position
+							quadrantFullyGenerated = false;
+						}
+						else
+						{
+							// data exists for this pos
+							quadrantEmpty = false;
+						}
+					}
+				}
+				
+				
+				if (quadrantFullyGenerated)
+				{
+					// no generation necessary
+					continue;
+				}
+				else if (quadrantEmpty)
+				{
+					// nothing exists for this sub quadrant, add this sub-quadrant's position
+					ungeneratedPosList.add(inputPos);
+				}
+				else
+				{
+					// some data exists in this quadrant, but not all that we need
+					// recurse down to determine which sub-quadrant positions will need generation
+					
+					ungeneratedPosList.addAll(this.getUngeneratedPosList(inputPos, highestGeneratorDetailLevel));
+				}
+				
+			}
+		}
+		
+		return ungeneratedPosList;
+	}
 	
 	
 	

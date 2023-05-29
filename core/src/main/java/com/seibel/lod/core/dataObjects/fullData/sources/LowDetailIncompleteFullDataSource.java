@@ -265,26 +265,6 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
     @Override
     public SingleColumnFullDataAccessor tryGet(int relativeX, int relativeZ) { return this.isColumnNotEmpty.get(relativeX * WIDTH + relativeZ) ? this.get(relativeX, relativeZ) : null; }
 	
-	@Override
-	public ArrayList<DhSectionPos> getUngeneratedPosList()
-	{
-		ArrayList<DhSectionPos> posList = new ArrayList<>();
-		
-		for (int x = 0; x < this.width; x++)
-		{
-			for (int z = 0; z < this.width; z++)
-			{
-				SingleColumnFullDataAccessor column = this.get(x,z);
-				if (column == null || !column.doesColumnExist())
-				{
-					posList.add(new DhSectionPos(this.sectionPos.sectionDetailLevel, this.sectionPos.sectionX + x, this.sectionPos.sectionZ + z));
-				}
-			}
-		}
-		
-		return posList;
-	}
-	
 	
 	
 	//=====================//

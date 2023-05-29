@@ -344,7 +344,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 						{
 							if (exception != null)
 							{
-								LOGGER.error("Error refreshing data "+this.pos+": "+exception+" "+exception.getMessage());
+								LOGGER.error("Error refreshing data "+this.pos+": "+exception+" "+exception.getMessage(), exception);
 								future.complete(null);
 								this.cachedFullDataSource = new SoftReference<>(null);
 							}
