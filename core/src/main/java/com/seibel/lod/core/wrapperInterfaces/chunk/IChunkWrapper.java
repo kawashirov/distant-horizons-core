@@ -25,21 +25,19 @@ import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
 
-/**
- * @author James Seibel
- * @version 3-16-2022
- */
 public interface IChunkWrapper extends IBindable
 {
-	default int getHeight() {
-		return getMaxBuildHeight()-getMinBuildHeight();
-	}
+	default int getHeight() { return this.getMaxBuildHeight() - this.getMinBuildHeight(); }
 	int getMinBuildHeight();
 	int getMaxBuildHeight();
-
-	// FIXME: getHeightMapValue & getMaxY is the same! Which one to keep?
-	int getHeightMapValue(int xRel, int zRel);
-	int getMaxY(int x, int z);
+	
+	/** @return The highest y position of a solid block at the given relative chunk position. */
+	int getSolidHeightMapValue(int xRel, int zRel);
+	/** 
+	 * @return The highest y position of a light-blocking or translucent block at the given relative chunk position. <br> 
+	 * 			Note: this includes water.
+	 */
+	int getLightBlockingHeightMapValue(int xRel, int zRel);
 	
 	int getMaxX();
 	int getMaxZ();
@@ -54,10 +52,11 @@ public interface IChunkWrapper extends IBindable
 	
 	default int getSkyLight(int x, int y, int z) {return -1;}
 	
-	default boolean blockPosInsideChunk(int x, int y, int z) {
-		return (x>=getMinX() && x<=getMaxX()
-				&& y>=getMinBuildHeight() && y<getMaxBuildHeight()
-				&& z>=getMinZ() && z<=getMaxZ());
+	default boolean blockPosInsideChunk(int x, int y, int z)
+	{
+		return (x >= this.getMinX() && x <= this.getMaxX()
+				&& y >= this.getMinBuildHeight() && y < this.getMaxBuildHeight()
+				&& z >= this.getMinZ() && z <= this.getMaxZ());
 	}
 	
 	boolean doesNearbyChunksExist();
@@ -73,7 +72,7 @@ public interface IChunkWrapper extends IBindable
 		{
 			for(int z = 0; z < LodUtil.CHUNK_WIDTH; z++)
 			{
-				hash = hash * primeMultiplier + Integer.hashCode(getMaxY(x, z));
+				hash = hash * primeMultiplier + Integer.hashCode(this.getLightBlockingHeightMapValue(x, z));
 			}
 		}
 		
