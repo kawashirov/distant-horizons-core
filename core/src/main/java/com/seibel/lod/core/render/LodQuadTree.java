@@ -92,22 +92,23 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		this.sectionsToReload.clear();
 		for (DhSectionPos pos : reloadSectionArray)
 		{
-			try
+			// walk up the tree until we hit the root node
+			// this is done so any high detail changes flow up to the lower detail render sections as well 
+			while (pos.sectionDetailLevel <= this.treeMaxDetailLevel)
 			{
-				// walk up the tree until we hit the root node or a position that is outside the tree
-				// this is done so any high detail level changes flow up to the lower detail render sections as well 
-				while (pos.sectionDetailLevel <= this.treeMaxDetailLevel)
+				try
 				{
 					LodRenderSection renderSection = this.getValue(pos);
 					if (renderSection != null)
 					{
 						renderSection.reload(this.renderSourceProvider);
 					}
-					
-					pos = pos.getParentPos();
 				}
+				catch (IndexOutOfBoundsException e)
+				{ /* the section is now out of bounds, it doesn't need to be reloaded */ }
+				
+				pos = pos.getParentPos();
 			}
-			catch (IndexOutOfBoundsException e) { /* the section is now out of bounds, it doesn't need to be reloaded */ }
 		}
 		
 		
@@ -346,6 +347,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 			return;
 		}
 		
+		//LOGGER.info("LodQuadTree reloadPos ["+pos+"].");
 		this.sectionsToReload.put(pos, true);
 	}
 	
