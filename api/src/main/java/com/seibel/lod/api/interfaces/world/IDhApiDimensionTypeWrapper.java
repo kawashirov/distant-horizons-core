@@ -25,6 +25,7 @@ import com.seibel.lod.api.interfaces.IDhApiUnsafeWrapper;
  * @author James Seibel
  * @version 2022-7-14
  */
+// TODO: Make a dimension wrapper as well
 public interface IDhApiDimensionTypeWrapper extends IDhApiUnsafeWrapper
 {
 	String getDimensionName();
