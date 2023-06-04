@@ -1,5 +1,6 @@
 package com.seibel.lod.core.dataObjects.transformers;
 
+import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderLoader;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
@@ -20,6 +21,7 @@ public class DataRenderTransformer
 	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
     
 	private static ExecutorService transformerThreads = null;
+	
 	
 	
 	//==============//
@@ -73,8 +75,8 @@ public class DataRenderTransformer
 		if (transformerThreads == null || transformerThreads.isTerminated())
 		{
 			LOGGER.info("Starting "+DataRenderTransformer.class.getSimpleName());
-			// TODO add config option to set pool size
-			transformerThreads = ThreadUtil.makeThreadPool(4, "Data/Render Transformer");
+			// TODO change when the config is modified
+			transformerThreads = ThreadUtil.makeThreadPool(Config.Client.Advanced.Threading.numberOfDataConverterThreads.get(), "Data/Render Transformer");
 		}
 	}
 	

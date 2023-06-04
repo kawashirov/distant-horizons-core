@@ -257,6 +257,7 @@
     "When matching worlds of the same dimension type the\ntested chunks must be at least this percent the same\nin order to be considered the same world.\n\nNote: If you use portals to enter a dimension at two\ndifferent locations this system may think it is two different worlds.\n\n§61.0:§r the chunks must be identical.\n§60.5:§r the chunks must be half the same.\n§60.0:§r disables multi-dimension support\n     only one world will be used per dimension.",
   "lod.config.client.advanced":
     "Advanced options",
+  
   "lod.config.client.advanced.threading":
     "Threading",
   "lod.config.client.advanced.threading.numberOfWorldGenerationThreads":
@@ -266,7 +267,15 @@
   "lod.config.client.advanced.threading.numberOfBufferBuilderThreads":
     "NO. of buffer builder threads",
   "lod.config.client.advanced.threading.numberOfBufferBuilderThreads.@tooltip":
-    "The number of threads used when building vertex buffers\n(The things sent to your GPU to draw the fake chunks).\nCan only be between 1 and your CPU's processor count.",
+    "The number of threads used when building geometry data.\nCan only be between 1 and your CPU's processor count.",
+  "lod.config.client.advanced.threading.numberOfFileHandlerThreads":
+  "NO. of file handler threads",
+  "lod.config.client.advanced.threading.numberOfFileHandlerThreads.@tooltip":
+  "The number of threads used when building vertex buffers\n(The things sent to your GPU to draw the fake chunks).\nCan only be between 1 and your CPU's processor count.",
+  "lod.config.client.advanced.threading.numberOfDataConverterThreads":
+  "NO. of data converter threads",
+  "lod.config.client.advanced.threading.numberOfDataConverterThreads.@tooltip":
+  "The number of threads used when converting ID data to render-able data.\n(This generally happens when generating new terrain or changing graphics settings).\nCan only be between 1 and your CPU's processor count.",
   "lod.config.client.advanced.debugging":
     "Debug",
   "lod.config.client.advanced.debugging.rendererMode":

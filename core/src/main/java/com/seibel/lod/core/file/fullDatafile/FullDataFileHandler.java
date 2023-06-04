@@ -1,6 +1,7 @@
 package com.seibel.lod.core.file.fullDatafile;
 
 import com.google.common.collect.HashMultimap;
+import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.sources.*;
 import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
@@ -31,8 +32,8 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
-	// TODO add config option to set pool size
-	protected final ExecutorService fileHandlerThread = ThreadUtil.makeThreadPool(4, FullDataFileHandler.class.getSimpleName()+"Thread");
+	// TODO change when config value is changed
+	protected final ExecutorService fileHandlerThread = ThreadUtil.makeThreadPool(Config.Client.Advanced.Threading.numberOfFileHandlerThreads.get(), FullDataFileHandler.class.getSimpleName()+"Thread");
 	protected final ConcurrentHashMap<DhSectionPos, FullDataMetaFile> fileBySectionPos = new ConcurrentHashMap<>();
 	protected final IDhLevel level;
 	protected final File saveDir;

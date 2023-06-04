@@ -696,45 +696,76 @@ public class Config
 
             public static class Threading
             {
+				public static final String THREAD_NOTE = "" 
+						+ " Note: \n"
+						+ " If the total thread count in this config is more threads than your CPU has cores, \n"
+						+ " CPU performance may suffer if Distant Horizons has a lot to load or generate. \n" 
+						+ " This can be an issue when first loading into a world, when flying, and/or when generating new terrain."; 
+				
+				
                 public static final ConfigEntry<Double> numberOfWorldGenerationThreads = new ConfigEntry.Builder<Double>()
                         .setMinDefaultMax(0.1,
-                                (double) Math.min(Runtime.getRuntime().availableProcessors()/2, 4),
+                                (double) Runtime.getRuntime().availableProcessors()/6,
                                 (double) Runtime.getRuntime().availableProcessors())
                         .comment(""
-                                + " How many threads should be used when generating fake \n"
+                                + " How many threads should be used when generating LOD \n"
                                 + " chunks outside the normal render distance? \n"
                                 + "\n"
                                 + " If it's less than 1, it will be treated as a percentage \n"
-                                + " of time single thread can run before going to idle. \n"
+                                + " of time a single thread can run before going to idle. \n"
                                 + "\n"
                                 + " If you experience stuttering when generating distant LODs, \n"
-                                + " decrease  this number. If you want to increase LOD \n"
+                                + " decrease this number. If you want to increase LOD \n"
                                 + " generation speed, increase this number. \n"
                                 + "\n"
-                                + " This and the number of buffer builder threads are independent, \n"
-                                + " so if they add up to more threads than your CPU has cores, \n"
-                                + " that shouldn't cause an issue.")
+                                + THREAD_NOTE)
                         .build();
-    
-    
+    			
                 public static ConfigEntry<Integer> numberOfBufferBuilderThreads = new ConfigEntry.Builder<Integer>()
                         .setMinDefaultMax(1,
-                                Math.min(Runtime.getRuntime().availableProcessors()/2, 2),
+                                Runtime.getRuntime().availableProcessors()/4,
                                 Runtime.getRuntime().availableProcessors())
                         .comment(""
-                                + "How many threads are used when building vertex buffers? \n"
-                                + " (The things sent to your GPU to draw the fake chunks). \n"
+                                + "How many threads are used when building geometry data? \n"
                                 + "\n"
-                                + "If you experience high CPU usage when NOT generating distant \n"
+                                + " If you experience high CPU usage when NOT generating distant \n"
                                 + " fake chunks, lower this number. A higher number will make fake\n"
                                 + " fake chunks' transition faster when moving around the world. \n"
                                 + "\n"
-                                + "This and the number of world generator threads are independent, \n"
-                                + " so if they add up to more threads than your CPU has cores, \n"
-                                + " that shouldn't cause an issue. \n"
-                                + "\n"
-                                + "The maximum value is the number of logical processors on your CPU.")
+								+ THREAD_NOTE)
                         .build();
+				
+				public static final ConfigEntry<Integer> numberOfFileHandlerThreads = new ConfigEntry.Builder<Integer>()
+						.setMinDefaultMax(1,
+								Runtime.getRuntime().availableProcessors()/8,
+								Runtime.getRuntime().availableProcessors())
+						.comment(""
+								+ " How many threads should be used when reading in LOD data from disk? \n"
+								+ "\n"
+								+ " Increasing this number will cause LODs to load in faster, \n"
+								+ " but may cause stuttering when loading a new world or when \n"
+								+ " quickly flying through existing LODs. \n"
+								+ "\n"
+								+ THREAD_NOTE)
+						.build();
+				
+				public static final ConfigEntry<Integer> numberOfDataConverterThreads = new ConfigEntry.Builder<Integer>()
+						.setMinDefaultMax(1,
+								Runtime.getRuntime().availableProcessors()/4,
+								Runtime.getRuntime().availableProcessors())
+						.comment(""
+								+ " How many threads should be used when converting full ID data to render data? \n"
+								+ "\n"
+								+ " These threads run both when terrain is generated and when\n"
+								+ " and when certain graphics settings are changed. \n"
+								+ "\n"
+								+ " Generally this number should be equal to the number of world\n"
+								+ " generator threads, although these threads shouldn't run as\n"
+								+ " often (or as long) as the world generator threads.\n"
+								+ "\n"
+								+ THREAD_NOTE)
+						.build();
+				
             }
 
 
