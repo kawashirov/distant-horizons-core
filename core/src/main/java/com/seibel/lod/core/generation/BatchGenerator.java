@@ -54,7 +54,7 @@ public class BatchGenerator implements IDhApiWorldGenerator
 	 *  if this is too high it may cause issues when moving, 
 	 *  but if it is too low the generator threads won't have enough tasks to work on
 	 */
-	private static final int MAX_QUEUED_TASKS = 5;
+	private static final int MAX_QUEUED_TASKS = 3;
 	
 	public AbstractBatchGenerationEnvironmentWrapper generationGroup;
 	public IDhLevel targetDhLevel;
