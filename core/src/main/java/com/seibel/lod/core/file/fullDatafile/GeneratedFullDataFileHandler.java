@@ -18,8 +18,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.*;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -50,7 +49,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	{
 		return super.read(pos).whenComplete((fullDataSource, ex) ->
 		{
-			this.DISABLED_checkIfSectionNeedsAdditionalGeneration(pos, fullDataSource);
+			this.checkIfSectionNeedsAdditionalGeneration(pos, fullDataSource);
 		});
 	}
 	
@@ -162,7 +161,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 								return;
 							}
 							
-							this.DISABLED_checkIfSectionNeedsAdditionalGeneration(pos, fullDataSource);
+							this.checkIfSectionNeedsAdditionalGeneration(pos, fullDataSource);
 							
 							//LOGGER.info("Merging data from {} into {}", data.getSectionPos(), pos);
 							incompleteFullDataSource.sampleFrom(fullDataSource);
@@ -181,14 +180,8 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	 * Should be used to fill out partially generated {@link IFullDataSource}'s,
 	 * not populate empty ones.
 	 */
-	private void DISABLED_checkIfSectionNeedsAdditionalGeneration(DhSectionPos pos, IFullDataSource fullDataSource)
+	private void checkIfSectionNeedsAdditionalGeneration(DhSectionPos pos, IFullDataSource fullDataSource)
 	{
-		// FIXME method is disabled since it will often cause duplicate world gen requests which cause other issues
-		//  and James is out of ideas for how to fix it.
-		if (true)
-			return;
-		
-		
 		WorldGenerationQueue worldGenQueue = this.worldGenQueueRef.get();
 		if (worldGenQueue == null)
 		{
@@ -229,13 +222,24 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 			this.incompleteSourceGenRequests.add(ungenChildPos);
 			
 			
+			// make sure a full data source file exists before generating
+			// (the files can be 
+			if (!this.fileBySectionPos.containsKey(pos))
+			{
+				FullDataMetaFile metaFile = this.getOrMakeFile(pos);
+				if (metaFile == null)
+				{
+					LOGGER.error("fireOnGenPosSuccessListeners unable to create file for pos: ["+pos+"].");
+					return;
+				}
+			}
+			
+			
 			// FIXME this can cause duplicate terrain generation requests
 			GenTask genTask = new GenTask(ungenChildPos, new WeakReference<>(fullDataSource));
 			CompletableFuture<WorldGenResult> future = worldGenQueue.submitGenTask(new DhLodPos(ungenChildPos), fullDataSource.getDataDetailLevel(), genTask)
 				.whenComplete((genTaskResult, ex) ->
 				{
-					//LOGGER.info("Partial generation completed for pos: ["+pos+"]. Remaining gen requests queued: ["+this.incompleteSourceGenRequests.size()+"].");
-					
 					this.onWorldGenTaskComplete(genTaskResult, ex, genTask, ungenChildPos);
 					this.fireOnGenPosSuccessListeners(pos);
 					this.incompleteSourceGenRequests.remove(ungenChildPos);
@@ -291,15 +295,34 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	{
 		//LOGGER.info("gen task completed for pos: ["+pos+"].");
 		
-		this.fileBySectionPos.get(pos).flushAndSaveAsync()
-			.whenComplete((voidObj, ex) ->
+		// save the full data source
+		FullDataMetaFile file = this.fileBySectionPos.get(pos);
+		if (file != null)
+		{
+			// timeout is for the rare case where saving gets stuck
+			int timeoutInSeconds = 10;
+			try
 			{
-				// fire the event listeners 
-				for (IOnWorldGenCompleteListener listener : this.onWorldGenTaskCompleteListeners)
-				{
-					listener.onWorldGenTaskComplete(pos);
-				}
-			});
+				file.flushAndSaveAsync().get(timeoutInSeconds, TimeUnit.SECONDS);
+			}
+			catch (TimeoutException | InterruptedException | ExecutionException e)
+			{
+				LOGGER.warn("fireOnGenPosSuccessListeners timed out after waiting ["+timeoutInSeconds+"] seconds for pos: ["+pos+"].");
+			}
+		}
+		else
+		{
+			// doesn't appear to cause issues, but probably isn't desired either
+			//LOGGER.warn("fireOnGenPosSuccessListeners file null for pos: ["+pos+"].");
+		}
+		
+		
+		// fire the event listeners 
+		for (IOnWorldGenCompleteListener listener : this.onWorldGenTaskCompleteListeners)
+		{
+			listener.onWorldGenTaskComplete(pos);
+		}
+		
 	}
 	
 	

@@ -149,6 +149,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
                 LOGGER.error("IOException on creating new data file at {}", pos, e);
                 return null;
             }
+			
             metaFile = this.fileBySectionPos.putIfAbsent(pos, newMetaFile); // This is a CAS with expected null value.
             if (metaFile == null) 
 			{

@@ -61,7 +61,7 @@ public class WorldGenerationQueue implements Closeable
 	
 	// debug variables to test for duplicate world generator requests //
 	/** limits how many of the previous world gen requests we should track */
-	private static final int MAX_ALREADY_GENERATED_COUNT = 400;
+	private static final int MAX_ALREADY_GENERATED_COUNT = 100;
 	private final HashSet<DhLodPos> alreadyGeneratedPosHashSet = new HashSet<>(MAX_ALREADY_GENERATED_COUNT);
 	private final Queue<DhLodPos> alreadyGeneratedPosQueue = new LinkedList<>();
 	
@@ -369,30 +369,26 @@ public class WorldGenerationQueue implements Closeable
 		DhChunkPos chunkPosMin = new DhChunkPos(taskPos.getCornerBlockPos());
 		
 		
-		// Could be enabled (change the if-false to true) to test for duplicate world generator requests
-		if (false)
+		// check if this is a duplicate generation task
+		if (this.alreadyGeneratedPosHashSet.contains(inProgressTaskGroup.group.pos))
 		{
-			if (this.alreadyGeneratedPosHashSet.contains(inProgressTaskGroup.group.pos))
-			{
-				// temporary solution to prevent generating the same section multiple times
-				LOGGER.warn("Duplicate generation section " + taskPos + " with granularity [" + granularity + "] at " + chunkPosMin + ". Skipping...");
-				
-				// FIXME this prevents sections from generating, or from being updated in the LodQuadTree, James isn't sure which issue it is
-				inProgressTaskGroup.group.worldGenTasks.forEach(worldGenTask -> worldGenTask.future.complete(WorldGenResult.CreateFail()));
-				return;
-			}
+			// temporary solution to prevent generating the same section multiple times
+			LOGGER.warn("Duplicate generation section " + taskPos + " with granularity [" + granularity + "] at " + chunkPosMin + ". Skipping...");
 			
-			this.alreadyGeneratedPosHashSet.add(inProgressTaskGroup.group.pos);
-			this.alreadyGeneratedPosQueue.add(inProgressTaskGroup.group.pos);
-			
-			
-			// remove extra tracked positions
-			while (this.alreadyGeneratedPosQueue.size() > MAX_ALREADY_GENERATED_COUNT)
-			{
-				DhLodPos posToRemove = this.alreadyGeneratedPosQueue.poll();
-				this.alreadyGeneratedPosHashSet.remove(posToRemove);
-			}
+			// sending a success result is necessary to make sure the render sections are reloaded correctly 
+			inProgressTaskGroup.group.worldGenTasks.forEach(worldGenTask -> worldGenTask.future.complete(WorldGenResult.CreateSuccess(new DhSectionPos(granularity, taskPos))));
+			return;
 		}
+		this.alreadyGeneratedPosHashSet.add(inProgressTaskGroup.group.pos);
+		this.alreadyGeneratedPosQueue.add(inProgressTaskGroup.group.pos);
+		
+		// remove extra tracked duplicate positions
+		while (this.alreadyGeneratedPosQueue.size() > MAX_ALREADY_GENERATED_COUNT)
+		{
+			DhLodPos posToRemove = this.alreadyGeneratedPosQueue.poll();
+			this.alreadyGeneratedPosHashSet.remove(posToRemove);
+		}
+		
 		
 		//LOGGER.info("Generating section "+taskPos+" with granularity "+granularity+" at "+chunkPosMin);
 		

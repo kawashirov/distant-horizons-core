@@ -140,11 +140,6 @@ public interface IFullDataSource
 			maxRelX = maxRelX * relWidthForSecPos;
 			maxRelZ = maxRelZ * relWidthForSecPos;
 			
-			if (this.getClass() != CompleteFullDataSource.class)
-			{
-				int breakpoint= 0;
-			}
-			
 			
 			boolean quadrantFullyGenerated = true;
 			for (int relX = minRelX; relX < maxRelX; relX++)
@@ -152,12 +147,7 @@ public interface IFullDataSource
 				for (int relZ = minRelZ; relZ < maxRelZ; relZ++)
 				{
 					SingleColumnFullDataAccessor column = this.tryGet(relX, relZ);
-					if (column == null)
-					{
-						int breakpoi= 0;
-					}
-					
-					if (column == null || !column.doesColumnExist())// || column.hasNullDataPoints())
+					if (column == null || !column.doesColumnExist())
 					{
 						// no data for this relative position
 						quadrantFullyGenerated = false;
@@ -210,7 +200,7 @@ public interface IFullDataSource
 					for (int relZ = minRelZ; relZ < maxRelZ; relZ++)
 					{
 						SingleColumnFullDataAccessor column = this.tryGet(relX, relZ);
-						if (column == null || !column.doesColumnExist()) // || column.hasNullDataPoints())
+						if (column == null || !column.doesColumnExist())
 						{
 							// no data for this relative position
 							quadrantFullyGenerated = false;
