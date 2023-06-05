@@ -1,10 +1,12 @@
 package com.seibel.lod.core.dataObjects.transformers;
 
 import com.seibel.lod.core.config.Config;
+import com.seibel.lod.core.config.listeners.ConfigChangeListener;
 import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderLoader;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
+import com.seibel.lod.core.file.fullDatafile.FullDataFileHandler;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.ThreadUtil;
@@ -20,7 +22,8 @@ public class DataRenderTransformer
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
     
-	private static ExecutorService transformerThreads = null;
+	private static ExecutorService transformerThreadPool = null;
+	private static ConfigChangeListener<Integer> configListener;
 	
 	
 	
@@ -30,12 +33,12 @@ public class DataRenderTransformer
 	
     public static CompletableFuture<ColumnRenderSource> transformDataSourceAsync(IFullDataSource fullDataSource, IDhClientLevel level)
 	{
-        return CompletableFuture.supplyAsync(() -> transform(fullDataSource, level), transformerThreads);
+        return CompletableFuture.supplyAsync(() -> transform(fullDataSource, level), transformerThreadPool);
     }
 	
     public static CompletableFuture<ColumnRenderSource> transformDataSourceAsync(CompletableFuture<IFullDataSource> fullDataSourceFuture, IDhClientLevel level)
 	{
-        return fullDataSourceFuture.thenApplyAsync((fullDataSource) -> transform(fullDataSource, level), transformerThreads);
+        return fullDataSourceFuture.thenApplyAsync((fullDataSource) -> transform(fullDataSource, level), transformerThreadPool);
     }
 	
     private static ColumnRenderSource transform(IFullDataSource fullDataSource, IDhClientLevel level)
@@ -72,13 +75,20 @@ public class DataRenderTransformer
 	 */	
 	public static void setupExecutorService()
 	{
-		if (transformerThreads == null || transformerThreads.isTerminated())
+		// static setup
+		if (configListener == null)
+		{
+			configListener = new ConfigChangeListener<>(Config.Client.Advanced.Threading.numberOfDataConverterThreads, (threadCount) -> { setThreadPoolSize(threadCount); });
+		}
+		
+		
+		if (transformerThreadPool == null || transformerThreadPool.isTerminated())
 		{
 			LOGGER.info("Starting "+DataRenderTransformer.class.getSimpleName());
-			// TODO change when the config is modified
-			transformerThreads = ThreadUtil.makeThreadPool(Config.Client.Advanced.Threading.numberOfDataConverterThreads.get(), "Data/Render Transformer");
+			setThreadPoolSize(Config.Client.Advanced.Threading.numberOfDataConverterThreads.get());
 		}
 	}
+	public static void setThreadPoolSize(int threadPoolSize) { transformerThreadPool = ThreadUtil.makeThreadPool(threadPoolSize, "Data/Render Transformer"); }
 	
 	/** 
 	 * Stops any executing tasks and destroys the executor. <br>
@@ -86,10 +96,10 @@ public class DataRenderTransformer
 	 */
 	public static void shutdownExecutorService()
 	{
-		if (transformerThreads != null)
+		if (transformerThreadPool != null)
 		{
 			LOGGER.info("Stopping "+DataRenderTransformer.class.getSimpleName());
-			transformerThreads.shutdownNow();
+			transformerThreadPool.shutdownNow();
 		}
 	}
 	

@@ -1,7 +1,9 @@
 package com.seibel.lod.core.api.internal;
 
 import com.seibel.lod.core.Initializer;
+import com.seibel.lod.core.dataObjects.render.bufferBuilding.ColumnRenderBufferBuilder;
 import com.seibel.lod.core.dataObjects.transformers.DataRenderTransformer;
+import com.seibel.lod.core.file.fullDatafile.FullDataFileHandler;
 import com.seibel.lod.core.world.*;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
 
@@ -29,10 +31,14 @@ public class SharedApi
 		if (currentWorld == null)
 		{
 			DataRenderTransformer.shutdownExecutorService();
+			FullDataFileHandler.shutdownExecutorService();
+			ColumnRenderBufferBuilder.shutdownExecutorService();
 		}
 		else
 		{
 			DataRenderTransformer.setupExecutorService();
+			FullDataFileHandler.setupExecutorService();
+			ColumnRenderBufferBuilder.setupExecutorService();
 		}
 	}
 	

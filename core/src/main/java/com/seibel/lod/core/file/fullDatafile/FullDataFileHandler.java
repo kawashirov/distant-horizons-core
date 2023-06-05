@@ -9,6 +9,7 @@ import com.seibel.lod.core.dataObjects.fullData.sources.*;
 import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IIncompleteFullDataSource;
+import com.seibel.lod.core.dataObjects.transformers.DataRenderTransformer;
 import com.seibel.lod.core.util.FileUtil;
 import com.seibel.lod.core.file.metaData.BaseMetaData;
 import com.seibel.lod.core.level.IDhLevel;
@@ -34,8 +35,8 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
-	protected ExecutorService fileHandlerThreadPool;
-	protected final ConfigChangeListener<Integer> configListener;
+	protected static ExecutorService fileHandlerThreadPool;
+	protected static ConfigChangeListener<Integer> configListener;
 	
 	protected final ConcurrentHashMap<DhSectionPos, FullDataMetaFile> fileBySectionPos = new ConcurrentHashMap<>();
 	protected final IDhLevel level;
@@ -47,11 +48,6 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	
     public FullDataFileHandler(IDhLevel level, File saveRootDir)
 	{
-		configListener = new ConfigChangeListener<>(Config.Client.Advanced.Threading.numberOfFileHandlerThreads, (threadCount) -> { this.setThreadPoolSize(threadCount); });
-		
-		int threadPoolSize = Config.Client.Advanced.Threading.numberOfFileHandlerThreads.get();
-		this.setThreadPoolSize(threadPoolSize);
-		
         this.saveDir = saveRootDir;
         this.level = level;
     }
@@ -433,7 +429,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
     @Override
     public CompletableFuture<IFullDataSource> onDataFileRefresh(IFullDataSource source, BaseMetaData metaData, Function<IFullDataSource, Boolean> updater, Consumer<IFullDataSource> onUpdated)
 	{
-		if (this.fileHandlerThreadPool.isTerminated())
+		if (fileHandlerThreadPool.isTerminated())
 		{
 			return CompletableFuture.completedFuture(source);
 		}
@@ -462,26 +458,65 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 				onUpdated.accept(sourceLocal);
 			}
             return sourceLocal;
-        }, this.fileHandlerThreadPool);
+        }, fileHandlerThreadPool);
     }
 	
     @Override
     public File computeDataFilePath(DhSectionPos pos) { return new File(this.saveDir, pos.serialize() + ".lod"); }
 	
-    @Override
-    public ExecutorService getIOExecutor() { return this.fileHandlerThreadPool; }
 	
-	public void setThreadPoolSize(int threadPoolSize) { fileHandlerThreadPool = ThreadUtil.makeThreadPool(threadPoolSize, FullDataFileHandler.class.getSimpleName()+"Thread"); }
+	
+	//==========================//
+	// executor handler methods //
+	//==========================//
+	
+	/**
+	 * Creates a new executor. <br>
+	 * Does nothing if an executor already exists.
+	 */
+	public static void setupExecutorService()
+	{
+		// static setup
+		if (configListener == null)
+		{
+			configListener = new ConfigChangeListener<>(Config.Client.Advanced.Threading.numberOfFileHandlerThreads, (threadCount) -> { setThreadPoolSize(threadCount); });
+		}
+		
+		
+		if (fileHandlerThreadPool == null || fileHandlerThreadPool.isTerminated())
+		{
+			LOGGER.info("Starting "+FullDataFileHandler.class.getSimpleName());
+			setThreadPoolSize(Config.Client.Advanced.Threading.numberOfFileHandlerThreads.get());
+		}
+	}
+	public static void setThreadPoolSize(int threadPoolSize) { fileHandlerThreadPool = ThreadUtil.makeThreadPool(threadPoolSize, FullDataFileHandler.class.getSimpleName()+"Thread"); }
+	
+	/**
+	 * Stops any executing tasks and destroys the executor. <br>
+	 * Does nothing if the executor isn't running.
+	 */
+	public static void shutdownExecutorService()
+	{
+		if (fileHandlerThreadPool != null)
+		{
+			LOGGER.info("Stopping "+ FullDataFileHandler.class.getSimpleName());
+			fileHandlerThreadPool.shutdownNow();
+		}
+	}
+	
+	@Override
+	public ExecutorService getIOExecutor() { return fileHandlerThreadPool; }
+	
+	
+	
+	//=========//
+	// cleanup //
+	//=========//
 	
     @Override
     public void close()
 	{
         FullDataMetaFile.debugPhantomLifeCycleCheck();
-		
-		configListener.close();
-		
-		// stop any existing file tasks
-		this.fileHandlerThreadPool.shutdownNow();
     }
 	
 }
