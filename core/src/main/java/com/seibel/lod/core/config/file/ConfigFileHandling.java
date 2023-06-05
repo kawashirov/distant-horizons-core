@@ -124,16 +124,16 @@ public class ConfigFileHandling {
         if (workConfig.contains(entry.getNameWCategory())) {
             try {
                 if (entry.getType().isEnum()) {
-                    entry.setWithoutSaving((T) ( workConfig.getEnum(entry.getNameWCategory(), (Class<? extends Enum>) entry.getType()) ));
+                    entry.set((T) ( workConfig.getEnum(entry.getNameWCategory(), (Class<? extends Enum>) entry.getType()) ));
                 } else if (ConfigTypeConverters.convertObjects.containsKey(entry.getType())) {
-                    entry.setWithoutSaving((T) ConfigTypeConverters.convertFromString(entry.getType(), workConfig.get(entry.getNameWCategory())));
+                    entry.set((T) ConfigTypeConverters.convertFromString(entry.getType(), workConfig.get(entry.getNameWCategory())));
                 } else {
                     if (entry.getType() == workConfig.get(entry.getNameWCategory()).getClass()) { // If the types are the same
-                        entry.setWithoutSaving((T) workConfig.get(entry.getNameWCategory()));
+                        entry.set((T) workConfig.get(entry.getNameWCategory()));
 
                         if (entry.isValid() == 0) return;
-                        else if (entry.isValid() == -1) entry.setWithoutSaving(entry.getMin());
-                        else if (entry.isValid() == 1) entry.setWithoutSaving(entry.getMax());
+                        else if (entry.isValid() == -1) entry.set(entry.getMin());
+                        else if (entry.isValid() == 1) entry.set(entry.getMax());
                     } else {
                         LOGGER.warn("Entry ["+ entry.getNameWCategory() +"] is invalid. Expected " + entry.getType() + " but got " + workConfig.get(entry.getNameWCategory()).getClass() + ". Using default value.");
                         saveEntry(entry, workConfig);
