@@ -89,7 +89,13 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
     public T getTrueValue() {
         return super.get();
     }
-	
+
+    /** Sets the value without saving */
+	@Override
+    public void setWithoutSaving(T newValue) {
+        super.set(newValue);
+    }
+
     /** Gets the min value */
 	@Override
     public T getMin() {

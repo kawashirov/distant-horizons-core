@@ -23,6 +23,9 @@ public interface IConfigEntry<T>
     T get();
     T getTrueValue();
 	
+    /** Sets the value without saving */
+    void setWithoutSaving(T newValue);
+	
     /** Gets the min value */
     T getMin();
     /** Sets the min value */
