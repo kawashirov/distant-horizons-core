@@ -2,6 +2,7 @@ package com.seibel.lod.core.file.fullDatafile;
 
 import com.google.common.collect.HashMultimap;
 import com.seibel.lod.core.config.Config;
+import com.seibel.lod.core.config.listeners.ConfigChangeListener;
 import com.seibel.lod.core.config.types.ConfigEntry;
 import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.sources.*;
@@ -34,7 +35,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
 	protected ExecutorService fileHandlerThreadPool;
-	protected final ConfigListener configListener = new ConfigListener();
+	protected final ConfigChangeListener<Integer> configListener;
 	
 	protected final ConcurrentHashMap<DhSectionPos, FullDataMetaFile> fileBySectionPos = new ConcurrentHashMap<>();
 	protected final IDhLevel level;
@@ -46,7 +47,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	
     public FullDataFileHandler(IDhLevel level, File saveRootDir)
 	{
-		Config.Client.Advanced.Threading.numberOfFileHandlerThreads.addListener(this.configListener);
+		configListener = new ConfigChangeListener<>(Config.Client.Advanced.Threading.numberOfFileHandlerThreads, (threadCount) -> { this.setThreadPoolSize(threadCount); });
 		
 		int threadPoolSize = Config.Client.Advanced.Threading.numberOfFileHandlerThreads.get();
 		this.setThreadPoolSize(threadPoolSize);
@@ -477,43 +478,10 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	{
         FullDataMetaFile.debugPhantomLifeCycleCheck();
 		
-		Config.Client.Advanced.Threading.numberOfFileHandlerThreads.removeListener(configListener);
+		configListener.close();
 		
 		// stop any existing file tasks
 		this.fileHandlerThreadPool.shutdownNow();
     }
-	
-	
-	
-	//================//
-	// helper classes // 
-	//================//
-	
-	private class ConfigListener implements ConfigEntry.Listener
-	{
-		private int previousThreadCount;
-		
-		
-		public ConfigListener() 
-		{
-			this.previousThreadCount = Config.Client.Advanced.Threading.numberOfFileHandlerThreads.get(); 
-		}
-		
-		
-		@Override
-		public void onModify()
-		{
-			int newThreadCount = Config.Client.Advanced.Threading.numberOfFileHandlerThreads.get();
-			if (newThreadCount != previousThreadCount)
-			{
-				previousThreadCount = newThreadCount;
-				setThreadPoolSize(newThreadCount);
-			}
-		}
-		
-		@Override
-		public void onUiModify() { /* do nothing, we only care about when the actual value is modified */ }
-		
-	} 
 	
 }

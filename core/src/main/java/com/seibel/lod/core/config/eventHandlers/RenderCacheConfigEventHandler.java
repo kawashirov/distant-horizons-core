@@ -4,6 +4,8 @@ import com.seibel.lod.api.DhApiMain;
 import com.seibel.lod.api.enums.config.EHorizontalResolution;
 import com.seibel.lod.api.enums.config.EVerticalQuality;
 import com.seibel.lod.core.config.Config;
+import com.seibel.lod.core.config.listeners.ConfigChangeListener;
+import com.seibel.lod.core.config.listeners.IConfigListener;
 import com.seibel.lod.core.config.types.ConfigEntry;
 import com.seibel.lod.core.util.DetailDistanceUtil;
 
@@ -16,7 +18,7 @@ import com.seibel.lod.core.util.DetailDistanceUtil;
  * @author James Seibel
  * @version 2023-2-9
  */
-public class RenderCacheConfigEventHandler implements ConfigEntry.Listener
+public class RenderCacheConfigEventHandler implements IConfigListener
 {
 	public static RenderCacheConfigEventHandler INSTANCE = new RenderCacheConfigEventHandler();
 	
@@ -32,7 +34,7 @@ public class RenderCacheConfigEventHandler implements ConfigEntry.Listener
 	
 	
 	@Override 
-	public void onModify()
+	public void onConfigValueSet()
 	{		
 		// confirm a setting was actually changed
 		boolean refreshRenderData = false;
