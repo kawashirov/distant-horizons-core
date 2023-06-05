@@ -2,6 +2,7 @@ package com.seibel.lod.core.file.fullDatafile;
 
 import com.google.common.collect.HashMultimap;
 import com.seibel.lod.core.config.Config;
+import com.seibel.lod.core.config.types.ConfigEntry;
 import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.sources.*;
 import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
@@ -32,8 +33,9 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
-	// TODO change when config value is changed
-	protected final ExecutorService fileHandlerThread = ThreadUtil.makeThreadPool(Config.Client.Advanced.Threading.numberOfFileHandlerThreads.get(), FullDataFileHandler.class.getSimpleName()+"Thread");
+	protected ExecutorService fileHandlerThreadPool;
+	protected final ConfigListener configListener = new ConfigListener();
+	
 	protected final ConcurrentHashMap<DhSectionPos, FullDataMetaFile> fileBySectionPos = new ConcurrentHashMap<>();
 	protected final IDhLevel level;
 	protected final File saveDir;
@@ -44,6 +46,11 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	
     public FullDataFileHandler(IDhLevel level, File saveRootDir)
 	{
+		Config.Client.Advanced.Threading.numberOfFileHandlerThreads.addListener(this.configListener);
+		
+		int threadPoolSize = Config.Client.Advanced.Threading.numberOfFileHandlerThreads.get();
+		this.setThreadPoolSize(threadPoolSize);
+		
         this.saveDir = saveRootDir;
         this.level = level;
     }
@@ -425,7 +432,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
     @Override
     public CompletableFuture<IFullDataSource> onDataFileRefresh(IFullDataSource source, BaseMetaData metaData, Function<IFullDataSource, Boolean> updater, Consumer<IFullDataSource> onUpdated)
 	{
-		if (this.fileHandlerThread.isTerminated())
+		if (this.fileHandlerThreadPool.isTerminated())
 		{
 			return CompletableFuture.completedFuture(source);
 		}
@@ -454,22 +461,59 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 				onUpdated.accept(sourceLocal);
 			}
             return sourceLocal;
-        }, this.fileHandlerThread);
+        }, this.fileHandlerThreadPool);
     }
 	
     @Override
     public File computeDataFilePath(DhSectionPos pos) { return new File(this.saveDir, pos.serialize() + ".lod"); }
 	
     @Override
-    public ExecutorService getIOExecutor() { return this.fileHandlerThread; }
+    public ExecutorService getIOExecutor() { return this.fileHandlerThreadPool; }
+	
+	public void setThreadPoolSize(int threadPoolSize) { fileHandlerThreadPool = ThreadUtil.makeThreadPool(threadPoolSize, FullDataFileHandler.class.getSimpleName()+"Thread"); }
 	
     @Override
     public void close()
 	{
         FullDataMetaFile.debugPhantomLifeCycleCheck();
 		
+		Config.Client.Advanced.Threading.numberOfFileHandlerThreads.removeListener(configListener);
+		
 		// stop any existing file tasks
-		this.fileHandlerThread.shutdownNow();
+		this.fileHandlerThreadPool.shutdownNow();
     }
+	
+	
+	
+	//================//
+	// helper classes // 
+	//================//
+	
+	private class ConfigListener implements ConfigEntry.Listener
+	{
+		private int previousThreadCount;
+		
+		
+		public ConfigListener() 
+		{
+			this.previousThreadCount = Config.Client.Advanced.Threading.numberOfFileHandlerThreads.get(); 
+		}
+		
+		
+		@Override
+		public void onModify()
+		{
+			int newThreadCount = Config.Client.Advanced.Threading.numberOfFileHandlerThreads.get();
+			if (newThreadCount != previousThreadCount)
+			{
+				previousThreadCount = newThreadCount;
+				setThreadPoolSize(newThreadCount);
+			}
+		}
+		
+		@Override
+		public void onUiModify() { /* do nothing, we only care about when the actual value is modified */ }
+		
+	} 
 	
 }
