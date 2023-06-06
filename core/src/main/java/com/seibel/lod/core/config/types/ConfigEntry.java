@@ -146,7 +146,14 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
      */
 	@Override
     public byte isValid() { return isValid(this.value); }
-    /** Checks if a value is valid */
+    /**
+     * Checks if a new value is valid
+     *
+     * @return      0 == valid
+     *         <p>  2 == invalid
+     *         <p>  1 == number too high
+     *         <p> -1 == number too low
+     */
 	@Override
     public byte isValid(T value) {
         if (this.configBase.disableMinMax)
@@ -155,9 +162,9 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
         if (value.getClass() != this.value.getClass()) // If the 2 variables aren't the same type then it will be invalid
             return 2;
         if (Number.class.isAssignableFrom(value.getClass())) { // Only check min max if it is a number
-            if (this.max != null && Double.parseDouble(value.toString()) > Double.parseDouble(max.toString())) // TODO: Use something larger and more precise like float
+            if (this.max != null && Float.parseFloat(value.toString()) > Float.parseFloat(max.toString()))
                 return 1;
-            if (this.min != null && Double.parseDouble(value.toString()) < Double.parseDouble(min.toString()))
+            if (this.min != null && Float.parseFloat(value.toString()) < Float.parseFloat(min.toString()))
                 return -1;
 
             return 0;

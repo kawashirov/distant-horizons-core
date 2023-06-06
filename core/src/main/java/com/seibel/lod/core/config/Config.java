@@ -841,7 +841,7 @@ public class Config
                             .build();
 
                     public static ConfigEntry<Long> longTest = new ConfigEntry.Builder<Long>()
-                            .set(42069l)
+                            .set(42069L)
                             .build();
 
                     public static ConfigEntry<Float> floatTest = new ConfigEntry.Builder<Float>()
@@ -857,7 +857,7 @@ public class Config
                             .build();
 
                     public static ConfigEntry<Map<String, String>> mapTest = new ConfigEntry.Builder<Map<String, String>>()
-                            .set(new HashMap<>())
+                            .set(new HashMap<String, String>())
                             .build();
                 }
 

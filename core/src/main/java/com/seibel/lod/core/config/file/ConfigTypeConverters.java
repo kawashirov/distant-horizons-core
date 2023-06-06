@@ -16,6 +16,8 @@ import java.util.Map;
 public class ConfigTypeConverters {
     // Once you've made a converter add it to here where the first value is the type you want to convert and the 2nd value is the converter
     public static final Map<Class, ConverterBase> convertObjects = new HashMap<Class, ConverterBase>() {{
+        put(Short.class, new ShortConverter());
+        put(Long.class, new LongConverter());
         put(Float.class, new FloatConverter());
         put(Byte.class, new ByteConverter());
 
@@ -51,8 +53,16 @@ public class ConfigTypeConverters {
 
 
 
-    // Float and Bytes are a bit wack with the config parser
+    // Some number types are a bit wack with the config parser
     // So we just store them as strings
+    public static class ShortConverter extends ConverterBase {
+        @Override public String convertToString(Object item) { return ((Short) item).toString(); }
+        @Override public Short convertFromString(String s) { return Short.valueOf(s); }
+    }
+    public static class LongConverter extends ConverterBase {
+        @Override public String convertToString(Object item) { return ((Long) item).toString(); }
+        @Override public Long convertFromString(String s) { return Long.valueOf(s); }
+    }
     public static class FloatConverter extends ConverterBase {
         @Override public String convertToString(Object item) { return ((Float) item).toString(); }
         @Override public Float convertFromString(String s) { return Float.valueOf(s); }

@@ -23,7 +23,6 @@ public class ConfigBase
 {
     /** Our own config instance, don't modify */
     public static ConfigBase INSTANCE;
-    /** Our own config instance, dont modify */
     public ConfigFileHandling configFileINSTANCE;
 
 	public static final Logger LOGGER = LogManager.getLogger(ConfigBase.class.getSimpleName());
@@ -59,13 +58,15 @@ public class ConfigBase
         add(Long.class);
         add(Float.class);
         add(String.class);
+
+        // TODO[CONFIG]: Check the type of these is valid
         add(List.class);
         add(ArrayList.class);
-        add(Map.class); // TODO[CONFIG]: This is handled separately to check the first input is String and the second input is valid
+        add(Map.class);
         add(HashMap.class);
     }};
 
-    /** Disables the minimum and maximum of a variable */
+    /** Disables the minimum and maximum of any variable */
     public boolean disableMinMax = false; // Very fun to use
     public final List<AbstractConfigType<?, ?>> entries = new ArrayList<>();
 
