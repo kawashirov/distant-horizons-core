@@ -859,6 +859,18 @@ public class Config
                     public static ConfigEntry<Map<String, String>> mapTest = new ConfigEntry.Builder<Map<String, String>>()
                             .set(new HashMap<String, String>())
                             .build();
+
+                    public static ConfigCategory categoryTest = new ConfigCategory.Builder().set(CategoryTest.class).build();
+
+                    public static ConfigEntry<Integer> linkableTest = new ConfigEntry.Builder<Integer>()
+                            .set(420)
+                            .build();
+
+
+                    public static class CategoryTest {
+                        // The name of this can be anything as it would be overwritten by the name of the linked object
+                        public static ConfigLinkedEntry linkableTest = new ConfigLinkedEntry(DebugConfigScreen.linkableTest);
+                    }
                 }
 
                 public static class DebugSwitch {

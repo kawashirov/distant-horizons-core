@@ -43,6 +43,7 @@
 
 
 
+
   "lod.config.client.advanced.debugging.debugConfigScreen":
     "Debug Config Screen",
   "lod.config.client.advanced.debugging.debugConfigScreen.debugConfigScreenNote":
@@ -67,6 +68,12 @@
     "List (ArrayList) test",
   "lod.config.client.advanced.debugging.debugConfigScreen.mapTest":
     "Map (HashMap) test",
+  "lod.config.client.advanced.debugging.debugConfigScreen.categoryTest":
+    "Category test",
+  "lod.config.client.advanced.debugging.debugConfigScreen.linkableTest":
+    "Linkable test",
+  "lod.config.client.advanced.debugging.debugConfigScreen.linkableTest.@tooltip":
+    "The value of this should be the same as in Category Test",
 
 
   "lod.config.title":
