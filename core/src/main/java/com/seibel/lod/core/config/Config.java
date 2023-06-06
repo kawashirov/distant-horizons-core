@@ -25,6 +25,12 @@ import com.seibel.lod.api.enums.rendering.*;
 import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.lod.core.config.eventHandlers.RenderCacheConfigEventHandler;
 import com.seibel.lod.core.config.types.*;
+import com.seibel.lod.core.config.types.enums.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**

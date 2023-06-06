@@ -1,4 +1,4 @@
-package com.seibel.lod.core.config.types;
+package com.seibel.lod.core.config.types.enums;
 
 /**
  * Allows options or categories to only be shown in the file or only in the ui

@@ -1,4 +1,4 @@
-package com.seibel.lod.core.config.types;
+package com.seibel.lod.core.config.types.enums;
 
 /**
  * What is the performance impact of an entry

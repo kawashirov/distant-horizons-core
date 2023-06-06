@@ -1,5 +1,7 @@
 package com.seibel.lod.core.config.types;
 
+import com.seibel.lod.core.config.types.enums.ConfigEntryAppearance;
+
 /**
  * Adds a categoty to the config
  * See our config file for more information on how to use it

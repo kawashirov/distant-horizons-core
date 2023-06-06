@@ -2,6 +2,7 @@ package com.seibel.lod.core.config.types;
 
 
 import com.seibel.lod.core.config.listeners.IConfigListener;
+import com.seibel.lod.core.config.types.enums.*;
 import com.seibel.lod.coreapi.interfaces.config.IConfigEntry;
 
 import java.util.ArrayList;
