@@ -38,20 +38,20 @@ public class DhApiThreadingConfig implements IDhApiThreadingConfig
 	
 	
 	
-	@Deprecated
 	@Override
-	public IDhApiConfigValue<Double> getWorldGeneratorThread()
+	public IDhApiConfigValue<Integer> getWorldGeneratorThread()
 	{ return new DhApiConfigValue<>(Threading.numberOfWorldGenerationThreads); }
-	
-	// TODO the above should be replaced with these
-//	public static IDhApiConfig<Integer> getWorldGeneratorThreadConfig()
-//	{ return new DhApiConfig<>(Threading.numberOfWorldGenerationThreads); }
-	
-//	public static IDhApiConfig<Double> getWorldGeneratorThreadActivePercentConfig()
-//	{ return new DhApiConfig<>(Threading.ToBeDetermined); }
 	
 	@Override
 	public IDhApiConfigValue<Integer> getBufferBuilderThread()
 	{ return new DhApiConfigValue<>(Threading.numberOfBufferBuilderThreads); }
+	
+	@Override
+	public IDhApiConfigValue<Integer> getFileHandlerThread()
+	{ return new DhApiConfigValue<>(Threading.numberOfFileHandlerThreads); }
+	
+	@Override
+	public IDhApiConfigValue<Integer> getDataConverterThread()
+	{ return new DhApiConfigValue<>(Threading.numberOfDataConverterThreads); }
 	
 }
