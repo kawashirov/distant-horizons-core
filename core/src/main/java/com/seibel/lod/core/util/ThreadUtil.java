@@ -1,6 +1,6 @@
 package com.seibel.lod.core.util;
 
-import com.seibel.lod.core.util.objects.LodThreadFactory;
+import com.seibel.lod.core.util.objects.DhThreadFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -18,7 +18,7 @@ public class ThreadUtil
 	
 	public static ExecutorService makeThreadPool(int poolSize, String name, int relativePriority)
 	{
-		return Executors.newFixedThreadPool(poolSize, new LodThreadFactory("DH-" + name, Thread.NORM_PRIORITY+relativePriority));
+		return Executors.newFixedThreadPool(poolSize, new DhThreadFactory("DH-" + name, Thread.NORM_PRIORITY+relativePriority));
 	}
 	
 	public static ExecutorService makeThreadPool(int poolSize, Class<?> clazz, int relativePriority)

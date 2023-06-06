@@ -31,10 +31,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Just a simple ThreadFactory to name ExecutorService
  * threads, which can be helpful when debugging.
+ * 
  * @author James Seibel
- * @version 8-15-2021
+ * @version 2023-6-5
  */
-public class LodThreadFactory implements ThreadFactory
+public class DhThreadFactory implements ThreadFactory
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 	
@@ -44,46 +45,58 @@ public class LodThreadFactory implements ThreadFactory
 	private final LinkedList<WeakReference<Thread>> threads = new LinkedList<>();
 	
 	
-	public LodThreadFactory(String newThreadName, int priority)
+	public DhThreadFactory(String newThreadName, int priority)
 	{
-		if (priority < 1 || priority > 10) throw new IllegalArgumentException("Thread priority should be [1-10]!");
-		threadName = newThreadName + " Thread";
+		if (priority < Thread.MIN_PRIORITY || priority > Thread.MAX_PRIORITY)
+		{
+			throw new IllegalArgumentException("Thread priority should be ["+Thread.MIN_PRIORITY+"-"+ Thread.MAX_PRIORITY+"]!");
+		}
+		
+		this.threadName = newThreadName + " Thread";
 		this.priority = priority;
 	}
 	
 	@Override
-	public Thread newThread(@NotNull Runnable r)
+	public Thread newThread(@NotNull Runnable runnable)
 	{
-		Thread t = new Thread(r, threadName + "[" + (threadCount++) + "]");
-		t.setPriority(priority);
-		threads.add(new WeakReference<>(t));
-		return t;
+		Thread thread = new Thread(runnable, this.threadName + "["+(this.threadCount++)+"]");
+		thread.setPriority(this.priority);
+		this.threads.add(new WeakReference<>(thread));
+		return thread;
 	}
 	
-	private static String StackTraceToString(StackTraceElement[] e) {
+	private static String StackTraceToString(StackTraceElement[] stackTraceArray)
+	{
 		StringBuilder str = new StringBuilder();
-		str.append(e[0]);
+		str.append(stackTraceArray[0]);
 		str.append('\n');
-		for (int i = 1; i<e.length; i++) {
+		for (int i = 1; i < stackTraceArray.length; i++)
+		{
 			str.append("  at ");
-			str.append(e[i]);
+			str.append(stackTraceArray[i]);
 			str.append('\n');
 		}
 		return str.toString();
 	}
 	
-	public void dumpAllThreadStacks() {
-		for (WeakReference<Thread> tRef : threads) {
-			Thread t = tRef.get();
-			if (t != null) {
-				StackTraceElement[] stacks = t.getStackTrace();
-				if (stacks.length != 0) {
-					LOGGER.info("===========================================\n"
-							+ "Thread: "+t.getName()+"\n"+StackTraceToString(stacks));
+	public void dumpAllThreadStacks()
+	{
+		for (WeakReference<Thread> threadRef : this.threads)
+		{
+			Thread thread = threadRef.get();
+			if (thread != null)
+			{
+				StackTraceElement[] stacks = thread.getStackTrace();
+				if (stacks.length != 0)
+				{
+					LOGGER.info("===========================================\n" +
+							"Thread: "+thread.getName()+"\n" +
+							StackTraceToString(stacks));
 				}
 			}
 		}
-		threads.removeIf((weakRef) -> weakRef.get() == null);
+		
+		this.threads.removeIf((weakRef) -> weakRef.get() == null);
 	}
 	
 }
