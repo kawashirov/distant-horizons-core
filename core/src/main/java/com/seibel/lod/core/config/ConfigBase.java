@@ -31,7 +31,7 @@ public class ConfigBase
     public final String modName;
     public final int configVersion;
 	
-    /*
+    /**
             What the config works with
 
         Enum
@@ -40,23 +40,29 @@ public class ConfigBase
         Integer
         Double
         Long
-        // Float (to be tested)
+        Float
         String
-        Map<String, ?> // The ? should be another value from above
+
+        // Below, "T" should be a value from above
+        List<T>
+        ArrayList<T>
+        Map<String, T>
+        HashMap<String, T>
      */
-    public static final List<Class<?>> acceptableInputs = new ArrayList<>();
-    private static void addAcceptableInputs() {
-        acceptableInputs.add(Boolean.class);
-        acceptableInputs.add(Byte.class);
-        acceptableInputs.add(Short.class);
-        acceptableInputs.add(Integer.class);
-        acceptableInputs.add(Double.class);
-        acceptableInputs.add(Long.class);
-//        acceptableInputs.add(Float.class);
-        acceptableInputs.add(String.class);
-        acceptableInputs.add(Map.class); // TODO[CONFIG]: This is handled separately to check the first input is String and the second input is valid
-        acceptableInputs.add(HashMap.class);
-    }
+    public static final List<Class<?>> acceptableInputs = new ArrayList<Class<?>>() {{
+        add(Boolean.class);
+        add(Byte.class);
+        add(Short.class);
+        add(Integer.class);
+        add(Double.class);
+        add(Long.class);
+        add(Float.class);
+        add(String.class);
+        add(List.class);
+        add(ArrayList.class);
+        add(Map.class); // TODO[CONFIG]: This is handled separately to check the first input is String and the second input is valid
+        add(HashMap.class);
+    }};
 
     /** Disables the minimum and maximum of a variable */
     public boolean disableMinMax = false; // Very fun to use
@@ -64,16 +70,17 @@ public class ConfigBase
 
 
     public ConfigBase(String modID, String modName, Class<?> config, int configVersion) {
+        LOGGER.info("Initialising config for " + modName);
         this.modID = modID;
         this.modName = modName;
         this.configVersion = configVersion;
 
-        addAcceptableInputs(); // Add all the acceptable stuff to the acceptableInputs list
         initNestedClass(config, ""); // Init root category
 
         // File handling (load from file)
         this.configFileINSTANCE = new ConfigFileHandling(this);
         this.configFileINSTANCE.loadFromFile();
+        LOGGER.info("Config for " + modName + " initialised");
     }
 
     private void initNestedClass(Class<?> config, String category) {
@@ -115,11 +122,13 @@ public class ConfigBase
         if (Clazz.isEnum())
             return true;
         for(Class<?> i: acceptableInputs) {
-            if(Clazz == i)
+            if(i == Clazz)
                 return true;
         }
         return false;
     }
+
+
 
     /**
      * Used for checking that all the lang files for the config exist

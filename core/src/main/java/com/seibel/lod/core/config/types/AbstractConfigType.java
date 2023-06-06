@@ -18,7 +18,7 @@ public abstract class AbstractConfigType<T, S> { // The S is the class that is e
 
     protected ConfigEntryAppearance appearance;
 
-    public AbstractConfigType(ConfigEntryAppearance appearance, T value) {
+    protected AbstractConfigType(ConfigEntryAppearance appearance, T value) {
         this.appearance = appearance;
         this.value = value;
     }
@@ -41,15 +41,12 @@ public abstract class AbstractConfigType<T, S> { // The S is the class that is e
     }
 
 
-    /** Should not be needed for anything other than the gui/file handling */
     public String getCategory() {
         return this.category;
     }
-    /** Should not be needed for anything other than the gui/file handling */
     public String getName() {
         return this.name;
     }
-    /** Should not be needed for anything other than the gui/file handling */
     public String getNameWCategory() {
         return (this.category.isEmpty() ? "" : this.category + ".") + this.name;
     }

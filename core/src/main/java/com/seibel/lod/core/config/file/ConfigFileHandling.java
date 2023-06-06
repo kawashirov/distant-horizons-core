@@ -50,7 +50,13 @@ public class ConfigFileHandling {
             }
         }
 
-        config.save();
+
+        try {
+            config.save();
+        } catch (Exception e) {
+            // If it fails to save, crash game
+            SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class).crashMinecraft("Failed to save config at ["+ ConfigPath.toString() +"]", e);
+        }
         config.close();
     }
     /**
@@ -81,7 +87,13 @@ public class ConfigFileHandling {
             }
         }
 
-        config.save();
+
+        try {
+            config.save();
+        } catch (Exception e) {
+            // If it fails to save, crash game
+            SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class).crashMinecraft("Failed to save config at ["+ ConfigPath.toString() +"]", e);
+        }
         config.close();
     }
 
@@ -103,9 +115,9 @@ public class ConfigFileHandling {
 
         if (ConfigTypeConverters.convertObjects.containsKey(entry.getType())) {
             workConfig.set(entry.getNameWCategory(), ConfigTypeConverters.convertToString(entry.getType(), entry.getTrueValue()));
-        } else {
-            workConfig.set(entry.getNameWCategory(), entry.getTrueValue());
+            return;
         }
+        workConfig.set(entry.getNameWCategory(), entry.getTrueValue());
     }
 
     // Loads an entry when only given the entry
@@ -125,20 +137,24 @@ public class ConfigFileHandling {
             try {
                 if (entry.getType().isEnum()) {
                     entry.setWithoutSaving((T) ( workConfig.getEnum(entry.getNameWCategory(), (Class<? extends Enum>) entry.getType()) ));
-                } else if (ConfigTypeConverters.convertObjects.containsKey(entry.getType())) {
-                    entry.setWithoutSaving((T) ConfigTypeConverters.convertFromString(entry.getType(), workConfig.get(entry.getNameWCategory())));
-                } else {
-                    if (entry.getType() == workConfig.get(entry.getNameWCategory()).getClass()) { // If the types are the same
-                        entry.setWithoutSaving((T) workConfig.get(entry.getNameWCategory()));
-
-                        if (entry.isValid() == 0) return;
-                        else if (entry.isValid() == -1) entry.setWithoutSaving(entry.getMin());
-                        else if (entry.isValid() == 1) entry.setWithoutSaving(entry.getMax());
-                    } else {
-                        LOGGER.warn("Entry ["+ entry.getNameWCategory() +"] is invalid. Expected " + entry.getType() + " but got " + workConfig.get(entry.getNameWCategory()).getClass() + ". Using default value.");
-                        saveEntry(entry, workConfig);
-                    }
+                    return;
                 }
+                if (ConfigTypeConverters.convertObjects.containsKey(entry.getType())) {
+                    entry.setWithoutSaving((T) ConfigTypeConverters.convertFromString(entry.getType(), workConfig.get(entry.getNameWCategory())));
+                    return;
+                }
+
+                if (entry.getType() == workConfig.get(entry.getNameWCategory()).getClass()) { // If the types are the same
+                    entry.setWithoutSaving((T) workConfig.get(entry.getNameWCategory()));
+
+                    if (entry.isValid() == 0) return;
+                    else if (entry.isValid() == -1) entry.setWithoutSaving(entry.getMin());
+                    else if (entry.isValid() == 1) entry.setWithoutSaving(entry.getMax());
+                    return;
+                }
+
+                LOGGER.warn("Entry ["+ entry.getNameWCategory() +"] is invalid. Expected " + entry.getType() + " but got " + workConfig.get(entry.getNameWCategory()).getClass() + ". Using default value.");
+                saveEntry(entry, workConfig);
             } catch (Exception e) {
 //                e.printStackTrace();
                 LOGGER.warn("Entry ["+entry.getNameWCategory()+"] had an invalid value when loading the config. Using default value.");
