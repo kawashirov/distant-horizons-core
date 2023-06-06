@@ -43,6 +43,28 @@
 
 
 
+  "lod.config.client.advanced.debugging.debugConfigScreen":
+    "Debug Config Screen",
+  "lod.config.client.advanced.debugging.debugConfigScreen.debugConfigScreenNote":
+    "This screen is to debug features of the config screen",
+  "lod.config.client.advanced.debugging.debugConfigScreen.boolTest":
+    "Boolean test",
+  "lod.config.client.advanced.debugging.debugConfigScreen.byteTest":
+    "Byte test",
+  "lod.config.client.advanced.debugging.debugConfigScreen.intTest":
+    "Integer test",
+  "lod.config.client.advanced.debugging.debugConfigScreen.doubleTest":
+    "Double test",
+  "lod.config.client.advanced.debugging.debugConfigScreen.longTest":
+    "Long test",
+  "lod.config.client.advanced.debugging.debugConfigScreen.floatTest":
+    "Float test",
+  "lod.config.client.advanced.debugging.debugConfigScreen.stringTest":
+    "String test",
+  "lod.config.client.advanced.debugging.debugConfigScreen.listTest":
+    "List (ArrayList) test",
+  "lod.config.client.advanced.debugging.debugConfigScreen.hashMapTest":
+    "Map (HashMap) test",
 
 
   "lod.config.title":

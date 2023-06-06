@@ -810,6 +810,52 @@ public class Config
 
                 public static ConfigCategory debugSwitch = new ConfigCategory.Builder().set(DebugSwitch.class).build();
 
+                public static ConfigCategory debugConfigScreen = new ConfigCategory.Builder()
+                        .set(DebugConfigScreen.class)
+                        .build();
+
+
+                /** This class is some debug to different features of the config GUI */
+                public static class DebugConfigScreen {
+                    // Defined in the lang, just a note about this screen
+                    public static ConfigUIComment debugConfigScreenNote = new ConfigUIComment();
+
+                    public static ConfigEntry<Boolean> boolTest = new ConfigEntry.Builder<Boolean>()
+                            .set(false)
+                            .build();
+
+                    public static ConfigEntry<Byte> byteTest = new ConfigEntry.Builder<Byte>()
+                            .set((byte) 8)
+                            .build();
+
+                    public static ConfigEntry<Integer> intTest = new ConfigEntry.Builder<Integer>()
+                            .set(69420)
+                            .build();
+
+                    public static ConfigEntry<Double> doubleTest = new ConfigEntry.Builder<Double>()
+                            .set(420.69d)
+                            .build();
+
+                    public static ConfigEntry<Long> longTest = new ConfigEntry.Builder<Long>()
+                            .set(42069l)
+                            .build();
+
+                    public static ConfigEntry<Float> floatTest = new ConfigEntry.Builder<Float>()
+                            .set(0.42069f)
+                            .build();
+
+                    public static ConfigEntry<String> stringTest = new ConfigEntry.Builder<String>()
+                            .set("Test input box")
+                            .build();
+
+                    public static ConfigEntry<List> listTest = new ConfigEntry.Builder<List>()
+                            .set(new ArrayList<String>())
+                            .build();
+
+                    public static ConfigEntry<HashMap<String, String>> hashMapTest = new ConfigEntry.Builder<HashMap<String, String>>()
+                            .set(new HashMap<>())
+                            .build();
+                }
 
                 public static class DebugSwitch {
                     /* The logging switches available:
