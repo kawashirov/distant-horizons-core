@@ -4,6 +4,7 @@ import com.seibel.lod.core.Initializer;
 import com.seibel.lod.core.dataObjects.render.bufferBuilding.ColumnRenderBufferBuilder;
 import com.seibel.lod.core.dataObjects.transformers.DataRenderTransformer;
 import com.seibel.lod.core.file.fullDatafile.FullDataFileHandler;
+import com.seibel.lod.core.generation.WorldGenerationQueue;
 import com.seibel.lod.core.world.*;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
 
@@ -28,17 +29,21 @@ public class SharedApi
 		
 		// starting and stopping the DataRenderTransformer is necessary to prevent attempting to
 		// access the MC level at inappropriate times, which can cause exceptions
-		if (currentWorld == null)
+		if (currentWorld != null)
 		{
-			DataRenderTransformer.shutdownExecutorService();
-			FullDataFileHandler.shutdownExecutorService();
-			ColumnRenderBufferBuilder.shutdownExecutorService();
-		}
-		else
-		{
+			// thread pool setup
 			DataRenderTransformer.setupExecutorService();
 			FullDataFileHandler.setupExecutorService();
 			ColumnRenderBufferBuilder.setupExecutorService();
+			WorldGenerationQueue.setupWorldGenThreadPool();
+		}
+		else
+		{
+			// thread pool shutdown
+			DataRenderTransformer.shutdownExecutorService();
+			FullDataFileHandler.shutdownExecutorService();
+			ColumnRenderBufferBuilder.shutdownExecutorService();
+			WorldGenerationQueue.shutdownWorldGenThreadPool();
 		}
 	}
 	

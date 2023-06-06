@@ -7,6 +7,7 @@ import com.seibel.lod.coreapi.DependencyInjection.OverrideInjector;
 import com.seibel.lod.core.util.LodUtil;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
 /**
@@ -61,7 +62,7 @@ public class TestWorldGenerator implements IDhApiWorldGenerator
 	public boolean isBusy() { return false; }
 	
 	@Override
-	public CompletableFuture<Void> generateChunks(int chunkPosMinX, int chunkPosMinZ, byte granularity, byte targetDataDetail, EDhApiDistantGeneratorMode maxGenerationStep, Consumer<Object[]> resultConsumer) { return null; }
+	public CompletableFuture<Void> generateChunks(int chunkPosMinX, int chunkPosMinZ, byte granularity, byte targetDataDetail, EDhApiDistantGeneratorMode maxGenerationStep, ExecutorService executorService, Consumer<Object[]> resultConsumer) { return null; }
 	
 	@Override
 	public void preGeneratorTaskStart() {  }

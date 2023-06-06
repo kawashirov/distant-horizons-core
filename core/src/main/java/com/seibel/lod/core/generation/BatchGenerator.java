@@ -36,6 +36,7 @@ import com.seibel.lod.core.wrapperInterfaces.worldGeneration.AbstractBatchGenera
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
 /**
@@ -56,16 +57,19 @@ public class BatchGenerator implements IDhApiWorldGenerator
 	 */
 	private static final int MAX_QUEUED_TASKS = 3;
 	
-	public AbstractBatchGenerationEnvironmentWrapper generationGroup;
+	public AbstractBatchGenerationEnvironmentWrapper generationEnvironment;
 	public IDhLevel targetDhLevel;
 	
 	
 	
+	//=============//
+	// constructor //
+	//=============//
 	
 	public BatchGenerator(IDhLevel targetDhLevel)
 	{
 		this.targetDhLevel = targetDhLevel;
-		this.generationGroup = FACTORY.createBatchGenerator(targetDhLevel);
+		this.generationEnvironment = FACTORY.createBatchGenerator(targetDhLevel);
 		LOGGER.info("Batch Chunk Generator initialized");
 	}
 	
@@ -105,7 +109,9 @@ public class BatchGenerator implements IDhApiWorldGenerator
 	//===================//
 	
 	@Override
-	public CompletableFuture<Void> generateChunks(int chunkPosMinX, int chunkPosMinZ, byte granularity, byte targetDataDetail, EDhApiDistantGeneratorMode generatorMode, Consumer<Object[]> resultConsumer)
+	public CompletableFuture<Void> generateChunks(
+			int chunkPosMinX, int chunkPosMinZ, byte granularity, byte targetDataDetail, EDhApiDistantGeneratorMode generatorMode,
+			ExecutorService worldGeneratorThreadPool, Consumer<Object[]> resultConsumer)
 	{
 		EDhApiWorldGenerationStep targetStep = null;
 		switch (generatorMode)
@@ -129,23 +135,19 @@ public class BatchGenerator implements IDhApiWorldGenerator
 		}
 		
 		int genChunkSize = BitShiftUtil.powerOfTwo(granularity - 4); // minus 4 is equal to dividing by 16 to convert to chunk scale
-		double runTimeRatio = Config.Client.Advanced.Threading.numberOfWorldGenerationThreads.get() > 1 ? 
-				1.0 :
-				Config.Client.Advanced.Threading.numberOfWorldGenerationThreads.get();
 		
 		// the consumer needs to be wrapped like this because the API can't use DH core objects (and IChunkWrapper can't be easily put into the API project)
-		Consumer<IChunkWrapper> consumer = (chunkWrapper) -> resultConsumer.accept(new Object[]{ chunkWrapper });
-		
-		return this.generationGroup.generateChunks(chunkPosMinX, chunkPosMinZ, genChunkSize, targetStep, runTimeRatio, consumer);
+		Consumer<IChunkWrapper> consumerWrapper = (chunkWrapper) -> resultConsumer.accept(new Object[]{ chunkWrapper });
+		return this.generationEnvironment.generateChunks(chunkPosMinX, chunkPosMinZ, genChunkSize, targetStep, worldGeneratorThreadPool, consumerWrapper);
 	}
 	
 	@Override
-	public void preGeneratorTaskStart() { this.generationGroup.updateAllFutures(); }
+	public void preGeneratorTaskStart() { this.generationEnvironment.updateAllFutures(); }
 	
 	@Override
 	public boolean isBusy()
 	{
-		return this.generationGroup.getEventCount() > Math.max(Config.Client.Advanced.Threading.numberOfWorldGenerationThreads.get().intValue(), 1) * MAX_QUEUED_TASKS; 
+		return this.generationEnvironment.getEventCount() > Math.max(Config.Client.Advanced.Threading.numberOfWorldGenerationThreads.get().intValue(), 1) * MAX_QUEUED_TASKS; 
 	}
 	
 	
@@ -158,7 +160,7 @@ public class BatchGenerator implements IDhApiWorldGenerator
 	public void close()
 	{
 		LOGGER.info(BatchGenerator.class.getSimpleName()+" shutting down...");
-		this.generationGroup.stop(true);
+		this.generationEnvironment.stop();
 	}
 	
 	

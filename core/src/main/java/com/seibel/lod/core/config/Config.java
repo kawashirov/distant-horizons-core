@@ -703,19 +703,17 @@ public class Config
 						+ " This can be an issue when first loading into a world, when flying, and/or when generating new terrain."; 
 				
 				
-                public static final ConfigEntry<Double> numberOfWorldGenerationThreads = new ConfigEntry.Builder<Double>()
-                        .setMinDefaultMax(0.1,
-                                (double) Runtime.getRuntime().availableProcessors()/6,
-                                (double) Runtime.getRuntime().availableProcessors())
+                public static final ConfigEntry<Integer> numberOfWorldGenerationThreads = new ConfigEntry.Builder<Integer>()
+                        .setMinDefaultMax(1,
+                                Runtime.getRuntime().availableProcessors()/6,
+                                Runtime.getRuntime().availableProcessors())
                         .comment(""
                                 + " How many threads should be used when generating LOD \n"
                                 + " chunks outside the normal render distance? \n"
                                 + "\n"
-                                + " If it's less than 1, it will be treated as a percentage \n"
-                                + " of time a single thread can run before going to idle. \n"
-                                + "\n"
                                 + " If you experience stuttering when generating distant LODs, \n"
-                                + " decrease this number. If you want to increase LOD \n"
+                                + " decrease this number. \n"
+								+ " If you want to increase LOD \n"
                                 + " generation speed, increase this number. \n"
                                 + "\n"
                                 + THREAD_NOTE)

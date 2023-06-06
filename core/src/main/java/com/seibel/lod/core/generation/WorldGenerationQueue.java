@@ -3,10 +3,11 @@ package com.seibel.lod.core.generation;
 import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
 import com.seibel.lod.core.config.Config;
+import com.seibel.lod.core.config.listeners.ConfigChangeListener;
 import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.transformers.LodDataBuilder;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
-import com.seibel.lod.core.file.fullDatafile.GeneratedFullDataFileHandler;
+import com.seibel.lod.core.file.fullDatafile.FullDataFileHandler;
 import com.seibel.lod.core.generation.tasks.*;
 import com.seibel.lod.core.pos.*;
 import com.seibel.lod.core.util.ThreadUtil;
@@ -20,7 +21,6 @@ import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import org.apache.logging.log4j.Logger;
 
 import java.io.Closeable;
-import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
@@ -64,6 +64,9 @@ public class WorldGenerationQueue implements Closeable
 	private static final int MAX_ALREADY_GENERATED_COUNT = 100;
 	private final HashSet<DhLodPos> alreadyGeneratedPosHashSet = new HashSet<>(MAX_ALREADY_GENERATED_COUNT);
 	private final Queue<DhLodPos> alreadyGeneratedPosQueue = new LinkedList<>();
+	
+	private static ExecutorService worldGeneratorThreadPool;
+	private static ConfigChangeListener<Integer> configListener;
 	
 	
 	
@@ -393,7 +396,7 @@ public class WorldGenerationQueue implements Closeable
 		//LOGGER.info("Generating section "+taskPos+" with granularity "+granularity+" at "+chunkPosMin);
 		
 		this.numberOfTasksQueued++;
-		inProgressTaskGroup.genFuture = startGenerationEvent(this.generator, chunkPosMin, granularity, taskDetailLevel, inProgressTaskGroup.group::onGenerationComplete);
+		inProgressTaskGroup.genFuture = this.startGenerationEvent(chunkPosMin, granularity, taskDetailLevel, inProgressTaskGroup.group::onGenerationComplete);
 		inProgressTaskGroup.genFuture.whenComplete((voidObj, exception) ->
 		{
 			this.numberOfTasksQueued--;
@@ -421,25 +424,65 @@ public class WorldGenerationQueue implements Closeable
 	 * The chunkPos is always aligned to the granularity.
 	 * For example: if the granularity is 4 (chunk sized) with a data detail level of 0 (block sized), the chunkPos will be aligned to 16x16 blocks.
 	 */
-	private static CompletableFuture<Void> startGenerationEvent(IDhApiWorldGenerator worldGenerator,
+	private CompletableFuture<Void> startGenerationEvent(
 			DhChunkPos chunkPosMin,
 			byte granularity, byte targetDataDetail,
 			Consumer<ChunkSizedFullDataAccessor> generationCompleteConsumer)
 	{
 		EDhApiDistantGeneratorMode generatorMode = Config.Client.WorldGenerator.distantGeneratorMode.get();
-		return worldGenerator.generateChunks(chunkPosMin.x, chunkPosMin.z, granularity, targetDataDetail, generatorMode, (objectArray) ->
+		return this.generator.generateChunks(chunkPosMin.x, chunkPosMin.z, granularity, targetDataDetail, generatorMode, worldGeneratorThreadPool, (generatedObjectArray) ->
 		{
 			try
 			{
-				IChunkWrapper chunk = SingletonInjector.INSTANCE.get(IWrapperFactory.class).createChunkWrapper(objectArray);
+				IChunkWrapper chunk = SingletonInjector.INSTANCE.get(IWrapperFactory.class).createChunkWrapper(generatedObjectArray);
 				generationCompleteConsumer.accept(LodDataBuilder.createChunkData(chunk));
 			}
 			catch (ClassCastException e)
 			{
-				DhLoggerBuilder.getLogger().error("World generator return type incorrect. Error: [" + e.getMessage() + "].", e);
+				DhLoggerBuilder.getLogger().error("World generator return type incorrect. Error: ["+e.getMessage()+"]. World generator disabled.", e);
 				Config.Client.WorldGenerator.enableDistantGeneration.set(false);
 			}
 		});
+	}
+	
+	
+	
+	//==========================//
+	// executor handler methods //
+	//==========================//
+	
+	/**
+	 * Creates a new executor. <br>
+	 * Does nothing if an executor already exists.
+	 */
+	public static void setupWorldGenThreadPool()
+	{
+		// static setup
+		if (configListener == null)
+		{
+			configListener = new ConfigChangeListener<>(Config.Client.Advanced.Threading.numberOfWorldGenerationThreads, (threadCount) -> { setThreadPoolSize(threadCount); });
+		}
+		
+		
+		if (worldGeneratorThreadPool == null || worldGeneratorThreadPool.isTerminated())
+		{
+			LOGGER.info("Starting "+ FullDataFileHandler.class.getSimpleName());
+			setThreadPoolSize(Config.Client.Advanced.Threading.numberOfWorldGenerationThreads.get());
+		}
+	}
+	public static void setThreadPoolSize(int threadPoolSize) { worldGeneratorThreadPool = ThreadUtil.makeThreadPool(threadPoolSize, "DH-Gen-Worker-Thread", Thread.MIN_PRIORITY); }
+	
+	/**
+	 * Stops any executing tasks and destroys the executor. <br>
+	 * Does nothing if the executor isn't running.
+	 */
+	public static void shutdownWorldGenThreadPool()
+	{
+		if (worldGeneratorThreadPool != null)
+		{
+			LOGGER.info("Stopping "+ FullDataFileHandler.class.getSimpleName());
+			worldGeneratorThreadPool.shutdownNow();
+		}
 	}
 	
 	
@@ -450,25 +493,7 @@ public class WorldGenerationQueue implements Closeable
 	
 	public CompletableFuture<Void> startClosing(boolean cancelCurrentGeneration, boolean alsoInterruptRunning)
 	{
-		queueingThread.shutdownNow();
-		
-		// remove any incomplete generation tasks
-//		for (byte detailLevel = QuadTree.TREE_LOWEST_DETAIL_LEVEL; detailLevel < this.waitingTaskQuadTree.treeMaxDetailLevel; detailLevel++)
-//		{
-//			MovableGridRingList<WorldGenTask> ringList = this.waitingTaskQuadTree.getRingList(detailLevel);
-//			ringList.clear((worldGenTask) ->
-//			{
-//				if (worldGenTask != null)
-//				{
-//					try
-//					{
-//						worldGenTask.future.cancel(true);
-//					}
-//					catch (CancellationException ignored)
-//					{ /* don't log shutdown exceptions */ }
-//				}
-//			});
-//		}
+		this.queueingThread.shutdownNow();
 		
 		
 		// stop and remove any in progress tasks
@@ -519,16 +544,40 @@ public class WorldGenerationQueue implements Closeable
 		}
 		LodUtil.assertTrue(this.generatorClosingFuture != null);
 		
+		
+		
+		
+		LOGGER.info("Awaiting world generator thread pool termination...");
+		try
+		{
+			int waitTimeInSeconds = 3;
+			if (!worldGeneratorThreadPool.awaitTermination(waitTimeInSeconds, TimeUnit.SECONDS))
+			{
+				LOGGER.warn("World generator thread pool shutdown didn't complete after ["+waitTimeInSeconds+"] seconds. Some world generator requests may still be running.");
+			}
+		}
+		catch (InterruptedException e)
+		{
+			LOGGER.warn("World generator thread pool shutdown interrupted! Ignoring child threads...", e);
+		}
+		
+		
+		
+		this.generator.close();
+		
+		
+		
 		try
 		{
 			this.generatorClosingFuture.cancel(true);
 		}
 		catch (Throwable e)
 		{
-			LOGGER.error("Failed to close generation queue: ", e);
+			LOGGER.warn("Failed to close generation queue: ", e);
 		}
 		
-		LOGGER.info("Successfully closed "+WorldGenerationQueue.class.getSimpleName());
+		
+		LOGGER.info("Finished closing "+WorldGenerationQueue.class.getSimpleName());
 	}
 	
 	

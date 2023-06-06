@@ -7,11 +7,12 @@ import com.seibel.lod.api.interfaces.override.IDhApiOverrideable;
 
 import java.io.Closeable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
 /**
  * @author James Seibel
- * @version 2022-12-10
+ * @version 2023-6-5
  */
 public interface IDhApiWorldGenerator extends Closeable, IDhApiOverrideable
 {
@@ -97,7 +98,7 @@ public interface IDhApiWorldGenerator extends Closeable, IDhApiOverrideable
 	 */
 	CompletableFuture<Void> generateChunks(int chunkPosMinX, int chunkPosMinZ,
 			byte granularity, byte targetDataDetail, EDhApiDistantGeneratorMode generatorMode,
-			Consumer<Object[]> resultConsumer) throws ClassCastException;
+			ExecutorService worldGeneratorThreadPool, Consumer<Object[]> resultConsumer) throws ClassCastException;
 	
 	
 	

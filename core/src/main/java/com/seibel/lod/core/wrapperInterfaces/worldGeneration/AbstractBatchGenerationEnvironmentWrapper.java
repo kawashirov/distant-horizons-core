@@ -24,20 +24,21 @@ import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
 public abstract class AbstractBatchGenerationEnvironmentWrapper
 {
 	public AbstractBatchGenerationEnvironmentWrapper(IDhLevel level) { }
 	
-	public abstract void resizeThreadPool(int newThreadCount);
-	
 	public abstract void updateAllFutures();
 	
 	public abstract int getEventCount();
 	
-	public abstract void stop(boolean blocking);
+	public abstract void stop();
 	
-	public abstract CompletableFuture<Void> generateChunks(int minX, int minZ, int genSize, EDhApiWorldGenerationStep targetStep, double runTimeRatio, Consumer<IChunkWrapper> resultConsumer);
+	public abstract CompletableFuture<Void> generateChunks(
+			int minX, int minZ, int genSize, EDhApiWorldGenerationStep targetStep, 
+			ExecutorService worldGeneratorThreadPool, Consumer<IChunkWrapper> resultConsumer);
 	
 }
