@@ -836,6 +836,10 @@ public class Config
                             .set(420.69d)
                             .build();
 
+                    public static ConfigEntry<Short> shortTest = new ConfigEntry.Builder<Short>()
+                            .set((short) 42)
+                            .build();
+
                     public static ConfigEntry<Long> longTest = new ConfigEntry.Builder<Long>()
                             .set(42069l)
                             .build();
@@ -848,11 +852,11 @@ public class Config
                             .set("Test input box")
                             .build();
 
-                    public static ConfigEntry<List> listTest = new ConfigEntry.Builder<List>()
+                    public static ConfigEntry<List<String>> listTest = new ConfigEntry.Builder<List<String>>()
                             .set(new ArrayList<String>())
                             .build();
 
-                    public static ConfigEntry<HashMap<String, String>> hashMapTest = new ConfigEntry.Builder<HashMap<String, String>>()
+                    public static ConfigEntry<Map<String, String>> mapTest = new ConfigEntry.Builder<Map<String, String>>()
                             .set(new HashMap<>())
                             .build();
                 }

@@ -55,6 +55,8 @@
     "Integer test",
   "lod.config.client.advanced.debugging.debugConfigScreen.doubleTest":
     "Double test",
+  "lod.config.client.advanced.debugging.debugConfigScreen.shortTest":
+    "Short test",
   "lod.config.client.advanced.debugging.debugConfigScreen.longTest":
     "Long test",
   "lod.config.client.advanced.debugging.debugConfigScreen.floatTest":
@@ -63,7 +65,7 @@
     "String test",
   "lod.config.client.advanced.debugging.debugConfigScreen.listTest":
     "List (ArrayList) test",
-  "lod.config.client.advanced.debugging.debugConfigScreen.hashMapTest":
+  "lod.config.client.advanced.debugging.debugConfigScreen.mapTest":
     "Map (HashMap) test",
 
 

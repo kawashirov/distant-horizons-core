@@ -39,6 +39,7 @@ public class ConfigBase
         Byte
         Integer
         Double
+        Short
         Long
         Float
         String
@@ -52,9 +53,9 @@ public class ConfigBase
     public static final List<Class<?>> acceptableInputs = new ArrayList<Class<?>>() {{
         add(Boolean.class);
         add(Byte.class);
-        add(Short.class);
         add(Integer.class);
         add(Double.class);
+        add(Short.class);
         add(Long.class);
         add(Float.class);
         add(String.class);
@@ -100,16 +101,17 @@ public class ConfigBase
                 entry.configBase = this;
 
                 if (ConfigEntry.class.isAssignableFrom(field.getType())) { // If item is type ConfigEntry
-                    if (!isAcceptableType(((ConfigEntry<?>) entry).getType())) {
+                    if (!isAcceptableType(entry.getType())) {
                         LOGGER.error("Invalid variable type at [" + (category.isEmpty() ? "" : category + ".") + field.getName() + "].");
-                        LOGGER.error("Type [" + ((ConfigEntry<?>) entry).getType() + "] is not one of these types [" + acceptableInputs.toString() + "]");
+                        LOGGER.error("Type [" + entry.getType() + "] is not one of these types [" + acceptableInputs.toString() + "]");
                         entries.remove(entries.size() -1); // Delete the entry if it is invalid so the game can still run
                     }
                 }
 
                 if (ConfigCategory.class.isAssignableFrom(field.getType())) { // If it's a category then init the stuff inside it and put it in the category list
+                    assert entry instanceof ConfigCategory;
                     if (((ConfigCategory) entry).getDestination() == null)
-                        ((ConfigCategory) entry).destination = ((ConfigCategory) entry).getNameWCategory();
+                        ((ConfigCategory) entry).destination = entry.getNameWCategory();
                     if (entry.get() != null) {
                         initNestedClass(((ConfigCategory) entry).get(), ((ConfigCategory) entry).getDestination());
                     }
@@ -121,11 +123,7 @@ public class ConfigBase
     private static boolean isAcceptableType(Class<?> Clazz) {
         if (Clazz.isEnum())
             return true;
-        for(Class<?> i: acceptableInputs) {
-            if(i == Clazz)
-                return true;
-        }
-        return false;
+        return acceptableInputs.contains(Clazz);
     }
 
 
