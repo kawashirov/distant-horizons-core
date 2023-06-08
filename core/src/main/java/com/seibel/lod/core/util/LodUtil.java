@@ -168,11 +168,11 @@ public class LodUtil
 
 	public static int computeOverdrawOffset() {
 		int chunkRenderDist = MC_RENDER.getRenderDistance() + 1;
-		EVanillaOverdraw overdraw = Config.Client.Graphics.AdvancedGraphics.vanillaOverdraw.get();
+		EVanillaOverdraw overdraw = EVanillaOverdraw.ALWAYS; //Config.Client.Advanced.Graphics.AdvancedGraphics.vanillaOverdraw.get();
 		if (overdraw == EVanillaOverdraw.ALWAYS) return Integer.MAX_VALUE;
 		int offset;
 		if (overdraw == EVanillaOverdraw.NEVER) {
-			offset = Config.Client.Graphics.AdvancedGraphics.overdrawOffset.get();
+			offset = 0; //Config.Client.Advanced.Graphics.AdvancedGraphics.overdrawOffset.get();
 		} else {
 			if (chunkRenderDist < MINIMUM_RENDER_DISTANCE_FOR_FAR_OVERDRAW) {
 				offset = 1;
@@ -186,8 +186,11 @@ public class LodUtil
 		}
 		return offset;
 	}
-
-	public static EdgeDistanceBooleanGrid readVanillaRenderedChunks() {
+	
+	/** not currently used since the new rendering system can't easily toggle single chunks to render */
+	@Deprecated
+	public static EdgeDistanceBooleanGrid readVanillaRenderedChunks()
+	{
 		int offset = computeOverdrawOffset();
 		if (offset == Integer.MAX_VALUE) return null;
 		int renderDist = MC_RENDER.getRenderDistance() + 1;

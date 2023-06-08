@@ -65,10 +65,9 @@ public class CubicLodTemplate
 		boolean fullBright = false;
 		switch (debugging) {
 			case OFF:
-			case SHOW_WIREFRAME:
 			{
-				float saturationMultiplier = Config.Client.Graphics.AdvancedGraphics.saturationMultiplier.get().floatValue();
-				float brightnessMultiplier = Config.Client.Graphics.AdvancedGraphics.brightnessMultiplier.get().floatValue();
+				float saturationMultiplier = Config.Client.Advanced.Graphics.AdvancedGraphics.saturationMultiplier.get().floatValue();
+				float brightnessMultiplier = Config.Client.Advanced.Graphics.AdvancedGraphics.brightnessMultiplier.get().floatValue();
 				if (saturationMultiplier == 1.0 && brightnessMultiplier == 1.0)
 				{
 					color = RenderDataPointUtil.getColor(data);
@@ -84,28 +83,24 @@ public class CubicLodTemplate
 				break;
 			}
 			case SHOW_DETAIL:
-			case SHOW_DETAIL_WIREFRAME:
 			{
 				color = LodUtil.DEBUG_DETAIL_LEVEL_COLORS[detailLevel];
 				fullBright = true;
 				break;
 			}
 			case SHOW_GENMODE:
-			case SHOW_GENMODE_WIREFRAME:
 			{
 				color = LodUtil.DEBUG_DETAIL_LEVEL_COLORS[RenderDataPointUtil.getGenerationMode(data)];
 				fullBright = true;
 				break;
 			}
 			case SHOW_OVERLAPPING_QUADS:
-			case SHOW_OVERLAPPING_QUADS_WIREFRAME:
 			{
 				color = ColorUtil.WHITE;
 				fullBright = true;
 				break;
 			}
 			case SHOW_RENDER_SOURCE_FLAG:
-			case SHOW_RENDER_SOURCE_FLAG_WIREFRAME:
 			{
 				color = debugSource == null ? ColorUtil.RED : debugSource.color;
 				fullBright = true;

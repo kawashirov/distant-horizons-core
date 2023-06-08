@@ -83,7 +83,7 @@ public abstract class AbstractDhClientLevel implements IDhClientLevel
 			return false;
 		}
 		
-		if (clientRenderState.quadtree.blockRenderDistance != Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH)
+		if (clientRenderState.quadtree.blockRenderDistance != Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH)
 		{
 			if (!this.ClientRenderStateRef.compareAndSet(clientRenderState, null))
 			{

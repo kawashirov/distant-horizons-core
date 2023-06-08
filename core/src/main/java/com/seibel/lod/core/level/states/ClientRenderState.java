@@ -36,7 +36,7 @@ public class ClientRenderState
 		this.levelWrapper = dhClientLevel.getLevelWrapper();
 		this.renderSourceFileHandler = new RenderSourceFileHandler(fullDataSourceProvider, dhClientLevel, saveStructure.getRenderCacheFolder(this.levelWrapper));
 		
-		this.quadtree = new LodQuadTree(dhClientLevel, Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH,
+		this.quadtree = new LodQuadTree(dhClientLevel, Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH,
 				MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, this.renderSourceFileHandler);
 		
 		RenderBufferHandler renderBufferHandler = new RenderBufferHandler(this.quadtree);

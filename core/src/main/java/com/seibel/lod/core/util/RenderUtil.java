@@ -179,11 +179,11 @@ public class RenderUtil
 		int vanillaBlockRenderedDistance = MC_RENDER.getRenderDistance() * LodUtil.CHUNK_WIDTH;
 		
 		float nearClipPlane;
-		if (Config.Client.Advanced.lodOnlyMode.get())
+		if (Config.Client.Advanced.Debugging.lodOnlyMode.get())
 		{
 			nearClipPlane = 0.1f;
 		}
-		else if (Config.Client.Graphics.AdvancedGraphics.useExtendedNearClipPlane.get())
+		else if (Config.Client.Advanced.Graphics.AdvancedGraphics.useExtendedNearClipPlane.get())
 		{
 			nearClipPlane = Math.min(vanillaBlockRenderedDistance - LodUtil.CHUNK_WIDTH, (float) 8 * LodUtil.CHUNK_WIDTH); // allow a max near clip plane of 8 chunks
 		}
@@ -202,7 +202,7 @@ public class RenderUtil
 	}
 	public static int getFarClipPlaneDistanceInBlocks()
 	{
-		int lodChunkDist = Config.Client.Graphics.Quality.lodChunkRenderDistance.get();
+		int lodChunkDist = Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistance.get();
 		return lodChunkDist * LodUtil.CHUNK_WIDTH;
 	}
 	

@@ -26,9 +26,9 @@ import com.seibel.lod.api.objects.config.DhApiConfigValue;
 import com.seibel.lod.coreapi.util.converters.RenderModeEnabledConverter;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.api.enums.rendering.ERendererMode;
-import com.seibel.lod.core.config.Config.Client.Graphics.Quality;
+import com.seibel.lod.core.config.Config.Client.Advanced.Graphics.Quality;
 import com.seibel.lod.core.config.Config.Client.Advanced.Debugging;
-import com.seibel.lod.core.config.Config.Client.Graphics.AdvancedGraphics;
+import com.seibel.lod.core.config.Config.Client.Advanced.Graphics.AdvancedGraphics;
 
 /**
  * Distant Horizons' graphics/rendering configuration.
@@ -78,9 +78,9 @@ public class DhApiGraphicsConfig implements IDhApiGraphicsConfig
 	public IDhApiConfigValue<EHorizontalQuality> getHorizontalQualityDropoff()
 	{ return new DhApiConfigValue<>(Quality.horizontalQuality); }
 	
-	@Override
-	public IDhApiConfigValue<Integer> getBiomeBlending()
-	{ return new DhApiConfigValue<>(Quality.lodBiomeBlending); }
+//	@Override
+//	public IDhApiConfigValue<Integer> getBiomeBlending()
+//	{ return new DhApiConfigValue<>(Quality.lodBiomeBlending); }
 	
 	
 	
@@ -88,17 +88,9 @@ public class DhApiGraphicsConfig implements IDhApiGraphicsConfig
 	// advanced graphic settings //
 	//===========================//
 	
-	@Override
-	public IDhApiConfigValue<Boolean> getDisableDirectionalCulling()
-	{ return new DhApiConfigValue<>(AdvancedGraphics.disableDirectionalCulling); }
-	
-	@Override
-	public IDhApiConfigValue<EVanillaOverdraw> getVanillaOverdraw()
-	{ return new DhApiConfigValue<>(AdvancedGraphics.vanillaOverdraw); }
-	
-	@Override
-	public IDhApiConfigValue<Integer> getVanillaOverdrawOffset()
-	{ return new DhApiConfigValue<>(AdvancedGraphics.overdrawOffset); }
+//	@Override
+//	public IDhApiConfigValue<Boolean> getDisableDirectionalCulling()
+//	{ return new DhApiConfigValue<>(AdvancedGraphics.disableDirectionalCulling); }
 	
 	@Override
 	public IDhApiConfigValue<Boolean> getUseExtendedNearClipPlane()
@@ -126,11 +118,7 @@ public class DhApiGraphicsConfig implements IDhApiGraphicsConfig
 	
 	@Override
 	public IDhApiConfigValue<Boolean> getEnableLodOnlyMode()
-	{ return new DhApiConfigValue<>(Config.Client.Advanced.lodOnlyMode); }
-	
-	@Override
-	public IDhApiConfigValue<EBufferRebuildTimes> getGeometryRebuildFrequency()
-	{ return new DhApiConfigValue<>(Config.Client.Advanced.Buffers.rebuildTimes); }
+	{ return new DhApiConfigValue<>(Debugging.lodOnlyMode); }
 	
 	
 	

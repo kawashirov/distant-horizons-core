@@ -3,13 +3,11 @@ package com.seibel.lod.core.file.fullDatafile;
 import com.google.common.collect.HashMultimap;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.config.listeners.ConfigChangeListener;
-import com.seibel.lod.core.config.types.ConfigEntry;
 import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.sources.*;
 import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IIncompleteFullDataSource;
-import com.seibel.lod.core.dataObjects.transformers.DataRenderTransformer;
 import com.seibel.lod.core.util.FileUtil;
 import com.seibel.lod.core.file.metaData.BaseMetaData;
 import com.seibel.lod.core.level.IDhLevel;
@@ -479,14 +477,14 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		// static setup
 		if (configListener == null)
 		{
-			configListener = new ConfigChangeListener<>(Config.Client.Advanced.Threading.numberOfFileHandlerThreads, (threadCount) -> { setThreadPoolSize(threadCount); });
+			configListener = new ConfigChangeListener<>(Config.Client.Advanced.MultiThreading.numberOfFileHandlerThreads, (threadCount) -> { setThreadPoolSize(threadCount); });
 		}
 		
 		
 		if (fileHandlerThreadPool == null || fileHandlerThreadPool.isTerminated())
 		{
 			LOGGER.info("Starting "+FullDataFileHandler.class.getSimpleName());
-			setThreadPoolSize(Config.Client.Advanced.Threading.numberOfFileHandlerThreads.get());
+			setThreadPoolSize(Config.Client.Advanced.MultiThreading.numberOfFileHandlerThreads.get());
 		}
 	}
 	public static void setThreadPoolSize(int threadPoolSize) { fileHandlerThreadPool = ThreadUtil.makeThreadPool(threadPoolSize, FullDataFileHandler.class.getSimpleName()+"Thread"); }

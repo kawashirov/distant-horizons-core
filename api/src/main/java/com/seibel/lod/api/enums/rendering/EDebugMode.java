@@ -20,20 +20,15 @@
 package com.seibel.lod.api.enums.rendering;
 
 /**
- * OFF,									<br>
- * SHOW_WIREFRAME,						<br>
- * SHOW_DETAIL,							<br>
- * SHOW_DETAIL_WIREFRAME,				<br>
- * SHOW_GENMODE,						<br>
- * SHOW_GENMODE_WIREFRAME,				<br>
- * SHOW_OVERLAPPING_QUADS,				<br>
- * SHOW_OVERLAPPING_QUADS_WIREFRAME,	<br>
- * SHOW_RENDER_SOURCE_FLAG,	<br>
- * SHOW_RENDER_SOURCE_FLAG_WIREFRAME,	<br>
+ * OFF,								<br>
+ * SHOW_DETAIL,						<br>
+ * SHOW_GENMODE,					<br>
+ * SHOW_OVERLAPPING_QUADS,			<br>
+ * SHOW_RENDER_SOURCE_FLAG,			<br>
  *
  * @author Leetom
  * @author James Seibel
- * @version 2022-7-2
+ * @version 2023-6-7
  */
 public enum EDebugMode
 {
@@ -44,68 +39,40 @@ public enum EDebugMode
 	
 	/** LODs are rendered normally */
 	OFF,
-
-	/** LOD draws in wireframe. */
-	SHOW_WIREFRAME,
 	
 	/** LOD colors are based on their detail */
 	SHOW_DETAIL,
 	
-	/** LOD colors are based on their detail, and draws in wireframe. */
-	SHOW_DETAIL_WIREFRAME,
-	
 	/** LOD colors are based on their gen mode. */
 	SHOW_GENMODE,
 	
-	/** LOD colors are based on their gen mode, and draws in wireframe. */
-	SHOW_GENMODE_WIREFRAME,
-
 	/** Only draw overlapping LOD quads. */
 	SHOW_OVERLAPPING_QUADS,
-
-	/** Only draw overlapping LOD quads, and draws in wireframe. */
-	SHOW_OVERLAPPING_QUADS_WIREFRAME,
-
+	
 	/** LOD colors are based on renderSource flags. */
-	SHOW_RENDER_SOURCE_FLAG,
-
-	/** LOD colors are based on renderSource flags, and draws in wireframe. */
-	SHOW_RENDER_SOURCE_FLAG_WIREFRAME;
-
-	/** returns the next debug mode */
-	// Deprecated: use DebugMode.next() instead
-	@Deprecated
-	public EDebugMode getNext()
+	SHOW_RENDER_SOURCE_FLAG;
+	
+	
+	public static EDebugMode next(EDebugMode type) 
 	{
-		return next(this);
-	}
-
-	public static EDebugMode next(EDebugMode type) {
-		switch (type) {
-			case OFF: return SHOW_WIREFRAME;
-			case SHOW_WIREFRAME: return SHOW_DETAIL;
-			case SHOW_DETAIL: return SHOW_DETAIL_WIREFRAME;
-			case SHOW_DETAIL_WIREFRAME: return SHOW_GENMODE;
-			case SHOW_GENMODE: return SHOW_GENMODE_WIREFRAME;
-			case SHOW_GENMODE_WIREFRAME: return SHOW_OVERLAPPING_QUADS;
-			case SHOW_OVERLAPPING_QUADS: return SHOW_OVERLAPPING_QUADS_WIREFRAME;
-			case SHOW_OVERLAPPING_QUADS_WIREFRAME: return SHOW_RENDER_SOURCE_FLAG;
-			case SHOW_RENDER_SOURCE_FLAG: return SHOW_RENDER_SOURCE_FLAG_WIREFRAME;
+		switch (type) 
+		{
+			case OFF: return SHOW_DETAIL;
+			case SHOW_DETAIL: return SHOW_GENMODE;
+			case SHOW_GENMODE: return SHOW_OVERLAPPING_QUADS;
+			case SHOW_OVERLAPPING_QUADS: return SHOW_RENDER_SOURCE_FLAG;
 			default: return OFF;
 		}
 	}
 
-	public static EDebugMode previous(EDebugMode type) {
-		switch (type) {
-			case OFF: return SHOW_RENDER_SOURCE_FLAG_WIREFRAME;
-			case SHOW_RENDER_SOURCE_FLAG_WIREFRAME: return SHOW_RENDER_SOURCE_FLAG;
-			case SHOW_RENDER_SOURCE_FLAG: return SHOW_OVERLAPPING_QUADS_WIREFRAME;
-			case SHOW_OVERLAPPING_QUADS_WIREFRAME: return SHOW_OVERLAPPING_QUADS;
-			case SHOW_OVERLAPPING_QUADS: return SHOW_GENMODE_WIREFRAME;
-			case SHOW_GENMODE_WIREFRAME: return SHOW_GENMODE;
-			case SHOW_GENMODE: return SHOW_DETAIL_WIREFRAME;
-			case SHOW_DETAIL_WIREFRAME: return SHOW_DETAIL;
-			case SHOW_DETAIL: return SHOW_WIREFRAME;
+	public static EDebugMode previous(EDebugMode type) 
+	{
+		switch (type) 
+		{
+			case OFF: return SHOW_RENDER_SOURCE_FLAG;
+			case SHOW_RENDER_SOURCE_FLAG: return SHOW_OVERLAPPING_QUADS;
+			case SHOW_OVERLAPPING_QUADS: return SHOW_GENMODE;
+			case SHOW_GENMODE: return SHOW_DETAIL;
 			default: return OFF;
 		}
 	}

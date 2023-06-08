@@ -42,7 +42,7 @@ public class SubDimensionLevelMatcher implements AutoCloseable
 {
 	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	public static final ConfigBasedLogger LOGGER = new ConfigBasedLogger(LogManager.getLogger(),
-			() -> Config.Client.Advanced.Debugging.DebugSwitch.logFileSubDimEvent.get());
+			() -> Config.Client.Advanced.Logging.logFileSubDimEvent.get());
 	
 	private final ExecutorService matcherThread = ThreadUtil.makeSingleThreadPool("Level-To-File-Matcher");
 	

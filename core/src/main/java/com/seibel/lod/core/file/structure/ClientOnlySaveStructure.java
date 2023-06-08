@@ -58,7 +58,7 @@ public class ClientOnlySaveStructure extends AbstractSaveStructure
 	{
 		return this.levelToFileMap.computeIfAbsent(level, (newLevel) ->
 		{
-			if (Config.Client.Multiplayer.multiDimensionRequiredSimilarity.get() == 0)
+			if (Config.Client.Advanced.Multiplayer.multiDimensionRequiredSimilarity.get() == 0)
 			{
 				if (this.fileMatcher != null)
 				{
@@ -184,11 +184,7 @@ public class ClientOnlySaveStructure extends AbstractSaveStructure
 		
 		
 		// determine the auto folder name format
-		EServerFolderNameMode folderNameMode = Config.Client.Multiplayer.serverFolderNameMode.get();
-		if (folderNameMode == EServerFolderNameMode.AUTO)
-		{
-			folderNameMode = EServerFolderNameMode.NAME_ONLY;
-		}
+		EServerFolderNameMode folderNameMode = Config.Client.Advanced.Multiplayer.serverFolderNameMode.get();
 		String serverName = MC_CLIENT.getCurrentServerName().replaceAll(INVALID_FILE_CHARACTERS_REGEX, "");
 		String serverMcVersion = MC_CLIENT.getCurrentServerVersion().replaceAll(INVALID_FILE_CHARACTERS_REGEX, "");
 		

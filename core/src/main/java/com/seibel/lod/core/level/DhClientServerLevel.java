@@ -65,7 +65,7 @@ public class DhClientServerLevel extends AbstractDhClientLevel implements IDhCli
 		
 		FileScanUtil.scanFiles(saveStructure, this.serverLevelWrapper, this.fullDataFileHandler, null);
 		
-		this.worldGeneratorEnabledConfig = new AppliedConfigState<>(Config.Client.WorldGenerator.enableDistantGeneration);
+		this.worldGeneratorEnabledConfig = new AppliedConfigState<>(Config.Client.Advanced.WorldGenerator.enableDistantGeneration);
 		
 		
 		LOGGER.info("Started "+DhClientServerLevel.class.getSimpleName()+" for "+ serverLevelWrapper +" with saves at "+saveStructure);

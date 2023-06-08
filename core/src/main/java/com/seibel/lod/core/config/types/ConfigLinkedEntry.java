@@ -10,7 +10,7 @@ import com.seibel.lod.core.config.types.enums.ConfigEntryAppearance;
  */
 public class ConfigLinkedEntry extends AbstractConfigType<AbstractConfigType, ConfigLinkedEntry> {
     public ConfigLinkedEntry(AbstractConfigType value) {
-        super(ConfigEntryAppearance.ONLY_SHOW, value);
+        super(ConfigEntryAppearance.ONLY_IN_GUI, value);
     }
 
     /** Appearance shouldn't be changed */

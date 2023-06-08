@@ -40,14 +40,14 @@ public class RenderCacheConfigEventHandler implements IConfigListener
 		boolean refreshRenderData = false;
 		
 		
-		EVerticalQuality newVerticalQuality = Config.Client.Graphics.Quality.verticalQuality.get();
+		EVerticalQuality newVerticalQuality = Config.Client.Advanced.Graphics.Quality.verticalQuality.get();
 		if (this.previousVerticalQualitySetting != newVerticalQuality)
 		{
 			this.previousVerticalQualitySetting = newVerticalQuality;
 			refreshRenderData = true;
 		}
 		
-		EHorizontalResolution newHorizontalResolution = Config.Client.Graphics.Quality.drawResolution.get();
+		EHorizontalResolution newHorizontalResolution = Config.Client.Advanced.Graphics.Quality.drawResolution.get();
 		if (this.previousHorizontalResolution != newHorizontalResolution)
 		{
 			this.previousHorizontalResolution = newHorizontalResolution;

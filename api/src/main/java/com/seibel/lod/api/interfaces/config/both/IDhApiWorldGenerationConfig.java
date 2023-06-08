@@ -46,12 +46,6 @@ public interface IDhApiWorldGenerationConfig extends IDhApiConfigGroup
 	/** Defines to what level fake chunks will be generated. */
 	IDhApiConfigValue<EDhApiDistantGeneratorMode> getDistantGeneratorMode();
 	
-	/** Defines how generated fake chunks will be lit. */
-	IDhApiConfigValue<ELightGenerationMode> getLightingMode();
-	
-	/** Defines the order in which fake chunks will be generated. */
-	IDhApiConfigValue<EGenerationPriority> getGenerationPriority();
-	
 	/**
 	 * Defines what blocks will be ignored when generating LODs. <br><br>
 	 *

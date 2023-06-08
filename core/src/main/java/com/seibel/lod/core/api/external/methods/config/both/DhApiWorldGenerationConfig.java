@@ -22,7 +22,7 @@ package com.seibel.lod.core.api.external.methods.config.both;
 import com.seibel.lod.api.interfaces.config.IDhApiConfigValue;
 import com.seibel.lod.api.interfaces.config.both.IDhApiWorldGenerationConfig;
 import com.seibel.lod.api.objects.config.DhApiConfigValue;
-import com.seibel.lod.core.config.Config.Client.WorldGenerator;
+import com.seibel.lod.core.config.Config.Client.Advanced.WorldGenerator;
 import com.seibel.lod.api.enums.config.EBlocksToAvoid;
 import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.lod.api.enums.config.EGenerationPriority;
@@ -51,14 +51,6 @@ public class DhApiWorldGenerationConfig implements IDhApiWorldGenerationConfig
 	@Override
 	public IDhApiConfigValue<EDhApiDistantGeneratorMode> getDistantGeneratorMode()
 	{ return new DhApiConfigValue<>(WorldGenerator.distantGeneratorMode); }
-	
-	@Override
-	public IDhApiConfigValue<ELightGenerationMode> getLightingMode()
-	{ return new DhApiConfigValue<>(WorldGenerator.lightGenerationMode); }
-	
-	@Override
-	public IDhApiConfigValue<EGenerationPriority> getGenerationPriority()
-	{ return new DhApiConfigValue<>(WorldGenerator.generationPriority); }
 	
 	@Deprecated
 	@Override

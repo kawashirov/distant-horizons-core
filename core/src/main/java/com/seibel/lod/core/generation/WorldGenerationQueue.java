@@ -82,7 +82,7 @@ public class WorldGenerationQueue implements Closeable
 		this.largestDataDetail = generator.getLargestDataDetailLevel();
 		this.smallestDataDetail = generator.getSmallestDataDetailLevel();
 		
-		int treeWidth = Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH * 2; // TODO the *2 is to allow for generation edge cases, and should probably be removed at some point
+		int treeWidth = Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH * 2; // TODO the *2 is to allow for generation edge cases, and should probably be removed at some point
 		byte treeMinDetailLevel = LodUtil.BLOCK_DETAIL_LEVEL; // the tree shouldn't need to go this low, but just in case
 		this.waitingTaskQuadTree = new QuadTree<>(treeWidth, DhBlockPos2D.ZERO /*the quad tree will be re-centered later*/, treeMinDetailLevel);
 		
@@ -429,7 +429,7 @@ public class WorldGenerationQueue implements Closeable
 			byte granularity, byte targetDataDetail,
 			Consumer<ChunkSizedFullDataAccessor> generationCompleteConsumer)
 	{
-		EDhApiDistantGeneratorMode generatorMode = Config.Client.WorldGenerator.distantGeneratorMode.get();
+		EDhApiDistantGeneratorMode generatorMode = Config.Client.Advanced.WorldGenerator.distantGeneratorMode.get();
 		return this.generator.generateChunks(chunkPosMin.x, chunkPosMin.z, granularity, targetDataDetail, generatorMode, worldGeneratorThreadPool, (generatedObjectArray) ->
 		{
 			try
@@ -440,7 +440,7 @@ public class WorldGenerationQueue implements Closeable
 			catch (ClassCastException e)
 			{
 				DhLoggerBuilder.getLogger().error("World generator return type incorrect. Error: ["+e.getMessage()+"]. World generator disabled.", e);
-				Config.Client.WorldGenerator.enableDistantGeneration.set(false);
+				Config.Client.Advanced.WorldGenerator.enableDistantGeneration.set(false);
 			}
 		});
 	}
@@ -460,14 +460,14 @@ public class WorldGenerationQueue implements Closeable
 		// static setup
 		if (configListener == null)
 		{
-			configListener = new ConfigChangeListener<>(Config.Client.Advanced.Threading.numberOfWorldGenerationThreads, (threadCount) -> { setThreadPoolSize(threadCount); });
+			configListener = new ConfigChangeListener<>(Config.Client.Advanced.MultiThreading.numberOfWorldGenerationThreads, (threadCount) -> { setThreadPoolSize(threadCount); });
 		}
 		
 		
 		if (worldGeneratorThreadPool == null || worldGeneratorThreadPool.isTerminated())
 		{
 			LOGGER.info("Starting "+ FullDataFileHandler.class.getSimpleName());
-			setThreadPoolSize(Config.Client.Advanced.Threading.numberOfWorldGenerationThreads.get());
+			setThreadPoolSize(Config.Client.Advanced.MultiThreading.numberOfWorldGenerationThreads.get());
 		}
 	}
 	public static void setThreadPoolSize(int threadPoolSize) { worldGeneratorThreadPool = ThreadUtil.makeThreadPool(threadPoolSize, "DH-Gen-Worker-Thread", Thread.MIN_PRIORITY); }

@@ -22,7 +22,7 @@ package com.seibel.lod.core.api.external.methods.config.client;
 import com.seibel.lod.api.interfaces.config.IDhApiConfigValue;
 import com.seibel.lod.api.interfaces.config.client.IDhApiMultiplayerConfig;
 import com.seibel.lod.api.objects.config.DhApiConfigValue;
-import com.seibel.lod.core.config.Config.Client.Multiplayer;
+import com.seibel.lod.core.config.Config.Client.Advanced.Multiplayer;
 import com.seibel.lod.api.enums.config.EServerFolderNameMode;
 
 /**

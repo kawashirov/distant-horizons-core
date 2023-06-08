@@ -7,7 +7,6 @@ import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.config.listeners.ConfigChangeListener;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.dataObjects.render.columnViews.ColumnArrayView;
-import com.seibel.lod.core.dataObjects.transformers.DataRenderTransformer;
 import com.seibel.lod.core.enums.ELodDirection;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.logging.ConfigBasedLogger;
@@ -35,7 +34,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class ColumnRenderBufferBuilder
 {
 	public static final ConfigBasedLogger EVENT_LOGGER = new ConfigBasedLogger(LogManager.getLogger(),
-			() -> Config.Client.Advanced.Debugging.DebugSwitch.logRendererBufferEvent.get());
+			() -> Config.Client.Advanced.Logging.logRendererBufferEvent.get());
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
 	
@@ -66,12 +65,12 @@ public class ColumnRenderBufferBuilder
 			{
 				try
 				{
-					boolean enableTransparency = Config.Client.Graphics.Quality.transparency.get().tranparencyEnabled;
+					boolean enableTransparency = Config.Client.Advanced.Graphics.Quality.transparency.get().tranparencyEnabled;
 					
 					EVENT_LOGGER.trace("RenderRegion start QuadBuild @ "+renderSource.sectionPos);
-					boolean enableSkyLightCulling = Config.Client.Graphics.AdvancedGraphics.enableCaveCulling.get();
+					boolean enableSkyLightCulling = Config.Client.Advanced.Graphics.AdvancedGraphics.enableCaveCulling.get();
 					
-					int skyLightCullingBelow = Config.Client.Graphics.AdvancedGraphics.caveCullingHeight.get();
+					int skyLightCullingBelow = Config.Client.Advanced.Graphics.AdvancedGraphics.caveCullingHeight.get();
 					// FIXME: Clamp also to the max world height.
 					skyLightCullingBelow = Math.max(skyLightCullingBelow, clientLevel.getMinY());
 					
@@ -371,14 +370,14 @@ public class ColumnRenderBufferBuilder
 		// static setup
 		if (configListener == null)
 		{
-			configListener = new ConfigChangeListener<>(Config.Client.Advanced.Threading.numberOfBufferBuilderThreads, (threadCount) -> { setThreadPoolSize(threadCount); });
+			configListener = new ConfigChangeListener<>(Config.Client.Advanced.MultiThreading.numberOfBufferBuilderThreads, (threadCount) -> { setThreadPoolSize(threadCount); });
 		}
 		
 		
 		if (bufferBuilderThreadPool == null || bufferBuilderThreadPool.isTerminated())
 		{
 			LOGGER.info("Starting "+ ColumnRenderBufferBuilder.class.getSimpleName());
-			setThreadPoolSize(Config.Client.Advanced.Threading.numberOfBufferBuilderThreads.get());
+			setThreadPoolSize(Config.Client.Advanced.MultiThreading.numberOfBufferBuilderThreads.get());
 		}
 	}
 	public static void setThreadPoolSize(int threadPoolSize) 

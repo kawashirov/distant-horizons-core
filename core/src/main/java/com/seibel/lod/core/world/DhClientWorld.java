@@ -92,7 +92,7 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 
     private void _clientTick()
 	{
-		int newBlockRenderDistance = Config.Client.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH;
+		int newBlockRenderDistance = Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH;
 		
 		Iterator<DhClientLevel> iterator = this.levels.values().iterator();
 		while (iterator.hasNext())

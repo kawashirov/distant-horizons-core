@@ -21,10 +21,10 @@
 package com.seibel.lod.api.enums.config;
 
 /**
- * AUTO, <br>
  * NAME_ONLY, <br>
  * NAME_IP, <br>
- * NAME_IP_PORT, <br> <br>
+ * NAME_IP_PORT, <br>
+ * NAME_IP_PORT_MC_VERSION, <br> <br>
  *
  * Determines how the multiplayer folders should be named.
  * 
@@ -37,12 +37,6 @@ public enum EServerFolderNameMode
 	// when adding items up the API minor version
 	// when removing items up the API major version
 	
-	
-	/**
-	 * NAME_IP for LAN connections <Br>
-	 * NAME_IP_PORT for all others
-	 */
-	AUTO,
 	
 	/** Only use the server name */
 	NAME_ONLY,

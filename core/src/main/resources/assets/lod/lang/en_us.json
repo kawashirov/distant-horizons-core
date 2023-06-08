@@ -369,6 +369,12 @@
     "Prompt for update",
   "lod.config.client.autoUpdater.promptForUpdate.@tooltip":
     "If disabled then when an update is available then it would update without prompting the user",
+  
+  "lod.config.client.quickEnableRendering":
+    "quickEnableRendering",
+  "lod.config.client.quickEnableRendering.@tooltip":
+  "quickEnableRendering tooltip",
+  
   "lod.config.client.optionsButton":
     "Show options button",
   "lod.config.client.optionsButton.@tooltip":

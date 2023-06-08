@@ -87,7 +87,7 @@ public interface IDhApiGraphicsFogConfig extends IDhApiConfigGroup
 	IDhApiConfigValue<Double> getFogMaxThickness();
 	
 	/** Defines how the fog changes in thickness. */
-	IDhApiConfigValue<EFogFalloff> getFogFalloff();
+	IDhApiConfigValue<EFogFalloff> getFarFogFalloff();
 	
 	/** Defines the fog density. */
 	IDhApiConfigValue<Double> getFogDensity();

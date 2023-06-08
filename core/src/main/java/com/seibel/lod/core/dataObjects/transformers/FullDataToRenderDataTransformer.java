@@ -59,7 +59,7 @@ public class FullDataToRenderDataTransformer
 	{
         final DhSectionPos pos = fullDataSource.getSectionPos();
         final byte dataDetail = fullDataSource.getDataDetailLevel();
-        final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(fullDataSource.getDataDetailLevel());
+        final int vertSize = Config.Client.Advanced.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(fullDataSource.getDataDetailLevel());
         final ColumnRenderSource columnSource = new ColumnRenderSource(pos, vertSize, level.getMinY());
         if (fullDataSource.isEmpty())
 		{
@@ -109,7 +109,7 @@ public class FullDataToRenderDataTransformer
 	{
         final DhSectionPos pos = data.getSectionPos();
         final byte dataDetail = data.getDataDetailLevel();
-        final int vertSize = Config.Client.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(data.getDataDetailLevel());
+        final int vertSize = Config.Client.Advanced.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(data.getDataDetailLevel());
         final ColumnRenderSource columnSource = new ColumnRenderSource(pos, vertSize, level.getMinY());
         if (data.isEmpty())
 		{

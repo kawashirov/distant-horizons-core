@@ -16,7 +16,7 @@ import org.apache.logging.log4j.LogManager;
 //FIXME: To-Be-Used class
 public class ChunkToLodBuilder
 {
-    public static final ConfigBasedLogger LOGGER = new ConfigBasedLogger(LogManager.getLogger(), () -> Config.Client.Advanced.Debugging.DebugSwitch.logLodBuilderEvent.get());
+    public static final ConfigBasedLogger LOGGER = new ConfigBasedLogger(LogManager.getLogger(), () -> Config.Client.Advanced.Logging.logLodBuilderEvent.get());
 	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	
     public static final long MAX_TICK_TIME_NS = 1000000000L / 20L;

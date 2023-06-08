@@ -120,7 +120,7 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 	private static void uploadBuffersDirect(GLVertexBuffer[] vbos, Iterator<ByteBuffer> iter, EGpuUploadMethod method) throws InterruptedException
 	{
 		long remainingNS = 0;
-		long BPerNS = Config.Client.Advanced.Buffers.gpuUploadPerMegabyteInMilliseconds.get();
+		long BPerNS = Config.Client.Advanced.GpuBuffers.gpuUploadPerMegabyteInMilliseconds.get();
 		int vboIndex = 0;
 		while (iter.hasNext())
 		{

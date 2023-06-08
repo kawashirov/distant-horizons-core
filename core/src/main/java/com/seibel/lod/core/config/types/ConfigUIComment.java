@@ -9,7 +9,7 @@ import com.seibel.lod.core.config.types.enums.ConfigEntryAppearance;
  */
 public class ConfigUIComment extends AbstractConfigType<String, ConfigUIComment>{
     public ConfigUIComment() {
-        super(ConfigEntryAppearance.ONLY_SHOW, "");
+        super(ConfigEntryAppearance.ONLY_IN_GUI, "");
     }
 
     /** Appearance shouldn't be changed */

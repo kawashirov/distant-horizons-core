@@ -6,7 +6,6 @@ import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IFullDataSour
 import com.seibel.lod.core.dataObjects.render.ColumnRenderLoader;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
-import com.seibel.lod.core.file.fullDatafile.FullDataFileHandler;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.ThreadUtil;
@@ -78,14 +77,14 @@ public class DataRenderTransformer
 		// static setup
 		if (configListener == null)
 		{
-			configListener = new ConfigChangeListener<>(Config.Client.Advanced.Threading.numberOfDataConverterThreads, (threadCount) -> { setThreadPoolSize(threadCount); });
+			configListener = new ConfigChangeListener<>(Config.Client.Advanced.MultiThreading.numberOfDataConverterThreads, (threadCount) -> { setThreadPoolSize(threadCount); });
 		}
 		
 		
 		if (transformerThreadPool == null || transformerThreadPool.isTerminated())
 		{
 			LOGGER.info("Starting "+DataRenderTransformer.class.getSimpleName());
-			setThreadPoolSize(Config.Client.Advanced.Threading.numberOfDataConverterThreads.get());
+			setThreadPoolSize(Config.Client.Advanced.MultiThreading.numberOfDataConverterThreads.get());
 		}
 	}
 	public static void setThreadPoolSize(int threadPoolSize) { transformerThreadPool = ThreadUtil.makeThreadPool(threadPoolSize, "Data/Render Transformer"); }

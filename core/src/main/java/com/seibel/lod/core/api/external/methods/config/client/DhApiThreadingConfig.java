@@ -22,7 +22,7 @@ package com.seibel.lod.core.api.external.methods.config.client;
 import com.seibel.lod.api.interfaces.config.IDhApiConfigValue;
 import com.seibel.lod.api.interfaces.config.client.IDhApiThreadingConfig;
 import com.seibel.lod.api.objects.config.DhApiConfigValue;
-import com.seibel.lod.core.config.Config.Client.Advanced.Threading;
+import com.seibel.lod.core.config.Config.Client.Advanced.MultiThreading;
 
 /**
  * Distant Horizons' threading configuration.
@@ -40,18 +40,18 @@ public class DhApiThreadingConfig implements IDhApiThreadingConfig
 	
 	@Override
 	public IDhApiConfigValue<Integer> getWorldGeneratorThread()
-	{ return new DhApiConfigValue<>(Threading.numberOfWorldGenerationThreads); }
+	{ return new DhApiConfigValue<>(MultiThreading.numberOfWorldGenerationThreads); }
 	
 	@Override
 	public IDhApiConfigValue<Integer> getBufferBuilderThread()
-	{ return new DhApiConfigValue<>(Threading.numberOfBufferBuilderThreads); }
+	{ return new DhApiConfigValue<>(MultiThreading.numberOfBufferBuilderThreads); }
 	
 	@Override
 	public IDhApiConfigValue<Integer> getFileHandlerThread()
-	{ return new DhApiConfigValue<>(Threading.numberOfFileHandlerThreads); }
+	{ return new DhApiConfigValue<>(MultiThreading.numberOfFileHandlerThreads); }
 	
 	@Override
 	public IDhApiConfigValue<Integer> getDataConverterThread()
-	{ return new DhApiConfigValue<>(Threading.numberOfDataConverterThreads); }
+	{ return new DhApiConfigValue<>(MultiThreading.numberOfDataConverterThreads); }
 	
 }

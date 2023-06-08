@@ -16,24 +16,30 @@
  *    You should have received a copy of the GNU Lesser General Public License
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
- 
-package com.seibel.lod.api.enums.config;
+
+package com.seibel.lod.api.enums.config.quickOptions;
 
 /**
- * FAST, <br>
- * FANCY,
- *
- * @author Leetom
- * @version 2023-6-7
+ * CUSTOM, <br><br>
+ * 
+ * MINIMUM, <br>
+ * LOW, <br>
+ * MEDIUM, <br>
+ * HIGH, <br>
+ * EXTREME, <br>
  */
-public enum ELightGenerationMode
+public enum EQuickQuality
 {
 	// Reminder:
 	// when adding items up the API minor version
 	// when removing items up the API major version
 	
-	DISTANT_HORIZONS,
+	CUSTOM,
 	
-	MINECRAFT
+	MINIMUM,
+	LOW,
+	MEDIUM,
+	HIGH,
+	EXTREME;
 	
 }

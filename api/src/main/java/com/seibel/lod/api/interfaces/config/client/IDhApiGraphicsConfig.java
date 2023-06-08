@@ -81,22 +81,13 @@ public interface IDhApiGraphicsConfig extends IDhApiConfigGroup
 	 * 2 = blending of 5x5			<br>
 	 * ...							<br>
 	 */
-	IDhApiConfigValue<Integer> getBiomeBlending();
+//	IDhApiConfigValue<Integer> getBiomeBlending();
 	
 	
 	
 	//===========================//
 	// advanced graphic settings //
 	//===========================//
-	
-	/** If directional culling is disabled fake chunks will be rendered behind the camera. */
-	IDhApiConfigValue<Boolean> getDisableDirectionalCulling();
-	
-	/** Determines how fake chunks are rendered in comparison to vanilla MC's chunks. */
-	IDhApiConfigValue<EVanillaOverdraw> getVanillaOverdraw();
-	
-	/** Modifies how far the vanilla overdraw is rendered in chunks. */
-	IDhApiConfigValue<Integer> getVanillaOverdrawOffset();
 	
 	/**
 	 * If enabled the near clip plane is extended to reduce
@@ -129,9 +120,6 @@ public interface IDhApiGraphicsConfig extends IDhApiConfigGroup
 	
 	/** If enabled vanilla chunk rendering is disabled and only fake chunks are rendered. */
 	IDhApiConfigValue<Boolean> getEnableLodOnlyMode();
-	
-	/** Defines how often the geometry should be rebuilt when the player moves. */
-	IDhApiConfigValue<EBufferRebuildTimes> getGeometryRebuildFrequency();
 	
 	
 	

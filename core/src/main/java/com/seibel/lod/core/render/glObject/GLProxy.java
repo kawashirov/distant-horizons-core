@@ -73,7 +73,7 @@ public class GLProxy
 	
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
 	public static final ConfigBasedLogger GL_LOGGER = new ConfigBasedLogger(LogManager.getLogger(GLProxy.class),
-			() -> Config.Client.Advanced.Debugging.DebugSwitch.logRendererGLEvent.get());
+			() -> Config.Client.Advanced.Logging.logRendererGLEvent.get());
 
 	private static GLProxy instance = null;
 	
@@ -351,7 +351,7 @@ public class GLProxy
 	
 	public EGpuUploadMethod getGpuUploadMethod()
 	{
-		EGpuUploadMethod method = Config.Client.Advanced.Buffers.gpuUploadMethod.get();
+		EGpuUploadMethod method = Config.Client.Advanced.GpuBuffers.gpuUploadMethod.get();
 		if (!bufferStorageSupported && method == EGpuUploadMethod.BUFFER_STORAGE)
 		{
 			// if buffer storage isn't supported

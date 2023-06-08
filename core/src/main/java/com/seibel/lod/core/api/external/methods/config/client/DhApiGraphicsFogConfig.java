@@ -23,7 +23,7 @@ import com.seibel.lod.api.enums.rendering.*;
 import com.seibel.lod.api.interfaces.config.IDhApiConfigValue;
 import com.seibel.lod.api.interfaces.config.client.IDhApiGraphicsFogConfig;
 import com.seibel.lod.api.objects.config.DhApiConfigValue;
-import com.seibel.lod.core.config.Config.Client.Graphics.FogQuality;
+import com.seibel.lod.core.config.Config.Client.Advanced.Graphics.Fog;
 
 /**
  * Distant Horizons' fog configuration. <br><br>
@@ -49,19 +49,19 @@ public class DhApiGraphicsFogConfig implements IDhApiGraphicsFogConfig
 	
 	@Override
 	public IDhApiConfigValue<EFogDistance> getFogDistance()
-	{ return new DhApiConfigValue<>(FogQuality.fogDistance); }
+	{ return new DhApiConfigValue<>(Fog.fogDistance); }
 	
 	@Override
 	public IDhApiConfigValue<EFogDrawMode> getFogRender()
-	{ return new DhApiConfigValue<>(FogQuality.fogDrawMode); }
+	{ return new DhApiConfigValue<>(Fog.fogDrawMode); }
 	
 	@Override
 	public IDhApiConfigValue<EFogColorMode> getFogColor()
-	{ return new DhApiConfigValue<>(FogQuality.fogColorMode); }
+	{ return new DhApiConfigValue<>(Fog.fogColorMode); }
 	
 	@Override
 	public IDhApiConfigValue<Boolean> getDisableVanillaFog()
-	{ return new DhApiConfigValue<>(FogQuality.disableVanillaFog); }
+	{ return new DhApiConfigValue<>(Fog.disableVanillaFog); }
 	
 	
 	//=======================//
@@ -70,27 +70,27 @@ public class DhApiGraphicsFogConfig implements IDhApiGraphicsFogConfig
 	
 	@Override
 	public IDhApiConfigValue<Double> getFogStartDistance()
-	{ return new DhApiConfigValue<>(FogQuality.AdvancedFog.farFogStart); }
+	{ return new DhApiConfigValue<>(Fog.AdvancedFog.farFogStart); }
 	
 	@Override
 	public IDhApiConfigValue<Double> getFogEndDistance()
-	{ return new DhApiConfigValue<>(FogQuality.AdvancedFog.farFogEnd); }
+	{ return new DhApiConfigValue<>(Fog.AdvancedFog.farFogEnd); }
 	
 	@Override
 	public IDhApiConfigValue<Double> getFogMinThickness()
-	{ return new DhApiConfigValue<>(FogQuality.AdvancedFog.farFogMin); }
+	{ return new DhApiConfigValue<>(Fog.AdvancedFog.farFogMin); }
 	
 	@Override
 	public IDhApiConfigValue<Double> getFogMaxThickness()
-	{ return new DhApiConfigValue<>(FogQuality.AdvancedFog.farFogMax); }
+	{ return new DhApiConfigValue<>(Fog.AdvancedFog.farFogMax); }
 	
 	@Override
-	public IDhApiConfigValue<EFogFalloff> getFogFalloff()
-	{ return new DhApiConfigValue<>(FogQuality.AdvancedFog.farFogType); }
+	public IDhApiConfigValue<EFogFalloff> getFarFogFalloff()
+	{ return new DhApiConfigValue<>(Fog.AdvancedFog.farFogFalloff); }
 	
 	@Override
 	public IDhApiConfigValue<Double> getFogDensity()
-	{ return new DhApiConfigValue<>(FogQuality.AdvancedFog.farFogDensity); }
+	{ return new DhApiConfigValue<>(Fog.AdvancedFog.farFogDensity); }
 	
 	
 	//=====================//
@@ -99,38 +99,38 @@ public class DhApiGraphicsFogConfig implements IDhApiGraphicsFogConfig
 	
 	@Override
 	public IDhApiConfigValue<EHeightFogMixMode> getHeightFogMixMode()
-	{ return new DhApiConfigValue<>(FogQuality.AdvancedFog.HeightFog.heightFogMixMode); }
+	{ return new DhApiConfigValue<>(Fog.AdvancedFog.HeightFog.heightFogMixMode); }
 	
 	@Override
 	public IDhApiConfigValue<EHeightFogMode> getHeightFogMode()
-	{ return new DhApiConfigValue<>(FogQuality.AdvancedFog.HeightFog.heightFogMode); }
+	{ return new DhApiConfigValue<>(Fog.AdvancedFog.HeightFog.heightFogMode); }
 	
 	@Override
 	public IDhApiConfigValue<Double> getHeightFogBaseHeight()
-	{ return new DhApiConfigValue<>(FogQuality.AdvancedFog.HeightFog.heightFogHeight); }
+	{ return new DhApiConfigValue<>(Fog.AdvancedFog.HeightFog.heightFogHeight); }
 	
 	@Override
 	public IDhApiConfigValue<Double> getHeightFogStartingHeightPercent()
-	{ return new DhApiConfigValue<>(FogQuality.AdvancedFog.HeightFog.heightFogStart); }
+	{ return new DhApiConfigValue<>(Fog.AdvancedFog.HeightFog.heightFogStart); }
 	
 	@Override
 	public IDhApiConfigValue<Double> getHeightFogEndingHeightPercent()
-	{ return new DhApiConfigValue<>(FogQuality.AdvancedFog.HeightFog.heightFogEnd); }
+	{ return new DhApiConfigValue<>(Fog.AdvancedFog.HeightFog.heightFogEnd); }
 	
 	@Override
 	public IDhApiConfigValue<Double> getHeightFogMinThickness()
-	{ return new DhApiConfigValue<>(FogQuality.AdvancedFog.HeightFog.heightFogMin); }
+	{ return new DhApiConfigValue<>(Fog.AdvancedFog.HeightFog.heightFogMin); }
 	
 	@Override
 	public IDhApiConfigValue<Double> getHeightFogMaxThickness()
-	{ return new DhApiConfigValue<>(FogQuality.AdvancedFog.HeightFog.heightFogMax); }
+	{ return new DhApiConfigValue<>(Fog.AdvancedFog.HeightFog.heightFogMax); }
 	
 	@Override
 	public IDhApiConfigValue<EFogFalloff> getHeightFogFalloff()
-	{ return new DhApiConfigValue<>(FogQuality.AdvancedFog.HeightFog.heightFogType); }
+	{ return new DhApiConfigValue<>(Fog.AdvancedFog.HeightFog.heightFogFalloff); }
 	
 	@Override
 	public IDhApiConfigValue<Double> getHeightFogDensity()
-	{ return new DhApiConfigValue<>(FogQuality.AdvancedFog.HeightFog.heightFogDensity); }
+	{ return new DhApiConfigValue<>(Fog.AdvancedFog.HeightFog.heightFogDensity); }
 	
 }

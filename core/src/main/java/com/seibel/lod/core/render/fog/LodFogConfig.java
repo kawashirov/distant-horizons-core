@@ -66,7 +66,7 @@ public class LodFogConfig
 	
 	public static LodFogConfig generateFogConfig()
 	{
-		EFogDrawMode fogMode = Config.Client.Graphics.FogQuality.fogDrawMode.get();
+		EFogDrawMode fogMode = Config.Client.Advanced.Graphics.Fog.fogDrawMode.get();
 		if (fogMode == EFogDrawMode.USE_OPTIFINE_SETTING && OPTIFINE != null)
 		{
 			fogMode = OPTIFINE.getFogDrawMode();
@@ -78,17 +78,17 @@ public class LodFogConfig
 	private LodFogConfig(EFogDrawMode fogDrawMode)
 	{
 		// TODO: Move these out of here
-		earthCurveRatio = Config.Client.Graphics.AdvancedGraphics.earthCurveRatio.get();
+		earthCurveRatio = Config.Client.Advanced.Graphics.AdvancedGraphics.earthCurveRatio.get();
 
-		noiseEnable = Config.Client.Graphics.AdvancedGraphics.NoiseSettings.noiseEnable.get();
-		noiseSteps = Config.Client.Graphics.AdvancedGraphics.NoiseSettings.noiseSteps.get();
-		noiseIntensity = Config.Client.Graphics.AdvancedGraphics.NoiseSettings.noiseIntensity.get().floatValue();
-		noiseDropoff = Config.Client.Graphics.AdvancedGraphics.NoiseSettings.noiseDropoff.get().floatValue();
+		noiseEnable = Config.Client.Advanced.Graphics.NoiseTextureSettings.noiseEnable.get();
+		noiseSteps = Config.Client.Advanced.Graphics.NoiseTextureSettings.noiseSteps.get();
+		noiseIntensity = Config.Client.Advanced.Graphics.NoiseTextureSettings.noiseIntensity.get().floatValue();
+		noiseDropoff = Config.Client.Advanced.Graphics.NoiseTextureSettings.noiseDropoff.get().floatValue();
 
 
 		if (fogDrawMode != EFogDrawMode.FOG_DISABLED)
 		{
-			EFogDistance fogDistance = Config.Client.Graphics.FogQuality.fogDistance.get();
+			EFogDistance fogDistance = Config.Client.Advanced.Graphics.Fog.fogDistance.get();
 			drawNearFog = (fogDistance == EFogDistance.NEAR || fogDistance == EFogDistance.NEAR_AND_FAR);
 			
 			if (fogDistance == EFogDistance.FAR || fogDistance == EFogDistance.NEAR_AND_FAR)
@@ -96,15 +96,15 @@ public class LodFogConfig
 				// far fog should be drawn
 				
 				farFogSetting = new FogSettings(
-						Config.Client.Graphics.FogQuality.AdvancedFog.farFogStart.get(),
-						Config.Client.Graphics.FogQuality.AdvancedFog.farFogEnd.get(),
-						Config.Client.Graphics.FogQuality.AdvancedFog.farFogMin.get(),
-						Config.Client.Graphics.FogQuality.AdvancedFog.farFogMax.get(),
-						Config.Client.Graphics.FogQuality.AdvancedFog.farFogDensity.get(),
-						Config.Client.Graphics.FogQuality.AdvancedFog.farFogType.get()
+						Config.Client.Advanced.Graphics.Fog.AdvancedFog.farFogStart.get(),
+						Config.Client.Advanced.Graphics.Fog.AdvancedFog.farFogEnd.get(),
+						Config.Client.Advanced.Graphics.Fog.AdvancedFog.farFogMin.get(),
+						Config.Client.Advanced.Graphics.Fog.AdvancedFog.farFogMax.get(),
+						Config.Client.Advanced.Graphics.Fog.AdvancedFog.farFogDensity.get(),
+						Config.Client.Advanced.Graphics.Fog.AdvancedFog.farFogFalloff.get()
 				);
 				
-				heightFogMixMode = Config.Client.Graphics.FogQuality.AdvancedFog.HeightFog.heightFogMixMode.get();
+				heightFogMixMode = Config.Client.Advanced.Graphics.Fog.AdvancedFog.HeightFog.heightFogMixMode.get();
 				if (heightFogMixMode == EHeightFogMixMode.IGNORE_HEIGHT || heightFogMixMode == EHeightFogMixMode.BASIC)
 				{
 					// basic fog mixing
@@ -118,15 +118,15 @@ public class LodFogConfig
 					// advanced fog mixing
 					
 					heightFogSetting = new FogSettings(
-							Config.Client.Graphics.FogQuality.AdvancedFog.HeightFog.heightFogDensity.get(),
-							Config.Client.Graphics.FogQuality.AdvancedFog.HeightFog.heightFogEnd.get(),
-							Config.Client.Graphics.FogQuality.AdvancedFog.HeightFog.heightFogMin.get(),
-							Config.Client.Graphics.FogQuality.AdvancedFog.HeightFog.heightFogMax.get(),
-							Config.Client.Graphics.FogQuality.AdvancedFog.HeightFog.heightFogDensity.get(),
-							Config.Client.Graphics.FogQuality.AdvancedFog.HeightFog.heightFogType.get()
+							Config.Client.Advanced.Graphics.Fog.AdvancedFog.HeightFog.heightFogDensity.get(),
+							Config.Client.Advanced.Graphics.Fog.AdvancedFog.HeightFog.heightFogEnd.get(),
+							Config.Client.Advanced.Graphics.Fog.AdvancedFog.HeightFog.heightFogMin.get(),
+							Config.Client.Advanced.Graphics.Fog.AdvancedFog.HeightFog.heightFogMax.get(),
+							Config.Client.Advanced.Graphics.Fog.AdvancedFog.HeightFog.heightFogDensity.get(),
+							Config.Client.Advanced.Graphics.Fog.AdvancedFog.HeightFog.heightFogFalloff.get()
 					);
 							
-					heightFogMode = Config.Client.Graphics.FogQuality.AdvancedFog.HeightFog.heightFogMode.get();
+					heightFogMode = Config.Client.Advanced.Graphics.Fog.AdvancedFog.HeightFog.heightFogMode.get();
 					
 					if (heightFogMode.basedOnCamera)
 					{
@@ -134,7 +134,7 @@ public class LodFogConfig
 					}
 					else
 					{
-						heightFogHeight = Config.Client.Graphics.FogQuality.AdvancedFog.HeightFog.heightFogHeight.get().floatValue();
+						heightFogHeight = Config.Client.Advanced.Graphics.Fog.AdvancedFog.HeightFog.heightFogHeight.get().floatValue();
 					}
 				}
 			}

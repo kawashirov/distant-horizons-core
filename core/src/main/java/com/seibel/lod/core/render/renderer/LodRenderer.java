@@ -60,10 +60,10 @@ import java.util.concurrent.TimeUnit;
 public class LodRenderer
 {
 	public static final ConfigBasedLogger EVENT_LOGGER = new ConfigBasedLogger(LogManager.getLogger(LodRenderer.class),
-			() -> Config.Client.Advanced.Debugging.DebugSwitch.logRendererBufferEvent.get());
+			() -> Config.Client.Advanced.Logging.logRendererBufferEvent.get());
 
 	public static ConfigBasedSpamLogger tickLogger = new ConfigBasedSpamLogger(LogManager.getLogger(LodRenderer.class),
-			() -> Config.Client.Advanced.Debugging.DebugSwitch.logRendererBufferEvent.get(),1);
+			() -> Config.Client.Advanced.Logging.logRendererBufferEvent.get(),1);
 	public static final boolean ENABLE_DRAW_LAG_SPIKE_LOGGING = false;
 	public static final boolean ENABLE_DUMP_GL_STATE = true;
 	public static final long DRAW_LAG_SPIKE_THRESHOLD_NS = TimeUnit.NANOSECONDS.convert(20, TimeUnit.MILLISECONDS);
@@ -154,7 +154,7 @@ public class LodRenderer
 		drawSaveGLState.end("drawSaveGLState");
 
 		GLProxy glProxy = GLProxy.getInstance();
-		if (Config.Client.Graphics.FogQuality.disableVanillaFog.get())
+		if (Config.Client.Advanced.Graphics.Fog.disableVanillaFog.get())
 			MC_RENDER.tryDisableVanillaFog();
 		
 		//===================//
@@ -168,16 +168,14 @@ public class LodRenderer
 		GL32.glViewport(0,0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight());
 		GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, 0);
 		// set the required open GL settings
-		ConfigEntry<EDebugMode> debugModeConfig = Config.Client.Advanced.Debugging.debugMode;
-		if (debugModeConfig.get() == EDebugMode.SHOW_DETAIL_WIREFRAME
-			|| debugModeConfig.get() == EDebugMode.SHOW_GENMODE_WIREFRAME
-			|| debugModeConfig.get() == EDebugMode.SHOW_WIREFRAME
-			|| debugModeConfig.get() == EDebugMode.SHOW_OVERLAPPING_QUADS_WIREFRAME
-			|| debugModeConfig.get() == EDebugMode.SHOW_RENDER_SOURCE_FLAG_WIREFRAME) {
+		boolean renderWireframe = Config.Client.Advanced.Debugging.renderWireframe.get();
+		if (renderWireframe) 
+		{
 			GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_LINE);
 			//GL32.glDisable(GL32.GL_CULL_FACE);
 		}
-		else {
+		else 
+		{
 			GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_FILL);
 			GL32.glEnable(GL32.GL_CULL_FACE);
 		}
@@ -187,8 +185,8 @@ public class LodRenderer
 
 
 
-		transparencyEnabled = Config.Client.Graphics.Quality.transparency.get().tranparencyEnabled;
-		fakeOceanFloor = Config.Client.Graphics.Quality.transparency.get().fakeTransparencyEnabled;
+		transparencyEnabled = Config.Client.Advanced.Graphics.Quality.transparency.get().tranparencyEnabled;
+		fakeOceanFloor = Config.Client.Advanced.Graphics.Quality.transparency.get().fakeTransparencyEnabled;
 
 		GL32.glDisable(GL32.GL_BLEND); // We render opaque first, then transparent
 		GL32.glDepthMask(true);
@@ -236,12 +234,11 @@ public class LodRenderer
 		//===========//
 		profiler.popPush("LOD draw");
 		LagSpikeCatcher draw = new LagSpikeCatcher();
-
-		boolean cullingDisabled = Config.Client.Graphics.AdvancedGraphics.disableDirectionalCulling.get();
+		
 		Vec3d cameraPos = MC_RENDER.getCameraExactPosition();
 		DhBlockPos cameraBlockPos = MC_RENDER.getCameraBlockPosition();
 		Vec3f cameraDir = MC_RENDER.getLookAtVector();
-
+		
 		//TODO: Directional culling
 		bufferHandler.renderOpaque(this);
 
@@ -312,7 +309,7 @@ public class LodRenderer
 	{
 		Color fogColor;
 		
-		if (Config.Client.Graphics.FogQuality.fogColorMode.get() == EFogColorMode.USE_SKY_COLOR)
+		if (Config.Client.Advanced.Graphics.Fog.fogColorMode.get() == EFogColorMode.USE_SKY_COLOR)
 			fogColor = MC_RENDER.getSkyColor();
 		else
 			fogColor = MC_RENDER.getFogColor(partialTicks);

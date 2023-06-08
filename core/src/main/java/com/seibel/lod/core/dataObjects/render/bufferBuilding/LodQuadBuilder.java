@@ -765,9 +765,9 @@ public class LodQuadBuilder
 		return i;
 	}
 
-	/** Returns how many Buffers will be needed to render opaque quads in this builder. */
+	/** Returns how many GpuBuffers will be needed to render opaque quads in this builder. */
 	public int getCurrentNeededOpaqueVertexBufferCount() { return MathUtil.ceilDiv(this.getCurrentOpaqueQuadsCount(), AbstractRenderBuffer.MAX_QUADS_PER_BUFFER); }
-	/** Returns how many Buffers will be needed to render transparent quads in this builder. */
+	/** Returns how many GpuBuffers will be needed to render transparent quads in this builder. */
 	public int getCurrentNeededTransparentVertexBufferCount()
 	{
 		if (!this.doTransparency)

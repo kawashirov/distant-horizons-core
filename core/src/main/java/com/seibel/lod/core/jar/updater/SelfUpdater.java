@@ -47,11 +47,12 @@ public class SelfUpdater {
 
 
         LOGGER.info("New version ("+ModrinthGetter.getLatestNameForVersion(mcVersion)+") of "+ ModInfo.READABLE_NAME+" is available");
-        if (!Config.Client.AutoUpdater.promptForUpdate.get()) {
-            // Auto-update mod
-            updateMod(mcVersion);
-            return false;
-        } // else
+        if (Config.Client.Advanced.AutoUpdater.automaticallyUpdate.get())
+		{
+			// Auto-update mod
+			updateMod(mcVersion);
+			return false;
+		} // else
         return true;
     }
 
