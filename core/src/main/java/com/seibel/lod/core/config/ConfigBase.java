@@ -4,6 +4,7 @@ import com.seibel.lod.core.config.file.ConfigFileHandling;
 import com.seibel.lod.core.config.types.AbstractConfigType;
 import com.seibel.lod.core.config.types.ConfigCategory;
 import com.seibel.lod.core.config.types.ConfigEntry;
+import com.seibel.lod.core.config.types.ConfigLinkedEntry;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.wrapperInterfaces.config.ILangWrapper;
 import org.apache.logging.log4j.LogManager;
@@ -129,6 +130,7 @@ public class ConfigBase
 
 
 
+
     /**
      * Used for checking that all the lang files for the config exist
      *
@@ -153,12 +155,14 @@ public class ConfigBase
                 enumList.add((Class<? extends Enum>) entry.getType());
             }
             if (!onlyShowNew || langWrapper.langExists(entryPrefix)) {
-                generatedLang += starter
-                        + entryPrefix
-                        + separator
-                        + langWrapper.getLang(entryPrefix)
-                        + ending
-                ;
+                if (!ConfigLinkedEntry.class.isAssignableFrom(entry.getClass())) { // If it is a linked item, dont generate the base lang
+                    generatedLang += starter
+                            + entryPrefix
+                            + separator
+                            + langWrapper.getLang(entryPrefix)
+                            + ending
+                    ;
+                }
                 // Adds tooltips
                 if (langWrapper.langExists(entryPrefix+".@tooltip")) {
                     generatedLang += starter
