@@ -2,6 +2,7 @@ package com.seibel.lod.core.render.renderer;
 
 import com.seibel.lod.api.enums.config.EGpuUploadMethod;
 import com.seibel.lod.api.enums.config.ELoggerMode;
+import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.logging.ConfigBasedSpamLogger;
@@ -112,6 +113,7 @@ public class DebugRenderer {
     private final Map<Object, IDebugRender> renderers = Collections.synchronizedMap(new WeakHashMap<>());
 
     public void addRenderer(Object o, IDebugRender r) {
+        if (!Config.Client.Advanced.Debugging.debugWireframeRendering.get()) return;
         renderers.put(o, r);
     }
 
@@ -142,6 +144,8 @@ public class DebugRenderer {
     }
 
     public void render(Mat4f transform) {
+        if (!Config.Client.Advanced.Debugging.debugWireframeRendering.get()) return;
+
         transform_this_frame = transform;
         Vec3d cam = MC_RENDER.getCameraExactPosition();
         camf = new Vec3f((float)cam.x, (float)cam.y, (float)cam.z);

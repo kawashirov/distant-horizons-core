@@ -978,7 +978,16 @@ public class Config
 								+ "   This setting is only for fun and debugging. \n"
 								+ "   Mod compatibility is not guaranteed.")
 						.build();
-				
+
+				public static ConfigEntry<Boolean> debugWireframeRendering = new ConfigEntry.Builder<Boolean>()
+						.set(false)
+						.comment(""
+								+ "If enabled, various wireframes for debugging internal functions will be drawn. \n"
+								+ "\n"
+								+ "NOTE: There WILL be performance hit! \n"
+								+ "   Additionally, only stuff that's loaded after you enable this \n"
+								+ "   will render their debug wireframes.")
+						.build();
 				
 				
 				// can be set to public to show in the config file and UI
