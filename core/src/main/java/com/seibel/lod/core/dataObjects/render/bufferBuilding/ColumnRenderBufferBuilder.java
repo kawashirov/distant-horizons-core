@@ -105,7 +105,7 @@ public class ColumnRenderBufferBuilder
 						
 						if (buffer == null)
 						{
-							buffer = new ColumnRenderBuffer(new DhBlockPos(renderSource.sectionPos.getCorner().getCornerBlockPos(), clientLevel.getMinY()));
+							buffer = new ColumnRenderBuffer(new DhBlockPos(renderSource.sectionPos.getCorner().getCornerBlockPos(), clientLevel.getMinY()), renderSource.sectionPos);
 						}
 						buffer.buffersUploaded = false;
 						

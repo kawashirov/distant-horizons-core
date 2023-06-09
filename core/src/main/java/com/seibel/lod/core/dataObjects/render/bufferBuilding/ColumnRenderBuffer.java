@@ -1,5 +1,8 @@
 package com.seibel.lod.core.dataObjects.render.bufferBuilding;
 
+import com.seibel.lod.core.pos.DhBlockPos2D;
+import com.seibel.lod.core.pos.DhSectionPos;
+import com.seibel.lod.core.render.renderer.DebugRenderer;
 import com.seibel.lod.core.render.renderer.LodRenderer;
 import com.seibel.lod.core.render.AbstractRenderBuffer;
 import com.seibel.lod.core.config.Config;
@@ -12,6 +15,7 @@ import com.seibel.lod.core.util.*;
 import com.seibel.lod.core.util.objects.StatsMap;
 import org.apache.logging.log4j.Logger;
 
+import java.awt.*;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.concurrent.*;
@@ -37,18 +41,28 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 	private GLVertexBuffer[] vbos;
     private GLVertexBuffer[] vbosTransparent;
 	private boolean closed = false;
-	
+
+	private final DhSectionPos debugPos;
 	
 	
 	//==============//
 	// constructors //
 	//==============//
 	
-	public ColumnRenderBuffer(DhBlockPos pos)
+	public ColumnRenderBuffer(DhBlockPos pos, DhSectionPos debugPos)
 	{
 		this.pos = pos;
+		this.debugPos = debugPos;
 		vbos = new GLVertexBuffer[0];
 		vbosTransparent = new GLVertexBuffer[0];
+		DebugRenderer.register(this, (r) -> {
+			if (closed || this.vbos == null) {
+				return;
+			}
+
+			Color c = Color.green;
+			r.renderBox(debugPos, -32, 32, c);
+		});
 	}
 	
 	
@@ -288,6 +302,4 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 			}
         });
     }
-	
-	
 }

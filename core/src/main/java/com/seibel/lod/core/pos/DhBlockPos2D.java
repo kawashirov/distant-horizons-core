@@ -19,6 +19,11 @@ public class DhBlockPos2D {
     public DhBlockPos2D add(DhBlockPos2D other) {
         return new DhBlockPos2D(x + other.x, z + other.z);
     }
+
+    public DhBlockPos2D add(int offsetX, int offsetZ) {
+        return new DhBlockPos2D(x + offsetX, z + offsetZ);
+    }
+
     public DhBlockPos2D subtract(DhBlockPos2D other) {
         return new DhBlockPos2D(x - other.x, z - other.z);
     }

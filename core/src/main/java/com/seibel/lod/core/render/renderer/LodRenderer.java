@@ -276,6 +276,8 @@ public class LodRenderer
 		// end of internal LOD profiling
 		profiler.pop();
 		tickLogger.incLogTries();
+
+		DebugRenderer.INSTANCE.render(modelViewProjectionMatrix);
 	}
 	
 	

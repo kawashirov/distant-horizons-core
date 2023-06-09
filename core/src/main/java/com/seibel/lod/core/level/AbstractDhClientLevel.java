@@ -14,6 +14,7 @@ import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
+import com.seibel.lod.core.render.renderer.DebugRenderer;
 import com.seibel.lod.core.util.FileScanUtil;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.coreapi.util.math.Mat4f;
@@ -138,7 +139,7 @@ public abstract class AbstractDhClientLevel implements IDhClientLevel
 			// either the renderer hasn't been started yet, or is being reloaded
 			return;
 		}
-		
+
 		ClientRenderState.renderer.drawLODs(mcModelViewMatrix, mcProjectionMatrix, partialTicks, profiler);
 	}
 	
