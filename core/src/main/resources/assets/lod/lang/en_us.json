@@ -64,7 +64,7 @@
     "Will modify a number of settings to quickly change how many CPU resources Distant Horizons' is allowed to use. \n\nIncreasing this setting will improve Distant Generator speed and LOD loading speed, \nbut will also increase CPU/memory usage and may introduce stuttering.",
     
   "lod.config.client.optionsButton":
-    "Show options button",
+    "Show The Options Button",
   "lod.config.client.optionsButton.@tooltip":
     "Show the config button to the left of the fov button",
     
@@ -72,9 +72,6 @@
     
   "lod.config.client.advanced":
     "Advanced options",
-    
-  "lod.config.client.advanced.advancedConfigScreenNote":
-    "",
     
   "lod.config.client.advanced.graphics":
     "Graphics",
@@ -422,7 +419,16 @@
     "Linkable test",
   "lod.config.client.advanced.debugging.debugConfigScreen.linkableTest.@tooltip":
     "The value of this should be the same as in Category Test",
-    
+
+  
+  "lod.config.client.resetSettingsConfirmation":
+    "Reset All Settings?",
+  
+  "lod.config.client.resetSettingsConfirmation.resetConfirmationNote":
+    "Are you sure? This cannot be undone.",
+  "lod.config.client.resetSettingsConfirmation.resetAllSettings":
+    "Reset All Settings",
+  
     
     
   "lod.config.enum.EQuickQuality.CUSTOM":

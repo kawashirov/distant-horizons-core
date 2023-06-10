@@ -114,11 +114,10 @@ public class Config
 		
 		
 		public static ConfigCategory advanced = new ConfigCategory.Builder().set(Advanced.class).build();
+		public static ConfigCategory resetSettingsConfirmation = new ConfigCategory.Builder().set(ResetConfirmation.class).build();
 		
 		public static class Advanced
 		{
-			public static ConfigUIComment advancedConfigScreenNote = new ConfigUIComment();
-			
 			public static ConfigCategory graphics = new ConfigCategory.Builder().set(Graphics.class).build();
 			public static ConfigCategory worldGenerator = new ConfigCategory.Builder().set(WorldGenerator.class).build();
 			public static ConfigCategory multiplayer = new ConfigCategory.Builder().set(Multiplayer.class).build();
@@ -990,7 +989,7 @@ public class Config
 						.build();
 				
 				
-				// can be set to public to show in the config file and UI
+				// can be set to public inorder to show in the config file and UI
 				private static ConfigCategory exampleConfigScreen = new ConfigCategory.Builder()
 						.set(ExampleConfigScreen.class)
 						.build();
@@ -1056,6 +1055,18 @@ public class Config
 				}
 				
 			}
+			
+		}
+		
+		public static class ResetConfirmation
+		{
+			public static ConfigUIComment resetConfirmationNote = new ConfigUIComment();
+			
+			public static ConfigEntry<Boolean> resetAllSettings = new ConfigEntry.Builder<Boolean>()
+					.set(false)
+					.setAppearance(ConfigEntryAppearance.ONLY_IN_GUI)
+					//.addListener(null) // TODO add listener
+					.build();
 			
 		}
 		
