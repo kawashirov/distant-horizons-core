@@ -1,6 +1,6 @@
 package com.seibel.lod.core.config.types;
 
-import com.seibel.lod.core.config.types.enums.ConfigEntryAppearance;
+import com.seibel.lod.core.config.types.enums.EConfigEntryAppearance;
 
 /**
  * Adds a categoty to the config
@@ -11,7 +11,7 @@ import com.seibel.lod.core.config.types.enums.ConfigEntryAppearance;
 public class ConfigCategory extends AbstractConfigType<Class, ConfigCategory> {
     public String destination;    // Where the category goes to
 
-    private ConfigCategory(ConfigEntryAppearance appearance, Class value, String destination) {
+    private ConfigCategory(EConfigEntryAppearance appearance, Class value, String destination) {
         super(appearance, value);
         this.destination = destination;
     }
@@ -35,7 +35,7 @@ public class ConfigCategory extends AbstractConfigType<Class, ConfigCategory> {
             return this;
         }
 
-        public Builder setAppearance(ConfigEntryAppearance newAppearance) {
+        public Builder setAppearance(EConfigEntryAppearance newAppearance) {
             this.tmpAppearance = newAppearance;
             return this;
         }

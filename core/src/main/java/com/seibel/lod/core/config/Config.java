@@ -72,7 +72,7 @@ public class Config
 				.comment(""
 						+ "If true, Distant Horizons will render LODs beyond the vanilla render distance."
 						+ "")
-				.setAppearance(ConfigEntryAppearance.ONLY_IN_GUI) // TODO set when the game boots
+				.setAppearance(EConfigEntryAppearance.ONLY_IN_GUI) // TODO set when the game boots
 				//.addListener(null) // TODO add listener
 				.build();
 		
@@ -86,7 +86,7 @@ public class Config
 						+ "\n"
 						+ "Higher settings will improve the graphical quality while increasing GPU and memory use.\n"
 						+ "")
-				.setAppearance(ConfigEntryAppearance.ONLY_IN_GUI) // TODO set when the game boots
+				.setAppearance(EConfigEntryAppearance.ONLY_IN_GUI) // TODO set when the game boots
 				//.addListener(null) // TODO add listener
 				.build();
 		
@@ -99,7 +99,7 @@ public class Config
 						+ "Higher options will improve LOD generation and loading speed, \n"
 						+ "but will increase CPU load and may introduce stuttering.\n"
 						+ "")
-				.setAppearance(ConfigEntryAppearance.ONLY_IN_GUI) // TODO set when the game boots
+				.setAppearance(EConfigEntryAppearance.ONLY_IN_GUI) // TODO set when the game boots
 				//.addListener(null) // TODO add listener
 				.build();
 		
@@ -154,13 +154,13 @@ public class Config
 									+ "Lowest Quality: " + EHorizontalResolution.CHUNK + "\n"
 									+ "Highest Quality: " + EHorizontalResolution.BLOCK)
 							.addListener(RenderCacheConfigEventHandler.INSTANCE)
-							.setPerformance(ConfigEntryPerformance.MEDIUM)
+							.setPerformance(EConfigEntryPerformance.MEDIUM)
 							.build();
 					
 					public static ConfigEntry<Integer> lodChunkRenderDistance = new ConfigEntry.Builder<Integer>()
 							.setMinDefaultMax(32, 128, 4096)
 							.comment("The radius of the mod's render distance. (measured in chunks)")
-							.setPerformance(ConfigEntryPerformance.HIGH)
+							.setPerformance(EConfigEntryPerformance.HIGH)
 							.build();
 					
 					public static ConfigEntry<EVerticalQuality> verticalQuality = new ConfigEntry.Builder<EVerticalQuality>()
@@ -173,7 +173,7 @@ public class Config
 									+ "\n"
 									+ "Lowest Quality: " + EVerticalQuality.HEIGHT_MAP + "\n"
 									+ "Highest Quality: " + EVerticalQuality.ULTRA)
-							.setPerformance(ConfigEntryPerformance.VERY_HIGH)
+							.setPerformance(EConfigEntryPerformance.VERY_HIGH)
 							.addListener(RenderCacheConfigEventHandler.INSTANCE)
 							.build();
 					
@@ -192,7 +192,7 @@ public class Config
 									+ "This indicates how quickly LODs decrease in quality the further away they are. \n"
 									+ "Higher settings will render higher quality fake chunks farther away, \n"
 									+ "but will increase memory and GPU usage.")
-							.setPerformance(ConfigEntryPerformance.MEDIUM)
+							.setPerformance(EConfigEntryPerformance.MEDIUM)
 							.build();
 					
 					public static ConfigEntry<ETransparency> transparency = new ConfigEntry.Builder<ETransparency>()
@@ -204,7 +204,7 @@ public class Config
 									+ ETransparency.FAKE + ": LODs will be opaque, but shaded to match the blocks underneath. \n"
 									+ ETransparency.DISABLED + ": LODs will be opaque. \n"
 									+ "")
-							.setPerformance(ConfigEntryPerformance.MEDIUM)
+							.setPerformance(EConfigEntryPerformance.MEDIUM)
 							.build();
 					
 					// TODO fixme
@@ -227,7 +227,7 @@ public class Config
 					public static ConfigEntry<EFogDistance> fogDistance = new ConfigEntry.Builder<EFogDistance>()
 							.set(EFogDistance.FAR)
 							.comment("At what distance should Fog be drawn on the LODs?")
-							.setPerformance(ConfigEntryPerformance.NONE)
+							.setPerformance(EConfigEntryPerformance.NONE)
 							.build();
 					
 					public static ConfigEntry<EFogDrawMode> fogDrawMode = new ConfigEntry.Builder<EFogDrawMode>()
@@ -241,7 +241,7 @@ public class Config
 									+ EFogDrawMode.FOG_DISABLED + ": Always draw fast fog on the LODs \n"
 									+ "\n"
 									+ "Disabling fog will improve GPU performance.")
-							.setPerformance(ConfigEntryPerformance.VERY_LOW)
+							.setPerformance(EConfigEntryPerformance.VERY_LOW)
 							.build();
 					
 					public static ConfigEntry<EFogColorMode> fogColorMode = new ConfigEntry.Builder<EFogColorMode>()
@@ -251,7 +251,7 @@ public class Config
 									+ "\n"
 									+ EFogColorMode.USE_WORLD_FOG_COLOR + ": Use the world's fog color. \n"
 									+ EFogColorMode.USE_SKY_COLOR + ": Use the sky's color.")
-							.setPerformance(ConfigEntryPerformance.NONE)
+							.setPerformance(EConfigEntryPerformance.NONE)
 							.build();
 					
 					public static ConfigEntry<Boolean> disableVanillaFog = new ConfigEntry.Builder<Boolean>()
@@ -483,7 +483,7 @@ public class Config
 							.comment(""
 									+ "Will prevent some overdraw issues, but may cause nearby fake chunks to render incorrectly \n"
 									+ " especially when in/near an ocean.")
-							.setPerformance(ConfigEntryPerformance.NONE)
+							.setPerformance(EConfigEntryPerformance.NONE)
 							.build();
 					
 					public static ConfigEntry<Double> brightnessMultiplier = new ConfigEntry.Builder<Double>() // TODO: Make this a float (the ClassicConfigGUI doesnt support floats)
@@ -648,7 +648,7 @@ public class Config
 								+ EGenerationPriority.AUTO + " \n"
 								+ "Uses " + EGenerationPriority.BALANCED + " when on a single player world \n"
 								+ " and " + EGenerationPriority.NEAR_FIRST + " when connected to a server.")
-						.setPerformance(ConfigEntryPerformance.NONE)
+						.setPerformance(EConfigEntryPerformance.NONE)
 						.build();
 				
 				// TODO fixme
@@ -664,7 +664,7 @@ public class Config
 								+ EBlocksToAvoid.NON_FULL + ": Only use full blocks when generating fake chunks (ignores slabs, lanterns, torches, tall grass, etc.) \n"
 								+ EBlocksToAvoid.NO_COLLISION + ": Only use solid blocks when generating fake chunks (ignores tall grass, torches, etc.) \n"
 								+ EBlocksToAvoid.BOTH + ": Only use full solid blocks when generating fake chunks")
-						.setPerformance(ConfigEntryPerformance.NONE)
+						.setPerformance(EConfigEntryPerformance.NONE)
 						.build();
 				
 				// TODO fixme
@@ -1064,7 +1064,7 @@ public class Config
 			
 			public static ConfigEntry<Boolean> resetAllSettings = new ConfigEntry.Builder<Boolean>()
 					.set(false)
-					.setAppearance(ConfigEntryAppearance.ONLY_IN_GUI)
+					.setAppearance(EConfigEntryAppearance.ONLY_IN_GUI)
 					//.addListener(null) // TODO add listener
 					.build();
 			

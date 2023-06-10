@@ -1,6 +1,6 @@
 package com.seibel.lod.core.config.types;
 
-import com.seibel.lod.core.config.types.enums.ConfigEntryAppearance;
+import com.seibel.lod.core.config.types.enums.EConfigEntryAppearance;
 
 /**
  * Adds something like a ConfigEntry but without a button to change the input
@@ -9,12 +9,12 @@ import com.seibel.lod.core.config.types.enums.ConfigEntryAppearance;
  */
 public class ConfigUIComment extends AbstractConfigType<String, ConfigUIComment>{
     public ConfigUIComment() {
-        super(ConfigEntryAppearance.ONLY_IN_GUI, "");
+        super(EConfigEntryAppearance.ONLY_IN_GUI, "");
     }
 
     /** Appearance shouldn't be changed */
     @Override
-    public void setAppearance(ConfigEntryAppearance newAppearance) {}
+    public void setAppearance(EConfigEntryAppearance newAppearance) {}
 
     /** Pointless to set the value */
     @Override
@@ -23,7 +23,7 @@ public class ConfigUIComment extends AbstractConfigType<String, ConfigUIComment>
     public static class Builder extends AbstractConfigType.Builder<String, Builder> {
         /** Appearance shouldn't be changed */
         @Override
-        public Builder setAppearance(ConfigEntryAppearance newAppearance) {
+        public Builder setAppearance(EConfigEntryAppearance newAppearance) {
             return this;
         }
 
