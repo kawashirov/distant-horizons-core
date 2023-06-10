@@ -25,7 +25,7 @@ package com.seibel.lod.api.enums.config.quickOptions;
  * MINIMAL_IMPACT, <br>
  * LOW_IMPACT, <br>
  * BALANCED, <br>
- * FAST_LOADING, <br>
+ * AGGRESSIVE_LOADING, <br>
  * I_PAID_FOR_THE_WHOLE_CPU, <br>
  */
 public enum EQuickThread
@@ -39,7 +39,7 @@ public enum EQuickThread
 	MINIMAL_IMPACT,
 	LOW_IMPACT,
 	BALANCED,
-	FAST_LOADING,
+	AGGRESSIVE_LOADING,
 	I_PAID_FOR_THE_WHOLE_CPU;
 	
 }

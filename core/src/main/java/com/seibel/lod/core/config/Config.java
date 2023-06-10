@@ -853,7 +853,7 @@ public class Config
 								+ "Automatically check for updates on game launch?")
 						.build();
 				
-				public static ConfigEntry<Boolean> automaticallyUpdate = new ConfigEntry.Builder<Boolean>()
+				public static ConfigEntry<Boolean> enableSilentUpdates = new ConfigEntry.Builder<Boolean>()
 						.set(true)
 						.comment("" 
 								+ "Should Distant Horizons silently, automatically download and install new versions? "
