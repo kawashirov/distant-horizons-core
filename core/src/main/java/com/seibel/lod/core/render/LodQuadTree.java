@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * This quadTree structure is our core data structure and holds
@@ -32,9 +33,9 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	
 	/** 
 	 * This holds every {@link DhSectionPos} that should be reloaded next tick. <br>
-	 * This is a {@link ConcurrentHashMap} because new sections can be added to this list via the world generator threads.
+	 * This is a {@link ConcurrentLinkedQueue} because new sections can be added to this list via the world generator threads.
 	 */
-	private final ConcurrentHashMap<DhSectionPos, Boolean> sectionsToReload = new ConcurrentHashMap<>();
+	private final ConcurrentLinkedQueue<DhSectionPos> sectionsToReload = new ConcurrentLinkedQueue<>();
 	
 	private final IDhClientLevel level; //FIXME: Proper hierarchy to remove this reference!
 	
@@ -80,7 +81,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		try
 		{
 			// recenter if necessary, removing out of bounds sections
-			this.setCenterBlockPos(playerPos, LodRenderSection::disposeRenderData);
+			this.setCenterBlockPos(playerPos, LodRenderSection::dispose);
 			
 			updateAllRenderSections(playerPos);
 		}
@@ -92,12 +93,11 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	private void updateAllRenderSections(DhBlockPos2D playerPos)
 	{
 		// reload any sections that need it
-		DhSectionPos[] reloadSectionArray = this.sectionsToReload.keySet().toArray(new DhSectionPos[0]);
-		this.sectionsToReload.clear();
-		for (DhSectionPos pos : reloadSectionArray)
+		DhSectionPos pos;
+		while ((pos = this.sectionsToReload.poll()) != null)
 		{
 			// walk up the tree until we hit the root node
-			// this is done so any high detail changes flow up to the lower detail render sections as well 
+			// this is done so any high detail changes flow up to the lower detail render sections as well
 			while (pos.sectionDetailLevel <= this.treeMaxDetailLevel)
 			{
 				try
@@ -110,12 +110,11 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 				}
 				catch (IndexOutOfBoundsException e)
 				{ /* the section is now out of bounds, it doesn't need to be reloaded */ }
-				
+
 				pos = pos.getParentPos();
 			}
 		}
-		
-		
+
 		// walk through each root node
 		Iterator<DhSectionPos> rootPosIterator = this.rootNodePosIterator();
 		while (rootPosIterator.hasNext())
@@ -352,7 +351,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		}
 		
 		//LOGGER.info("LodQuadTree reloadPos ["+pos+"].");
-		this.sectionsToReload.put(pos, true);
+		this.sectionsToReload.add(pos);
 	}
 	
 	

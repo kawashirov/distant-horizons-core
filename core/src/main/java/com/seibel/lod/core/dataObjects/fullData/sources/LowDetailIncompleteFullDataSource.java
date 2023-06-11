@@ -52,6 +52,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 	
     private boolean isEmpty = true;
 	public EDhApiWorldGenerationStep worldGenStep = EDhApiWorldGenerationStep.EMPTY;
+	private boolean isPromoted = false;
 	
 	
 	
@@ -514,12 +515,16 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 		{
 			return this;
 		}
-		
+		isPromoted = true;
 		return new CompleteFullDataSource(this.sectionPos, this.mapping, this.dataArrays);
 	}
-	
-	
-	
+
+	@Override
+	public boolean hasBeenPromoted() {
+		return isPromoted;
+	}
+
+
 	//================//
 	// helper classes //
 	//================//

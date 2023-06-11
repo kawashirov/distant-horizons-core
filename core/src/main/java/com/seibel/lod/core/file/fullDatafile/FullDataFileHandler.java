@@ -178,7 +178,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
         while (--sectionDetail >= this.minDetailLevel)
 		{
             DhLodPos minPos = pos.getCorner().getCornerLodPos(sectionDetail);
-            int count = pos.getSectionBBoxPos().getBlockWidth(sectionDetail);
+            int count = pos.getSectionBBoxPos().getWidthAtDetail(sectionDetail);
 			
             for (int xOffset = 0; xOffset < count; xOffset++)
 			{

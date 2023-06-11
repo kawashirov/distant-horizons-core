@@ -39,19 +39,22 @@ public class DhLodPos implements Comparable<DhLodPos>
 	
     public DhLodUnit getX() { return new DhLodUnit(this.detailLevel, this.x); }
     public DhLodUnit getZ() { return new DhLodUnit(this.detailLevel, this.z); }
-	
-    public int getBlockWidth() { return this.getBlockWidth(this.detailLevel); }
-	public int getBlockWidth(byte detailLevel) // TODO this needs some documentation or a better name describing what is happening, why is there an assert here?
+
+	// Get the width of this pos, measured in the mc block unit. (i.e. detail 0)
+    public int getBlockWidth() { return this.getWidthAtDetail((byte)0); }
+
+	// Get the width of this pos, measured in the target detail level.
+	public int getWidthAtDetail(byte targetLevel)
 	{
-		LodUtil.assertTrue(detailLevel <= this.detailLevel);
-		return BitShiftUtil.powerOfTwo(this.detailLevel - detailLevel);
+		LodUtil.assertTrue(targetLevel <= this.detailLevel);
+		return BitShiftUtil.powerOfTwo(this.detailLevel - targetLevel);
 	}
 	
 	public DhBlockPos2D getCenterBlockPos() 
 	{ 
 		return new DhBlockPos2D(
 				this.getX().toBlockWidth() + BitShiftUtil.half(this.getBlockWidth()),
-				this.getZ().toBlockWidth() + BitShiftUtil.half(this.getBlockWidth())); 
+				this.getZ().toBlockWidth() + BitShiftUtil.half(this.getBlockWidth()));
 	}
 	public DhBlockPos2D getCornerBlockPos() { return new DhBlockPos2D(this.getX().toBlockWidth(), this.getZ().toBlockWidth()); }
 	
