@@ -272,9 +272,9 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 			{
 				CheckingTasks.add(newGenTask);
 				// TODO this isn't a long term fix, in the long term the tree should automatically remove out of bound nodes when moved
-				if (!this.waitingTaskQuadTree.isSectionPosInBounds(taskSectionPos))
+				if (!this.waitingTaskQuadTree.isSectionPosInBounds(taskSectionPos) || !newGenTask.StillValid())
 				{
-					// skip and remove out-of-bound tasks
+					// skip and remove out-of-bound tasks or tasks that are no longer valid
 					taskNode.value = null;
 					continue;
 				}

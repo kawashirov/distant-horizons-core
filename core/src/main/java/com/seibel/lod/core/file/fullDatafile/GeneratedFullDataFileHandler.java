@@ -1,10 +1,12 @@
 package com.seibel.lod.core.file.fullDatafile;
 
 import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
+import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.HighDetailIncompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IIncompleteFullDataSource;
 import com.seibel.lod.core.dataObjects.fullData.sources.LowDetailIncompleteFullDataSource;
+import com.seibel.lod.core.file.metaData.BaseMetaData;
 import com.seibel.lod.core.generation.tasks.IWorldGenTaskTracker;
 import com.seibel.lod.core.generation.WorldGenerationQueue;
 import com.seibel.lod.core.generation.tasks.WorldGenResult;
@@ -21,6 +23,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class GeneratedFullDataFileHandler extends FullDataFileHandler
 {
@@ -173,7 +176,17 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 					.thenApply((voidValue) -> incompleteFullDataSource.tryPromotingToCompleteDataSource());
 		}
 	}
-	
+
+/*	@Override
+	public CompletableFuture<IFullDataSource> onDataFileRefresh(IFullDataSource source, BaseMetaData metaData, Function<IFullDataSource, Boolean> updater, Consumer<IFullDataSource> onUpdated)
+	{
+		return super.onDataFileRefresh(source, metaData, updater, (IFullDataSource d) -> {
+			if (d instanceof CompleteFullDataSource) {
+
+			}
+		}
+	}*/
+
 	/**
 	 * Checks if the given {@link IFullDataSource} is fully generated and
 	 * if it isn't, creates the necessary world gen request(s) to finish it. <br>
@@ -351,7 +364,10 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		
 		
 		@Override
-		public boolean isMemoryAddressValid() { return this.targetFullDataSourceRef.get() != null; }
+		public boolean isMemoryAddressValid() {
+			IFullDataSource ref = this.targetFullDataSourceRef.get();
+			return ref != null && !((IIncompleteFullDataSource)ref).hasBeenPromoted();
+		}
 		
 		@Override
 		public Consumer<ChunkSizedFullDataAccessor> getOnGenTaskCompleteConsumer()
