@@ -333,7 +333,11 @@
     "Only Render LODs",
   "lod.config.client.advanced.debugging.lodOnlyMode.@tooltip":
     "If enabled this will disable (most) vanilla Minecraft rendering. \n\nNOTE: Do not report any issues when this mode is on! \nThis setting is only for fun and debugging. \nMod compatibility is not guaranteed.",
-    
+  "lod.config.client.advanced.debugging.debugWireframeRendering":
+    "Enable Debug Wireframe Rendering",
+  "lod.config.client.advanced.debugging.debugWireframeRendering.@tooltip":
+    "If enabled, various wireframes for debugging internal functions will be drawn.",
+
   "lod.config.client.advanced.buffers":
     "Buffers",
   "lod.config.client.advanced.buffers.gpuUploadMethod":
