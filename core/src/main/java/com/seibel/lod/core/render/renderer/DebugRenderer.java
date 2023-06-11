@@ -7,9 +7,8 @@ import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.logging.ConfigBasedSpamLogger;
 import com.seibel.lod.core.pos.DhBlockPos2D;
+import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
-import com.seibel.lod.core.render.LodRenderSection;
-import com.seibel.lod.core.render.glObject.GLProxy;
 import com.seibel.lod.core.render.glObject.GLState;
 import com.seibel.lod.core.render.glObject.buffer.GLElementBuffer;
 import com.seibel.lod.core.render.glObject.buffer.GLVertexBuffer;
@@ -144,17 +143,23 @@ public class DebugRenderer {
     private Mat4f transform_this_frame;
     private Vec3f camf;
 
+    public void renderBox(DhLodPos pos, float minY, float maxY, float marginPercent, Color color) {
+        DhBlockPos2D blockMin = pos.getCornerBlockPos();
+        DhBlockPos2D blockMax = blockMin.add(pos.getBlockWidth(), pos.getBlockWidth());
+        float edge = pos.getBlockWidth() * marginPercent;
+        renderBox(blockMin.x + edge, minY, blockMin.z + edge, blockMax.x - edge, maxY, blockMax.z - edge, color);
+    }
+
+    public void renderBox(DhLodPos pos, float minY, float maxY, Color color) {
+        renderBox(pos, minY, maxY, 0, color);
+    }
+
     public void renderBox(DhSectionPos sectPos, float minY, float maxY, Color color) {
-        DhBlockPos2D blockMin = sectPos.getCorner().getCornerBlockPos();
-        DhBlockPos2D blockMax = blockMin.add(sectPos.getWidth().toBlockWidth(), sectPos.getWidth().toBlockWidth());
-        renderBox(blockMin.x, minY, blockMin.z, blockMax.x, maxY, blockMax.z, color);
+        renderBox(sectPos.getSectionBBoxPos(), minY, maxY, 0, color);
     }
 
     public void renderBox(DhSectionPos sectPos, float minY, float maxY, float marginPercent, Color color) {
-        DhBlockPos2D blockMin = sectPos.getCorner().getCornerBlockPos();
-        DhBlockPos2D blockMax = blockMin.add(sectPos.getWidth().toBlockWidth(), sectPos.getWidth().toBlockWidth());
-        float edge = sectPos.getWidth().toBlockWidth() * marginPercent;
-        renderBox(blockMin.x + edge, minY, blockMin.z + edge, blockMax.x - edge, maxY, blockMax.z - edge, color);
+        renderBox(sectPos.getSectionBBoxPos(), minY, maxY, marginPercent, color);
     }
 
     public void renderBox(float x, float y, float z, float x2, float y2, float z2, Color color) {

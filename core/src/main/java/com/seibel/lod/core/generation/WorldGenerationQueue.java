@@ -10,6 +10,8 @@ import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.file.fullDatafile.FullDataFileHandler;
 import com.seibel.lod.core.generation.tasks.*;
 import com.seibel.lod.core.pos.*;
+import com.seibel.lod.core.render.renderer.DebugRenderer;
+import com.seibel.lod.core.render.renderer.IDebugRenderable;
 import com.seibel.lod.core.util.ThreadUtil;
 import com.seibel.lod.core.util.objects.quadTree.QuadNode;
 import com.seibel.lod.core.util.objects.quadTree.QuadTree;
@@ -20,12 +22,13 @@ import com.seibel.lod.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
 import org.apache.logging.log4j.Logger;
 
+import java.awt.*;
 import java.io.Closeable;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 
-public class WorldGenerationQueue implements Closeable
+public class WorldGenerationQueue implements Closeable, IDebugRenderable
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
@@ -95,6 +98,7 @@ public class WorldGenerationQueue implements Closeable
 		{
 			throw new IllegalArgumentException(IDhApiWorldGenerator.class.getSimpleName() + ": max granularity smaller than min granularity!");
 		}
+		DebugRenderer.register(this);
 	}
 	
 	
@@ -242,7 +246,9 @@ public class WorldGenerationQueue implements Closeable
 //			}
 //		}
 //	}
-	
+
+	private final Set<WorldGenTask> CheckingTasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
 	/** 
 	 * @param targetPos the position to center the generation around 
 	 * @return false if no tasks were found to generate
@@ -252,6 +258,7 @@ public class WorldGenerationQueue implements Closeable
 		long closestGenDist = Long.MAX_VALUE;
 		
 		WorldGenTask closestTask = null;
+		CheckingTasks.clear();
 		
 		// TODO improve, having to go over every node isn't super efficient, removing null nodes from the tree would help
 		Iterator<QuadNode<WorldGenTask>> nodeIterator = this.waitingTaskQuadTree.nodeIterator();
@@ -263,6 +270,7 @@ public class WorldGenerationQueue implements Closeable
 			
 			if (newGenTask != null) // TODO add an option to skip leaves with null values and potentially auto-prune them
 			{
+				CheckingTasks.add(newGenTask);
 				// TODO this isn't a long term fix, in the long term the tree should automatically remove out of bound nodes when moved
 				if (!this.waitingTaskQuadTree.isSectionPosInBounds(taskSectionPos))
 				{
@@ -289,13 +297,9 @@ public class WorldGenerationQueue implements Closeable
 			return false;
 		}
 		
-		
-		
 		// remove the task we found, we are going to start it and don't want to run it multiple times
 		// TODO the setValue can fail if the user is moving and the task that was once in range is no longer in range
 		WorldGenTask removedWorldGenTask = this.waitingTaskQuadTree.setValue(new DhSectionPos(closestTask.pos.detailLevel, closestTask.pos.x, closestTask.pos.z), null);
-		
-		
 		
 		// do we need to modify this task to generate it?
 		if(this.canGeneratePos((byte) 0, closestTask.pos)) // TODO should detail level 0 be replaced?
@@ -370,7 +374,6 @@ public class WorldGenerationQueue implements Closeable
 		LodUtil.assertTrue(taskDetailLevel >= this.smallestDataDetail && taskDetailLevel <= this.largestDataDetail);
 		
 		DhChunkPos chunkPosMin = new DhChunkPos(taskPos.getCornerBlockPos());
-		
 		
 		// check if this is a duplicate generation task
 		if (this.alreadyGeneratedPosHashSet.contains(inProgressTaskGroup.group.pos))
@@ -578,6 +581,8 @@ public class WorldGenerationQueue implements Closeable
 		
 		
 		LOGGER.info("Finished closing "+WorldGenerationQueue.class.getSimpleName());
+
+		DebugRenderer.unregister(this);
 	}
 	
 	
@@ -616,6 +621,16 @@ public class WorldGenerationQueue implements Closeable
 		
 		return index;
 	}
-	
-	
+
+
+	@Override
+	public void debugRender(DebugRenderer r) {
+		CheckingTasks.forEach((t) -> {
+			DhLodPos pos = t.pos;
+			r.renderBox(pos, -32f, 64f, 0.05f, Color.blue);
+		});
+		this.inProgressGenTasksByLodPos.forEach((pos, t) -> {
+			r.renderBox(pos, -30f, 64f, 0.05f, Color.red);
+		});
+	}
 }
