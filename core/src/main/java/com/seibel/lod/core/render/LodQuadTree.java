@@ -56,7 +56,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		this.renderSourceProvider = provider;
         this.blockRenderDistance = viewDistanceInBlocks;
 		
-		this.horizontalScaleChangeListener = new ConfigChangeListener<>(Config.Client.Advanced.Graphics.Quality.horizontalScale, (newHorizontalScale) -> this.onHorizontalScaleChange(newHorizontalScale));
+		this.horizontalScaleChangeListener = new ConfigChangeListener<>(Config.Client.Advanced.Graphics.Quality.horizontalScale, (newHorizontalScale) -> this.onHorizontalScaleChange());
     }
 	
 	
@@ -362,13 +362,24 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	// config listeners //
 	//==================//
 	
-	private void onHorizontalScaleChange(int newHorizontalScale)
+	private void onHorizontalScaleChange()
 	{
 		// TODO this Util should probably be somewhere else or handled differently, but it works for now
 		// Updating the util is necessary whenever the horizontal quality or scale are changed, otherwise they won't be applied
 		DetailDistanceUtil.updateSettings();
 		
-		// TODO clearing the tree may be necessary in some cases to make sure the render data is flushed
+		
+		// flush the current render data to make sure the new settings are used
+		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.nodeIterator();
+		while (nodeIterator.hasNext())
+		{
+			QuadNode<LodRenderSection> quadNode = nodeIterator.next();
+			if (quadNode.value != null)
+			{
+				quadNode.value.disposeRenderData();
+				quadNode.value = null;
+			}
+		}
 	}
 	
 	
