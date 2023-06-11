@@ -23,12 +23,7 @@ package com.seibel.lod.api.enums.config;
  * LOWEST <br>
  * LOW <br>
  * MEDIUM <br>
- * HIGH <br> <br>
- *
- * this indicates the base of the quadratic function we use for the quality drop-off
- * 
- * @author Leonardo Amato
- * @version 9-29-2021
+ * HIGH <br>
  */
 public enum EHorizontalQuality
 {
@@ -37,22 +32,27 @@ public enum EHorizontalQuality
 	// when removing items up the API major version
 	
 	
-	/** 1.0 AKA Linear */
-	LOWEST(1.0f),
+	// FIXME any quadraticBase less than 2.0f has issues with DetailDistanceUtil, and will always return the lowest detail level.
+	//  So for now we are limiting the lowest value to 2.0
+	//  LOWEST was originally 1.0f and LOW was 1.5f
 	
-	/** exponent 1.5 */
-	LOW(1.5f),
+	LOWEST(2.0f, 4),
+	LOW(2.0f, 8),
+	MEDIUM(2.0f, 12),
+	HIGH(2.2f, 24),
+	EXTREME(2.4f, 64),
 	
-	/** exponent 2.0 */
-	MEDIUM(2.0f),
+	UNLIMITED(-1, -1);
 	
-	/** exponent 2.2 */
-	HIGH(2.2f);
+	
 	
 	public final double quadraticBase;
+	public final int distanceUnitInBlocks;
 	
-	EHorizontalQuality(double distanceUnit)
+	EHorizontalQuality(double quadraticBase, int distanceUnitInBlocks)
 	{
-		this.quadraticBase = distanceUnit;
+		this.quadraticBase = quadraticBase; 
+		this.distanceUnitInBlocks = distanceUnitInBlocks;
 	}
+		
 }

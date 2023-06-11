@@ -178,15 +178,6 @@ public class Config
 							.addListener(RenderCacheConfigEventHandler.INSTANCE)
 							.build();
 					
-					// TODO merge with horizontal quality
-					public static ConfigEntry<Integer> horizontalScale = new ConfigEntry.Builder<Integer>()
-							.setMinDefaultMax(2, 12, 64)
-							.comment(""
-									+ "This indicates how quickly fake chunks decrease in quality the further away they are. \n"
-									+ "Higher settings will render higher quality fake chunks farther away, \n"
-									+ " but will increase memory and GPU usage.")
-							.build();
-					
 					public static ConfigEntry<EHorizontalQuality> horizontalQuality = new ConfigEntry.Builder<EHorizontalQuality>()
 							.set(EHorizontalQuality.MEDIUM)
 							.comment(""

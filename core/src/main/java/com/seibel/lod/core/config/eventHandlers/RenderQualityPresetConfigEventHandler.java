@@ -47,29 +47,15 @@ public class RenderQualityPresetConfigEventHandler implements IConfigListener
 			this.put(EQualityPreset.HIGH, EVerticalQuality.HIGH);
 			this.put(EQualityPreset.EXTREME, EVerticalQuality.HIGH);
 		}});
-	
-	
 	private final ConfigEntryWithPresetOptions<EQualityPreset, EHorizontalQuality> horizontalQuality = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.Graphics.Quality.horizontalQuality,
 		new HashMap<EQualityPreset, EHorizontalQuality>()
 		{{
-			this.put(EQualityPreset.MINIMUM, EHorizontalQuality.MEDIUM); // TODO Lowest and Low have a bug, making "chunk" the highest detail level
-			this.put(EQualityPreset.LOW, EHorizontalQuality.MEDIUM);		//      I should look into why this is instead of just removing the option
+			this.put(EQualityPreset.MINIMUM, EHorizontalQuality.LOWEST);
+			this.put(EQualityPreset.LOW, EHorizontalQuality.LOW);
 			this.put(EQualityPreset.MEDIUM, EHorizontalQuality.MEDIUM);
 			this.put(EQualityPreset.HIGH, EHorizontalQuality.HIGH);
 			this.put(EQualityPreset.EXTREME, EHorizontalQuality.HIGH);
 		}});
-//	// TODO merge horizontal scale and quality (merge the numbers into quality)
-//	private final ConfigEntryWithPresetOptions<EQualityPreset, Integer> horizontalScale = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.Graphics.Quality.horizontalScale,
-//		new HashMap<EQualityPreset, Integer>()
-//		{{
-//			this.put(EQualityPreset.MINIMUM, 4);
-//			this.put(EQualityPreset.LOW, 8);
-//			this.put(EQualityPreset.MEDIUM, 12);
-//			this.put(EQualityPreset.HIGH, 24);
-//			this.put(EQualityPreset.EXTREME, 64);
-//		}});
-	
-	
 	private final ConfigEntryWithPresetOptions<EQualityPreset, ETransparency> transparency = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.Graphics.Quality.transparency, 
 		new HashMap<EQualityPreset, ETransparency>()
 		{{
