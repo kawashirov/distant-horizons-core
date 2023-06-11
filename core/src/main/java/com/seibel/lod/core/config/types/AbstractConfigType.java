@@ -1,7 +1,7 @@
 package com.seibel.lod.core.config.types;
 
 import com.seibel.lod.core.config.ConfigBase;
-import com.seibel.lod.core.config.types.enums.ConfigEntryAppearance;
+import com.seibel.lod.core.config.types.enums.EConfigEntryAppearance;
 
 /**
  * The class where all config options should extend
@@ -16,9 +16,9 @@ public abstract class AbstractConfigType<T, S> { // The S is the class that is e
 
     public Object guiValue; // This is a storage variable something like the gui can use
 
-    protected ConfigEntryAppearance appearance;
+    protected EConfigEntryAppearance appearance;
 
-    protected AbstractConfigType(ConfigEntryAppearance appearance, T value) {
+    protected AbstractConfigType(EConfigEntryAppearance appearance, T value) {
         this.appearance = appearance;
         this.value = value;
     }
@@ -33,10 +33,10 @@ public abstract class AbstractConfigType<T, S> { // The S is the class that is e
         this.value = newValue;
     }
     
-    public ConfigEntryAppearance getAppearance() {
+    public EConfigEntryAppearance getAppearance() {
         return appearance;
     }
-    public void setAppearance(ConfigEntryAppearance newAppearance) {
+    public void setAppearance(EConfigEntryAppearance newAppearance) {
         this.appearance = newAppearance;
     }
 
@@ -58,12 +58,12 @@ public abstract class AbstractConfigType<T, S> { // The S is the class that is e
     }
 
     protected static abstract class Builder<T, S> {
-        protected ConfigEntryAppearance tmpAppearance = ConfigEntryAppearance.ALL;
+        protected EConfigEntryAppearance tmpAppearance = EConfigEntryAppearance.ALL;
         protected T tmpValue;
 
 
         // Put this into your own builder
-        public S setAppearance(ConfigEntryAppearance newAppearance) {
+        public S setAppearance(EConfigEntryAppearance newAppearance) {
             this.tmpAppearance = newAppearance;
             return (S) this;
         }

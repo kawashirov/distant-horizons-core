@@ -31,11 +31,11 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
     public final boolean allowApiOverride;
     private T apiValue;
 
-    private final ConfigEntryPerformance performance;
+    private final EConfigEntryPerformance performance;
 
 
     /** Creates the entry */
-    private ConfigEntry(ConfigEntryAppearance appearance, T value, String comment, T min, T max, boolean allowApiOverride, ConfigEntryPerformance performance, ArrayList<IConfigListener> listenerList)
+    private ConfigEntry(EConfigEntryAppearance appearance, T value, String comment, T min, T max, boolean allowApiOverride, EConfigEntryPerformance performance, ArrayList<IConfigListener> listenerList)
 	{
         super(appearance, value);
         this.defaultValue = value;
@@ -120,7 +120,7 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
     public void setComment(String newComment) { this.comment = newComment; }
 
     /** Gets the performance impact of an option */
-    public ConfigEntryPerformance getPerformance() { return this.performance; }
+    public EConfigEntryPerformance getPerformance() { return this.performance; }
 
     public void addListener(IConfigListener newListener) { this.listenerList.add(newListener); }
     public void removeListener(IConfigListener oldListener) { this.listenerList.remove(oldListener); }
@@ -197,7 +197,7 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
         private T tmpMin;
         private T tmpMax;
         private boolean tmpUseApiOverwrite;
-        private ConfigEntryPerformance tmpPerformance = ConfigEntryPerformance.DONT_SHOW;
+        private EConfigEntryPerformance tmpPerformance = EConfigEntryPerformance.DONT_SHOW;
         protected ArrayList<IConfigListener> tmpIConfigListener = new ArrayList<>();
 
         public Builder<T> comment(String newComment)
@@ -239,7 +239,7 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
 			return this;
 		}
 
-        public Builder<T> setPerformance(ConfigEntryPerformance newPerformance)
+        public Builder<T> setPerformance(EConfigEntryPerformance newPerformance)
 		{
 			this.tmpPerformance = newPerformance;
 			return this;
