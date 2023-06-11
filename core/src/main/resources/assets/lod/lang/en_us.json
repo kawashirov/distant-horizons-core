@@ -90,10 +90,6 @@
     "Vertical Quality",
   "lod.config.client.advanced.graphics.quality.verticalQuality.@tooltip":
     "How well LODs represent overhangs, caves, cliffsides, etc.\n\nHigher options will increase memory and GPU usage.",
-  "lod.config.client.advanced.graphics.quality.horizontalScale":
-    "Horizontal Scale",
-  "lod.config.client.advanced.graphics.quality.horizontalScale.@tooltip":
-    "How quickly LODs drop off in quality.\n\nLarger numbers will improve how distant terrain looks\nbut will increase memory and GPU usage.",
   "lod.config.client.advanced.graphics.quality.horizontalQuality":
     "Horizontal Quality",
   "lod.config.client.advanced.graphics.quality.horizontalQuality.@tooltip":
@@ -107,16 +103,16 @@
   
   
   "lod.config.client.advanced.graphics.fog":
-    "Fog Options",
-    
-  "lod.config.client.advanced.graphics.fog.fogDistance":
-    "Fog Distance",
-  "lod.config.client.advanced.graphics.fog.fogDistance.@tooltip":
-    "The distance(s) Fog will be rendered on the LODs.",
+    "Fog",
+
   "lod.config.client.advanced.graphics.fog.fogDrawMode":
     "Fog Draw Mode",
   "lod.config.client.advanced.graphics.fog.fogDrawMode.@tooltip":
     "When fog will be rendered on the LODs.",
+  "lod.config.client.advanced.graphics.fog.fogDistance":
+    "Fog Distance",
+  "lod.config.client.advanced.graphics.fog.fogDistance.@tooltip":
+    "The distance(s) Fog will be rendered on the LODs.",
   "lod.config.client.advanced.graphics.fog.fogColorMode":
     "Fog Color Mode",
   "lod.config.client.advanced.graphics.fog.fogColorMode.@tooltip":

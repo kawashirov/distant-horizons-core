@@ -225,12 +225,6 @@ public class Config
 				
 				public static class Fog
 				{
-					public static ConfigEntry<EFogDistance> fogDistance = new ConfigEntry.Builder<EFogDistance>()
-							.set(EFogDistance.FAR)
-							.comment("At what distance should Fog be drawn on the LODs?")
-							.setPerformance(EConfigEntryPerformance.NONE)
-							.build();
-					
 					public static ConfigEntry<EFogDrawMode> fogDrawMode = new ConfigEntry.Builder<EFogDrawMode>()
 							.set(EFogDrawMode.FOG_ENABLED)
 							.comment(""
@@ -243,6 +237,12 @@ public class Config
 									+ "\n"
 									+ "Disabling fog will improve GPU performance.")
 							.setPerformance(EConfigEntryPerformance.VERY_LOW)
+							.build();
+					
+					public static ConfigEntry<EFogDistance> fogDistance = new ConfigEntry.Builder<EFogDistance>()
+							.set(EFogDistance.FAR)
+							.comment("At what distance should Fog be drawn on the LODs?")
+							.setPerformance(EConfigEntryPerformance.NONE)
 							.build();
 					
 					public static ConfigEntry<EFogColorMode> fogColorMode = new ConfigEntry.Builder<EFogColorMode>()
