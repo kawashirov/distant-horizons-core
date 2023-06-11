@@ -16,10 +16,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 
-/**
- * Listens to the config and will automatically
- * clear the current render cache if certain settings are changed. 
- */
 public abstract class AbstractPresetConfigEventHandler<TPresetEnum extends Enum<?>> implements IConfigListener
 {
 	private static final Logger LOGGER = LogManager.getLogger();
@@ -50,7 +46,7 @@ public abstract class AbstractPresetConfigEventHandler<TPresetEnum extends Enum<
 		}
 		
 		// if the quick value is custom, nothing needs to be changed
-		if (qualityPreset == EQualityPreset.CUSTOM)
+		if (qualityPreset == this.getCustomPresetEnum())
 		{
 			return;
 		}

@@ -16,10 +16,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 
-/**
- * Listens to the config and will automatically
- * clear the current render cache if certain settings are changed. 
- */
 public class RenderQualityPresetConfigEventHandler extends AbstractPresetConfigEventHandler<EQualityPreset>
 {
 	public static final RenderQualityPresetConfigEventHandler INSTANCE = new RenderQualityPresetConfigEventHandler();
@@ -98,7 +94,6 @@ public class RenderQualityPresetConfigEventHandler extends AbstractPresetConfigE
 	
 	@Override 
 	protected List<EQualityPreset> getPresetEnumList() { return Arrays.asList(EQualityPreset.values()); }
-	
 	@Override 
 	protected EQualityPreset getCustomPresetEnum() { return EQualityPreset.CUSTOM; }
 	

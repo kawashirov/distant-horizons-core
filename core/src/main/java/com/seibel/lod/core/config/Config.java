@@ -27,6 +27,7 @@ import com.seibel.lod.api.enums.rendering.*;
 import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.lod.core.config.eventHandlers.RenderQualityPresetConfigEventHandler;
 import com.seibel.lod.core.config.eventHandlers.RenderCacheConfigEventHandler;
+import com.seibel.lod.core.config.eventHandlers.ThreadPresetConfigEventHandler;
 import com.seibel.lod.core.config.types.*;
 import com.seibel.lod.core.config.types.enums.*;
 import com.seibel.lod.coreapi.ModInfo;
@@ -80,28 +81,31 @@ public class Config
 		public static ConfigLinkedEntry quickLodChunkRenderDistance = new ConfigLinkedEntry(Advanced.Graphics.Quality.lodChunkRenderDistance);
 		
 		public static ConfigEntry<EQualityPreset> qualityPresetSetting = new ConfigEntry.Builder<EQualityPreset>()
-				.set(EQualityPreset.MEDIUM)
+				.set(EQualityPreset.MEDIUM) // the default value is set via the listener when accessed
 				.comment(""
 						+ "Changing this setting will modify a number of different settings that will change the \n"
 						+ "visual fidelity of the rendered LODs.\n"
 						+ "\n"
 						+ "Higher settings will improve the graphical quality while increasing GPU and memory use.\n"
 						+ "")
-				.setAppearance(EConfigEntryAppearance.ONLY_IN_GUI) // TODO set when the game boots
+				.setAppearance(EConfigEntryAppearance.ONLY_IN_GUI)
 				.addListener(RenderQualityPresetConfigEventHandler.INSTANCE)
 				.build();
 		
 		public static ConfigEntry<EThreadPreset> threadPresetSetting = new ConfigEntry.Builder<EThreadPreset>()
-				.set(EThreadPreset.BALANCED)
+				.set(EThreadPreset.LOW_IMPACT) // the default value is set via the listener when accessed
 				.comment(""
 						+ "Changing this setting will modify a number of different settings that will change \n"
 						+ "the load that Distant Horizons is allowed to put on your CPU. \n"
 						+ "\n"
 						+ "Higher options will improve LOD generation and loading speed, \n"
 						+ "but will increase CPU load and may introduce stuttering.\n"
+						+ "\n"
+						+ "Note: on CPUs with 4 cores or less these settings will be less effective \n"
+						+ "      and some settings will give similar results. \n"
 						+ "")
-				.setAppearance(EConfigEntryAppearance.ONLY_IN_GUI) // TODO set when the game boots
-				//.addListener(null) // TODO add listener
+				.setAppearance(EConfigEntryAppearance.ONLY_IN_GUI)
+				.addListener(ThreadPresetConfigEventHandler.INSTANCE)
 				.build();
 		
 		public static ConfigLinkedEntry quickEnableWorldGenerator = new ConfigLinkedEntry(Advanced.WorldGenerator.enableDistantGeneration);

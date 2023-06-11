@@ -25,7 +25,7 @@ package com.seibel.lod.api.enums.config.quickOptions;
  * MINIMAL_IMPACT, <br>
  * LOW_IMPACT, <br>
  * BALANCED, <br>
- * AGGRESSIVE_LOADING, <br>
+ * AGGRESSIVE, <br>
  * I_PAID_FOR_THE_WHOLE_CPU, <br>
  */
 public enum EThreadPreset
@@ -39,7 +39,7 @@ public enum EThreadPreset
 	MINIMAL_IMPACT,
 	LOW_IMPACT,
 	BALANCED,
-	AGGRESSIVE_LOADING,
+	AGGRESSIVE,
 	I_PAID_FOR_THE_WHOLE_CPU;
 	
 }
