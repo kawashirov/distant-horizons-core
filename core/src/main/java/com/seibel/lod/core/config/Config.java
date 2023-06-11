@@ -122,7 +122,7 @@ public class Config
 			public static ConfigCategory graphics = new ConfigCategory.Builder().set(Graphics.class).build();
 			public static ConfigCategory worldGenerator = new ConfigCategory.Builder().set(WorldGenerator.class).build();
 			public static ConfigCategory multiplayer = new ConfigCategory.Builder().set(Multiplayer.class).build();
-			public static ConfigCategory threading = new ConfigCategory.Builder().set(MultiThreading.class).build();
+			public static ConfigCategory multiThreading = new ConfigCategory.Builder().set(MultiThreading.class).build();
 			public static ConfigCategory buffers = new ConfigCategory.Builder().set(GpuBuffers.class).build();
 			public static ConfigCategory autoUpdater = new ConfigCategory.Builder().set(AutoUpdater.class).build();
 			
