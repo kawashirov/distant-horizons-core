@@ -9,20 +9,18 @@ import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.config.ConfigEntryWithPresetOptions;
 import com.seibel.lod.core.config.listeners.ConfigChangeListener;
 import com.seibel.lod.core.config.listeners.IConfigListener;
+import com.seibel.lod.coreapi.interfaces.config.IConfigEntry;
 import com.seibel.lod.coreapi.util.StringUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 
 /**
  * Listens to the config and will automatically
  * clear the current render cache if certain settings are changed. 
  */
-public class RenderQualityPresetConfigEventHandler implements IConfigListener
+public class RenderQualityPresetConfigEventHandler extends AbstractPresetConfigEventHandler<EQualityPreset>
 {
 	public static final RenderQualityPresetConfigEventHandler INSTANCE = new RenderQualityPresetConfigEventHandler();
 	
@@ -67,12 +65,10 @@ public class RenderQualityPresetConfigEventHandler implements IConfigListener
 		}});
 	
 	
-	private final ArrayList<ConfigEntryWithPresetOptions<EQualityPreset, ?>> configList = new ArrayList<>();
 	
-	/** True if a preset is currently being applied */
-	private boolean changingPreset = false;
-	
-	
+	//==============//
+	// constructors //
+	//==============//
 	
 	/** private since we only ever need one handler at a time */
 	private RenderQualityPresetConfigEventHandler() 
@@ -87,112 +83,23 @@ public class RenderQualityPresetConfigEventHandler implements IConfigListener
 		for (ConfigEntryWithPresetOptions<EQualityPreset, ?> config : this.configList)
 		{
 			// ignore try-using, the listener should only ever be added once and should never be removed
-			new ConfigChangeListener<>(config.configEntry, (val) -> { this.onGraphicsConfigValueChanged(); });
+			new ConfigChangeListener<>(config.configEntry, (val) -> { this.onConfigValueChanged(); });
 		}
 	}
 	
 	
 	
-	//===========//
-	// listeners //
-	//===========//
-	
-	@Override 
-	public void onConfigValueSet()
-	{
-		EQualityPreset qualityPreset = Config.Client.qualityPresetSetting.get();
-		if (qualityPreset == null)
-		{
-			// the value will be null when the config menu is first opened,
-			// set the value to what it should be.
-
-			EQualityPreset currentQualitySetting = this.getCurrentQualityPreset();
-			Config.Client.qualityPresetSetting.set(currentQualitySetting);
-			return;
-		}
-		
-		// if the quick value is custom, nothing needs to be changed
-		if (qualityPreset == EQualityPreset.CUSTOM)
-		{
-			return;
-		}
-		
-		
-		LOGGER.debug("changing quality preset to: " + qualityPreset);
-		this.changingPreset = true;
-		
-		for (ConfigEntryWithPresetOptions<EQualityPreset, ?> configEntry : this.configList)
-		{
-			configEntry.updateConfigEntry(qualityPreset);
-		}
-		
-		this.changingPreset = false;
-		LOGGER.debug("quality preset active: "+qualityPreset);
-		
-	}
+	//==============//
+	// enum getters //
+	//==============//
 	
 	@Override
-	public void onUiModify() { /* do nothing, we only care about modified config values */ }
+	protected IConfigEntry<EQualityPreset> getPresetConfigEntry() { return Config.Client.qualityPresetSetting; }
 	
-	/**
-	 * listen for changed graphics settings and set the
-	 * quick quality to "custom" if anything was changed
-	 */
-	public void onGraphicsConfigValueChanged()
-	{
-		if (this.changingPreset)
-		{
-			// if a preset is currently being applied, ignore all changes
-			return;
-		}
-		
-		
-		EQualityPreset newPreset = this.getCurrentQualityPreset();
-		EQualityPreset currentPreset = Config.Client.qualityPresetSetting.get();
-		
-		if (newPreset != currentPreset)
-		{
-			Config.Client.qualityPresetSetting.set(EQualityPreset.CUSTOM);
-		}
-	}
+	@Override 
+	protected List<EQualityPreset> getPresetEnumList() { return Arrays.asList(EQualityPreset.values()); }
 	
-	
-	
-	//================//
-	// helper methods //
-	//================//
-	
-	/** @return what {@link EQualityPreset} is currently viable based on the {@link RenderQualityPresetConfigEventHandler#configList}. */
-	public EQualityPreset getCurrentQualityPreset()
-	{
-		// get all quick options
-		HashSet<EQualityPreset> possiblePresetSet = new HashSet<>(Arrays.asList(EQualityPreset.values()));
-		
-		
-		// remove any quick options that aren't possible with the currently selected options
-		for (ConfigEntryWithPresetOptions<EQualityPreset, ?> configEntry : this.configList)
-		{
-			HashSet<EQualityPreset> optionPresetSet = configEntry.getPossibleQualitiesFromCurrentOptionValue();
-			possiblePresetSet.retainAll(optionPresetSet);
-		}
-		
-		
-		
-		ArrayList<EQualityPreset> possiblePrestList = new ArrayList<>(possiblePresetSet);
-		if (possiblePrestList.size() > 1)
-		{
-			// we shouldn't have multiple options, but just in case
-			LOGGER.warn("Multiple potential graphics options ["+StringUtil.join(", ", possiblePrestList)+"], defaulting to the first one.");
-		}
-		
-		if (possiblePrestList.size() == 0)
-		{
-			// if no options are valid, return "CUSTOM"
-			possiblePrestList.add(EQualityPreset.CUSTOM);
-		}
-		
-		return possiblePrestList.get(0);
-	}
-	
+	@Override 
+	protected EQualityPreset getCustomPresetEnum() { return EQualityPreset.CUSTOM; }
 	
 }
