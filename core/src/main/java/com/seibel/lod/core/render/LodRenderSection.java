@@ -6,8 +6,12 @@ import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.file.renderfile.ILodRenderSourceProvider;
+import com.seibel.lod.core.render.renderer.DebugRenderer;
+import com.seibel.lod.core.render.renderer.IDebugRenderable;
 import org.apache.logging.log4j.Logger;
 
+import java.awt.*;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -15,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * A render section represents an area that could be rendered.
  * For more information see {@link LodQuadTree}.
  */
-public class LodRenderSection
+public class LodRenderSection implements IDebugRenderable
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
@@ -38,7 +42,30 @@ public class LodRenderSection
 	
 	
 	
-    public LodRenderSection(DhSectionPos pos) { this.pos = pos; }
+    public LodRenderSection(DhSectionPos pos) {
+		this.pos = pos;
+
+		DebugRenderer.register(this);
+	}
+
+	public void debugRender(DebugRenderer r)
+	{
+		Color color = Color.red;
+
+		if (this.renderSourceProvider == null) color = Color.black;
+
+		if (this.renderSourceLoadFuture != null) color = Color.yellow;
+
+		if (renderSource != null) {
+			color = Color.blue;
+			if (isRenderingEnabled) color = Color.cyan;
+			if (isRenderingEnabled && isRenderDataLoaded()) color = Color.green;
+		}
+
+		float yOffset = Objects.hashCode(this) / (float) Integer.MAX_VALUE * 16f;
+
+		r.renderBox(this.pos, yOffset, yOffset, 0.1f, color);
+	}
 	
 	
 	
@@ -160,6 +187,8 @@ public class LodRenderSection
 			this.renderSourceLoadFuture.cancel(true);
 			this.renderSourceLoadFuture = null;
 		}
+
+		this.renderSourceProvider = null;
 	}
 	
 	
@@ -208,5 +237,9 @@ public class LodRenderSection
                 ", isRenderEnabled=" + this.isRenderingEnabled +
                 '}';
     }
-	
+
+	public void dispose() {
+		DebugRenderer.unregister(this);
+		disposeRenderData();
+	}
 }

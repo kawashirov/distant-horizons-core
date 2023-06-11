@@ -8,6 +8,7 @@ import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.logging.ConfigBasedSpamLogger;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhSectionPos;
+import com.seibel.lod.core.render.LodRenderSection;
 import com.seibel.lod.core.render.glObject.GLProxy;
 import com.seibel.lod.core.render.glObject.GLState;
 import com.seibel.lod.core.render.glObject.buffer.GLElementBuffer;
@@ -22,11 +23,10 @@ import org.apache.logging.log4j.LogManager;
 import org.lwjgl.opengl.GL32;
 
 import java.awt.*;
+import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Collections;
-import java.util.Map;
-import java.util.WeakHashMap;
+import java.util.*;
 
 public class DebugRenderer {
     public static DebugRenderer INSTANCE = new DebugRenderer();
@@ -74,12 +74,34 @@ public class DebugRenderer {
     VertexAttribute va;
     boolean init = false;
 
+    public static void unregister(IDebugRenderable r) {
+        if (INSTANCE == null) return;
+        INSTANCE.removeRenderer(r);
+    }
+
+    private void removeRenderer(IDebugRenderable r) {
+        synchronized (renderers) {
+            Iterator<WeakReference<IDebugRenderable>> it = renderers.iterator();
+            while (it.hasNext()) {
+                WeakReference<IDebugRenderable> ref = it.next();
+                if (ref.get() == null) {
+                    it.remove();
+                    continue;
+                }
+                if (ref.get() == r) {
+                    it.remove();
+                    return;
+                }
+            }
+        }
+    }
+
     public void init() {
         if (init) return;
         init = true;
         va = VertexAttribute.create();
         va.bind();
-        // Pos
+        // Pos\
         va.setVertexAttribute(0, 0, VertexAttribute.VertexPointer.addVec3Pointer(false));
         va.completeAndCheck(Float.BYTES * 3);
         basicShader = new ShaderProgram("shaders/debug/vert.vert", "shaders/debug/frag.frag",
@@ -105,21 +127,18 @@ public class DebugRenderer {
         boxOutlineBuffer.uploadBuffer(buffer, EGpuUploadMethod.DATA, box_outline_indices.length * Integer.BYTES, GL32.GL_STATIC_DRAW);
     }
 
-    @FunctionalInterface
-    public interface IDebugRender {
-        void render(DebugRenderer r);
-    }
+    private final LinkedList<WeakReference<IDebugRenderable>> renderers = new LinkedList<>();
 
-    private final Map<Object, IDebugRender> renderers = Collections.synchronizedMap(new WeakHashMap<>());
-
-    public void addRenderer(Object o, IDebugRender r) {
+    public void addRenderer(IDebugRenderable r) {
         if (!Config.Client.Advanced.Debugging.debugWireframeRendering.get()) return;
-        renderers.put(o, r);
+        synchronized (renderers) {
+            renderers.add(new WeakReference<>(r));
+        }
     }
 
-    public static void register(Object o, IDebugRender r) {
+    public static void register(IDebugRenderable r) {
         if (INSTANCE == null) return;
-        INSTANCE.addRenderer(o, r);
+        INSTANCE.addRenderer(r);
     }
 
     private Mat4f transform_this_frame;
@@ -129,6 +148,13 @@ public class DebugRenderer {
         DhBlockPos2D blockMin = sectPos.getCorner().getCornerBlockPos();
         DhBlockPos2D blockMax = blockMin.add(sectPos.getWidth().toBlockWidth(), sectPos.getWidth().toBlockWidth());
         renderBox(blockMin.x, minY, blockMin.z, blockMax.x, maxY, blockMax.z, color);
+    }
+
+    public void renderBox(DhSectionPos sectPos, float minY, float maxY, float marginPercent, Color color) {
+        DhBlockPos2D blockMin = sectPos.getCorner().getCornerBlockPos();
+        DhBlockPos2D blockMax = blockMin.add(sectPos.getWidth().toBlockWidth(), sectPos.getWidth().toBlockWidth());
+        float edge = sectPos.getWidth().toBlockWidth() * marginPercent;
+        renderBox(blockMin.x + edge, minY, blockMin.z + edge, blockMax.x - edge, maxY, blockMax.z - edge, color);
     }
 
     public void renderBox(float x, float y, float z, float x2, float y2, float z2, Color color) {
@@ -165,9 +191,22 @@ public class DebugRenderer {
         basicShader.bind();
         va.bind();
         va.bindBufferToAllBindingPoint(boxBuffer.getId());
+
         boxOutlineBuffer.bind();
 
-        renderers.forEach((o, r) -> r.render(this));
+        synchronized (renderers)
+        {
+            Iterator<WeakReference<IDebugRenderable>> it = renderers.iterator();
+            while (it.hasNext()) {
+                WeakReference<IDebugRenderable> ref = it.next();
+                IDebugRenderable r = ref.get();
+                if (r == null) {
+                    it.remove();
+                    continue;
+                }
+                r.debugRender(this);
+            }
+        }
 
         state.restore();
     }
