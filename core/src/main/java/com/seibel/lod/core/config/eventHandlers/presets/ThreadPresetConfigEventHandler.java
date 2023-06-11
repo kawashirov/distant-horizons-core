@@ -1,4 +1,4 @@
-package com.seibel.lod.core.config.eventHandlers;
+package com.seibel.lod.core.config.eventHandlers.presets;
 
 import com.seibel.lod.api.enums.config.quickOptions.EThreadPreset;
 import com.seibel.lod.core.config.Config;

@@ -1,4 +1,4 @@
-package com.seibel.lod.core.config.eventHandlers;
+package com.seibel.lod.core.config.eventHandlers.presets;
 
 import com.seibel.lod.api.enums.config.EHorizontalQuality;
 import com.seibel.lod.api.enums.config.EHorizontalResolution;
@@ -8,9 +8,7 @@ import com.seibel.lod.api.enums.rendering.ETransparency;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.config.ConfigEntryWithPresetOptions;
 import com.seibel.lod.core.config.listeners.ConfigChangeListener;
-import com.seibel.lod.core.config.listeners.IConfigListener;
 import com.seibel.lod.coreapi.interfaces.config.IConfigEntry;
-import com.seibel.lod.coreapi.util.StringUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
