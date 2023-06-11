@@ -119,7 +119,7 @@ public class Config
 		
 		
 		public static ConfigCategory advanced = new ConfigCategory.Builder().set(Advanced.class).build();
-		public static ConfigCategory resetSettingsConfirmation = new ConfigCategory.Builder().set(ResetConfirmation.class).build();
+//		public static ConfigCategory resetSettingsConfirmation = new ConfigCategory.Builder().set(ResetConfirmation.class).build();
 		
 		public static class Advanced
 		{
