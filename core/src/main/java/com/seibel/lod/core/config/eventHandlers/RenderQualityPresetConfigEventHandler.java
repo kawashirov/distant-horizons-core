@@ -45,7 +45,7 @@ public class RenderQualityPresetConfigEventHandler implements IConfigListener
 			this.put(EQualityPreset.LOW, EVerticalQuality.LOW);
 			this.put(EQualityPreset.MEDIUM, EVerticalQuality.MEDIUM);
 			this.put(EQualityPreset.HIGH, EVerticalQuality.HIGH);
-			this.put(EQualityPreset.EXTREME, EVerticalQuality.HIGH);
+			this.put(EQualityPreset.EXTREME, EVerticalQuality.EXTREME);
 		}});
 	private final ConfigEntryWithPresetOptions<EQualityPreset, EHorizontalQuality> horizontalQuality = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.Graphics.Quality.horizontalQuality,
 		new HashMap<EQualityPreset, EHorizontalQuality>()
@@ -54,7 +54,7 @@ public class RenderQualityPresetConfigEventHandler implements IConfigListener
 			this.put(EQualityPreset.LOW, EHorizontalQuality.LOW);
 			this.put(EQualityPreset.MEDIUM, EHorizontalQuality.MEDIUM);
 			this.put(EQualityPreset.HIGH, EHorizontalQuality.HIGH);
-			this.put(EQualityPreset.EXTREME, EHorizontalQuality.HIGH);
+			this.put(EQualityPreset.EXTREME, EHorizontalQuality.EXTREME);
 		}});
 	private final ConfigEntryWithPresetOptions<EQualityPreset, ETransparency> transparency = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.Graphics.Quality.transparency, 
 		new HashMap<EQualityPreset, ETransparency>()

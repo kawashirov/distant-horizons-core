@@ -173,7 +173,7 @@ public class Config
 									+ "will increase memory and GPU usage. \n"
 									+ "\n"
 									+ "Lowest Quality: " + EVerticalQuality.HEIGHT_MAP + "\n"
-									+ "Highest Quality: " + EVerticalQuality.ULTRA)
+									+ "Highest Quality: " + EVerticalQuality.EXTREME)
 							.setPerformance(EConfigEntryPerformance.VERY_HIGH)
 							.addListener(RenderCacheConfigEventHandler.INSTANCE)
 							.build();

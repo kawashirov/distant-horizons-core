@@ -472,8 +472,8 @@
     "Medium",
   "lod.config.enum.EVerticalQuality.HIGH":
     "High",
-  "lod.config.enum.EVerticalQuality.ULTRA":
-    "Ultra",
+  "lod.config.enum.EVerticalQuality.EXTREME":
+    "Extreme",
   "lod.config.enum.EHorizontalQuality.LOWEST":
     "Lowest",
   "lod.config.enum.EHorizontalQuality.LOW":
@@ -482,6 +482,10 @@
     "Medium",
   "lod.config.enum.EHorizontalQuality.HIGH":
     "High",
+  "lod.config.enum.EHorizontalQuality.EXTREME":
+    "Extreme",
+  "lod.config.enum.EHorizontalQuality.UNLIMITED":
+    "Unlimited",
     
   "lod.config.enum.ETransparency.DISABLED":
     "Disabled",
