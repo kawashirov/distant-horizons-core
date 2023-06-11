@@ -5,7 +5,7 @@ import com.seibel.lod.core.config.types.ConfigEntry;
 import java.util.HashMap;
 import java.util.HashSet;
 
-public class ConfigEntryWithPresetOptions<TConfig, TQuickEnum>
+public class ConfigEntryWithPresetOptions<TQuickEnum, TConfig>
 {
 	public final ConfigEntry<TConfig> configEntry;
 	

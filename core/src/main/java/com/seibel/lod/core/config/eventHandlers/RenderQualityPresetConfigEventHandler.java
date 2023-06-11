@@ -29,7 +29,7 @@ public class RenderQualityPresetConfigEventHandler implements IConfigListener
 	private static final Logger LOGGER = LogManager.getLogger();
 	
 	
-	private final ConfigEntryWithPresetOptions<EHorizontalResolution, EQualityPreset> drawResolution = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.Graphics.Quality.drawResolution, 
+	private final ConfigEntryWithPresetOptions<EQualityPreset, EHorizontalResolution> drawResolution = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.Graphics.Quality.drawResolution, 
 		new HashMap<EQualityPreset, EHorizontalResolution>()
 		{{
 			this.put(EQualityPreset.MINIMUM, EHorizontalResolution.TWO_BLOCKS);
@@ -38,7 +38,7 @@ public class RenderQualityPresetConfigEventHandler implements IConfigListener
 			this.put(EQualityPreset.HIGH, EHorizontalResolution.BLOCK);
 			this.put(EQualityPreset.EXTREME, EHorizontalResolution.BLOCK);
 		}});
-	private final ConfigEntryWithPresetOptions<EVerticalQuality, EQualityPreset> verticalQuality = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.Graphics.Quality.verticalQuality,
+	private final ConfigEntryWithPresetOptions<EQualityPreset, EVerticalQuality> verticalQuality = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.Graphics.Quality.verticalQuality,
 		new HashMap<EQualityPreset, EVerticalQuality>()
 		{{
 			this.put(EQualityPreset.MINIMUM, EVerticalQuality.HEIGHT_MAP);
@@ -49,7 +49,7 @@ public class RenderQualityPresetConfigEventHandler implements IConfigListener
 		}});
 	
 	
-	private final ConfigEntryWithPresetOptions<EHorizontalQuality, EQualityPreset> horizontalQuality = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.Graphics.Quality.horizontalQuality,
+	private final ConfigEntryWithPresetOptions<EQualityPreset, EHorizontalQuality> horizontalQuality = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.Graphics.Quality.horizontalQuality,
 		new HashMap<EQualityPreset, EHorizontalQuality>()
 		{{
 			this.put(EQualityPreset.MINIMUM, EHorizontalQuality.MEDIUM); // TODO Lowest and Low have a bug, making "chunk" the highest detail level
@@ -58,9 +58,8 @@ public class RenderQualityPresetConfigEventHandler implements IConfigListener
 			this.put(EQualityPreset.HIGH, EHorizontalQuality.HIGH);
 			this.put(EQualityPreset.EXTREME, EHorizontalQuality.HIGH);
 		}});
-//	// TODO swap generic params
 //	// TODO merge horizontal scale and quality (merge the numbers into quality)
-//	private final ConfigEntryWithPresetOptions<Integer, EQualityPreset> horizontalScale = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.Graphics.Quality.horizontalScale,
+//	private final ConfigEntryWithPresetOptions<EQualityPreset, Integer> horizontalScale = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.Graphics.Quality.horizontalScale,
 //		new HashMap<EQualityPreset, Integer>()
 //		{{
 //			this.put(EQualityPreset.MINIMUM, 4);
@@ -71,7 +70,7 @@ public class RenderQualityPresetConfigEventHandler implements IConfigListener
 //		}});
 	
 	
-	private final ConfigEntryWithPresetOptions<ETransparency, EQualityPreset> transparency = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.Graphics.Quality.transparency, 
+	private final ConfigEntryWithPresetOptions<EQualityPreset, ETransparency> transparency = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.Graphics.Quality.transparency, 
 		new HashMap<EQualityPreset, ETransparency>()
 		{{
 			this.put(EQualityPreset.MINIMUM, ETransparency.DISABLED);
@@ -82,7 +81,7 @@ public class RenderQualityPresetConfigEventHandler implements IConfigListener
 		}});
 	
 	
-	private final ArrayList<ConfigEntryWithPresetOptions<?, EQualityPreset>> configList = new ArrayList<>();
+	private final ArrayList<ConfigEntryWithPresetOptions<EQualityPreset, ?>> configList = new ArrayList<>();
 	
 	/** True if a preset is currently being applied */
 	private boolean changingPreset = false;
@@ -99,7 +98,7 @@ public class RenderQualityPresetConfigEventHandler implements IConfigListener
 		this.configList.add(this.transparency);
 		
 		
-		for (ConfigEntryWithPresetOptions<?, EQualityPreset> config : this.configList)
+		for (ConfigEntryWithPresetOptions<EQualityPreset, ?> config : this.configList)
 		{
 			// ignore try-using, the listener should only ever be added once and should never be removed
 			new ConfigChangeListener<>(config.configEntry, (val) -> { this.onGraphicsConfigValueChanged(); });
@@ -136,7 +135,7 @@ public class RenderQualityPresetConfigEventHandler implements IConfigListener
 		LOGGER.debug("changing quality preset to: " + qualityPreset);
 		this.changingPreset = true;
 		
-		for (ConfigEntryWithPresetOptions<?, EQualityPreset> configEntry : this.configList)
+		for (ConfigEntryWithPresetOptions<EQualityPreset, ?> configEntry : this.configList)
 		{
 			configEntry.updateConfigEntry(qualityPreset);
 		}
@@ -185,7 +184,7 @@ public class RenderQualityPresetConfigEventHandler implements IConfigListener
 		
 		
 		// remove any quick options that aren't possible with the currently selected options
-		for (ConfigEntryWithPresetOptions<?, EQualityPreset> configEntry : this.configList)
+		for (ConfigEntryWithPresetOptions<EQualityPreset, ?> configEntry : this.configList)
 		{
 			HashSet<EQualityPreset> optionPresetSet = configEntry.getPossibleQualitiesFromCurrentOptionValue();
 			possiblePresetSet.retainAll(optionPresetSet);
