@@ -39,4 +39,26 @@ public class StringUtil
 			pos = str.indexOf(substr, pos + 1);
 		return pos;
 	}
+	
+	/** Combines each item in the given list together separated by the given delimiter. */
+	public static <T> String join(String delimiter, Iterable<T> list)
+	{
+		StringBuilder stringBuilder = new StringBuilder();
+		
+		boolean firstItem = true;
+		for (T item : list)
+		{
+			if (!firstItem)
+			{
+				stringBuilder.append(delimiter);
+			}
+			
+			stringBuilder.append(item);
+			firstItem = false;
+		}
+		
+		return stringBuilder.toString();
+	}
+	
+	
 }

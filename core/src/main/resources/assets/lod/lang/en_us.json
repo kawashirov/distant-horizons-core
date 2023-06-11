@@ -54,13 +54,13 @@
   "lod.config.client.quickEnableRendering.@tooltip":
   "Determines if Distant Horizons Renders LODs.",
   
-  "lod.config.client.quickQualitySetting":
-    "Overall Quality",
-  "lod.config.client.quickQualitySetting.@tooltip":
+  "lod.config.client.qualityPresetSetting":
+    "Quality Preset",
+  "lod.config.client.qualityPresetSetting.@tooltip":
     "Will modify a number of settings to quickly change Distant Horizons' rendering quality.",
-  "lod.config.client.quickThreadSetting":
+  "lod.config.client.threadPresetSetting":
     "CPU Load",
-  "lod.config.client.quickThreadSetting.@tooltip":
+  "lod.config.client.threadPresetSetting.@tooltip":
     "Will modify a number of settings to quickly change how many CPU resources Distant Horizons' is allowed to use. \n\nIncreasing this setting will improve Distant Generator speed and LOD loading speed, \nbut will also increase CPU/memory usage and may introduce stuttering.",
     
   "lod.config.client.optionsButton":
@@ -431,30 +431,30 @@
   
     
     
-  "lod.config.enum.EQuickQuality.CUSTOM":
+  "lod.config.enum.EQualityPreset.CUSTOM":
     "Custom",
-  "lod.config.enum.EQuickQuality.MINIMUM":
+  "lod.config.enum.EQualityPreset.MINIMUM":
     "Minimum",
-  "lod.config.enum.EQuickQuality.LOW":
+  "lod.config.enum.EQualityPreset.LOW":
     "Low",
-  "lod.config.enum.EQuickQuality.MEDIUM":
+  "lod.config.enum.EQualityPreset.MEDIUM":
     "Medium",
-  "lod.config.enum.EQuickQuality.HIGH":
+  "lod.config.enum.EQualityPreset.HIGH":
     "High",
-  "lod.config.enum.EQuickQuality.EXTREME":
+  "lod.config.enum.EQualityPreset.EXTREME":
     "Extreme",
     
-  "lod.config.enum.EQuickThread.CUSTOM":
+  "lod.config.enum.EThreadPreset.CUSTOM":
     "Custom",
-  "lod.config.enum.EQuickThread.MINIMAL_IMPACT":
+  "lod.config.enum.EThreadPreset.MINIMAL_IMPACT":
     "Minimal Impact",
-  "lod.config.enum.EQuickThread.LOW_IMPACT":
+  "lod.config.enum.EThreadPreset.LOW_IMPACT":
     "Low Impact",
-  "lod.config.enum.EQuickThread.BALANCED":
+  "lod.config.enum.EThreadPreset.BALANCED":
     "Balanced",
-  "lod.config.enum.EQuickThread.AGGRESSIVE_LOADING":
+  "lod.config.enum.EThreadPreset.AGGRESSIVE_LOADING":
     "Aggressive Loading",
-  "lod.config.enum.EQuickThread.I_PAID_FOR_THE_WHOLE_CPU":
+  "lod.config.enum.EThreadPreset.I_PAID_FOR_THE_WHOLE_CPU":
     "I Paid For The Whole CPU",
     
   "lod.config.enum.EHorizontalResolution.BLOCK":

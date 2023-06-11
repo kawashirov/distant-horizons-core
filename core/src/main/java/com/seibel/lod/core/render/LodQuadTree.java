@@ -1,5 +1,7 @@
 package com.seibel.lod.core.render;
 
+import com.seibel.lod.core.config.Config;
+import com.seibel.lod.core.config.listeners.ConfigChangeListener;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhBlockPos2D;
@@ -37,6 +39,8 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	
 	private final IDhClientLevel level; //FIXME: Proper hierarchy to remove this reference!
 	
+	private final ConfigChangeListener<Integer> horizontalScaleChangeListener;
+	
 	
 	
 	
@@ -52,6 +56,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		this.renderSourceProvider = provider;
         this.blockRenderDistance = viewDistanceInBlocks;
 		
+		this.horizontalScaleChangeListener = new ConfigChangeListener<>(Config.Client.Advanced.Graphics.Quality.horizontalScale, (newHorizontalScale) -> this.onHorizontalScaleChange(newHorizontalScale));
     }
 	
 	
@@ -353,6 +358,21 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	
 	
 	
+	//==================//
+	// config listeners //
+	//==================//
+	
+	private void onHorizontalScaleChange(int newHorizontalScale)
+	{
+		// TODO this Util should probably be somewhere else or handled differently, but it works for now
+		// Updating the util is necessary whenever the horizontal quality or scale are changed, otherwise they won't be applied
+		DetailDistanceUtil.updateSettings();
+		
+		// TODO clearing the tree may be necessary in some cases to make sure the render data is flushed
+	}
+	
+	
+	
 	//==============//
 	// base methods //
 	//==============//
@@ -374,6 +394,8 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	public void close()
 	{
 		LOGGER.info("Shutting down "+ LodQuadTree.class.getSimpleName()+"...");
+		
+		this.horizontalScaleChangeListener.close();
 		
 		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.nodeIterator();
 		while (nodeIterator.hasNext())

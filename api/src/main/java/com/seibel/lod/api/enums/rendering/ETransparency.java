@@ -20,18 +20,9 @@
 package com.seibel.lod.api.enums.rendering;
 
 /**
- * OFF,									<br>
- * SHOW_WIREFRAME,						<br>
- * SHOW_DETAIL,							<br>
- * SHOW_DETAIL_WIREFRAME,				<br>
- * SHOW_GENMODE,						<br>
- * SHOW_GENMODE_WIREFRAME,				<br>
- * SHOW_OVERLAPPING_QUADS,				<br>
- * SHOW_OVERLAPPING_QUADS_WIREFRAME,	<br>
- *
- * @author Leetom
- * @author James Seibel
- * @version 2022-7-2
+ * DISABLED,					<br>
+ * FAKE,						<br>
+ * COMPLETE,					<br>
  */
 public enum ETransparency
 {
@@ -44,12 +35,13 @@ public enum ETransparency
 	FAKE(true, true),
 	COMPLETE(true, false);
 
-	public final boolean tranparencyEnabled;
+	public final boolean transparencyEnabled;
 	public final boolean fakeTransparencyEnabled;
 
-	ETransparency(boolean tranparencyEnabled, boolean fakeTransparencyEnabled)
+	ETransparency(boolean transparencyEnabled, boolean fakeTransparencyEnabled)
 	{
-		this.tranparencyEnabled = tranparencyEnabled;
+		this.transparencyEnabled = transparencyEnabled;
 		this.fakeTransparencyEnabled = fakeTransparencyEnabled;
 	}
+	
 }

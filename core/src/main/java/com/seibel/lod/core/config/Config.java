@@ -21,10 +21,11 @@ package com.seibel.lod.core.config;
 
 
 import com.seibel.lod.api.enums.config.*;
-import com.seibel.lod.api.enums.config.quickOptions.EQuickQuality;
-import com.seibel.lod.api.enums.config.quickOptions.EQuickThread;
+import com.seibel.lod.api.enums.config.quickOptions.EQualityPreset;
+import com.seibel.lod.api.enums.config.quickOptions.EThreadPreset;
 import com.seibel.lod.api.enums.rendering.*;
 import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
+import com.seibel.lod.core.config.eventHandlers.RenderQualityPresetConfigEventHandler;
 import com.seibel.lod.core.config.eventHandlers.RenderCacheConfigEventHandler;
 import com.seibel.lod.core.config.types.*;
 import com.seibel.lod.core.config.types.enums.*;
@@ -78,8 +79,8 @@ public class Config
 		
 		public static ConfigLinkedEntry quickLodChunkRenderDistance = new ConfigLinkedEntry(Advanced.Graphics.Quality.lodChunkRenderDistance);
 		
-		public static ConfigEntry<EQuickQuality> quickQualitySetting = new ConfigEntry.Builder<EQuickQuality>()
-				.set(EQuickQuality.MEDIUM)
+		public static ConfigEntry<EQualityPreset> qualityPresetSetting = new ConfigEntry.Builder<EQualityPreset>()
+				.set(EQualityPreset.MEDIUM)
 				.comment(""
 						+ "Changing this setting will modify a number of different settings that will change the \n"
 						+ "visual fidelity of the rendered LODs.\n"
@@ -87,11 +88,11 @@ public class Config
 						+ "Higher settings will improve the graphical quality while increasing GPU and memory use.\n"
 						+ "")
 				.setAppearance(EConfigEntryAppearance.ONLY_IN_GUI) // TODO set when the game boots
-				//.addListener(null) // TODO add listener
+				.addListener(RenderQualityPresetConfigEventHandler.INSTANCE)
 				.build();
 		
-		public static ConfigEntry<EQuickThread> quickThreadSetting = new ConfigEntry.Builder<EQuickThread>()
-				.set(EQuickThread.BALANCED)
+		public static ConfigEntry<EThreadPreset> threadPresetSetting = new ConfigEntry.Builder<EThreadPreset>()
+				.set(EThreadPreset.BALANCED)
 				.comment(""
 						+ "Changing this setting will modify a number of different settings that will change \n"
 						+ "the load that Distant Horizons is allowed to put on your CPU. \n"

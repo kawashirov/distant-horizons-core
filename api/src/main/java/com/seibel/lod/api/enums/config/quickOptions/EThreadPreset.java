@@ -22,13 +22,13 @@ package com.seibel.lod.api.enums.config.quickOptions;
 /**
  * CUSTOM, <br><br>
  * 
- * MINIMUM, <br>
- * LOW, <br>
- * MEDIUM, <br>
- * HIGH, <br>
- * EXTREME, <br>
+ * MINIMAL_IMPACT, <br>
+ * LOW_IMPACT, <br>
+ * BALANCED, <br>
+ * AGGRESSIVE_LOADING, <br>
+ * I_PAID_FOR_THE_WHOLE_CPU, <br>
  */
-public enum EQuickQuality
+public enum EThreadPreset
 {
 	// Reminder:
 	// when adding items up the API minor version
@@ -36,10 +36,10 @@ public enum EQuickQuality
 	
 	CUSTOM,
 	
-	MINIMUM,
-	LOW,
-	MEDIUM,
-	HIGH,
-	EXTREME;
+	MINIMAL_IMPACT,
+	LOW_IMPACT,
+	BALANCED,
+	AGGRESSIVE_LOADING,
+	I_PAID_FOR_THE_WHOLE_CPU;
 	
 }

@@ -84,6 +84,8 @@ public abstract class AbstractDhClientLevel implements IDhClientLevel
 			return false;
 		}
 		
+		// TODO this should probably be handled via a config change listener
+		// recreate the RenderState if the render distance changes
 		if (clientRenderState.quadtree.blockRenderDistance != Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH)
 		{
 			if (!this.ClientRenderStateRef.compareAndSet(clientRenderState, null))

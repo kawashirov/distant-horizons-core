@@ -20,7 +20,6 @@
 package com.seibel.lod.core.render.renderer;
 
 import com.seibel.lod.core.config.Config;
-import com.seibel.lod.core.config.types.ConfigEntry;
 import com.seibel.lod.api.enums.rendering.EDebugMode;
 import com.seibel.lod.api.enums.rendering.EFogColorMode;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
@@ -185,7 +184,7 @@ public class LodRenderer
 
 
 
-		transparencyEnabled = Config.Client.Advanced.Graphics.Quality.transparency.get().tranparencyEnabled;
+		transparencyEnabled = Config.Client.Advanced.Graphics.Quality.transparency.get().transparencyEnabled;
 		fakeOceanFloor = Config.Client.Advanced.Graphics.Quality.transparency.get().fakeTransparencyEnabled;
 
 		GL32.glDisable(GL32.GL_BLEND); // We render opaque first, then transparent
