@@ -74,6 +74,7 @@ public interface IMinecraftRenderWrapper extends IBindable
 	int getScreenHeight();
 
 	int getTargetFrameBuffer();
+	int getDepthTextureId();
 	int getTargetFrameBufferViewportWidth();
 	int getTargetFrameBufferViewportHeight();
 	

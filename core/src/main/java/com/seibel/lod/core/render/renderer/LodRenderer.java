@@ -241,6 +241,10 @@ public class LodRenderer
 		//TODO: Directional culling
 		bufferHandler.renderOpaque(this);
 
+		if (Config.Client.Advanced.Graphics.Quality.ssao.get()) {
+			SSAORenderer.INSTANCE.render(partialTicks);
+		}
+
 		//======================//
 		// render transparency //
 		//======================//
@@ -253,7 +257,7 @@ public class LodRenderer
 		}
 		//if (drawCall==0)
 		//	tickLogger.info("DrawCall Count: {}", drawCount);
-		
+
 		//================//
 		// render cleanup //
 		//================//
@@ -262,7 +266,7 @@ public class LodRenderer
 		LagSpikeCatcher drawCleanup = new LagSpikeCatcher();
 		lightmap.unbind();
 		if (ENABLE_IBO) quadIBO.unbind();
-		
+
 		GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, 0);
 
 		shaderProgram.unbind();
