@@ -3,6 +3,7 @@ package com.seibel.lod.core.dataObjects.render.bufferBuilding;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.render.renderer.DebugRenderer;
+import com.seibel.lod.core.render.renderer.IDebugRenderable;
 import com.seibel.lod.core.render.renderer.LodRenderer;
 import com.seibel.lod.core.render.AbstractRenderBuffer;
 import com.seibel.lod.core.config.Config;
@@ -27,7 +28,7 @@ import static com.seibel.lod.core.render.glObject.GLProxy.GL_LOGGER;
  * 
  * @see ColumnRenderBufferBuilder
  */
-public class ColumnRenderBuffer extends AbstractRenderBuffer
+public class ColumnRenderBuffer extends AbstractRenderBuffer implements IDebugRenderable
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
@@ -55,14 +56,16 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 		this.debugPos = debugPos;
 		vbos = new GLVertexBuffer[0];
 		vbosTransparent = new GLVertexBuffer[0];
-		DebugRenderer.register(this, (r) -> {
-			if (closed || this.vbos == null) {
-				return;
-			}
+		DebugRenderer.register(this);
+	}
 
-			Color c = Color.green;
-			r.renderBox(debugPos, -32, 32, c);
-		});
+	public void debugRender(DebugRenderer r)
+	{
+		if (closed || vbos == null) {
+			return;
+		}
+		Color c = Color.green;
+		//r.renderBox(debugPos, 128, 128, 0.05f, c);
 	}
 	
 	

@@ -19,6 +19,7 @@
 
 package com.seibel.lod.core.util;
 
+import com.seibel.lod.api.enums.config.EOverdrawPrevention;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.world.IDhClientWorld;
 import com.seibel.lod.core.api.internal.SharedApi;
@@ -176,20 +177,48 @@ public class RenderUtil
 	
 	public static float getNearClipPlaneDistanceInBlocks(float partialTicks)
 	{
-		int vanillaBlockRenderedDistance = MC_RENDER.getRenderDistance() * LodUtil.CHUNK_WIDTH;
+		int chunkRenderDistance = MC_RENDER.getRenderDistance();
+		if (chunkRenderDistance % 2 == 0)
+		{
+			chunkRenderDistance += 1;
+		}
+		
+		int vanillaBlockRenderedDistance = chunkRenderDistance * LodUtil.CHUNK_WIDTH;
+		vanillaBlockRenderedDistance *= 2;
 		
 		float nearClipPlane;
 		if (Config.Client.Advanced.Debugging.lodOnlyMode.get())
 		{
 			nearClipPlane = 0.1f;
 		}
-		else if (Config.Client.Advanced.Graphics.AdvancedGraphics.useExtendedNearClipPlane.get())
+		else 
 		{
-			nearClipPlane = Math.min(vanillaBlockRenderedDistance - LodUtil.CHUNK_WIDTH, (float) 8 * LodUtil.CHUNK_WIDTH); // allow a max near clip plane of 8 chunks
-		}
-		else
-		{
-			nearClipPlane = 16f;
+			// TODO make this option dependent on player speed.
+			//  if the player is flying quickly, lower the near clip plane to account for slow chunk loading.
+			//  If the player is moving quickly they are less likely to notice overdraw.
+			
+			EOverdrawPrevention clipPlaneDistance = Config.Client.Advanced.Graphics.AdvancedGraphics.overdrawPrevention.get();
+			switch (clipPlaneDistance)
+			{
+				default: // shouldn't be necessary, just here to make the compiler happy
+				case NONE:
+					nearClipPlane = 0.1f;
+					break;
+					
+				case LIGHT:
+					nearClipPlane = vanillaBlockRenderedDistance * 0.25f;
+					break;
+					
+				case MEDIUM:
+					nearClipPlane = vanillaBlockRenderedDistance * 0.4f;
+					break;
+					
+					
+				case HEAVY:
+					// recommend render distance ot 6 or higher, otherwise holes may appear
+					nearClipPlane = vanillaBlockRenderedDistance * 0.6f;
+					break;
+			}
 		}
 		
 		// modify the based on the player's FOV

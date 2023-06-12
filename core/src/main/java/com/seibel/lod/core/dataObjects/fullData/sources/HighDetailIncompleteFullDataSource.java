@@ -65,6 +65,7 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 	public final int dataPointsPerSection;
     public boolean isEmpty = true;
 	public EDhApiWorldGenerationStep worldGenStep = EDhApiWorldGenerationStep.EMPTY;
+	private boolean isPromoted = false;
 	
 	
 	
@@ -614,10 +615,15 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 				return this;
 			}
 		}
-		
+		isPromoted = true;
         CompleteFullDataSource fullDataSource = CompleteFullDataSource.createEmpty(this.sectionPos);
 		this.applyToFullDataSource(fullDataSource);
         return fullDataSource;
     }
-	
+
+	@Override
+	public boolean hasBeenPromoted() {
+		return isPromoted;
+	}
+
 }

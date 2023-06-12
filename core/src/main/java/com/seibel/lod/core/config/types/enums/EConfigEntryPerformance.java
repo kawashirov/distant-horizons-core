@@ -6,13 +6,14 @@ package com.seibel.lod.core.config.types.enums;
  *
  * @author coolGi
  */
-public enum ConfigEntryPerformance {
+public enum EConfigEntryPerformance
+{
     NONE,
     VERY_LOW,
     LOW,
     MEDIUM,
     HIGH,
     VERY_HIGH,
-
+	
     DONT_SHOW
 }

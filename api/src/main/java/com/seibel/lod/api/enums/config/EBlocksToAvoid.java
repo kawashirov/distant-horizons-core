@@ -21,12 +21,7 @@ package com.seibel.lod.api.enums.config;
 
 /**
  * NONE, <br>
- * NON_FULL, <br>
- * NO_COLLISION, <br>
- * BOTH, <br>
- *
- * @author Leonardo Amato
- * @version 2022-7-1
+ * NON_COLLIDING, <br>
  */
 public enum EBlocksToAvoid
 {
@@ -34,20 +29,11 @@ public enum EBlocksToAvoid
 	// when adding items up the API minor version
 	// when removing items up the API major version
 	
-	NONE(false, false),
+	NONE(false),
+	NON_COLLIDING(true);
 	
-	NON_FULL(true, false),
-	
-	NO_COLLISION(false, true),
-	
-	BOTH(true, true);
-	
-	public final boolean nonFull;
 	public final boolean noCollision;
 	
-	EBlocksToAvoid(boolean nonFull, boolean noCollision)
-	{
-		this.nonFull = nonFull;
-		this.noCollision = noCollision;
-	}
+	EBlocksToAvoid(boolean noCollision) { this.noCollision = noCollision; }
+	
 }

@@ -1,5 +1,8 @@
 package com.seibel.lod.core.render;
 
+import com.seibel.lod.api.enums.config.EHorizontalQuality;
+import com.seibel.lod.core.config.Config;
+import com.seibel.lod.core.config.listeners.ConfigChangeListener;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhBlockPos2D;
@@ -7,14 +10,13 @@ import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.file.renderfile.ILodRenderSourceProvider;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.DetailDistanceUtil;
-import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.objects.quadTree.QuadNode;
 import com.seibel.lod.core.util.objects.quadTree.QuadTree;
 import org.apache.logging.log4j.Logger;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * This quadTree structure is our core data structure and holds
@@ -31,11 +33,13 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	
 	/** 
 	 * This holds every {@link DhSectionPos} that should be reloaded next tick. <br>
-	 * This is a {@link ConcurrentHashMap} because new sections can be added to this list via the world generator threads.
+	 * This is a {@link ConcurrentLinkedQueue} because new sections can be added to this list via the world generator threads.
 	 */
-	private final ConcurrentHashMap<DhSectionPos, Boolean> sectionsToReload = new ConcurrentHashMap<>();
+	private final ConcurrentLinkedQueue<DhSectionPos> sectionsToReload = new ConcurrentLinkedQueue<>();
 	
 	private final IDhClientLevel level; //FIXME: Proper hierarchy to remove this reference!
+	
+	private final ConfigChangeListener<EHorizontalQuality> horizontalScaleChangeListener;
 	
 	
 	
@@ -52,6 +56,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		this.renderSourceProvider = provider;
         this.blockRenderDistance = viewDistanceInBlocks;
 		
+		this.horizontalScaleChangeListener = new ConfigChangeListener<>(Config.Client.Advanced.Graphics.Quality.horizontalQuality, (newHorizontalScale) -> this.onHorizontalQualityChange());
     }
 	
 	
@@ -76,7 +81,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		try
 		{
 			// recenter if necessary, removing out of bounds sections
-			this.setCenterBlockPos(playerPos, LodRenderSection::disposeRenderData);
+			this.setCenterBlockPos(playerPos, LodRenderSection::dispose);
 			
 			updateAllRenderSections(playerPos);
 		}
@@ -88,12 +93,11 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	private void updateAllRenderSections(DhBlockPos2D playerPos)
 	{
 		// reload any sections that need it
-		DhSectionPos[] reloadSectionArray = this.sectionsToReload.keySet().toArray(new DhSectionPos[0]);
-		this.sectionsToReload.clear();
-		for (DhSectionPos pos : reloadSectionArray)
+		DhSectionPos pos;
+		while ((pos = this.sectionsToReload.poll()) != null)
 		{
 			// walk up the tree until we hit the root node
-			// this is done so any high detail changes flow up to the lower detail render sections as well 
+			// this is done so any high detail changes flow up to the lower detail render sections as well
 			while (pos.sectionDetailLevel <= this.treeMaxDetailLevel)
 			{
 				try
@@ -106,12 +110,11 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 				}
 				catch (IndexOutOfBoundsException e)
 				{ /* the section is now out of bounds, it doesn't need to be reloaded */ }
-				
+
 				pos = pos.getParentPos();
 			}
 		}
-		
-		
+
 		// walk through each root node
 		Iterator<DhSectionPos> rootPosIterator = this.rootNodePosIterator();
 		while (rootPosIterator.hasNext())
@@ -348,7 +351,33 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		}
 		
 		//LOGGER.info("LodQuadTree reloadPos ["+pos+"].");
-		this.sectionsToReload.put(pos, true);
+		this.sectionsToReload.add(pos);
+	}
+	
+	
+	
+	//==================//
+	// config listeners //
+	//==================//
+	
+	private void onHorizontalQualityChange()
+	{
+		// TODO this Util should probably be somewhere else or handled differently, but it works for now
+		// Updating this util is necessary whenever the horizontal quality is changed, since it handles the detail drop-off
+		DetailDistanceUtil.updateSettings();
+		
+		
+		// flush the current render data to make sure the new settings are used
+		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.nodeIterator();
+		while (nodeIterator.hasNext())
+		{
+			QuadNode<LodRenderSection> quadNode = nodeIterator.next();
+			if (quadNode.value != null)
+			{
+				quadNode.value.disposeRenderData();
+				quadNode.value = null;
+			}
+		}
 	}
 	
 	
@@ -374,6 +403,8 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	public void close()
 	{
 		LOGGER.info("Shutting down "+ LodQuadTree.class.getSimpleName()+"...");
+		
+		this.horizontalScaleChangeListener.close();
 		
 		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.nodeIterator();
 		while (nodeIterator.hasNext())

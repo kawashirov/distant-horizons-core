@@ -17,29 +17,23 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.api.enums.config.quickOptions;
+package com.seibel.lod.api.enums.config;
 
 /**
- * CUSTOM, <br><br>
- * 
- * MINIMAL_IMPACT, <br>
- * LOW_IMPACT, <br>
- * BALANCED, <br>
- * AGGRESSIVE_LOADING, <br>
- * I_PAID_FOR_THE_WHOLE_CPU, <br>
+ * NONE <br>
+ * LIGHT <br>
+ * MEDIUM <br>
+ * HEAVY <br> <br>
  */
-public enum EQuickThread
+public enum EOverdrawPrevention
 {
 	// Reminder:
 	// when adding items up the API minor version
 	// when removing items up the API major version
 	
-	CUSTOM,
-	
-	MINIMAL_IMPACT,
-	LOW_IMPACT,
-	BALANCED,
-	AGGRESSIVE_LOADING,
-	I_PAID_FOR_THE_WHOLE_CPU;
+	NONE,
+	LIGHT,
+	MEDIUM,
+	HEAVY;
 	
 }

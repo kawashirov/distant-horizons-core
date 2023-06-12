@@ -21,11 +21,13 @@ package com.seibel.lod.core.config;
 
 
 import com.seibel.lod.api.enums.config.*;
-import com.seibel.lod.api.enums.config.quickOptions.EQuickQuality;
-import com.seibel.lod.api.enums.config.quickOptions.EQuickThread;
+import com.seibel.lod.api.enums.config.quickOptions.EQualityPreset;
+import com.seibel.lod.api.enums.config.quickOptions.EThreadPreset;
 import com.seibel.lod.api.enums.rendering.*;
 import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
+import com.seibel.lod.core.config.eventHandlers.presets.RenderQualityPresetConfigEventHandler;
 import com.seibel.lod.core.config.eventHandlers.RenderCacheConfigEventHandler;
+import com.seibel.lod.core.config.eventHandlers.presets.ThreadPresetConfigEventHandler;
 import com.seibel.lod.core.config.types.*;
 import com.seibel.lod.core.config.types.enums.*;
 import com.seibel.lod.coreapi.ModInfo;
@@ -72,35 +74,38 @@ public class Config
 				.comment(""
 						+ "If true, Distant Horizons will render LODs beyond the vanilla render distance."
 						+ "")
-				.setAppearance(ConfigEntryAppearance.ONLY_IN_GUI) // TODO set when the game boots
+				.setAppearance(EConfigEntryAppearance.ONLY_IN_GUI) // TODO set when the game boots
 				//.addListener(null) // TODO add listener
 				.build();
 		
 		public static ConfigLinkedEntry quickLodChunkRenderDistance = new ConfigLinkedEntry(Advanced.Graphics.Quality.lodChunkRenderDistance);
 		
-		public static ConfigEntry<EQuickQuality> quickQualitySetting = new ConfigEntry.Builder<EQuickQuality>()
-				.set(EQuickQuality.MEDIUM)
+		public static ConfigEntry<EQualityPreset> qualityPresetSetting = new ConfigEntry.Builder<EQualityPreset>()
+				.set(EQualityPreset.MEDIUM) // the default value is set via the listener when accessed
 				.comment(""
 						+ "Changing this setting will modify a number of different settings that will change the \n"
 						+ "visual fidelity of the rendered LODs.\n"
 						+ "\n"
 						+ "Higher settings will improve the graphical quality while increasing GPU and memory use.\n"
 						+ "")
-				.setAppearance(ConfigEntryAppearance.ONLY_IN_GUI) // TODO set when the game boots
-				//.addListener(null) // TODO add listener
+				.setAppearance(EConfigEntryAppearance.ONLY_IN_GUI)
+				.addListener(RenderQualityPresetConfigEventHandler.INSTANCE)
 				.build();
 		
-		public static ConfigEntry<EQuickThread> quickThreadSetting = new ConfigEntry.Builder<EQuickThread>()
-				.set(EQuickThread.BALANCED)
+		public static ConfigEntry<EThreadPreset> threadPresetSetting = new ConfigEntry.Builder<EThreadPreset>()
+				.set(EThreadPreset.LOW_IMPACT) // the default value is set via the listener when accessed
 				.comment(""
 						+ "Changing this setting will modify a number of different settings that will change \n"
 						+ "the load that Distant Horizons is allowed to put on your CPU. \n"
 						+ "\n"
 						+ "Higher options will improve LOD generation and loading speed, \n"
 						+ "but will increase CPU load and may introduce stuttering.\n"
+						+ "\n"
+						+ "Note: on CPUs with 4 cores or less these settings will be less effective \n"
+						+ "      and some settings will give similar results. \n"
 						+ "")
-				.setAppearance(ConfigEntryAppearance.ONLY_IN_GUI) // TODO set when the game boots
-				//.addListener(null) // TODO add listener
+				.setAppearance(EConfigEntryAppearance.ONLY_IN_GUI)
+				.addListener(ThreadPresetConfigEventHandler.INSTANCE)
 				.build();
 		
 		public static ConfigLinkedEntry quickEnableWorldGenerator = new ConfigLinkedEntry(Advanced.WorldGenerator.enableDistantGeneration);
@@ -114,15 +119,14 @@ public class Config
 		
 		
 		public static ConfigCategory advanced = new ConfigCategory.Builder().set(Advanced.class).build();
+//		public static ConfigCategory resetSettingsConfirmation = new ConfigCategory.Builder().set(ResetConfirmation.class).build();
 		
 		public static class Advanced
 		{
-			public static ConfigUIComment advancedConfigScreenNote = new ConfigUIComment();
-			
 			public static ConfigCategory graphics = new ConfigCategory.Builder().set(Graphics.class).build();
 			public static ConfigCategory worldGenerator = new ConfigCategory.Builder().set(WorldGenerator.class).build();
 			public static ConfigCategory multiplayer = new ConfigCategory.Builder().set(Multiplayer.class).build();
-			public static ConfigCategory threading = new ConfigCategory.Builder().set(MultiThreading.class).build();
+			public static ConfigCategory multiThreading = new ConfigCategory.Builder().set(MultiThreading.class).build();
 			public static ConfigCategory buffers = new ConfigCategory.Builder().set(GpuBuffers.class).build();
 			public static ConfigCategory autoUpdater = new ConfigCategory.Builder().set(AutoUpdater.class).build();
 			
@@ -155,13 +159,13 @@ public class Config
 									+ "Lowest Quality: " + EHorizontalResolution.CHUNK + "\n"
 									+ "Highest Quality: " + EHorizontalResolution.BLOCK)
 							.addListener(RenderCacheConfigEventHandler.INSTANCE)
-							.setPerformance(ConfigEntryPerformance.MEDIUM)
+							.setPerformance(EConfigEntryPerformance.MEDIUM)
 							.build();
 					
 					public static ConfigEntry<Integer> lodChunkRenderDistance = new ConfigEntry.Builder<Integer>()
 							.setMinDefaultMax(32, 128, 4096)
 							.comment("The radius of the mod's render distance. (measured in chunks)")
-							.setPerformance(ConfigEntryPerformance.HIGH)
+							.setPerformance(EConfigEntryPerformance.HIGH)
 							.build();
 					
 					public static ConfigEntry<EVerticalQuality> verticalQuality = new ConfigEntry.Builder<EVerticalQuality>()
@@ -173,8 +177,8 @@ public class Config
 									+ "will increase memory and GPU usage. \n"
 									+ "\n"
 									+ "Lowest Quality: " + EVerticalQuality.HEIGHT_MAP + "\n"
-									+ "Highest Quality: " + EVerticalQuality.ULTRA)
-							.setPerformance(ConfigEntryPerformance.VERY_HIGH)
+									+ "Highest Quality: " + EVerticalQuality.EXTREME)
+							.setPerformance(EConfigEntryPerformance.VERY_HIGH)
 							.addListener(RenderCacheConfigEventHandler.INSTANCE)
 							.build();
 					
@@ -198,7 +202,7 @@ public class Config
 									+ "This indicates how quickly LODs decrease in quality the further away they are. \n"
 									+ "Higher settings will render higher quality fake chunks farther away, \n"
 									+ "but will increase memory and GPU usage.")
-							.setPerformance(ConfigEntryPerformance.MEDIUM)
+							.setPerformance(EConfigEntryPerformance.MEDIUM)
 							.build();
 					
 					public static ConfigEntry<ETransparency> transparency = new ConfigEntry.Builder<ETransparency>()
@@ -210,7 +214,31 @@ public class Config
 									+ ETransparency.FAKE + ": LODs will be opaque, but shaded to match the blocks underneath. \n"
 									+ ETransparency.DISABLED + ": LODs will be opaque. \n"
 									+ "")
-							.setPerformance(ConfigEntryPerformance.MEDIUM)
+							.setPerformance(EConfigEntryPerformance.MEDIUM)
+							.build();
+					
+					public static ConfigEntry<EBlocksToAvoid> blocksToIgnore = new ConfigEntry.Builder<EBlocksToAvoid>()
+							.set(EBlocksToAvoid.NON_COLLIDING)
+							.comment(""
+									+ "What blocks shouldn't be rendered as LODs? \n"
+									+ "\n"
+									+ EBlocksToAvoid.NONE + ": Represent all blocks in the LODs \n"
+									+ EBlocksToAvoid.NON_COLLIDING + ": Only represent solid blocks in the LODs (tall grass, torches, etc. won't count for a LOD's height) \n"
+									+ "")
+							.setPerformance(EConfigEntryPerformance.NONE)
+							.addListener(RenderCacheConfigEventHandler.INSTANCE)
+							.build();
+					
+					public static ConfigEntry<Boolean> tintWithAvoidedBlocks = new ConfigEntry.Builder<Boolean>()
+							.set(true)
+							.comment(""
+									+ "Should the blocks underneath avoided blocks gain the color of the avoided block? \n"
+									+ "\n"
+									+ "True: a red flower will tint the grass below it red. \n"
+									+ "False: skipped blocks will not change color of surface below them. "
+									+"")
+							.setPerformance(EConfigEntryPerformance.NONE)
+							.addListener(RenderCacheConfigEventHandler.INSTANCE)
 							.build();
 					
 					// TODO fixme
@@ -230,12 +258,6 @@ public class Config
 				
 				public static class Fog
 				{
-					public static ConfigEntry<EFogDistance> fogDistance = new ConfigEntry.Builder<EFogDistance>()
-							.set(EFogDistance.FAR)
-							.comment("At what distance should Fog be drawn on the LODs?")
-							.setPerformance(ConfigEntryPerformance.NONE)
-							.build();
-					
 					public static ConfigEntry<EFogDrawMode> fogDrawMode = new ConfigEntry.Builder<EFogDrawMode>()
 							.set(EFogDrawMode.FOG_ENABLED)
 							.comment(""
@@ -247,7 +269,13 @@ public class Config
 									+ EFogDrawMode.FOG_DISABLED + ": Always draw fast fog on the LODs \n"
 									+ "\n"
 									+ "Disabling fog will improve GPU performance.")
-							.setPerformance(ConfigEntryPerformance.VERY_LOW)
+							.setPerformance(EConfigEntryPerformance.VERY_LOW)
+							.build();
+					
+					public static ConfigEntry<EFogDistance> fogDistance = new ConfigEntry.Builder<EFogDistance>()
+							.set(EFogDistance.FAR)
+							.comment("At what distance should Fog be drawn on the LODs?")
+							.setPerformance(EConfigEntryPerformance.NONE)
 							.build();
 					
 					public static ConfigEntry<EFogColorMode> fogColorMode = new ConfigEntry.Builder<EFogColorMode>()
@@ -257,7 +285,7 @@ public class Config
 									+ "\n"
 									+ EFogColorMode.USE_WORLD_FOG_COLOR + ": Use the world's fog color. \n"
 									+ EFogColorMode.USE_SKY_COLOR + ": Use the sky's color.")
-							.setPerformance(ConfigEntryPerformance.NONE)
+							.setPerformance(EConfigEntryPerformance.NONE)
 							.build();
 					
 					public static ConfigEntry<Boolean> disableVanillaFog = new ConfigEntry.Builder<Boolean>()
@@ -483,13 +511,19 @@ public class Config
 //									+ "Disable this if you see LODs disappearing at the corners of your vision.")
 //							.build();
 					
-					// TODO replace with better options
-					public static ConfigEntry<Boolean> useExtendedNearClipPlane = new ConfigEntry.Builder<Boolean>()
-							.set(true)
+					public static ConfigEntry<EOverdrawPrevention> overdrawPrevention = new ConfigEntry.Builder<EOverdrawPrevention>()
+							.set(EOverdrawPrevention.MEDIUM)
 							.comment(""
-									+ "Will prevent some overdraw issues, but may cause nearby fake chunks to render incorrectly \n"
-									+ " especially when in/near an ocean.")
-							.setPerformance(ConfigEntryPerformance.NONE)
+									+ "Determines how far Distant Horizon's near clip plane will render. \n"
+									+ "\n"
+									+ "Higher values will prevent LODs from rendering behind vanilla blocks at a higher distance,\n"
+									+ "but may cause holes to appear in the LODs. \n"
+									+ "Holes are most likely at the left and right edges of the screen \n"
+									+ "when flying through unloaded terrain. \n"
+									+ "\n"
+									+ "Increasing the vanilla render distance increases the effectiveness of these options."
+									+ "")
+							.setPerformance(EConfigEntryPerformance.NONE)
 							.build();
 					
 					public static ConfigEntry<Double> brightnessMultiplier = new ConfigEntry.Builder<Double>() // TODO: Make this a float (the ClassicConfigGUI doesnt support floats)
@@ -512,7 +546,6 @@ public class Config
 									+ "2 = very saturated")
 							.build();
 					
-					// TODO replace with better options
 					public static ConfigEntry<Boolean> enableCaveCulling = new ConfigEntry.Builder<Boolean>()
 							.set(true)
 							.comment(""
@@ -654,33 +687,9 @@ public class Config
 								+ EGenerationPriority.AUTO + " \n"
 								+ "Uses " + EGenerationPriority.BALANCED + " when on a single player world \n"
 								+ " and " + EGenerationPriority.NEAR_FIRST + " when connected to a server.")
-						.setPerformance(ConfigEntryPerformance.NONE)
+						.setPerformance(EConfigEntryPerformance.NONE)
 						.build();
 				
-				// TODO fixme
-				public static ConfigEntry<EBlocksToAvoid> blocksToAvoid = new ConfigEntry.Builder<EBlocksToAvoid>()
-						.set(EBlocksToAvoid.BOTH)
-						.comment(""
-								+ "When generating fake chunks, what blocks should be ignored? \n"
-								+ "Ignored blocks don't affect the height of the fake chunk, but might affect the color. \n"
-								+ "So using " + EBlocksToAvoid.BOTH + " will prevent snow covered blocks from appearing one block too tall, \n"
-								+ " but will still show the snow's color.\n"
-								+ "\n"
-								+ EBlocksToAvoid.NONE + ": Use all blocks when generating fake chunks \n"
-								+ EBlocksToAvoid.NON_FULL + ": Only use full blocks when generating fake chunks (ignores slabs, lanterns, torches, tall grass, etc.) \n"
-								+ EBlocksToAvoid.NO_COLLISION + ": Only use solid blocks when generating fake chunks (ignores tall grass, torches, etc.) \n"
-								+ EBlocksToAvoid.BOTH + ": Only use full solid blocks when generating fake chunks")
-						.setPerformance(ConfigEntryPerformance.NONE)
-						.build();
-				
-				// TODO fixme
-				public static ConfigEntry<Boolean> tintWithAvoidedBlocks = new ConfigEntry.Builder<Boolean>()
-						.set(true)
-						.comment(""
-								+ "Should the blocks underneath avoided blocks gain the color of the avoided block? \n"
-								+ " True: a red flower on grass will tint the grass below it red"
-								+ " False: skipped blocks will not change color of surface below them")
-						.build();
 			}
 			
 			public static class Multiplayer
@@ -995,7 +1004,7 @@ public class Config
 						.build();
 				
 				
-				// can be set to public to show in the config file and UI
+				// can be set to public inorder to show in the config file and UI
 				private static ConfigCategory exampleConfigScreen = new ConfigCategory.Builder()
 						.set(ExampleConfigScreen.class)
 						.build();
@@ -1061,6 +1070,18 @@ public class Config
 				}
 				
 			}
+			
+		}
+		
+		public static class ResetConfirmation
+		{
+			public static ConfigUIComment resetConfirmationNote = new ConfigUIComment();
+			
+			public static ConfigEntry<Boolean> resetAllSettings = new ConfigEntry.Builder<Boolean>()
+					.set(false)
+					.setAppearance(EConfigEntryAppearance.ONLY_IN_GUI)
+					//.addListener(null) // TODO add listener
+					.build();
 			
 		}
 		

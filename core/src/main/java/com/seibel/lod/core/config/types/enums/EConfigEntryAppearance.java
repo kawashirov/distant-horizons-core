@@ -6,7 +6,7 @@ package com.seibel.lod.core.config.types.enums;
  *
  * @author coolGi
  */
-public enum ConfigEntryAppearance
+public enum EConfigEntryAppearance
 {
     /** Defeat option */
     ALL(true, true),
@@ -14,13 +14,15 @@ public enum ConfigEntryAppearance
     ONLY_IN_GUI(true, false),
     /** Only show the option in the file. There would be no way to access it using the UI */
     ONLY_IN_FILE(true, false);
-
+	
     /** Sets whether the option should show in the UI */
     public final boolean showInGui;
     /** Sets whether to save an option, <br> If set to false, the option will be reset on game restart */
     public final boolean showInFile;
 	
-    ConfigEntryAppearance(boolean showInGui, boolean showInFile) { // If both are false then the config won't touch the option, but it would still be accessable if explicitly called 
+    EConfigEntryAppearance(boolean showInGui, boolean showInFile)
+	{ 
+		// If both are false then the config won't touch the option, but it would still be accessible if explicitly called 
         this.showInGui = showInGui;
         this.showInFile = showInFile;
     }

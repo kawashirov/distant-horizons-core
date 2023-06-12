@@ -1,6 +1,6 @@
 package com.seibel.lod.core.config.types;
 
-import com.seibel.lod.core.config.types.enums.ConfigEntryAppearance;
+import com.seibel.lod.core.config.types.enums.EConfigEntryAppearance;
 
 /**
  * Creates a UI element that copies everything from another element.
@@ -10,12 +10,12 @@ import com.seibel.lod.core.config.types.enums.ConfigEntryAppearance;
  */
 public class ConfigLinkedEntry extends AbstractConfigType<AbstractConfigType, ConfigLinkedEntry> {
     public ConfigLinkedEntry(AbstractConfigType value) {
-        super(ConfigEntryAppearance.ONLY_IN_GUI, value);
+        super(EConfigEntryAppearance.ONLY_IN_GUI, value);
     }
 
     /** Appearance shouldn't be changed */
     @Override
-    public void setAppearance(ConfigEntryAppearance newAppearance) {}
+    public void setAppearance(EConfigEntryAppearance newAppearance) {}
 
     /** Value shouldn't be changed after creation */
     @Override
@@ -25,7 +25,7 @@ public class ConfigLinkedEntry extends AbstractConfigType<AbstractConfigType, Co
     public static class Builder extends AbstractConfigType.Builder<AbstractConfigType, Builder> {
         /** Appearance shouldn't be changed */
         @Override
-        public Builder setAppearance(ConfigEntryAppearance newAppearance) {
+        public Builder setAppearance(EConfigEntryAppearance newAppearance) {
             return this;
         }
 

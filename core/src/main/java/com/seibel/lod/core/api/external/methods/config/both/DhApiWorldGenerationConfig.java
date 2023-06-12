@@ -22,11 +22,10 @@ package com.seibel.lod.core.api.external.methods.config.both;
 import com.seibel.lod.api.interfaces.config.IDhApiConfigValue;
 import com.seibel.lod.api.interfaces.config.both.IDhApiWorldGenerationConfig;
 import com.seibel.lod.api.objects.config.DhApiConfigValue;
+import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.config.Config.Client.Advanced.WorldGenerator;
 import com.seibel.lod.api.enums.config.EBlocksToAvoid;
 import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
-import com.seibel.lod.api.enums.config.EGenerationPriority;
-import com.seibel.lod.api.enums.config.ELightGenerationMode;
 
 /**
  * Distant Horizons' world generation configuration. <br><br>
@@ -55,12 +54,12 @@ public class DhApiWorldGenerationConfig implements IDhApiWorldGenerationConfig
 	@Deprecated
 	@Override
 	public IDhApiConfigValue<EBlocksToAvoid> getBlocksToAvoid()
-	{ return new DhApiConfigValue<>(WorldGenerator.blocksToAvoid); }
+	{ return new DhApiConfigValue<>(Config.Client.Advanced.Graphics.Quality.blocksToIgnore); }
 	
 	@Deprecated
 	@Override
 	public IDhApiConfigValue<Boolean> getTintWithAvoidedBlocks()
-	{ return new DhApiConfigValue<>(WorldGenerator.tintWithAvoidedBlocks); }
+	{ return new DhApiConfigValue<>(Config.Client.Advanced.Graphics.Quality.tintWithAvoidedBlocks); }
 	
 	
 }

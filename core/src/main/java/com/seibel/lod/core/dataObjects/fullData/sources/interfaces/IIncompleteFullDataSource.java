@@ -17,5 +17,6 @@ public interface IIncompleteFullDataSource extends IFullDataSource
 	 * @return a new {@link CompleteFullDataSource} if successful, this if the promotion failed, .
 	 */
 	IFullDataSource tryPromotingToCompleteDataSource();
-	
+
+	boolean hasBeenPromoted();
 }
