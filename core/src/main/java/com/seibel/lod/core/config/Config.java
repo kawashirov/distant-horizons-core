@@ -203,6 +203,30 @@ public class Config
 							.setPerformance(EConfigEntryPerformance.MEDIUM)
 							.build();
 					
+					public static ConfigEntry<EBlocksToAvoid> blocksToIgnore = new ConfigEntry.Builder<EBlocksToAvoid>()
+							.set(EBlocksToAvoid.NON_COLLIDING)
+							.comment(""
+									+ "What blocks shouldn't be rendered as LODs? \n"
+									+ "\n"
+									+ EBlocksToAvoid.NONE + ": Represent all blocks in the LODs \n"
+									+ EBlocksToAvoid.NON_COLLIDING + ": Only represent solid blocks in the LODs (tall grass, torches, etc. won't count for a LOD's height) \n"
+									+ "")
+							.setPerformance(EConfigEntryPerformance.NONE)
+							.addListener(RenderCacheConfigEventHandler.INSTANCE)
+							.build();
+					
+					public static ConfigEntry<Boolean> tintWithAvoidedBlocks = new ConfigEntry.Builder<Boolean>()
+							.set(true)
+							.comment(""
+									+ "Should the blocks underneath avoided blocks gain the color of the avoided block? \n"
+									+ "\n"
+									+ "True: a red flower will tint the grass below it red. \n"
+									+ "False: skipped blocks will not change color of surface below them. "
+									+"")
+							.setPerformance(EConfigEntryPerformance.NONE)
+							.addListener(RenderCacheConfigEventHandler.INSTANCE)
+							.build();
+					
 					// TODO fixme
 //					public static ConfigEntry<Integer> lodBiomeBlending = new ConfigEntry.Builder<Integer>()
 //							.setMinDefaultMax(0,1,7)
@@ -647,30 +671,6 @@ public class Config
 						.setPerformance(EConfigEntryPerformance.NONE)
 						.build();
 				
-				// TODO fixme
-				public static ConfigEntry<EBlocksToAvoid> blocksToAvoid = new ConfigEntry.Builder<EBlocksToAvoid>()
-						.set(EBlocksToAvoid.BOTH)
-						.comment(""
-								+ "When generating fake chunks, what blocks should be ignored? \n"
-								+ "Ignored blocks don't affect the height of the fake chunk, but might affect the color. \n"
-								+ "So using " + EBlocksToAvoid.BOTH + " will prevent snow covered blocks from appearing one block too tall, \n"
-								+ " but will still show the snow's color.\n"
-								+ "\n"
-								+ EBlocksToAvoid.NONE + ": Use all blocks when generating fake chunks \n"
-								+ EBlocksToAvoid.NON_FULL + ": Only use full blocks when generating fake chunks (ignores slabs, lanterns, torches, tall grass, etc.) \n"
-								+ EBlocksToAvoid.NO_COLLISION + ": Only use solid blocks when generating fake chunks (ignores tall grass, torches, etc.) \n"
-								+ EBlocksToAvoid.BOTH + ": Only use full solid blocks when generating fake chunks")
-						.setPerformance(EConfigEntryPerformance.NONE)
-						.build();
-				
-				// TODO fixme
-				public static ConfigEntry<Boolean> tintWithAvoidedBlocks = new ConfigEntry.Builder<Boolean>()
-						.set(true)
-						.comment(""
-								+ "Should the blocks underneath avoided blocks gain the color of the avoided block? \n"
-								+ " True: a red flower on grass will tint the grass below it red"
-								+ " False: skipped blocks will not change color of surface below them")
-						.build();
 			}
 			
 			public static class Multiplayer

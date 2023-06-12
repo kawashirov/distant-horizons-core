@@ -12,8 +12,4 @@ public interface IBlockStateWrapper extends IDhApiBlockStateWrapper
 {
     String serialize();
 	
-// TODO:
-//    boolean hasFaceCullingFor(ELodDirection dir);
-//    boolean hasNoCollision();
-//    boolean noFaceIsFullFace();
 }

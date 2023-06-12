@@ -1,5 +1,6 @@
 package com.seibel.lod.core.dataObjects.transformers;
 
+import com.seibel.lod.api.enums.config.EBlocksToAvoid;
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
 import com.seibel.lod.core.dataObjects.fullData.accessor.SingleColumnFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
@@ -235,9 +236,16 @@ public class FullDataToRenderDataTransformer
 	
 	private static void iterateAndConvert(IDhClientLevel level, int blockX, int blockZ, int genMode, ColumnArrayView column, SingleColumnFullDataAccessor data)
 	{
-		FullDataPointIdMap mapping = data.getMapping();
+		boolean avoidSolidBlocks = (Config.Client.Advanced.Graphics.Quality.blocksToIgnore.get() == EBlocksToAvoid.NON_COLLIDING);
+		boolean colorBelowWithAvoidedBlocks = Config.Client.Advanced.Graphics.Quality.tintWithAvoidedBlocks.get();
+		
+		FullDataPointIdMap fullDataMapping = data.getMapping();
+		
 		boolean isVoid = true;
-		int offset = 0;
+		int colorToApplyToNextBlock = -1;
+		int columnOffset = 0;
+		
+		// goes from the top down
 		for (int i = 0; i < data.getSingleLength(); i++)
 		{
 			long fullData = data.getSingle(i);
@@ -245,19 +253,49 @@ public class FullDataToRenderDataTransformer
 			int blockHeight = FullDataPointUtil.getHeight(fullData);
 			int id = FullDataPointUtil.getId(fullData);
 			int light = FullDataPointUtil.getLight(fullData);
-			IBiomeWrapper biome = mapping.getBiomeWrapper(id);
-			IBlockStateWrapper block = mapping.getBlockStateWrapper(id);
+			IBiomeWrapper biome = fullDataMapping.getBiomeWrapper(id);
+			IBlockStateWrapper block = fullDataMapping.getBlockStateWrapper(id);
 			if (block.equals(AIR))
 			{
+				// we don't render air
 				continue;
 			}
 			
+			
+			// solid block check
+			if (avoidSolidBlocks && !block.isSolid() && !block.isLiquid())
+			{
+				if (colorBelowWithAvoidedBlocks)
+				{
+					colorToApplyToNextBlock = level.computeBaseColor(new DhBlockPos(blockX, bottomY + level.getMinY(), blockZ), biome, block);
+				}
+				
+				// don't add this block
+				continue;
+			}
+			
+			
+			int color;
+			if (colorToApplyToNextBlock == -1)
+			{
+				// use this block's color
+				color = level.computeBaseColor(new DhBlockPos(blockX, bottomY + level.getMinY(), blockZ), biome, block);
+			}
+			else
+			{
+				// use the previous block's color
+				color = colorToApplyToNextBlock;
+				colorToApplyToNextBlock = -1;
+			}
+			
+			
+			// add the block
 			isVoid = false;
-			int color = level.computeBaseColor(new DhBlockPos(blockX, bottomY + level.getMinY(), blockZ), biome, block);
 			long columnData = RenderDataPointUtil.createDataPoint(bottomY + blockHeight, bottomY, color, light, genMode);
-			column.set(offset, columnData);
-			offset++;
+			column.set(columnOffset, columnData);
+			columnOffset++;
 		}
+		
 		
 		if (isVoid)
 		{
