@@ -268,6 +268,7 @@ public class LodRenderer
 
 		shaderProgram.unbind();
 		//lightmapTexture.free();
+		DebugRenderer.INSTANCE.render(modelViewProjectionMatrix);
 		GL32.glClear(GL32.GL_DEPTH_BUFFER_BIT);
 
 		currentState.restore();
@@ -277,7 +278,6 @@ public class LodRenderer
 		profiler.pop();
 		tickLogger.incLogTries();
 
-		DebugRenderer.INSTANCE.render(modelViewProjectionMatrix);
 	}
 	
 	

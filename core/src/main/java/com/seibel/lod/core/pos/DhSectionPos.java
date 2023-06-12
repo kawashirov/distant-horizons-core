@@ -167,6 +167,20 @@ public class DhSectionPos
 			callback.accept(this.getChildByIndex(i));
 		}
 	}
+
+	/** Applies the given consumer to all children of the position at the given section detail level. */
+	public void forEachChildAtLevel(byte sectionDetailLevel, Consumer<DhSectionPos> callback)
+	{
+		if (sectionDetailLevel == this.sectionDetailLevel)
+		{
+			callback.accept(this);
+			return;
+		}
+		for (int i = 0; i < 4; i++)
+		{
+			this.getChildByIndex(i).forEachChildAtLevel(sectionDetailLevel, callback);
+		}
+	}
 	
 	public DhSectionPos getParentPos() { return new DhSectionPos((byte) (this.sectionDetailLevel + 1), BitShiftUtil.half(this.sectionX), BitShiftUtil.half(this.sectionZ)); }
 	

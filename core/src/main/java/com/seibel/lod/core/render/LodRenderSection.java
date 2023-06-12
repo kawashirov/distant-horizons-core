@@ -64,7 +64,7 @@ public class LodRenderSection implements IDebugRenderable
 
 		float yOffset = Objects.hashCode(this) / (float) Integer.MAX_VALUE * 16f;
 
-		r.renderBox(this.pos, yOffset, yOffset, 0.1f, color);
+		//r.renderBox(this.pos, yOffset, yOffset, 0.1f, color);
 	}
 	
 	

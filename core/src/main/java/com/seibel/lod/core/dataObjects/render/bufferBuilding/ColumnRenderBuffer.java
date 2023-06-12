@@ -65,7 +65,7 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer implements IDebugRe
 			return;
 		}
 		Color c = Color.green;
-		r.renderBox(debugPos, 128, 128, 0.05f, c);
+		//r.renderBox(debugPos, 128, 128, 0.05f, c);
 	}
 	
 	

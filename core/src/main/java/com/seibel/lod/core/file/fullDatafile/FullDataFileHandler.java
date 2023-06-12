@@ -168,28 +168,28 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	 * @param preexistingFiles the list of {@link FullDataMetaFile}'s that have been created for the given position.
 	 * @param missingFilePositions the list of {@link DhSectionPos}'s that don't have {@link FullDataMetaFile} created for them yet.
 	 */
-    protected void getDataFilesForPosition(DhSectionPos basePos, DhSectionPos pos, 
+    protected void getDataFilesForPosition(DhSectionPos effectivePos, DhSectionPos posAreaToGet,
 			ArrayList<FullDataMetaFile> preexistingFiles, ArrayList<DhSectionPos> missingFilePositions)
 	{
-        byte sectionDetail = pos.sectionDetailLevel;
+        byte sectionDetail = posAreaToGet.sectionDetailLevel;
         boolean allEmpty = true;
 		
         outerLoop:
         while (--sectionDetail >= this.minDetailLevel)
 		{
-            DhLodPos minPos = pos.getCorner().getCornerLodPos(sectionDetail);
-            int count = pos.getSectionBBoxPos().getWidthAtDetail(sectionDetail);
+            DhLodPos minPos = posAreaToGet.getCorner().getCornerLodPos(sectionDetail);
+            int count = posAreaToGet.getSectionBBoxPos().getWidthAtDetail(sectionDetail);
 			
             for (int xOffset = 0; xOffset < count; xOffset++)
 			{
                 for (int zOffset = 0; zOffset < count; zOffset++)
 				{
                     DhSectionPos subPos = new DhSectionPos(sectionDetail, xOffset+minPos.x, zOffset+minPos.z);
-                    LodUtil.assertTrue(pos.overlaps(basePos) && subPos.overlaps(pos));
+                    LodUtil.assertTrue(posAreaToGet.overlaps(effectivePos) && subPos.overlaps(posAreaToGet));
 
                     //TODO: The following check is temporary as we only sample corner points, which means
                     // on a very different level, we may not need the entire section at all.
-                    if (!CompleteFullDataSource.firstDataPosCanAffectSecond(basePos, subPos))
+                    if (!CompleteFullDataSource.firstDataPosCanAffectSecond(effectivePos, subPos))
 					{
 						continue;
 					}
@@ -207,15 +207,15 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		{
 			// there are no children to this quad tree,
 			// add this leaf's position
-            missingFilePositions.add(pos);
+            missingFilePositions.add(posAreaToGet);
         }
 		else 
 		{
 			// there are children in this quad tree, search them
-			this.recursiveGetDataFilesForPosition(0, basePos, pos, preexistingFiles, missingFilePositions);
-			this.recursiveGetDataFilesForPosition(1, basePos, pos, preexistingFiles, missingFilePositions);
-			this.recursiveGetDataFilesForPosition(2, basePos, pos, preexistingFiles, missingFilePositions);
-			this.recursiveGetDataFilesForPosition(3, basePos, pos, preexistingFiles, missingFilePositions);
+			this.recursiveGetDataFilesForPosition(0, effectivePos, posAreaToGet, preexistingFiles, missingFilePositions);
+			this.recursiveGetDataFilesForPosition(1, effectivePos, posAreaToGet, preexistingFiles, missingFilePositions);
+			this.recursiveGetDataFilesForPosition(2, effectivePos, posAreaToGet, preexistingFiles, missingFilePositions);
+			this.recursiveGetDataFilesForPosition(3, effectivePos, posAreaToGet, preexistingFiles, missingFilePositions);
         }
     }
 	private void recursiveGetDataFilesForPosition(int childIndex, DhSectionPos basePos, DhSectionPos pos, ArrayList<FullDataMetaFile> preexistingFiles, ArrayList<DhSectionPos> missingFilePositions)
@@ -403,7 +403,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	
 	@Override
     public IFullDataSource onDataFileLoaded(IFullDataSource source, BaseMetaData metaData,
-                                          Consumer<IFullDataSource> onUpdated, Function<IFullDataSource, Boolean> updater)
+                                          Consumer<IFullDataSource> onUpdated, Function<IFullDataSource, Boolean> updater, boolean justCreated)
 	{
         boolean changed = updater.apply(source);
 //		if (changed)

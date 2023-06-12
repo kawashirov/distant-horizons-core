@@ -188,7 +188,7 @@ public class DebugRenderer {
         GL32.glViewport(0,0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight());
         GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_LINE);
         //GL32.glLineWidth(2);
-        GL32.glDisable(GL32.GL_DEPTH_TEST);
+        GL32.glEnable(GL32.GL_DEPTH_TEST);
         GL32.glDisable(GL32.GL_STENCIL_TEST);
         GL32.glDisable(GL32.GL_BLEND);
         GL32.glDisable(GL32.GL_SCISSOR_TEST);

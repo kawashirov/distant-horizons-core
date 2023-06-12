@@ -163,7 +163,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 					this.baseMetaData = this._makeBaseMetaData(fullDataSource);
 					return fullDataSource;
 				})
-				.thenApply((fullDataSource) -> this.fullDataSourceProvider.onDataFileLoaded(fullDataSource, this.baseMetaData, this::_updateAndWriteDataSource, this::_applyWriteQueueToFullDataSource))
+				.thenApply((fullDataSource) -> this.fullDataSourceProvider.onDataFileLoaded(fullDataSource, this.baseMetaData, this::_updateAndWriteDataSource, this::_applyWriteQueueToFullDataSource, true))
 				.whenComplete((fullDataSource, exception) ->
 				{
 					if (exception != null)
@@ -225,7 +225,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 									"loading one into the cache! Is this a deadlock?");
 					
 					// fire the onDataLoaded method
-					fullDataSource = this.fullDataSourceProvider.onDataFileLoaded(fullDataSource, this.baseMetaData, this::_updateAndWriteDataSource, this::_applyWriteQueueToFullDataSource);
+					fullDataSource = this.fullDataSourceProvider.onDataFileLoaded(fullDataSource, this.baseMetaData, this::_updateAndWriteDataSource, this::_applyWriteQueueToFullDataSource, false);
 					return fullDataSource;
 					
 				}, executorService)

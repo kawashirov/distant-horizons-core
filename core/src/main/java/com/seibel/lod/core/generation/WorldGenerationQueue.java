@@ -44,7 +44,7 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 	public final byte minGranularity;
 	
 	/** largest numerical detail level allowed */
-	 final byte largestDataDetail;
+	public final byte largestDataDetail;
 	/** lowest numerical detail level allowed */
 	public final byte smallestDataDetail;
 	
@@ -65,7 +65,7 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 	// debug variables to test for duplicate world generator requests //
 	/** limits how many of the previous world gen requests we should track */
 	private static final int MAX_ALREADY_GENERATED_COUNT = 100;
-	private final HashSet<DhLodPos> alreadyGeneratedPosHashSet = new HashSet<>(MAX_ALREADY_GENERATED_COUNT);
+	private final HashMap<DhLodPos, StackTraceElement[]> alreadyGeneratedPosHashSet = new HashMap<>(MAX_ALREADY_GENERATED_COUNT);
 	private final Queue<DhLodPos> alreadyGeneratedPosQueue = new LinkedList<>();
 	
 	private static ExecutorService worldGeneratorThreadPool;
@@ -271,8 +271,7 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 			if (newGenTask != null) // TODO add an option to skip leaves with null values and potentially auto-prune them
 			{
 				CheckingTasks.add(newGenTask);
-				// TODO this isn't a long term fix, in the long term the tree should automatically remove out of bound nodes when moved
-				if (!this.waitingTaskQuadTree.isSectionPosInBounds(taskSectionPos) || !newGenTask.StillValid())
+				if (!newGenTask.StillValid())
 				{
 					// skip and remove out-of-bound tasks or tasks that are no longer valid
 					taskNode.value = null;
@@ -298,7 +297,6 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 		}
 		
 		// remove the task we found, we are going to start it and don't want to run it multiple times
-		// TODO the setValue can fail if the user is moving and the task that was once in range is no longer in range
 		WorldGenTask removedWorldGenTask = this.waitingTaskQuadTree.setValue(new DhSectionPos(closestTask.pos.detailLevel, closestTask.pos.x, closestTask.pos.z), null);
 		
 		// do we need to modify this task to generate it?
@@ -322,6 +320,8 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 				// Note: Due to concurrency reasons, even if the currently running task is compatible with 
 				// 		   the newly selected task, we cannot use it,
 				//         as some chunks may have already been written into.
+
+				LOGGER.warn("A task already exists for this position, todo: {}", closestTask.pos);
 			}
 			
 			// a task has been started
@@ -338,13 +338,6 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 			DhSectionPos sectionPos = new DhSectionPos(closestTask.pos.detailLevel, closestTask.pos.x, closestTask.pos.z);
 			sectionPos.forEachChild((childDhSectionPos) -> 
 			{
-				if (!this.waitingTaskQuadTree.isSectionPosInBounds(childDhSectionPos))
-				{
-					// don't attempt to generate terrain outside the user's render distance
-					return;
-				}
-				
-				
 				CompletableFuture<WorldGenResult> newFuture = new CompletableFuture<>();
 				childFutures.add(newFuture);
 				
@@ -376,16 +369,18 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 		DhChunkPos chunkPosMin = new DhChunkPos(taskPos.getCornerBlockPos());
 		
 		// check if this is a duplicate generation task
-		if (this.alreadyGeneratedPosHashSet.contains(inProgressTaskGroup.group.pos))
+		if (this.alreadyGeneratedPosHashSet.containsKey(inProgressTaskGroup.group.pos))
 		{
 			// temporary solution to prevent generating the same section multiple times
 			LOGGER.warn("Duplicate generation section " + taskPos + " with granularity [" + granularity + "] at " + chunkPosMin + ". Skipping...");
-			
+
+			StackTraceElement[] stackTrace = this.alreadyGeneratedPosHashSet.get(inProgressTaskGroup.group.pos);
+
 			// sending a success result is necessary to make sure the render sections are reloaded correctly 
 			inProgressTaskGroup.group.worldGenTasks.forEach(worldGenTask -> worldGenTask.future.complete(WorldGenResult.CreateSuccess(new DhSectionPos(granularity, taskPos))));
 			return;
 		}
-		this.alreadyGeneratedPosHashSet.add(inProgressTaskGroup.group.pos);
+		this.alreadyGeneratedPosHashSet.put(inProgressTaskGroup.group.pos, Thread.currentThread().getStackTrace());
 		this.alreadyGeneratedPosQueue.add(inProgressTaskGroup.group.pos);
 		
 		// remove extra tracked duplicate positions
@@ -627,10 +622,10 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 	public void debugRender(DebugRenderer r) {
 		CheckingTasks.forEach((t) -> {
 			DhLodPos pos = t.pos;
-			r.renderBox(pos, -32f, 64f, 0.05f, Color.blue);
+			r.renderBox(pos, -32f, 128f, 0.05f, Color.blue);
 		});
 		this.inProgressGenTasksByLodPos.forEach((pos, t) -> {
-			r.renderBox(pos, -30f, 64f, 0.05f, Color.red);
+			r.renderBox(pos, -30f, 128f, 0.05f, Color.red);
 		});
 	}
 }
