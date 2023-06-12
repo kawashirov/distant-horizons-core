@@ -54,8 +54,6 @@ public enum EHorizontalResolution
 	
 	
 	
-	
-	
 	/**
 	 * How many DataPoints should
 	 * be drawn per side, per LodChunk
@@ -92,15 +90,15 @@ public enum EHorizontalResolution
 	
 	EHorizontalResolution(int newLengthCount, int newDetailLevel)
 	{
-		detailLevel = (byte) newDetailLevel;
-		dataPointLengthCount = newLengthCount;
-		dataPointWidth = 16 / dataPointLengthCount;
+		this.detailLevel = (byte) newDetailLevel;
+		this.dataPointLengthCount = newLengthCount;
+		this.dataPointWidth = 16 / this.dataPointLengthCount;
 		
-		startX = new int[dataPointLengthCount * dataPointLengthCount];
-		endX = new int[dataPointLengthCount * dataPointLengthCount];
+		this.startX = new int[this.dataPointLengthCount * this.dataPointLengthCount];
+		this.endX = new int[this.dataPointLengthCount * this.dataPointLengthCount];
 		
-		startZ = new int[dataPointLengthCount * dataPointLengthCount];
-		endZ = new int[dataPointLengthCount * dataPointLengthCount];
+		this.startZ = new int[this.dataPointLengthCount * this.dataPointLengthCount];
+		this.endZ = new int[this.dataPointLengthCount * this.dataPointLengthCount];
 		
 		
 		int index = 0;
@@ -108,11 +106,11 @@ public enum EHorizontalResolution
 		{
 			for (int z = 0; z < newLengthCount; z++)
 			{
-				startX[index] = x * dataPointWidth;
-				startZ[index] = z * dataPointWidth;
+				this.startX[index] = x * this.dataPointWidth;
+				this.startZ[index] = z * this.dataPointWidth;
 				
-				endX[index] = (x * dataPointWidth) + dataPointWidth;
-				endZ[index] = (z * dataPointWidth) + dataPointWidth;
+				this.endX[index] = (x * this.dataPointWidth) + this.dataPointWidth;
+				this.endZ[index] = (z * this.dataPointWidth) + this.dataPointWidth;
 				
 				index++;
 			}
@@ -122,8 +120,9 @@ public enum EHorizontalResolution
 	
 	
 	
-	
-	
+	//================//
+	// static methods //
+	//================//
 	
 	/**
 	 * Returns an array of all LodDetails that have a detail level
@@ -169,7 +168,6 @@ public enum EHorizontalResolution
 		int index = MathUtil.clamp(0, distance / distanceBetweenDetails, lowerDetails.length - 1);
 		
 		return lowerDetails[index];
-		
 	}
 	
 }

@@ -24,7 +24,6 @@ import com.seibel.lod.api.interfaces.config.IDhApiConfigValue;
 import com.seibel.lod.api.interfaces.config.client.IDhApiGraphicsConfig;
 import com.seibel.lod.api.objects.config.DhApiConfigValue;
 import com.seibel.lod.coreapi.util.converters.RenderModeEnabledConverter;
-import com.seibel.lod.core.config.Config;
 import com.seibel.lod.api.enums.rendering.ERendererMode;
 import com.seibel.lod.core.config.Config.Client.Advanced.Graphics.Quality;
 import com.seibel.lod.core.config.Config.Client.Advanced.Debugging;
@@ -94,7 +93,7 @@ public class DhApiGraphicsConfig implements IDhApiGraphicsConfig
 	
 	@Override
 	public IDhApiConfigValue<Boolean> getUseExtendedNearClipPlane()
-	{ return new DhApiConfigValue<>(AdvancedGraphics.useExtendedNearClipPlane); }
+	{ return new DhApiConfigValue<>(AdvancedGraphics.overdrawPrevention); }
 	
 	@Override
 	public IDhApiConfigValue<Double> getBrightnessMultiplier()

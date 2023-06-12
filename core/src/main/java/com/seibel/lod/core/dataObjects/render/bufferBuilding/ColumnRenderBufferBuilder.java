@@ -65,7 +65,7 @@ public class ColumnRenderBufferBuilder
 			{
 				try
 				{
-					boolean enableTransparency = Config.Client.Advanced.Graphics.Quality.transparency.get().tranparencyEnabled;
+					boolean enableTransparency = Config.Client.Advanced.Graphics.Quality.transparency.get().transparencyEnabled;
 					
 					EVENT_LOGGER.trace("RenderRegion start QuadBuild @ "+renderSource.sectionPos);
 					boolean enableSkyLightCulling = Config.Client.Advanced.Graphics.AdvancedGraphics.enableCaveCulling.get();

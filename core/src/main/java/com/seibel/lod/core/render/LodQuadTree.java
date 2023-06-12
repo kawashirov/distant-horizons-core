@@ -1,5 +1,8 @@
 package com.seibel.lod.core.render;
 
+import com.seibel.lod.api.enums.config.EHorizontalQuality;
+import com.seibel.lod.core.config.Config;
+import com.seibel.lod.core.config.listeners.ConfigChangeListener;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.pos.DhBlockPos2D;
@@ -7,12 +10,10 @@ import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.file.renderfile.ILodRenderSourceProvider;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.util.DetailDistanceUtil;
-import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.objects.quadTree.QuadNode;
 import com.seibel.lod.core.util.objects.quadTree.QuadTree;
 import org.apache.logging.log4j.Logger;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -38,6 +39,8 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	
 	private final IDhClientLevel level; //FIXME: Proper hierarchy to remove this reference!
 	
+	private final ConfigChangeListener<EHorizontalQuality> horizontalScaleChangeListener;
+	
 	
 	
 	
@@ -53,6 +56,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		this.renderSourceProvider = provider;
         this.blockRenderDistance = viewDistanceInBlocks;
 		
+		this.horizontalScaleChangeListener = new ConfigChangeListener<>(Config.Client.Advanced.Graphics.Quality.horizontalQuality, (newHorizontalScale) -> this.onHorizontalQualityChange());
     }
 	
 	
@@ -352,6 +356,32 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	
 	
 	
+	//==================//
+	// config listeners //
+	//==================//
+	
+	private void onHorizontalQualityChange()
+	{
+		// TODO this Util should probably be somewhere else or handled differently, but it works for now
+		// Updating this util is necessary whenever the horizontal quality is changed, since it handles the detail drop-off
+		DetailDistanceUtil.updateSettings();
+		
+		
+		// flush the current render data to make sure the new settings are used
+		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.nodeIterator();
+		while (nodeIterator.hasNext())
+		{
+			QuadNode<LodRenderSection> quadNode = nodeIterator.next();
+			if (quadNode.value != null)
+			{
+				quadNode.value.disposeRenderData();
+				quadNode.value = null;
+			}
+		}
+	}
+	
+	
+	
 	//==============//
 	// base methods //
 	//==============//
@@ -373,6 +403,8 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	public void close()
 	{
 		LOGGER.info("Shutting down "+ LodQuadTree.class.getSimpleName()+"...");
+		
+		this.horizontalScaleChangeListener.close();
 		
 		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.nodeIterator();
 		while (nodeIterator.hasNext())

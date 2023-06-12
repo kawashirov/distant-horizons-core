@@ -17,33 +17,29 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.api.enums.config;
+package com.seibel.lod.api.enums.config.quickOptions;
 
 /**
- * Low <br>
- * Medium <br>
- * High <br>
- * <br>
- * this is a quality scale for the detail drop-off
+ * CUSTOM, <br><br>
  * 
- * @author Leonardo Amato
- * @version 9-25-2021
+ * MINIMAL_IMPACT, <br>
+ * LOW_IMPACT, <br>
+ * BALANCED, <br>
+ * AGGRESSIVE, <br>
+ * I_PAID_FOR_THE_WHOLE_CPU, <br>
  */
-public enum EHorizontalScale
+public enum EThreadPreset
 {
-	/** Lods are 2D with heightMap */
-	LOW(64),
+	// Reminder:
+	// when adding items up the API minor version
+	// when removing items up the API major version
 	
-	/** Lods expand in three dimension */
-	MEDIUM(128),
+	CUSTOM,
 	
-	/** Lods expand in three dimension */
-	HIGH(256);
+	MINIMAL_IMPACT,
+	LOW_IMPACT,
+	BALANCED,
+	AGGRESSIVE,
+	I_PAID_FOR_THE_WHOLE_CPU;
 	
-	public final int distanceUnit;
-	
-	EHorizontalScale(int distanceUnit)
-	{
-		this.distanceUnit = distanceUnit;
-	}
 }

@@ -28,7 +28,7 @@ package com.seibel.lod.api.enums.config.quickOptions;
  * HIGH, <br>
  * EXTREME, <br>
  */
-public enum EQuickQuality
+public enum EQualityPreset
 {
 	// Reminder:
 	// when adding items up the API minor version

@@ -54,14 +54,14 @@
   "lod.config.client.quickEnableRendering.@tooltip":
   "Determines if Distant Horizons Renders LODs.",
   
-  "lod.config.client.quickQualitySetting":
-    "Overall Quality",
-  "lod.config.client.quickQualitySetting.@tooltip":
-    "Will modify a number of settings to quickly change Distant Horizons' rendering quality.",
-  "lod.config.client.quickThreadSetting":
+  "lod.config.client.qualityPresetSetting":
+    "Quality Preset",
+  "lod.config.client.qualityPresetSetting.@tooltip":
+    "Modifies a number of graphical settings to quickly change Distant Horizons' rendering quality. \n\nLower this setting if your GPU is at max usage or you are having framerate issues.",
+  "lod.config.client.threadPresetSetting":
     "CPU Load",
-  "lod.config.client.quickThreadSetting.@tooltip":
-    "Will modify a number of settings to quickly change how many CPU resources Distant Horizons' is allowed to use. \n\nIncreasing this setting will improve Distant Generator speed and LOD loading speed, \nbut will also increase CPU/memory usage and may introduce stuttering.",
+  "lod.config.client.threadPresetSetting.@tooltip":
+    "Modifies how many threads Distant Horizons' will use. \n\nIncreasing this setting will improve the Distant Generator speed and LOD loading speed, \nbut will also increase CPU/memory usage and may introduce stuttering. \n\nNote: on CPUs with 4 cores or less these settings will be less effective \nand some settings will give similar results.",
     
   "lod.config.client.optionsButton":
     "Show The Options Button",
@@ -90,16 +90,20 @@
     "Vertical Quality",
   "lod.config.client.advanced.graphics.quality.verticalQuality.@tooltip":
     "How well LODs represent overhangs, caves, cliffsides, etc.\n\nHigher options will increase memory and GPU usage.",
-  "lod.config.client.advanced.graphics.quality.horizontalScale":
-    "Horizontal Scale",
-  "lod.config.client.advanced.graphics.quality.horizontalScale.@tooltip":
-    "How quickly LODs drop off in quality.\n\nLarger numbers will improve how distant terrain looks\nbut will increase memory and GPU usage.",
   "lod.config.client.advanced.graphics.quality.horizontalQuality":
     "Horizontal Quality",
   "lod.config.client.advanced.graphics.quality.horizontalQuality.@tooltip":
     "How far apart drops in quality are.\n\nHigher settings will increase the distance between drops\nbut will increase memory and GPU usage.",
   "lod.config.client.advanced.graphics.quality.transparency":
     "Transparency",
+  "lod.config.client.advanced.graphics.quality.blocksToIgnore":
+    "Blocks To Ignore",
+  "lod.config.client.advanced.graphics.quality.blocksToIgnore.@tooltip":
+    "Defines the types of blocks to ignore when generating LODs.",
+  "lod.config.client.advanced.graphics.quality.tintWithAvoidedBlocks":
+    "Tint With Avoided Blocks",
+  "lod.config.client.advanced.graphics.quality.tintWithAvoidedBlocks.@tooltip":
+    "§4Note: makes snow, carpet, and trapdoors look really bad§r\nShould the blocks underneath avoided blocks gain the color of the avoided block?\n§6True:§r a red flower on grass will tint the grass below it red\n§6False:§r skipped blocks will not change color of surface below them",
   "lod.config.client.advanced.graphics.quality.lodBiomeBlending":
     "Biome Blending",
   "lod.config.client.advanced.graphics.quality.lodBiomeBlending.@tooltip":
@@ -107,16 +111,16 @@
   
   
   "lod.config.client.advanced.graphics.fog":
-    "Fog Options",
-    
-  "lod.config.client.advanced.graphics.fog.fogDistance":
-    "Fog Distance",
-  "lod.config.client.advanced.graphics.fog.fogDistance.@tooltip":
-    "The distance(s) Fog will be rendered on the LODs.",
+    "Fog",
+
   "lod.config.client.advanced.graphics.fog.fogDrawMode":
     "Fog Draw Mode",
   "lod.config.client.advanced.graphics.fog.fogDrawMode.@tooltip":
     "When fog will be rendered on the LODs.",
+  "lod.config.client.advanced.graphics.fog.fogDistance":
+    "Fog Distance",
+  "lod.config.client.advanced.graphics.fog.fogDistance.@tooltip":
+    "The distance(s) Fog will be rendered on the LODs.",
   "lod.config.client.advanced.graphics.fog.fogColorMode":
     "Fog Color Mode",
   "lod.config.client.advanced.graphics.fog.fogColorMode.@tooltip":
@@ -221,9 +225,9 @@
   "lod.config.client.advanced.graphics.advancedGraphics":
     "Advanced Graphics Options",
     
-  "lod.config.client.advanced.graphics.advancedGraphics.useExtendedNearClipPlane":
-    "Use extended near clip plane",
-  "lod.config.client.advanced.graphics.advancedGraphics.useExtendedNearClipPlane.@tooltip":
+  "lod.config.client.advanced.graphics.advancedGraphics.overdrawPrevention":
+    "Overdraw Prevention",
+  "lod.config.client.advanced.graphics.advancedGraphics.overdrawPrevention.@tooltip":
     "Enabling this will prevent some overdraw issues,\nbut may cause nearby LODs to render incorrectly, especially when near fancy leaves or non-full blocks.\nLess noticeable with a longer vanilla render distance.",
   "lod.config.client.advanced.graphics.advancedGraphics.brightnessMultiplier":
     "Brightness Multiplier",
@@ -270,14 +274,6 @@
     "Generation Priority",
   "lod.config.client.advanced.worldGenerator.generationPriority.@tooltip":
     "The priority for chunks being generated around the player.",
-  "lod.config.client.advanced.worldGenerator.blocksToAvoid":
-    "Blocks To Avoid",
-  "lod.config.client.advanced.worldGenerator.blocksToAvoid.@tooltip":
-    "Defines the types of blocks to ignore when generating LODs.",
-  "lod.config.client.advanced.worldGenerator.tintWithAvoidedBlocks":
-    "Tint With Avoided Blocks",
-  "lod.config.client.advanced.worldGenerator.tintWithAvoidedBlocks.@tooltip":
-    "§4Note: makes snow, carpet, and trapdoors look really bad§r\nShould the blocks underneath avoided blocks gain the color of the avoided block?\n§6True:§r a red flower on grass will tint the grass below it red\n§6False:§r skipped blocks will not change color of surface below them",
   
   
   "lod.config.client.advanced.multiplayer":
@@ -294,24 +290,24 @@
   
   
   
-  "lod.config.client.advanced.threading":
+  "lod.config.client.advanced.multiThreading":
     "Threading",
     
-  "lod.config.client.advanced.threading.numberOfWorldGenerationThreads":
+  "lod.config.client.advanced.multiThreading.numberOfWorldGenerationThreads":
     "NO. of world generation threads",
-  "lod.config.client.advanced.threading.numberOfWorldGenerationThreads.@tooltip":
+  "lod.config.client.advanced.multiThreading.numberOfWorldGenerationThreads.@tooltip":
     "How many threads should be used when generating LODs \n outside the normal render distance? \n\nIf it this is less than 1, it will be treated as a percentage \nof time a single thread can run before going idle. \n\nIf you experience stuttering when generating distant LODs, \ndecrease  this number. If you want to increase LOD \ngeneration speed, increase this number. \n\nThis and the number of buffer builder threads are independent, \nif they add up to more threads than your CPU has cores \nthat is ok.",
-  "lod.config.client.advanced.threading.numberOfBufferBuilderThreads":
+  "lod.config.client.advanced.multiThreading.numberOfBufferBuilderThreads":
     "NO. of buffer builder threads",
-  "lod.config.client.advanced.threading.numberOfBufferBuilderThreads.@tooltip":
+  "lod.config.client.advanced.multiThreading.numberOfBufferBuilderThreads.@tooltip":
     "The number of threads used when building geometry data.\nCan only be between 1 and your CPU's processor count.",
-  "lod.config.client.advanced.threading.numberOfFileHandlerThreads":
+  "lod.config.client.advanced.multiThreading.numberOfFileHandlerThreads":
   "NO. of file handler threads",
-  "lod.config.client.advanced.threading.numberOfFileHandlerThreads.@tooltip":
+  "lod.config.client.advanced.multiThreading.numberOfFileHandlerThreads.@tooltip":
   "The number of threads used when building vertex buffers\n(The things sent to your GPU to draw the LODs).\nCan only be between 1 and your CPU's processor count.",
-  "lod.config.client.advanced.threading.numberOfDataConverterThreads":
+  "lod.config.client.advanced.multiThreading.numberOfDataConverterThreads":
   "NO. of data converter threads",
-  "lod.config.client.advanced.threading.numberOfDataConverterThreads.@tooltip":
+  "lod.config.client.advanced.multiThreading.numberOfDataConverterThreads.@tooltip":
   "The number of threads used when converting ID data to render-able data.\n(This generally happens when generating new terrain or changing graphics settings).\nCan only be between 1 and your CPU's processor count.",
   
   
@@ -337,7 +333,11 @@
     "Only Render LODs",
   "lod.config.client.advanced.debugging.lodOnlyMode.@tooltip":
     "If enabled this will disable (most) vanilla Minecraft rendering. \n\nNOTE: Do not report any issues when this mode is on! \nThis setting is only for fun and debugging. \nMod compatibility is not guaranteed.",
-    
+  "lod.config.client.advanced.debugging.debugWireframeRendering":
+    "Enable Debug Wireframe Rendering",
+  "lod.config.client.advanced.debugging.debugWireframeRendering.@tooltip":
+    "If enabled, various wireframes for debugging internal functions will be drawn.",
+
   "lod.config.client.advanced.buffers":
     "Buffers",
   "lod.config.client.advanced.buffers.gpuUploadMethod":
@@ -431,30 +431,30 @@
   
     
     
-  "lod.config.enum.EQuickQuality.CUSTOM":
+  "lod.config.enum.EQualityPreset.CUSTOM":
     "Custom",
-  "lod.config.enum.EQuickQuality.MINIMUM":
+  "lod.config.enum.EQualityPreset.MINIMUM":
     "Minimum",
-  "lod.config.enum.EQuickQuality.LOW":
+  "lod.config.enum.EQualityPreset.LOW":
     "Low",
-  "lod.config.enum.EQuickQuality.MEDIUM":
+  "lod.config.enum.EQualityPreset.MEDIUM":
     "Medium",
-  "lod.config.enum.EQuickQuality.HIGH":
+  "lod.config.enum.EQualityPreset.HIGH":
     "High",
-  "lod.config.enum.EQuickQuality.EXTREME":
+  "lod.config.enum.EQualityPreset.EXTREME":
     "Extreme",
     
-  "lod.config.enum.EQuickThread.CUSTOM":
+  "lod.config.enum.EThreadPreset.CUSTOM":
     "Custom",
-  "lod.config.enum.EQuickThread.MINIMAL_IMPACT":
+  "lod.config.enum.EThreadPreset.MINIMAL_IMPACT":
     "Minimal Impact",
-  "lod.config.enum.EQuickThread.LOW_IMPACT":
+  "lod.config.enum.EThreadPreset.LOW_IMPACT":
     "Low Impact",
-  "lod.config.enum.EQuickThread.BALANCED":
+  "lod.config.enum.EThreadPreset.BALANCED":
     "Balanced",
-  "lod.config.enum.EQuickThread.AGGRESSIVE_LOADING":
-    "Aggressive Loading",
-  "lod.config.enum.EQuickThread.I_PAID_FOR_THE_WHOLE_CPU":
+  "lod.config.enum.EThreadPreset.AGGRESSIVE":
+    "Aggressive",
+  "lod.config.enum.EThreadPreset.I_PAID_FOR_THE_WHOLE_CPU":
     "I Paid For The Whole CPU",
     
   "lod.config.enum.EHorizontalResolution.BLOCK":
@@ -476,8 +476,8 @@
     "Medium",
   "lod.config.enum.EVerticalQuality.HIGH":
     "High",
-  "lod.config.enum.EVerticalQuality.ULTRA":
-    "Ultra",
+  "lod.config.enum.EVerticalQuality.EXTREME":
+    "Extreme",
   "lod.config.enum.EHorizontalQuality.LOWEST":
     "Lowest",
   "lod.config.enum.EHorizontalQuality.LOW":
@@ -486,6 +486,10 @@
     "Medium",
   "lod.config.enum.EHorizontalQuality.HIGH":
     "High",
+  "lod.config.enum.EHorizontalQuality.EXTREME":
+    "Extreme",
+  "lod.config.enum.EHorizontalQuality.UNLIMITED":
+    "Unlimited",
     
   "lod.config.enum.ETransparency.DISABLED":
     "Disabled",
@@ -591,12 +595,17 @@
     
   "lod.config.enum.EBlocksToAvoid.NONE":
     "None",
-  "lod.config.enum.EBlocksToAvoid.NON_FULL":
-    "Non full",
-  "lod.config.enum.EBlocksToAvoid.NO_COLLISION":
-    "No collision",
-  "lod.config.enum.EBlocksToAvoid.BOTH":
-    "Both",
+  "lod.config.enum.EBlocksToAvoid.NON_COLLIDING":
+    "Non-Colliding",
+    
+  "lod.config.enum.EOverdrawPrevention.NONE":
+    "None",
+  "lod.config.enum.EOverdrawPrevention.LIGHT":
+    "Light",
+  "lod.config.enum.EOverdrawPrevention.MEDIUM":
+    "Medium",
+  "lod.config.enum.EOverdrawPrevention.HEAVY":
+    "Heavy",
     
   "lod.config.enum.EServerFolderNameMode.NAME_ONLY":
     "Name Only",
