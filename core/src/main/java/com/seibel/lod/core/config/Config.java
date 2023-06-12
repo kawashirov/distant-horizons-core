@@ -497,12 +497,18 @@ public class Config
 //									+ "Disable this if you see LODs disappearing at the corners of your vision.")
 //							.build();
 					
-					// TODO replace with better options
-					public static ConfigEntry<Boolean> useExtendedNearClipPlane = new ConfigEntry.Builder<Boolean>()
-							.set(true)
+					public static ConfigEntry<EOverdrawPrevention> overdrawPrevention = new ConfigEntry.Builder<EOverdrawPrevention>()
+							.set(EOverdrawPrevention.MEDIUM)
 							.comment(""
-									+ "Will prevent some overdraw issues, but may cause nearby fake chunks to render incorrectly \n"
-									+ " especially when in/near an ocean.")
+									+ "Determines how far Distant Horizon's near clip plane will render. \n"
+									+ "\n"
+									+ "Higher values will prevent LODs from rendering behind vanilla blocks at a higher distance,\n"
+									+ "but may cause holes to appear in the LODs. \n"
+									+ "Holes are most likely at the left and right edges of the screen \n"
+									+ "when flying through unloaded terrain. \n"
+									+ "\n"
+									+ "Increasing the vanilla render distance increases the effectiveness of these options."
+									+ "")
 							.setPerformance(EConfigEntryPerformance.NONE)
 							.build();
 					
@@ -526,7 +532,6 @@ public class Config
 									+ "2 = very saturated")
 							.build();
 					
-					// TODO replace with better options
 					public static ConfigEntry<Boolean> enableCaveCulling = new ConfigEntry.Builder<Boolean>()
 							.set(true)
 							.comment(""

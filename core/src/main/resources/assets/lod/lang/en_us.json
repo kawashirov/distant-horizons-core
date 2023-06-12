@@ -225,9 +225,9 @@
   "lod.config.client.advanced.graphics.advancedGraphics":
     "Advanced Graphics Options",
     
-  "lod.config.client.advanced.graphics.advancedGraphics.useExtendedNearClipPlane":
-    "Use extended near clip plane",
-  "lod.config.client.advanced.graphics.advancedGraphics.useExtendedNearClipPlane.@tooltip":
+  "lod.config.client.advanced.graphics.advancedGraphics.overdrawPrevention":
+    "Overdraw Prevention",
+  "lod.config.client.advanced.graphics.advancedGraphics.overdrawPrevention.@tooltip":
     "Enabling this will prevent some overdraw issues,\nbut may cause nearby LODs to render incorrectly, especially when near fancy leaves or non-full blocks.\nLess noticeable with a longer vanilla render distance.",
   "lod.config.client.advanced.graphics.advancedGraphics.brightnessMultiplier":
     "Brightness Multiplier",
@@ -597,6 +597,15 @@
     "None",
   "lod.config.enum.EBlocksToAvoid.NON_COLLIDING":
     "Non-Colliding",
+    
+  "lod.config.enum.EOverdrawPrevention.NONE":
+    "None",
+  "lod.config.enum.EOverdrawPrevention.LIGHT":
+    "Light",
+  "lod.config.enum.EOverdrawPrevention.MEDIUM":
+    "Medium",
+  "lod.config.enum.EOverdrawPrevention.HEAVY":
+    "Heavy",
     
   "lod.config.enum.EServerFolderNameMode.NAME_ONLY":
     "Name Only",
