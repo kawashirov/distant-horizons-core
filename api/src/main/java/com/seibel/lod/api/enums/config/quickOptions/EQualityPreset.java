@@ -19,6 +19,8 @@
 
 package com.seibel.lod.api.enums.config.quickOptions;
 
+import com.seibel.lod.api.enums.config.DisallowSelectingViaConfigGui;
+
 /**
  * CUSTOM, <br><br>
  * 
@@ -34,6 +36,7 @@ public enum EQualityPreset
 	// when adding items up the API minor version
 	// when removing items up the API major version
 	
+	@DisallowSelectingViaConfigGui
 	CUSTOM,
 	
 	MINIMUM,
