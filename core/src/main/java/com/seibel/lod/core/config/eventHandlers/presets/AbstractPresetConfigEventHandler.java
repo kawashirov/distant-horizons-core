@@ -20,6 +20,17 @@ public abstract class AbstractPresetConfigEventHandler<TPresetEnum extends Enum<
 	
 	
 	
+	/** 
+	 * Set the UI only config based on what is set in the file. <br> 
+	 * This should only be called once. 
+	 */
+	public void setUiOnlyConfigValues()
+	{
+		TPresetEnum currentQualitySetting = this.getCurrentQualityPreset();
+		this.getPresetConfigEntry().set(currentQualitySetting);
+	}
+	
+	
 	//===========//
 	// listeners //
 	//===========//
@@ -28,15 +39,6 @@ public abstract class AbstractPresetConfigEventHandler<TPresetEnum extends Enum<
 	public void onConfigValueSet()
 	{
 		TPresetEnum qualityPreset = this.getPresetConfigEntry().get();
-		if (qualityPreset == null)
-		{
-			// the value will be null when the config menu is first opened,
-			// set the value to what it should be.
-			
-			TPresetEnum currentQualitySetting = this.getCurrentQualityPreset();
-			this.getPresetConfigEntry().set(currentQualitySetting);
-			return;
-		}
 		
 		// if the quick value is custom, nothing needs to be changed
 		if (qualityPreset == this.getCustomPresetEnum())

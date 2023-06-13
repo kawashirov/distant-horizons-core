@@ -36,10 +36,15 @@ import java.util.*;
 
 
 /**
- * This handles any configuration the user has access to.
+ * This handles any configuration the user has access to. <br><br>
+ * 
+ * Note: <br>
+ * Only add simpler listeners here (IE listeners that only depend on 1 config entry).
+ * For listeners that depend on 2 or more config entries, add them before the config menu is opened.
+ * Otherwise, you will have issues where only some of the config entries will exist when your listener is created.
  * 
  * @author coolGi
- * @version 2023-6-7
+ * @version 2023-6-12
  */
 
 public class Config
@@ -68,14 +73,12 @@ public class Config
 
     public static class Client
     {
-		// TODO modify debugging.rendererMode
 		public static ConfigEntry<Boolean> quickEnableRendering = new ConfigEntry.Builder<Boolean>()
 				.set(true)
 				.comment(""
 						+ "If true, Distant Horizons will render LODs beyond the vanilla render distance."
 						+ "")
-				.setAppearance(EConfigEntryAppearance.ONLY_IN_GUI) // TODO set when the game boots
-				//.addListener(null) // TODO add listener
+				.setAppearance(EConfigEntryAppearance.ONLY_IN_GUI)
 				.build();
 		
 		public static ConfigLinkedEntry quickLodChunkRenderDistance = new ConfigLinkedEntry(Advanced.Graphics.Quality.lodChunkRenderDistance);
@@ -1077,10 +1080,11 @@ public class Config
 		{
 			public static ConfigUIComment resetConfirmationNote = new ConfigUIComment();
 			
+			// TODO implement
 			public static ConfigEntry<Boolean> resetAllSettings = new ConfigEntry.Builder<Boolean>()
 					.set(false)
 					.setAppearance(EConfigEntryAppearance.ONLY_IN_GUI)
-					//.addListener(null) // TODO add listener
+					//.addListener(null)
 					.build();
 			
 		}

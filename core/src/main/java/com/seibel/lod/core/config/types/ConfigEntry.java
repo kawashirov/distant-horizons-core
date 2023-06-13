@@ -273,7 +273,7 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
 
         public ConfigEntry<T> build()
 		{
-			return new ConfigEntry<T>(tmpAppearance, tmpValue, tmpComment, tmpMin, tmpMax, tmpUseApiOverwrite, tmpPerformance, tmpIConfigListener);
+			return new ConfigEntry<>(this.tmpAppearance, this.tmpValue, this.tmpComment, this.tmpMin, this.tmpMax, this.tmpUseApiOverwrite, this.tmpPerformance, this.tmpIConfigListener);
         }
 		
     }
