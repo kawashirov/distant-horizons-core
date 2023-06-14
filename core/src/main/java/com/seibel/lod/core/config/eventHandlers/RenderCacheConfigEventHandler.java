@@ -24,7 +24,7 @@ public class RenderCacheConfigEventHandler implements IConfigListener
 	private EHorizontalResolution previousHorizontalResolution = null;
 	
 	/** how long to wait in milliseconds before applying the config changes */
-	private static final long TIMEOUT_IN_MS = 1000L;
+	private static final long TIMEOUT_IN_MS = 400L;
 	private Timer cacheClearingTimer;
 	
 	
