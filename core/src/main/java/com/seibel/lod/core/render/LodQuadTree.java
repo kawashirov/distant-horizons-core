@@ -15,8 +15,9 @@ import com.seibel.lod.core.util.objects.quadTree.QuadTree;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Iterator;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * This quadTree structure is our core data structure and holds
@@ -41,6 +42,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	
 	private final ConfigChangeListener<EHorizontalQuality> horizontalScaleChangeListener;
 	
+	private ReentrantLock treeReadWriteLock = new ReentrantLock();
 	
 	
 	
@@ -78,16 +80,24 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		}
 		
 		
-		try
+		// don't traverse the tree if it is being modified
+		if (this.treeReadWriteLock.tryLock())
 		{
-			// recenter if necessary, removing out of bounds sections
-			this.setCenterBlockPos(playerPos, LodRenderSection::dispose);
-			
-			updateAllRenderSections(playerPos);
-		}
-		catch (Exception e)
-		{
-			LOGGER.error("Quad Tree tick exception for dimension: "+this.level.getClientLevelWrapper().getDimensionType().getDimensionName()+", exception: "+e.getMessage(), e);
+			try
+			{
+				// recenter if necessary, removing out of bounds sections
+				this.setCenterBlockPos(playerPos, LodRenderSection::dispose);
+				
+				this.updateAllRenderSections(playerPos);
+			}
+			catch (Exception e)
+			{
+				LOGGER.error("Quad Tree tick exception for dimension: " + this.level.getClientLevelWrapper().getDimensionType().getDimensionName() + ", exception: " + e.getMessage(), e);
+			}
+			finally
+			{
+				this.treeReadWriteLock.unlock();
+			}
 		}
 	}
 	private void updateAllRenderSections(DhBlockPos2D playerPos)
@@ -317,24 +327,46 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	 */
 	public void clearRenderDataCache()
 	{
-		// TODO this causes some (harmless) file errors when called
-		LOGGER.info("Clearing render cache...");
-		
-		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.nodeIterator();
-		while (nodeIterator.hasNext())
+		if (this.treeReadWriteLock.tryLock())
 		{
-			QuadNode<LodRenderSection> quadNode = nodeIterator.next();
-			if (quadNode.value != null)
+			try
 			{
-				quadNode.value.disposeRenderData();
-				quadNode.value = null;
+				LOGGER.info("Clearing render cache...");
+				
+				
+				// changing this while the tree is being traversed can cause (harmless) errors,
+				// where the traversal goes deeper into the tree than it should.
+				// so it should also be inside the tree lock
+				DetailDistanceUtil.updateSettings();
+				
+				
+				// clear the tree
+				Iterator<QuadNode<LodRenderSection>> nodeIterator = this.nodeIterator();
+				while (nodeIterator.hasNext())
+				{
+					QuadNode<LodRenderSection> quadNode = nodeIterator.next();
+					if (quadNode.value != null)
+					{
+						quadNode.value.disposeRenderData();
+						quadNode.value = null;
+					}
+				}
+				
+				// delete the cache files
+				// TODO this will only delete the files for this level/world
+				this.renderSourceProvider.deleteRenderCache();
+				
+				LOGGER.info("Render cache invalidated, please wait a moment for everything to reload...");
+			}
+			catch (Exception e)
+			{
+				LOGGER.error("Unexpected error when clearing LodQuadTree render cache: " + e.getMessage(), e);
+			}
+			finally
+			{
+				this.treeReadWriteLock.unlock();
 			}
 		}
-		
-		// delete the cache files
-		this.renderSourceProvider.deleteRenderCache();
-		
-		LOGGER.info("Render cache invalidated");
 	}
 	
 	/** 
@@ -362,22 +394,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	
 	private void onHorizontalQualityChange()
 	{
-		// TODO this Util should probably be somewhere else or handled differently, but it works for now
-		// Updating this util is necessary whenever the horizontal quality is changed, since it handles the detail drop-off
-		DetailDistanceUtil.updateSettings();
-		
-		
-		// flush the current render data to make sure the new settings are used
-		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.nodeIterator();
-		while (nodeIterator.hasNext())
-		{
-			QuadNode<LodRenderSection> quadNode = nodeIterator.next();
-			if (quadNode.value != null)
-			{
-				quadNode.value.disposeRenderData();
-				quadNode.value = null;
-			}
-		}
+		this.clearRenderDataCache();
 	}
 	
 	
@@ -386,19 +403,6 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	// base methods //
 	//==============//
 	
-//	public String getDebugString()
-//	{
-//		StringBuilder sb = new StringBuilder();
-//		for (byte i = 0; i < this.renderSectionRingLists.length; i++)
-//		{
-//			sb.append("Layer ").append(i + TREE_LOWEST_DETAIL_LEVEL).append(":\n");
-//			sb.append(this.renderSectionRingLists[i].toDetailString());
-//			sb.append("\n");
-//			sb.append("\n");
-//		}
-//		return sb.toString();
-//	}
-
     @Override
 	public void close()
 	{

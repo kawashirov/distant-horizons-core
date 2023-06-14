@@ -7,14 +7,15 @@ import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.config.listeners.IConfigListener;
 import com.seibel.lod.core.util.DetailDistanceUtil;
 
+import java.sql.Date;
+import java.util.Timer;
+import java.util.TimerTask;
+
 /**
  * Listens to the config and will automatically
  * clear the current render cache if certain settings are changed. <br> <br>
  * 
  * Note: if additional settings should clear the render cache, add those to this listener, don't create a new listener
- * 
- * @author James Seibel
- * @version 2023-2-9
  */
 public class RenderCacheConfigEventHandler implements IConfigListener
 {
@@ -24,6 +25,9 @@ public class RenderCacheConfigEventHandler implements IConfigListener
 	private EVerticalQuality previousVerticalQualitySetting = null;
 	private EHorizontalResolution previousHorizontalResolution = null;
 	
+	/** how long to wait in milliseconds before applying the config changes */
+	private static final long TIMEOUT_IN_MS = 1000L;
+	private Timer cacheClearingTimer;
 	
 	
 	/** private since we only ever need one handler at a time */
@@ -33,7 +37,7 @@ public class RenderCacheConfigEventHandler implements IConfigListener
 	
 	@Override 
 	public void onConfigValueSet()
-	{		
+	{
 		// confirm a setting was actually changed
 		boolean refreshRenderData = false;
 		
@@ -56,14 +60,35 @@ public class RenderCacheConfigEventHandler implements IConfigListener
 		
 		if (refreshRenderData)
 		{
-			// TODO add a timeout to prevent rapidly changing settings causing the render data thrashing.
-			DetailDistanceUtil.updateSettings();
-			DhApiMain.Delayed.renderProxy.clearRenderDataCache();
+			this.refreshRenderDataAfterTimeout();
 		}
 		
 	}
 	
 	@Override
 	public void onUiModify() { /* do nothing, we only care about modified config values */ }
+	
+	
+	/** Calling this method multiple times will reset the timer */
+	private void refreshRenderDataAfterTimeout()
+	{
+		// stop the previous timer if one exists
+		if (this.cacheClearingTimer != null)
+		{
+			this.cacheClearingTimer.cancel();
+		}
+		
+		// create a new timer task
+		TimerTask timerTask = new TimerTask()
+		{
+			public void run()
+			{
+				DetailDistanceUtil.updateSettings();
+				DhApiMain.Delayed.renderProxy.clearRenderDataCache();
+			}
+		};
+		this.cacheClearingTimer = new Timer("RenderCacheConfig-Timeout-Timer");
+		this.cacheClearingTimer.schedule(timerTask, TIMEOUT_IN_MS);
+	}
 	
 }
