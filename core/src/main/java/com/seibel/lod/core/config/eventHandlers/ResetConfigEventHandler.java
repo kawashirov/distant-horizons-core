@@ -1,12 +1,7 @@
 package com.seibel.lod.core.config.eventHandlers;
 
-import com.seibel.lod.api.DhApiMain;
-import com.seibel.lod.api.enums.config.EHorizontalResolution;
-import com.seibel.lod.api.enums.config.EVerticalQuality;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.config.listeners.ConfigChangeListener;
-import com.seibel.lod.core.config.listeners.IConfigListener;
-import com.seibel.lod.core.util.DetailDistanceUtil;
 
 public class ResetConfigEventHandler
 {

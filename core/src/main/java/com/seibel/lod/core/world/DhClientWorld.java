@@ -5,7 +5,6 @@ import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.file.structure.ClientOnlySaveStructure;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.level.states.ClientRenderState;
-import com.seibel.lod.core.util.DetailDistanceUtil;
 import com.seibel.lod.core.util.ThreadUtil;
 import com.seibel.lod.core.util.objects.EventLoop;
 import com.seibel.lod.core.util.LodUtil;
@@ -102,7 +101,7 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 			
 			if (clientRenderState != null && clientRenderState.quadtree != null)
 			{
-				if (clientRenderState.quadtree.blockRenderDistance != newBlockRenderDistance)
+				if (clientRenderState.quadtree.blockRenderDistanceRadius != newBlockRenderDistance)
 				{
 					// TODO is this the best way to handle changing the render distance?
 					level.close();
@@ -111,7 +110,6 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 			}
 		}
 		
-		DetailDistanceUtil.updateSettings();
 		this.levels.values().forEach(DhClientLevel::clientTick);
 	}
 

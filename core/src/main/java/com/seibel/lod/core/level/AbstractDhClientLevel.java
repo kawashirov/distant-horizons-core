@@ -14,7 +14,6 @@ import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
-import com.seibel.lod.core.render.renderer.DebugRenderer;
 import com.seibel.lod.core.util.FileScanUtil;
 import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.coreapi.util.math.Mat4f;
@@ -86,7 +85,7 @@ public abstract class AbstractDhClientLevel implements IDhClientLevel
 		
 		// TODO this should probably be handled via a config change listener
 		// recreate the RenderState if the render distance changes
-		if (clientRenderState.quadtree.blockRenderDistance != Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH)
+		if (clientRenderState.quadtree.blockRenderDistanceRadius != Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH)
 		{
 			if (!this.ClientRenderStateRef.compareAndSet(clientRenderState, null))
 			{

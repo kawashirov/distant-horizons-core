@@ -9,14 +9,14 @@ import com.seibel.lod.core.pos.DhBlockPos2D;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.file.renderfile.ILodRenderSourceProvider;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
-import com.seibel.lod.core.util.DetailDistanceUtil;
+import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.objects.quadTree.QuadNode;
 import com.seibel.lod.core.util.objects.quadTree.QuadTree;
+import com.seibel.lod.coreapi.util.MathUtil;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -29,7 +29,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
-    public final int blockRenderDistance;
+    public final int blockRenderDistanceRadius;
     private final ILodRenderSourceProvider renderSourceProvider;
 	
 	/** 
@@ -37,29 +37,37 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	 * This is a {@link ConcurrentLinkedQueue} because new sections can be added to this list via the world generator threads.
 	 */
 	private final ConcurrentLinkedQueue<DhSectionPos> sectionsToReload = new ConcurrentLinkedQueue<>();
-	
 	private final IDhClientLevel level; //FIXME: Proper hierarchy to remove this reference!
-	
 	private final ConfigChangeListener<EHorizontalQuality> horizontalScaleChangeListener;
+	private final ReentrantLock treeReadWriteLock = new ReentrantLock();
 	
-	private ReentrantLock treeReadWriteLock = new ReentrantLock();
+	/** the lowest detail level number that can be rendered */
+	private byte maxRenderDetailLevel;
+	/** used to calculate when a detail drop will occur */
+	private double detailDropOffDistanceUnit;
+	/** used to calculate when a detail drop will occur */
+	private double detailDropOffLogBase;
 	
 	
 	
-    public LodQuadTree(
+	//==============//
+	// constructors //
+	//==============//
+	
+	public LodQuadTree(
 			IDhClientLevel level, int viewDistanceInBlocks, 
 			int initialPlayerBlockX, int initialPlayerBlockZ, 
 			ILodRenderSourceProvider provider)
 	{
 		super(viewDistanceInBlocks, new DhBlockPos2D(initialPlayerBlockX, initialPlayerBlockZ), TREE_LOWEST_DETAIL_LEVEL);
 		
-        DetailDistanceUtil.updateSettings(); //TODO: Move this to somewhere else
         this.level = level;
 		this.renderSourceProvider = provider;
-        this.blockRenderDistance = viewDistanceInBlocks;
+        this.blockRenderDistanceRadius = viewDistanceInBlocks;
 		
 		this.horizontalScaleChangeListener = new ConfigChangeListener<>(Config.Client.Advanced.Graphics.Quality.horizontalQuality, (newHorizontalScale) -> this.onHorizontalQualityChange());
     }
+	
 	
 	
 	//=============//
@@ -79,6 +87,10 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 			return;
 		}
 		
+		
+		
+		// this shouldn't be updated while the tree is being iterated through
+		this.updateDetailLevelVariables();
 		
 		// don't traverse the tree if it is being modified
 		if (this.treeReadWriteLock.tryLock())
@@ -286,33 +298,48 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	 * @param sectionPos section position
 	 * @return detail level of this section pos
 	 */
-	public byte calculateExpectedDetailLevel(DhBlockPos2D playerPos, DhSectionPos sectionPos)
+	public byte calculateExpectedDetailLevel(DhBlockPos2D playerPos, DhSectionPos sectionPos) { return getDetailLevelFromDistance(playerPos.dist(sectionPos.getCenter().getCenterBlockPos())); }
+	private byte getDetailLevelFromDistance(double distance)
 	{
-		return DetailDistanceUtil.getDetailLevelFromDistance(playerPos.dist(sectionPos.getCenter().getCenterBlockPos()));
+		// special case, never drop the quality
+		if (Config.Client.Advanced.Graphics.Quality.horizontalQuality.get() == EHorizontalQuality.UNLIMITED)
+		{
+			return this.maxRenderDetailLevel;
+		}
+		
+		
+		double maxDetailDistance = this.getDrawDistanceFromDetail(Byte.MAX_VALUE -1);
+		if (distance > maxDetailDistance)
+		{
+			return Byte.MAX_VALUE - 1;
+		}
+		
+		
+		int detailLevel = (int) (Math.log(distance / this.detailDropOffDistanceUnit) / this.detailDropOffLogBase);
+		return (byte) MathUtil.clamp(this.maxRenderDetailLevel, detailLevel, Byte.MAX_VALUE - 1);
 	}
 	
-	/**
-	 * The method will return the highest detail level in a circle around the center
-	 * Override this method if you want to use a different algorithm
-	 * Note: the returned distance should always be the ceiling estimation of the distance
-	 * //TODO: Make this input a bbox or a circle or something....
-	 * @param distance the circle radius
-	 * @return the highest detail level in the circle
-	 */
-	public byte getMaxDetailInRange(double distance) { return DetailDistanceUtil.getDetailLevelFromDistance(distance); }
-	
-	/**
-	 * The method will return the furthest distance to the center for the given detail level
-	 * Override this method if you want to use a different algorithm
-	 * Note: the returned distance should always be the ceiling estimation of the distance
-	 * //TODO: Make this return a bbox instead of a distance in circle
-	 * @param detailLevel detail level
-	 * @return the furthest distance to the center, in blocks
-	 */
-	public int getFurthestDistance(byte detailLevel)
+	private double getDrawDistanceFromDetail(int detail)
 	{
-		return (int)Math.ceil(DetailDistanceUtil.getDrawDistanceFromDetail(detailLevel + 1));
-		// +1 because that's the border to the next detail level, and we want to include up to it.
+		if (detail <= this.maxRenderDetailLevel)
+		{
+			return 0;
+		}
+		else if (detail >= Byte.MAX_VALUE)
+		{
+			return this.blockRenderDistanceRadius * 2;
+		}
+		
+		
+		double base = Config.Client.Advanced.Graphics.Quality.horizontalQuality.get().quadraticBase;
+		return Math.pow(base, detail) * this.detailDropOffDistanceUnit;
+	}
+	
+	private void updateDetailLevelVariables()
+	{
+		this.maxRenderDetailLevel = Config.Client.Advanced.Graphics.Quality.drawResolution.get().detailLevel;
+		this.detailDropOffDistanceUnit = Config.Client.Advanced.Graphics.Quality.horizontalQuality.get().distanceUnitInBlocks * LodUtil.CHUNK_WIDTH;
+		this.detailDropOffLogBase = Math.log(Config.Client.Advanced.Graphics.Quality.horizontalQuality.get().quadraticBase);
 	}
 	
 	
@@ -332,13 +359,6 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 			try
 			{
 				LOGGER.info("Clearing render cache...");
-				
-				
-				// changing this while the tree is being traversed can cause (harmless) errors,
-				// where the traversal goes deeper into the tree than it should.
-				// so it should also be inside the tree lock
-				DetailDistanceUtil.updateSettings();
-				
 				
 				// clear the tree
 				Iterator<QuadNode<LodRenderSection>> nodeIterator = this.nodeIterator();

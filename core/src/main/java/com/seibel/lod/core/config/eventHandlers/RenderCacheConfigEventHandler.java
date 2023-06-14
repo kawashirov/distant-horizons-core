@@ -5,9 +5,7 @@ import com.seibel.lod.api.enums.config.EHorizontalResolution;
 import com.seibel.lod.api.enums.config.EVerticalQuality;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.config.listeners.IConfigListener;
-import com.seibel.lod.core.util.DetailDistanceUtil;
 
-import java.sql.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -83,7 +81,6 @@ public class RenderCacheConfigEventHandler implements IConfigListener
 		{
 			public void run()
 			{
-				DetailDistanceUtil.updateSettings();
 				DhApiMain.Delayed.renderProxy.clearRenderDataCache();
 			}
 		};
