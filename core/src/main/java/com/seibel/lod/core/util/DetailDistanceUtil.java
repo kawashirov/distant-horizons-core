@@ -21,6 +21,7 @@ package com.seibel.lod.core.util;
 
 import com.seibel.lod.api.enums.config.EHorizontalQuality;
 import com.seibel.lod.core.config.Config;
+import com.seibel.lod.core.render.LodQuadTree;
 import com.seibel.lod.coreapi.util.MathUtil;
 
 /**
@@ -28,6 +29,7 @@ import com.seibel.lod.coreapi.util.MathUtil;
  * @author Leonardo Amato
  * @version ??
  */
+// TODO move this into LodQuadTree? If so then the update method should only be called when the tree isn't being updated
 @Deprecated
 public class DetailDistanceUtil
 {
@@ -45,6 +47,7 @@ public class DetailDistanceUtil
 	
 	
 	
+	/** can cause issues if called while the {@link LodQuadTree} is being iterated through */
 	public static void updateSettings()
 	{
 		maxDetailLevel = Config.Client.Advanced.Graphics.Quality.drawResolution.get().detailLevel;
@@ -54,7 +57,8 @@ public class DetailDistanceUtil
 		logBase = Math.log(Config.Client.Advanced.Graphics.Quality.horizontalQuality.get().quadraticBase);
 	}
 	
-	public static double baseDistanceFunction(int detail)
+	public static double getDrawDistanceFromDetail(int detail) { return baseDistanceFunction(detail); }
+	private static double baseDistanceFunction(int detail)
 	{
 		if (detail <= maxDetailLevel)
 		{
@@ -70,9 +74,8 @@ public class DetailDistanceUtil
 		return Math.pow(base, detail) * distanceUnit;
 	}
 	
-	public static double getDrawDistanceFromDetail(int detail) { return baseDistanceFunction(detail); }
-	
-	public static byte baseInverseFunction(double distance)
+	public static byte getDetailLevelFromDistance(double distance) { return baseInverseFunction(distance); }
+	private static byte baseInverseFunction(double distance)
 	{
 		// special case, never drop the quality
 		if (Config.Client.Advanced.Graphics.Quality.horizontalQuality.get() == EHorizontalQuality.UNLIMITED)
@@ -91,7 +94,5 @@ public class DetailDistanceUtil
 		int detailLevel = (int) (Math.log(distance / distanceUnit) / logBase);
 		return (byte) MathUtil.clamp(maxDetailLevel, detailLevel, minDetailLevel - 1);
 	}
-	
-	public static byte getDetailLevelFromDistance(double distance) { return baseInverseFunction(distance); }
 	
 }
