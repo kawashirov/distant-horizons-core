@@ -1,7 +1,7 @@
 package com.seibel.lod.core.dataObjects.render.bufferBuilding;
 
 import com.seibel.lod.api.enums.config.EGpuUploadMethod;
-import com.seibel.lod.api.enums.rendering.EDebugMode;
+import com.seibel.lod.api.enums.rendering.EDebugRendering;
 import com.seibel.lod.api.enums.rendering.EGLProxyContext;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.config.listeners.ConfigChangeListener;
@@ -159,7 +159,7 @@ public class ColumnRenderBufferBuilder
 	private static void makeLodRenderData(LodQuadBuilder quadBuilder, ColumnRenderSource renderSource, ColumnRenderSource[] adjRegions)
 	{
 		// Variable initialization
-		EDebugMode debugMode = Config.Client.Advanced.Debugging.debugMode.get();
+		EDebugRendering debugMode = Config.Client.Advanced.Debugging.debugRendering.get();
 		
 		// can be uncommented to limit which section positions are build and thus, rendered
 		// useful when debugging a specific section

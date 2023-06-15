@@ -33,9 +33,9 @@ import com.seibel.lod.coreapi.util.MathUtil;
  * 
  * @author James Seibel
  * @author Leonardo Amato
- * @version 2022-7-5
+ * @version 2023-6-14
  */
-public enum EHorizontalResolution
+public enum EMaxHorizontalResolution
 {
 	/** render 256 LODs for each chunk */
 	BLOCK(16, 0),
@@ -83,12 +83,12 @@ public enum EHorizontalResolution
 	 * 2nd dimension: An array of all LodDetails that are less than or <br>
 	 * equal to that detailLevel
 	 */
-	private static EHorizontalResolution[][] lowerDetailArrays;
+	private static EMaxHorizontalResolution[][] lowerDetailArrays;
 	
 	
 	
 	
-	EHorizontalResolution(int newLengthCount, int newDetailLevel)
+	EMaxHorizontalResolution(int newLengthCount, int newDetailLevel)
 	{
 		this.detailLevel = (byte) newDetailLevel;
 		this.dataPointLengthCount = newLengthCount;
@@ -128,20 +128,20 @@ public enum EHorizontalResolution
 	 * Returns an array of all LodDetails that have a detail level
 	 * that is less than or equal to the given LodDetail
 	 */
-	public static EHorizontalResolution[] getSelfAndLowerDetails(EHorizontalResolution detail)
+	public static EMaxHorizontalResolution[] getSelfAndLowerDetails(EMaxHorizontalResolution detail)
 	{
 		if (lowerDetailArrays == null)
 		{
 			// run first time setup
-			lowerDetailArrays = new EHorizontalResolution[EHorizontalResolution.values().length][];
+			lowerDetailArrays = new EMaxHorizontalResolution[EMaxHorizontalResolution.values().length][];
 			
 			// go through each LodDetail
-			for (EHorizontalResolution currentDetail : EHorizontalResolution.values())
+			for (EMaxHorizontalResolution currentDetail : EMaxHorizontalResolution.values())
 			{
-				ArrayList<EHorizontalResolution> lowerDetails = new ArrayList<>();
+				ArrayList<EMaxHorizontalResolution> lowerDetails = new ArrayList<>();
 				
 				// find the details lower than currentDetail
-				for (EHorizontalResolution compareDetail : EHorizontalResolution.values())
+				for (EMaxHorizontalResolution compareDetail : EMaxHorizontalResolution.values())
 				{
 					if (currentDetail.detailLevel <= compareDetail.detailLevel)
 					{
@@ -153,7 +153,7 @@ public enum EHorizontalResolution
 				Collections.sort(lowerDetails);
 				Collections.reverse(lowerDetails);
 				
-				lowerDetailArrays[currentDetail.detailLevel] = lowerDetails.toArray(new EHorizontalResolution[lowerDetails.size()]);
+				lowerDetailArrays[currentDetail.detailLevel] = lowerDetails.toArray(new EMaxHorizontalResolution[lowerDetails.size()]);
 			}
 		}
 		
@@ -161,9 +161,9 @@ public enum EHorizontalResolution
 	}
 	
 	/** Returns what detail level should be used at a given distance and maxDistance. */
-	public static EHorizontalResolution getDetailForDistance(EHorizontalResolution maxDetailLevel, int distance, int maxDistance)
+	public static EMaxHorizontalResolution getDetailForDistance(EMaxHorizontalResolution maxDetailLevel, int distance, int maxDistance)
 	{
-		EHorizontalResolution[] lowerDetails = getSelfAndLowerDetails(maxDetailLevel);
+		EMaxHorizontalResolution[] lowerDetails = getSelfAndLowerDetails(maxDetailLevel);
 		int distanceBetweenDetails = maxDistance / lowerDetails.length;
 		int index = MathUtil.clamp(0, distance / distanceBetweenDetails, lowerDetails.length - 1);
 		

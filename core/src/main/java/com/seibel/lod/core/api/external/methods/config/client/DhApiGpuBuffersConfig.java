@@ -20,30 +20,24 @@
 package com.seibel.lod.core.api.external.methods.config.client;
 
 import com.seibel.lod.api.interfaces.config.IDhApiConfigValue;
-import com.seibel.lod.api.interfaces.config.client.IDhApiBuffersConfig;
+import com.seibel.lod.api.interfaces.config.client.IDhApiGpuBuffersConfig;
 import com.seibel.lod.api.objects.config.DhApiConfigValue;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.config.Config.Client.Advanced.GpuBuffers;
 import com.seibel.lod.api.enums.config.EGpuUploadMethod;
 
-/**
- * Distant Horizons' OpenGL buffer configuration.
- *
- * @author James Seibel
- * @version 2022-9-15
- */
-public class DhApiBuffersConfig implements IDhApiBuffersConfig
+public class DhApiGpuBuffersConfig implements IDhApiGpuBuffersConfig
 {
-	public static DhApiBuffersConfig INSTANCE = new DhApiBuffersConfig();
+	public static DhApiGpuBuffersConfig INSTANCE = new DhApiGpuBuffersConfig();
 	
-	private DhApiBuffersConfig() { }
+	private DhApiGpuBuffersConfig() { }
 	
 	
 	
-	public IDhApiConfigValue<EGpuUploadMethod> getGpuUploadMethod()
+	public IDhApiConfigValue<EGpuUploadMethod> gpuUploadMethod()
 	{ return new DhApiConfigValue<>(Config.Client.Advanced.GpuBuffers.gpuUploadMethod); }
 	
-	public IDhApiConfigValue<Integer> getBufferUploadTimeoutPerMegabyteInMilliseconds()
+	public IDhApiConfigValue<Integer> gpuUploadPerMegabyteInMilliseconds()
 	{ return new DhApiConfigValue<>(GpuBuffers.gpuUploadPerMegabyteInMilliseconds); }
 	
 }

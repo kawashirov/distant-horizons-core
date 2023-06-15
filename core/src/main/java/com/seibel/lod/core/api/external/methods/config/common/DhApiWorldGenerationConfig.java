@@ -17,8 +17,9 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.core.api.external.methods.config.both;
+package com.seibel.lod.core.api.external.methods.config.common;
 
+import com.seibel.lod.api.enums.config.ELightGenerationMode;
 import com.seibel.lod.api.interfaces.config.IDhApiConfigValue;
 import com.seibel.lod.api.interfaces.config.both.IDhApiWorldGenerationConfig;
 import com.seibel.lod.api.objects.config.DhApiConfigValue;
@@ -30,10 +31,10 @@ import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 /**
  * Distant Horizons' world generation configuration. <br><br>
  *
- * Note: Fake chunks are NOT saved in Minecraft's vanilla save system.
+ * Note: LODs are NOT saved in Minecraft's save system.
  *
  * @author James Seibel
- * @version 2022-9-15
+ * @version 2023-9-14
  */
 public class DhApiWorldGenerationConfig implements IDhApiWorldGenerationConfig
 {
@@ -44,22 +45,16 @@ public class DhApiWorldGenerationConfig implements IDhApiWorldGenerationConfig
 	
 	
 	@Override
-	public IDhApiConfigValue<Boolean> getEnableDistantWorldGeneration()
+	public IDhApiConfigValue<Boolean> enableDistantWorldGeneration()
 	{ return new DhApiConfigValue<>(WorldGenerator.enableDistantGeneration); }
 	
 	@Override
-	public IDhApiConfigValue<EDhApiDistantGeneratorMode> getDistantGeneratorMode()
+	public IDhApiConfigValue<EDhApiDistantGeneratorMode> distantGeneratorMode()
 	{ return new DhApiConfigValue<>(WorldGenerator.distantGeneratorMode); }
 	
-	@Deprecated
 	@Override
-	public IDhApiConfigValue<EBlocksToAvoid> getBlocksToAvoid()
-	{ return new DhApiConfigValue<>(Config.Client.Advanced.Graphics.Quality.blocksToIgnore); }
-	
-	@Deprecated
-	@Override
-	public IDhApiConfigValue<Boolean> getTintWithAvoidedBlocks()
-	{ return new DhApiConfigValue<>(Config.Client.Advanced.Graphics.Quality.tintWithAvoidedBlocks); }
+	public IDhApiConfigValue<ELightGenerationMode> lightingEngine()
+	{ return new DhApiConfigValue<>(WorldGenerator.lightingEngine); }
 	
 	
 }

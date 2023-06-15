@@ -25,7 +25,7 @@ import com.seibel.lod.coreapi.DependencyInjection.ApiEventInjector;
 import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.coreapi.ModInfo;
-import com.seibel.lod.api.enums.rendering.EDebugMode;
+import com.seibel.lod.api.enums.rendering.EDebugRendering;
 import com.seibel.lod.api.enums.rendering.ERendererMode;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.level.IDhLevel;
@@ -338,8 +338,8 @@ public class ClientApi
 		
 		if (glfwKey == GLFW.GLFW_KEY_F8)
 		{
-			Config.Client.Advanced.Debugging.debugMode.set(EDebugMode.next(Config.Client.Advanced.Debugging.debugMode.get()));
-			MC.sendChatMessage("F8: Set debug mode to " + Config.Client.Advanced.Debugging.debugMode.get());
+			Config.Client.Advanced.Debugging.debugRendering.set(EDebugRendering.next(Config.Client.Advanced.Debugging.debugRendering.get()));
+			MC.sendChatMessage("F8: Set debug mode to " + Config.Client.Advanced.Debugging.debugRendering.get());
 		}
 		else if (glfwKey == GLFW.GLFW_KEY_F6)
 		{

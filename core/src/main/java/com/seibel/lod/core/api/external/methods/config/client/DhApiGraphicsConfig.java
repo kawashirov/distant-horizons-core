@@ -20,21 +20,18 @@
 package com.seibel.lod.core.api.external.methods.config.client;
 
 import com.seibel.lod.api.enums.config.*;
+import com.seibel.lod.api.enums.rendering.ETransparency;
 import com.seibel.lod.api.interfaces.config.IDhApiConfigValue;
+import com.seibel.lod.api.interfaces.config.client.IDhApiFogConfig;
 import com.seibel.lod.api.interfaces.config.client.IDhApiGraphicsConfig;
+import com.seibel.lod.api.interfaces.config.client.IDhApiNoiseTextureConfig;
 import com.seibel.lod.api.objects.config.DhApiConfigValue;
-import com.seibel.lod.coreapi.util.converters.RenderModeEnabledConverter;
 import com.seibel.lod.api.enums.rendering.ERendererMode;
+import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.config.Config.Client.Advanced.Graphics.Quality;
 import com.seibel.lod.core.config.Config.Client.Advanced.Debugging;
 import com.seibel.lod.core.config.Config.Client.Advanced.Graphics.AdvancedGraphics;
 
-/**
- * Distant Horizons' graphics/rendering configuration.
- *
- * @author James Seibel
- * @version 2022-9-15
- */
 public class DhApiGraphicsConfig implements IDhApiGraphicsConfig
 {
 	public static DhApiGraphicsConfig INSTANCE = new DhApiGraphicsConfig();
@@ -43,21 +40,30 @@ public class DhApiGraphicsConfig implements IDhApiGraphicsConfig
 	
 	
 	
+	//==============//
+	// inner layers //
+	//==============//
+	
+	public IDhApiFogConfig fog() { return DhApiFogConfig.INSTANCE; }
+	public IDhApiNoiseTextureConfig noiseTexture() { return DhApiNoiseTextureConfig.INSTANCE; }
+	
+	
+	
 	//========================//
 	// basic graphic settings //
 	//========================//
 	
 	@Override
-	public IDhApiConfigValue<Integer> getChunkRenderDistance()
-	{ return new DhApiConfigValue<>(Quality.lodChunkRenderDistance); }
+	public IDhApiConfigValue<Integer> chunkRenderDistance()
+	{ return new DhApiConfigValue<Integer, Integer>(Quality.lodChunkRenderDistance); }
 	
 	@Override
-	public IDhApiConfigValue<Boolean> getRenderingEnabled()
-	{ return new DhApiConfigValue<ERendererMode, Boolean>(Debugging.rendererMode, new RenderModeEnabledConverter()); }
+	public IDhApiConfigValue<Boolean> renderingEnabled()
+	{ return new DhApiConfigValue<Boolean, Boolean>(Config.Client.quickEnableRendering); }
 	
 	@Override
-	public IDhApiConfigValue<ERendererMode> getRenderingMode()
-	{ return new DhApiConfigValue<>(Debugging.rendererMode); }
+	public IDhApiConfigValue<ERendererMode> renderingMode()
+	{ return new DhApiConfigValue<ERendererMode, ERendererMode>(Debugging.rendererMode); }
 	
 	
 	
@@ -66,20 +72,37 @@ public class DhApiGraphicsConfig implements IDhApiGraphicsConfig
 	//==================//
 	
 	@Override
-	public IDhApiConfigValue<EHorizontalResolution> getMaxDetailLevel()
-	{ return new DhApiConfigValue<>(Quality.drawResolution); }
+	public IDhApiConfigValue<EMaxHorizontalResolution> maxHorizontalResolution()
+	{ return new DhApiConfigValue<EMaxHorizontalResolution, EMaxHorizontalResolution>(Quality.maxHorizontalResolution); }
 	
 	@Override
-	public IDhApiConfigValue<EVerticalQuality> getVerticalQuality()
-	{ return new DhApiConfigValue<>(Quality.verticalQuality); }
+	public IDhApiConfigValue<EVerticalQuality> verticalQuality()
+	{ return new DhApiConfigValue<EVerticalQuality, EVerticalQuality>(Quality.verticalQuality); }
 	
 	@Override
-	public IDhApiConfigValue<EHorizontalQuality> getHorizontalQualityDropoff()
-	{ return new DhApiConfigValue<>(Quality.horizontalQuality); }
+	public IDhApiConfigValue<EHorizontalQuality> horizontalQuality()
+	{ return new DhApiConfigValue<EHorizontalQuality, EHorizontalQuality>(Quality.horizontalQuality); }
 	
+	@Override
+	public IDhApiConfigValue<Boolean> ambientOcclusion()
+	{ return new DhApiConfigValue<Boolean, Boolean>(Quality.ssao); }
+	
+	@Override
+	public IDhApiConfigValue<ETransparency> transparency()
+	{ return new DhApiConfigValue<ETransparency, ETransparency>(Quality.transparency); }
+	
+	@Override
+	public IDhApiConfigValue<EBlocksToAvoid> blocksToAvoid()
+	{ return new DhApiConfigValue<EBlocksToAvoid, EBlocksToAvoid>(Quality.blocksToIgnore); }
+	
+	@Override
+	public IDhApiConfigValue<Boolean> tintWithAvoidedBlocks()
+	{ return new DhApiConfigValue<Boolean, Boolean>(Quality.tintWithAvoidedBlocks); }
+	
+	// TODO re-implement
 //	@Override
 //	public IDhApiConfigValue<Integer> getBiomeBlending()
-//	{ return new DhApiConfigValue<>(Quality.lodBiomeBlending); }
+//	{ return new DhApiConfigValue<Integer, Integer>(Quality.lodBiomeBlending); }
 	
 	
 	
@@ -89,35 +112,39 @@ public class DhApiGraphicsConfig implements IDhApiGraphicsConfig
 	
 //	@Override
 //	public IDhApiConfigValue<Boolean> getDisableDirectionalCulling()
-//	{ return new DhApiConfigValue<>(AdvancedGraphics.disableDirectionalCulling); }
+//	{ return new DhApiConfigValue<Boolean, Boolean>(AdvancedGraphics.disableDirectionalCulling); }
 	
 	@Override
-	public IDhApiConfigValue<Boolean> getUseExtendedNearClipPlane()
-	{ return new DhApiConfigValue<>(AdvancedGraphics.overdrawPrevention); }
+	public IDhApiConfigValue<EOverdrawPrevention> overdrawPrevention()
+	{ return new DhApiConfigValue<EOverdrawPrevention, EOverdrawPrevention>(AdvancedGraphics.overdrawPrevention); }
 	
 	@Override
-	public IDhApiConfigValue<Double> getBrightnessMultiplier()
-	{ return new DhApiConfigValue<>(AdvancedGraphics.brightnessMultiplier); }
+	public IDhApiConfigValue<Double> brightnessMultiplier()
+	{ return new DhApiConfigValue<Double, Double>(AdvancedGraphics.brightnessMultiplier); }
 	
 	@Override
-	public IDhApiConfigValue<Double> getSaturationMultiplier()
-	{ return new DhApiConfigValue<>(AdvancedGraphics.saturationMultiplier); }
+	public IDhApiConfigValue<Double> saturationMultiplier()
+	{ return new DhApiConfigValue<Double, Double>(AdvancedGraphics.saturationMultiplier); }
 	
 	@Override
-	public IDhApiConfigValue<Boolean> getCaveCullingEnabled()
-	{ return new DhApiConfigValue<>(AdvancedGraphics.enableCaveCulling); }
+	public IDhApiConfigValue<Boolean> caveCullingEnabled()
+	{ return new DhApiConfigValue<Boolean, Boolean>(AdvancedGraphics.enableCaveCulling); }
 	
 	@Override
-	public IDhApiConfigValue<Integer> getCaveCullingHeight()
-	{ return new DhApiConfigValue<>(AdvancedGraphics.caveCullingHeight); }
+	public IDhApiConfigValue<Integer> caveCullingHeight()
+	{ return new DhApiConfigValue<Integer, Integer>(AdvancedGraphics.caveCullingHeight); }
 	
 	@Override
-	public IDhApiConfigValue<Integer> getEarthCurvatureRatio()
-	{ return new DhApiConfigValue<>(AdvancedGraphics.earthCurveRatio); }
+	public IDhApiConfigValue<Integer> earthCurvatureRatio()
+	{ return new DhApiConfigValue<Integer, Integer>(AdvancedGraphics.earthCurveRatio); }
 	
 	@Override
-	public IDhApiConfigValue<Boolean> getEnableLodOnlyMode()
-	{ return new DhApiConfigValue<>(Debugging.lodOnlyMode); }
+	public IDhApiConfigValue<Boolean> lodOnlyMode()
+	{ return new DhApiConfigValue<Boolean, Boolean>(Debugging.lodOnlyMode); }
+	
+	@Override
+	public IDhApiConfigValue<Double> lodBias()
+	{ return new DhApiConfigValue<Double, Double>(AdvancedGraphics.lodBias); }
 	
 	
 	

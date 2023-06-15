@@ -17,36 +17,21 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.lod.api.interfaces.config.both;
+package com.seibel.lod.api.interfaces.config.client;
 
-import com.seibel.lod.api.enums.config.ELightGenerationMode;
-import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
-import com.seibel.lod.api.interfaces.config.IDhApiConfigValue;
+import com.seibel.lod.api.enums.rendering.EFogColorMode;
+import com.seibel.lod.api.enums.rendering.EFogDistance;
+import com.seibel.lod.api.enums.rendering.EFogDrawMode;
 import com.seibel.lod.api.interfaces.config.IDhApiConfigGroup;
+import com.seibel.lod.api.interfaces.config.IDhApiConfigValue;
 
 /**
- * Distant Horizons' world generation configuration. <br><br>
- *
- * Note: Fake chunks are NOT saved in Minecraft's vanilla save system.
+ * Distant Horizons' fog configuration. <br><br>
  *
  * @author James Seibel
- * @version 2022-9-15
+ * @version 2022-6-14
  */
-public interface IDhApiWorldGenerationConfig extends IDhApiConfigGroup
+public interface IDhApiLoggingConfig extends IDhApiConfigGroup
 {
-	
-	/**
-	 * Defines whether fake chunks will be generated
-	 * outside Minecraft's vanilla render distance.
-	 */
-	IDhApiConfigValue<Boolean> enableDistantWorldGeneration();
-	
-	/** Defines to what level fake chunks will be generated. */
-	IDhApiConfigValue<EDhApiDistantGeneratorMode> distantGeneratorMode();
-	
-	/** 
-	 * TODO
-	 */
-	IDhApiConfigValue<ELightGenerationMode> lightingEngine();
-	
+	// TODO implement
 }

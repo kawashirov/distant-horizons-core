@@ -49,28 +49,9 @@ import java.util.*;
 
 public class Config
 {
-	// TODO update this diagram
-    // CONFIG STRUCTURE
-    // 	-> Client
-    //		|
-    //		|-> Graphics
-    //		|		|-> Quality
-    //		|		|-> FogQuality
-    //		|		|-> AdvancedGraphics
-    //      |       		|-> NoiseTextureSettings
-    //		|
-    //		|-> World Generation
-    //		|
-    //		|-> Advanced
-    //				|-> Threads
-    //				|-> GpuBuffers
-    //				|-> Debugging
-
-    // Since the original config system uses forge stuff, that means we have to rewrite the whole config system
-
     public static ConfigCategory client = new ConfigCategory.Builder().set(Client.class).build();
-
-
+	
+	
     public static class Client
     {
 		public static ConfigEntry<Boolean> quickEnableRendering = new ConfigEntry.Builder<Boolean>()
@@ -147,20 +128,20 @@ public class Config
 				
 				public static class Quality
 				{
-					public static ConfigEntry<EHorizontalResolution> drawResolution = new ConfigEntry.Builder<EHorizontalResolution>()
-							.set(EHorizontalResolution.BLOCK)
+					public static ConfigEntry<EMaxHorizontalResolution> maxHorizontalResolution = new ConfigEntry.Builder<EMaxHorizontalResolution>()
+							.set(EMaxHorizontalResolution.BLOCK)
 							.comment(""
 									+ "What is the maximum detail LODs should be drawn at? \n"
 									+ "Higher settings will increase memory and GPU usage. \n"
 									+ "\n"
-									+ EHorizontalResolution.CHUNK + ": render 1 LOD for each Chunk. \n"
-									+ EHorizontalResolution.HALF_CHUNK + ": render 4 LODs for each Chunk. \n"
-									+ EHorizontalResolution.FOUR_BLOCKS + ": render 16 LODs for each Chunk. \n"
-									+ EHorizontalResolution.TWO_BLOCKS + ": render 64 LODs for each Chunk. \n"
-									+ EHorizontalResolution.BLOCK + ": render 256 LODs for each Chunk (width of one block). \n"
+									+ EMaxHorizontalResolution.CHUNK + ": render 1 LOD for each Chunk. \n"
+									+ EMaxHorizontalResolution.HALF_CHUNK + ": render 4 LODs for each Chunk. \n"
+									+ EMaxHorizontalResolution.FOUR_BLOCKS + ": render 16 LODs for each Chunk. \n"
+									+ EMaxHorizontalResolution.TWO_BLOCKS + ": render 64 LODs for each Chunk. \n"
+									+ EMaxHorizontalResolution.BLOCK + ": render 256 LODs for each Chunk (width of one block). \n"
 									+ "\n"
-									+ "Lowest Quality: " + EHorizontalResolution.CHUNK + "\n"
-									+ "Highest Quality: " + EHorizontalResolution.BLOCK)
+									+ "Lowest Quality: " + EMaxHorizontalResolution.CHUNK + "\n"
+									+ "Highest Quality: " + EMaxHorizontalResolution.BLOCK)
 							.addListener(RenderCacheConfigEventHandler.INSTANCE)
 							.setPerformance(EConfigEntryPerformance.MEDIUM)
 							.build();
@@ -185,15 +166,6 @@ public class Config
 							.addListener(RenderCacheConfigEventHandler.INSTANCE)
 							.build();
 					
-					// TODO merge with horizontal quality
-					public static ConfigEntry<Integer> horizontalScale = new ConfigEntry.Builder<Integer>()
-							.setMinDefaultMax(2, 12, 64)
-							.comment(""
-									+ "This indicates how quickly fake chunks decrease in quality the further away they are. \n"
-									+ "Higher settings will render higher quality fake chunks farther away, \n"
-									+ " but will increase memory and GPU usage.")
-							.build();
-
 					public static ConfigEntry<Boolean> ssao = new ConfigEntry.Builder<Boolean>()
 							.set(true)
 							.comment("Enable Screen Space Ambient Occlusion")
@@ -261,7 +233,7 @@ public class Config
 				
 				public static class Fog
 				{
-					public static ConfigEntry<EFogDrawMode> fogDrawMode = new ConfigEntry.Builder<EFogDrawMode>()
+					public static ConfigEntry<EFogDrawMode> drawMode = new ConfigEntry.Builder<EFogDrawMode>()
 							.set(EFogDrawMode.FOG_ENABLED)
 							.comment(""
 									+ "When should fog be drawn? \n"
@@ -275,13 +247,13 @@ public class Config
 							.setPerformance(EConfigEntryPerformance.VERY_LOW)
 							.build();
 					
-					public static ConfigEntry<EFogDistance> fogDistance = new ConfigEntry.Builder<EFogDistance>()
+					public static ConfigEntry<EFogDistance> distance = new ConfigEntry.Builder<EFogDistance>()
 							.set(EFogDistance.FAR)
 							.comment("At what distance should Fog be drawn on the LODs?")
 							.setPerformance(EConfigEntryPerformance.NONE)
 							.build();
 					
-					public static ConfigEntry<EFogColorMode> fogColorMode = new ConfigEntry.Builder<EFogColorMode>()
+					public static ConfigEntry<EFogColorMode> colorMode = new ConfigEntry.Builder<EFogColorMode>()
 							.set(EFogColorMode.USE_WORLD_FOG_COLOR)
 							.comment(""
 									+ "What color should fog use? \n"
@@ -370,8 +342,6 @@ public class Config
 						
 						public static class HeightFog
 						{
-							public static ConfigUIComment heightFogConfigScreenNote = new ConfigUIComment();
-							
 							public static ConfigEntry<EHeightFogMixMode> heightFogMixMode = new ConfigEntry.Builder<EHeightFogMixMode>()
 									.set(EHeightFogMixMode.BASIC)
 									.comment(""
@@ -405,7 +375,7 @@ public class Config
 											+ EHeightFogMode.ABOVE_AND_BELOW_SET_HEIGHT + ": Height fog starts from a set height and goes towards both the sky and void")
 									.build();
 							
-							public static ConfigEntry<Double> heightFogHeight = new ConfigEntry.Builder<Double>()
+							public static ConfigEntry<Double> heightFogBaseHeight = new ConfigEntry.Builder<Double>()
 									.setMinDefaultMax(-4096.0, 70.0, 4096.0)
 									.comment("If the height fog is calculated around a set height, what is that height position?")
 									.build();
@@ -467,7 +437,7 @@ public class Config
 				
 				public static class NoiseTextureSettings
 				{
-					public static ConfigEntry<Boolean> noiseEnable = new ConfigEntry.Builder<Boolean>()
+					public static ConfigEntry<Boolean> noiseEnabled = new ConfigEntry.Builder<Boolean>()
 							.set(true)
 							.comment(""
 									+ "Should a noise texture be applied to LODs? \n"
@@ -708,7 +678,7 @@ public class Config
 								+ EServerFolderNameMode.NAME_IP_PORT_MC_VERSION + ": Example: \"Minecraft Server IP 192.168.1.40:25565 GameVersion 1.16.5\"")
 						.build();
 				
-				public static ConfigEntry<Double> multiDimensionRequiredSimilarity = new ConfigEntry.Builder<Double>()
+				public static ConfigEntry<Double> multiverseSimilarityRequiredPercent = new ConfigEntry.Builder<Double>()
 						.setMinDefaultMax(0.0, 0.0, 1.0)
 						.comment(""
 								+ "AKA: Multiverse support. \n"
@@ -971,15 +941,15 @@ public class Config
 								+ ERendererMode.DISABLED + ": Disable rendering")
 						.build();
 				
-				public static ConfigEntry<EDebugMode> debugMode = new ConfigEntry.Builder<EDebugMode>()
-						.set(EDebugMode.OFF)
+				public static ConfigEntry<EDebugRendering> debugRendering = new ConfigEntry.Builder<EDebugRendering>()
+						.set(EDebugRendering.OFF)
 						.comment(""
 								+ "Should specialized colors/rendering modes be used? \n"
 								+ "\n"
-								+ EDebugMode.OFF + ": Fake chunks will be drawn with their normal colors. \n"
-								+ EDebugMode.SHOW_DETAIL + ": Fake chunks color will be based on their detail level. \n"
-								+ EDebugMode.SHOW_GENMODE + ": Fake chunks color will be based on their distant generation mode. \n"
-								+ EDebugMode.SHOW_OVERLAPPING_QUADS + ": Fake chunks will be drawn with total white, but overlapping quads will be drawn with red. \n"
+								+ EDebugRendering.OFF + ": Fake chunks will be drawn with their normal colors. \n"
+								+ EDebugRendering.SHOW_DETAIL + ": Fake chunks color will be based on their detail level. \n"
+								+ EDebugRendering.SHOW_GENMODE + ": Fake chunks color will be based on their distant generation mode. \n"
+								+ EDebugRendering.SHOW_OVERLAPPING_QUADS + ": Fake chunks will be drawn with total white, but overlapping quads will be drawn with red. \n"
 								+ "    but overlapping quads will be drawn with red, drawn as a wireframe.")
 						.build();
 				
@@ -1089,6 +1059,7 @@ public class Config
 			
 		}
 		
+		// TODO implement
 		public static class ResetConfirmation
 		{
 			public static ConfigUIComment resetConfirmationNote = new ConfigUIComment();

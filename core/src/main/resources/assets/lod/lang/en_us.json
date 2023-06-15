@@ -78,9 +78,9 @@
   "lod.config.client.advanced.graphics.quality":
     "Render Quality",
 
-  "lod.config.client.advanced.graphics.quality.drawResolution":
-    "Draw Resolution",
-  "lod.config.client.advanced.graphics.quality.drawResolution.@tooltip":
+  "lod.config.client.advanced.graphics.quality.maxHorizontalResolution":
+    "Max Horizontal Resolution",
+  "lod.config.client.advanced.graphics.quality.maxHorizontalResolution.@tooltip":
     "The maximum detail LODs are rendered at.\n\n§6Fastest:§r Chunk\n§6Fanciest:§r Block",
   "lod.config.client.advanced.graphics.quality.lodChunkRenderDistance":
     "LOD Render Distance",
@@ -121,17 +121,17 @@
   "lod.config.client.advanced.graphics.fog":
     "Fog",
 
-  "lod.config.client.advanced.graphics.fog.fogDrawMode":
+  "lod.config.client.advanced.graphics.fog.drawMode":
     "Fog Draw Mode",
-  "lod.config.client.advanced.graphics.fog.fogDrawMode.@tooltip":
+  "lod.config.client.advanced.graphics.fog.drawMode.@tooltip":
     "When fog will be rendered on the LODs.",
-  "lod.config.client.advanced.graphics.fog.fogDistance":
+  "lod.config.client.advanced.graphics.fog.distance":
     "Fog Distance",
-  "lod.config.client.advanced.graphics.fog.fogDistance.@tooltip":
+  "lod.config.client.advanced.graphics.fog.distance.@tooltip":
     "The distance(s) Fog will be rendered on the LODs.",
-  "lod.config.client.advanced.graphics.fog.fogColorMode":
+  "lod.config.client.advanced.graphics.fog.colorMode":
     "Fog Color Mode",
-  "lod.config.client.advanced.graphics.fog.fogColorMode.@tooltip":
+  "lod.config.client.advanced.graphics.fog.colorMode.@tooltip":
     "The color of the fog on LODs.",
   "lod.config.client.advanced.graphics.fog.disableVanillaFog":
     "Disable Vanilla Fog",
@@ -167,10 +167,7 @@
     
   "lod.config.client.advanced.graphics.fog.advancedFog.heightFog":
     "Height Fog Options",
-    
-  "lod.config.client.advanced.graphics.fog.advancedFog.heightFog.heightFogConfigScreenNote":
-    "",    
-
+     
   "lod.config.client.advanced.graphics.fog.advancedFog.heightFog.heightFogMixMode":
     "Height Fog Mix Mode",
   "lod.config.client.advanced.graphics.fog.advancedFog.heightFog.heightFogMixMode.@tooltip":
@@ -179,9 +176,9 @@
     "Height Fog Mode",
   "lod.config.client.advanced.graphics.fog.advancedFog.heightFog.heightFogMode.@tooltip":
     "Where should the height fog be located? \n\nABOVE_CAMERA: Height fog starts from camera to the sky \nBELOW_CAMERA: Height fog starts from camera to the void \nABOVE_AND_BELOW_CAMERA: Height fog starts from camera to both the sky and the void \nABOVE_SET_HEIGHT: Height fog starts from a set height to the sky \nBELOW_SET_HEIGHT: Height fog starts from a set height to the void \nABOVE_AND_BELOW_SET_HEIGHT: Height fog starts from a set height to both the sky and the void \n",
-  "lod.config.client.advanced.graphics.fog.advancedFog.heightFog.heightFogHeight":
-    "Height Fog Set Height",
-  "lod.config.client.advanced.graphics.fog.advancedFog.heightFog.heightFogHeight.@tooltip":
+  "lod.config.client.advanced.graphics.fog.advancedFog.heightFog.heightFogBaseHeight":
+    "Height Fog Base Height",
+  "lod.config.client.advanced.graphics.fog.advancedFog.heightFog.heightFogBaseHeight.@tooltip":
     "If the height fog is calculated around a set height, what is that height position? ",
   "lod.config.client.advanced.graphics.fog.advancedFog.heightFog.heightFogStart":
     "Height Fog Start",
@@ -212,9 +209,9 @@
   "lod.config.client.advanced.graphics.noiseTextureSettings":
     "Noise Texture",
     
-  "lod.config.client.advanced.graphics.noiseTextureSettings.noiseEnable":
+  "lod.config.client.advanced.graphics.noiseTextureSettings.noiseEnabled":
     "Enable Noise Texture",
-  "lod.config.client.advanced.graphics.noiseTextureSettings.noiseEnable.@tooltip":
+  "lod.config.client.advanced.graphics.noiseTextureSettings.noiseEnabled.@tooltip":
     "If enabled a noise texture will be applied to LODs to simulate textures.",
   "lod.config.client.advanced.graphics.noiseTextureSettings.noiseSteps":
     "Noise Steps",
@@ -291,9 +288,9 @@
     "Server Folder Mode",
   "lod.config.client.multiplayer.serverFolderNameMode.@tooltip":
     "Determines the folder format for local multiplayer data.\n\n§6Name Only:§r\nUses the server browser name. Ex: \"Minecraft Server\"\n§6Name IP:§r\n\"Minecraft Server, IP 192.168.1.40\"\n§6Name, IP, Port:§r\n\"Minecraft Server, IP 192.168.1.40:25565\"\n§6Name, IP, Port, MC Version:§r\n\"Minecraft Server, IP 192.168.1.40:25565, GameVersion 1.18.1\"\n\n§c§lCaution:§r changing while connected to a multiplayer server may cause glitches.",
-  "lod.config.client.advanced.multiplayer.multiDimensionRequiredSimilarity":
-    "Multiverse Dimension Required Similarity",
-  "lod.config.client.multiplayer.multiDimensionRequiredSimilarity.@tooltip":
+  "lod.config.client.advanced.multiplayer.multiverseSimilarityRequiredPercent":
+    "Multiverse Required Similarity %",
+  "lod.config.client.advanced.multiplayer.multiverseSimilarityRequiredPercent.@tooltip":
     "When matching worlds of the same dimension type the\ntested chunk(s) must be at least this percent the same\nin order to be considered the same world.\n\nNote: If you use portals to enter a dimension at two\ndifferent locations this system may think it is two different worlds.\n\n§61.0:§r the chunks must be identical.\n§60.5:§r the chunks must be half the same.\n§60.0:§r disables multi-dimension support\n     only one world will be used per dimension.",
   
   
@@ -469,15 +466,15 @@
   "lod.config.enum.EThreadPreset.I_PAID_FOR_THE_WHOLE_CPU":
     "I Paid For The Whole CPU",
     
-  "lod.config.enum.EHorizontalResolution.BLOCK":
+  "lod.config.enum.EMaxHorizontalResolution.BLOCK":
     "Block",
-  "lod.config.enum.EHorizontalResolution.TWO_BLOCKS":
+  "lod.config.enum.EMaxHorizontalResolution.TWO_BLOCKS":
     "2 blocks",
-  "lod.config.enum.EHorizontalResolution.FOUR_BLOCKS":
+  "lod.config.enum.EMaxHorizontalResolution.FOUR_BLOCKS":
     "4 blocks",
-  "lod.config.enum.EHorizontalResolution.HALF_CHUNK":
+  "lod.config.enum.EMaxHorizontalResolution.HALF_CHUNK":
     "Half a chunk",
-  "lod.config.enum.EHorizontalResolution.CHUNK":
+  "lod.config.enum.EMaxHorizontalResolution.CHUNK":
     "Chunk",
     
   "lod.config.enum.EVerticalQuality.HEIGHT_MAP":
@@ -635,15 +632,15 @@
   "lod.config.enum.ERendererMode.DISABLED":
     "Disabled",
     
-  "lod.config.enum.EDebugMode.OFF":
+  "lod.config.enum.EDebugRendering.OFF":
     "Off",
-  "lod.config.enum.EDebugMode.SHOW_DETAIL":
+  "lod.config.enum.EDebugRendering.SHOW_DETAIL":
     "Show detail",
-  "lod.config.enum.EDebugMode.SHOW_GENMODE":
+  "lod.config.enum.EDebugRendering.SHOW_GENMODE":
     "Show generation mode",
-  "lod.config.enum.EDebugMode.SHOW_OVERLAPPING_QUADS":
+  "lod.config.enum.EDebugRendering.SHOW_OVERLAPPING_QUADS":
     "Show overlapping quads",
-  "lod.config.enum.EDebugMode.SHOW_RENDER_SOURCE_FLAG":
+  "lod.config.enum.EDebugRendering.SHOW_RENDER_SOURCE_FLAG":
     "Show render source flag",
     
   "lod.config.enum.ELoggerMode.DISABLED":

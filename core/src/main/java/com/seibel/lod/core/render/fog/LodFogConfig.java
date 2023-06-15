@@ -66,7 +66,7 @@ public class LodFogConfig
 	
 	public static LodFogConfig generateFogConfig()
 	{
-		EFogDrawMode fogMode = Config.Client.Advanced.Graphics.Fog.fogDrawMode.get();
+		EFogDrawMode fogMode = Config.Client.Advanced.Graphics.Fog.drawMode.get();
 		if (fogMode == EFogDrawMode.USE_OPTIFINE_SETTING && OPTIFINE != null)
 		{
 			fogMode = OPTIFINE.getFogDrawMode();
@@ -80,7 +80,7 @@ public class LodFogConfig
 		// TODO: Move these out of here
 		earthCurveRatio = Config.Client.Advanced.Graphics.AdvancedGraphics.earthCurveRatio.get();
 
-		noiseEnable = Config.Client.Advanced.Graphics.NoiseTextureSettings.noiseEnable.get();
+		noiseEnable = Config.Client.Advanced.Graphics.NoiseTextureSettings.noiseEnabled.get();
 		noiseSteps = Config.Client.Advanced.Graphics.NoiseTextureSettings.noiseSteps.get();
 		noiseIntensity = Config.Client.Advanced.Graphics.NoiseTextureSettings.noiseIntensity.get().floatValue();
 		noiseDropoff = Config.Client.Advanced.Graphics.NoiseTextureSettings.noiseDropoff.get().floatValue();
@@ -88,7 +88,7 @@ public class LodFogConfig
 
 		if (fogDrawMode != EFogDrawMode.FOG_DISABLED)
 		{
-			EFogDistance fogDistance = Config.Client.Advanced.Graphics.Fog.fogDistance.get();
+			EFogDistance fogDistance = Config.Client.Advanced.Graphics.Fog.distance.get();
 			drawNearFog = (fogDistance == EFogDistance.NEAR || fogDistance == EFogDistance.NEAR_AND_FAR);
 			
 			if (fogDistance == EFogDistance.FAR || fogDistance == EFogDistance.NEAR_AND_FAR)
@@ -134,7 +134,7 @@ public class LodFogConfig
 					}
 					else
 					{
-						heightFogHeight = Config.Client.Advanced.Graphics.Fog.AdvancedFog.HeightFog.heightFogHeight.get().floatValue();
+						heightFogHeight = Config.Client.Advanced.Graphics.Fog.AdvancedFog.HeightFog.heightFogBaseHeight.get().floatValue();
 					}
 				}
 			}

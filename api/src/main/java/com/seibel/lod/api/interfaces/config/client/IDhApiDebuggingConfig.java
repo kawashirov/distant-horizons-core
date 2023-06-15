@@ -19,7 +19,7 @@
 
 package com.seibel.lod.api.interfaces.config.client;
 
-import com.seibel.lod.api.enums.rendering.EDebugMode;
+import com.seibel.lod.api.enums.rendering.EDebugRendering;
 import com.seibel.lod.api.interfaces.config.IDhApiConfigValue;
 import com.seibel.lod.api.interfaces.config.IDhApiConfigGroup;
 
@@ -32,10 +32,19 @@ import com.seibel.lod.api.interfaces.config.IDhApiConfigGroup;
 public interface IDhApiDebuggingConfig extends IDhApiConfigGroup
 {
 	/** Can be used to debug the standard fake chunk rendering. */
-	IDhApiConfigValue<EDebugMode> getDebugRenderMode();
+	IDhApiConfigValue<EDebugRendering> debugRendering();
 	
 	/** If enabled debug keybindings can be used. */
-	IDhApiConfigValue<Boolean> getEnableDebugKeybindings();
+	IDhApiConfigValue<Boolean> debugKeybindings();
+	
+	/** TODO */
+	IDhApiConfigValue<Boolean> renderWireframe();
+	
+	/** TODO */
+	IDhApiConfigValue<Boolean> lodOnlyMode();
+	
+	/** TODO */
+	IDhApiConfigValue<Boolean> debugWireframeRendering();
 	
 	
 }

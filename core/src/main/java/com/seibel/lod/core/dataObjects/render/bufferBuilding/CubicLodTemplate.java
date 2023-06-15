@@ -22,7 +22,7 @@ package com.seibel.lod.core.dataObjects.render.bufferBuilding;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.lod.core.util.RenderDataPointUtil;
-import com.seibel.lod.api.enums.rendering.EDebugMode;
+import com.seibel.lod.api.enums.rendering.EDebugRendering;
 import com.seibel.lod.core.dataObjects.render.columnViews.ColumnArrayView;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.coreapi.util.BitShiftUtil;
@@ -40,7 +40,7 @@ public class CubicLodTemplate
 	public static void addLodToBuffer(
 			long data, long topData, long bottomData, ColumnArrayView[][] adjData,
 			byte detailLevel, int offsetPosX, int offsetOosZ, LodQuadBuilder quadBuilder, 
-			EDebugMode debugging, ColumnRenderSource.DebugSourceFlag debugSource)
+			EDebugRendering debugging, ColumnRenderSource.DebugSourceFlag debugSource)
 	{
 		DhLodPos blockOffsetPos = new DhLodPos(detailLevel, offsetPosX, offsetOosZ).convertToDetailLevel(LodUtil.BLOCK_DETAIL_LEVEL);
 		

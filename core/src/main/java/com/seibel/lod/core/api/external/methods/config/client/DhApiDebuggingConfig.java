@@ -23,14 +23,8 @@ import com.seibel.lod.api.interfaces.config.IDhApiConfigValue;
 import com.seibel.lod.api.interfaces.config.client.IDhApiDebuggingConfig;
 import com.seibel.lod.api.objects.config.DhApiConfigValue;
 import com.seibel.lod.core.config.Config.Client.Advanced.Debugging;
-import com.seibel.lod.api.enums.rendering.EDebugMode;
+import com.seibel.lod.api.enums.rendering.EDebugRendering;
 
-/**
- * Distant Horizons' debug configuration.
- *
- * @author James Seibel
- * @version 2022-9-15
- */
 public class DhApiDebuggingConfig implements IDhApiDebuggingConfig
 {
 	public static DhApiDebuggingConfig INSTANCE = new DhApiDebuggingConfig();
@@ -39,10 +33,19 @@ public class DhApiDebuggingConfig implements IDhApiDebuggingConfig
 	
 	
 	
-	public IDhApiConfigValue<EDebugMode> getDebugRenderMode()
-	{ return new DhApiConfigValue<>(Debugging.debugMode); }
+	public IDhApiConfigValue<EDebugRendering> debugRendering()
+	{ return new DhApiConfigValue<EDebugRendering, EDebugRendering>(Debugging.debugRendering); }
 	
-	public IDhApiConfigValue<Boolean> getEnableDebugKeybindings()
-	{ return new DhApiConfigValue<>(Debugging.enableDebugKeybindings); }
+	public IDhApiConfigValue<Boolean> debugKeybindings()
+	{ return new DhApiConfigValue<Boolean, Boolean>(Debugging.enableDebugKeybindings); }
+	
+	public IDhApiConfigValue<Boolean> renderWireframe()
+	{ return new DhApiConfigValue<Boolean, Boolean>(Debugging.renderWireframe); }
+	
+	public IDhApiConfigValue<Boolean> lodOnlyMode()
+	{ return new DhApiConfigValue<Boolean, Boolean>(Debugging.lodOnlyMode); }
+	
+	public IDhApiConfigValue<Boolean> debugWireframeRendering()
+	{ return new DhApiConfigValue<Boolean, Boolean>(Debugging.debugWireframeRendering); }
 	
 }

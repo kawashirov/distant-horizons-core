@@ -30,7 +30,7 @@ package com.seibel.lod.api.enums.rendering;
  * @author James Seibel
  * @version 2023-6-7
  */
-public enum EDebugMode
+public enum EDebugRendering
 {
 	// Reminder:
 	// when adding items up the API minor version
@@ -53,7 +53,7 @@ public enum EDebugMode
 	SHOW_RENDER_SOURCE_FLAG;
 	
 	
-	public static EDebugMode next(EDebugMode type) 
+	public static EDebugRendering next(EDebugRendering type) 
 	{
 		switch (type) 
 		{
@@ -65,7 +65,7 @@ public enum EDebugMode
 		}
 	}
 
-	public static EDebugMode previous(EDebugMode type) 
+	public static EDebugRendering previous(EDebugRendering type) 
 	{
 		switch (type) 
 		{

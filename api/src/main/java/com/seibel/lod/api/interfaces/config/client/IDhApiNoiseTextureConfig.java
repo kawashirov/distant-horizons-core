@@ -19,29 +19,35 @@
 
 package com.seibel.lod.api.interfaces.config.client;
 
-import com.seibel.lod.api.enums.config.EGpuUploadMethod;
 import com.seibel.lod.api.interfaces.config.IDhApiConfigGroup;
 import com.seibel.lod.api.interfaces.config.IDhApiConfigValue;
 
 /**
- * Distant Horizons' OpenGL buffer configuration.
+ * Distant Horizons' noise texture configuration. <br><br>
  *
  * @author James Seibel
- * @version 2022-9-15
+ * @version 2022-6-14
  */
-public interface IDhApiBuffersConfig extends IDhApiConfigGroup
+public interface IDhApiNoiseTextureConfig extends IDhApiConfigGroup
 {
-	
-	/** Defines how geometry data is uploaded to the GPU. */
-	IDhApiConfigValue<EGpuUploadMethod> getGpuUploadMethod();
+	/**
+	 * TODO
+	 */
+	IDhApiConfigValue<Boolean> noiseEnabled();
 	
 	/**
-	 * Defines how long we should wait after uploading one
-	 * Megabyte of geometry data to the GPU before uploading
-	 * the next Megabyte of data. <br>
-	 * This can be set to a non-zero number to reduce stuttering caused by
-	 * uploading buffers to the GPU.
+	 * TODO
 	 */
-	IDhApiConfigValue<Integer> getBufferUploadTimeoutPerMegabyteInMilliseconds();
+	IDhApiConfigValue<Integer> noiseSteps();
+	
+	/**
+	 * TODO
+	 */
+	IDhApiConfigValue<Double> noiseIntensity();
+	
+	/**
+	 * TODO
+	 */
+	IDhApiConfigValue<Double> noiseDropoff();
 	
 }
