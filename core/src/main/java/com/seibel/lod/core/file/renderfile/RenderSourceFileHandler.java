@@ -32,7 +32,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
-	private final ExecutorService renderCacheThread = ThreadUtil.makeSingleThreadPool("RenderCacheThread");
+	private final ExecutorService fileHandlerThreadPool = ThreadUtil.makeSingleThreadPool("Render Source File Handler");
 	private final ConcurrentHashMap<DhSectionPos, RenderMetaDataFile> filesBySectionPos = new ConcurrentHashMap<>();
 	
 	private final IDhClientLevel level;
@@ -160,7 +160,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
     public CompletableFuture<ColumnRenderSource> readAsync(DhSectionPos pos)
 	{
 		// don't continue if the handler has been shut down
-		if (this.renderCacheThread.isTerminated())
+		if (this.fileHandlerThreadPool.isTerminated())
 		{
 			return CompletableFuture.completedFuture(null);
 		}
@@ -205,7 +205,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 			}
 		}
 		
-        return metaFile.loadOrGetCachedDataSourceAsync(this.renderCacheThread, this.level).handle(
+        return metaFile.loadOrGetCachedDataSourceAsync(this.fileHandlerThreadPool, this.level).handle(
 			(renderSource, exception) ->
 			{
 				if (exception != null)
@@ -289,7 +289,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (RenderMetaDataFile metaFile : this.filesBySectionPos.values())
 		{
-			futures.add(metaFile.flushAndSave(this.renderCacheThread));
+			futures.add(metaFile.flushAndSave(this.fileHandlerThreadPool));
 		}
 		
 		return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
@@ -423,7 +423,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (RenderMetaDataFile metaFile : this.filesBySectionPos.values())
 		{
-			futures.add(metaFile.flushAndSave(this.renderCacheThread));
+			futures.add(metaFile.flushAndSave(this.fileHandlerThreadPool));
 		}
 		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 	}

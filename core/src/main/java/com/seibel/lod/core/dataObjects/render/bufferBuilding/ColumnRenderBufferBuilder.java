@@ -38,7 +38,7 @@ public class ColumnRenderBufferBuilder
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
 	
-	public static ExecutorService bufferUploaderThreadPool = ThreadUtil.makeSingleThreadPool("ColumnBufferUploader");
+	public static ExecutorService bufferUploaderThreadPool = ThreadUtil.makeSingleThreadPool("Column Buffer Uploader");
 	public static ExecutorService bufferBuilderThreadPool;
 	private static ConfigChangeListener<Integer> configListener;
 	
@@ -382,7 +382,7 @@ public class ColumnRenderBufferBuilder
 	}
 	public static void setThreadPoolSize(int threadPoolSize) 
 	{
-		bufferBuilderThreadPool = ThreadUtil.makeThreadPool(threadPoolSize, "BufferBuilder");
+		bufferBuilderThreadPool = ThreadUtil.makeThreadPool(threadPoolSize, "Buffer Builder");
 		maxNumberOfConcurrentCalls = threadPoolSize * MAX_NUMBER_OF_CONCURRENT_CALLS_PER_THREAD;
 	}
 	
