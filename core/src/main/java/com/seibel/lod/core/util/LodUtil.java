@@ -266,8 +266,8 @@ public class LodUtil
 			debugBreak();
 		}
 	}
-	
-	private static void debugBreak() {
+
+	public static void debugBreak() {
 		int a = 0; // Set breakpoint here for auto pause on assert failure
 	}
 

@@ -83,6 +83,7 @@ public class LodRenderer
 		shaderProgram.bindVertexBuffer(vbo.getId());
 		GL32.glDrawElements(GL32.GL_TRIANGLES, (vbo.getVertexCount()/4)*6,
 				quadIBO.getType(), 0);
+		vbo.unbind();
 	}
 	public Vec3f getLookVector() {
 		return MC_RENDER.getLookAtVector();

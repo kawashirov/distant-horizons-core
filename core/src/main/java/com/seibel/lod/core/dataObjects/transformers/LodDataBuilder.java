@@ -26,11 +26,18 @@ public class LodDataBuilder {
                 int mappedId = chunkData.getMapping().addIfNotPresentAndGetId(biome, blockState);
                 // FIXME: The +1 offset to reproduce the old behavior. Remove this when we get per-face lighting
                 byte light = (byte) ((chunkWrapper.getBlockLight(x,lastY+1,z) << 4) + chunkWrapper.getSkyLight(x,lastY+1,z));
+
                 int y=chunkWrapper.getLightBlockingHeightMapValue(x, z);
+                int top = y;
 
                 for (; y>=chunkWrapper.getMinBuildHeight(); y--) {
                     IBiomeWrapper newBiome = chunkWrapper.getBiome(x, y, z);
                     IBlockStateWrapper newBlockState = chunkWrapper.getBlockState(x, y, z);
+
+                    if (top == 30 && y == 29 && chunkWrapper.getSkyLight(x,y+1,z) == 0)
+                    {
+                        int a = 0;
+                    }
                     byte newLight = (byte) ((chunkWrapper.getBlockLight(x,y+1,z) << 4) + chunkWrapper.getSkyLight(x,y+1,z));
 
                     if (!newBiome.equals(biome) || !newBlockState.equals(blockState)) {
@@ -52,6 +59,7 @@ public class LodDataBuilder {
                 chunkData.setSingleColumn(longs.toArray(new long[0]), x, z);
             }
         }
+        if (!canGenerateLodFromChunk(chunkWrapper)) return null;
         LodUtil.assertTrue(chunkData.emptyCount() == 0);
         return chunkData;
     }

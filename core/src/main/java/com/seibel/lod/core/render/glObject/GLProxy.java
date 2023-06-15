@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.logging.ConfigBasedLogger;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
+import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
@@ -457,7 +458,7 @@ public class GLProxy
 				"Vertex Attribute Buffer Binding: " + (c.glVertexAttribBinding != 0) + " <- optional improvement\n" +
 				"Buffer Storage: " + (c.glBufferStorage != 0) + " <- optional improvement\n";
 	}
-	
+
 	private static void logMessage(GLMessage msg)
 	{
 		GLMessage.ESeverity s = msg.severity;
@@ -465,6 +466,7 @@ public class GLProxy
 			msg.type == GLMessage.EType.UNDEFINED_BEHAVIOR)
 		{
 			GL_LOGGER.error("GL ERROR {} from {}: {}", msg.id, msg.source, msg.message);
+			LodUtil.assertNotReach();
 			throw new RuntimeException("GL ERROR: " + msg.toString());
 		}
 		
