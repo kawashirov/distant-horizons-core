@@ -1,7 +1,7 @@
 package com.seibel.lod.core.dataObjects.render.bufferBuilding;
 
 import com.seibel.lod.api.enums.config.EGpuUploadMethod;
-import com.seibel.lod.api.enums.rendering.EDebugMode;
+import com.seibel.lod.api.enums.rendering.EDebugRendering;
 import com.seibel.lod.api.enums.rendering.EGLProxyContext;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.config.listeners.ConfigChangeListener;
@@ -38,7 +38,7 @@ public class ColumnRenderBufferBuilder
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
 	
-	public static ExecutorService bufferUploaderThreadPool = ThreadUtil.makeSingleThreadPool("ColumnBufferUploader");
+	public static ExecutorService bufferUploaderThreadPool = ThreadUtil.makeSingleThreadPool("Column Buffer Uploader");
 	public static ExecutorService bufferBuilderThreadPool;
 	private static ConfigChangeListener<Integer> configListener;
 	
@@ -159,7 +159,7 @@ public class ColumnRenderBufferBuilder
 	private static void makeLodRenderData(LodQuadBuilder quadBuilder, ColumnRenderSource renderSource, ColumnRenderSource[] adjRegions)
 	{
 		// Variable initialization
-		EDebugMode debugMode = Config.Client.Advanced.Debugging.debugMode.get();
+		EDebugRendering debugMode = Config.Client.Advanced.Debugging.debugRendering.get();
 		
 		// can be uncommented to limit which section positions are build and thus, rendered
 		// useful when debugging a specific section
@@ -382,7 +382,7 @@ public class ColumnRenderBufferBuilder
 	}
 	public static void setThreadPoolSize(int threadPoolSize) 
 	{
-		bufferBuilderThreadPool = ThreadUtil.makeThreadPool(threadPoolSize, "BufferBuilder");
+		bufferBuilderThreadPool = ThreadUtil.makeThreadPool(threadPoolSize, "Buffer Builder");
 		maxNumberOfConcurrentCalls = threadPoolSize * MAX_NUMBER_OF_CONCURRENT_CALLS_PER_THREAD;
 	}
 	

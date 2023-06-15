@@ -20,38 +20,32 @@
 package com.seibel.lod.core.api.external.methods.config.client;
 
 import com.seibel.lod.api.interfaces.config.IDhApiConfigValue;
-import com.seibel.lod.api.interfaces.config.client.IDhApiThreadingConfig;
+import com.seibel.lod.api.interfaces.config.client.IDhApiNoiseTextureConfig;
 import com.seibel.lod.api.objects.config.DhApiConfigValue;
-import com.seibel.lod.core.config.Config.Client.Advanced.MultiThreading;
+import com.seibel.lod.core.config.Config.Client.Advanced.Graphics.NoiseTextureSettings;
 
-/**
- * Distant Horizons' threading configuration.
- *
- * @author James Seibel
- * @version 2022-9-15
- */
-public class DhApiThreadingConfig implements IDhApiThreadingConfig
+public class DhApiNoiseTextureConfig implements IDhApiNoiseTextureConfig
 {
-	public static DhApiThreadingConfig INSTANCE = new DhApiThreadingConfig();
+	public static DhApiNoiseTextureConfig INSTANCE = new DhApiNoiseTextureConfig();
 	
-	private DhApiThreadingConfig() { }
+	private DhApiNoiseTextureConfig() { }
 	
 	
-	
-	@Override
-	public IDhApiConfigValue<Integer> getWorldGeneratorThread()
-	{ return new DhApiConfigValue<>(MultiThreading.numberOfWorldGenerationThreads); }
 	
 	@Override
-	public IDhApiConfigValue<Integer> getBufferBuilderThread()
-	{ return new DhApiConfigValue<>(MultiThreading.numberOfBufferBuilderThreads); }
+	public IDhApiConfigValue<Boolean> noiseEnabled()
+	{ return new DhApiConfigValue<Boolean, Boolean>(NoiseTextureSettings.noiseEnabled); }
 	
 	@Override
-	public IDhApiConfigValue<Integer> getFileHandlerThread()
-	{ return new DhApiConfigValue<>(MultiThreading.numberOfFileHandlerThreads); }
+	public IDhApiConfigValue<Integer> noiseSteps()
+	{ return new DhApiConfigValue<Integer, Integer>(NoiseTextureSettings.noiseSteps); }
 	
 	@Override
-	public IDhApiConfigValue<Integer> getDataConverterThread()
-	{ return new DhApiConfigValue<>(MultiThreading.numberOfDataConverterThreads); }
+	public IDhApiConfigValue<Double> noiseIntensity()
+	{ return new DhApiConfigValue<Double, Double>(NoiseTextureSettings.noiseIntensity); }
+	
+	@Override
+	public IDhApiConfigValue<Double> noiseDropoff()
+	{ return new DhApiConfigValue<Double, Double>(NoiseTextureSettings.noiseDropoff); }
 	
 }

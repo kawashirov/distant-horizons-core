@@ -25,12 +25,6 @@ import com.seibel.lod.api.objects.config.DhApiConfigValue;
 import com.seibel.lod.core.config.Config.Client.Advanced.Multiplayer;
 import com.seibel.lod.api.enums.config.EServerFolderNameMode;
 
-/**
- * Distant Horizons' client-side multiplayer configuration.
- *
- * @author James Seibel
- * @version 2022-9-15
- */
 public class DhApiMultiplayerConfig implements IDhApiMultiplayerConfig
 {
 	public static DhApiMultiplayerConfig INSTANCE = new DhApiMultiplayerConfig();
@@ -39,10 +33,10 @@ public class DhApiMultiplayerConfig implements IDhApiMultiplayerConfig
 	
 	
 	
-	public IDhApiConfigValue<EServerFolderNameMode> getFolderSavingMode()
-	{ return new DhApiConfigValue<>(Multiplayer.serverFolderNameMode); }
+	public IDhApiConfigValue<EServerFolderNameMode> folderSavingMode()
+	{ return new DhApiConfigValue<EServerFolderNameMode, EServerFolderNameMode>(Multiplayer.serverFolderNameMode); }
 	
-	public IDhApiConfigValue<Double> getMultiverseSimilarityRequirement()
-	{ return new DhApiConfigValue<>(Multiplayer.multiDimensionRequiredSimilarity); }
+	public IDhApiConfigValue<Double> multiverseSimilarityRequirement()
+	{ return new DhApiConfigValue<Double, Double>(Multiplayer.multiverseSimilarityRequiredPercent); }
 	
 }

@@ -26,9 +26,9 @@ import com.seibel.lod.api.interfaces.config.IDhApiConfigGroup;
  * Distant Horizons' threading configuration.
  *
  * @author James Seibel
- * @version 2023-6-5
+ * @version 2023-6-14
  */
-public interface IDhApiThreadingConfig extends IDhApiConfigGroup
+public interface IDhApiMultiThreadingConfig extends IDhApiConfigGroup
 {
 	
 	/**
@@ -36,19 +36,15 @@ public interface IDhApiThreadingConfig extends IDhApiConfigGroup
 	 * terrain outside Minecraft's vanilla render distance. <br>
 	 * <br>
 	 * If the number of threads is less than 1 it will be treated as a percentage
-	 * representing how often the single thread will actively generate terrain. <br> <br>
-	 * 
-	 * @deprecated this (and the related config) should be replaced with an int
-	 * 				count of threads and then a double percent active config.
+	 * representing how often the single thread will actively generate terrain.
 	 */
-	@Deprecated
-	IDhApiConfigValue<Integer> getWorldGeneratorThread();
+	IDhApiConfigValue<Integer> worldGeneratorThreads();
 	
 	/** Defines how many buffer (GPU Terrain data) builder threads are used. */
-	IDhApiConfigValue<Integer> getBufferBuilderThread();
+	IDhApiConfigValue<Integer> bufferBuilderThreads();
 	
 	/** Defines how many file handler threads are used. */
-	IDhApiConfigValue<Integer> getFileHandlerThread();
+	IDhApiConfigValue<Integer> fileHandlerThreads();
 	
 	/** 
 	 * Defines how many Full to Render data converter threads are used. <br><br>
@@ -56,6 +52,11 @@ public interface IDhApiThreadingConfig extends IDhApiConfigGroup
 	 * <strong>Full data</strong> - Distant Horizons data based on BlockState and Biome IDs <br>
 	 * <strong>Render data</strong> - color data used when Distant Horizons is rendering
 	 */
-	IDhApiConfigValue<Integer> getDataConverterThread();
+	IDhApiConfigValue<Integer> dataConverterThreads();
+	
+	/**
+	 * TODO
+	 */
+	IDhApiConfigValue<Integer> chunkLodConverterThreads();
 	
 }

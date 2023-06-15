@@ -218,7 +218,7 @@ public abstract class AbstractDhClientLevel implements IDhClientLevel
 		this.fullDataFileHandler.close();
 		
 		// clear the chunk builder to prevent generating LODs for chunks that are unloaded
-		this.chunkToLodBuilder.clearCurrentTasks();
+		this.chunkToLodBuilder.close();
 		
 		
 		// shutdown the renderer

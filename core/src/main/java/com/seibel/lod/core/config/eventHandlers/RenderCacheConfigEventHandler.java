@@ -1,7 +1,7 @@
 package com.seibel.lod.core.config.eventHandlers;
 
 import com.seibel.lod.api.DhApiMain;
-import com.seibel.lod.api.enums.config.EHorizontalResolution;
+import com.seibel.lod.api.enums.config.EMaxHorizontalResolution;
 import com.seibel.lod.api.enums.config.EVerticalQuality;
 import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.config.listeners.IConfigListener;
@@ -21,7 +21,7 @@ public class RenderCacheConfigEventHandler implements IConfigListener
 	
 	// previous values used to check if a watched setting was actually modified
 	private EVerticalQuality previousVerticalQualitySetting = null;
-	private EHorizontalResolution previousHorizontalResolution = null;
+	private EMaxHorizontalResolution previousHorizontalResolution = null;
 	
 	/** how long to wait in milliseconds before applying the config changes */
 	private static final long TIMEOUT_IN_MS = 400L;
@@ -47,7 +47,7 @@ public class RenderCacheConfigEventHandler implements IConfigListener
 			refreshRenderData = true;
 		}
 		
-		EHorizontalResolution newHorizontalResolution = Config.Client.Advanced.Graphics.Quality.drawResolution.get();
+		EMaxHorizontalResolution newHorizontalResolution = Config.Client.Advanced.Graphics.Quality.maxHorizontalResolution.get();
 		if (this.previousHorizontalResolution != newHorizontalResolution)
 		{
 			this.previousHorizontalResolution = newHorizontalResolution;

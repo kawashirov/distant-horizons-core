@@ -27,7 +27,7 @@ import com.seibel.lod.api.interfaces.config.IDhApiConfigGroup;
  * Distant Horizons' client-side multiplayer configuration.
  *
  * @author James Seibel
- * @version 2022-9-15
+ * @version 2023-6-14
  */
 public interface IDhApiMultiplayerConfig extends IDhApiConfigGroup
 {
@@ -36,7 +36,7 @@ public interface IDhApiMultiplayerConfig extends IDhApiConfigGroup
 	 * Defines how multiplayer server folders are named. <br>
 	 * Note: Changing this while connected to a multiplayer world will cause undefined behavior!
 	 */
-	IDhApiConfigValue<EServerFolderNameMode> getFolderSavingMode();
+	IDhApiConfigValue<EServerFolderNameMode> folderSavingMode();
 	
 	/**
 	 * Defines the necessary similarity (as a percent) that two potential levels
@@ -47,7 +47,7 @@ public interface IDhApiMultiplayerConfig extends IDhApiConfigGroup
 	 * Setting this to a non-zero value allows for usage in servers that user Multiverse
 	 * or similar mods.
 	 */
-	IDhApiConfigValue<Double> getMultiverseSimilarityRequirement();
+	IDhApiConfigValue<Double> multiverseSimilarityRequirement();
 	
 	
 }

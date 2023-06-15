@@ -23,7 +23,8 @@ public class DhClientServerWorld extends AbstractDhWorld implements IDhClientWor
     private final HashSet<DhClientServerLevel> dhLevels;
     public final LocalSaveStructure saveStructure;
 	
-    public ExecutorService dhTickerThread = ThreadUtil.makeSingleThreadPool("DHTickerThread", 2);
+	// TODO why does this executor have 2 threads?
+    public ExecutorService dhTickerThread = ThreadUtil.makeSingleThreadPool("DH Client Server World Ticker Thread", 2);
     public EventLoop eventLoop = new EventLoop(this.dhTickerThread, this::_clientTick); //TODO: Rate-limit the loop
 	
     public F3Screen.DynamicMessage f3Message;

@@ -44,7 +44,7 @@ public class SubDimensionLevelMatcher implements AutoCloseable
 	public static final ConfigBasedLogger LOGGER = new ConfigBasedLogger(LogManager.getLogger(),
 			() -> Config.Client.Advanced.Logging.logFileSubDimEvent.get());
 	
-	private final ExecutorService matcherThread = ThreadUtil.makeSingleThreadPool("Level-To-File-Matcher");
+	private final ExecutorService matcherThread = ThreadUtil.makeSingleThreadPool("Sub Dimension Matcher");
 	
 	private SubDimensionPlayerData playerData = null;
 	private SubDimensionPlayerData firstSeenPlayerData = null;

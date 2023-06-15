@@ -22,7 +22,8 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
     private final HashMap<IClientLevelWrapper, DhClientLevel> levels;
     public final ClientOnlySaveStructure saveStructure;
 	
-    public ExecutorService dhTickerThread = ThreadUtil.makeSingleThreadPool("DHTickerThread", 2);
+	// TODO why does this executor have 2 threads?
+    public ExecutorService dhTickerThread = ThreadUtil.makeSingleThreadPool("DH Client World Ticker Thread", 2);
     public EventLoop eventLoop = new EventLoop(this.dhTickerThread, this::_clientTick);
 	
 	

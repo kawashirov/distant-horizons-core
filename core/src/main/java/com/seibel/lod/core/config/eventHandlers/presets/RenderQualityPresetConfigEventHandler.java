@@ -1,7 +1,7 @@
 package com.seibel.lod.core.config.eventHandlers.presets;
 
 import com.seibel.lod.api.enums.config.EHorizontalQuality;
-import com.seibel.lod.api.enums.config.EHorizontalResolution;
+import com.seibel.lod.api.enums.config.EMaxHorizontalResolution;
 import com.seibel.lod.api.enums.config.EVerticalQuality;
 import com.seibel.lod.api.enums.config.quickOptions.EQualityPreset;
 import com.seibel.lod.api.enums.rendering.ETransparency;
@@ -21,14 +21,14 @@ public class RenderQualityPresetConfigEventHandler extends AbstractPresetConfigE
 	private static final Logger LOGGER = LogManager.getLogger();
 	
 	
-	private final ConfigEntryWithPresetOptions<EQualityPreset, EHorizontalResolution> drawResolution = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.Graphics.Quality.drawResolution, 
-		new HashMap<EQualityPreset, EHorizontalResolution>()
+	private final ConfigEntryWithPresetOptions<EQualityPreset, EMaxHorizontalResolution> drawResolution = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.Graphics.Quality.maxHorizontalResolution, 
+		new HashMap<EQualityPreset, EMaxHorizontalResolution>()
 		{{
-			this.put(EQualityPreset.MINIMUM, EHorizontalResolution.TWO_BLOCKS);
-			this.put(EQualityPreset.LOW, EHorizontalResolution.BLOCK);
-			this.put(EQualityPreset.MEDIUM, EHorizontalResolution.BLOCK);
-			this.put(EQualityPreset.HIGH, EHorizontalResolution.BLOCK);
-			this.put(EQualityPreset.EXTREME, EHorizontalResolution.BLOCK);
+			this.put(EQualityPreset.MINIMUM, EMaxHorizontalResolution.TWO_BLOCKS);
+			this.put(EQualityPreset.LOW, EMaxHorizontalResolution.BLOCK);
+			this.put(EQualityPreset.MEDIUM, EMaxHorizontalResolution.BLOCK);
+			this.put(EQualityPreset.HIGH, EMaxHorizontalResolution.BLOCK);
+			this.put(EQualityPreset.EXTREME, EMaxHorizontalResolution.BLOCK);
 		}});
 	private final ConfigEntryWithPresetOptions<EQualityPreset, EVerticalQuality> verticalQuality = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.Graphics.Quality.verticalQuality,
 		new HashMap<EQualityPreset, EVerticalQuality>()

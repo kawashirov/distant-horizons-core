@@ -1,0 +1,58 @@
+/*
+ *    This file is part of the Distant Horizons mod (formerly the LOD Mod),
+ *    licensed under the GNU LGPL v3 License.
+ *
+ *    Copyright (C) 2020-2022  James Seibel
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Lesser General Public License as published by
+ *    the Free Software Foundation, version 3.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Lesser General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Lesser General Public License
+ *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package com.seibel.lod.api.interfaces.config.client;
+
+import com.seibel.lod.api.enums.rendering.*;
+import com.seibel.lod.api.interfaces.config.IDhApiConfigGroup;
+import com.seibel.lod.api.interfaces.config.IDhApiConfigValue;
+
+/**
+ * Distant Horizons' fog configuration. <br><br>
+ *
+ * Note: unless an option explicitly states that it modifies
+ * Minecraft's vanilla rendering (like DisableVanillaFog)
+ * these settings will only affect Distant horizons' fog.
+ *
+ * @author James Seibel
+ * @version 2022-6-14
+ */
+public interface IDhApiFogConfig extends IDhApiConfigGroup
+{
+	
+	//====================//
+	// basic fog settings //
+	//====================//
+	
+	/** Defines at what distance fog is rendered on fake chunks. */
+	IDhApiConfigValue<EFogDistance> distance();
+	
+	/** Should be used to enable/disable fog rendering. */
+	IDhApiConfigValue<EFogDrawMode> drawMode();
+	
+	/** Can be used to enable support with mods that change vanilla MC's fog color. */
+	IDhApiConfigValue<EFogColorMode> color();
+	
+	/**
+	 * If enabled attempts to disable vanilla MC's fog on real chunks. <br>
+	 * May not play nice with other fog editing mods.
+	 */
+	IDhApiConfigValue<Boolean> disableVanillaFog();
+	
+}

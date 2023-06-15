@@ -20,7 +20,7 @@
 package com.seibel.lod.core.render.renderer;
 
 import com.seibel.lod.core.config.Config;
-import com.seibel.lod.api.enums.rendering.EDebugMode;
+import com.seibel.lod.api.enums.rendering.EDebugRendering;
 import com.seibel.lod.api.enums.rendering.EFogColorMode;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.logging.ConfigBasedLogger;
@@ -105,7 +105,7 @@ public class LodRenderer
 	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 
-	public EDebugMode previousDebugMode = null;
+	public EDebugRendering previousDebugMode = null;
 	public final RenderBufferHandler bufferHandler;
 
 	// The shader program
@@ -315,7 +315,7 @@ public class LodRenderer
 	{
 		Color fogColor;
 		
-		if (Config.Client.Advanced.Graphics.Fog.fogColorMode.get() == EFogColorMode.USE_SKY_COLOR)
+		if (Config.Client.Advanced.Graphics.Fog.colorMode.get() == EFogColorMode.USE_SKY_COLOR)
 			fogColor = MC_RENDER.getSkyColor();
 		else
 			fogColor = MC_RENDER.getFogColor(partialTicks);

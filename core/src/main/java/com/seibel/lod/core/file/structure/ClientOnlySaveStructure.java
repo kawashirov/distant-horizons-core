@@ -58,7 +58,7 @@ public class ClientOnlySaveStructure extends AbstractSaveStructure
 	{
 		return this.levelToFileMap.computeIfAbsent(level, (newLevel) ->
 		{
-			if (Config.Client.Advanced.Multiplayer.multiDimensionRequiredSimilarity.get() == 0)
+			if (Config.Client.Advanced.Multiplayer.multiverseSimilarityRequiredPercent.get() == 0)
 			{
 				if (this.fileMatcher != null)
 				{

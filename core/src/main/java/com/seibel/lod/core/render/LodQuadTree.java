@@ -337,7 +337,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	
 	private void updateDetailLevelVariables()
 	{
-		this.maxRenderDetailLevel = Config.Client.Advanced.Graphics.Quality.drawResolution.get().detailLevel;
+		this.maxRenderDetailLevel = Config.Client.Advanced.Graphics.Quality.maxHorizontalResolution.get().detailLevel;
 		this.detailDropOffDistanceUnit = Config.Client.Advanced.Graphics.Quality.horizontalQuality.get().distanceUnitInBlocks * LodUtil.CHUNK_WIDTH;
 		this.detailDropOffLogBase = Math.log(Config.Client.Advanced.Graphics.Quality.horizontalQuality.get().quadraticBase);
 	}
