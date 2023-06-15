@@ -20,12 +20,15 @@ public interface IFullDataSourceProvider extends AutoCloseable
     CompletableFuture<IFullDataSource> read(DhSectionPos pos);
     void write(DhSectionPos sectionPos, ChunkSizedFullDataAccessor chunkData);
     CompletableFuture<Void> flushAndSave();
+    CompletableFuture<Void> flushAndSave(DhSectionPos sectionPos);
+
+    void addOnUpdatedListener(Consumer<IFullDataSource> listener);
 
     //long getCacheVersion(DhSectionPos sectionPos);
     //boolean isCacheVersionValid(DhSectionPos sectionPos, long cacheVersion);
 
     CompletableFuture<IFullDataSource> onCreateDataFile(FullDataMetaFile file);
-    IFullDataSource onDataFileLoaded(IFullDataSource source, BaseMetaData metaData, Consumer<IFullDataSource> onUpdated, Function<IFullDataSource, Boolean> updater, boolean justCreated);
+    CompletableFuture<IFullDataSource> onDataFileLoaded(IFullDataSource source, BaseMetaData metaData, Consumer<IFullDataSource> onUpdated, Function<IFullDataSource, Boolean> updater, boolean justCreated);
     CompletableFuture<IFullDataSource> onDataFileRefresh(IFullDataSource source, BaseMetaData metaData, Function<IFullDataSource, Boolean> updater, Consumer<IFullDataSource> onUpdated);
     File computeDataFilePath(DhSectionPos pos);
     ExecutorService getIOExecutor();

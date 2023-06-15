@@ -207,115 +207,44 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	public CompletableFuture<IFullDataSource> onCreateDataFile(FullDataMetaFile file)
 	{
 		return this.spawnGenTasks(file, null);
-/*		DhSectionPos pos = file.pos;
-		
-		ArrayList<FullDataMetaFile> existingFiles = new ArrayList<>();
-		ArrayList<DhSectionPos> missingPositions = new ArrayList<>();
-		this.getDataFilesForPosition(pos, pos, existingFiles, missingPositions);
-		
-		// confirm the quad tree has at least one node in it
-		LodUtil.assertTrue(!missingPositions.isEmpty() || !existingFiles.isEmpty());
-		
-		
-		// determine the type of dataSource that should be used for this position
-		IIncompleteFullDataSource incompleteFullDataSource;
-		if (pos.sectionDetailLevel <= HighDetailIncompleteFullDataSource.MAX_SECTION_DETAIL)
-		{
-			incompleteFullDataSource = HighDetailIncompleteFullDataSource.createEmpty(pos);
-		}
-		else
-		{
-			incompleteFullDataSource = LowDetailIncompleteFullDataSource.createEmpty(pos);
-		}
-		
-		
-		if (missingPositions.size() == 1 && existingFiles.isEmpty() && missingPositions.get(0).equals(pos))
-		{
-			// No LOD data exists for this position yet
-			
-			WorldGenerationQueue worldGenQueue = this.worldGenQueueRef.get();
-			if (worldGenQueue != null)
-			{
-				this.incompleteSourceGenRequests.add(pos);
-				
-				// queue this section to be generated
-				GenTask genTask = new GenTask(pos, new WeakReference<>(incompleteFullDataSource));
-				worldGenQueue.submitGenTask(new DhLodPos(pos), incompleteFullDataSource.getDataDetailLevel(), genTask)
-						.whenComplete((genTaskResult, ex) ->
-						{
-							this.onWorldGenTaskComplete(genTaskResult, ex, genTask, pos);
-							this.fireOnGenPosSuccessListeners(pos);
-							this.incompleteSourceGenRequests.remove(pos);
-						});
-			}
-			
-			// return the empty dataSource (it will be populated later)
-			return CompletableFuture.completedFuture(incompleteFullDataSource);
-		}
-		else
-		{
-			// LOD data exists for this position
-			
-			// create the missing metaData files
-			for (DhSectionPos missingPos : missingPositions)
-			{
-				FullDataMetaFile newFile = this.getOrMakeFile(missingPos);
-				if (newFile != null)
-				{
-					existingFiles.add(newFile);
-				}
-			}
-			
-			//            LOGGER.debug("Creating "+pos+" from sampling "+existingFiles.size()+" files: "+existingFiles);
-			
-			// read in the existing data
-			final ArrayList<CompletableFuture<Void>> loadDataFutures = new ArrayList<>(existingFiles.size());
-			for (FullDataMetaFile existingFile : existingFiles)
-			{
-				loadDataFutures.add(existingFile.loadOrGetCachedDataSourceAsync()
-						.exceptionally((ex) -> *//*Ignore file read errors*//*null)
-						.thenAccept((fullDataSource) ->
-						{
-							if (fullDataSource == null)
-							{
-								return;
-							}
-							
-							this.checkIfSectionNeedsAdditionalGeneration(pos, fullDataSource);
-							
-							//LOGGER.info("Merging data from {} into {}", data.getSectionPos(), pos);
-							incompleteFullDataSource.sampleFrom(fullDataSource);
-						})
-				);
-			}
-			
-			return CompletableFuture.allOf(loadDataFutures.toArray(new CompletableFuture[0]))
-					.thenApply((voidValue) -> incompleteFullDataSource.tryPromotingToCompleteDataSource());
-		}*/
 	}
 	@Override
-	public IFullDataSource onDataFileLoaded(IFullDataSource source, BaseMetaData metaData,
+	public CompletableFuture<IFullDataSource> onDataFileLoaded(IFullDataSource source, BaseMetaData metaData,
 			Consumer<IFullDataSource> onUpdated, Function<IFullDataSource, Boolean> updater, boolean justCreated)
 	{
-		IFullDataSource fullDataSource = super.onDataFileLoaded(source, metaData, onUpdated, updater, justCreated);
-		if (fullDataSource instanceof CompleteFullDataSource || justCreated) {
-			return fullDataSource;
+		boolean changed = updater.apply(source);
+
+		if (source instanceof IIncompleteFullDataSource)
+		{
+			IFullDataSource newSource = ((IIncompleteFullDataSource) source).tryPromotingToCompleteDataSource();
+			changed |= newSource != source;
+			source = newSource;
 		}
 
-		this.spawnGenTasks(getOrMakeFile(metaData.pos), (IIncompleteFullDataSource)fullDataSource);
-		//checkIfSectionNeedsAdditionalGeneration(metaData.pos, fullDataSource);
-		return fullDataSource;
+		if (source instanceof IIncompleteFullDataSource && !justCreated) {
+			return this.spawnGenTasks(getOrMakeFile(metaData.pos), (IIncompleteFullDataSource)source)
+					.thenApply((newSource) -> {
+						onUpdated.accept(newSource);
+						return newSource;
+					});
+		}
+		else {
+			if (changed)
+			{
+				onUpdated.accept(source);
+			}
+			return CompletableFuture.completedFuture(source);
+		}
 	}
 
-/*	@Override
+	@Override
 	public CompletableFuture<IFullDataSource> onDataFileRefresh(IFullDataSource source, BaseMetaData metaData, Function<IFullDataSource, Boolean> updater, Consumer<IFullDataSource> onUpdated)
 	{
 		return super.onDataFileRefresh(source, metaData, updater, (IFullDataSource d) -> {
-			if (d instanceof CompleteFullDataSource) {
-
-			}
-		}
-	}*/
+			this.fireOnGenPosSuccessListeners(source.getSectionPos());
+			onUpdated.accept(d);
+		});
+	}
 
 	/**
 	 * Checks if the given {@link IFullDataSource} is fully generated and
@@ -417,12 +346,14 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		else if (genTaskResult.success)
 		{
 			// generation completed, update the files and listener(s)
-			this.fireOnGenPosSuccessListeners(pos);
+			this.flushAndSave(pos);
+			//this.fireOnGenPosSuccessListeners(pos);
 			return;
 		}
 		else
 		{
 			// generation didn't complete
+			LOGGER.error("Gen Task Failed at " + pos + ": " + genTaskResult);
 		}
 		
 		
@@ -439,7 +370,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	{
 		//LOGGER.info("gen task completed for pos: ["+pos+"].");
 		
-		// save the full data source
+/*		// save the full data source
 		FullDataMetaFile file = this.fileBySectionPos.get(pos);
 		if (file != null)
 		{
@@ -459,8 +390,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 			// doesn't appear to cause issues, but probably isn't desired either
 			//LOGGER.warn("fireOnGenPosSuccessListeners file null for pos: ["+pos+"].");
 		}
-		
-		
+		*/
 		// fire the event listeners 
 		for (IOnWorldGenCompleteListener listener : this.onWorldGenTaskCompleteListeners)
 		{
@@ -501,7 +431,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		}
 		
 		@Override
-		public Consumer<ChunkSizedFullDataAccessor> getOnGenTaskCompleteConsumer()
+		public Consumer<ChunkSizedFullDataAccessor> getChunkDataConsumer()
 		{
 			if (this.loadedTargetFullDataSource == null)
 			{
@@ -521,7 +451,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 				}
 			};
 		}
-		
+
 		public void releaseStrongReference() { this.loadedTargetFullDataSource = null; }
 		
 	}

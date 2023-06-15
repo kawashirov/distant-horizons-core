@@ -22,7 +22,9 @@ import com.seibel.lod.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -61,20 +63,6 @@ public class ColumnRenderSource
 	
 	private boolean isEmpty = true;
 	public EDhApiWorldGenerationStep worldGenStep;
-	
-	private IDhClientLevel level = null; //FIXME: hack to pass level into tryBuildBuffer
-	
-	//FIXME: Temp Hack to prevent swapping buffers too quickly
-	private long lastNs = -1;
-	/** 2 sec */
-	private static final long SWAP_TIMEOUT_IN_NS = 2_000000000L;
-	/** 1 sec */
-	private static final long SWAP_BUSY_COLLISION_TIMEOUT_IN_NS = 1_000000000L;
-	
-	private CompletableFuture<ColumnRenderBuffer> buildRenderBufferFuture = null;
-	private final Reference<ColumnRenderBuffer> columnRenderBufferRef = new Reference<>();
-	
-	
 	
 	//==============//
 	// constructors //
@@ -342,94 +330,7 @@ public class ColumnRenderSource
 	public byte getDetailOffset() { return SECTION_SIZE_OFFSET; }
 	
 	
-	
-	//================//
-	// Render Methods //
-	//================//
-	
-	// TODO return future?
-	private void tryBuildBuffer(IDhClientLevel level, ColumnRenderSource[] adjacentRenderSources)
-	{
-		if (this.buildRenderBufferFuture == null && !ColumnRenderBufferBuilder.isBusy() && !this.isEmpty)
-		{
-			this.buildRenderBufferFuture = ColumnRenderBufferBuilder.buildBuffers(level, this.columnRenderBufferRef, this, adjacentRenderSources);
-		}
-	}
-	
-	private void cancelBuildBuffer()
-	{
-		if (this.buildRenderBufferFuture != null)
-		{
-			//LOGGER.info("Cancelling build of render buffer for {}", sectionPos);
-			this.buildRenderBufferFuture.cancel(true);
-			this.buildRenderBufferFuture = null;
-		}
-	}
-	
-	public void allowRendering(IDhClientLevel level) { this.level = level; }
-	
-	public void disableRender() { this.cancelBuildBuffer(); }
-	
-	public void dispose() { this.cancelBuildBuffer(); }
-	
-	/**
-	 * Try and swap in new render buffer for this section. Note that before this call, there should be no other
-	 * places storing or referencing the render buffer.
-	 * @param renderBufferRefToSwap The slot for swapping in the new buffer.
-	 * @return True if the swap was successful. False if swap is not needed or if it is in progress.
-	 */
-	public boolean trySwapInNewlyBuiltRenderBuffer(AtomicReference<ColumnRenderBuffer> renderBufferRefToSwap, ColumnRenderSource[] adjacentRenderSources)
-	{
-		// prevent swapping the buffer to quickly
-		if (this.lastNs != -1 && System.nanoTime() - this.lastNs < SWAP_TIMEOUT_IN_NS)
-		{
-			return false;
-		}
-		
-		
-		if (this.buildRenderBufferFuture != null)
-		{
-			if (this.buildRenderBufferFuture.isDone())
-			{
-				this.lastNs = System.nanoTime();
-				//LOGGER.info("Swapping render buffer for {}", sectionPos);
-				
-				
-				ColumnRenderBuffer newBuffer = this.buildRenderBufferFuture.join();
-				LodUtil.assertTrue(newBuffer.buffersUploaded, "The buffer future for "+this.sectionPos+" returned an un-built buffer.");
-				
-				ColumnRenderBuffer oldBuffer = renderBufferRefToSwap.getAndSet(newBuffer);
-				if (oldBuffer != null)
-				{
-					// the old buffer is now considered unloaded, it will need to be freshly re-loaded
-					oldBuffer.buffersUploaded = false;
-				}
-				
-				ColumnRenderBuffer swapped = this.columnRenderBufferRef.swap(oldBuffer);
-				LodUtil.assertTrue(swapped == null);
-				
-					
-				this.buildRenderBufferFuture = null;
-				return true;
-			}
-		}
-		else
-		{
-			if (!this.isEmpty)
-			{
-				if (ColumnRenderBufferBuilder.isBusy())
-				{
-					this.lastNs += (long) (SWAP_BUSY_COLLISION_TIMEOUT_IN_NS * Math.random());
-				}
-				else
-				{
-					this.tryBuildBuffer(this.level, adjacentRenderSources);
-				}
-			}
-		}
-		
-		return false;
-	}
+
 	
 	public byte getRenderDataFormatVersion() { return DATA_FORMAT_VERSION; }
 	

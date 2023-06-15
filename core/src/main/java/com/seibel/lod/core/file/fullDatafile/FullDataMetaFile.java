@@ -163,7 +163,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 					this.baseMetaData = this._makeBaseMetaData(fullDataSource);
 					return fullDataSource;
 				})
-				.thenApply((fullDataSource) -> this.fullDataSourceProvider.onDataFileLoaded(fullDataSource, this.baseMetaData, this::_updateAndWriteDataSource, this::_applyWriteQueueToFullDataSource, true))
+				.thenCompose((fullDataSource) -> this.fullDataSourceProvider.onDataFileLoaded(fullDataSource, this.baseMetaData, this::_updateAndWriteDataSource, this::_applyWriteQueueToFullDataSource, true))
 				.whenComplete((fullDataSource, exception) ->
 				{
 					if (exception != null)
@@ -223,12 +223,10 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 					LodUtil.assertTrue(this.inCacheWriteAccessFuture.get() == null,
 							"No one should be writing to the cache while we are in the process of " +
 									"loading one into the cache! Is this a deadlock?");
-					
-					// fire the onDataLoaded method
-					fullDataSource = this.fullDataSourceProvider.onDataFileLoaded(fullDataSource, this.baseMetaData, this::_updateAndWriteDataSource, this::_applyWriteQueueToFullDataSource, false);
+
 					return fullDataSource;
-					
 				}, executorService)
+				.thenCompose((fullDataSource) -> this.fullDataSourceProvider.onDataFileLoaded(fullDataSource, this.baseMetaData, this::_updateAndWriteDataSource, this::_applyWriteQueueToFullDataSource, false))
 				.exceptionally((ex) ->
 				{
 					if (ex instanceof InterruptedException)
@@ -243,11 +241,8 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 						//LOGGER.warn(FullDataMetaFile.class.getSimpleName()+" loadOrGetCachedAsync attempted to use a closed thread pool.");
 						return null;
 					}
-					
-					
 					LOGGER.error("Error loading file "+this.file+": ", ex);
 					this.cachedFullDataSource = new SoftReference<>(null);
-					
 					future.completeExceptionally(ex);
 					return null; // the return value here doesn't matter
 				})

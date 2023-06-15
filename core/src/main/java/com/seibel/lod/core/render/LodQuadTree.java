@@ -198,9 +198,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		if (sectionPos.sectionDetailLevel > expectedDetailLevel)
 		{
 			// section detail level too high //
-			
-			
-			boolean isThisPositionBeingRendered = renderSection.isRenderingEnabled();
+			boolean canThisPosRender = renderSection.isRenderingEnabled();
 			boolean allChildrenSectionsAreLoaded = true;
 			
 			// recursively update all child render sections
@@ -210,24 +208,20 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 				DhSectionPos childPos = childPosIterator.next();
 				QuadNode<LodRenderSection> childNode = rootNode.getNode(childPos);
 				
-				boolean childSectionLoaded = this.recursivelyUpdateRenderSectionNode(playerPos, rootNode, childNode, childPos, isThisPositionBeingRendered || parentRenderSectionIsEnabled);
+				boolean childSectionLoaded = this.recursivelyUpdateRenderSectionNode(playerPos, rootNode, childNode, childPos, canThisPosRender || parentRenderSectionIsEnabled);
 				allChildrenSectionsAreLoaded = childSectionLoaded && allChildrenSectionsAreLoaded;
 			}
-			
-			
-			
+
 			if (!allChildrenSectionsAreLoaded)
 			{
 				// not all child positions are loaded yet, or this section is out of render range
-				return isThisPositionBeingRendered;
+				return canThisPosRender;
 			}
 			else
 			{
 				// all child positions are loaded, disable this section and enable its children.
-				renderSection.disposeRenderData();
 				renderSection.disableRendering();
-				
-				
+				renderSection.disposeRenderData();
 				
 				// walk back down the tree and enable the child sections //TODO there are probably more efficient ways of doing this, but this will work for now
 				childPosIterator = quadNode.getChildPosIterator();
@@ -243,10 +237,9 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 				{
 					// FIXME having world generation enabled in a pre-generated world that doesn't have any DH data can cause this to happen
 					//  surprisingly reloadPos() doesn't appear to be the culprit, maybe there is an issue with reloading/changing the full data source?
-					LOGGER.debug("Potential QuadTree concurrency issue. All child sections should be enabled and ready to render for pos: "+sectionPos);
+					LOGGER.warn("Potential QuadTree concurrency issue. All child sections should be enabled and ready to render for pos: "+sectionPos);
 				}
-				
-				
+
 				// this section is now being rendered via its children
 				return true;
 			}
@@ -255,29 +248,25 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		else if (sectionPos.sectionDetailLevel == expectedDetailLevel || sectionPos.sectionDetailLevel == expectedDetailLevel-1)
 		{
 			// this is the detail level we want to render //
-			
-			
 			// prepare this section for rendering
 			renderSection.loadRenderSource(this.renderSourceProvider, this.level);
 			
 			// wait for the parent to disable before enabling this section, so we don't overdraw/overlap render sections
-			if (!parentRenderSectionIsEnabled && renderSection.isRenderDataLoaded())
+			if (!parentRenderSectionIsEnabled && renderSection.canRenderNow())
 			{
 				renderSection.enableRendering();
-				
-				
+
 				// delete/disable children, all of them will be a lower detail level than requested
 				quadNode.deleteAllChildren((childRenderSection) ->
 				{
 					if (childRenderSection != null)
 					{
-						childRenderSection.disposeRenderData();
 						childRenderSection.disableRendering();
+						childRenderSection.disposeRenderData();
 					}
 				});
 			}
-			
-			return renderSection.isRenderDataLoaded();
+			return renderSection.canRenderNow();
 		}
 		else
 		{

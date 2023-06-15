@@ -25,27 +25,23 @@ public final class WorldGenTaskGroup
 		this.pos = pos;
 		this.dataDetail = dataDetail;
 	}
-	
-	
-	
-	public void onGenerationComplete(ChunkSizedFullDataAccessor chunkSizedFullDataView)
+
+	public void consumeChunkData(ChunkSizedFullDataAccessor chunkSizedFullDataView)
 	{
 		Iterator<WorldGenTask> tasks = this.worldGenTasks.iterator();
 		while (tasks.hasNext())
 		{
 			WorldGenTask task = tasks.next();
-			Consumer<ChunkSizedFullDataAccessor> onGenTaskCompleteConsumer = task.taskTracker.getOnGenTaskCompleteConsumer();
-			if (onGenTaskCompleteConsumer == null)
+			Consumer<ChunkSizedFullDataAccessor> chunkDataConsumer = task.taskTracker.getChunkDataConsumer();
+			if (chunkDataConsumer == null)
 			{
 				tasks.remove();
 				task.future.complete(WorldGenResult.CreateFail());
 			}
 			else
 			{
-				// TODO why aren't we removing the task if it has a consumer?
-				onGenTaskCompleteConsumer.accept(chunkSizedFullDataView);
+				chunkDataConsumer.accept(chunkSizedFullDataView);
 			}
 		}
 	}
-	
 }

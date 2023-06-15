@@ -13,6 +13,5 @@ public interface IWorldGenTaskTracker
 	/**  Returns true if the task hasn't been garbage collected. */
 	boolean isMemoryAddressValid();
 	
-	Consumer<ChunkSizedFullDataAccessor> getOnGenTaskCompleteConsumer();
-	
+	Consumer<ChunkSizedFullDataAccessor> getChunkDataConsumer();
 }

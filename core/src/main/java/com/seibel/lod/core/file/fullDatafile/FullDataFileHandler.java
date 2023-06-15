@@ -20,10 +20,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -314,7 +311,26 @@ public class FullDataFileHandler implements IFullDataSourceProvider
         }
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
-	
+
+	@Override
+	public CompletableFuture<Void> flushAndSave(DhSectionPos sectionPos)
+	{
+		FullDataMetaFile metaFile = this.fileBySectionPos.get(sectionPos);
+		if (metaFile == null)
+		{
+			return CompletableFuture.completedFuture(null);
+		}
+		return metaFile.flushAndSaveAsync();
+	}
+
+
+	private LinkedList<Consumer<IFullDataSource>> onUpdatedListeners = new LinkedList<>();
+	@Override
+	public synchronized void addOnUpdatedListener(Consumer<IFullDataSource> listener)
+	{
+		this.onUpdatedListeners.add(listener);
+	}
+
 //    @Override
 //    public long getCacheVersion(DhSectionPos sectionPos)
 //	{
@@ -402,7 +418,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	}
 	
 	@Override
-    public IFullDataSource onDataFileLoaded(IFullDataSource source, BaseMetaData metaData,
+    public CompletableFuture<IFullDataSource> onDataFileLoaded(IFullDataSource source, BaseMetaData metaData,
                                           Consumer<IFullDataSource> onUpdated, Function<IFullDataSource, Boolean> updater, boolean justCreated)
 	{
         boolean changed = updater.apply(source);
@@ -422,7 +438,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		{
 			onUpdated.accept(source);
 		}
-        return source;
+        return CompletableFuture.completedFuture(source);
     }
     @Override
     public CompletableFuture<IFullDataSource> onDataFileRefresh(IFullDataSource source, BaseMetaData metaData, Function<IFullDataSource, Boolean> updater, Consumer<IFullDataSource> onUpdated)

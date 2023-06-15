@@ -145,11 +145,12 @@ public class RenderBufferHandler
 			DhSectionPos sectionPos = node.sectionPos;
 			LodRenderSection renderSection = node.value;
 			
-			if (renderSection != null && renderSection.shouldRender())
+			if (renderSection != null && renderSection.isRenderingEnabled())
 			{
-				if (renderSection.renderBufferRef.get() != null && renderSection.renderBufferRef.get().buffersUploaded)
+				AbstractRenderBuffer buffer = renderSection.activeRenderBufferRef.get();
+				if (buffer != null)
 				{
-					this.loadedNearToFarBuffers.add(new LoadedRenderBuffer(renderSection.renderBufferRef.get(), sectionPos));
+					this.loadedNearToFarBuffers.add(new LoadedRenderBuffer(buffer, sectionPos));
 				}
 			}
 		}
@@ -168,48 +169,20 @@ public class RenderBufferHandler
 	
 	public void updateQuadTreeRenderSources()
 	{
-		try
+		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.lodQuadTree.nodeIterator();
+		while (nodeIterator.hasNext())
 		{
-			Iterator<QuadNode<LodRenderSection>> nodeIterator = this.lodQuadTree.nodeIterator();
-			while (nodeIterator.hasNext())
-			{
-				LodRenderSection renderSection = nodeIterator.next().value;
+			LodRenderSection renderSection = nodeIterator.next().value;
+			try {
 				if (renderSection != null)
 				{
-					ColumnRenderSource sectionRenderSource = renderSection.getRenderSource();
-					// if the render source is present, attempt to build it
-					if (sectionRenderSource != null)
-					{
-						ColumnRenderSource[] adjacentRenderSources = new ColumnRenderSource[ELodDirection.ADJ_DIRECTIONS.length];
-						for (ELodDirection direction : ELodDirection.ADJ_DIRECTIONS)
-						{
-							try
-							{
-								DhSectionPos adjPos = sectionRenderSource.sectionPos.getAdjacentPos(direction);
-								LodRenderSection adjRenderSection = this.lodQuadTree.getValue(adjPos);
-								// adjacent render sources can be null
-								if (adjRenderSection != null)
-								{
-									ColumnRenderSource adjRenderSource = adjRenderSection.getRenderSource();
-									adjacentRenderSources[direction.ordinal() - 2] = adjRenderSource;
-								}
-							}
-							catch (IndexOutOfBoundsException e)
-							{
-								// adjacent positions can be out of bounds, in that case a null render source will be used
-							}
-						}
-						
-						
-						// TODO why are we always trying to swap the buffers? shouldn't we only swap them when a new buffer has been built? we have a future object specifically for that in ColumnRenderSource
-						sectionRenderSource.trySwapInNewlyBuiltRenderBuffer(renderSection.renderBufferRef, adjacentRenderSources);
-					}
+					renderSection.tryBuildAndSwapBuffer(lodQuadTree);
 				}
 			}
-		}
-		catch (Exception e)
-		{
-			LOGGER.error("Error updating QuadTree render sources. Error: "+e.getMessage(), e);
+			catch (Exception e)
+			{
+				LOGGER.error("Error updating QuadTree render source at "+renderSection.pos+".", e);
+			}
 		}
 	}
 	
@@ -219,10 +192,9 @@ public class RenderBufferHandler
 		while (nodeIterator.hasNext())
 		{
 			LodRenderSection renderSection = nodeIterator.next().value;
-			if (renderSection != null && renderSection.renderBufferRef.get() != null)
+			if (renderSection != null)
 			{
-				renderSection.renderBufferRef.get().close();
-				renderSection.renderBufferRef.set(null);
+				renderSection.dispose();
 			}
 		}
 	}

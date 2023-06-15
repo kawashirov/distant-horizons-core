@@ -374,7 +374,7 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 			// temporary solution to prevent generating the same section multiple times
 			LOGGER.warn("Duplicate generation section " + taskPos + " with granularity [" + granularity + "] at " + chunkPosMin + ". Skipping...");
 
-			StackTraceElement[] stackTrace = this.alreadyGeneratedPosHashSet.get(inProgressTaskGroup.group.pos);
+			//StackTraceElement[] stackTrace = this.alreadyGeneratedPosHashSet.get(inProgressTaskGroup.group.pos);
 
 			// sending a success result is necessary to make sure the render sections are reloaded correctly 
 			inProgressTaskGroup.group.worldGenTasks.forEach(worldGenTask -> worldGenTask.future.complete(WorldGenResult.CreateSuccess(new DhSectionPos(granularity, taskPos))));
@@ -394,7 +394,7 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 		//LOGGER.info("Generating section "+taskPos+" with granularity "+granularity+" at "+chunkPosMin);
 		
 		this.numberOfTasksQueued++;
-		inProgressTaskGroup.genFuture = this.startGenerationEvent(chunkPosMin, granularity, taskDetailLevel, inProgressTaskGroup.group::onGenerationComplete);
+		inProgressTaskGroup.genFuture = this.startGenerationEvent(chunkPosMin, granularity, taskDetailLevel, inProgressTaskGroup.group::consumeChunkData);
 		inProgressTaskGroup.genFuture.whenComplete((voidObj, exception) ->
 		{
 			this.numberOfTasksQueued--;
@@ -425,7 +425,7 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 	private CompletableFuture<Void> startGenerationEvent(
 			DhChunkPos chunkPosMin,
 			byte granularity, byte targetDataDetail,
-			Consumer<ChunkSizedFullDataAccessor> generationCompleteConsumer)
+			Consumer<ChunkSizedFullDataAccessor> chunkDataConsumer)
 	{
 		EDhApiDistantGeneratorMode generatorMode = Config.Client.Advanced.WorldGenerator.distantGeneratorMode.get();
 		return this.generator.generateChunks(chunkPosMin.x, chunkPosMin.z, granularity, targetDataDetail, generatorMode, worldGeneratorThreadPool, (generatedObjectArray) ->
@@ -433,7 +433,7 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 			try
 			{
 				IChunkWrapper chunk = SingletonInjector.INSTANCE.get(IWrapperFactory.class).createChunkWrapper(generatedObjectArray);
-				generationCompleteConsumer.accept(LodDataBuilder.createChunkData(chunk));
+				chunkDataConsumer.accept(LodDataBuilder.createChunkData(chunk));
 			}
 			catch (ClassCastException e)
 			{

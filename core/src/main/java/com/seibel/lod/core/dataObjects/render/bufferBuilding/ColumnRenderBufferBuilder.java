@@ -14,6 +14,7 @@ import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhBlockPos;
 import com.seibel.lod.core.render.glObject.GLProxy;
 import com.seibel.lod.core.render.glObject.buffer.GLVertexBuffer;
+import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.util.RenderDataPointUtil;
 import com.seibel.lod.core.util.ThreadUtil;
 import com.seibel.lod.core.util.objects.Reference;
@@ -90,71 +91,71 @@ public class ColumnRenderBufferBuilder
 					LOGGER.error("\"LodNodeBufferBuilder\" was unable to build quads: ", e3);
 					throw e3;
 				}
-				
 			}, bufferBuilderThreadPool)
 			.thenApplyAsync((quadBuilder) ->
+			{
+				try
 				{
+					EVENT_LOGGER.trace("RenderRegion start Upload @ "+renderSource.sectionPos);
+					GLProxy glProxy = GLProxy.getInstance();
+					EGpuUploadMethod method = GLProxy.getInstance().getGpuUploadMethod();
+					EGLProxyContext oldContext = glProxy.getGlContext();
+					glProxy.setGlContext(EGLProxyContext.LOD_BUILDER);
+					ColumnRenderBuffer buffer = renderBufferRef.swap(null);
+
+					if (buffer == null)
+					{
+						buffer = new ColumnRenderBuffer(new DhBlockPos(renderSource.sectionPos.getCorner().getCornerBlockPos(), clientLevel.getMinY()), renderSource.sectionPos);
+					}
+
 					try
 					{
-						EVENT_LOGGER.trace("RenderRegion start Upload @ "+renderSource.sectionPos);
-						GLProxy glProxy = GLProxy.getInstance();
-						EGpuUploadMethod method = GLProxy.getInstance().getGpuUploadMethod();
-						EGLProxyContext oldContext = glProxy.getGlContext();
-						glProxy.setGlContext(EGLProxyContext.LOD_BUILDER);
-						ColumnRenderBuffer buffer = renderBufferRef.swap(null);
-						
-						if (buffer == null)
+						buffer.uploadBuffer(quadBuilder, method);
+						LodUtil.assertTrue(buffer.buffersUploaded);
+						EVENT_LOGGER.trace("RenderRegion end Upload @ "+renderSource.sectionPos);
+						return buffer;
+					}
+					catch (Exception e)
+					{
+						buffer.close();
+						throw e;
+					}
+					finally
+					{
+						glProxy.setGlContext(oldContext);
+					}
+				}
+				catch (InterruptedException e)
+				{
+					throw UncheckedInterruptedException.convert(e);
+				}
+				catch (Throwable e3)
+				{
+					LOGGER.error("\"LodNodeBufferBuilder\" was unable to upload buffer: ", e3);
+					throw e3;
+				}
+			}, bufferUploaderThreadPool)
+			.handle((columnRenderBuffer, ex) ->
+				{
+					//LOGGER.info("RenderRegion endBuild @ {}", renderSource.sectionPos);
+					if (ex != null)
+					{
+						LOGGER.warn("Buffer building failed: "+ex.getMessage(), ex);
+
+						if (!renderBufferRef.isEmpty())
 						{
-							buffer = new ColumnRenderBuffer(new DhBlockPos(renderSource.sectionPos.getCorner().getCornerBlockPos(), clientLevel.getMinY()), renderSource.sectionPos);
-						}
-						buffer.buffersUploaded = false;
-						
-						try
-						{
-							buffer.uploadBuffer(quadBuilder, method);
-							EVENT_LOGGER.trace("RenderRegion end Upload @ "+renderSource.sectionPos);
-							return buffer;
-						}
-						catch (Exception e)
-						{
+							ColumnRenderBuffer buffer = renderBufferRef.swap(null);
 							buffer.close();
-							throw e;
 						}
-						finally
-						{
-							glProxy.setGlContext(oldContext);
-						}
+
+						return null;
 					}
-					catch (InterruptedException e)
+					else
 					{
-						throw UncheckedInterruptedException.convert(e);
+						LodUtil.assertTrue(columnRenderBuffer.buffersUploaded);
+						return columnRenderBuffer;
 					}
-					catch (Throwable e3)
-					{
-						LOGGER.error("\"LodNodeBufferBuilder\" was unable to upload buffer: ", e3);
-						throw e3;
-					}
-				},
-					bufferUploaderThreadPool).handle((columnRenderBuffer, ex) ->
-					{
-						//LOGGER.info("RenderRegion endBuild @ {}", renderSource.sectionPos);
-						if (ex != null)
-						{
-							LOGGER.warn("Buffer building failed: "+ex.getMessage(), ex);
-							
-							if (!renderBufferRef.isEmpty())
-							{
-								ColumnRenderBuffer buffer = renderBufferRef.swap(null);
-								buffer.close();
-							}
-							
-							return null;
-						}
-						else
-						{
-							return columnRenderBuffer;
-						}
-					});
+				});
 	}
 	private static void makeLodRenderData(LodQuadBuilder quadBuilder, ColumnRenderSource renderSource, ColumnRenderSource[] adjRegions)
 	{
