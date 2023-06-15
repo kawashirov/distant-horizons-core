@@ -14,8 +14,8 @@ It should be automatically included when pulling the full mod.
 
 ## Open Source Acknowledgements
 
-XZ for Java (data compression)\
-https://tukaani.org/xz/java.html
+LZ4 for Java (data compression)\
+https://github.com/lz4/lz4-java
 
 Json & Toml for Java (config handling)\
 https://github.com/TheElectronWill/night-config
