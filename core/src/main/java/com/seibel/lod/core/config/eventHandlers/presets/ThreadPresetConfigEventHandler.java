@@ -55,6 +55,15 @@ public class ThreadPresetConfigEventHandler extends AbstractPresetConfigEventHan
 			this.put(EThreadPreset.AGGRESSIVE, getThreadCountByPercent(0.2));
 			this.put(EThreadPreset.I_PAID_FOR_THE_WHOLE_CPU, getThreadCountByPercent(1.0));
 		}});
+	private final ConfigEntryWithPresetOptions<EThreadPreset, Integer> chunkLodConverters = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.MultiThreading.numberOfChunkLodConverterThreads, 
+		new HashMap<EThreadPreset, Integer>()
+		{{
+			this.put(EThreadPreset.MINIMAL_IMPACT, 1);
+			this.put(EThreadPreset.LOW_IMPACT, getThreadCountByPercent(0.1));
+			this.put(EThreadPreset.BALANCED, getThreadCountByPercent(0.2));
+			this.put(EThreadPreset.AGGRESSIVE, getThreadCountByPercent(0.4));
+			this.put(EThreadPreset.I_PAID_FOR_THE_WHOLE_CPU, getThreadCountByPercent(1.0));
+		}});
 	
 	
 	
@@ -70,6 +79,7 @@ public class ThreadPresetConfigEventHandler extends AbstractPresetConfigEventHan
 		this.configList.add(this.bufferBuilders);
 		this.configList.add(this.fileHandlers);
 		this.configList.add(this.dataConverters);
+		this.configList.add(this.chunkLodConverters);
 		
 		
 		for (ConfigEntryWithPresetOptions<EThreadPreset, ?> config : this.configList)

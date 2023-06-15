@@ -805,6 +805,19 @@ public class Config
 								+ THREAD_NOTE)
 						.build();
 				
+				public static final ConfigEntry<Integer> numberOfChunkLodConverterThreads = new ConfigEntry.Builder<Integer>()
+						.setMinDefaultMax(1,
+								Runtime.getRuntime().availableProcessors()/16,
+								Runtime.getRuntime().availableProcessors())
+						.comment(""
+								+ "How many threads should be used to convert Minecraft chunks into LOD data? \n"
+								+ "\n"
+								+ "These threads run both when terrain is generated and when\n"
+								+ "chunks are loaded, unloaded, and modified. \n"
+								+ "\n"
+								+ THREAD_NOTE)
+						.build();
+				
 			}
 			
 			public static class GpuBuffers

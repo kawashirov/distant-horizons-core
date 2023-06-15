@@ -308,15 +308,19 @@
   "lod.config.client.advanced.multiThreading.numberOfBufferBuilderThreads":
     "NO. of buffer builder threads",
   "lod.config.client.advanced.multiThreading.numberOfBufferBuilderThreads.@tooltip":
-    "The number of threads used when building geometry data.\nCan only be between 1 and your CPU's processor count.",
+    "The number of threads used when building geometry data. \nCan only be between 1 and your CPU's processor count.",
   "lod.config.client.advanced.multiThreading.numberOfFileHandlerThreads":
-  "NO. of file handler threads",
+    "NO. of file handler threads",
   "lod.config.client.advanced.multiThreading.numberOfFileHandlerThreads.@tooltip":
-  "The number of threads used when building vertex buffers\n(The things sent to your GPU to draw the LODs).\nCan only be between 1 and your CPU's processor count.",
+    "The number of threads used when building vertex buffers \n(The things sent to your GPU to draw the LODs). \nCan only be between 1 and your CPU's processor count.",
   "lod.config.client.advanced.multiThreading.numberOfDataConverterThreads":
-  "NO. of data converter threads",
+    "NO. of data converter threads",
   "lod.config.client.advanced.multiThreading.numberOfDataConverterThreads.@tooltip":
-  "The number of threads used when converting ID data to render-able data.\n(This generally happens when generating new terrain or changing graphics settings).\nCan only be between 1 and your CPU's processor count.",
+    "The number of threads used when converting ID data to render-able data. \n(This generally happens when generating new terrain or changing graphics settings). \nCan only be between 1 and your CPU's processor count.",
+  "lod.config.client.advanced.multiThreading.numberOfChunkLodConverterThreads":
+    "NO. of chunk LOD converter threads",
+  "lod.config.client.advanced.multiThreading.numberOfChunkLodConverterThreads.@tooltip":
+    "How many threads should be used to convert Minecraft chunks into LOD data? \nThese threads run both when terrain is generated and when \nchunks are loaded, unloaded, and modified.",
   
   
   
