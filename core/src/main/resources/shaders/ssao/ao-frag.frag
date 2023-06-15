@@ -58,7 +58,7 @@ void main()
         float geometryDepth = calcViewPosition(offset.xy).z;
 
         float rangeCheck = smoothstep(0.0, 1.0, gSampleRad / abs(viewPos.z - geometryDepth));
-        occlusion_factor += float(geometryDepth >= samplePos.z + 0.0) * rangeCheck;
+        occlusion_factor += float(geometryDepth >= samplePos.z + 0.05) * rangeCheck;
 
     }
 
