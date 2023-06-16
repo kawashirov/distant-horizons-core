@@ -58,9 +58,11 @@ public interface ILevelWrapper extends IDhApiLevelWrapper, IBindable
 	default IChunkWrapper tryGetChunk(DhChunkPos pos) { return null; }
 	
     boolean hasChunkLoaded(int chunkX, int chunkZ);
-	
+
+	@Deprecated
 	IBlockStateWrapper getBlockState(DhBlockPos pos);
-	
+
+	@Deprecated
 	IBiomeWrapper getBiome(DhBlockPos pos);
 	
 	@Override
