@@ -47,9 +47,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 	 */
 	private SoftReference<IFullDataSource> cachedFullDataSource = new SoftReference<>(null);
 	private CompletableFuture<IFullDataSource> dataSourceWriteQueueFuture;
-	
-	
-	
+
 	//TODO: use ConcurrentAppendSingleSwapContainer<LodDataSource> instead of below:
 	private static class GuardedMultiAppendQueue
 	{
@@ -137,7 +135,20 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile
 	//==========//
 	// get data //
 	//==========//
-	
+
+	// Try get cached data source. Used for temp impl for re-queueing world gen tasks.
+	// (Read-only access! As writes should always be done async)
+	public IFullDataSource getCachedDataSourceNowOrNull()
+	{
+		debugPhantomLifeCycleCheck();
+		return this.cachedFullDataSource.get();
+	}
+
+	public CompletableFuture<IFullDataSource> forceReload() {
+		cachedFullDataSource = new SoftReference<>(null);
+		return loadOrGetCachedDataSourceAsync();
+	}
+
 	// Cause: Generic Type runtime casting cannot safety check it.
 	// However, the Union type ensures the 'data' should only contain the listed type.
 	public CompletableFuture<IFullDataSource> loadOrGetCachedDataSourceAsync()

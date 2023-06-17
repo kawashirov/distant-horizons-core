@@ -135,7 +135,7 @@ public class DhClientServerWorld extends AbstractDhWorld implements IDhClientWor
 		
 		for (DhClientServerLevel level : this.dhLevels)
 		{
-			LOGGER.info("Unloading level "+level.serverLevelWrapper.getDimensionType().getDimensionName());
+			LOGGER.info("Unloading level "+level.getServerLevelWrapper().getDimensionType().getDimensionName());
 			level.close();
 		}
 		

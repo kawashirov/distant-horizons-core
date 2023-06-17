@@ -70,6 +70,16 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	{
 		boolean oldQueueExists = this.worldGenQueueRef.compareAndSet(null, newWorldGenQueue);
 		LodUtil.assertTrue(oldQueueExists, "previous world gen queue is still here!");
+
+		for (FullDataMetaFile metaFile : this.fileBySectionPos.values())
+		{
+			IFullDataSource data = metaFile.getCachedDataSourceNowOrNull();
+			if (data instanceof IIncompleteFullDataSource) {
+				//todo
+				//metaFile.flushAndSaveAsync().thenApply(() -> metaFile.forceReload());
+			}
+		}
+
 	}
 	
 	public void clearGenerationQueue() { this.worldGenQueueRef.set(null); }
@@ -101,8 +111,6 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		// confirm the quad tree has at least one node in it
 		LodUtil.assertTrue(!missingPositions.isEmpty() || !existingFiles.isEmpty());
 
-
-
 		// determine the type of dataSource that should be used for this position
 		IIncompleteFullDataSource incompleteFullDataSource;
 		if (data == null)
@@ -121,31 +129,31 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 			incompleteFullDataSource = data;
 		}
 
+		WorldGenerationQueue worldGenQueue = this.worldGenQueueRef.get();
 		// breaks down the missing positions into the desired detail level that the gen queue could accept
-		byte maxSectDataDetailLevel = worldGenQueueRef.get().largestDataDetail;
-		byte targetDataDetailLevel = incompleteFullDataSource.getDataDetailLevel();
-		if (targetDataDetailLevel > maxSectDataDetailLevel) {
-			byte sectDetailLevel = (byte) (DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL + maxSectDataDetailLevel);
-			missingPositions = missingPositions.stream()
-					.flatMap(missingPos -> {
-						if (missingPos.sectionDetailLevel > sectDetailLevel) {
-							// split this position into smaller positions
-							ArrayList<DhSectionPos> splitPositions = new ArrayList<>();
-							missingPos.forEachChildAtLevel(sectDetailLevel, splitPositions::add);
-							return splitPositions.stream();
-						}
-						else {
-							return Stream.of(missingPos);
-						}
-					})
-					.collect(Collectors.toCollection(ArrayList::new));
+		if (worldGenQueue != null) {
+			byte maxSectDataDetailLevel = worldGenQueue.largestDataDetail;
+			byte targetDataDetailLevel = incompleteFullDataSource.getDataDetailLevel();
+			if (targetDataDetailLevel > maxSectDataDetailLevel) {
+				byte sectDetailLevel = (byte) (DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL + maxSectDataDetailLevel);
+				missingPositions = missingPositions.stream()
+						.flatMap(missingPos -> {
+							if (missingPos.sectionDetailLevel > sectDetailLevel) {
+								// split this position into smaller positions
+								ArrayList<DhSectionPos> splitPositions = new ArrayList<>();
+								missingPos.forEachChildAtLevel(sectDetailLevel, splitPositions::add);
+								return splitPositions.stream();
+							} else {
+								return Stream.of(missingPos);
+							}
+						})
+						.collect(Collectors.toCollection(ArrayList::new));
+			}
 		}
 
 		if (missingPositions.size() == 1 && existingFiles.isEmpty() && missingPositions.get(0).equals(pos))
 		{
 			// No LOD data exists for this position yet
-
-			WorldGenerationQueue worldGenQueue = this.worldGenQueueRef.get();
 			if (worldGenQueue != null)
 			{
 				this.incompleteSourceGenRequests.add(pos);

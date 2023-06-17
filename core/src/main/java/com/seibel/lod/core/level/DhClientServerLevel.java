@@ -1,20 +1,12 @@
 package com.seibel.lod.core.level;
 
-import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
-import com.seibel.lod.coreapi.DependencyInjection.WorldGeneratorInjector;
-import com.seibel.lod.core.config.AppliedConfigState;
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
+import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
+import com.seibel.lod.core.wrapperInterfaces.minecraft.IProfilerWrapper;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
-import com.seibel.lod.core.file.fullDatafile.FullDataFileHandler;
 import com.seibel.lod.core.file.structure.AbstractSaveStructure;
-import com.seibel.lod.core.generation.BatchGenerator;
-import com.seibel.lod.core.generation.WorldGenerationQueue;
-import com.seibel.lod.core.file.fullDatafile.GeneratedFullDataFileHandler;
-import com.seibel.lod.core.level.states.ClientRenderState;
-import com.seibel.lod.core.logging.f3.F3Screen;
 import com.seibel.lod.core.pos.DhSectionPos;
-import com.seibel.lod.core.util.FileScanUtil;
 import com.seibel.lod.core.pos.DhBlockPos2D;
-import com.seibel.lod.core.config.Config;
 import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.pos.DhBlockPos;
 import com.seibel.lod.core.wrapperInterfaces.block.IBlockStateWrapper;
@@ -23,56 +15,29 @@ import com.seibel.lod.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.IServerLevelWrapper;
+import com.seibel.lod.coreapi.util.math.Mat4f;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
 
 /** The level used on a singleplayer world */
-public class DhClientServerLevel extends AbstractDhClientLevel implements IDhClientLevel, IDhServerLevel, GeneratedFullDataFileHandler.IOnWorldGenCompleteListener
+public class DhClientServerLevel extends DhLevel implements IDhClientLevel, IDhServerLevel
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
-	
-	public final IServerLevelWrapper serverLevelWrapper;
-	public final F3Screen.NestedMessage f3Message;
-	
-	/**
-	 * This is separate from {@link AbstractDhClientLevel#fullDataFileHandler}
-	 * since the base {@link FullDataFileHandler} doesn't support world generation
-	 */
-	public final GeneratedFullDataFileHandler generatedFullDataFileHandler;
-	
-	private final AppliedConfigState<Boolean> worldGeneratorEnabledConfig;
-	private final AtomicReference<WorldGenState> worldGenStateRef = new AtomicReference<>();
-	
-	
+
+	public final ServerLevelModule serverside;
+	public final ClientLevelModule clientside;
+
+	public IClientLevelWrapper clientLevelWrapper;
 	
 	public DhClientServerLevel(AbstractSaveStructure saveStructure, IServerLevelWrapper serverLevelWrapper)
 	{
-		super(saveStructure, serverLevelWrapper);
-		
-		this.serverLevelWrapper = serverLevelWrapper;
-		this.f3Message = new F3Screen.NestedMessage(super::f3Log);
-		
-		if (this.fullDataFileHandler != null)
-		{
-			// done since the super() constructor creates a FullDataFileHandler first that we don't want // TODO in the future it would be nice if we didn't have to overwrite an existing object like this
-			this.fullDataFileHandler.close();
-		}
-		this.generatedFullDataFileHandler = new GeneratedFullDataFileHandler(this, saveStructure.getFullDataFolder(serverLevelWrapper));
-		this.fullDataFileHandler = this.generatedFullDataFileHandler;
-		
-		FileScanUtil.scanFiles(saveStructure, this.serverLevelWrapper, this.fullDataFileHandler, null);
-		
-		this.worldGeneratorEnabledConfig = new AppliedConfigState<>(Config.Client.Advanced.WorldGenerator.enableDistantGeneration);
-		
-		
+		serverside = new ServerLevelModule(this, serverLevelWrapper, saveStructure);
+		clientside = new ClientLevelModule(this);
 		LOGGER.info("Started "+DhClientServerLevel.class.getSimpleName()+" for "+ serverLevelWrapper +" with saves at "+saveStructure);
 	}
-	
-	
-	
+
 	//==============//
 	// tick methods //
 	//==============//
@@ -80,104 +45,58 @@ public class DhClientServerLevel extends AbstractDhClientLevel implements IDhCli
 	@Override
 	public void clientTick()
 	{
-		if (!super.baseClientTick())
-		{
-			return;
-		}
-		
-		// additional tick logic can be added if necessary
+		clientside.clientTick();
 	}
-	
+
 	@Override
-	public void serverTick() { this.chunkToLodBuilder.tick(); }
+	public void render(Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, float partialTicks, IProfilerWrapper profiler) {
+		clientside.render(mcModelViewMatrix, mcProjectionMatrix, partialTicks, profiler);
+	}
+
+	@Override
+	public void serverTick()
+	{
+		chunkToLodBuilder.tick();
+	}
 	
 	@Override
 	public void doWorldGen()
 	{
-		WorldGenState worldGenState = this.worldGenStateRef.get();
-		
-		// create/destroy the world generator as necessary
-		boolean shouldDoWorldGen = this.worldGeneratorEnabledConfig.get() && this.ClientRenderStateRef.get() != null;
-		if (shouldDoWorldGen && worldGenState == null)
+		serverside.worldGeneratorEnabledConfig.pollNewValue();
+		boolean shouldDoWorldGen = serverside.worldGeneratorEnabledConfig.get() && clientside.isRendering();
+		boolean isWorldGenRunning = serverside.isWorldGenRunning();
+		if (shouldDoWorldGen && !isWorldGenRunning)
 		{
-			// create the new world generator
-			WorldGenState newWgs = new WorldGenState(this);
-			if (!this.worldGenStateRef.compareAndSet(null, newWgs))
-			{
-				LOGGER.warn("Failed to start world gen due to concurrency");
-				newWgs.closeAsync(false);
-			}
+			// start world gen
+			serverside.startWorldGen();
 		}
-		else if (!shouldDoWorldGen && worldGenState != null)
+		else if (!shouldDoWorldGen && isWorldGenRunning)
 		{
-			// shut down the world generator
-			while (!this.worldGenStateRef.compareAndSet(worldGenState, null))
-			{
-				worldGenState = this.worldGenStateRef.get();
-				if (worldGenState == null)
-				{
-					return;
-				}
-			}
-			worldGenState.closeAsync(true).join(); //TODO: Make it async.
+			// stop world gen
+			serverside.stopWorldGen();
 		}
-		
-		
-		if (worldGenState != null)
+
+		if (serverside.isWorldGenRunning())
 		{
-			// queue new world generation requests
-			worldGenState.chunkGenerator.preGeneratorTaskStart();
-			worldGenState.worldGenerationQueue.runCurrentGenTasksUntilBusy(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
+			serverside.worldGenTick(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
 		}
 	}
-	
-	
-	
+
 	//========//
 	// render //
 	//========//
 	
 	public void startRenderer(IClientLevelWrapper clientLevel)
 	{
-		LOGGER.info("Starting renderer for "+this);
-		if (super.setAndStartRenderer())
-		{
-			this.worldGeneratorEnabledConfig.pollNewValue();
-			if (this.worldGeneratorEnabledConfig.get() && this.worldGenStateRef.get() == null)
-			{
-				WorldGenState worldGenState = new WorldGenState(this);
-				if (!this.worldGenStateRef.compareAndSet(null, worldGenState))
-				{
-					LOGGER.warn("Failed to start world gen due to concurrency");
-					worldGenState.closeAsync(false);
-				}
-			}
-			
-		}
+		clientside.startRenderer();
 	}
 	
 	public void stopRenderer()
 	{
-		super.stopRenderer();
-		
-		// stop the world generator
-		WorldGenState worldGenState = this.worldGenStateRef.get();
-		if (worldGenState != null)
-		{
-			while (!this.worldGenStateRef.compareAndSet(worldGenState, null))
-			{
-				worldGenState = this.worldGenStateRef.get();
-				if (worldGenState == null)
-				{
-					return;
-				}
-			}
-			worldGenState.closeAsync(true).join(); //TODO: Make it async.
-		}
+		clientside.stopRenderer();
+		clientLevelWrapper = null;
 	}
-	
-	
-	
+
 	//================//
 	// level handling //
 	//================//
@@ -197,17 +116,41 @@ public class DhClientServerLevel extends AbstractDhClientLevel implements IDhCli
 	}
 	
 	@Override
-	public IClientLevelWrapper getClientLevelWrapper() { return this.serverLevelWrapper.tryGetClientLevelWrapper(); }
+	public IClientLevelWrapper getClientLevelWrapper() { return serverside.levelWrapper.tryGetClientLevelWrapper(); }
+
 	@Override
-	public IServerLevelWrapper getServerLevelWrapper() { return this.serverLevelWrapper; }
+	public void clearRenderCache() {
+		clientside.clearRenderCache();
+	}
+
 	@Override
-	public ILevelWrapper getLevelWrapper() { return this.serverLevelWrapper; }
-	
+	public IServerLevelWrapper getServerLevelWrapper() { return serverside.levelWrapper; }
 	@Override
-	public int getMinY() { return this.serverLevelWrapper.getMinHeight(); }
-	
-	
-	
+	public ILevelWrapper getLevelWrapper() { return getServerLevelWrapper(); }
+
+	@Override
+	public IFullDataSourceProvider getFileHandler() {
+		return serverside.dataFileHandler;
+	}
+
+	@Override
+	public AbstractSaveStructure getSaveStructure() {
+		return serverside.saveStructure;
+	}
+
+	@Override
+	protected void saveWrites(ChunkSizedFullDataAccessor data) {
+		clientside.saveWrites(data);
+	}
+
+	@Override
+	public int getMinY() { return getLevelWrapper().getMinHeight(); }
+
+	@Override
+	public CompletableFuture<Void> saveAsync() {
+		return CompletableFuture.allOf(clientside.saveAsync(), getFileHandler().flushAndSave());
+	}
+
 	//===============//
 	// data handling //
 	//===============//
@@ -215,93 +158,20 @@ public class DhClientServerLevel extends AbstractDhClientLevel implements IDhCli
 	@Override
 	public void close()
 	{
-		super.baseClose();
-		this.f3Message.close();
-		
-		WorldGenState worldGenState = this.worldGenStateRef.get();
-		if (worldGenState != null)
-		{
-			// TODO does this have to be in a while loop, if so why?
-			while (!this.worldGenStateRef.compareAndSet(worldGenState, null))
-			{
-				worldGenState = this.worldGenStateRef.get();
-				if (worldGenState == null)
-				{
-					break;
-				}
-			}
-			
-			if (worldGenState != null)
-			{
-				worldGenState.closeAsync(true).join(); //TODO: Make it async.
-			}
-		}
-		
-		LOGGER.info("Closed "+this.getClass().getSimpleName()+" for "+this.serverLevelWrapper);
+		clientside.close();
+		super.close();
+		serverside.close();
+		LOGGER.info("Closed "+this.getClass().getSimpleName()+" for "+this.getServerLevelWrapper());
 	}
-	
-	
+
 	@Override 
 	public void onWorldGenTaskComplete(DhSectionPos pos)
 	{
-		ClientRenderState clientRenderState = this.ClientRenderStateRef.get();
-		if (clientRenderState != null && clientRenderState.quadtree != null)
-		{
-			clientRenderState.quadtree.reloadPos(pos);
-		}
+		clientside.reloadPos(pos);
 	}
-	
-	
-	
-	
-	//================//
-	// helper classes //
-	//================//
-	
-	private class WorldGenState
-	{
-		public final IDhApiWorldGenerator chunkGenerator;
-		public final WorldGenerationQueue worldGenerationQueue;
-		
-		
-		
-		WorldGenState(DhClientServerLevel level)
-		{
-			IDhApiWorldGenerator worldGenerator = WorldGeneratorInjector.INSTANCE.get(level.getLevelWrapper());
-			if (worldGenerator == null)
-			{
-				// no override generator is bound, use the Core world generator
-				worldGenerator = new BatchGenerator(level);
-				// binding the core generator won't prevent other mods from binding their own generators 
-				// since core world generator's should have the lowest override priority
-				WorldGeneratorInjector.INSTANCE.bind(level.getLevelWrapper(), worldGenerator);
-			}
-			this.chunkGenerator = worldGenerator;
-			
-			this.worldGenerationQueue = new WorldGenerationQueue(this.chunkGenerator);
-			DhClientServerLevel.this.generatedFullDataFileHandler.setGenerationQueue(this.worldGenerationQueue);
-			DhClientServerLevel.this.generatedFullDataFileHandler.addWorldGenCompleteListener(level);
-		}
-		
-		
-		
-		CompletableFuture<Void> closeAsync(boolean doInterrupt)
-		{
-			DhClientServerLevel.this.generatedFullDataFileHandler.clearGenerationQueue();
-			
-			return this.worldGenerationQueue.startClosing(true, doInterrupt)
-				.exceptionally(ex ->
-				{
-					LOGGER.error("Error closing generation queue", ex);
-					return null;
-				}
-				).thenRun(this.chunkGenerator::close)
-				.exceptionally(ex ->
-				{
-					LOGGER.error("Error closing world gen", ex);
-					return null;
-				});
-		}
+
+	@Override
+	public void dumpRamUsage() {
+
 	}
-	
 }

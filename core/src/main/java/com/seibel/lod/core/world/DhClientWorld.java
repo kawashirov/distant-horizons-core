@@ -3,17 +3,13 @@ package com.seibel.lod.core.world;
 import com.seibel.lod.core.level.DhClientLevel;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.file.structure.ClientOnlySaveStructure;
-import com.seibel.lod.core.config.Config;
-import com.seibel.lod.core.level.states.ClientRenderState;
 import com.seibel.lod.core.util.ThreadUtil;
 import com.seibel.lod.core.util.objects.EventLoop;
-import com.seibel.lod.core.util.LodUtil;
 import com.seibel.lod.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
@@ -53,11 +49,8 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 			{
 				return null;
 			}
-			
-			DhClientLevel level = new DhClientLevel(this.saveStructure, clientLevelWrapper);
-			level.startRenderer(clientLevelWrapper);
-			
-            return level;
+
+			return new DhClientLevel(this.saveStructure, clientLevelWrapper);
         });
     }
 
@@ -92,25 +85,6 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 
     private void _clientTick()
 	{
-		int newBlockRenderDistance = Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH;
-		
-		Iterator<DhClientLevel> iterator = this.levels.values().iterator();
-		while (iterator.hasNext())
-		{
-			DhClientLevel level = iterator.next();
-			ClientRenderState clientRenderState = level.ClientRenderStateRef.get();
-			
-			if (clientRenderState != null && clientRenderState.quadtree != null)
-			{
-				if (clientRenderState.quadtree.blockRenderDistanceRadius != newBlockRenderDistance)
-				{
-					// TODO is this the best way to handle changing the render distance?
-					level.close();
-					iterator.remove();
-				}
-			}
-		}
-		
 		this.levels.values().forEach(DhClientLevel::clientTick);
 	}
 

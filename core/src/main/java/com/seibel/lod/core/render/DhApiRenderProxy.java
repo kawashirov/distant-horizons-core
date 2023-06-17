@@ -3,6 +3,7 @@ package com.seibel.lod.core.render;
 import com.seibel.lod.api.interfaces.render.IDhApiRenderProxy;
 import com.seibel.lod.api.objects.DhApiResult;
 import com.seibel.lod.core.api.internal.SharedApi;
+import com.seibel.lod.core.level.IDhClientLevel;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.world.AbstractDhWorld;
 
@@ -36,9 +37,9 @@ public class DhApiRenderProxy implements IDhApiRenderProxy
 		Iterable<? extends IDhLevel> loadedLevels = world.getAllLoadedLevels();
 		for (IDhLevel level : loadedLevels)
 		{
-			if (level != null)
+			if (level instanceof IDhClientLevel)
 			{
-				level.clearRenderDataCache();
+				((IDhClientLevel) level).clearRenderCache();
 			}
 		}
 		

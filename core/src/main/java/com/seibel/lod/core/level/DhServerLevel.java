@@ -1,6 +1,12 @@
 package com.seibel.lod.core.level;
 
+import com.seibel.lod.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
+import com.seibel.lod.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.lod.core.file.fullDatafile.IFullDataSourceProvider;
+import com.seibel.lod.core.file.structure.AbstractSaveStructure;
+import com.seibel.lod.core.pos.DhBlockPos2D;
+import com.seibel.lod.core.pos.DhLodPos;
+import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.FileScanUtil;
 import com.seibel.lod.core.file.fullDatafile.FullDataFileHandler;
 import com.seibel.lod.core.file.structure.LocalSaveStructure;
@@ -12,31 +18,30 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
 
-public class DhServerLevel implements IDhServerLevel
+public class DhServerLevel extends DhLevel implements IDhServerLevel
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
-	
-	public final LocalSaveStructure save;
-	public final FullDataFileHandler dataFileHandler;
-	public final IServerLevelWrapper level;
-	
-	public DhServerLevel(LocalSaveStructure save, IServerLevelWrapper level)
+	public final ServerLevelModule serverside;
+
+	public DhServerLevel(AbstractSaveStructure saveStructure, IServerLevelWrapper serverLevelWrapper)
 	{
-		this.save = save;
-		this.level = level;
-		save.getFullDataFolder(level).mkdirs();
-		this.dataFileHandler = new FullDataFileHandler(this, save.getFullDataFolder(level)); //FIXME: GenerationQueue
-		FileScanUtil.scanFiles(save, level, this.dataFileHandler, null);
-		LOGGER.info("Started DHLevel for {} with saves at {}", level, save);
+		serverside = new ServerLevelModule(this, serverLevelWrapper, saveStructure);
+		LOGGER.info("Started DHLevel for {} with saves at {}", serverLevelWrapper, saveStructure);
 	}
 	
 	public void serverTick()
 	{
-		//Nothing for now
+		chunkToLodBuilder.tick();
 	}
-	
+
 	@Override
-	public int getMinY() { return this.level.getMinHeight(); }
+	protected void saveWrites(ChunkSizedFullDataAccessor data) {
+		DhLodPos pos = data.getLodPos().convertToDetailLevel(CompleteFullDataSource.SECTION_SIZE_OFFSET);
+		getFileHandler().write(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);
+	}
+
+	@Override
+	public int getMinY() { return getLevelWrapper().getMinHeight(); }
 	
 	@Override
 	public void dumpRamUsage()
@@ -47,38 +52,52 @@ public class DhServerLevel implements IDhServerLevel
 	@Override
 	public void close()
 	{
-		this.dataFileHandler.close();
-		LOGGER.info("Closed DHLevel for {}", this.level);
+		super.close();
+		serverside.close();
+		LOGGER.info("Closed DHLevel for {}", getLevelWrapper());
 	}
 	
 	@Override
-	public CompletableFuture<Void> saveAsync() { return this.dataFileHandler.flushAndSave(); }
+	public CompletableFuture<Void> saveAsync() { return getFileHandler().flushAndSave(); }
 	
 	@Override
 	public void doWorldGen()
 	{
-		// FIXME: No world gen for server side only for now
+		boolean shouldDoWorldGen = true; //todo;
+		boolean isWorldGenRunning = serverside.isWorldGenRunning();
+		if (shouldDoWorldGen && !isWorldGenRunning)
+		{
+			// start world gen
+			serverside.startWorldGen();
+		}
+		else if (!shouldDoWorldGen && isWorldGenRunning)
+		{
+			// stop world gen
+			serverside.stopWorldGen();
+		}
+
+		if (serverside.isWorldGenRunning())
+		{
+			serverside.worldGenTick(new DhBlockPos2D(0, 0)); // todo;
+		}
 	}
 	
 	@Override
-	public IServerLevelWrapper getServerLevelWrapper() { return this.level; }
+	public IServerLevelWrapper getServerLevelWrapper() { return serverside.levelWrapper; }
 	
 	@Override
-	public ILevelWrapper getLevelWrapper() { return this.level; }
+	public ILevelWrapper getLevelWrapper() { return getServerLevelWrapper(); }
 	
 	@Override
-	public IFullDataSourceProvider getFileHandler() { return this.dataFileHandler; }
-	
-	@Override 
-	public void clearRenderDataCache()
-	{
-		// Do nothing, there is no render data on the server
+	public IFullDataSourceProvider getFileHandler() { return serverside.dataFileHandler; }
+
+	@Override
+	public AbstractSaveStructure getSaveStructure() {
+		return serverside.saveStructure;
 	}
-	
+
 	@Override
-	public void updateChunkAsync(IChunkWrapper chunk)
-	{
-		//TODO
+	public void onWorldGenTaskComplete(DhSectionPos pos) {
+		//TODO: Send packet to client
 	}
-	
 }

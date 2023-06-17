@@ -16,5 +16,10 @@ public interface IDhClientLevel extends IDhLevel
     int computeBaseColor(DhBlockPos pos, IBiomeWrapper biome, IBlockStateWrapper block);
 	
     IClientLevelWrapper getClientLevelWrapper();
-	
+
+    /**
+     * Re-creates the color, render data.
+     * This method should be called after resource packs are changed or LOD settings are modified.
+     */
+    void clearRenderCache();
 }

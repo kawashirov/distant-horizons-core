@@ -90,7 +90,7 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 	{
 		for (DhServerLevel level : this.levels.values())
 		{
-			LOGGER.info("Unloading level " + level.level.getDimensionType().getDimensionName());
+			LOGGER.info("Unloading level " + level.getLevelWrapper().getDimensionType().getDimensionName());
 			level.close();
 		}
 		
