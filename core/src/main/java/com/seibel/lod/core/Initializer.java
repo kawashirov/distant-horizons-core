@@ -4,7 +4,7 @@ import com.seibel.lod.core.api.external.methods.config.DhApiConfig;
 import com.seibel.lod.core.api.external.methods.data.DhApiTerrainDataRepo;
 import com.seibel.lod.core.dataObjects.fullData.loader.CompleteFullDataSourceLoader;
 import com.seibel.lod.core.dataObjects.fullData.loader.HighDetailIncompleteFullDataSourceLoader;
-import com.seibel.lod.api.DhApiMain;
+import com.seibel.lod.api.DhApi;
 import com.seibel.lod.core.dataObjects.fullData.loader.LowDetailIncompleteFullDataSourceLoader;
 import com.seibel.lod.core.render.DhApiRenderProxy;
 import com.seibel.lod.core.world.DhApiWorldProxy;
@@ -19,10 +19,10 @@ public class Initializer
         LowDetailIncompleteFullDataSourceLoader unused4 = new LowDetailIncompleteFullDataSourceLoader(); // Auto register
 		
 		// link Core's config to the API
-		DhApiMain.Delayed.configs = DhApiConfig.INSTANCE;
-		DhApiMain.Delayed.terrainRepo = DhApiTerrainDataRepo.INSTANCE;
-		DhApiMain.Delayed.worldProxy = DhApiWorldProxy.INSTANCE;
-		DhApiMain.Delayed.renderProxy = DhApiRenderProxy.INSTANCE;
+		DhApi.Delayed.configs = DhApiConfig.INSTANCE;
+		DhApi.Delayed.terrainRepo = DhApiTerrainDataRepo.INSTANCE;
+		DhApi.Delayed.worldProxy = DhApiWorldProxy.INSTANCE;
+		DhApi.Delayed.renderProxy = DhApiRenderProxy.INSTANCE;
 		
     }
 }
