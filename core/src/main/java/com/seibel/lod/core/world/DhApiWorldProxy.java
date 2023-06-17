@@ -6,14 +6,11 @@ import com.seibel.lod.api.interfaces.world.IDhApiWorldProxy;
 import com.seibel.lod.core.api.internal.SharedApi;
 import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.level.IDhLevel;
-import com.seibel.lod.core.logging.DhLoggerBuilder;
 import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
+import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
 import com.seibel.lod.core.wrapperInterfaces.world.ILevelWrapper;
-import org.apache.logging.log4j.Logger;
 
-import java.io.Closeable;
 import java.util.ArrayList;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Used to interact with the currently loaded world.
@@ -28,7 +25,8 @@ public class DhApiWorldProxy implements IDhApiWorldProxy
 {
 	public static DhApiWorldProxy INSTANCE = new DhApiWorldProxy();
 	
-	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
+	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
+	private static final IMinecraftSharedWrapper MC_SHARED = SingletonInjector.INSTANCE.get(IMinecraftSharedWrapper.class);
 	private static final String NO_WORLD_EXCEPTION_STRING = "No world loaded";
 	
 	
@@ -49,9 +47,9 @@ public class DhApiWorldProxy implements IDhApiWorldProxy
 		}
 		
 		
-		if (!SharedApi.MC.isDedicatedServer()) // TODO why isn't this thrown a null pointer? when is SharedApi.MC being set?
+		if (!MC_SHARED.isDedicatedServer())
 		{
-			return MC.getWrappedClientWorld();
+			return MC_CLIENT.getWrappedClientWorld();
 		}
 		else
 		{
