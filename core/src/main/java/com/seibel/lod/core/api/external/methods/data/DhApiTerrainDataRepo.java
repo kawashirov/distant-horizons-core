@@ -213,7 +213,7 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 				SingleColumnFullDataAccessor dataColumn = dataSource.tryGet(relativePos.x, relativePos.z);
 				if (dataColumn != null)
 				{
-					int dataColumnIndexCount = dataColumn.getSingleLength();
+					int dataColumnIndexCount = dataColumn.getSingleLength(); // FIXME can throw index out of bounds exceptions, this is probably a core DH problem, not an API problem
 					DhApiTerrainDataPoint[] returnArray = new DhApiTerrainDataPoint[dataColumnIndexCount];
 					long dataPoint;
 					
@@ -264,7 +264,7 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 		catch (InterruptedException | ExecutionException e)
 		{
 			// shouldn't normally happen, but just in case
-			e.printStackTrace();
+			LOGGER.error("Unexpected exception in getTerrainDataColumnArray. Error: ["+e.getMessage()+"]", e);
 			return DhApiResult.createFail("Unexpected exception: [" + e.getMessage() + "].");
 		}
 	}
