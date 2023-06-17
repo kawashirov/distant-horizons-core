@@ -9,12 +9,14 @@ import com.seibel.lod.api.objects.math.DhApiVec3i;
 import com.seibel.lod.core.api.internal.SharedApi;
 import com.seibel.lod.core.dataObjects.fullData.accessor.SingleColumnFullDataAccessor;
 import com.seibel.lod.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
+import com.seibel.lod.core.dependencyInjection.SingletonInjector;
 import com.seibel.lod.core.util.FullDataPointUtil;
 import com.seibel.lod.core.dataObjects.fullData.FullDataPointIdMap;
 import com.seibel.lod.core.level.IDhLevel;
 import com.seibel.lod.core.pos.DhLodPos;
 import com.seibel.lod.core.pos.DhSectionPos;
 import com.seibel.lod.core.util.*;
+import com.seibel.lod.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.lod.coreapi.util.BitShiftUtil;
 import com.seibel.lod.coreapi.util.math.Vec3d;
 import com.seibel.lod.coreapi.util.math.Vec3f;
@@ -419,7 +421,10 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 	// debug methods //
 	//===============//
 	
-	/** debug methods need to be async because pausing the main thread to debug and hot swapping will crash the program */
+	/** 
+	 * This method is here for debugging the repo and isn't intended for normal use. 
+	 * The method need to be async because pausing the main thread with a breakpoint and hot swapping will crash the program
+	 */
 	public static void asyncDebugMethod(IDhApiLevelWrapper levelWrapper, int blockPosX, int blockPosY, int blockPosZ)
 	{
 		if (!debugThreadRunning)
@@ -428,47 +433,47 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 			Thread thread = new Thread(() -> {
 				try
 				{
-//					DhApiResult<DhApiTerrainDataPoint> single = getTerrainDataAtBlockYPos(levelWrapper, new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPosX, blockPosZ), blockPosY);
-//					DhApiResult<DhApiTerrainDataPoint[]> column = getTerrainDataColumnArray(levelWrapper, new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPosX, blockPosZ), null);
+					DhApiResult<DhApiTerrainDataPoint> single = getTerrainDataAtBlockYPos(levelWrapper, new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPosX, blockPosZ), blockPosY);
+					DhApiResult<DhApiTerrainDataPoint[]> column = getTerrainDataColumnArray(levelWrapper, new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPosX, blockPosZ), null);
 					
-//					DhLodPos chunkPos = new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPosX, blockPosZ).convertUpwardsTo(LodUtil.CHUNK_DETAIL_LEVEL);
-//					DhApiResult<DhApiTerrainDataPoint[][][]> area = getTerrainDataOverAreaForPositionDetailLevel(levelWrapper, chunkPos);
+					DhLodPos chunkPos = new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPosX, blockPosZ).convertToDetailLevel(LodUtil.CHUNK_DETAIL_LEVEL);
+					DhApiResult<DhApiTerrainDataPoint[][][]> area = getTerrainDataOverAreaForPositionDetailLevel(levelWrapper, chunkPos);
 					
 					
-//					IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
-//					DhApiResult<DhApiRaycastResult> rayCast = INSTANCE.raycastLodData(levelWrapper, MC_RENDER.getCameraExactPosition(), MC_RENDER.getLookAtVector(), 50);
-//					if (rayCast.payload != null && !rayCast.payload.pos.equals(currentDebugVec3i))
-//					{
-//						currentDebugVec3i = rayCast.payload.pos;
-//						
-//						// get a string for the block
-//						String blockString = "[NULL BLOCK]"; // shouldn't normally happen unless there is an issue with getting the terrain at the given position
-//						if (rayCast.payload.dataPoint.blockStateWrapper != null)
-//						{
-//							if (!rayCast.payload.dataPoint.blockStateWrapper.isAir() && rayCast.payload.dataPoint.blockStateWrapper.getWrappedMcObject_UNSAFE() != null)
-//							{
-//								blockString = rayCast.payload.dataPoint.blockStateWrapper.getWrappedMcObject_UNSAFE().toString();
-//							}
-//							else
-//							{
-//								blockString = "[AIR]";	
-//							}
-//						}
-//						
-//						LOGGER.info("raycast: " + currentDebugVec3i + "\t block: " + blockString);
-//					}
-//					else if (rayCast.payload == null && currentDebugVec3i != null)
-//					{
-//						currentDebugVec3i = null;
-//						LOGGER.info("raycast: [INFINITY]");
-//					}
+					IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
+					DhApiResult<DhApiRaycastResult> rayCast = INSTANCE.raycastLodData(levelWrapper, MC_RENDER.getCameraExactPosition(), MC_RENDER.getLookAtVector(), 50);
+					if (rayCast.payload != null && !rayCast.payload.pos.equals(currentDebugVec3i))
+					{
+						currentDebugVec3i = rayCast.payload.pos;
+
+						// get a string for the block
+						String blockString = "[NULL BLOCK]"; // shouldn't normally happen unless there is an issue with getting the terrain at the given position
+						if (rayCast.payload.dataPoint.blockStateWrapper != null)
+						{
+							if (!rayCast.payload.dataPoint.blockStateWrapper.isAir() && rayCast.payload.dataPoint.blockStateWrapper.getWrappedMcObject() != null)
+							{
+								blockString = rayCast.payload.dataPoint.blockStateWrapper.getWrappedMcObject().toString();
+							}
+							else
+							{
+								blockString = "[AIR]";	
+							}
+						}
+
+						LOGGER.info("raycast: " + currentDebugVec3i + "\t block: " + blockString);
+					}
+					else if (rayCast.payload == null && currentDebugVec3i != null)
+					{
+						currentDebugVec3i = null;
+						LOGGER.info("raycast: [INFINITY]");
+					}
 					
 					
 					int debugPoint = 0; // a place to put a debugger break point
 				}
 				catch (Exception e)
 				{
-					e.printStackTrace();
+					LOGGER.error("Test method Error: ["+e.getMessage()+"]", e);
 				}
 				finally
 				{
