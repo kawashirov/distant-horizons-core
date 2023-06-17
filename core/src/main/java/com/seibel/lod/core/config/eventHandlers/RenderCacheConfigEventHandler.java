@@ -1,6 +1,6 @@
 package com.seibel.lod.core.config.eventHandlers;
 
-import com.seibel.lod.api.DhApiMain;
+import com.seibel.lod.api.DhApi;
 import com.seibel.lod.api.enums.config.EMaxHorizontalResolution;
 import com.seibel.lod.api.enums.config.EVerticalQuality;
 import com.seibel.lod.core.config.Config;
@@ -81,7 +81,7 @@ public class RenderCacheConfigEventHandler implements IConfigListener
 		{
 			public void run()
 			{
-				DhApiMain.Delayed.renderProxy.clearRenderDataCache();
+				DhApi.Delayed.renderProxy.clearRenderDataCache();
 			}
 		};
 		this.cacheClearingTimer = new Timer("RenderCacheConfig-Timeout-Timer");

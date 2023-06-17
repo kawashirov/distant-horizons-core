@@ -28,14 +28,14 @@ import com.seibel.lod.coreapi.interfaces.dependencyInjection.IOverrideInjector;
  * @author James Seibel
  * @version 2023-2-9
  */
-public class DhApiMain
+public class DhApi
 {
 	/** 
 	 * <strong>WARNING:</strong> 
 	 * All objects in this class will be null until after DH initializes for the first time. <br><br>
 	 * 
 	 * Bind a custom {@link com.seibel.lod.api.methods.events.abstractEvents.DhApiAfterDhInitEvent DhApiAfterDhInitEvent}
-	 * to {@link DhApiMain#events ApiCoreInjectors.events} in order to be notified when this class can
+	 * to {@link DhApi#events ApiCoreInjectors.events} in order to be notified when this class can
 	 * be safely used.
 	 */
 	public static class Delayed
@@ -45,13 +45,13 @@ public class DhApiMain
 		
 		/** 
 		 * Used to interact with Distant Horizons' terrain data. 
-		 * Designed to be used in conjunction with {@link DhApiMain.Delayed#worldProxy}.
+		 * Designed to be used in conjunction with {@link DhApi.Delayed#worldProxy}.
 		 */
 		public static IDhApiTerrainDataRepo terrainRepo = null;
 		
 		/**
 		 * Used to interact with Distant Horizons' currently loaded world.
-		 * Designed to be used in conjunction with {@link DhApiMain.Delayed#terrainRepo}.
+		 * Designed to be used in conjunction with {@link DhApi.Delayed#terrainRepo}.
 		 */
 		public static IDhApiWorldProxy worldProxy = null;
 		
