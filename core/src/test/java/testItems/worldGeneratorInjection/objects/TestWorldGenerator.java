@@ -1,10 +1,10 @@
 package testItems.worldGeneratorInjection.objects;
 
-import com.seibel.lod.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
-import com.seibel.lod.api.enums.worldGeneration.EDhApiWorldGenThreadMode;
-import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
-import com.seibel.lod.coreapi.DependencyInjection.OverrideInjector;
-import com.seibel.lod.core.util.LodUtil;
+import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
+import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiWorldGenThreadMode;
+import com.seibel.distanthorizons.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
+import com.seibel.distanthorizons.coreapi.DependencyInjection.OverrideInjector;
+import com.seibel.distanthorizons.core.util.LodUtil;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;

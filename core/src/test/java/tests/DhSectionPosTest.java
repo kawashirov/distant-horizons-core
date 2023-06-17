@@ -19,8 +19,8 @@
 
 package tests;
 
-import com.seibel.lod.core.pos.DhLodPos;
-import com.seibel.lod.core.pos.DhSectionPos;
+import com.seibel.distanthorizons.core.pos.DhLodPos;
+import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import org.junit.Assert;
 import org.junit.Test;
 

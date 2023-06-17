@@ -1,9 +1,9 @@
 package tests;
 
-import com.seibel.lod.api.methods.events.abstractEvents.DhApiAfterDhInitEvent;
-import com.seibel.lod.api.objects.events.DhApiEventDefinition;
-import com.seibel.lod.coreapi.DependencyInjection.ApiEventInjector;
-import com.seibel.lod.coreapi.events.ApiEventDefinitionHandler;
+import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiAfterDhInitEvent;
+import com.seibel.distanthorizons.api.objects.events.DhApiEventDefinition;
+import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
+import com.seibel.distanthorizons.coreapi.events.ApiEventDefinitionHandler;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

@@ -1,11 +1,11 @@
 package tests;
 
-import com.seibel.lod.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
-import com.seibel.lod.api.interfaces.world.IDhApiLevelWrapper;
-import com.seibel.lod.coreapi.DependencyInjection.DependencyInjector;
-import com.seibel.lod.coreapi.interfaces.dependencyInjection.IBindable;
-import com.seibel.lod.coreapi.DependencyInjection.OverrideInjector;
-import com.seibel.lod.coreapi.DependencyInjection.WorldGeneratorInjector;
+import com.seibel.distanthorizons.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
+import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
+import com.seibel.distanthorizons.coreapi.DependencyInjection.DependencyInjector;
+import com.seibel.distanthorizons.coreapi.interfaces.dependencyInjection.IBindable;
+import com.seibel.distanthorizons.coreapi.DependencyInjection.OverrideInjector;
+import com.seibel.distanthorizons.coreapi.DependencyInjection.WorldGeneratorInjector;
 
 import org.junit.Assert;
 import org.junit.Test;

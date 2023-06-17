@@ -19,7 +19,7 @@
 
 package tests;
 
-import com.seibel.lod.core.util.RayCastUtil;
+import com.seibel.distanthorizons.core.util.RayCastUtil;
 import org.junit.Assert;
 import org.junit.Test;
 

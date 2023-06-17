@@ -1,6 +1,6 @@
 package testItems.overrideInjection.objects;
 
-import com.seibel.lod.coreapi.DependencyInjection.OverrideInjector;
+import com.seibel.distanthorizons.coreapi.DependencyInjection.OverrideInjector;
 import testItems.overrideInjection.interfaces.IOverrideTest;
 
 /**

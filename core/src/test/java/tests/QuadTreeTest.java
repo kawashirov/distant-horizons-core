@@ -19,14 +19,14 @@
 
 package tests;
 
-import com.seibel.lod.core.logging.DhLoggerBuilder;
-import com.seibel.lod.core.pos.DhBlockPos2D;
-import com.seibel.lod.core.pos.DhSectionPos;
-import com.seibel.lod.coreapi.util.BitShiftUtil;
-import com.seibel.lod.core.util.LodUtil;
-import com.seibel.lod.coreapi.util.MathUtil;
-import com.seibel.lod.core.util.objects.quadTree.QuadNode;
-import com.seibel.lod.core.util.objects.quadTree.QuadTree;
+import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.pos.DhBlockPos2D;
+import com.seibel.distanthorizons.core.pos.DhSectionPos;
+import com.seibel.distanthorizons.coreapi.util.BitShiftUtil;
+import com.seibel.distanthorizons.core.util.LodUtil;
+import com.seibel.distanthorizons.coreapi.util.MathUtil;
+import com.seibel.distanthorizons.core.util.objects.quadTree.QuadNode;
+import com.seibel.distanthorizons.core.util.objects.quadTree.QuadTree;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;

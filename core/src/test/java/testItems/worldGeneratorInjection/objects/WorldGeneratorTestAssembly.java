@@ -1,6 +1,6 @@
 package testItems.worldGeneratorInjection.objects;
 
-import com.seibel.lod.coreapi.util.StringUtil;
+import com.seibel.distanthorizons.coreapi.util.StringUtil;
 
 /**
  * assembly classes are used to reference the package they are in.

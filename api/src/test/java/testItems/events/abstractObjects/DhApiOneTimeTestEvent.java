@@ -1,7 +1,7 @@
 package testItems.events.abstractObjects;
 
-import com.seibel.lod.api.methods.events.interfaces.IDhApiEvent;
-import com.seibel.lod.api.objects.events.DhApiEventDefinition;
+import com.seibel.distanthorizons.api.methods.events.interfaces.IDhApiEvent;
+import com.seibel.distanthorizons.api.objects.events.DhApiEventDefinition;
 
 /**
  * A dummy event implementation used for unit testing.
