@@ -13,7 +13,7 @@ import com.seibel.lod.api.interfaces.world.IDhApiLevelWrapper;
 public class LevelWrapperTest implements IDhApiLevelWrapper
 {
 	@Override
-	public Object getWrappedMcObject_UNSAFE() { return null; }
+	public Object getWrappedMcObject() { return null; }
 	
 	@Override 
 	public IDhApiDimensionTypeWrapper getDimensionType() { return null; }

@@ -24,7 +24,7 @@ import com.seibel.lod.coreapi.interfaces.dependencyInjection.IBindable;
 
 /**
  * @author James Seibel
- * @version 2022-9-16
+ * @version 2023-6-17
  */
 public interface IDimensionTypeWrapper extends IDhApiDimensionTypeWrapper, IBindable
 {
@@ -34,7 +34,5 @@ public interface IDimensionTypeWrapper extends IDhApiDimensionTypeWrapper, IBind
 	boolean hasCeiling();
 
 	boolean hasSkyLight();
-	
-	Object getWrappedMcObject_UNSAFE();
 	
 }

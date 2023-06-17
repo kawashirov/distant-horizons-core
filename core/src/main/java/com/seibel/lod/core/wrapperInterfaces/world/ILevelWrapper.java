@@ -31,7 +31,7 @@ import com.seibel.lod.core.wrapperInterfaces.chunk.IChunkWrapper;
  * Can be either a Server world or a Client world.
  * 
  * @author James Seibel
- * @version 2022-9-16
+ * @version 2023-6-17
  */
 public interface ILevelWrapper extends IDhApiLevelWrapper, IBindable
 {
@@ -64,9 +64,6 @@ public interface ILevelWrapper extends IDhApiLevelWrapper, IBindable
 
 	@Deprecated
 	IBiomeWrapper getBiome(DhBlockPos pos);
-	
-	@Override
-	Object getWrappedMcObject_UNSAFE();
 	
 	// TODO implement onUnload
 	//  necessary so ChunkToLodBuilder can have its cache cleared after the level closes

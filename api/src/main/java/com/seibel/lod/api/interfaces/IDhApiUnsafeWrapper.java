@@ -1,12 +1,8 @@
 package com.seibel.lod.api.interfaces;
 
 /**
- * The Distant Horizons' API objects can't cover
- * every potential use case. Sometimes developers just need
- * the base Minecraft Objects.
- *
  * @author James Seibel
- * @version 2022-9-16
+ * @version 2023-6-17
  */
 public interface IDhApiUnsafeWrapper
 {
@@ -21,6 +17,6 @@ public interface IDhApiUnsafeWrapper
 	 * in order to determine what object this method returns for
 	 * the specific version of Minecraft you are developing for.
 	 */
-	Object getWrappedMcObject_UNSAFE();
+	Object getWrappedMcObject();
 	
 }
