@@ -143,7 +143,20 @@ public class FullDataArrayAccessor implements IFullDataAccessor
 	@Override
 	public SingleColumnFullDataAccessor get(int index) { return this.get(index / this.width, index % this.width); }
 	@Override
-	public SingleColumnFullDataAccessor get(int relativeX, int relativeZ) { return new SingleColumnFullDataAccessor(this.mapping, this.dataArrays, relativeX * this.width + relativeZ + this.offset); }
+	public SingleColumnFullDataAccessor get(int relativeX, int relativeZ) 
+	{ 
+		int dataArrayIndex = (relativeX * this.width) + relativeZ + this.offset;
+		if (dataArrayIndex >= this.dataArrays.length)
+		{
+			LodUtil.assertNotReach(
+					"FullDataArrayAccessor.get() called with a relative position that is outside the data source. \n" + 
+					"source width: ["+this.width+"] source offset: ["+this.offset+"]\n" +
+					"given relative pos X: ["+relativeX+"] Z: ["+relativeZ+"]\n" +
+					"dataArrays.length: ["+this.dataArrays.length+"] dataArrayIndex: ["+dataArrayIndex+"].");
+		}
+		
+		return new SingleColumnFullDataAccessor(this.mapping, this.dataArrays, dataArrayIndex); 
+	}
 	
 	@Override
 	public int width() { return this.width; }

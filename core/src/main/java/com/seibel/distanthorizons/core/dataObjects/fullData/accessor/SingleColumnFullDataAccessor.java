@@ -2,6 +2,7 @@ package com.seibel.distanthorizons.core.dataObjects.fullData.accessor;
 
 import com.seibel.distanthorizons.core.dataObjects.fullData.FullDataPointIdMap;
 import com.seibel.distanthorizons.core.util.FullDataPointUtil;
+import com.seibel.distanthorizons.core.util.LodUtil;
 
 /**
  * Represents a single column of Full LOD data.
@@ -27,6 +28,8 @@ public class SingleColumnFullDataAccessor implements IFullDataAccessor
 		this.dataArrays = dataArrays;
 		this.dataArrayIndex = dataArrayIndex;
 		this.mapping = mapping;
+		
+		LodUtil.assertTrue(this.dataArrayIndex < this.dataArrays.length, "dataArrays.length ["+this.dataArrays.length+"] is less than the dataArrayIndex ["+this.dataArrayIndex+"].");
 	}
 	
 	
