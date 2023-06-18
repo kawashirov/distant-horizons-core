@@ -200,9 +200,9 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
     public static class Builder<T> extends AbstractConfigType.Builder<T, Builder<T>>
 	{
         private String tmpComment = null;
-        private T tmpMin;
-        private T tmpMax;
-        private boolean tmpUseApiOverwrite;
+        private T tmpMin = null;
+        private T tmpMax = null;
+        private boolean tmpUseApiOverwrite = true;
         private EConfigEntryPerformance tmpPerformance = EConfigEntryPerformance.DONT_SHOW;
         protected ArrayList<IConfigListener> tmpIConfigListener = new ArrayList<>();
 
