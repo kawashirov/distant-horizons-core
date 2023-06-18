@@ -51,6 +51,10 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
         this.fullDataSourceProvider = sourceProvider;
         this.level = level;
         this.saveDir = saveRootDir;
+		if (!this.saveDir.exists() && !this.saveDir.mkdirs())
+		{
+			LOGGER.warn("Unable to create render data folder, file saving may fail.");
+		}
     }
 	
 	

@@ -36,10 +36,6 @@ public class ClientLevelModule {
     {
         this.parent = parent;
         this.f3Message = new F3Screen.NestedMessage(this::f3Log);
-        if (parent.getSaveStructure().getRenderCacheFolder(parent.getLevelWrapper()).mkdirs())
-        {
-            LOGGER.warn("unable to create cache folder.");
-        }
     }
 
     //==============//

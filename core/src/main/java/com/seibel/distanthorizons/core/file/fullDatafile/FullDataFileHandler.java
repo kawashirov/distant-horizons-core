@@ -45,8 +45,12 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	
     public FullDataFileHandler(IDhLevel level, File saveRootDir)
 	{
+		this.level = level;
         this.saveDir = saveRootDir;
-        this.level = level;
+		if (!this.saveDir.exists() && !this.saveDir.mkdirs())
+		{
+			LOGGER.warn("Unable to create full data folder, file saving may fail.");
+		}
     }
 	
 	
