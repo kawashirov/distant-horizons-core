@@ -32,13 +32,12 @@ public class DhClientLevel extends DhLevel implements IDhClientLevel
 	
 	public DhClientLevel(AbstractSaveStructure saveStructure, IClientLevelWrapper clientLevelWrapper)
 	{
-		super();
+		if (saveStructure.getFullDataFolder(clientLevelWrapper).mkdirs())
+		{
+			LOGGER.warn("unable to create data folder.");
+		}
 		this.levelWrapper = clientLevelWrapper;
 		this.saveStructure = saveStructure;
-		if (saveStructure.getFullDataFolder(levelWrapper).mkdirs())
-		{
-			LOGGER.warn("unable to create full data folder.");
-		}
 		dataFileHandler = new RemoteFullDataFileHandler(this, saveStructure.getFullDataFolder(levelWrapper));
 		clientside = new ClientLevelModule(this);
 		clientside.startRenderer();

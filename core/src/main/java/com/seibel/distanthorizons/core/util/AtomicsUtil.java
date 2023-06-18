@@ -13,31 +13,6 @@ import java.util.function.Predicate;
 public class AtomicsUtil
 {
 	
-	public static <T> T compareAndExchange(AtomicReference<T> atomic, T expected, T newValue)
-	{
-		while (true)
-		{
-			T oldValue = atomic.get();
-			if (oldValue != expected)
-			{
-				return oldValue;
-			}
-			else if (atomic.weakCompareAndSet(expected, newValue))
-			{
-				return expected;
-			}
-		}
-	}
-	
-    public static <T> BooleanObjectImmutablePair<T> compareAndExchangeWeak(AtomicReference<T> atomic, T expected, T newValue) {
-        T oldValue = atomic.get();
-        if (oldValue == expected && atomic.weakCompareAndSet(expected, newValue)) {
-            return new BooleanObjectImmutablePair<>(true, expected);
-        } else {
-            return new BooleanObjectImmutablePair<>(false, oldValue);
-        }
-    }
-	
     public static <T> T conditionalAndExchange(AtomicReference<T> atomic, Predicate<T> requirement, T newValue) {
         while (true) {
             T oldValue = atomic.get();
@@ -54,9 +29,25 @@ public class AtomicsUtil
             return new BooleanObjectImmutablePair<>(false, oldValue);
         }
     }
-	
-	
-	
+
+    public static <T> T compareAndExchange(AtomicReference<T> atomic, T expected, T newValue)
+    {
+        while (true) {
+            T oldValue = atomic.get();
+            if (oldValue != expected) return oldValue;
+            if (atomic.weakCompareAndSet(expected, newValue)) return expected;
+        }
+    }
+
+    public static <T> BooleanObjectImmutablePair<T> compareAndExchangeWeak(AtomicReference<T> atomic, T expected, T newValue) {
+        T oldValue = atomic.get();
+        if (oldValue == expected && atomic.weakCompareAndSet(expected, newValue)) {
+            return new BooleanObjectImmutablePair<>(true, expected);
+        } else {
+            return new BooleanObjectImmutablePair<>(false, oldValue);
+        }
+    }
+
     // Additionally, we implement some helper methods for frequently used atomic operations. //
 	
     // Compare with expected value and set new value if equal. Then return whatever value the atomic now contains.

@@ -18,8 +18,10 @@ import com.seibel.distanthorizons.core.dataObjects.fullData.sources.CompleteFull
 import com.seibel.distanthorizons.core.util.FileUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.ThreadUtil;
+import com.seibel.distanthorizons.core.render.renderer.DebugRenderer;
+import com.seibel.distanthorizons.core.render.renderer.IDebugRenderable;
 import org.apache.logging.log4j.Logger;
-
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -358,11 +360,49 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 //		}
 //        return file.isCacheVersionValid(cacheVersion);
 //    }
-	
+
+	protected IIncompleteFullDataSource makeDataSource(DhSectionPos pos)
+	{
+		return pos.sectionDetailLevel <= HighDetailIncompleteFullDataSource.MAX_SECTION_DETAIL ?
+				HighDetailIncompleteFullDataSource.createEmpty(pos) : LowDetailIncompleteFullDataSource.createEmpty(pos);
+	}
+
+	protected CompletableFuture<IIncompleteFullDataSource> sampleFromFiles(IIncompleteFullDataSource source, ArrayList<FullDataMetaFile> existingFiles)
+	{
+		// read in the existing data
+		final ArrayList<CompletableFuture<Void>> loadDataFutures = new ArrayList<>(existingFiles.size());
+		for (FullDataMetaFile existingFile : existingFiles)
+		{
+			loadDataFutures.add(existingFile.loadOrGetCachedDataSourceAsync()
+					.exceptionally((ex) -> /*Ignore file read errors*/null)
+					.thenAccept((fullDataSource) ->
+					{
+						if (fullDataSource == null) return;
+						//this.checkIfSectionNeedsAdditionalGeneration(pos, fullDataSource);
+						//LOGGER.info("Merging data from {} into {}", data.getSectionPos(), pos);
+						source.sampleFrom(fullDataSource);
+					})
+			);
+		}
+		return CompletableFuture.allOf(loadDataFutures.toArray(new CompletableFuture[0])).thenApply(v -> source);
+	}
+
+	protected void makeFiles(ArrayList<DhSectionPos> posList, ArrayList<FullDataMetaFile> output) {
+		for (DhSectionPos missingPos : posList)
+		{
+			FullDataMetaFile newFile = this.getOrMakeFile(missingPos);
+			if (newFile != null)
+			{
+				output.add(newFile);
+			}
+		}
+	}
+
     @Override
     public CompletableFuture<IFullDataSource> onCreateDataFile(FullDataMetaFile file)
 	{
         DhSectionPos pos = file.pos;
+		IIncompleteFullDataSource source = this.makeDataSource(pos);
         ArrayList<FullDataMetaFile> existFiles = new ArrayList<>();
         ArrayList<DhSectionPos> missing = new ArrayList<>();
 		this.getDataFilesForPosition(pos, pos, existFiles, missing);
@@ -370,49 +410,20 @@ public class FullDataFileHandler implements IFullDataSourceProvider
         if (missing.size() == 1 && existFiles.isEmpty() && missing.get(0).equals(pos))
 		{
             // None exist.
-            IIncompleteFullDataSource incompleteDataSource = pos.sectionDetailLevel <= HighDetailIncompleteFullDataSource.MAX_SECTION_DETAIL ?
-                    HighDetailIncompleteFullDataSource.createEmpty(pos) : LowDetailIncompleteFullDataSource.createEmpty(pos);
-            return CompletableFuture.completedFuture(incompleteDataSource);
+			return CompletableFuture.completedFuture(source);
         }
 		else
 		{
-            for (DhSectionPos missingPos : missing)
-			{
-                FullDataMetaFile newFile = this.getOrMakeFile(missingPos);
-                if (newFile != null)
+			makeFiles(missing, existFiles);
+			return sampleFromFiles(source, existFiles).thenApply(IIncompleteFullDataSource::tryPromotingToCompleteDataSource)
+				.exceptionally((e) ->
 				{
-					existFiles.add(newFile);
-				}
-            }
-            final ArrayList<CompletableFuture<Void>> futures = new ArrayList<>(existFiles.size());
-            final IIncompleteFullDataSource incompleteFullDataSource = pos.sectionDetailLevel <= HighDetailIncompleteFullDataSource.MAX_SECTION_DETAIL ? 
-					HighDetailIncompleteFullDataSource.createEmpty(pos) : 
-					LowDetailIncompleteFullDataSource.createEmpty(pos);
-
-            for (FullDataMetaFile metaFile : existFiles)
-			{
-                futures.add(metaFile.loadOrGetCachedDataSourceAsync()
-                        .thenAccept((data) ->
-						{
-                            if (data != null)
-							{
-                                //LOGGER.info("Merging data from {} into {}", data.getSectionPos(), pos);
-                                incompleteFullDataSource.sampleFrom(data);
-                            }
-                        })
-						.exceptionally((e) ->
-						{
-							FullDataMetaFile newMetaFile = this.removeCorruptedFile(pos, metaFile, e);
-							return null;
-						})
-                );
-            }
-            return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                    .thenApply((v) -> incompleteFullDataSource.tryPromotingToCompleteDataSource());
-     
+					FullDataMetaFile newMetaFile = this.removeCorruptedFile(pos, file, e);
+					return null;
+				});
         }
     }
-	private FullDataMetaFile removeCorruptedFile(DhSectionPos pos, FullDataMetaFile metaFile, Throwable exception)
+	protected FullDataMetaFile removeCorruptedFile(DhSectionPos pos, FullDataMetaFile metaFile, Throwable exception)
 	{
 		LOGGER.error("Error reading Data file ["+pos+"]", exception);
 		
@@ -424,8 +435,8 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	}
 	
 	@Override
-    public CompletableFuture<IFullDataSource> onDataFileLoaded(IFullDataSource source, BaseMetaData metaData,
-                                          Consumer<IFullDataSource> onUpdated, Function<IFullDataSource, Boolean> updater, boolean justCreated)
+    public CompletableFuture<IFullDataSource> onDataFileUpdate(IFullDataSource source, FullDataMetaFile file,
+															   Consumer<IFullDataSource> onUpdated, Function<IFullDataSource, Boolean> updater)
 	{
         boolean changed = updater.apply(source);
 //		if (changed)
@@ -445,40 +456,6 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 			onUpdated.accept(source);
 		}
         return CompletableFuture.completedFuture(source);
-    }
-    @Override
-    public CompletableFuture<IFullDataSource> onDataFileRefresh(IFullDataSource source, BaseMetaData metaData, Function<IFullDataSource, Boolean> updater, Consumer<IFullDataSource> onUpdated)
-	{
-		if (fileHandlerThreadPool.isTerminated())
-		{
-			return CompletableFuture.completedFuture(source);
-		}
-		
-		
-        return CompletableFuture.supplyAsync(() ->
-		{
-            IFullDataSource sourceLocal = source;
-			
-            boolean changed = updater.apply(sourceLocal);
-//          if (changed)
-//			{
-//				metaData.dataVersion.incrementAndGet();
-//			}
-			
-			
-            if (sourceLocal instanceof IIncompleteFullDataSource)
-			{
-                IFullDataSource newSource = ((IIncompleteFullDataSource) sourceLocal).tryPromotingToCompleteDataSource();
-                changed |= newSource != sourceLocal;
-                sourceLocal = newSource;
-            }
-			
-            if (changed)
-			{
-				onUpdated.accept(sourceLocal);
-			}
-            return sourceLocal;
-        }, fileHandlerThreadPool);
     }
 	
     @Override
@@ -538,5 +515,4 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	{
         FullDataMetaFile.debugPhantomLifeCycleCheck();
     }
-	
 }

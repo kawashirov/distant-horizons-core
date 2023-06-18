@@ -72,13 +72,14 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 
 		for (FullDataMetaFile metaFile : this.fileBySectionPos.values())
 		{
+			metaFile.genQueueChecked = false; // unset it so it can be checked again
 			IFullDataSource data = metaFile.getCachedDataSourceNowOrNull();
 			if (data instanceof IIncompleteFullDataSource) {
-				//todo
-				//metaFile.flushAndSaveAsync().thenApply(() -> metaFile.forceReload());
+				// need manual marking for update.
+				metaFile.markNeedUpdate();
 			}
 		}
-
+		flushAndSave(); // Trigger an update to the meta files
 	}
 	
 	public void clearGenerationQueue() { this.worldGenQueueRef.set(null); }
@@ -99,67 +100,32 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	// events //
 	//========//
 
-	private CompletableFuture<IFullDataSource> spawnGenTasks(FullDataMetaFile file, @Nullable IIncompleteFullDataSource data)
-	{
-		DhSectionPos pos = file.pos;
-
-		ArrayList<FullDataMetaFile> existingFiles = new ArrayList<>();
-		ArrayList<DhSectionPos> missingPositions = new ArrayList<>();
-		this.getDataFilesForPosition(pos, pos, existingFiles, missingPositions);
-
-		// confirm the quad tree has at least one node in it
-		LodUtil.assertTrue(!missingPositions.isEmpty() || !existingFiles.isEmpty());
-
-		// determine the type of dataSource that should be used for this position
-		IIncompleteFullDataSource incompleteFullDataSource;
-		if (data == null)
-		{
-			if (pos.sectionDetailLevel <= HighDetailIncompleteFullDataSource.MAX_SECTION_DETAIL)
-			{
-				incompleteFullDataSource = HighDetailIncompleteFullDataSource.createEmpty(pos);
-			}
-			else
-			{
-				incompleteFullDataSource = LowDetailIncompleteFullDataSource.createEmpty(pos);
-			}
-		}
-		else
-		{
-			incompleteFullDataSource = data;
-		}
-
+	@Nullable
+	private CompletableFuture<IFullDataSource> tryStartGenTask(FullDataMetaFile file, IIncompleteFullDataSource dataSource) {
 		WorldGenerationQueue worldGenQueue = this.worldGenQueueRef.get();
 		// breaks down the missing positions into the desired detail level that the gen queue could accept
-		if (worldGenQueue != null) {
+		if (worldGenQueue != null && !file.genQueueChecked) {
+			DhSectionPos pos = file.pos;
+			file.genQueueChecked = true;
 			byte maxSectDataDetailLevel = worldGenQueue.largestDataDetail;
-			byte targetDataDetailLevel = incompleteFullDataSource.getDataDetailLevel();
+			byte targetDataDetailLevel = dataSource.getDataDetailLevel();
+
 			if (targetDataDetailLevel > maxSectDataDetailLevel) {
+				ArrayList<FullDataMetaFile> existingFiles = new ArrayList<>();
 				byte sectDetailLevel = (byte) (DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL + maxSectDataDetailLevel);
-				missingPositions = missingPositions.stream()
-						.flatMap(missingPos -> {
-							if (missingPos.sectionDetailLevel > sectDetailLevel) {
-								// split this position into smaller positions
-								ArrayList<DhSectionPos> splitPositions = new ArrayList<>();
-								missingPos.forEachChildAtLevel(sectDetailLevel, splitPositions::add);
-								return splitPositions.stream();
-							} else {
-								return Stream.of(missingPos);
-							}
-						})
-						.collect(Collectors.toCollection(ArrayList::new));
+				pos.forEachChildAtLevel(sectDetailLevel, this::getOrMakeFile);
+				return sampleFromFiles(dataSource, existingFiles).thenApply(IIncompleteFullDataSource::tryPromotingToCompleteDataSource)
+						.exceptionally((e) ->
+						{
+							FullDataMetaFile newMetaFile = removeCorruptedFile(pos, file, e);
+							return null;
+						});
 			}
-		}
-
-		if (missingPositions.size() == 1 && existingFiles.isEmpty() && missingPositions.get(0).equals(pos))
-		{
-			// No LOD data exists for this position yet
-			if (worldGenQueue != null)
-			{
+			else {
 				this.incompleteSourceGenRequests.add(pos);
-
 				// queue this section to be generated
-				GenTask genTask = new GenTask(pos, new WeakReference<>(incompleteFullDataSource));
-				worldGenQueue.submitGenTask(new DhLodPos(pos), incompleteFullDataSource.getDataDetailLevel(), genTask)
+				GenTask genTask = new GenTask(pos, new WeakReference<>(dataSource));
+				worldGenQueue.submitGenTask(new DhLodPos(pos), dataSource.getDataDetailLevel(), genTask)
 						.whenComplete((genTaskResult, ex) ->
 						{
 							this.onWorldGenTaskComplete(genTaskResult, ex, genTask, pos);
@@ -167,59 +133,53 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 							this.incompleteSourceGenRequests.remove(pos);
 						});
 			}
-
 			// return the empty dataSource (it will be populated later)
-			return CompletableFuture.completedFuture(incompleteFullDataSource);
+			return CompletableFuture.completedFuture(dataSource);
 		}
-		else
-		{
-			// LOD data exists for this position
+		return null;
+	}
 
-			// create the missing metaData files
-			for (DhSectionPos missingPos : missingPositions)
-			{
-				FullDataMetaFile newFile = this.getOrMakeFile(missingPos);
-				if (newFile != null)
+	// Try update the gen queue on this data source. If null, then nothing was done.
+	@Nullable
+	private CompletableFuture<IFullDataSource> updateDataGenStatus(FullDataMetaFile file, IIncompleteFullDataSource data)
+	{
+		DhSectionPos pos = file.pos;
+		ArrayList<FullDataMetaFile> existingFiles = new ArrayList<>();
+		ArrayList<DhSectionPos> missingPositions = new ArrayList<>();
+		this.getDataFilesForPosition(pos, pos, existingFiles, missingPositions);
+
+		if (missingPositions.size() == 1) {
+			// Only missing myself. I.e. no child file data exists yet.
+			return tryStartGenTask(file, data);
+		}
+		else {
+			// Has stuff to sample.
+			makeFiles(missingPositions, existingFiles);
+			return sampleFromFiles(data, existingFiles).thenApply(IIncompleteFullDataSource::tryPromotingToCompleteDataSource)
+				.exceptionally((e) ->
 				{
-					existingFiles.add(newFile);
-				}
-			}
-
-			//            LOGGER.debug("Creating "+pos+" from sampling "+existingFiles.size()+" files: "+existingFiles);
-
-			// read in the existing data
-			final ArrayList<CompletableFuture<Void>> loadDataFutures = new ArrayList<>(existingFiles.size());
-			for (FullDataMetaFile existingFile : existingFiles)
-			{
-				loadDataFutures.add(existingFile.loadOrGetCachedDataSourceAsync()
-						.exceptionally((ex) -> /*Ignore file read errors*/null)
-						.thenAccept((fullDataSource) ->
-						{
-							if (fullDataSource == null)
-							{
-								return;
-							}
-							//this.checkIfSectionNeedsAdditionalGeneration(pos, fullDataSource);
-							//LOGGER.info("Merging data from {} into {}", data.getSectionPos(), pos);
-							incompleteFullDataSource.sampleFrom(fullDataSource);
-						})
-				);
-			}
-			return CompletableFuture.allOf(loadDataFutures.toArray(new CompletableFuture[0]))
-					.thenApply((voidValue) -> incompleteFullDataSource.tryPromotingToCompleteDataSource());
+					FullDataMetaFile newMetaFile = removeCorruptedFile(pos, file, e);
+					return null;
+				});
 		}
 	}
-	
+
 	@Override
 	public CompletableFuture<IFullDataSource> onCreateDataFile(FullDataMetaFile file)
 	{
-		return this.spawnGenTasks(file, null);
+		DhSectionPos pos = file.pos;
+		IIncompleteFullDataSource data = makeDataSource(pos);
+		CompletableFuture<IFullDataSource> future = updateDataGenStatus(file, data);
+		// Cant start gen task, so return the data
+		return future == null ? CompletableFuture.completedFuture(data) : future;
 	}
+
 	@Override
-	public CompletableFuture<IFullDataSource> onDataFileLoaded(IFullDataSource source, BaseMetaData metaData,
-			Consumer<IFullDataSource> onUpdated, Function<IFullDataSource, Boolean> updater, boolean justCreated)
+	public CompletableFuture<IFullDataSource> onDataFileUpdate(IFullDataSource source, FullDataMetaFile file,
+															   Consumer<IFullDataSource> onUpdated, Function<IFullDataSource, Boolean> updater)
 	{
 		boolean changed = updater.apply(source);
+		LodUtil.assertTrue(file.doesFileExist || changed);
 
 		if (source instanceof IIncompleteFullDataSource)
 		{
@@ -228,118 +188,32 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 			source = newSource;
 		}
 
-		if (source instanceof IIncompleteFullDataSource && !justCreated) {
-			return this.spawnGenTasks(getOrMakeFile(metaData.pos), (IIncompleteFullDataSource)source)
-					.thenApply((newSource) -> {
+		if (source instanceof CompleteFullDataSource)
+		{
+			this.fireOnGenPosSuccessListeners(source.getSectionPos());
+		}
+		this.fireOnGenPosSuccessListeners(source.getSectionPos());
+
+		if (source instanceof IIncompleteFullDataSource && !file.genQueueChecked) {
+			WorldGenerationQueue worldGenQueue = this.worldGenQueueRef.get();
+			if (worldGenQueue != null) {
+				CompletableFuture<IFullDataSource> future = updateDataGenStatus(file, (IIncompleteFullDataSource) source);
+				if (future != null) {
+					return future.thenApply((newSource) -> {
 						onUpdated.accept(newSource);
 						return newSource;
 					});
-		}
-		else {
-			if (changed)
-			{
-				onUpdated.accept(source);
-			}
-			return CompletableFuture.completedFuture(source);
-		}
-	}
-
-	@Override
-	public CompletableFuture<IFullDataSource> onDataFileRefresh(IFullDataSource source, BaseMetaData metaData, Function<IFullDataSource, Boolean> updater, Consumer<IFullDataSource> onUpdated)
-	{
-		return super.onDataFileRefresh(source, metaData, updater, (IFullDataSource d) -> {
-			this.fireOnGenPosSuccessListeners(source.getSectionPos());
-			onUpdated.accept(d);
-		});
-	}
-
-	/**
-	 * Checks if the given {@link IFullDataSource} is fully generated and
-	 * if it isn't, creates the necessary world gen request(s) to finish it. <br>
-	 * Should be used to fill out partially generated {@link IFullDataSource}'s,
-	 * not populate empty ones.
-	 */
-	private void checkIfSectionNeedsAdditionalGeneration(DhSectionPos pos, IFullDataSource fullDataSource)
-	{
-		WorldGenerationQueue worldGenQueue = this.worldGenQueueRef.get();
-		if (worldGenQueue == null)
-		{
-			// world generation is disabled
-			return;
-		}
-		
-		
-		if (fullDataSource == null || fullDataSource.isEmpty())
-		{
-			// none of the data source has been generated, those generation requests should be handled elsewhere
-			return;
-		}
-		else if (this.incompleteSourceGenRequests.contains(pos))
-		{
-			return;
-		}
-		
-		ArrayList<DhSectionPos> ungeneratedPosList = fullDataSource.getUngeneratedPosList(worldGenQueue.maxGranularity, true);
-		if (ungeneratedPosList.size() == 0)
-		{
-			// this section doesn't need to be generated
-			return;
-		}
-		
-		
-		
-		//LOGGER.info("["+ungeneratedPosList.size()+"] missing sub positions for pos: ["+pos+"]. Number of gen requests queued: ["+this.incompleteSourceGenRequests.size()+"].");
-		
-		List<CompletableFuture<WorldGenResult>> futureList = new ArrayList<>();
-		for (DhSectionPos ungenChildPos : ungeneratedPosList)
-		{
-			// don't queue the same section twice
-			if (this.incompleteSourceGenRequests.contains(ungenChildPos))
-			{
-				LOGGER.warn("checkIfSectionNeedsAdditionalGeneration skipping duplicate gen request for pos: ["+ungenChildPos+"].");
-				continue;
-			}
-			this.incompleteSourceGenRequests.add(ungenChildPos);
-			
-			
-			// make sure a full data source file exists before generating
-			// (the files can be 
-			if (!this.fileBySectionPos.containsKey(pos))
-			{
-				FullDataMetaFile metaFile = this.getOrMakeFile(pos);
-				if (metaFile == null)
-				{
-					LOGGER.error("fireOnGenPosSuccessListeners unable to create file for pos: ["+pos+"].");
-					return;
 				}
 			}
-			
-			
-			// FIXME this can cause duplicate terrain generation requests
-			GenTask genTask = new GenTask(ungenChildPos, new WeakReference<>(fullDataSource));
-			CompletableFuture<WorldGenResult> future = worldGenQueue.submitGenTask(new DhLodPos(ungenChildPos), fullDataSource.getDataDetailLevel(), genTask)
-				.whenComplete((genTaskResult, ex) ->
-				{
-					this.onWorldGenTaskComplete(genTaskResult, ex, genTask, ungenChildPos);
-					this.fireOnGenPosSuccessListeners(pos);
-					this.incompleteSourceGenRequests.remove(ungenChildPos);
-				});
-			futureList.add(future);
 		}
-		
-		
-		if (futureList.size() != 0)
+
+		if (changed)
 		{
-			CompletableFuture.allOf(futureList.toArray(new CompletableFuture[0]))
-				.whenComplete((genTaskResult, ex) ->
-				{
-					// parent pos has completed generation
-					this.fireOnGenPosSuccessListeners(pos);
-					this.incompleteSourceGenRequests.remove(pos);
-				});
+			onUpdated.accept(source);
 		}
+		return CompletableFuture.completedFuture(source);
 	}
-	
+
 	private void onWorldGenTaskComplete(WorldGenResult genTaskResult, Throwable exception, GenTask genTask, DhSectionPos pos)
 	{
 		if (exception != null)

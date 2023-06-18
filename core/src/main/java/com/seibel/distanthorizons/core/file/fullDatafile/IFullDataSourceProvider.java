@@ -27,8 +27,7 @@ public interface IFullDataSourceProvider extends AutoCloseable
     //boolean isCacheVersionValid(DhSectionPos sectionPos, long cacheVersion);
 
     CompletableFuture<IFullDataSource> onCreateDataFile(FullDataMetaFile file);
-    CompletableFuture<IFullDataSource> onDataFileLoaded(IFullDataSource source, BaseMetaData metaData, Consumer<IFullDataSource> onUpdated, Function<IFullDataSource, Boolean> updater, boolean justCreated);
-    CompletableFuture<IFullDataSource> onDataFileRefresh(IFullDataSource source, BaseMetaData metaData, Function<IFullDataSource, Boolean> updater, Consumer<IFullDataSource> onUpdated);
+    CompletableFuture<IFullDataSource> onDataFileUpdate(IFullDataSource source, FullDataMetaFile file, Consumer<IFullDataSource> onUpdated, Function<IFullDataSource, Boolean> updater);
     File computeDataFilePath(DhSectionPos pos);
     ExecutorService getIOExecutor();
 
