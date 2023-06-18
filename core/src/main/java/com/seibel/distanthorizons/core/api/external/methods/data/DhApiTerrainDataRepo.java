@@ -217,7 +217,7 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 				SingleColumnFullDataAccessor dataColumn = dataSource.tryGet(relativePos.x, relativePos.z);
 				if (dataColumn != null)
 				{
-					int dataColumnIndexCount = dataColumn.getSingleLength(); // FIXME can throw index out of bounds exceptions, this is probably a core DH problem, not an API problem
+					int dataColumnIndexCount = dataColumn.getSingleLength();
 					DhApiTerrainDataPoint[] returnArray = new DhApiTerrainDataPoint[dataColumnIndexCount];
 					long dataPoint;
 					
@@ -443,7 +443,7 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 					
 					
 					IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
-					DhApiResult<DhApiRaycastResult> rayCast = INSTANCE.raycastLodData(levelWrapper, MC_RENDER.getCameraExactPosition(), MC_RENDER.getLookAtVector(), 50);
+					DhApiResult<DhApiRaycastResult> rayCast = INSTANCE.raycastLodData(levelWrapper, MC_RENDER.getCameraExactPosition(), MC_RENDER.getLookAtVector(), 1000);
 					if (rayCast.payload != null && !rayCast.payload.pos.equals(currentDebugVec3i))
 					{
 						currentDebugVec3i = rayCast.payload.pos;
