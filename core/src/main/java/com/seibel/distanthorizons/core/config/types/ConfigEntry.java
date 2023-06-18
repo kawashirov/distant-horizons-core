@@ -56,7 +56,11 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
 	public T getDefaultValue() { return this.defaultValue; }
 	
 	@Override
-    public void setApiValue(T newApiValue) { this.apiValue = newApiValue; }
+    public void setApiValue(T newApiValue) 
+	{
+		this.apiValue = newApiValue;
+		this.listenerList.forEach(IConfigListener::onConfigValueSet);
+	}
 	@Override
 	public T getApiValue() { return this.apiValue; }
 	@Override 
