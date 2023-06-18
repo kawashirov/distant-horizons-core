@@ -125,8 +125,8 @@ public class DhLodPos implements Comparable<DhLodPos>
 		int zRelativePos = zInput / BitShiftUtil.powerOfTwo(detailLevelDifference);
 		
 		// convert the positions into section relative space (0-63)
-		xRelativePos = xInput >= 0 ? (xRelativePos % 64) : 64 + (xRelativePos % 64);
-		zRelativePos = zInput >= 0 ? (zRelativePos % 64) : 64 + (zRelativePos % 64);
+		xRelativePos = xInput >= 0 ? (xRelativePos % 64) : 63 + (xRelativePos % 64);
+		zRelativePos = zInput >= 0 ? (zRelativePos % 64) : 63 + (zRelativePos % 64);
 		
 		return new DhLodPos(outputDetailLevel, xRelativePos, zRelativePos);
 	}
