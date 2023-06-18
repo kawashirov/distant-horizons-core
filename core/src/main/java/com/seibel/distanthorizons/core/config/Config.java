@@ -25,6 +25,7 @@ import com.seibel.distanthorizons.api.enums.rendering.*;
 import com.seibel.distanthorizons.api.enums.config.quickOptions.EQualityPreset;
 import com.seibel.distanthorizons.api.enums.config.quickOptions.EThreadPreset;
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
+import com.seibel.distanthorizons.core.config.eventHandlers.QuickRenderToggleConfigEventHandler;
 import com.seibel.distanthorizons.core.config.eventHandlers.RenderCacheConfigEventHandler;
 import com.seibel.distanthorizons.core.config.eventHandlers.presets.ThreadPresetConfigEventHandler;
 import com.seibel.distanthorizons.core.config.eventHandlers.presets.RenderQualityPresetConfigEventHandler;
@@ -34,9 +35,9 @@ import com.seibel.distanthorizons.core.config.types.ConfigLinkedEntry;
 import com.seibel.distanthorizons.core.config.types.ConfigUIComment;
 import com.seibel.distanthorizons.core.config.types.enums.EConfigEntryAppearance;
 import com.seibel.distanthorizons.core.config.types.enums.EConfigEntryPerformance;
-import com.seibel.distanthorizons.core.config.types.*;
-import com.seibel.distanthorizons.core.config.types.enums.*;
+import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.coreapi.ModInfo;
+import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 
@@ -55,6 +56,8 @@ import java.util.*;
 
 public class Config
 {
+	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	
     public static ConfigCategory client = new ConfigCategory.Builder().set(Client.class).build();
 	
 	
@@ -1080,4 +1083,36 @@ public class Config
 		}
 		
     }
+	
+	
+	
+	/** the setup should only be called once */
+	private static boolean complicatedListenerSetupComplete = false;
+	/**
+	 * Runs any config setup that needs all (or most) config entries be initialized (not null),
+	 * but doesn't necessarily require they have the right values yet. <br><br>
+	 * 
+	 * Specially:
+	 * Updates any config values that are UI only 
+	 * and adds any listeners that depend on multiple config values. 
+	 */
+	public static void completeDelayedSetup()
+	{
+		if (!complicatedListenerSetupComplete)
+		{
+			complicatedListenerSetupComplete = true;
+			
+			try
+			{
+				ThreadPresetConfigEventHandler.INSTANCE.setUiOnlyConfigValues();
+				RenderQualityPresetConfigEventHandler.INSTANCE.setUiOnlyConfigValues();
+				QuickRenderToggleConfigEventHandler.INSTANCE.setUiOnlyConfigValues();	
+			}
+			catch (Exception e)
+			{
+				LOGGER.error("Unexpected exception when setting up complicated config listeners. Error: ["+e.getMessage()+"].", e);
+			}
+		}
+	}
+	
 }
