@@ -5,6 +5,7 @@ import com.seibel.distanthorizons.core.file.metaData.AbstractMetaDataContainerFi
 import com.seibel.distanthorizons.core.file.metaData.BaseMetaData;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.render.renderer.DebugRenderer;
 import com.seibel.distanthorizons.core.pos.DhLodPos;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.core.dataObjects.render.ColumnRenderLoader;
@@ -14,6 +15,7 @@ import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.objects.dataStreams.DhDataInputStream;
 import org.apache.logging.log4j.Logger;
 
+import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -87,6 +89,13 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile
 		CompletableFuture<ColumnRenderSource> readSourceFuture = this.getCachedDataSourceAsync();
 		if (readSourceFuture != null)
 		{
+			if (chunkDataView.getLodPos().detailLevel == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
+				DebugRenderer.makeParticle(
+						new DebugRenderer.BoxParticle(
+								new DebugRenderer.Box(chunkDataView.getLodPos(), 0, 256f, 0.05f, Color.blue),
+								0.5, 512f
+						)
+				);
 			readSourceFuture.thenAccept((renderSource) -> renderSource.fastWrite(chunkDataView, level));
 		}
 		

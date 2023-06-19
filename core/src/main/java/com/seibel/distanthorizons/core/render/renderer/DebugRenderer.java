@@ -19,6 +19,8 @@ import com.seibel.distanthorizons.coreapi.util.math.Mat4f;
 import com.seibel.distanthorizons.coreapi.util.math.Vec3d;
 import com.seibel.distanthorizons.coreapi.util.math.Vec3f;
 import org.apache.logging.log4j.LogManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL32;
 
 import java.awt.*;
@@ -26,6 +28,7 @@ import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
+import java.util.concurrent.PriorityBlockingQueue;
 
 public class DebugRenderer {
     public static DebugRenderer INSTANCE = new DebugRenderer();
@@ -67,15 +70,115 @@ public class DebugRenderer {
             3, 7,
     };
 
+    public static final class Box {
+        public final Vec3f a;
+        public final Vec3f b;
+        public final Color color;
+
+        public Box(Vec3f a, Vec3f b, Color color) {
+            this.a = a;
+            this.b = b;
+            this.color = color;
+        }
+
+        public Box(Vec3f a, Vec3f b, Color color, Vec3f margin) {
+            this.a = a;
+            this.a.add(margin);
+            this.b = b;
+            this.b.subtract(margin);
+            this.color = color;
+        }
+
+        public Box(DhLodPos pos, float minY, float maxY, float marginPercent, Color color) {
+            DhBlockPos2D blockMin = pos.getCornerBlockPos();
+            DhBlockPos2D blockMax = blockMin.add(pos.getBlockWidth(), pos.getBlockWidth());
+            float edge = pos.getBlockWidth() * marginPercent;
+            Vec3f a = new Vec3f(blockMin.x + edge, minY, blockMin.z + edge);
+            Vec3f b = new Vec3f(blockMax.x - edge, maxY, blockMax.z - edge);
+            this.a = a;
+            this.b = b;
+            this.color = color;
+        }
+
+        public Box(DhLodPos pos, float y, float yDiff, Object hash, float marginPercent, Color color) {
+            float hashY = ((float)hash.hashCode() / Integer.MAX_VALUE) * yDiff;
+            DhBlockPos2D blockMin = pos.getCornerBlockPos();
+            DhBlockPos2D blockMax = blockMin.add(pos.getBlockWidth(), pos.getBlockWidth());
+            float edge = pos.getBlockWidth() * marginPercent;
+            Vec3f a = new Vec3f(blockMin.x + edge, hashY, blockMin.z + edge);
+            Vec3f b = new Vec3f(blockMax.x - edge, hashY, blockMax.z - edge);
+            this.a = a;
+            this.b = b;
+            this.color = color;
+        }
+
+        public Box(DhSectionPos pos, float minY, float maxY, float marginPercent, Color color) {
+            this(pos.getSectionBBoxPos(), minY, maxY, marginPercent, color);
+        }
+
+        public Box(DhSectionPos pos, float y, float yDiff, Object hash, float marginPercent, Color color) {
+            this(pos.getSectionBBoxPos(), y, yDiff, hash, marginPercent, color);
+        }
+    }
+
     ShaderProgram basicShader;
     GLVertexBuffer boxBuffer;
     GLElementBuffer boxOutlineBuffer;
     VertexAttribute va;
     boolean init = false;
 
+    private final LinkedList<WeakReference<IDebugRenderable>> renderers = new LinkedList<>();
+
+    public static final class BoxParticle implements Comparable<BoxParticle> {
+        private final Box box;
+        private final long startTime;
+        private final long duration;
+        private final float yChange;
+
+        public BoxParticle(Box box, long startTime, long duration, float yChange) {
+            this.box = box;
+            this.startTime = startTime;
+            this.duration = duration;
+            this.yChange = yChange;
+        }
+
+        public BoxParticle(Box box, long ns, float yChange) {
+            this(box, System.nanoTime(), ns, yChange);
+        }
+
+        public BoxParticle(Box box, double s, float yChange) {
+            this(box, System.nanoTime(), (long)(s * 1000000000), yChange);
+        }
+
+        @Override
+        public int compareTo(@NotNull DebugRenderer.BoxParticle o) {
+            return Long.compare(startTime, o.startTime);
+        }
+
+        Box getBox() {
+            long now = System.nanoTime();
+            float percent = (now - startTime) / (float)duration;
+            percent = (float)Math.pow(percent, 4);
+            float yDiff = yChange * percent;
+            return new Box(new Vec3f(box.a.x, box.a.y + yDiff, box.a.z), new Vec3f(box.b.x, box.b.y + yDiff, box.b.z), box.color);
+        }
+
+        boolean isDead(long time) {
+            return time - startTime > duration;
+        }
+    }
+
+    private final PriorityBlockingQueue<BoxParticle> particles = new PriorityBlockingQueue<>();
+
     public static void unregister(IDebugRenderable r) {
         if (INSTANCE == null) return;
         INSTANCE.removeRenderer(r);
+    }
+
+    public static void makeParticle(BoxParticle particle) {
+        if (INSTANCE == null) return;
+        if (!Config.Client.Advanced.Debugging.debugWireframeRendering.get()) return;
+        INSTANCE.particles.add(particle);
     }
 
     private void removeRenderer(IDebugRenderable r) {
@@ -126,8 +229,6 @@ public class DebugRenderer {
         boxOutlineBuffer.uploadBuffer(buffer, EGpuUploadMethod.DATA, box_outline_indices.length * Integer.BYTES, GL32.GL_STATIC_DRAW);
     }
 
-    private final LinkedList<WeakReference<IDebugRenderable>> renderers = new LinkedList<>();
-
     public void addRenderer(IDebugRenderable r) {
         if (!Config.Client.Advanced.Debugging.debugWireframeRendering.get()) return;
         synchronized (renderers) {
@@ -143,34 +244,13 @@ public class DebugRenderer {
     private Mat4f transform_this_frame;
     private Vec3f camf;
 
-    public void renderBox(DhLodPos pos, float minY, float maxY, float marginPercent, Color color) {
-        DhBlockPos2D blockMin = pos.getCornerBlockPos();
-        DhBlockPos2D blockMax = blockMin.add(pos.getBlockWidth(), pos.getBlockWidth());
-        float edge = pos.getBlockWidth() * marginPercent;
-        renderBox(blockMin.x + edge, minY, blockMin.z + edge, blockMax.x - edge, maxY, blockMax.z - edge, color);
-    }
-
-    public void renderBox(DhLodPos pos, float minY, float maxY, Color color) {
-        renderBox(pos, minY, maxY, 0, color);
-    }
-
-    public void renderBox(DhSectionPos sectPos, float minY, float maxY, Color color) {
-        renderBox(sectPos.getSectionBBoxPos(), minY, maxY, 0, color);
-    }
-
-    public void renderBox(DhSectionPos sectPos, float minY, float maxY, float marginPercent, Color color) {
-        renderBox(sectPos.getSectionBBoxPos(), minY, maxY, marginPercent, color);
-    }
-
-    public void renderBox(float x, float y, float z, float x2, float y2, float z2, Color color) {
-        Vec3f boxPos = new Vec3f(x - camf.x, y - camf.y, z - camf.z);
-        Mat4f boxTransform = Mat4f.createTranslateMatrix(boxPos.x, boxPos.y, boxPos.z);
-        boxTransform.multiply(Mat4f.createScaleMatrix(x2-x, y2-y, z2-z));
+    public void renderBox(Box box) {
+        Mat4f boxTransform = Mat4f.createTranslateMatrix(box.a.x - camf.x, box.a.y - camf.y, box.a.z - camf.z);
+        boxTransform.multiply(Mat4f.createScaleMatrix(box.b.x - box.a.x, box.b.y - box.a.y, box.b.z - box.a.z));
         Mat4f t = transform_this_frame.copy();
         t.multiply(boxTransform);
-
         basicShader.setUniform(basicShader.getUniformLocation("transform"), t);
-        basicShader.setUniform(basicShader.getUniformLocation("uColor"), color);
+        basicShader.setUniform(basicShader.getUniformLocation("uColor"), box.color);
         GL32.glDrawElements(GL32.GL_LINES, box_outline_indices.length, GL32.GL_UNSIGNED_INT, 0);
     }
 
@@ -212,6 +292,13 @@ public class DebugRenderer {
                 r.debugRender(this);
             }
         }
+
+        BoxParticle head = null;
+        while ((head = particles.poll()) != null && head.isDead(System.nanoTime())) {}
+        if (head != null) {
+            particles.add(head);
+        }
+        particles.forEach(b -> renderBox(b.getBox()));
 
         state.restore();
     }

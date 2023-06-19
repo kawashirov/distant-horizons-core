@@ -84,6 +84,7 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 	
 	public WorldGenerationQueue(IDhApiWorldGenerator generator)
 	{
+		LOGGER.info("Creating world gen queue");
 		this.generator = generator;
 		this.maxGranularity = generator.getMaxGenerationGranularity();
 		this.minGranularity = generator.getMinGenerationGranularity();
@@ -104,6 +105,7 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 			throw new IllegalArgumentException(IDhApiWorldGenerator.class.getSimpleName() + ": max granularity smaller than min granularity!");
 		}
 		DebugRenderer.register(this);
+		LOGGER.info("Created world gen queue");
 	}
 	
 	
@@ -156,13 +158,9 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 	
 	public void runCurrentGenTasksUntilBusy(DhBlockPos2D targetPos)
 	{
+		generator.preGeneratorTaskStart();
 		try
 		{
-			if (this.generator == null)
-			{
-				throw new IllegalStateException("generator is null");
-			}
-			
 			// the generator is shutting down, don't attempt to generate anything
 			if (this.generatorClosingFuture != null)
 			{
@@ -496,6 +494,7 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 	
 	public CompletableFuture<Void> startClosing(boolean cancelCurrentGeneration, boolean alsoInterruptRunning)
 	{
+		LOGGER.info("Closing world gen queue");
 		this.queueingThread.shutdownNow();
 		
 		
@@ -578,10 +577,7 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 		{
 			LOGGER.warn("Failed to close generation queue: ", e);
 		}
-		
-		
 		LOGGER.info("Finished closing "+WorldGenerationQueue.class.getSimpleName());
-
 		DebugRenderer.unregister(this);
 	}
 	
@@ -627,10 +623,10 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 	public void debugRender(DebugRenderer r) {
 		CheckingTasks.forEach((t) -> {
 			DhLodPos pos = t.pos;
-			r.renderBox(pos, -32f, 128f, 0.05f, Color.blue);
+			r.renderBox(new DebugRenderer.Box(pos, -32f, 128f, 0.05f, Color.blue));
 		});
 		this.inProgressGenTasksByLodPos.forEach((pos, t) -> {
-			r.renderBox(pos, -30f, 128f, 0.05f, Color.red);
+			r.renderBox(new DebugRenderer.Box(pos, -32f, 128f, 0.05f, Color.red));
 		});
 	}
 }

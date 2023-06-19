@@ -40,7 +40,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	//TODO: Atm can't find a better way to store when genQueue is checked.
 	public boolean genQueueChecked = false;
 
-	private boolean markedNeedUpdate = false;
+	private volatile boolean markedNeedUpdate = false;
 
 	public AbstractFullDataSourceLoader fullDataSourceLoader;
 	public Class<? extends IFullDataSource> dataType;
@@ -57,6 +57,9 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	@Override
 	public void debugRender(DebugRenderer r) {
 		IFullDataSource cached = cachedFullDataSource.get();
+		if (markedNeedUpdate)
+			r.renderBox(new DebugRenderer.Box(pos, 0, 512, 0.05f, Color.red));
+
 		Color c = Color.black;
 		if (cached != null) {
 			if (cached instanceof CompleteFullDataSource) {
@@ -69,7 +72,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 		} else if (doesFileExist) {
 			c = Color.RED;
 		}
-		//r.renderBox(pos, 50, 200, 0.05f, c);
+		//r.renderBox(new DebugRenderer.Box(pos, 0, 256, 0.05f, c));
 	}
 
 	//TODO: use ConcurrentAppendSingleSwapContainer<LodDataSource> instead of below:
@@ -168,9 +171,11 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 
 	private void makeUpdateCompletionStage(CompletableFuture<IFullDataSource> completer, CompletableFuture<IFullDataSource> currentStage)
 	{
-		markedNeedUpdate = false;
 		currentStage.thenCompose(
-			(fullDataSource) -> this.fullDataSourceProvider.onDataFileUpdate(fullDataSource, this, this::_updateAndWriteDataSource, this::_applyWriteQueueToFullDataSource))
+			(fullDataSource) -> {
+				markedNeedUpdate = false;
+				return this.fullDataSourceProvider.onDataFileUpdate(fullDataSource, this, this::_updateAndWriteDataSource, this::_applyWriteQueueToFullDataSource);
+			})
 			.whenComplete((fullDataSource, ex) ->
 			{
 				if (ex instanceof CompletionException) {
@@ -186,11 +191,25 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 				if (fullDataSource != null) {
 					new DataObjTracker(fullDataSource);
 				}
-				LOGGER.info("Updated file "+this.file);
+				//LOGGER.info("Updated file "+this.file);
+				if (pos.sectionDetailLevel == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
+					DebugRenderer.makeParticle(
+							new DebugRenderer.BoxParticle(
+									new DebugRenderer.Box(this.pos, 0, 256f, 0.05f, Color.green),
+									0.5, 512f
+							)
+					);
+
 				this.cachedFullDataSource = new SoftReference<>(fullDataSource);
 				inCrit = false;
 				dataSourceLoadFutureRef.set(null);
 				completer.complete(fullDataSource);
+
+				if (this.markedNeedUpdate)
+				{
+					// trigger another update
+					this.loadOrGetCachedDataSourceAsync();
+				}
 			});
 	}
 
@@ -413,7 +432,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	public CompletableFuture<Void> flushAndSaveAsync()
 	{
 		debugPhantomLifeCycleCheck();
-		boolean isEmpty = this.writeQueueRef.get().queue.isEmpty();
+		boolean isEmpty = this.writeQueueRef.get().queue.isEmpty() && !markedNeedUpdate;
 		if (!isEmpty)
 		{
 			// This will flush the data to disk.

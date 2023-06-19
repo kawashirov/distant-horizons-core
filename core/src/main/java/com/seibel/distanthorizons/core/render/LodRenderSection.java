@@ -81,9 +81,7 @@ public class LodRenderSection implements IDebugRenderable
 			if (canRenderNow() && isRenderingEnabled) color = Color.green;
 		}
 
-		float yOffset = Objects.hashCode(this) / (float) Integer.MAX_VALUE * 16f + 16f;
-
-		r.renderBox(this.pos, yOffset, yOffset, 0.1f, color);
+		r.renderBox(new DebugRenderer.Box(this.pos, 400, 8f, Objects.hashCode(this), 0.1f, color));
 	}
 	
 	
@@ -109,6 +107,7 @@ public class LodRenderSection implements IDebugRenderable
 		{
 			this.renderSourceLoadFuture = null;
 			this.renderSource = renderSource;
+			this.lastNs = -1;
 			if (this.reloadRenderSourceOnceLoaded)
 			{
 				this.reloadRenderSourceOnceLoaded = false;
@@ -136,6 +135,13 @@ public class LodRenderSection implements IDebugRenderable
 	
     public void reload(ILodRenderSourceProvider renderDataProvider)
 	{
+		if (pos.sectionDetailLevel == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
+			DebugRenderer.makeParticle(
+					new DebugRenderer.BoxParticle(
+							new DebugRenderer.Box(pos, 0, 256f, 0.05f, Color.cyan),
+							0.5, 512f
+					)
+			);
 		this.renderSourceProvider = renderDataProvider;
 		if (this.renderSourceProvider == null)
 		{
@@ -201,14 +207,14 @@ public class LodRenderSection implements IDebugRenderable
 
 	private boolean isInBuildBufferTimeout() {
 		if (this.lastNs == -1) return false;
-		return true;
+		//return true;
 
-		//boolean inTimeout = System.nanoTime() - this.lastNs < SWAP_TIMEOUT_IN_NS;
-		//if (!inTimeout && ColumnRenderBufferBuilder.isBusy()) {
-		//	this.lastNs += (long) (SWAP_BUSY_COLLISION_TIMEOUT_IN_NS * Math.random());
-		//	inTimeout = true;
-		//}
-		//return inTimeout;
+		boolean inTimeout = System.nanoTime() - this.lastNs < SWAP_TIMEOUT_IN_NS;
+		if (!inTimeout && ColumnRenderBufferBuilder.isBusy()) {
+			this.lastNs += (long) (SWAP_BUSY_COLLISION_TIMEOUT_IN_NS * Math.random());
+			inTimeout = true;
+		}
+		return inTimeout;
 	}
 
 	/** @return true if this section is loaded and set to render */
@@ -228,6 +234,13 @@ public class LodRenderSection implements IDebugRenderable
 	{
 		boolean didSwapped = false;
 		if (canBuildBuffer()) {
+			if (pos.sectionDetailLevel == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
+				DebugRenderer.makeParticle(
+						new DebugRenderer.BoxParticle(
+								new DebugRenderer.Box(pos, 0, 256f, 0.1f, Color.yellow),
+								0.8, 512f
+						)
+				);
 			ColumnRenderSource[] adjacentSources = new ColumnRenderSource[ELodDirection.ADJ_DIRECTIONS.length];
 			for (ELodDirection direction : ELodDirection.ADJ_DIRECTIONS) {
 				try {

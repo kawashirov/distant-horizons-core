@@ -14,7 +14,7 @@ public abstract class DhLevel implements IDhLevel {
         this.chunkToLodBuilder = new ChunkToLodBuilder();
     }
 
-    protected abstract void saveWrites(ChunkSizedFullDataAccessor data);
+    public abstract void saveWrites(ChunkSizedFullDataAccessor data);
 
 
     @Override

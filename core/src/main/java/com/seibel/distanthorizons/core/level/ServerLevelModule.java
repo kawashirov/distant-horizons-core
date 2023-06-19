@@ -20,7 +20,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ServerLevelModule {
     private static class WorldGenState
     {
-        public final IDhApiWorldGenerator chunkGenerator;
         public final WorldGenerationQueue worldGenerationQueue;
         WorldGenState(IDhServerLevel level)
         {
@@ -33,9 +32,7 @@ public class ServerLevelModule {
                 // since core world generator's should have the lowest override priority
                 WorldGeneratorInjector.INSTANCE.bind(level.getLevelWrapper(), worldGenerator);
             }
-            this.chunkGenerator = worldGenerator;
-
-            this.worldGenerationQueue = new WorldGenerationQueue(this.chunkGenerator);
+            this.worldGenerationQueue = new WorldGenerationQueue(worldGenerator);
         }
 
         CompletableFuture<Void> closeAsync(boolean doInterrupt)
@@ -46,12 +43,16 @@ public class ServerLevelModule {
                                 LOGGER.error("Error closing generation queue", ex);
                                 return null;
                             }
-                    ).thenRun(this.chunkGenerator::close)
+                    ).thenRun(this.worldGenerationQueue::close)
                     .exceptionally(ex ->
                     {
                         LOGGER.error("Error closing world gen", ex);
                         return null;
                     });
+        }
+
+        public void tick(DhBlockPos2D targetPosForGeneration) {
+            worldGenerationQueue.runCurrentGenTasksUntilBusy(targetPosForGeneration);
         }
     }
 
@@ -87,8 +88,8 @@ public class ServerLevelModule {
             LOGGER.warn("Failed to start world gen due to concurrency");
             newWgs.closeAsync(false);
         }
-        dataFileHandler.setGenerationQueue(newWgs.worldGenerationQueue);
         dataFileHandler.addWorldGenCompleteListener(parent);
+        dataFileHandler.setGenerationQueue(newWgs.worldGenerationQueue);
     }
 
     public void stopWorldGen()
@@ -125,8 +126,7 @@ public class ServerLevelModule {
         if (worldGenState != null)
         {
             // queue new world generation requests
-            worldGenState.chunkGenerator.preGeneratorTaskStart();//new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()
-            worldGenState.worldGenerationQueue.runCurrentGenTasksUntilBusy(targetPosForGeneration);
+            worldGenState.tick(targetPosForGeneration);
         }
     }
 

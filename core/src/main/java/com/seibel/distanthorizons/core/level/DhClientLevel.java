@@ -84,7 +84,7 @@ public class DhClientLevel extends DhLevel implements IDhClientLevel
 	}
 
 	@Override
-	protected void saveWrites(ChunkSizedFullDataAccessor data) {
+	public void saveWrites(ChunkSizedFullDataAccessor data) {
 		clientside.saveWrites(data);
 	}
 

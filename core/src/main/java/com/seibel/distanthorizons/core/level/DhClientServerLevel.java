@@ -3,6 +3,7 @@ package com.seibel.distanthorizons.core.level;
 import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.file.fullDatafile.IFullDataSourceProvider;
+import com.seibel.distanthorizons.core.render.renderer.DebugRenderer;
 import com.seibel.distanthorizons.core.file.structure.AbstractSaveStructure;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhBlockPos;
@@ -18,6 +19,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapp
 import com.seibel.distanthorizons.coreapi.util.math.Mat4f;
 import org.apache.logging.log4j.Logger;
 
+import java.awt.*;
 import java.util.concurrent.CompletableFuture;
 
 /** The level used on a singleplayer world */
@@ -143,7 +145,7 @@ public class DhClientServerLevel extends DhLevel implements IDhClientLevel, IDhS
 	}
 
 	@Override
-	protected void saveWrites(ChunkSizedFullDataAccessor data) {
+	public void saveWrites(ChunkSizedFullDataAccessor data) {
 		clientside.saveWrites(data);
 	}
 
@@ -171,6 +173,13 @@ public class DhClientServerLevel extends DhLevel implements IDhClientLevel, IDhS
 	@Override 
 	public void onWorldGenTaskComplete(DhSectionPos pos)
 	{
+		if (pos.sectionDetailLevel == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
+			DebugRenderer.makeParticle(
+					new DebugRenderer.BoxParticle(
+							new DebugRenderer.Box(pos, 0, 256f, 0.05f, Color.red),
+							0.5, 512f
+					)
+			);
 		clientside.reloadPos(pos);
 	}
 

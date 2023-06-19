@@ -1,12 +1,14 @@
 package com.seibel.distanthorizons.core.file.fullDatafile;
 
 import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
+import com.seibel.distanthorizons.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IIncompleteFullDataSource;
 import com.seibel.distanthorizons.core.file.metaData.BaseMetaData;
 import com.seibel.distanthorizons.core.generation.WorldGenerationQueue;
 import com.seibel.distanthorizons.core.generation.tasks.IWorldGenTaskTracker;
 import com.seibel.distanthorizons.core.generation.tasks.WorldGenResult;
+import com.seibel.distanthorizons.core.level.DhLevel;
 import com.seibel.distanthorizons.core.level.IDhServerLevel;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhLodPos;
@@ -69,15 +71,15 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	{
 		boolean oldQueueExists = this.worldGenQueueRef.compareAndSet(null, newWorldGenQueue);
 		LodUtil.assertTrue(oldQueueExists, "previous world gen queue is still here!");
-
+		LOGGER.info("Set world gen queue for level {} to start.", this.level);
 		for (FullDataMetaFile metaFile : this.fileBySectionPos.values())
 		{
-			metaFile.genQueueChecked = false; // unset it so it can be checked again
 			IFullDataSource data = metaFile.getCachedDataSourceNowOrNull();
-			if (data instanceof IIncompleteFullDataSource) {
-				// need manual marking for update.
-				metaFile.markNeedUpdate();
+			if (data instanceof CompleteFullDataSource) {
+				continue;
 			}
+			metaFile.genQueueChecked = false; // unset it so it can be checked again
+			metaFile.markNeedUpdate();
 		}
 		flushAndSave(); // Trigger an update to the meta files
 	}
@@ -113,7 +115,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 			if (targetDataDetailLevel > maxSectDataDetailLevel) {
 				ArrayList<FullDataMetaFile> existingFiles = new ArrayList<>();
 				byte sectDetailLevel = (byte) (DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL + maxSectDataDetailLevel);
-				pos.forEachChildAtLevel(sectDetailLevel, this::getOrMakeFile);
+				pos.forEachChildAtLevel(sectDetailLevel, p -> existingFiles.add(getOrMakeFile(p)));
 				return sampleFromFiles(dataSource, existingFiles).thenApply(IIncompleteFullDataSource::tryPromotingToCompleteDataSource)
 						.exceptionally((e) ->
 						{
@@ -249,6 +251,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	
 	private void fireOnGenPosSuccessListeners(DhSectionPos pos)
 	{
+		if (true) return;
 		//LOGGER.info("gen task completed for pos: ["+pos+"].");
 		
 /*		// save the full data source
@@ -328,7 +331,8 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 			{
 				if (chunkSizedFullDataSource.getLodPos().overlapsExactly(this.loadedTargetFullDataSource.getSectionPos().getSectionBBoxPos()))
 				{
-					GeneratedFullDataFileHandler.this.write(this.loadedTargetFullDataSource.getSectionPos(), chunkSizedFullDataSource);
+					((DhLevel)level).saveWrites(chunkSizedFullDataSource);
+					//GeneratedFullDataFileHandler.this.write(this.loadedTargetFullDataSource.getSectionPos(), chunkSizedFullDataSource);
 				}
 			};
 		}
