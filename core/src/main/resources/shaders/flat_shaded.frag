@@ -129,8 +129,8 @@ void main()
 
 
         float noiseAmplification = noiseIntensity / 100;
-        noiseAmplification = (returnColor.x + returnColor.y + returnColor.z) / 3 * noiseAmplification; // Lessen the effect on depending on how dark the object is
-//        noiseAmplification *= returnColor.w; // The effect would lessen on transparent objects
+        noiseAmplification = (-1 * pow(2*((returnColor.x + returnColor.y + returnColor.z) / 3) - 1, 2) + 1) * noiseAmplification; // Lessen the effect on depending on how dark the object is, equasion for this is -(2x-1)^{2}+1
+        noiseAmplification *= returnColor.w; // The effect would lessen on transparent objects
 
         // Random value for each position
         float randomValue = rand(vec3(
