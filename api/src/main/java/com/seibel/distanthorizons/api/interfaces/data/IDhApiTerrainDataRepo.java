@@ -1,5 +1,6 @@
 package com.seibel.distanthorizons.api.interfaces.data;
 
+import com.seibel.distanthorizons.api.enums.EDhApiDetailLevel;
 import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.distanthorizons.api.objects.DhApiResult;
 import com.seibel.distanthorizons.api.objects.data.DhApiRaycastResult;
@@ -45,7 +46,8 @@ public interface IDhApiTerrainDataRepo
 	 * 
 	 * @param detailLevel a positive byte defining the detail level of the returned data. <br>
 	 * 					  Every increase doubles the width of the returned area. <br>
-	 * 					  Example values: 0 = block, 1 = 2x2 blocks, 2 = 4x4 blocks, ... 4 = chunk (16x16 blocks), ... 9 = region (512x512 blocks)
+	 * 					  Example values: 0 = block, 1 = 2x2 blocks, 2 = 4x4 blocks, ... 4 = chunk (16x16 blocks), ... 9 = region (512x512 blocks) <br>
+	 * 					  See {@link EDhApiDetailLevel} for more information.
 	 */
 	DhApiResult<DhApiTerrainDataPoint[][][]> getAllTerrainDataAtDetailLevelAndPos(IDhApiLevelWrapper levelWrapper, byte detailLevel, int posX, int posZ);
 	

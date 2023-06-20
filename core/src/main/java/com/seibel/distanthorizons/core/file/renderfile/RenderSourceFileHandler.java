@@ -1,6 +1,7 @@
 package com.seibel.distanthorizons.core.file.renderfile;
 
 import com.google.common.collect.HashMultimap;
+import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiDataFileChangedEvent;
 import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
@@ -14,6 +15,7 @@ import com.seibel.distanthorizons.core.util.ThreadUtil;
 import com.seibel.distanthorizons.core.util.objects.UncheckedInterruptedException;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.util.LodUtil;
+import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
@@ -246,6 +248,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		// convert to the lowest detail level so all detail levels are updated
         this.writeChunkDataToFileRecursively(sectionPos.convertToDetailLevel((byte) this.lowestDetailLevel.get()), chunkDataView);
 		this.fullDataSourceProvider.write(sectionPos, chunkDataView);
+		ApiEventInjector.INSTANCE.fireAllEvents(DhApiDataFileChangedEvent.class, new DhApiDataFileChangedEvent.EventParam(DhApiDataFileChangedEvent.EDataType.Render, (byte)(sectionPos.sectionDetailLevel - DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL), sectionPos.sectionX, sectionPos.sectionZ));
     }
     private void writeChunkDataToFileRecursively(DhSectionPos sectionPos, ChunkSizedFullDataAccessor chunkDataView)
 	{

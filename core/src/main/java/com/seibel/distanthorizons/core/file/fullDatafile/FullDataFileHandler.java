@@ -1,6 +1,7 @@
 package com.seibel.distanthorizons.core.file.fullDatafile;
 
 import com.google.common.collect.HashMultimap;
+import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiDataFileChangedEvent;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.config.listeners.ConfigChangeListener;
 import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
@@ -8,20 +9,17 @@ import com.seibel.distanthorizons.core.dataObjects.fullData.sources.HighDetailIn
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.LowDetailIncompleteFullDataSource;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IIncompleteFullDataSource;
-import com.seibel.distanthorizons.core.file.metaData.BaseMetaData;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhLodPos;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
-import com.seibel.distanthorizons.core.dataObjects.fullData.sources.*;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.distanthorizons.core.util.FileUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.ThreadUtil;
-import com.seibel.distanthorizons.core.render.renderer.DebugRenderer;
-import com.seibel.distanthorizons.core.render.renderer.IDebugRenderable;
+import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import org.apache.logging.log4j.Logger;
-import javax.annotation.Nullable;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -291,6 +289,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		
         chunkPos = chunkPos.convertToDetailLevel((byte) this.minDetailLevel);
 		this.writeChunkDataToMetaFile(new DhSectionPos(chunkPos.detailLevel, chunkPos.x, chunkPos.z), chunkDataView);
+		ApiEventInjector.INSTANCE.fireAllEvents(DhApiDataFileChangedEvent.class, new DhApiDataFileChangedEvent.EventParam(DhApiDataFileChangedEvent.EDataType.Full, (byte)(sectionPos.sectionDetailLevel - DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL), sectionPos.sectionX, sectionPos.sectionZ));
     }
     private void writeChunkDataToMetaFile(DhSectionPos sectionPos, ChunkSizedFullDataAccessor chunkData)
 	{
