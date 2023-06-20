@@ -90,9 +90,10 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 		this.minGranularity = generator.getMinGenerationGranularity();
 		this.largestDataDetail = generator.getLargestDataDetailLevel();
 		this.smallestDataDetail = generator.getSmallestDataDetailLevel();
-		
+
+		//FIXME: Currently resizing view dist doesn't update this, causing some gen task to fail.
 		int treeWidth = Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH * 2; // TODO the *2 is to allow for generation edge cases, and should probably be removed at some point
-		byte treeMinDetailLevel = LodUtil.BLOCK_DETAIL_LEVEL; // the tree shouldn't need to go this low, but just in case
+		byte treeMinDetailLevel = LodUtil.CHUNK_DETAIL_LEVEL; // The min level should be at least fill in 1 ChunkSizedFullDataAccessor.
 		this.waitingTaskQuadTree = new QuadTree<>(treeWidth, DhBlockPos2D.ZERO /*the quad tree will be re-centered later*/, treeMinDetailLevel);
 		
 		
@@ -133,11 +134,10 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 		{
 			requiredDataDetail = this.largestDataDetail;
 		}
-		
-		// TODO what does this assert mean?
-		LodUtil.assertTrue(pos.detailLevel > requiredDataDetail + LodUtil.CHUNK_DETAIL_LEVEL/*TODO is chunkDetailLevel the correct replacement? otherwise the magic number was 4*/); 
-		
-		
+
+		// Assert that the data at least can fill in 1 single ChunkSizedFullDataAccessor
+		LodUtil.assertTrue(pos.detailLevel > requiredDataDetail + LodUtil.CHUNK_DETAIL_LEVEL);
+
 		DhSectionPos requestPos = new DhSectionPos(pos.detailLevel, pos.x, pos.z);
 		if (this.waitingTaskQuadTree.isSectionPosInBounds(requestPos))
 		{
@@ -621,7 +621,7 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 
 	@Override
 	public void debugRender(DebugRenderer r) {
-		if (true) return;
+		//if (true) return;
 		CheckingTasks.forEach((t) -> {
 			DhLodPos pos = t.pos;
 			r.renderBox(new DebugRenderer.Box(pos, -32f, 64f, 0.05f, Color.blue));

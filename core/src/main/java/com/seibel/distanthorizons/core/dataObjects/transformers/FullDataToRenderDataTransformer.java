@@ -13,6 +13,7 @@ import com.seibel.distanthorizons.core.dataObjects.render.columnViews.ColumnArra
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.level.IDhClientLevel;
 import com.seibel.distanthorizons.core.pos.DhBlockPos;
+import com.seibel.distanthorizons.core.pos.DhLodPos;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.core.util.FullDataPointUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
@@ -21,6 +22,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.block.IBlockStateWrappe
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.distanthorizons.coreapi.util.BitShiftUtil;
+import com.seibel.distanthorizons.coreapi.util.MathUtil;
 
 import java.util.Arrays;
 
@@ -153,7 +155,7 @@ public class FullDataToRenderDataTransformer
 		}
         return columnSource;
     }
-	
+
 	/**
 	 * @throws InterruptedException Can be caused by interrupting the thread upstream.
 	 * 								Generally thrown if the method is running after the client leaves the current world.
@@ -175,6 +177,7 @@ public class FullDataToRenderDataTransformer
 
 		if (chunkDataView.detailLevel == renderSource.getDataDetail())
 		{
+			renderSource.markNotEmpty();
 			// confirm the render source contains this chunk
 			if (blockOffsetX < 0
 				|| blockOffsetX + LodUtil.CHUNK_WIDTH > renderSource.getWidthInDataPoints()
@@ -192,25 +195,62 @@ public class FullDataToRenderDataTransformer
 				{
 					ColumnArrayView columnArrayView = renderSource.getVerticalDataPointView(blockOffsetX + x, blockOffsetZ + z);
 					int hash = columnArrayView.getDataHash();
-
 					SingleColumnFullDataAccessor fullArrayView = chunkDataView.get(x, z);
-					
 					convertColumnData(level, 
 							sourceBlockX + sourceDataPointBlockWidth * (blockOffsetX + x),
 							sourceBlockZ + sourceDataPointBlockWidth * (blockOffsetZ + z),
 							columnArrayView, fullArrayView, 2);
-					
-					if (fullArrayView.doesColumnExist())
-					{
-						LodUtil.assertTrue(renderSource.doesDataPointExist(blockOffsetX + x, blockOffsetZ + z));
-					}
-
 					changed |= hash != columnArrayView.getDataHash();
 				}
 			}
 			renderSource.fillDebugFlag(blockOffsetX, blockOffsetZ, LodUtil.CHUNK_WIDTH, LodUtil.CHUNK_WIDTH, ColumnRenderSource.DebugSourceFlag.DIRECT);
-
+		}
+		else if (chunkDataView.detailLevel < renderSource.getDataDetail() && renderSource.getDataDetail() <= chunkDataView.getLodPos().detailLevel) {
 			renderSource.markNotEmpty();
+			// multiple chunk data points converting to 1 column data point
+			DhLodPos dataCornerPos = chunkDataView.getLodPos().getCornerLodPos(chunkDataView.detailLevel);
+			DhLodPos sourceCornerPos = renderSourcePos.getCorner(renderSource.getDataDetail());
+			DhLodPos sourceStartingChangePos = dataCornerPos.convertToDetailLevel(renderSource.getDataDetail());
+			int relStartX = Math.floorMod(sourceStartingChangePos.x, renderSource.getWidthInDataPoints());
+			int relStartZ = Math.floorMod(sourceStartingChangePos.z, renderSource.getWidthInDataPoints());
+			int dataToSourceScale = sourceCornerPos.getWidthAtDetail(chunkDataView.detailLevel);
+			int columnsInChunk = chunkDataView.getLodPos().getWidthAtDetail(renderSource.getDataDetail());
+
+			for (int ox = 0; ox < columnsInChunk; ox++) {
+				for (int oz = 0; oz < columnsInChunk; oz++) {
+					int relSourceX = relStartX + ox;
+					int relSourceZ = relStartZ + oz;
+					ColumnArrayView columnArrayView = renderSource.getVerticalDataPointView(relSourceX, relSourceZ);
+					int hash = columnArrayView.getDataHash();
+					SingleColumnFullDataAccessor fullArrayView = chunkDataView.get(ox * dataToSourceScale, oz * dataToSourceScale);
+					convertColumnData(level,
+							sourceBlockX + sourceDataPointBlockWidth * relSourceX * dataToSourceScale,
+							sourceBlockZ + sourceDataPointBlockWidth * relSourceZ * dataToSourceScale,
+							columnArrayView, fullArrayView, 2);
+					changed |= hash != columnArrayView.getDataHash();
+				}
+			}
+			renderSource.fillDebugFlag(relStartX, relStartZ, columnsInChunk, columnsInChunk, ColumnRenderSource.DebugSourceFlag.DIRECT);
+		}
+		else if (chunkDataView.getLodPos().detailLevel < renderSource.getDataDetail()) {
+			// The entire chunk is being converted to a single column data point, possibly.
+			DhLodPos dataCornerPos = chunkDataView.getLodPos().getCornerLodPos(chunkDataView.detailLevel);
+			DhLodPos sourceCornerPos = renderSourcePos.getCorner(renderSource.getDataDetail());
+			DhLodPos sourceStartingChangePos = dataCornerPos.convertToDetailLevel(renderSource.getDataDetail());
+			int chunksPerColumn = sourceStartingChangePos.getWidthAtDetail(chunkDataView.getLodPos().detailLevel);
+			if (chunkDataView.getLodPos().x % chunksPerColumn != 0 || chunkDataView.getLodPos().z % chunksPerColumn != 0) {
+				return false; // not a multiple of the column size, so no change
+			}
+			int relStartX = Math.floorMod(sourceStartingChangePos.x, renderSource.getWidthInDataPoints());
+			int relStartZ = Math.floorMod(sourceStartingChangePos.z, renderSource.getWidthInDataPoints());
+			ColumnArrayView columnArrayView = renderSource.getVerticalDataPointView(relStartX, relStartZ);
+			int hash = columnArrayView.getDataHash();
+			SingleColumnFullDataAccessor fullArrayView = chunkDataView.get(0, 0);
+			convertColumnData(level, dataCornerPos.x * sourceDataPointBlockWidth,
+					dataCornerPos.z * sourceDataPointBlockWidth,
+					columnArrayView, fullArrayView, 2);
+			changed = hash != columnArrayView.getDataHash();
+			renderSource.fillDebugFlag(relStartX, relStartZ, 1, 1, ColumnRenderSource.DebugSourceFlag.DIRECT);
 		}
 		return changed;
 	}

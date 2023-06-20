@@ -294,15 +294,15 @@ public class ColumnRenderSource
 				return false;
 			}
 		}
-		catch (IllegalArgumentException e)
-		{
-			// shouldn't happen, but just in case
-			LOGGER.warn("Unable to complete fastWrite for RenderSource pos: ["+this.sectionPos+"] and chunk pos: ["+chunkData.pos+"].");
-		}
 		catch (InterruptedException e)
 		{
 			// expected if the transformer is shut down, the exception can be ignored
-//			LOGGER.warn(ColumnRenderSource.class.getSimpleName()+" fast write interrupted.");
+			LOGGER.warn(ColumnRenderSource.class.getSimpleName()+" fast write interrupted.");
+		}
+		catch (Throwable e)
+		{
+			// shouldn't happen, but just in case
+			LOGGER.warn("Unable to complete fastWrite for RenderSource pos: ["+this.sectionPos+"] and chunk pos: ["+chunkData.pos+"].", e);
 		}
 		return false;
 	}

@@ -242,7 +242,7 @@ public class ClientLevelModule {
         }
     }
 
-    private static class ClientRenderState
+    public static class ClientRenderState
     {
         private static final Logger LOGGER = DhLoggerBuilder.getLogger();
         private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);

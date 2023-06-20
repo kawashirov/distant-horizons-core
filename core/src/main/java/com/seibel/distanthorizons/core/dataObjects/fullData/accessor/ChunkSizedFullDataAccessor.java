@@ -50,7 +50,6 @@ public class ChunkSizedFullDataAccessor extends FullDataArrayAccessor
 	
 	public DhLodPos getLodPos() { return new DhLodPos(LodUtil.CHUNK_DETAIL_LEVEL, this.pos.x, this.pos.z); }
 	
-	
 	@Override
 	public String toString() { return this.pos+" "+this.nonEmptyCount(); }
 	

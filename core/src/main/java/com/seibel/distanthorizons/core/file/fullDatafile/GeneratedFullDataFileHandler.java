@@ -36,12 +36,9 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	private final AtomicReference<WorldGenerationQueue> worldGenQueueRef = new AtomicReference<>(null);
 	
 	private final ArrayList<IOnWorldGenCompleteListener> onWorldGenTaskCompleteListeners = new ArrayList<>();
-	
-	/**
-	 * Keeps track of which partially generated {@link IFullDataSource} {@link DhSectionPos}' are waiting to be generated.
-	 * This is done to prevent sending duplicate generation requests for the same position.
-	 */
-	private final HashSet<DhSectionPos> incompleteSourceGenRequests = new HashSet<>();
+
+	// Use to hold onto incomplete data sources that are waiting for generation, so that they don't get GC'd before they are generated
+	private final ConcurrentHashMap<DhSectionPos, IIncompleteFullDataSource> incompleteDataSources = new ConcurrentHashMap<>();
 	
 	public GeneratedFullDataFileHandler(IDhServerLevel level, File saveRootDir) { super(level, saveRootDir); }
 	
@@ -84,9 +81,19 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		flushAndSave(); // Trigger an update to the meta files
 	}
 	
-	public void clearGenerationQueue() { this.worldGenQueueRef.set(null); }
-	
-	
+	public void clearGenerationQueue() {
+		this.worldGenQueueRef.set(null);
+		incompleteDataSources.clear(); // clear the incomplete data sources
+	}
+
+	public void removeGenRequestIf(Function<DhSectionPos, Boolean> removeIf) {
+		this.incompleteDataSources.forEach((pos, dataSource) ->
+		{
+			if (removeIf.apply(pos)) {
+				this.incompleteDataSources.remove(pos);
+			}
+		});
+	}
 	
 	//=================//
 	// event listeners //
@@ -96,7 +103,13 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	
 	public void removeWorldGenCompleteListener(IOnWorldGenCompleteListener listener) { this.onWorldGenTaskCompleteListeners.remove(listener); }
 	
-	
+	private IFullDataSource tryPromoteDataSource(IIncompleteFullDataSource source) {
+		IFullDataSource newSource = source.tryPromotingToCompleteDataSource();
+		if (newSource instanceof CompleteFullDataSource) {
+			incompleteDataSources.remove(source.getSectionPos());
+		}
+		return newSource;
+	}
 	
 	//========//
 	// events //
@@ -116,7 +129,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 				ArrayList<FullDataMetaFile> existingFiles = new ArrayList<>();
 				byte sectDetailLevel = (byte) (DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL + maxSectDataDetailLevel);
 				pos.forEachChildAtLevel(sectDetailLevel, p -> existingFiles.add(getOrMakeFile(p)));
-				return sampleFromFiles(dataSource, existingFiles).thenApply(IIncompleteFullDataSource::tryPromotingToCompleteDataSource)
+				return sampleFromFiles(dataSource, existingFiles).thenApply(this::tryPromoteDataSource)
 						.exceptionally((e) ->
 						{
 							FullDataMetaFile newMetaFile = removeCorruptedFile(pos, file, e);
@@ -124,7 +137,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 						});
 			}
 			else {
-				this.incompleteSourceGenRequests.add(pos);
+				this.incompleteDataSources.put(pos, dataSource);
 				// queue this section to be generated
 				GenTask genTask = new GenTask(pos, new WeakReference<>(dataSource));
 				worldGenQueue.submitGenTask(new DhLodPos(pos), dataSource.getDataDetailLevel(), genTask)
@@ -132,7 +145,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 						{
 							this.onWorldGenTaskComplete(genTaskResult, ex, genTask, pos);
 							this.fireOnGenPosSuccessListeners(pos);
-							this.incompleteSourceGenRequests.remove(pos);
+							this.incompleteDataSources.remove(pos);
 						});
 			}
 			// return the empty dataSource (it will be populated later)
@@ -157,7 +170,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		else {
 			// Has stuff to sample.
 			makeFiles(missingPositions, existingFiles);
-			return sampleFromFiles(data, existingFiles).thenApply(IIncompleteFullDataSource::tryPromotingToCompleteDataSource)
+			return sampleFromFiles(data, existingFiles).thenApply(this::tryPromoteDataSource)
 				.exceptionally((e) ->
 				{
 					FullDataMetaFile newMetaFile = removeCorruptedFile(pos, file, e);
@@ -185,7 +198,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 
 		if (source instanceof IIncompleteFullDataSource)
 		{
-			IFullDataSource newSource = ((IIncompleteFullDataSource) source).tryPromotingToCompleteDataSource();
+			IFullDataSource newSource = tryPromoteDataSource((IIncompleteFullDataSource) source);
 			changed |= newSource != source;
 			source = newSource;
 		}

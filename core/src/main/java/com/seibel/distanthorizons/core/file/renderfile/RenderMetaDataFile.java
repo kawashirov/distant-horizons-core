@@ -108,22 +108,20 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 
 		DebugRenderer.register(this);
 	}
-	
-	// FIXME: This can cause concurrent modification of LodRenderSource.
-    //       Not sure if it will cause issues or not.
+
 	public void updateChunkIfSourceExists(ChunkSizedFullDataAccessor chunkDataView, IDhClientLevel level)
 	{
 		DhLodPos chunkPos = chunkDataView.getLodPos();
 		LodUtil.assertTrue(this.pos.getSectionBBoxPos().overlapsExactly(chunkPos), "Chunk pos "+chunkPos+" doesn't overlap with section "+this.pos);
 		
 		// update the render source if one exists
-		CompletableFuture<ColumnRenderSource> renderSourceLoadFuture = getCachedDataSourceAsync();
+		CompletableFuture<ColumnRenderSource> renderSourceLoadFuture = getCachedDataSourceAsync(false);
 		if (renderSourceLoadFuture == null) return;
 
-/*		renderSourceLoadFuture.thenAccept((renderSource) -> {
+		renderSourceLoadFuture.thenAccept((renderSource) -> {
 			boolean worked = renderSource.fastWrite(chunkDataView, level);
 
-			if (pos.sectionDetailLevel == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL) {
+			if (pos.sectionDetailLevel == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL+5) {
 				float offset = new Random(System.nanoTime() ^ Thread.currentThread().getId()).nextFloat() * 16f;
 				Color c = worked ? Color.blue : Color.red;
 				DebugRenderer.makeParticle(
@@ -133,7 +131,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 						)
 				);
 			}
-		});*/
+		});
 	}
 	
     public CompletableFuture<Void> flushAndSave(ExecutorService renderCacheThread)
@@ -142,7 +140,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 		{
 			return CompletableFuture.completedFuture(null); // No need to save if the file doesn't exist.
 		}
-		CompletableFuture<ColumnRenderSource> source = getCachedDataSourceAsync();
+		CompletableFuture<ColumnRenderSource> source = getCachedDataSourceAsync(true);
 		if (source == null)
 		{
 			return CompletableFuture.completedFuture(null); // If there is no cached data, there is no need to save.
@@ -152,7 +150,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 	private CacheQueryResult getOrStartCachedDataSourceAsync()
 	{
 		// use the existing future
-		CompletableFuture<ColumnRenderSource> renderSourceLoadFuture = getCachedDataSourceAsync();
+		CompletableFuture<ColumnRenderSource> renderSourceLoadFuture = getCachedDataSourceAsync(true);
 		if (renderSourceLoadFuture == null) {
 			// Make a new future, and CAS it, or return the existing future
 			CompletableFuture<ColumnRenderSource> newFuture = new CompletableFuture<>();
@@ -169,7 +167,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 	}
 
 	@Nullable
-	private CompletableFuture<ColumnRenderSource> getCachedDataSourceAsync()
+	private CompletableFuture<ColumnRenderSource> getCachedDataSourceAsync(boolean doTriggerUpdate)
 	{
 		// use the existing future
 		CompletableFuture<ColumnRenderSource> renderSourceLoadFuture = renderSourceLoadFutureRef.get();
@@ -182,6 +180,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 			return null;
 		}
 		else {
+			if (!doTriggerUpdate) return CompletableFuture.completedFuture(cachedRenderDataSource);
 			// Make a new future, and CAS it, or return the existing future
 			CompletableFuture<ColumnRenderSource> newFuture = new CompletableFuture<>();
 			CompletableFuture<ColumnRenderSource> cas = AtomicsUtil.compareAndExchange(renderSourceLoadFutureRef, null, newFuture);

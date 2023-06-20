@@ -5,6 +5,7 @@ import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiDataFil
 import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.pos.DhLodPos;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.distanthorizons.core.dataObjects.transformers.DataRenderTransformer;
@@ -14,7 +15,6 @@ import com.seibel.distanthorizons.core.util.FileUtil;
 import com.seibel.distanthorizons.core.util.ThreadUtil;
 import com.seibel.distanthorizons.core.util.objects.UncheckedInterruptedException;
 import com.seibel.distanthorizons.core.config.Config;
-import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import org.apache.logging.log4j.Logger;
 
@@ -40,7 +40,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	private final IDhClientLevel level;
 	private final File saveDir;
 	/** This is the lowest (highest numeric) detail level that this {@link RenderSourceFileHandler} is keeping track of. */
-	AtomicInteger lowestDetailLevel = new AtomicInteger(6);
+	AtomicInteger topDetailLevel = new AtomicInteger(6);
 	private final IFullDataSourceProvider fullDataSourceProvider;
 	
 	private final ConcurrentHashMap<DhSectionPos, Object> cacheUpdateLockBySectionPos = new ConcurrentHashMap<>();
@@ -154,9 +154,9 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 			this.filesBySectionPos.put(pos, fileToUse);
 			
 			// increase the lowest detail level if a new lower detail file is found
-			if (this.lowestDetailLevel.get() < pos.sectionDetailLevel)
+			if (this.topDetailLevel.get() < pos.sectionDetailLevel)
 			{
-				this.lowestDetailLevel.set(pos.sectionDetailLevel);
+				this.topDetailLevel.set(pos.sectionDetailLevel);
 			}
 		}
 	}
@@ -205,9 +205,9 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 			}
 			
 			// increase the lowest detail level if a new lower detail file was added
-			if (this.lowestDetailLevel.get() < pos.sectionDetailLevel)
+			if (this.topDetailLevel.get() < pos.sectionDetailLevel)
 			{
-				this.lowestDetailLevel.set(pos.sectionDetailLevel);
+				this.topDetailLevel.set(pos.sectionDetailLevel);
 			}
 		}
 		
@@ -240,52 +240,37 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	
     /**
 	 * This call is concurrent. I.e. it supports multiple threads calling this method at the same time. <br>
-	 * TODO why is there fullData handling in the render file handler? 
+	 * This allows fast writes of new data to the render source, without having to wait for the data to be written to disk.
 	 */
     @Override
     public void writeChunkDataToFile(DhSectionPos sectionPos, ChunkSizedFullDataAccessor chunkDataView)
 	{
 		// convert to the lowest detail level so all detail levels are updated
-        this.writeChunkDataToFileRecursively(sectionPos.convertToDetailLevel((byte) this.lowestDetailLevel.get()), chunkDataView);
+		fastWriteDataToSourceRecursively(chunkDataView, DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL);
 		this.fullDataSourceProvider.write(sectionPos, chunkDataView);
 		ApiEventInjector.INSTANCE.fireAllEvents(DhApiDataFileChangedEvent.class, new DhApiDataFileChangedEvent.EventParam(DhApiDataFileChangedEvent.EDataType.Render, (byte)(sectionPos.sectionDetailLevel - DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL), sectionPos.sectionX, sectionPos.sectionZ));
     }
-    private void writeChunkDataToFileRecursively(DhSectionPos sectionPos, ChunkSizedFullDataAccessor chunkDataView)
+
+	private void fastWriteDataToSourceRecursively(ChunkSizedFullDataAccessor chunk, byte sectionDetailLevel)
 	{
-		// only continue if the chunk data is in this sectionPos
-		if (!sectionPos.getSectionBBoxPos().overlapsExactly(chunkDataView.getLodPos()))
-		{
-			return;
+		DhLodPos boundingPos = chunk.getLodPos();
+		DhLodPos sectPosMin = boundingPos.convertToDetailLevel(sectionDetailLevel);
+		int width = sectionDetailLevel > boundingPos.detailLevel ? 1 : boundingPos.getWidthAtDetail(sectionDetailLevel);
+		for (int ox = 0; ox < width; ox++) {
+			for (int oz = 0; oz < width; oz++) {
+				DhSectionPos sectPos = new DhSectionPos(sectionDetailLevel, sectPosMin.x + ox, sectPosMin.z + oz);
+				RenderMetaDataFile metaFile = this.filesBySectionPos.get(sectPos);
+				if (metaFile != null)
+				{
+					metaFile.updateChunkIfSourceExists(chunk, this.level);
+				}
+			}
 		}
-		
-		
-		
-		if (sectionPos.sectionDetailLevel > ColumnRenderSource.SECTION_SIZE_OFFSET)
-		{
-			this.writeChunkDataToFileRecursively(sectionPos.getChildByIndex(0), chunkDataView);
-			this.writeChunkDataToFileRecursively(sectionPos.getChildByIndex(1), chunkDataView);
-			this.writeChunkDataToFileRecursively(sectionPos.getChildByIndex(2), chunkDataView);
-			this.writeChunkDataToFileRecursively(sectionPos.getChildByIndex(3), chunkDataView);
-		}
-		
-		
-		
-		RenderMetaDataFile metaFile = this.filesBySectionPos.get(sectionPos);
-		if (metaFile != null)
-		{
-			metaFile.updateChunkIfSourceExists(chunkDataView, this.level);
-		}
-		else
-		{
-			// create a new file if necessary
-			this.readAsync(sectionPos).whenComplete((renderSource, ex) ->
-			{
-				RenderMetaDataFile newMetaFile = this.filesBySectionPos.get(sectionPos);
-				newMetaFile.updateChunkIfSourceExists(chunkDataView, this.level);
-			});
+		if (sectionDetailLevel < topDetailLevel.get()) {
+			fastWriteDataToSourceRecursively(chunk, (byte) (sectionDetailLevel + 1));
 		}
 	}
-	
+
 	
     /** This call is concurrent. I.e. it supports multiple threads calling this method at the same time. */
     @Override
