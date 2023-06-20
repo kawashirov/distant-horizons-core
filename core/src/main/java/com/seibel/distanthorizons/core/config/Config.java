@@ -725,7 +725,7 @@ public class Config
 				
 				public static final ConfigEntry<Integer> numberOfWorldGenerationThreads = new ConfigEntry.Builder<Integer>()
 						.setMinDefaultMax(1,
-								Runtime.getRuntime().availableProcessors()/6,
+								ThreadPresetConfigEventHandler.getWorldGenDefaultThreadCount(),
 								Runtime.getRuntime().availableProcessors())
 						.comment(""
 								+ "How many threads should be used when generating LOD \n"
@@ -741,7 +741,7 @@ public class Config
 				
 				public static ConfigEntry<Integer> numberOfBufferBuilderThreads = new ConfigEntry.Builder<Integer>()
 						.setMinDefaultMax(1,
-								Runtime.getRuntime().availableProcessors()/4,
+								ThreadPresetConfigEventHandler.getBufferBuilderDefaultThreadCount(),
 								Runtime.getRuntime().availableProcessors())
 						.comment(""
 								+ "How many threads are used when building geometry data for the GPU? \n"
@@ -755,7 +755,7 @@ public class Config
 				
 				public static final ConfigEntry<Integer> numberOfFileHandlerThreads = new ConfigEntry.Builder<Integer>()
 						.setMinDefaultMax(1,
-								Runtime.getRuntime().availableProcessors()/8,
+								ThreadPresetConfigEventHandler.getFileHandlerDefaultThreadCount(),
 								Runtime.getRuntime().availableProcessors())
 						.comment(""
 								+ "How many threads should be used when reading in LOD data from disk? \n"
@@ -769,7 +769,7 @@ public class Config
 				
 				public static final ConfigEntry<Integer> numberOfDataConverterThreads = new ConfigEntry.Builder<Integer>()
 						.setMinDefaultMax(1,
-								Runtime.getRuntime().availableProcessors()/4,
+								ThreadPresetConfigEventHandler.getDataConverterDefaultThreadCount(),
 								Runtime.getRuntime().availableProcessors())
 						.comment(""
 								+ "How many threads should be used when converting full ID data to render data? \n"
@@ -786,7 +786,7 @@ public class Config
 				
 				public static final ConfigEntry<Integer> numberOfChunkLodConverterThreads = new ConfigEntry.Builder<Integer>()
 						.setMinDefaultMax(1,
-								Runtime.getRuntime().availableProcessors()/16,
+								ThreadPresetConfigEventHandler.getChunkLodConvertersDefaultThreadCount(),
 								Runtime.getRuntime().availableProcessors())
 						.comment(""
 								+ "How many threads should be used to convert Minecraft chunks into LOD data? \n"

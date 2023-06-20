@@ -5,6 +5,7 @@ import com.seibel.distanthorizons.core.config.listeners.ConfigChangeListener;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.config.ConfigEntryWithPresetOptions;
 import com.seibel.distanthorizons.coreapi.interfaces.config.IConfigEntry;
+import com.seibel.distanthorizons.coreapi.util.MathUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -19,47 +20,56 @@ public class ThreadPresetConfigEventHandler extends AbstractPresetConfigEventHan
 	private static final Logger LOGGER = LogManager.getLogger();
 	
 	
+	public static int getWorldGenDefaultThreadCount() { return getThreadCountByPercent(0.1); } 
 	private final ConfigEntryWithPresetOptions<EThreadPreset, Integer> worldGen = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.MultiThreading.numberOfWorldGenerationThreads, 
 		new HashMap<EThreadPreset, Integer>()
 		{{
 			this.put(EThreadPreset.MINIMAL_IMPACT, 1);
-			this.put(EThreadPreset.LOW_IMPACT, getThreadCountByPercent(0.1));
+			this.put(EThreadPreset.LOW_IMPACT, getWorldGenDefaultThreadCount());
 			this.put(EThreadPreset.BALANCED, getThreadCountByPercent(0.2));
 			this.put(EThreadPreset.AGGRESSIVE, getThreadCountByPercent(0.4));
 			this.put(EThreadPreset.I_PAID_FOR_THE_WHOLE_CPU, getThreadCountByPercent(1.0));
 		}});
+	
+	public static int getBufferBuilderDefaultThreadCount() { return getThreadCountByPercent(0.1); }
 	private final ConfigEntryWithPresetOptions<EThreadPreset, Integer> bufferBuilders = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.MultiThreading.numberOfBufferBuilderThreads, 
 		new HashMap<EThreadPreset, Integer>()
 		{{
 			this.put(EThreadPreset.MINIMAL_IMPACT, 1);
-			this.put(EThreadPreset.LOW_IMPACT, getThreadCountByPercent(0.1));
+			this.put(EThreadPreset.LOW_IMPACT, getBufferBuilderDefaultThreadCount());
 			this.put(EThreadPreset.BALANCED, getThreadCountByPercent(0.2));
 			this.put(EThreadPreset.AGGRESSIVE, getThreadCountByPercent(0.4));
 			this.put(EThreadPreset.I_PAID_FOR_THE_WHOLE_CPU, getThreadCountByPercent(1.0));
 		}});
+	
+	public static int getFileHandlerDefaultThreadCount() { return getThreadCountByPercent(0.1); }
 	private final ConfigEntryWithPresetOptions<EThreadPreset, Integer> fileHandlers = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.MultiThreading.numberOfFileHandlerThreads, 
 		new HashMap<EThreadPreset, Integer>()
 		{{
 			this.put(EThreadPreset.MINIMAL_IMPACT, 1);
-			this.put(EThreadPreset.LOW_IMPACT, getThreadCountByPercent(0.1));
+			this.put(EThreadPreset.LOW_IMPACT, getFileHandlerDefaultThreadCount());
 			this.put(EThreadPreset.BALANCED, getThreadCountByPercent(0.2));
 			this.put(EThreadPreset.AGGRESSIVE, getThreadCountByPercent(0.2));
 			this.put(EThreadPreset.I_PAID_FOR_THE_WHOLE_CPU, getThreadCountByPercent(1.0));
 		}});
+	
+	public static int getDataConverterDefaultThreadCount() { return getThreadCountByPercent(0.1); }
 	private final ConfigEntryWithPresetOptions<EThreadPreset, Integer> dataConverters = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.MultiThreading.numberOfDataConverterThreads, 
 		new HashMap<EThreadPreset, Integer>()
 		{{
 			this.put(EThreadPreset.MINIMAL_IMPACT, 1);
-			this.put(EThreadPreset.LOW_IMPACT, getThreadCountByPercent(0.1));
+			this.put(EThreadPreset.LOW_IMPACT, getDataConverterDefaultThreadCount());
 			this.put(EThreadPreset.BALANCED, getThreadCountByPercent(0.2));
 			this.put(EThreadPreset.AGGRESSIVE, getThreadCountByPercent(0.2));
 			this.put(EThreadPreset.I_PAID_FOR_THE_WHOLE_CPU, getThreadCountByPercent(1.0));
 		}});
+	
+	public static int getChunkLodConvertersDefaultThreadCount() { return getThreadCountByPercent(0.1); }
 	private final ConfigEntryWithPresetOptions<EThreadPreset, Integer> chunkLodConverters = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.MultiThreading.numberOfChunkLodConverterThreads, 
 		new HashMap<EThreadPreset, Integer>()
 		{{
 			this.put(EThreadPreset.MINIMAL_IMPACT, 1);
-			this.put(EThreadPreset.LOW_IMPACT, getThreadCountByPercent(0.1));
+			this.put(EThreadPreset.LOW_IMPACT, getChunkLodConvertersDefaultThreadCount());
 			this.put(EThreadPreset.BALANCED, getThreadCountByPercent(0.2));
 			this.put(EThreadPreset.AGGRESSIVE, getThreadCountByPercent(0.4));
 			this.put(EThreadPreset.I_PAID_FOR_THE_WHOLE_CPU, getThreadCountByPercent(1.0));
@@ -117,7 +127,7 @@ public class ThreadPresetConfigEventHandler extends AbstractPresetConfigEventHan
 		// this is logical processor count, not physical CPU cores
 		int totalProcessorCount = Runtime.getRuntime().availableProcessors();
 		int coreCount = (int) Math.ceil(totalProcessorCount * percent);
-		return Math.max(1, coreCount);
+		return MathUtil.clamp(1, coreCount, totalProcessorCount);
 	}
 	
 	
