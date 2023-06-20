@@ -22,7 +22,7 @@ public interface ILodRenderSourceProvider extends AutoCloseable
     CompletableFuture<Void> flushAndSaveAsync();
 	
 	/** Returns true if the data was refreshed, false otherwise */
-    boolean refreshRenderSource(ColumnRenderSource source);
+    //boolean refreshRenderSource(ColumnRenderSource source);
 	
 	/** Deletes any data stored in the render cache so it can be re-created */
 	void deleteRenderCache();

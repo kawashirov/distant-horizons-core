@@ -165,9 +165,19 @@ public class RenderBufferHandler
 		//TODO: Directional culling
 		this.loadedNearToFarBuffers.forEach(loadedBuffer -> loadedBuffer.buffer.renderTransparent(renderContext));
 	}
-	
+
+	private boolean rebuildAllBuffers = false;
+
+	public void MarkAllBuffersDirty()
+	{
+		this.rebuildAllBuffers = true;
+	}
+
 	public void updateQuadTreeRenderSources()
 	{
+		boolean rebuildAllBuffers = this.rebuildAllBuffers;
+		this.rebuildAllBuffers = false;
+
 		Iterator<QuadNode<LodRenderSection>> nodeIterator = this.lodQuadTree.nodeIterator();
 		while (nodeIterator.hasNext())
 		{
@@ -175,7 +185,11 @@ public class RenderBufferHandler
 			try {
 				if (renderSection != null)
 				{
-					renderSection.tryBuildAndSwapBuffer(lodQuadTree);
+					if (rebuildAllBuffers)
+					{
+						renderSection.markBufferDirty();
+					}
+					renderSection.tryBuildAndSwapBuffer();
 				}
 			}
 			catch (Exception e)

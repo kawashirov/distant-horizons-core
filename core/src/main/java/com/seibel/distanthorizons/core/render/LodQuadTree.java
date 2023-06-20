@@ -145,7 +145,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 			DhSectionPos rootPos = rootPosIterator.next();
 			if (this.getNode(rootPos) == null)
 			{
-				this.setValue(rootPos, new LodRenderSection(rootPos));
+				this.setValue(rootPos, new LodRenderSection(this, rootPos));
 			}
 			
 			QuadNode<LodRenderSection> rootNode = this.getNode(rootPos);
@@ -162,7 +162,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		// make sure the node is created
 		if (quadNode == null && this.isSectionPosInBounds(sectionPos)) // the position bounds should only fail when at the edge of the user's render distance
 		{
-			rootNode.setValue(sectionPos, new LodRenderSection(sectionPos));
+			rootNode.setValue(sectionPos, new LodRenderSection(this, sectionPos));
 			quadNode = rootNode.getNode(sectionPos);
 		}
 		if (quadNode == null)
@@ -176,7 +176,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		// create a new render section if missing
 		if (renderSection == null)
 		{
-			LodRenderSection newRenderSection = new LodRenderSection(sectionPos);
+			LodRenderSection newRenderSection = new LodRenderSection(this, sectionPos);
 			rootNode.setValue(sectionPos, newRenderSection);
 			
 			renderSection = newRenderSection;

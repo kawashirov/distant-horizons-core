@@ -176,7 +176,7 @@ public class DhClientServerLevel extends DhLevel implements IDhClientLevel, IDhS
 		if (pos.sectionDetailLevel == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
 			DebugRenderer.makeParticle(
 					new DebugRenderer.BoxParticle(
-							new DebugRenderer.Box(pos, 0, 256f, 0.05f, Color.red),
+							new DebugRenderer.Box(pos, 0, 256f, 0.09f, Color.red),
 							0.5, 512f
 					)
 			);

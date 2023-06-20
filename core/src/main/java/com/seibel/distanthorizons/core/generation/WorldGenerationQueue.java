@@ -621,12 +621,13 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 
 	@Override
 	public void debugRender(DebugRenderer r) {
+		if (true) return;
 		CheckingTasks.forEach((t) -> {
 			DhLodPos pos = t.pos;
-			r.renderBox(new DebugRenderer.Box(pos, -32f, 128f, 0.05f, Color.blue));
+			r.renderBox(new DebugRenderer.Box(pos, -32f, 64f, 0.05f, Color.blue));
 		});
 		this.inProgressGenTasksByLodPos.forEach((pos, t) -> {
-			r.renderBox(new DebugRenderer.Box(pos, -32f, 128f, 0.05f, Color.red));
+			r.renderBox(new DebugRenderer.Box(pos, -32f, 64f, 0.05f, Color.red));
 		});
 	}
 }

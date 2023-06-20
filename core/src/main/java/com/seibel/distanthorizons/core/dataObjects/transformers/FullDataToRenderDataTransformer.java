@@ -22,6 +22,8 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.distanthorizons.coreapi.util.BitShiftUtil;
 
+import java.util.Arrays;
+
 /**
  * Handles converting {@link ChunkSizedFullDataAccessor}, {@link IIncompleteFullDataSource},
  * and {@link IFullDataSource}'s to {@link ColumnRenderSource}.
@@ -156,7 +158,7 @@ public class FullDataToRenderDataTransformer
 	 * @throws InterruptedException Can be caused by interrupting the thread upstream.
 	 * 								Generally thrown if the method is running after the client leaves the current world.
 	 */
-	public static void writeFullDataChunkToColumnData(ColumnRenderSource renderSource, IDhClientLevel level, ChunkSizedFullDataAccessor chunkDataView) throws InterruptedException, IllegalArgumentException
+	public static boolean writeFullDataChunkToColumnData(ColumnRenderSource renderSource, IDhClientLevel level, ChunkSizedFullDataAccessor chunkDataView) throws InterruptedException, IllegalArgumentException
 	{
 		final DhSectionPos renderSourcePos = renderSource.getSectionPos();
 		
@@ -169,8 +171,8 @@ public class FullDataToRenderDataTransformer
 		
 		final int sourceDataPointBlockWidth = BitShiftUtil.powerOfTwo(renderSource.getDataDetail());
 		
-		
-		
+		boolean changed = false;
+
 		if (chunkDataView.detailLevel == renderSource.getDataDetail())
 		{
 			// confirm the render source contains this chunk
@@ -181,15 +183,16 @@ public class FullDataToRenderDataTransformer
 			{
 				throw new IllegalArgumentException("Data offset is out of bounds");
 			}
-			
+
+			throwIfThreadInterrupted();
 			
 			for (int x = 0; x < LodUtil.CHUNK_WIDTH; x++)
 			{
 				for (int z = 0; z < LodUtil.CHUNK_WIDTH; z++)
 				{
-					throwIfThreadInterrupted();
-					
 					ColumnArrayView columnArrayView = renderSource.getVerticalDataPointView(blockOffsetX + x, blockOffsetZ + z);
+					int hash = columnArrayView.getDataHash();
+
 					SingleColumnFullDataAccessor fullArrayView = chunkDataView.get(x, z);
 					
 					convertColumnData(level, 
@@ -201,12 +204,15 @@ public class FullDataToRenderDataTransformer
 					{
 						LodUtil.assertTrue(renderSource.doesDataPointExist(blockOffsetX + x, blockOffsetZ + z));
 					}
+
+					changed |= hash != columnArrayView.getDataHash();
 				}
 			}
 			renderSource.fillDebugFlag(blockOffsetX, blockOffsetZ, LodUtil.CHUNK_WIDTH, LodUtil.CHUNK_WIDTH, ColumnRenderSource.DebugSourceFlag.DIRECT);
-			
+
 			renderSource.markNotEmpty();
 		}
+		return changed;
 	}
 
     private static void convertColumnData(IDhClientLevel level, int blockX, int blockZ, ColumnArrayView columnArrayView, SingleColumnFullDataAccessor fullArrayView, int genMode)

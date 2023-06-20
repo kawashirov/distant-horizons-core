@@ -54,6 +54,15 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	private SoftReference<IFullDataSource> cachedFullDataSource = new SoftReference<>(null);
 	private final AtomicReference<CompletableFuture<IFullDataSource>> dataSourceLoadFutureRef = new AtomicReference<>(null);
 
+	private static final class CacheQueryResult {
+		public final CompletableFuture<IFullDataSource> future;
+		public final boolean needsLoad;
+		public CacheQueryResult(CompletableFuture<IFullDataSource> future, boolean needsLoad) {
+			this.future = future;
+			this.needsLoad = needsLoad;
+		}
+	}
+
 	@Override
 	public void debugRender(DebugRenderer r) {
 		IFullDataSource cached = cachedFullDataSource.get();
@@ -309,15 +318,6 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 				data.getDataDetailLevel(), data.getWorldGenStep(), (loader == null ? 0 : loader.datatypeId), data.getBinaryDataFormatVersion());
 	}
 
-	private static final class CacheQueryResult {
-		public final CompletableFuture<IFullDataSource> future;
-		public final boolean needsLoad;
-		public CacheQueryResult(CompletableFuture<IFullDataSource> future, boolean needsLoad) {
-			this.future = future;
-			this.needsLoad = needsLoad;
-		}
-	}
-
 	/**
 	 * @return one of the following:
 	 * 		the cached {@link IFullDataSource}, 
@@ -328,11 +328,9 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	{
 		// this data source is being written to, use the existing future
 		CompletableFuture<IFullDataSource> dataSourceLoadFuture = this.dataSourceLoadFutureRef.get();
-		if (dataSourceLoadFuture != null)
-		{
+		if (dataSourceLoadFuture != null) {
 			return new CacheQueryResult(dataSourceLoadFuture, false);
 		}
-
 		// attempt to get the cached data source
 		IFullDataSource cachedFullDataSource = this.cachedFullDataSource.get();
 		if (cachedFullDataSource == null) {

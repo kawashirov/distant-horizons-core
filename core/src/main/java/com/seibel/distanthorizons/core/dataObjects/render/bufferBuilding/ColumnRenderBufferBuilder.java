@@ -52,15 +52,13 @@ public class ColumnRenderBufferBuilder
 	//==============//
 	// vbo building //
 	//==============//
-	
-	/** @return null if busy */
+
 	public static CompletableFuture<ColumnRenderBuffer> buildBuffers(IDhClientLevel clientLevel, Reference<ColumnRenderBuffer> renderBufferRef, ColumnRenderSource renderSource, ColumnRenderSource[] adjData)
 	{
-		if (isBusy())
+/*		if (isBusy())
 		{
 			return null;
-		}
-		
+		}*/
 		//LOGGER.info("RenderRegion startBuild @ {}", renderSource.sectionPos);
 		return CompletableFuture.supplyAsync(() ->
 			{

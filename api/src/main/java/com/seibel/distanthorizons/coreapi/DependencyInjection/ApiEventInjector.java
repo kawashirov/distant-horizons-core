@@ -118,38 +118,36 @@ public class ApiEventInjector extends DependencyInjector<IDhApiEvent> implements
 	@Override
 	public <T, U extends IDhApiEvent<T>> boolean fireAllEvents(Class<U> abstractEvent, T eventParameterObject)
 	{
-		boolean cancelEvent = false;
-		
-		// if this is a one time event, record that it was called
-		if (ApiEventDefinitionHandler.INSTANCE.getEventDefinition(abstractEvent).isOneTimeEvent && 
-			!this.firedOneTimeEventParamsByEventInterface.containsKey(abstractEvent))
-		{
-			this.firedOneTimeEventParamsByEventInterface.put(abstractEvent, eventParameterObject);
-		}
-		
-		
-		
-		
-		// fire each bound event
-		ArrayList<U> eventList = this.getAll(abstractEvent);
-		for (IDhApiEvent<T> event : eventList)
-		{
-			if (event != null)
-			{
-				try
-				{
-					// fire each event and record if any of them
-					// request to cancel the event.
-					cancelEvent |= event.fireEvent(eventParameterObject);
-				}
-				catch (Exception e)
-				{
-					LOGGER.error("Exception thrown by event handler [" + event.getClass().getSimpleName() + "] for event type [" + abstractEvent.getSimpleName() + "], error:" + e.getMessage(), e);
+		try {
+			boolean cancelEvent = false;
+
+			// if this is a one time event, record that it was called
+			if (ApiEventDefinitionHandler.INSTANCE.getEventDefinition(abstractEvent).isOneTimeEvent &&
+					!this.firedOneTimeEventParamsByEventInterface.containsKey(abstractEvent)) {
+				this.firedOneTimeEventParamsByEventInterface.put(abstractEvent, eventParameterObject);
+			}
+
+
+			// fire each bound event
+			ArrayList<U> eventList = this.getAll(abstractEvent);
+			for (IDhApiEvent<T> event : eventList) {
+				if (event != null) {
+					try {
+						// fire each event and record if any of them
+						// request to cancel the event.
+						cancelEvent |= event.fireEvent(eventParameterObject);
+					} catch (Exception e) {
+						LOGGER.error("Exception thrown by event handler [" + event.getClass().getSimpleName() + "] for event type [" + abstractEvent.getSimpleName() + "], error:" + e.getMessage(), e);
+					}
 				}
 			}
+			return cancelEvent;
 		}
-		
-		return cancelEvent;
+		catch (Throwable e)
+		{
+			//LOGGER.error("Exception thrown while firing events for event type [" + abstractEvent.getSimpleName() + "], error:" + e.getMessage(), e);
+			return false;
+		}
 	}
 	
 }

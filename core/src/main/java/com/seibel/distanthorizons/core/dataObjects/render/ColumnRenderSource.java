@@ -1,11 +1,13 @@
 package com.seibel.distanthorizons.core.dataObjects.render;
 
+import com.kitfox.svg.A;
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.core.dataObjects.transformers.FullDataToRenderDataTransformer;
+import com.seibel.distanthorizons.core.render.renderer.DebugRenderer;
 import com.seibel.distanthorizons.core.util.objects.dataStreams.DhDataOutputStream;
 import com.seibel.distanthorizons.coreapi.ModInfo;
 import com.seibel.distanthorizons.core.dataObjects.render.columnViews.ColumnArrayView;
@@ -18,7 +20,10 @@ import com.seibel.distanthorizons.core.util.RenderDataPointUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
+import java.awt.*;
 import java.io.*;
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Stores the render data used to generate OpenGL buffers.
@@ -56,6 +61,8 @@ public class ColumnRenderSource
 	
 	private boolean isEmpty = true;
 	public EDhApiWorldGenerationStep worldGenStep;
+
+	public AtomicLong localVersion = new AtomicLong(0); // used to track changes to the data source, so that buffers can be updated when necessary
 	
 	//==============//
 	// constructors //
@@ -222,7 +229,6 @@ public class ColumnRenderSource
 	/** Overrides any data that has not been written directly using write(). Skips empty source dataPoints. */
 	public void updateFromRenderSource(ColumnRenderSource renderSource)
 	{
-		
 		// validate we are writing for the same location
 		LodUtil.assertTrue(renderSource.sectionPos.equals(this.sectionPos));
 		
@@ -239,8 +245,7 @@ public class ColumnRenderSource
 		}
 		// the source isn't empty, this object won't be empty after the method finishes
 		this.isEmpty = false;
-		
-		
+
 		for (int i = 0; i < this.renderDataContainer.length; i += this.verticalDataCount)
 		{
 			int thisGenMode = RenderDataPointUtil.getGenerationMode(this.renderDataContainer[i]);
@@ -277,11 +282,17 @@ public class ColumnRenderSource
 		}
 	}
 	
-	public void fastWrite(ChunkSizedFullDataAccessor chunkData, IDhClientLevel level) 
+	public boolean fastWrite(ChunkSizedFullDataAccessor chunkData, IDhClientLevel level)
 	{
 		try
 		{
-			FullDataToRenderDataTransformer.writeFullDataChunkToColumnData(this, level, chunkData);
+			if (FullDataToRenderDataTransformer.writeFullDataChunkToColumnData(this, level, chunkData)) {
+				localVersion.incrementAndGet();
+				return true;
+			}
+			else {
+				return false;
+			}
 		}
 		catch (IllegalArgumentException e)
 		{
@@ -293,6 +304,7 @@ public class ColumnRenderSource
 			// expected if the transformer is shut down, the exception can be ignored
 //			LOGGER.warn(ColumnRenderSource.class.getSimpleName()+" fast write interrupted.");
 		}
+		return false;
 	}
 	
 	
@@ -321,10 +333,7 @@ public class ColumnRenderSource
 	/** @return how many data points wide this {@link ColumnRenderSource} is. */
 	public int getWidthInDataPoints() { return BitShiftUtil.powerOfTwo(this.getDetailOffset()); }
 	public byte getDetailOffset() { return SECTION_SIZE_OFFSET; }
-	
-	
 
-	
 	public byte getRenderDataFormatVersion() { return DATA_FORMAT_VERSION; }
 	
 	/** 
@@ -352,6 +361,7 @@ public class ColumnRenderSource
 				this.debugSourceFlags[x * SECTION_SIZE + z] = flag;
 			}
 		}
+		localVersion.incrementAndGet();
 	}
 	
 	public DebugSourceFlag debugGetFlag(int ox, int oz) { return this.debugSourceFlags[ox * SECTION_SIZE + oz]; }

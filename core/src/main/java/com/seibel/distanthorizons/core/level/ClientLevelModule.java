@@ -1,5 +1,7 @@
 package com.seibel.distanthorizons.core.level;
 
+import com.seibel.distanthorizons.api.enums.rendering.EDebugRendering;
+import com.seibel.distanthorizons.api.enums.rendering.ERendererMode;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
@@ -42,6 +44,8 @@ public class ClientLevelModule {
     // tick methods //
     //==============//
 
+    private EDebugRendering lastDebugRendering = EDebugRendering.OFF;
+
     public void clientTick()
     {
         ClientRenderState clientRenderState = this.ClientRenderStateRef.get();
@@ -69,6 +73,18 @@ public class ClientLevelModule {
             }
         }
         clientRenderState.quadtree.tick(new DhBlockPos2D(MC_CLIENT.getPlayerBlockPos()));
+
+        boolean isBuffersDirty = false;
+        EDebugRendering newDebugRendering = Config.Client.Advanced.Debugging.debugRendering.get();
+        if (newDebugRendering != lastDebugRendering)
+        {
+            lastDebugRendering = newDebugRendering;
+            isBuffersDirty = true;
+        }
+        if (isBuffersDirty) {
+            clientRenderState.renderer.bufferHandler.MarkAllBuffersDirty();
+        }
+
         clientRenderState.renderer.bufferHandler.updateQuadTreeRenderSources();
     }
 
@@ -235,8 +251,6 @@ public class ClientLevelModule {
         public final LodQuadTree quadtree;
         public final RenderSourceFileHandler renderSourceFileHandler;
         public final LodRenderer renderer;
-
-
 
         public ClientRenderState(IDhClientLevel dhClientLevel, IFullDataSourceProvider fullDataSourceProvider,
                 AbstractSaveStructure saveStructure)

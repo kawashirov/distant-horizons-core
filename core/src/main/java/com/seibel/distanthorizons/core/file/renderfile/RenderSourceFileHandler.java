@@ -311,11 +311,6 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	
     private CompletableFuture<Void> updateCacheAsync(ColumnRenderSource renderSource, RenderMetaDataFile file)
 	{
-		if (this.cacheUpdateLockBySectionPos.putIfAbsent(file.pos, new Object()) != null)
-		{
-			return CompletableFuture.completedFuture(null);
-		}
-		
 		// get the full data source loading future
 		CompletableFuture<IFullDataSource> fullDataSourceFuture = this.fullDataSourceProvider.read(renderSource.getSectionPos());
 		fullDataSourceFuture = fullDataSourceFuture.thenApply((fullDataSource) -> 
@@ -327,8 +322,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 				LOGGER.error("Exception when getting data for updateCache()", ex);
 				return null;
 			});
-		
-		
+
 		// future returned 
 		CompletableFuture<Void> transformationCompleteFuture = new CompletableFuture<>();
 		
@@ -362,12 +356,8 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 							LOGGER.error("Exception when updating render file using data source: ", ex);
 						}
 					}
-					
 					transformationCompleteFuture.complete(null);
-				})
-				.thenRun(() -> this.cacheUpdateLockBySectionPos.remove(file.pos));
-		
-		
+				});
 		return transformationCompleteFuture;
 	}
 	
@@ -378,7 +368,9 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
         return renderSource;
     }
 	
-	public CompletableFuture<Void> onReadRenderSourceLoadedFromCacheAsync(RenderMetaDataFile file, ColumnRenderSource data) { return this.updateCacheAsync(data, file); }
+	public CompletableFuture<Void> onReadRenderSourceLoadedFromCacheAsync(RenderMetaDataFile file, ColumnRenderSource data) {
+		return this.updateCacheAsync(data, file);
+	}
 	
     private void writeRenderSourceToFile(ColumnRenderSource currentRenderSource, RenderMetaDataFile file, ColumnRenderSource newRenderSource)
 	{
@@ -388,6 +380,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		}
 		
         currentRenderSource.updateFromRenderSource(newRenderSource);
+		currentRenderSource.localVersion.incrementAndGet();
 		
         //file.metaData.dataVersion.set(newDataVersion);
         file.baseMetaData.dataLevel = currentRenderSource.getDataDetail();
@@ -395,7 +388,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
         file.baseMetaData.binaryDataFormatVersion = currentRenderSource.getRenderDataFormatVersion();
         file.save(currentRenderSource);
     }
-	
+/*
     public boolean refreshRenderSource(ColumnRenderSource renderSource)
 	{
         RenderMetaDataFile file = this.filesBySectionPos.get(renderSource.getSectionPos());
@@ -418,7 +411,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 //        return false;
     }
 	
-	
+	*/
 	
 	//=====================//
 	// clearing / shutdown //
