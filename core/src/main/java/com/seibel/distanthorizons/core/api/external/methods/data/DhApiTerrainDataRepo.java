@@ -1,5 +1,6 @@
 package com.seibel.distanthorizons.core.api.external.methods.data;
 
+import com.seibel.distanthorizons.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
 import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.distanthorizons.api.objects.DhApiResult;
 import com.seibel.distanthorizons.api.objects.data.DhApiRaycastResult;
@@ -18,11 +19,12 @@ import com.seibel.distanthorizons.core.util.FullDataPointUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.RayCastUtil;
 import com.seibel.distanthorizons.core.world.AbstractDhWorld;
+import com.seibel.distanthorizons.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.distanthorizons.core.wrapperInterfaces.block.IBlockStateWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
-import com.seibel.distanthorizons.core.util.*;
 import com.seibel.distanthorizons.coreapi.util.BitShiftUtil;
 import com.seibel.distanthorizons.coreapi.util.math.Vec3d;
 import com.seibel.distanthorizons.coreapi.util.math.Vec3f;
@@ -416,6 +418,38 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 		return returnList;
 	}
 	
+	
+	
+	//================//
+	// setter methods //
+	//================//
+	
+	public DhApiResult<Void> overwriteChunkDataAsync(IDhApiLevelWrapper levelWrapper, Object[] chunkObjectArray) throws ClassCastException
+	{
+		if (!(levelWrapper instanceof ILevelWrapper))
+		{
+			return DhApiResult.createFail("Level wrapper needs to be an instance of ["+IDhApiLevelWrapper.class.getSimpleName()+"].");
+		}
+		AbstractDhWorld dhWorld = SharedApi.getAbstractDhWorld();
+		if (dhWorld == null)
+		{
+			return DhApiResult.createFail("No world loaded. This method can only be called while in a loaded world.");
+		}
+		
+		IDhLevel dhLevel = dhWorld.getLevel((ILevelWrapper) levelWrapper);
+		if (dhLevel == null)
+		{
+			return DhApiResult.createFail("No level exists for the given level wrapper. This either means the level hasn't been loaded yet, or was unloaded.");
+		}
+		
+		
+		// this will throw a cast exception if the chunk object array isn't correct
+		IChunkWrapper chunk = SingletonInjector.INSTANCE.get(IWrapperFactory.class).createChunkWrapper(chunkObjectArray);
+		dhLevel.updateChunkAsync(chunk);
+		
+		
+		return DhApiResult.createSuccess();
+	}
 	
 	
 	
