@@ -18,7 +18,7 @@ import java.util.function.Consumer;
  */
 public class TestWorldGenerator implements IDhApiWorldGenerator
 {
-	public static EDhApiWorldGenThreadMode THREAD_MODE = EDhApiWorldGenThreadMode.SINGLE_THREADED;
+	public static final byte SMALLEST_DETAIL_LEVEL = 1;
 	
 	
 	// testable methods //
@@ -27,7 +27,7 @@ public class TestWorldGenerator implements IDhApiWorldGenerator
 	public int getPriority() { return OverrideInjector.CORE_PRIORITY; }
 	
 	@Override
-	public EDhApiWorldGenThreadMode getThreadingMode() { return THREAD_MODE; }
+	public byte getSmallestDataDetailLevel() { return SMALLEST_DETAIL_LEVEL; }
 	
 	
 	
@@ -37,9 +37,6 @@ public class TestWorldGenerator implements IDhApiWorldGenerator
 	//======================//
 	// generator parameters //
 	//======================//
-	
-	@Override
-	public byte getSmallestDataDetailLevel() { return LodUtil.BLOCK_DETAIL_LEVEL; }
 	
 	@Override
 	public byte getLargestDataDetailLevel() { return LodUtil.BLOCK_DETAIL_LEVEL; }

@@ -22,9 +22,9 @@ public interface IDhApiWorldGenerator extends Closeable, IDhApiOverrideable
 	
 	/** 
 	 * Returns which thread chunk generation requests will be run on. <br>
-	 * TODO: only {@link EDhApiWorldGenThreadMode#SINGLE_THREADED} is currently supported
+	 * TODO: only {@link EDhApiWorldGenThreadMode#MULTI_THREADED} is implemented
 	 */
-	EDhApiWorldGenThreadMode getThreadingMode();
+	//EDhApiWorldGenThreadMode getThreadingMode();
 	
 	/**
 	 * Defines the smallest datapoint size that can be generated at a time. <br>
@@ -83,7 +83,7 @@ public interface IDhApiWorldGenerator extends Closeable, IDhApiOverrideable
 	
 	/**
 	 * This method is called by Distant Horizons to generate terrain over a given area
-	 * from a thread defined by {@link IDhApiWorldGenerator#getThreadingMode}. <br><br>
+	 * from a thread defined by Distant Horizons. <br><br>
 	 * 
 	 * After a chunk has been generated it (and any necessary supporting objects as listed below) should be passed into the 
 	 * resultConsumer's {@link Consumer#accept} method. If the Consumer is given the wrong data

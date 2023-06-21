@@ -180,7 +180,7 @@ public class DependencyInjectorTest
 		generator = TEST_INJECTOR.get(boundLevel);
 		Assert.assertNotNull("Level generator not bound.", generator);
 		Assert.assertEquals("Incorrect level generator bound.", generator.getPriority(), WorldGeneratorTestCore.PRIORITY);
-		Assert.assertEquals("Incorrect level generator bound.", generator.getThreadingMode(), WorldGeneratorTestCore.THREAD_MODE);
+		Assert.assertEquals("Incorrect level generator bound.", generator.getSmallestDataDetailLevel(), WorldGeneratorTestCore.SMALLEST_DETAIL_LEVEL);
 		
 		// unbound level should still return null
 		Assert.assertNull("Nothing should have been bound to this level.", TEST_INJECTOR.get(unboundLevel));
@@ -194,7 +194,7 @@ public class DependencyInjectorTest
 		generator = TEST_INJECTOR.get(boundLevel);
 		Assert.assertNotNull("Level generator not bound.", generator);
 		Assert.assertEquals("Incorrect level generator bound.", generator.getPriority(), WorldGeneratorTestSecondary.PRIORITY);
-		Assert.assertEquals("Incorrect level generator bound.", generator.getThreadingMode(), WorldGeneratorTestSecondary.THREAD_MODE);
+		Assert.assertEquals("Incorrect level generator bound.", generator.getSmallestDataDetailLevel(), WorldGeneratorTestSecondary.SMALLEST_DETAIL_LEVEL);
 		
 		// the unbound level should still return null
 		Assert.assertNull("Nothing should have been bound to this level.", TEST_INJECTOR.get(unboundLevel));
@@ -208,7 +208,7 @@ public class DependencyInjectorTest
 		generator = TEST_INJECTOR.get(boundLevel);
 		Assert.assertNotNull("Level generator not bound.", generator);
 		Assert.assertEquals("Incorrect level generator bound.", generator.getPriority(), WorldGeneratorTestPrimary.PRIORITY);
-		Assert.assertEquals("Incorrect level generator bound.", generator.getThreadingMode(), WorldGeneratorTestPrimary.THREAD_MODE);
+		Assert.assertEquals("Incorrect level generator bound.", generator.getSmallestDataDetailLevel(), WorldGeneratorTestPrimary.SMALLEST_DETAIL_LEVEL);
 		
 		// the unbound level should still return null
 		Assert.assertNull("Nothing should have been bound to this level.", TEST_INJECTOR.get(unboundLevel));

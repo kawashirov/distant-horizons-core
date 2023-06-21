@@ -10,14 +10,14 @@ import com.seibel.distanthorizons.coreapi.DependencyInjection.OverrideInjector;
  */
 public class WorldGeneratorTestCore extends TestWorldGenerator
 {
-	public static int PRIORITY = OverrideInjector.CORE_PRIORITY;
-	public static EDhApiWorldGenThreadMode THREAD_MODE = EDhApiWorldGenThreadMode.SINGLE_THREADED;
+	public static final int PRIORITY = OverrideInjector.CORE_PRIORITY;
+	public static final byte SMALLEST_DETAIL_LEVEL = 1;
 	
 	
 	@Override
 	public int getPriority() { return PRIORITY; }
 	
-	@Override 
-	public EDhApiWorldGenThreadMode getThreadingMode() { return THREAD_MODE; }
+	@Override
+	public byte getSmallestDataDetailLevel() { return SMALLEST_DETAIL_LEVEL; }
 	
 }
