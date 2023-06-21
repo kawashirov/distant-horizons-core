@@ -423,7 +423,25 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 	}
 	/**
 	 * The chunkPos is always aligned to the granularity.
-	 * For example: if the granularity is 4 (chunk sized) with a data detail level of 0 (block sized), the chunkPos will be aligned to 16x16 blocks.
+	 * For example: if the granularity is 4 (chunk sized) with a data detail level of 0 (block sized), 
+	 * the chunkPos will be aligned to 16x16 blocks. <br> <br>
+	 * 
+	 * 
+	 * <strong>Full Granularity definition (as of 2023-6-21): </strong> <br> <br>
+	 * 
+	 * world gen actually supports (in theory) generating stuff with a data detail that's higher than the per-block. <br> <br>
+	 *
+	 * Granularity basically means, on a single generation task, how big such group should be, in terms of the data points it will make. <br> <br>
+	 *
+	 * For example, a granularity of 4 means the task will generate a 16 by 16 data points. 
+	 * Now, those data points might be per block, or per 4 by 4 blocks. Granularity doesn't say what detail those would be. <br> <br>
+	 *
+	 * Note: currently the core system sends data via the chunk sized container, 
+	 * which has the locked granularity of 4 (16 by 16 data columns), and thus generators should at least have min granularity of 4.
+	 * (Gen chunk width in that context means how many 'chunk sized containers' it will fill up. 
+	 * Again, note that a 'chunk sized container' isn't necessary 16 by 16 Minecraft blocks wide. 
+	 * It only has to contain 16 by 16 columns of data points, in whatever data detail it might be in.) 
+	 * (So, with a generator whose only gen data detail is 0, it is the same as a MC chunk.)
 	 */
 	private CompletableFuture<Void> startGenerationEvent(
 			DhChunkPos chunkPosMin,
