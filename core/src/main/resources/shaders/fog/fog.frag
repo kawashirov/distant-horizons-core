@@ -36,7 +36,7 @@ float mixFogThickness(float near, float far, float height);
  * Fragment shader for fog.
  * This should be passed last so it applies above other affects like AO
  *
- * version: 7-2-2023
+ * version: 2023-6-21
  */
 void main() {
     float horizontalDist = length(vertexWorldPos.xz) * fogScale;
@@ -52,4 +52,24 @@ void main() {
         nearFogThickness, farFogThickness, heightFogThickness), 0.0, 1.0);
 
     fragColor = mix(vertexColor, vec4(fogColor.rgb, 1.0), mixedFogThickness);
+}
+
+
+
+// Are these still needed?
+float linearFog(float x, float fogStart, float fogLength, float fogMin, float fogRange) {
+    x = clamp((x-fogStart)/fogLength, 0.0, 1.0);
+    return fogMin + fogRange * x;
+}
+
+float exponentialFog(float x, float fogStart, float fogLength,
+float fogMin, float fogRange, float fogDensity) {
+    x = max((x-fogStart)/fogLength, 0.0) * fogDensity;
+    return fogMin + fogRange - fogRange/exp(x);
+}
+
+float exponentialSquaredFog(float x, float fogStart, float fogLength,
+float fogMin, float fogRange, float fogDensity) {
+    x = max((x-fogStart)/fogLength, 0.0) * fogDensity;
+    return fogMin + fogRange - fogRange/exp(x*x);
 }

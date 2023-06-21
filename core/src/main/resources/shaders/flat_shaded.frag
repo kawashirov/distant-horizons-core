@@ -172,6 +172,7 @@ void main()
 
 
 
+// Are these still needed?
 float linearFog(float x, float fogStart, float fogLength, float fogMin, float fogRange) {
     x = clamp((x-fogStart)/fogLength, 0.0, 1.0);
     return fogMin + fogRange * x;
