@@ -58,6 +58,7 @@ public class ApiEventDefinitionHandler
 		this.setEventDefinition(DhApiLevelLoadEvent.class, DhApiLevelLoadEvent.EVENT_DEFINITION);
 		this.setEventDefinition(DhApiLevelSaveEvent.class, DhApiLevelSaveEvent.EVENT_DEFINITION);
 		this.setEventDefinition(DhApiLevelUnloadEvent.class, DhApiLevelUnloadEvent.EVENT_DEFINITION);
+		this.setEventDefinition(DhApiDataFileChangedEvent.class, DhApiDataFileChangedEvent.EVENT_DEFINITION);
 		
 	}
 	
