@@ -1,4 +1,4 @@
-package com.seibel.distanthorizons.core.render.renderer;
+package com.seibel.distanthorizons.core.render.renderer.shaders;
 
 import com.seibel.distanthorizons.api.enums.config.EGpuUploadMethod;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
