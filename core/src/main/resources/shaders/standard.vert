@@ -42,8 +42,10 @@ void main()
     // format is: 0b00zzyyxx
     float mx = (mirco & 1u)!=0u ? mircoOffset : 0.0;
     mx = (mirco & 2u)!=0u ? -mx : mx;
-    float my = (mirco & 4u)!=0u ? mircoOffset : 0.0;
-    my = (mirco & 8u)!=0u ? -my : my;
+    // commented out to try fixing an issue with SSAO that causes the black borders on some blocks.
+    // (Also the vertical offset shouldn't be necessary since all vertical LODs should be the same size.)
+//  float my = (mirco & 4u)!=0u ? mircoOffset : 0.0;
+//  my = (mirco & 8u)!=0u ? -my : my;
     float mz = (mirco & 16u)!=0u ? mircoOffset : 0.0;
     mz = (mirco & 32u)!=0u ? -mz : mz;
 
@@ -53,5 +55,5 @@ void main()
 	float light = (float(lights/16u)+0.5) / 16.0;
 	vertexColor = color * vec4(texture(lightMap, vec2(light, light2)).xyz, 1.0);
 
-    gl_Position = combinedMatrix * vec4(vertexWorldPos + vec3(mx, my, mz), 1.0);
+    gl_Position = combinedMatrix * vec4(vertexWorldPos + vec3(mx, 0, mz), 1.0);
 }
