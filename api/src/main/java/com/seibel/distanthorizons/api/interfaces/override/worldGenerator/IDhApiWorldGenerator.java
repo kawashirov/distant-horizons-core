@@ -3,7 +3,6 @@ package com.seibel.distanthorizons.api.interfaces.override.worldGenerator;
 import com.seibel.distanthorizons.api.interfaces.override.IDhApiOverrideable;
 import com.seibel.distanthorizons.api.enums.EDhApiDetailLevel;
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
-import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiWorldGenThreadMode;
 
 import java.io.Closeable;
 import java.util.concurrent.CompletableFuture;
@@ -12,7 +11,7 @@ import java.util.function.Consumer;
 
 /**
  * @author James Seibel
- * @version 2023-6-5
+ * @version 2023-6-22
  */
 public interface IDhApiWorldGenerator extends Closeable, IDhApiOverrideable
 {
@@ -82,23 +81,20 @@ public interface IDhApiWorldGenerator extends Closeable, IDhApiOverrideable
 	//=================//
 	
 	/**
-	 * This method is called by Distant Horizons to generate terrain over a given area
-	 * from a thread defined by Distant Horizons. <br><br>
+	 * This method is called by Distant Horizons to generate terrain over a given area. <br><br>
 	 * 
 	 * After a chunk has been generated it (and any necessary supporting objects as listed below) should be passed into the 
 	 * resultConsumer's {@link Consumer#accept} method. If the Consumer is given the wrong data
-	 * type(s) it will throw a {@link ClassCastException} with a list of what objects it was expecting. <br>
+	 * type(s) it will disable the world generator and log an error with a list of objects it was expecting. <br>
 	 * <strong>Note:</strong> these objects are minecraft version dependent and will change without notice!
 	 * Please run your generator in game at least once to confirm the objects you are returning are correct. <br><br>
 	 * 
 	 * Consumer expected inputs for each minecraft version (in order): <br>
 	 * <strong>1.18:</strong> {@link net.minecraft.world.level.chunk.ChunkAccess} and {@link net.minecraft.world.level.LevelReader} <br>
-	 * 
-	 * @throws ClassCastException if incompatible objects are passed into the resultConsumer.
 	 */
 	CompletableFuture<Void> generateChunks(int chunkPosMinX, int chunkPosMinZ,
 			byte granularity, byte targetDataDetail, EDhApiDistantGeneratorMode generatorMode,
-			ExecutorService worldGeneratorThreadPool, Consumer<Object[]> resultConsumer) throws ClassCastException;
+			ExecutorService worldGeneratorThreadPool, Consumer<Object[]> resultConsumer);
 	
 	
 	
