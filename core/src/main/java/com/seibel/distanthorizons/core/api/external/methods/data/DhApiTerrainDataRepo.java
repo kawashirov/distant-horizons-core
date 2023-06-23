@@ -63,8 +63,9 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 	
 	
 	
-	
-	
+	//================//
+	// Getter Methods //
+	//================//
 	
 	@Override
 	public DhApiResult<DhApiTerrainDataPoint> getSingleDataPointAtBlockPos(IDhApiLevelWrapper levelWrapper, int blockPosX, int blockPosY, int blockPosZ) 
@@ -96,21 +97,7 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 	}
 	
 	
-	@Override
-	public DhApiResult<DhApiRaycastResult> raycast(IDhApiLevelWrapper levelWrapper,
-			double rayOriginX, double rayOriginY, double rayOriginZ,
-			float rayDirectionX, float rayDirectionY, float rayDirectionZ,
-			int maxRayBlockLength)
-	{
-		return this.raycastLodData(levelWrapper, new Vec3d(rayOriginX, rayOriginY, rayOriginZ), new Vec3f(rayDirectionX, rayDirectionY, rayDirectionZ), maxRayBlockLength);
-	}
-	
-	
-	
-	
-	//================//
-	// Getter Methods //
-	//================//
+	// private getters //
 	
 	/** Returns a single API terrain datapoint that contains the given Y block position */
 	private static DhApiResult<DhApiTerrainDataPoint> getTerrainDataAtBlockYPos(IDhApiLevelWrapper levelWrapper, DhLodPos requestedColumnPos, Integer blockYPos)
@@ -180,7 +167,7 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 			return DhApiResult.createFail("Unable to get terrain data before the world has loaded.");
 		}
 		
-		if (!ILevelWrapper.class.isInstance(levelWrapper))
+		if (!(levelWrapper instanceof ILevelWrapper))
 		{
 			// custom level wrappers aren't supported,
 			// the API user must get a level wrapper from our code somewhere
@@ -287,7 +274,7 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 		return new DhApiTerrainDataPoint(detailLevel, 
 				FullDataPointUtil.getLight(dataPoint), topY, bottomY,
 				blockState, biomeWrapper);
-	}	
+	}
 	
 	
 	
@@ -295,6 +282,14 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 	// raycasting methods //
 	//====================//
 	
+	@Override
+	public DhApiResult<DhApiRaycastResult> raycast(IDhApiLevelWrapper levelWrapper,
+			double rayOriginX, double rayOriginY, double rayOriginZ,
+			float rayDirectionX, float rayDirectionY, float rayDirectionZ,
+			int maxRayBlockLength)
+	{
+		return this.raycastLodData(levelWrapper, new Vec3d(rayOriginX, rayOriginY, rayOriginZ), new Vec3f(rayDirectionX, rayDirectionY, rayDirectionZ), maxRayBlockLength);
+	}
 	
 	/**
 	 * private since it uses non-API objects <br><br>
@@ -424,6 +419,7 @@ public class DhApiTerrainDataRepo implements IDhApiTerrainDataRepo
 	// setter methods //
 	//================//
 	
+	@Override
 	public DhApiResult<Void> overwriteChunkDataAsync(IDhApiLevelWrapper levelWrapper, Object[] chunkObjectArray) throws ClassCastException
 	{
 		if (!(levelWrapper instanceof ILevelWrapper))

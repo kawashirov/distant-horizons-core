@@ -11,7 +11,7 @@ import com.seibel.distanthorizons.api.objects.data.DhApiTerrainDataPoint;
  * Used to interface with Distant Horizons' terrain data.
  * 
  * @author James Seibel
- * @version 2023-6-16
+ * @version 2023-6-22
  */
 public interface IDhApiTerrainDataRepo
 {
@@ -75,7 +75,7 @@ public interface IDhApiTerrainDataRepo
 	 * Sets the LOD data for the given chunk at the chunk's position. <br><br>
 	 * 
 	 * Notes: <br>
-	 * - Only works if the given {@link IDhApiLevelWrapper} points to a loaded level.
+	 * - Only works if the given {@link IDhApiLevelWrapper} points to a loaded level. <br>
 	 * - If the player travels to this chunk, or the chunk is updated is some other way; your data will be replaced
 	 *    by whatever the current chunk is. <br>
 	 * - This method may not update the LOD data immediately. Any other chunks have
