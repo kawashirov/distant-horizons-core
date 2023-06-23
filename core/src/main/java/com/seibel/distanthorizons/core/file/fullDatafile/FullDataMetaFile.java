@@ -65,9 +65,11 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 
 	@Override
 	public void debugRender(DebugRenderer r) {
+		if (pos.sectionDetailLevel > DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL) return;
+
 		IFullDataSource cached = cachedFullDataSource.get();
 		if (markedNeedUpdate)
-			r.renderBox(new DebugRenderer.Box(pos, 0, 512, 0.05f, Color.red));
+			r.renderBox(new DebugRenderer.Box(pos, 80f, 96f, 0.05f, Color.red));
 
 		Color c = Color.black;
 		if (cached != null) {
@@ -76,12 +78,15 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 			} else {
 				c = Color.YELLOW;
 			}
+
 		} else if (dataSourceLoadFutureRef.get() != null) {
 			c = Color.BLUE;
 		} else if (doesFileExist) {
 			c = Color.RED;
 		}
-		//r.renderBox(new DebugRenderer.Box(pos, 0, 256, 0.05f, c));
+		boolean needUpdate = !this.writeQueueRef.get().queue.isEmpty() || markedNeedUpdate;
+		if (needUpdate) c = c.darker().darker();
+		r.renderBox(new DebugRenderer.Box(pos, 80f, 96f, 0.05f, c));
 	}
 
 	//TODO: use ConcurrentAppendSingleSwapContainer<LodDataSource> instead of below:
@@ -99,10 +104,12 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 
 	// ===Object lifetime stuff===
 	private static final ReferenceQueue<IFullDataSource> lifeCycleDebugQueue = new ReferenceQueue<>();
+	private static final ReferenceQueue<IFullDataSource> softRefDebugQueue = new ReferenceQueue<>();
 	private static final Set<DataObjTracker> lifeCycleDebugSet = ConcurrentHashMap.newKeySet();
+	private static final Set<DataObjSoftTracker> softRefDebugSet = ConcurrentHashMap.newKeySet();
 	private static class DataObjTracker extends PhantomReference<IFullDataSource> implements Closeable
 	{
-		private final DhSectionPos pos;
+		public final DhSectionPos pos;
 		DataObjTracker(IFullDataSource data)
 		{
 			super(data, lifeCycleDebugQueue);
@@ -110,10 +117,21 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 			lifeCycleDebugSet.add(this);
 			this.pos = data.getSectionPos();
 		}
-		
 		@Override
 		public void close() { lifeCycleDebugSet.remove(this); }
-		
+	}
+
+	private static class DataObjSoftTracker extends SoftReference<IFullDataSource> implements Closeable
+	{
+		public final FullDataMetaFile file;
+		DataObjSoftTracker(FullDataMetaFile file, IFullDataSource data)
+		{
+			super(data, softRefDebugQueue);
+			softRefDebugSet.add(this);
+			this.file = file;
+		}
+		@Override
+		public void close() { softRefDebugSet.remove(this); }
 	}
     // ===========================
 	
@@ -195,17 +213,18 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 					// this exception can be ignored
 				}
 				else if (ex != null) {
-					LOGGER.error("Error loading file "+this.file+": ", ex);
+					LOGGER.error("Error updating file "+this.file+": ", ex);
 				}
 				if (fullDataSource != null) {
 					new DataObjTracker(fullDataSource);
+					new DataObjSoftTracker(this, fullDataSource);
 				}
 				//LOGGER.info("Updated file "+this.file);
 				if (pos.sectionDetailLevel == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
 					DebugRenderer.makeParticle(
 							new DebugRenderer.BoxParticle(
-									new DebugRenderer.Box(this.pos, 0, 256f, 0.05f, Color.green),
-									0.5, 512f
+									new DebugRenderer.Box(this.pos, 64f, 72f, 0.03f, Color.green.darker()),
+									0.2, 32f
 							)
 					);
 
@@ -421,7 +440,8 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 		{
 			appendLock.unlock();
 		}
-		
+
+		this.flushAndSaveAsync();
 		//LOGGER.info("write queue length for pos "+this.pos+": " + writeQueue.queue.size());
 	}
 	
@@ -537,6 +557,14 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 			//LOGGER.info("Full Data at pos: "+phantom.pos+" has been freed. "+lifeCycleDebugSet.size()+" Full Data files remaining.");
 			phantom.close();
 			phantom = (DataObjTracker) lifeCycleDebugQueue.poll();
+		}
+
+		DataObjSoftTracker soft = (DataObjSoftTracker) softRefDebugQueue.poll();
+		while (soft != null)
+		{
+			//LOGGER.info("Full Data at pos: "+soft.file.pos+" has been soft released.");
+			soft.close();
+			soft = (DataObjSoftTracker) softRefDebugQueue.poll();
 		}
 	}
 	

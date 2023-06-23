@@ -40,7 +40,8 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 	private final IDhApiWorldGenerator generator;
 	
 	/** contains the positions that need to be generated */
-	private final QuadTree<WorldGenTask> waitingTaskQuadTree;
+	//private final QuadTree<WorldGenTask> waitingTaskQuadTree;
+	private final ConcurrentHashMap<DhLodPos, WorldGenTask> waitingTasks = new ConcurrentHashMap<>();
 	
 	private final ConcurrentHashMap<DhLodPos, InProgressWorldGenTaskGroup> inProgressGenTasksByLodPos = new ConcurrentHashMap<>();
 	
@@ -94,7 +95,7 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 		//FIXME: Currently resizing view dist doesn't update this, causing some gen task to fail.
 		int treeWidth = Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH * 2; // TODO the *2 is to allow for generation edge cases, and should probably be removed at some point
 		byte treeMinDetailLevel = LodUtil.CHUNK_DETAIL_LEVEL; // The min level should be at least fill in 1 ChunkSizedFullDataAccessor.
-		this.waitingTaskQuadTree = new QuadTree<>(treeWidth, DhBlockPos2D.ZERO /*the quad tree will be re-centered later*/, treeMinDetailLevel);
+		//this.waitingTaskQuadTree = new QuadTree<>(treeWidth, DhBlockPos2D.ZERO /*the quad tree will be re-centered later*/, treeMinDetailLevel);
 		
 		
 		if (this.minGranularity < LodUtil.CHUNK_DETAIL_LEVEL)
@@ -139,16 +140,19 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 		LodUtil.assertTrue(pos.detailLevel > requiredDataDetail + LodUtil.CHUNK_DETAIL_LEVEL);
 
 		DhSectionPos requestPos = new DhSectionPos(pos.detailLevel, pos.x, pos.z);
-		if (this.waitingTaskQuadTree.isSectionPosInBounds(requestPos))
+
+
+		//if (this.waitingTaskQuadTree.isSectionPosInBounds(requestPos))
 		{
 			CompletableFuture<WorldGenResult> future = new CompletableFuture<>();
-			this.waitingTaskQuadTree.setValue(requestPos, new WorldGenTask(pos, requiredDataDetail, tracker, future));
+			//this.waitingTaskQuadTree.setValue(requestPos, new WorldGenTask(pos, requiredDataDetail, tracker, future));
+			waitingTasks.put(pos, new WorldGenTask(pos, requiredDataDetail, tracker, future));
 			return future;
 		}
-		else
-		{
-			return CompletableFuture.completedFuture(WorldGenResult.CreateFail());
-		}
+		//else
+		//{
+			//return CompletableFuture.completedFuture(WorldGenResult.CreateFail());
+		//}
 	}
 	
 	
@@ -197,7 +201,7 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 //					LOGGER.info("pre task count: " + this.numberOfTasksQueued);
 					
 					// recenter the generator tasks, this is done to prevent generating chunks where the player isn't
-					this.waitingTaskQuadTree.setCenterBlockPos(this.generationTargetPos);
+					//this.waitingTaskQuadTree.setCenterBlockPos(this.generationTargetPos);
 					
 					// queue generation tasks until the generator is full, or there are no more tasks to generate
 					boolean taskStarted = true;
@@ -252,6 +256,15 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 
 	private final Set<WorldGenTask> CheckingTasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
+	private static class Mapper {
+		public final WorldGenTask task;
+		public final int dist;
+		public Mapper(WorldGenTask task, int dist) {
+			this.task = task;
+			this.dist = dist;
+		}
+	}
+
 	/** 
 	 * @param targetPos the position to center the generation around 
 	 * @return false if no tasks were found to generate
@@ -261,9 +274,9 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 		long closestGenDist = Long.MAX_VALUE;
 		
 		WorldGenTask closestTask = null;
-		CheckingTasks.clear();
+		//CheckingTasks.clear();
 		
-		// TODO improve, having to go over every node isn't super efficient, removing null nodes from the tree would help
+/*		// TODO improve, having to go over every node isn't super efficient, removing null nodes from the tree would help
 		Iterator<QuadNode<WorldGenTask>> nodeIterator = this.waitingTaskQuadTree.nodeIterator();
 		while (nodeIterator.hasNext())
 		{
@@ -291,16 +304,28 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 					closestGenDist = chebDistToTargetPos;
 				}
 			}
-		}
-		
-		if (closestTask == null)
-		{
-			// no task was found, this probably means there isn't anything left to generate
+		}*/
+
+		waitingTasks.forEach((pos, task) -> {
+			if (!task.StillValid()) {
+				waitingTasks.remove(pos);
+				task.future.complete(WorldGenResult.CreateFail());
+			}
+		});
+
+		if (waitingTasks.size() == 0) {
 			return false;
 		}
+
+		Mapper closestTaskMap = waitingTasks.reduceEntries(1024,
+				v -> new Mapper(v.getValue(), v.getValue().pos.getCenterBlockPos().toPos2D().chebyshevDist(targetPos.toPos2D())),
+				(a, b) -> a.dist < b.dist ? a : b);
+
+		closestTask = closestTaskMap.task;
 		
 		// remove the task we found, we are going to start it and don't want to run it multiple times
-		WorldGenTask removedWorldGenTask = this.waitingTaskQuadTree.setValue(new DhSectionPos(closestTask.pos.detailLevel, closestTask.pos.x, closestTask.pos.z), null);
+		//WorldGenTask removedWorldGenTask = this.waitingTaskQuadTree.setValue(new DhSectionPos(closestTask.pos.detailLevel, closestTask.pos.x, closestTask.pos.z), null);
+		waitingTasks.remove(closestTask.pos, closestTask);
 		
 		// do we need to modify this task to generate it?
 		if(this.canGeneratePos((byte) 0, closestTask.pos)) // TODO should detail level 0 be replaced?
@@ -339,24 +364,25 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 			// split up the task and add each one to the tree
 			LinkedList<CompletableFuture<WorldGenResult>> childFutures = new LinkedList<>();
 			DhSectionPos sectionPos = new DhSectionPos(closestTask.pos.detailLevel, closestTask.pos.x, closestTask.pos.z);
-			sectionPos.forEachChild((childDhSectionPos) -> 
+			WorldGenTask finalClosestTask = closestTask;
+			sectionPos.forEachChild((childDhSectionPos) ->
 			{
 				CompletableFuture<WorldGenResult> newFuture = new CompletableFuture<>();
 				childFutures.add(newFuture);
 				
-				WorldGenTask newGenTask = new WorldGenTask(new DhLodPos(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ), childDhSectionPos.sectionDetailLevel, removedWorldGenTask.taskTracker, newFuture);
-				this.waitingTaskQuadTree.setValue(new DhSectionPos(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ), newGenTask);
+				WorldGenTask newGenTask = new WorldGenTask(new DhLodPos(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ), childDhSectionPos.sectionDetailLevel, finalClosestTask.taskTracker, newFuture);
+				waitingTasks.put(newGenTask.pos, newGenTask);
+				//this.waitingTaskQuadTree.setValue(new DhSectionPos(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ), newGenTask);
 				
-				boolean valueAdded = this.waitingTaskQuadTree.getValue(new DhSectionPos(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ)) != null;
-				LodUtil.assertTrue(valueAdded); // failed to add world gen task to quad tree, this means the quad tree was the wrong size
+				//boolean valueAdded = this.waitingTaskQuadTree.getValue(new DhSectionPos(childDhSectionPos.sectionDetailLevel, childDhSectionPos.sectionX, childDhSectionPos.sectionZ)) != null;
+				//LodUtil.assertTrue(valueAdded); // failed to add world gen task to quad tree, this means the quad tree was the wrong size
 				
 //				LOGGER.info("split feature "+sectionPos+" into "+childDhSectionPos+" "+(valueAdded ? "added" : "notAdded"));
 			});
 			
 			// send the child futures to the future recipient, to notify them of the new tasks
-			removedWorldGenTask.future.complete(WorldGenResult.CreateSplit(childFutures));
-			
-			
+			closestTask.future.complete(WorldGenResult.CreateSplit(childFutures));
+
 			// return true so we attempt to generate again
 			return true;
 		}
@@ -640,8 +666,8 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 	@Override
 	public void debugRender(DebugRenderer r) {
 		//if (true) return;
-		CheckingTasks.forEach((t) -> {
-			DhLodPos pos = t.pos;
+		waitingTasks.keySet().forEach((pos) -> {
+			//DhLodPos pos = t.pos;
 			r.renderBox(new DebugRenderer.Box(pos, -32f, 64f, 0.05f, Color.blue));
 		});
 		this.inProgressGenTasksByLodPos.forEach((pos, t) -> {

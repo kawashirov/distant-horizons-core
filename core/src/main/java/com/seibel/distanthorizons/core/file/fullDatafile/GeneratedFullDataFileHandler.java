@@ -76,7 +76,9 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 				continue;
 			}
 			metaFile.genQueueChecked = false; // unset it so it can be checked again
-			metaFile.markNeedUpdate();
+			if (data != null) {
+				metaFile.markNeedUpdate();
+			}
 		}
 		flushAndSave(); // Trigger an update to the meta files
 	}
@@ -143,8 +145,13 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 				worldGenQueue.submitGenTask(new DhLodPos(pos), dataSource.getDataDetailLevel(), genTask)
 						.whenComplete((genTaskResult, ex) ->
 						{
-							this.onWorldGenTaskComplete(genTaskResult, ex, genTask, pos);
-							this.fireOnGenPosSuccessListeners(pos);
+							if (genTaskResult.success) {
+								this.onWorldGenTaskComplete(genTaskResult, ex, genTask, pos);
+								this.fireOnGenPosSuccessListeners(pos);
+							}
+							else {
+								file.genQueueChecked = false;
+							}
 							this.incompleteDataSources.remove(pos);
 						});
 			}

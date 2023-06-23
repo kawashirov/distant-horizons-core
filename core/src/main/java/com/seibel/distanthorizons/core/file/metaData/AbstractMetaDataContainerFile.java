@@ -79,6 +79,8 @@ public abstract class AbstractMetaDataContainerFile
     public final DhSectionPos pos;
 	
     public File file;
+
+	private volatile boolean DebugThreadCheck = false;
 	
 	
 	
@@ -190,6 +192,8 @@ public abstract class AbstractMetaDataContainerFile
 	
 	protected void writeData(IMetaDataWriterFunc<DhDataOutputStream> dataWriterFunc) throws IOException
 	{
+		LodUtil.assertTrue(!DebugThreadCheck);
+		DebugThreadCheck = true;
 		LodUtil.assertTrue(this.baseMetaData != null);
 		if (this.file.exists())
 		{
@@ -278,6 +282,7 @@ public abstract class AbstractMetaDataContainerFile
 			{
 				LOGGER.error(tempDeleteErrorMessage);
 			}
+			DebugThreadCheck = false;
 		}
 	}
 	

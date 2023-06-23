@@ -65,7 +65,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 		} else if (doesFileExist) {
 			c = Color.RED;
 		}
-		r.renderBox(new DebugRenderer.Box(pos, 0, 256, 0.05f, c));
+		r.renderBox(new DebugRenderer.Box(pos, 64, 72, 0.05f, c));
 	}
 
 	//=============//
@@ -121,16 +121,16 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 		renderSourceLoadFuture.thenAccept((renderSource) -> {
 			boolean worked = renderSource.fastWrite(chunkDataView, level);
 
-			if (pos.sectionDetailLevel == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL+5) {
+			//if (pos.sectionDetailLevel == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL+5) {
 				float offset = new Random(System.nanoTime() ^ Thread.currentThread().getId()).nextFloat() * 16f;
 				Color c = worked ? Color.blue : Color.red;
 				DebugRenderer.makeParticle(
 						new DebugRenderer.BoxParticle(
-								new DebugRenderer.Box(chunkDataView.getLodPos(), 0, 64f + offset, 0.07f, c),
+								new DebugRenderer.Box(chunkDataView.getLodPos(), 32f, 64f + offset, 0.07f, c),
 								2.0, 16f
 						)
 				);
-			}
+			//}
 		});
 	}
 	

@@ -178,11 +178,11 @@ public class DhClientServerLevel extends DhLevel implements IDhClientLevel, IDhS
 	@Override 
 	public void onWorldGenTaskComplete(DhSectionPos pos)
 	{
-		if (pos.sectionDetailLevel == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
+		//if (pos.sectionDetailLevel == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
 			DebugRenderer.makeParticle(
 					new DebugRenderer.BoxParticle(
-							new DebugRenderer.Box(pos, 0, 256f, 0.09f, Color.red),
-							0.5, 512f
+							new DebugRenderer.Box(pos, 128f, 156f, 0.09f, Color.red.darker()),
+							0.2, 32f
 					)
 			);
 		clientside.reloadPos(pos);

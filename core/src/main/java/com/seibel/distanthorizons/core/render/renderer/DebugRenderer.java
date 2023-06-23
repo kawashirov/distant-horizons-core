@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL32;
 
 import java.awt.*;
+import java.io.Closeable;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -71,9 +73,9 @@ public class DebugRenderer {
     };
 
     public static final class Box {
-        public final Vec3f a;
-        public final Vec3f b;
-        public final Color color;
+        public Vec3f a;
+        public Vec3f b;
+        public Color color;
 
         public Box(Vec3f a, Vec3f b, Color color) {
             this.a = a;
@@ -130,10 +132,10 @@ public class DebugRenderer {
     private final LinkedList<WeakReference<IDebugRenderable>> renderers = new LinkedList<>();
 
     public static final class BoxParticle implements Comparable<BoxParticle> {
-        private final Box box;
-        private final long startTime;
-        private final long duration;
-        private final float yChange;
+        public Box box;
+        public long startTime;
+        public long duration;
+        public float yChange;
 
         public BoxParticle(Box box, long startTime, long duration, float yChange) {
             this.box = box;
@@ -152,7 +154,7 @@ public class DebugRenderer {
 
         @Override
         public int compareTo(@NotNull DebugRenderer.BoxParticle o) {
-            return Long.compare(startTime, o.startTime);
+            return Long.compare(startTime + duration, o.startTime + o.duration);
         }
 
         Box getBox() {
@@ -165,6 +167,41 @@ public class DebugRenderer {
 
         boolean isDead(long time) {
             return time - startTime > duration;
+        }
+    }
+
+    public static final class BoxWithLife implements IDebugRenderable, Closeable {
+        public Box box;
+        public BoxParticle particaleOnClose;
+
+        public BoxWithLife(Box box, long ns, float yChange, Color deathColor) {
+            this.box = box;
+            this.particaleOnClose = new BoxParticle(new Box(box.a, box.b, deathColor), -1, ns, yChange);
+            DebugRenderer.register(this);
+        }
+
+        public BoxWithLife(Box box, long ns, float yChange) {
+            this(box, ns, yChange, box.color);
+        }
+
+        public BoxWithLife(Box box, double s, float yChange, Color deathColor) {
+            this.box = box;
+            this.particaleOnClose = new BoxParticle(new Box(box.a, box.b, deathColor), s, yChange);
+        }
+
+        public BoxWithLife(Box box, double s, float yChange) {
+            this(box, s, yChange, box.color);
+        }
+
+        @Override
+        public void debugRender(DebugRenderer r) {
+            r.renderBox(box);
+        }
+
+        @Override
+        public void close() {
+            makeParticle(new BoxParticle(particaleOnClose.getBox(), System.nanoTime(), particaleOnClose.duration, particaleOnClose.yChange));
+            DebugRenderer.unregister(this);
         }
     }
 

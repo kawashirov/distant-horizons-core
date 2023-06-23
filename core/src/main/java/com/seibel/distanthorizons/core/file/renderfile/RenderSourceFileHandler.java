@@ -11,6 +11,7 @@ import com.seibel.distanthorizons.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.distanthorizons.core.dataObjects.transformers.DataRenderTransformer;
 import com.seibel.distanthorizons.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.distanthorizons.core.level.IDhClientLevel;
+import com.seibel.distanthorizons.core.render.renderer.DebugRenderer;
 import com.seibel.distanthorizons.core.util.FileUtil;
 import com.seibel.distanthorizons.core.util.ThreadUtil;
 import com.seibel.distanthorizons.core.util.objects.UncheckedInterruptedException;
@@ -18,6 +19,7 @@ import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import org.apache.logging.log4j.Logger;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -293,14 +295,17 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	//================//
 	// cache updating //
 	//================//
-	
+
     private CompletableFuture<Void> updateCacheAsync(ColumnRenderSource renderSource, RenderMetaDataFile file)
 	{
+		DebugRenderer.BoxWithLife box = new DebugRenderer.BoxWithLife(new DebugRenderer.Box(renderSource.sectionPos, 74f, 86f, 0.1f, Color.red), 1.0, 32f, Color.green.darker());
+
 		// get the full data source loading future
 		CompletableFuture<IFullDataSource> fullDataSourceFuture = this.fullDataSourceProvider.read(renderSource.getSectionPos());
 		fullDataSourceFuture = fullDataSourceFuture.thenApply((fullDataSource) -> 
 			{
 				// the fullDataSource can be null if the thread this was running on was interrupted
+				box.box.color = Color.yellow.darker();
 				return fullDataSource;
 			}).exceptionally((ex) -> 
 			{
@@ -341,6 +346,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 							LOGGER.error("Exception when updating render file using data source: ", ex);
 						}
 					}
+					box.close();
 					transformationCompleteFuture.complete(null);
 				});
 		return transformationCompleteFuture;

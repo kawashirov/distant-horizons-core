@@ -267,8 +267,8 @@ public class LodRenderSection implements IDebugRenderable
 			if (pos.sectionDetailLevel == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
 				DebugRenderer.makeParticle(
 						new DebugRenderer.BoxParticle(
-								new DebugRenderer.Box(pos, 0, 256f, -0.1f, Color.yellow),
-								1.0, 512f
+								new DebugRenderer.Box(pos, 32f, 64f, 0.2f, Color.yellow),
+								0.5, 16f
 						)
 				);
 			neighborUpdated = false;

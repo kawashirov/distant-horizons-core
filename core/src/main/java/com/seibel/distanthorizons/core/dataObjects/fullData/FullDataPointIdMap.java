@@ -10,8 +10,10 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.IWrapperFactory;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /** 
  * WARNING: This is not THREAD-SAFE! 
@@ -23,13 +25,25 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class FullDataPointIdMap
 {
+	// FIXME: Improve performance maybe?
+	private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+
 	final ArrayList<Entry> entries = new ArrayList<>();
-	final ConcurrentHashMap<Entry, Integer> idMap = new ConcurrentHashMap<>(); // FIXME: Improve performance
+	final HashMap<Entry, Integer> idMap = new HashMap<>();
 	
+	private Entry getEntry(int id) {
+		lock.readLock().lock();
+		Entry entry = this.entries.get(id);
+		lock.readLock().unlock();
+		return entry;
+	}
 	
-	
-	public IBiomeWrapper getBiomeWrapper(int id) { return this.entries.get(id).biome; }
-	public IBlockStateWrapper getBlockStateWrapper(int id) { return this.entries.get(id).blockState; }
+	public IBiomeWrapper getBiomeWrapper(int id) {
+		return getEntry(id).biome;
+	}
+	public IBlockStateWrapper getBlockStateWrapper(int id) {
+		return getEntry(id).blockState;
+	}
 	
 	/** 
 	 * If an entry with the given values already exists nothing will 
@@ -38,11 +52,14 @@ public class FullDataPointIdMap
 	public int addIfNotPresentAndGetId(IBiomeWrapper biome, IBlockStateWrapper blockState) { return this.addIfNotPresentAndGetId(new Entry(biome, blockState)); }
 	private int addIfNotPresentAndGetId(Entry biomeBlockStateEntry)
 	{
-		return this.idMap.computeIfAbsent(biomeBlockStateEntry, (entry) -> {
+		lock.writeLock().lock();
+		int result = this.idMap.computeIfAbsent(biomeBlockStateEntry, (entry) -> {
 			int id = this.entries.size();
 			this.entries.add(entry);
 			return id;
 		});
+		lock.writeLock().unlock();
+		return result;
 	}
 	
 	
@@ -52,24 +69,29 @@ public class FullDataPointIdMap
 	 */
 	public int[] mergeAndReturnRemappedEntityIds(FullDataPointIdMap target)
 	{
+		target.lock.readLock().lock();
+		lock.writeLock().lock();
 		ArrayList<Entry> entriesToMerge = target.entries;
-		
 		int[] remappedEntryIds = new int[entriesToMerge.size()];
 		for (int i = 0; i < entriesToMerge.size(); i++)
 		{
 			remappedEntryIds[i] = this.addIfNotPresentAndGetId(entriesToMerge.get(i));
 		}
+		lock.writeLock().unlock();
+		target.lock.readLock().unlock();
 		return remappedEntryIds;
 	}
 	
 	/** Serializes all contained entries into the given stream, formatted in UTF */
 	public void serialize(DhDataOutputStream outputStream) throws IOException
 	{
+		lock.readLock().lock();
 		outputStream.writeInt(this.entries.size());
 		for (Entry entry : this.entries)
 		{
 			outputStream.writeUTF(entry.serialize());
 		}
+		lock.readLock().unlock();
 	}
 	
 	/** Creates a new IdBiomeBlockStateMap from the given UTF formatted stream */
@@ -89,12 +111,12 @@ public class FullDataPointIdMap
 	{
 		if (other == this)
 			return true;
-//        if (!(other instanceof IdBiomeBlockStateMap)) return false;
-//        IdBiomeBlockStateMap otherMap = (IdBiomeBlockStateMap) other;
-//        if (entries.size() != otherMap.entries.size()) return false;
-//        for (int i=0; i<entries.size(); i++) {
-//            if (!entries.get(i).equals(otherMap.entries.get(i))) return false;
-//        }
+/*        if (!(other instanceof FullDataPointIdMap)) return false;
+		FullDataPointIdMap otherMap = (FullDataPointIdMap) other;
+        if (entries.size() != otherMap.entries.size()) return false;
+        for (int i=0; i<entries.size(); i++) {
+            if (!entries.get(i).equals(otherMap.entries.get(i))) return false;
+        }*/
 		return false;
 	}
 	
