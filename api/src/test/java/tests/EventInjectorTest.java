@@ -1,48 +1,29 @@
 package tests;
 
-import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiAfterDhInitEvent;
-import com.seibel.distanthorizons.api.objects.events.DhApiEventDefinition;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
-import com.seibel.distanthorizons.coreapi.events.ApiEventDefinitionHandler;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import testItems.events.abstractObjects.DhApiOneTimeTestEvent;
-import testItems.events.objects.DhOneTimeTestEventHandler;
-import testItems.events.objects.DhOneTimeTestEventHandlerAlt;
-import testItems.events.abstractObjects.DhApiTestEvent;
-import testItems.events.objects.DhTestEventHandler;
-import testItems.events.objects.DhTestEventHandlerAlt;
+import testItems.events.abstractObjects.AbstractDhApiCancelableOneTimeTestEvent;
+import testItems.events.abstractObjects.AbstractDhApiRemoveAfterFireTestEvent;
+import testItems.events.objects.*;
+import testItems.events.abstractObjects.AbstractDhApiTestEvent;
 
 import java.util.ArrayList;
 
 
 /**
  * @author James Seibel
- * @version 2022-11-25
+ * @version 2023-6-23
  */
 public class EventInjectorTest
 {
 	@Before
 	public void testSetup()
 	{
-		ApiEventDefinitionHandler definitionHandler = ApiEventDefinitionHandler.INSTANCE;
-		
-		
-		// reset the injectors and event definitions
+		// reset the injectors
 		ApiEventInjector.INSTANCE.clear();
-		definitionHandler.clear();
-		
-		
-		// register test events
-		definitionHandler.setEventDefinition(DhApiTestEvent.class, DhApiTestEvent.EVENT_DEFINITION);
-		definitionHandler.setEventDefinition(DhApiOneTimeTestEvent.class, DhApiOneTimeTestEvent.EVENT_DEFINITION);
-		definitionHandler.addInitialBindings();
-		
 	}
-	
-	
-	
 	
 	@Test
 	public void testGeneralAndRecurringEvents() // this also tests list dependencies since there can be more than one event handler bound per event
@@ -50,24 +31,24 @@ public class EventInjectorTest
 		// Injector setup
 		ApiEventInjector TEST_EVENT_HANDLER = ApiEventInjector.INSTANCE;
 		
-
+		
 		// pre-dependency setup
-		Assert.assertNull("Nothing should have been bound.", TEST_EVENT_HANDLER.get(DhApiTestEvent.class));
-
-
+		Assert.assertNull("Nothing should have been bound.", TEST_EVENT_HANDLER.get(AbstractDhApiTestEvent.class));
+		
+		
 		// dependency setup
-		TEST_EVENT_HANDLER.bind(DhApiTestEvent.class, new DhTestEventHandler());
-		TEST_EVENT_HANDLER.bind(DhApiTestEvent.class, new DhTestEventHandlerAlt());
+		TEST_EVENT_HANDLER.bind(AbstractDhApiTestEvent.class, new DhTestEventHandler());
+		TEST_EVENT_HANDLER.bind(AbstractDhApiTestEvent.class, new DhTestEventHandlerAlt());
 		TEST_EVENT_HANDLER.runDelayedSetup();
-
-
+		
+		
 		// get first
-		DhApiTestEvent afterRenderEvent = TEST_EVENT_HANDLER.get(DhApiTestEvent.class);
+		AbstractDhApiTestEvent afterRenderEvent = TEST_EVENT_HANDLER.get(AbstractDhApiTestEvent.class);
 		Assert.assertNotNull("Event not bound.", afterRenderEvent);
-
-
+		
+		
 		// get list
-		ArrayList<DhApiTestEvent> afterRenderEventList = TEST_EVENT_HANDLER.getAll(DhApiTestEvent.class);
+		ArrayList<AbstractDhApiTestEvent> afterRenderEventList = TEST_EVENT_HANDLER.getAll(AbstractDhApiTestEvent.class);
 		Assert.assertEquals("Bound list doesn't contain the correct number of items.", 2, afterRenderEventList.size());
 		// object one
 		Assert.assertNotNull("Event not bound.", afterRenderEventList.get(0));
@@ -75,29 +56,29 @@ public class EventInjectorTest
 		// object two
 		Assert.assertNotNull("Event not bound.", afterRenderEventList.get(1));
 		Assert.assertEquals("First event object setup incorrectly.", null, afterRenderEventList.get(1).getTestValue());
-
-
+		
+		
 		// event firing
-		Assert.assertEquals("fireAllEvents canceled returned canceled incorrectly.", true, TEST_EVENT_HANDLER.fireAllEvents(DhApiTestEvent.class, true));
+		Assert.assertEquals("fireAllEvents canceled returned canceled incorrectly.", false, TEST_EVENT_HANDLER.fireAllEvents(AbstractDhApiTestEvent.class, true));
 		// object one
 		Assert.assertEquals("Event not fired for first object.", true, afterRenderEventList.get(0).getTestValue());
 		// object two
 		Assert.assertEquals("Event not fired for second object.", true, afterRenderEventList.get(1).getTestValue());
-
-
+		
+		
 		// unbind
-		DhApiTestEvent unboundEvent = afterRenderEventList.get(0);
-		Assert.assertTrue("Unbind should've removed item.", TEST_EVENT_HANDLER.unbind(DhApiTestEvent.class, DhTestEventHandler.class));
-		Assert.assertFalse("Unbind should've already removed item.", TEST_EVENT_HANDLER.unbind(DhApiTestEvent.class, DhTestEventHandler.class));
-
+		AbstractDhApiTestEvent unboundEvent = afterRenderEventList.get(0);
+		Assert.assertTrue("Unbind should've removed item.", TEST_EVENT_HANDLER.unbind(AbstractDhApiTestEvent.class, DhTestEventHandler.class));
+		Assert.assertFalse("Unbind should've already removed item.", TEST_EVENT_HANDLER.unbind(AbstractDhApiTestEvent.class, DhTestEventHandler.class));
+		
 		// check unbinding
-		afterRenderEventList = TEST_EVENT_HANDLER.getAll(DhApiTestEvent.class);
+		afterRenderEventList = TEST_EVENT_HANDLER.getAll(AbstractDhApiTestEvent.class);
 		Assert.assertEquals("Unbound list doesn't contain the correct number of items.", 1, afterRenderEventList.size());
 		Assert.assertNotNull("Unbinding removed all items.", afterRenderEventList.get(0));
-
-
+		
+		
 		// check unbound event firing
-		Assert.assertEquals("fireAllEvents canceled returned canceled incorrectly.", false, TEST_EVENT_HANDLER.fireAllEvents(DhApiTestEvent.class, false));
+		Assert.assertEquals("fireAllEvents canceled returned canceled incorrectly.", false, TEST_EVENT_HANDLER.fireAllEvents(AbstractDhApiTestEvent.class, false));
 		// remaining event
 		Assert.assertEquals("Event not fired for remaining object.", false, ((DhTestEventHandlerAlt) afterRenderEventList.get(0)).eventFiredValue);
 		// unbound event
@@ -105,20 +86,9 @@ public class EventInjectorTest
 		
 		
 		// prevent event handlers from being bound to the wrong event interface
-		Assert.assertThrows("Event bound to a non-implementing interface.", IllegalArgumentException.class, () -> { TEST_EVENT_HANDLER.bind(DhApiOneTimeTestEvent.class, new DhTestEventHandler()); });
-		Assert.assertThrows("Event bound to a non-implementing interface.", IllegalArgumentException.class, () -> { TEST_EVENT_HANDLER.bind(DhApiTestEvent.class, new DhOneTimeTestEventHandler()); });
+		Assert.assertThrows("Event bound to a non-implementing interface.", IllegalArgumentException.class, () -> { TEST_EVENT_HANDLER.bind(AbstractDhApiCancelableOneTimeTestEvent.class, new DhTestEventHandler()); });
+		Assert.assertThrows("Event bound to a non-implementing interface.", IllegalArgumentException.class, () -> { TEST_EVENT_HANDLER.bind(AbstractDhApiTestEvent.class, new DhCancelableOneTimeTestEventHandler()); });
 		
-	}
-	
-	@Test
-	public void testEventDefinition()
-	{
-		ApiEventDefinitionHandler definitionHandler = ApiEventDefinitionHandler.INSTANCE;
-		
-		String errorMessagePrefix = "Missing " + DhApiEventDefinition.class.getSimpleName() + " for event class [";
-		Assert.assertNotNull(errorMessagePrefix + DhApiTestEvent.class.getSimpleName() + "]", definitionHandler.getEventDefinition(DhApiTestEvent.class));
-		Assert.assertNotNull(errorMessagePrefix + DhApiOneTimeTestEvent.class.getSimpleName() + "]", definitionHandler.getEventDefinition(DhApiOneTimeTestEvent.class));
-		Assert.assertNotNull(errorMessagePrefix + DhApiAfterDhInitEvent.class.getSimpleName() + "]", definitionHandler.getEventDefinition(DhApiAfterDhInitEvent.class));
 	}
 	
 	
@@ -134,33 +104,33 @@ public class EventInjectorTest
 		
 		
 		// pre-dependency setup
-		Assert.assertNull("Nothing should have been bound.", TEST_EVENT_HANDLER.get(DhApiOneTimeTestEvent.class));
+		Assert.assertNull("Nothing should have been bound.", TEST_EVENT_HANDLER.get(AbstractDhApiCancelableOneTimeTestEvent.class));
 		
 		
 		if (bindEventBeforeOneTimeFiring)
 		{
-			TEST_EVENT_HANDLER.bind(DhApiOneTimeTestEvent.class, new DhOneTimeTestEventHandler());
+			TEST_EVENT_HANDLER.bind(AbstractDhApiCancelableOneTimeTestEvent.class, new DhCancelableOneTimeTestEventHandler());
 		}
 		TEST_EVENT_HANDLER.runDelayedSetup();
 		
 		
 		// pre-bound event firing
-		Assert.assertEquals("fireAllEvents canceled returned canceled incorrectly.", bindEventBeforeOneTimeFiring, TEST_EVENT_HANDLER.fireAllEvents(DhApiOneTimeTestEvent.class, true));
+		Assert.assertEquals("fireAllEvents canceled returned canceled incorrectly.", bindEventBeforeOneTimeFiring, TEST_EVENT_HANDLER.fireAllEvents(AbstractDhApiCancelableOneTimeTestEvent.class, true));
 		
 		// validate pre-bound events fired correctly
-		ArrayList<DhApiOneTimeTestEvent> oneTimeEventList;
+		ArrayList<AbstractDhApiCancelableOneTimeTestEvent> oneTimeEventList;
 		if (bindEventBeforeOneTimeFiring)
 		{
-			oneTimeEventList = TEST_EVENT_HANDLER.getAll(DhApiOneTimeTestEvent.class);
+			oneTimeEventList = TEST_EVENT_HANDLER.getAll(AbstractDhApiCancelableOneTimeTestEvent.class);
 			Assert.assertEquals("Event not fired for pre-fire object.", true, oneTimeEventList.get(0).getTestValue());
 		}
 		
 		
 		// post-event fire binding
 		// the event should fire instantly
-		TEST_EVENT_HANDLER.bind(DhApiOneTimeTestEvent.class, new DhOneTimeTestEventHandlerAlt());
+		TEST_EVENT_HANDLER.bind(AbstractDhApiCancelableOneTimeTestEvent.class, new DhCancelableOneTimeTestEventHandlerAlt());
 		// validate both events have fired
-		oneTimeEventList = TEST_EVENT_HANDLER.getAll(DhApiOneTimeTestEvent.class);
+		oneTimeEventList = TEST_EVENT_HANDLER.getAll(AbstractDhApiCancelableOneTimeTestEvent.class);
 		for (int i = 0; i < oneTimeEventList.size(); i++)
 		{
 			Assert.assertEquals("Event not fired for object ["+i+"].", true, oneTimeEventList.get(i).getTestValue());
@@ -169,9 +139,52 @@ public class EventInjectorTest
 		
 		
 		// recurring event test
-		TEST_EVENT_HANDLER.bind(DhApiTestEvent.class, new DhTestEventHandler());
-		ArrayList<DhApiTestEvent> recurringEventList = TEST_EVENT_HANDLER.getAll(DhApiTestEvent.class);
+		TEST_EVENT_HANDLER.bind(AbstractDhApiTestEvent.class, new DhTestEventHandler());
+		ArrayList<AbstractDhApiTestEvent> recurringEventList = TEST_EVENT_HANDLER.getAll(AbstractDhApiTestEvent.class);
 		Assert.assertNull("This unrelated recurring event shouldn't have been fired.", recurringEventList.get(0).getTestValue());
+		
+	}
+	
+	
+	@Test
+	public void testRemoveAfterFireEvents()
+	{
+		// Injector setup
+		ApiEventInjector TEST_EVENT_HANDLER = ApiEventInjector.INSTANCE;
+		
+		
+		// pre-dependency setup
+		Assert.assertNull("Nothing should have been bound.", TEST_EVENT_HANDLER.get(AbstractDhApiRemoveAfterFireTestEvent.class));
+		
+		
+		// dependency setup
+		TEST_EVENT_HANDLER.bind(AbstractDhApiRemoveAfterFireTestEvent.class, new DhRemoveAfterFireTestEventHandler());
+		TEST_EVENT_HANDLER.runDelayedSetup();
+		
+		
+		// get first
+		AbstractDhApiRemoveAfterFireTestEvent event = TEST_EVENT_HANDLER.get(AbstractDhApiRemoveAfterFireTestEvent.class);
+		Assert.assertNotNull("Event not bound.", event);
+		
+		
+		// get list
+		ArrayList<AbstractDhApiRemoveAfterFireTestEvent> eventList = TEST_EVENT_HANDLER.getAll(AbstractDhApiRemoveAfterFireTestEvent.class);
+		Assert.assertEquals("Bound list doesn't contain the correct number of items.", 1, eventList.size());
+		// object one
+		Assert.assertNotNull("Event not bound.", eventList.get(0));
+		Assert.assertEquals("First event object setup incorrectly.", null, eventList.get(0).getTestValue());
+		
+		
+		// event firing
+		Assert.assertEquals("fireAllEvents canceled returned canceled incorrectly.", false, TEST_EVENT_HANDLER.fireAllEvents(AbstractDhApiRemoveAfterFireTestEvent.class, true));
+		// object one
+		Assert.assertEquals("Event not fired for first object.", true, event.getTestValue());
+		
+		
+		// check that the event was automatically unbound
+		eventList = TEST_EVENT_HANDLER.getAll(AbstractDhApiRemoveAfterFireTestEvent.class);
+		Assert.assertEquals("Unbound list doesn't contain the correct number of items.", 1, eventList.size());
+		Assert.assertNull("Event wasn't automatically unbound after firing.", eventList.get(0));
 		
 	}
 	

@@ -147,9 +147,6 @@ public class ClientApi
 			{
 				dhLevel.updateChunkAsync(chunk);
 			}
-			
-			// TODO: potentially add a list of chunks that were updated during the save
-			ApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelSaveEvent.class, new DhApiLevelSaveEvent.EventParam(level));
 		}
 	}
 	

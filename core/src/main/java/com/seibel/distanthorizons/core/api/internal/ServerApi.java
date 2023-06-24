@@ -20,7 +20,6 @@
 package com.seibel.distanthorizons.core.api.internal;
 
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiLevelLoadEvent;
-import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiLevelSaveEvent;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiLevelUnloadEvent;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import com.seibel.distanthorizons.core.level.IDhLevel;
@@ -132,11 +131,6 @@ public class ServerApi
 		if (serverWorld != null)
 		{
 			serverWorld.saveAndFlush();
-			
-			for (IDhLevel level : serverWorld.getAllLoadedLevels())
-			{
-				ApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelSaveEvent.class, new DhApiLevelSaveEvent.EventParam(level.getLevelWrapper()));
-			}
 		}
 	}
 

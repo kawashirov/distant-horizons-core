@@ -1,22 +1,20 @@
 package com.seibel.distanthorizons.api.methods.events.abstractEvents;
 
-import com.seibel.distanthorizons.api.methods.events.interfaces.IDhApiEvent;
+import com.seibel.distanthorizons.api.methods.events.interfaces.IDhApiCancelableEvent;
+import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiCancelableEventParam;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
-import com.seibel.distanthorizons.api.objects.events.DhApiEventDefinition;
-import com.seibel.distanthorizons.coreapi.events.ApiEventDefinitionHandler;
 
 /**
+ * Called before Distant Horizons starts rendering a frame. <br>
+ * Canceling the event will prevent DH from rendering that frame.
+ * 
  * @author James Seibel
- * @version 2022-11-21
+ * @version 2023-6-23
  */
-public abstract class DhApiBeforeRenderEvent implements IDhApiEvent<DhApiBeforeRenderEvent.EventParam>
+public abstract class DhApiBeforeRenderEvent implements IDhApiCancelableEvent<DhApiBeforeRenderEvent.EventParam>
 {
-	/**
-	 * Fired before Distant Horizons renders fake chunks.
-	 *
-	 * @return whether the event should be canceled or not.
-	 */
-	public abstract boolean beforeRender(EventParam input);
+	/** Fired before Distant Horizons renders LODs. */
+	public abstract void beforeRender(DhApiCancelableEventParam<EventParam> input);
 	
 	
 	//=========================//
@@ -24,15 +22,7 @@ public abstract class DhApiBeforeRenderEvent implements IDhApiEvent<DhApiBeforeR
 	//=========================//
 	
 	@Override
-	public final boolean fireEvent(EventParam input) { return this.beforeRender(input); }
-	
-	/**
-	 * Note: when creating new events, make sure to bind this definition in {@link ApiEventDefinitionHandler}
-	 * Otherwise a bunch of runtime errors will be thrown.
-	 */
-	public final static DhApiEventDefinition EVENT_DEFINITION = new DhApiEventDefinition(true, false);
-	@Override
-	public final DhApiEventDefinition getEventDefinition() { return EVENT_DEFINITION; }
+	public final void fireEvent(DhApiCancelableEventParam<EventParam> input) { this.beforeRender(input); }
 	
 	
 	//==================//

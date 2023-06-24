@@ -1,17 +1,19 @@
 package com.seibel.distanthorizons.api.methods.events.abstractEvents;
 
 import com.seibel.distanthorizons.api.methods.events.interfaces.IDhApiEvent;
-import com.seibel.distanthorizons.api.objects.events.DhApiEventDefinition;
-import com.seibel.distanthorizons.coreapi.events.ApiEventDefinitionHandler;
+import com.seibel.distanthorizons.api.methods.events.interfaces.IDhApiOneTimeEvent;
+import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiEventParam;
 
 /**
+ * Fired after Distant Horizons finishes running its setup.
+ * 
  * @author James Seibel
- * @version 2022-11-21
+ * @version 2023-6-23
  */
-public abstract class DhApiAfterDhInitEvent implements IDhApiEvent<Void>
+public abstract class DhApiAfterDhInitEvent implements IDhApiEvent<Void>, IDhApiOneTimeEvent<Void>
 {
 	/** Fired after Distant Horizons finishes its initial setup on Minecraft startup. */
-	public abstract void afterDistantHorizonsInit();
+	public abstract void afterDistantHorizonsInit(DhApiEventParam<Void> input);
 	
 	
 	//=========================//
@@ -19,18 +21,6 @@ public abstract class DhApiAfterDhInitEvent implements IDhApiEvent<Void>
 	//=========================//
 	
 	@Override
-	public final boolean fireEvent(Void ignoredParam)
-	{
-		this.afterDistantHorizonsInit();
-		return false;
-	}
-	
-	/**
-	 * Note: when creating new events, make sure to bind this definition in {@link ApiEventDefinitionHandler}
-	 * Otherwise a bunch of runtime errors will be thrown.
-	 */
-	public final static DhApiEventDefinition EVENT_DEFINITION = new DhApiEventDefinition(false, true);
-	@Override
-	public final DhApiEventDefinition getEventDefinition() { return EVENT_DEFINITION; }
+	public final void fireEvent(DhApiEventParam<Void> input) { this.afterDistantHorizonsInit(input); }
 	
 }

@@ -1,6 +1,7 @@
 package com.seibel.distanthorizons.api.methods.events.interfaces;
 
-import com.seibel.distanthorizons.api.objects.events.DhApiEventDefinition;
+import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiCancelableEventParam;
+import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiEventParam;
 import com.seibel.distanthorizons.coreapi.interfaces.dependencyInjection.IBindable;
 
 /**
@@ -9,7 +10,7 @@ import com.seibel.distanthorizons.coreapi.interfaces.dependencyInjection.IBindab
  * @param <T> This is the datatype that will be passed into the event handler's method.
  * 
  * @author James Seibel
- * @version 2022-11-20
+ * @version 2023-6-23
  */
 public interface IDhApiEvent<T> extends IBindable
 {
@@ -25,18 +26,12 @@ public interface IDhApiEvent<T> extends IBindable
 	 * Defaults to False
 	 * IE: The event will not be removed after firing and will continue firing until removed.
 	 */
-	default boolean removeAfterFiring() { return false; };
+	default boolean removeAfterFiring() { return false; }
 	
 	
 	//==========//
 	// internal //
 	//==========//
-	
-	/** 
-	 * The event definition includes meta information about how the event will behave. <br>
-	 * For example: if the event is cancelable or not.
-	 */
-	DhApiEventDefinition getEventDefinition();
 	
 	/**
 	 * Called internally by Distant Horizons when the event happens.
@@ -44,9 +39,7 @@ public interface IDhApiEvent<T> extends IBindable
 	 * should call a more specific method instead.
 	 *
 	 * @param input the parameter object passed in from the event source. Can be null.
-	 * @return whether the event should be canceled or not.
-	 * 		   A canceled event will still fire the other event handlers that are queued.
 	 */
-	boolean fireEvent(T input);
+	void fireEvent(DhApiEventParam<T> input);
 	
 }

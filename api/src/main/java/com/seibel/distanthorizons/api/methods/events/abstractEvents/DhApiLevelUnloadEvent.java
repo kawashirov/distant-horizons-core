@@ -1,18 +1,20 @@
 package com.seibel.distanthorizons.api.methods.events.abstractEvents;
 
+import com.seibel.distanthorizons.api.DhApi;
 import com.seibel.distanthorizons.api.methods.events.interfaces.IDhApiEvent;
 import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
-import com.seibel.distanthorizons.api.objects.events.DhApiEventDefinition;
-import com.seibel.distanthorizons.coreapi.events.ApiEventDefinitionHandler;
+import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiEventParam;
 
 /**
+ * Called after Distant Horizons has finished unloading a level.
+ * 
  * @author James Seibel
- * @version 2022-11-21
+ * @version 2023-6-23
  */
 public abstract class DhApiLevelUnloadEvent implements IDhApiEvent<DhApiLevelUnloadEvent.EventParam>
 {
 	/** Fired before Distant Horizons unloads a level. */
-	public abstract void onLevelUnload(EventParam input);
+	public abstract void onLevelUnload(DhApiEventParam<EventParam> input);
 	
 	
 	//=========================//
@@ -20,19 +22,7 @@ public abstract class DhApiLevelUnloadEvent implements IDhApiEvent<DhApiLevelUnl
 	//=========================//
 	
 	@Override
-	public final boolean fireEvent(EventParam input)
-	{
-		this.onLevelUnload(input);
-		return false;
-	}
-	
-	/**
-	 * Note: when creating new events, make sure to bind this definition in {@link ApiEventDefinitionHandler}
-	 * Otherwise a bunch of runtime errors will be thrown.
-	 */
-	public final static DhApiEventDefinition EVENT_DEFINITION = new DhApiEventDefinition(false, false);
-	@Override
-	public final DhApiEventDefinition getEventDefinition() { return EVENT_DEFINITION; }
+	public final void fireEvent(DhApiEventParam<EventParam> input) { this.onLevelUnload(input); }
 	
 	
 	//==================//

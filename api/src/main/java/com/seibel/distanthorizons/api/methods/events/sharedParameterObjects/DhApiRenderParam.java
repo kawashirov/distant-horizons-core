@@ -3,7 +3,7 @@ package com.seibel.distanthorizons.api.methods.events.sharedParameterObjects;
 import com.seibel.distanthorizons.coreapi.util.math.Mat4f;
 
 /**
- * Parameter passed into Render events.
+ * Contains information relevant to Distant Horizons and Minecraft rendering.
  *
  * @author James Seibel
  * @version 2022-9-5

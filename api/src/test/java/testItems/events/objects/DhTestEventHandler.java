@@ -1,30 +1,24 @@
 package testItems.events.objects;
 
-import testItems.events.abstractObjects.DhApiTestEvent;
+import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiEventParam;
+import testItems.events.abstractObjects.AbstractDhApiTestEvent;
 
 /**
  * Dummy test event for unit tests.
  *
  * @author James Seibel
- * @version 2022-9-11
+ * @version 2023-6-23
  */
-public class DhTestEventHandler extends DhApiTestEvent
+public class DhTestEventHandler extends AbstractDhApiTestEvent
 {
 	public Boolean eventFiredValue = null;
 	
 	@Override
-	public void onTestEvent(Boolean input)
-	{
-		this.eventFiredValue = input;
-	}
-	
-	@Override
-	public boolean removeAfterFiring() { return false; }
-	
+	public void onTestEvent(DhApiEventParam<Boolean> input) { this.eventFiredValue = input.value; }
 	
 	
 	// test (non standard) methods //
 	@Override
-	public Boolean getTestValue() { return eventFiredValue; }
+	public Boolean getTestValue() { return this.eventFiredValue; }
 	
 }

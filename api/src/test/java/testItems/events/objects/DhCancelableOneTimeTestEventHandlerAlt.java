@@ -4,9 +4,9 @@ package testItems.events.objects;
  * Dummy test event for unit tests.
  *
  * @author James Seibel
- * @version 2022-11-20
+ * @version 2023-6-23
  */
-public class DhOneTimeTestEventHandlerAlt extends DhOneTimeTestEventHandler
+public class DhCancelableOneTimeTestEventHandlerAlt extends DhCancelableOneTimeTestEventHandler
 {
 	// all other code should be a duplicate of the parent
 }
