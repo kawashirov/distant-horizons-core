@@ -5,9 +5,8 @@ in vec4 vPos;
 in vec3 vertexWorldPos;
 out vec4 fragColor;
 
-uniform float fogScale;
+uniform float distanceScale;
 
-uniform bool noiseEnabled;
 uniform int noiseSteps;
 uniform float noiseIntensity;
 uniform float noiseDropoff;
@@ -67,25 +66,26 @@ void main() {
 
     // Modifies the color
     // A value of 0 on the randomValue will result in the original color, while a value of 1 will result in a fully bright color
-    vec3 newCol = vertexColor.rgb + (vec3(1.0) - vertexColor.rgb) * randomValue;
+    vec3 newCol = (vec3(1.0) - vertexColor.rgb) * randomValue;
 
     // Clamps it and turns it back into a vec4
-    fragColor = mix(
-        vec4(
-            clamp(newCol.r, 0., 1.),
-            clamp(newCol.g, 0., 1.),
-            clamp(newCol.b, 0., 1.),
-            vertexColor.w
-        ), vertexColor,
-        clamp(length(vertexWorldPos) * fogScale * noiseDropoff, 0., 1.) // The further away it gets, the less noise gets applied
+    fragColor = vec4(
+        clamp(newCol.r, 0., 1.),
+        clamp(newCol.g, 0., 1.),
+        clamp(newCol.b, 0., 1.),
+        clamp(length(vertexWorldPos) * distanceScale * noiseDropoff, 0., 1.) // The further away it gets, the less noise gets applied
+    );
+    fragColor = vec4(
+        0f, 0f, 0f,
+        randomValue // The further away it gets, the less noise gets applied
     );
 
     // For testing
-//            if (vertexColor.r != 69420.) {
-//                fragColor = vec4(
-//                    mod(fixedVPos.x, 1),
-//                    mod(fixedVPos.y, 1),
-//                    mod(fixedVPos.z, 1),
-//                vertexColor.w);
-//            }
+            if (vertexColor.r != 69420.) {
+                fragColor = vec4(
+                    mod(fixedVPos.x, 1),
+                    mod(fixedVPos.y, 1),
+                    mod(fixedVPos.z, 1),
+                1f);
+            }
 }
