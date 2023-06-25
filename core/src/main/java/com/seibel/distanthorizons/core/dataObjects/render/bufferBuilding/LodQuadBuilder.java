@@ -273,7 +273,8 @@ public class LodQuadBuilder
 				throw new IllegalArgumentException("Invalid Axis enum: " + axis);
 			}
 			putVertex(bb, (short) (quad.x + dx), (short) (quad.y + dy), (short) (quad.z + dz),
-					quad.hasError ? ColorUtil.RED : quad.color,
+//					quad.hasError ? ColorUtil.RED : quad.color, // TODO add debug config
+					quad.color,
 					quad.hasError ? 15 : quad.skyLight,
 					quad.hasError ? 15 : quad.blockLight,
 					mx, my, mz);

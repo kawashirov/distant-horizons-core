@@ -38,7 +38,7 @@ public class CubicLodTemplate
 {
 
 	public static void addLodToBuffer(
-			long data, long topData, long bottomData, ColumnArrayView[][] adjData,
+			long data, long topData, long bottomData, ColumnArrayView[][] adjColumnViews,
 			byte detailLevel, int offsetPosX, int offsetOosZ, LodQuadBuilder quadBuilder, 
 			EDebugRendering debugging, ColumnRenderSource.DebugSourceFlag debugSource)
 	{
@@ -46,15 +46,15 @@ public class CubicLodTemplate
 		
 		short width = (short) BitShiftUtil.powerOfTwo(detailLevel);
 		short x = (short) blockOffsetPos.x;
-		short y = RenderDataPointUtil.getDepth(data);
+		short yMin = RenderDataPointUtil.getYMin(data);
 		short z = (short) (short) blockOffsetPos.z;
-		short yHeight = (short) (RenderDataPointUtil.getHeight(data) - y);
+		short ySize = (short) (RenderDataPointUtil.getYMax(data) - yMin);
 		
-		if (yHeight == 0)
+		if (ySize == 0)
 		{
 			return;
 		}
-		else if (yHeight < 0)
+		else if (ySize < 0)
 		{
 			throw new IllegalArgumentException("Negative y size for the data! Data: " + RenderDataPointUtil.toString(data));
 		}
@@ -112,11 +112,11 @@ public class CubicLodTemplate
 		
 		ColumnBox.addBoxQuadsToBuilder(
 				quadBuilder, // buffer
-				width, yHeight, width, // setWidth
-				x, y, z, // setOffset
+				width, ySize, width, // setWidth
+				x, yMin, z, // setOffset
 				color, // setColor
 				RenderDataPointUtil.getLightSky(data), // setSkyLights
 				fullBright ? 15 : RenderDataPointUtil.getLightBlock(data), // setBlockLights
-				topData, bottomData, adjData); // setAdjData
+				topData, bottomData, adjColumnViews); // setAdjData
 	}
 }

@@ -163,9 +163,9 @@ public class ColumnRenderBufferBuilder
 		// can be uncommented to limit which section positions are build and thus, rendered
 		// useful when debugging a specific section
 //		if (renderSource.sectionPos.sectionDetailLevel == 6 
-//			&& renderSource.sectionPos.sectionZ == 0 && renderSource.sectionPos.sectionX == 3)
+//			&& renderSource.sectionPos.sectionZ == 0 && renderSource.sectionPos.sectionX == 0)
 //		{
-//			int test = 4;
+//			int test = 0;
 //		}
 //		else
 //		{
@@ -198,7 +198,7 @@ public class ColumnRenderBufferBuilder
 				
 				ColumnRenderSource.DebugSourceFlag debugSourceFlag = renderSource.debugGetFlag(x, z);
 				
-				ColumnArrayView[][] adjData = new ColumnArrayView[4][];
+				ColumnArrayView[][] adjColumnViews = new ColumnArrayView[4][];
 				// We extract the adj data in the four cardinal direction
 				
 				// we first reset the adjShadeDisabled. This is used to disable the shade on the
@@ -272,14 +272,14 @@ public class ColumnRenderBufferBuilder
 						
 						if (adjDetailLevel == detailLevel || adjDetailLevel > detailLevel)
 						{
-							adjData[lodDirection.ordinal() - 2] = new ColumnArrayView[1];
-							adjData[lodDirection.ordinal() - 2][0] = adjRenderSource.getVerticalDataPointView(xAdj, zAdj);
+							adjColumnViews[lodDirection.ordinal() - 2] = new ColumnArrayView[1];
+							adjColumnViews[lodDirection.ordinal() - 2][0] = adjRenderSource.getVerticalDataPointView(xAdj, zAdj);
 						}
 						else
 						{
-							adjData[lodDirection.ordinal() - 2] = new ColumnArrayView[2];
-							adjData[lodDirection.ordinal() - 2][0] = adjRenderSource.getVerticalDataPointView(xAdj, zAdj);
-							adjData[lodDirection.ordinal() - 2][1] = adjRenderSource.getVerticalDataPointView(
+							adjColumnViews[lodDirection.ordinal() - 2] = new ColumnArrayView[2];
+							adjColumnViews[lodDirection.ordinal() - 2][0] = adjRenderSource.getVerticalDataPointView(xAdj, zAdj);
+							adjColumnViews[lodDirection.ordinal() - 2][1] = adjRenderSource.getVerticalDataPointView(
 									xAdj + (lodDirection.getAxis() == ELodDirection.Axis.X ? 0 : 1),
 									zAdj + (lodDirection.getAxis() == ELodDirection.Axis.Z ? 0 : 1));
 						}
@@ -296,6 +296,12 @@ public class ColumnRenderBufferBuilder
 				// We only stop when we find a block that is void or non-existing block
 				for (int i = 0; i < columnRenderData.size(); i++)
 				{
+					// can be uncommented to limit which vertical LOD is generated
+//					if (i != 0)
+//					{
+//						continue;
+//					}
+					
 					long data = columnRenderData.get(i);
 					// If the data is not render-able (Void or non-existing) we stop since there is
 					// no data left in this position
@@ -304,10 +310,10 @@ public class ColumnRenderBufferBuilder
 						break;
 					}
 					
-					long adjDataTop = (i - 1) >= 0 ? columnRenderData.get(i - 1) : RenderDataPointUtil.EMPTY_DATA;
-					long adjDataBot = (i + 1) < columnRenderData.size() ? columnRenderData.get(i + 1) : RenderDataPointUtil.EMPTY_DATA;
+					long topDataPoint = (i - 1) >= 0 ? columnRenderData.get(i - 1) : RenderDataPointUtil.EMPTY_DATA;
+					long bottomDataPoint = (i + 1) < columnRenderData.size() ? columnRenderData.get(i + 1) : RenderDataPointUtil.EMPTY_DATA;
 					
-					CubicLodTemplate.addLodToBuffer(data, adjDataTop, adjDataBot, adjData, detailLevel,
+					CubicLodTemplate.addLodToBuffer(data, topDataPoint, bottomDataPoint, adjColumnViews, detailLevel,
 							x, z, quadBuilder, debugMode, debugSourceFlag);
 				}
 				

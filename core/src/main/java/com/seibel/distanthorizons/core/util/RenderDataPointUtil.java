@@ -182,9 +182,10 @@ public class RenderDataPointUtil
 		return dataPoint & ~(HEIGHT_SHIFTED_MASK | DEPTH_SHIFTED_MASK) | height | depth;
 	}
 	
-    public static short getHeight(long dataPoint) { return (short) ((dataPoint >>> HEIGHT_SHIFT) & HEIGHT_MASK); }
-	/** AKA the starting Y value above the parent {@link DhLevel#getMinY()} TODO is this correct? */
-    public static short getDepth(long dataPoint) { return (short) ((dataPoint >>> DEPTH_SHIFT) & DEPTH_MASK); }
+	/** AKA the ending/top/highest Y value above {@link DhLevel#getMinY()} */
+    public static short getYMax(long dataPoint) { return (short) ((dataPoint >>> HEIGHT_SHIFT) & HEIGHT_MASK); }
+	/** AKA the starting/bottom/lowest Y value above {@link DhLevel#getMinY()} */
+    public static short getYMin(long dataPoint) { return (short) ((dataPoint >>> DEPTH_SHIFT) & DEPTH_MASK); }
 	
     public static short getAlpha(long dataPoint) { return (short) ((((dataPoint >>> ALPHA_SHIFT) & ALPHA_MASK) << ALPHA_DOWNSIZE_SHIFT) | 0b1111); }
     public static short getRed(long dataPoint) { return (short) ((dataPoint >>> RED_SHIFT) & RED_MASK); }
@@ -235,14 +236,14 @@ public class RenderDataPointUtil
 		}
 		else
 		{
-			return "H:" + getHeight(dataPoint) +
-					" D:" + getDepth(dataPoint) +
+			return "Y+:" + getYMax(dataPoint) +
+					" Y-:" + getYMin(dataPoint) +
 					" argb:" + getAlpha(dataPoint) + " " +
 					getRed(dataPoint) + " " +
 					getBlue(dataPoint) + " " +
 					getGreen(dataPoint) +
-					" BL/SL:" + getLightBlock(dataPoint) + " " +
-					getLightSky(dataPoint) +
+					" BL:" + getLightBlock(dataPoint) +
+					" SL:" +getLightSky(dataPoint) +
 					" G:" + getGenerationMode(dataPoint);
 		}
 	}
@@ -303,8 +304,8 @@ public class RenderDataPointUtil
 		boolean allDefault;
 		long singleData;
 		
-		short depth;
-		short height;
+		short yMin;
+		short yMax;
 		int count = 0;
 		int i;
 		int ii;
@@ -360,8 +361,8 @@ public class RenderDataPointUtil
 			boolean connected = true;
 			int newHeight = -10000;
 			int newDepth = -10000;
-			int tempHeight;
-			int tempDepth;
+			int tempYMax;
+			int tempYMin;
 			while (connected)
 			{
 				Arrays.fill(increaseIndex, false);
@@ -372,34 +373,34 @@ public class RenderDataPointUtil
 						tempData = sourceData.get(index * inputVerticalSize + indices[index]);
 						if (!RenderDataPointUtil.isVoid(tempData) && RenderDataPointUtil.doesDataPointExist(tempData))
 						{
-							tempHeight = RenderDataPointUtil.getHeight(tempData);
-							tempDepth = RenderDataPointUtil.getDepth(tempData);
-							if (tempDepth >= newHeight)
+							tempYMax = RenderDataPointUtil.getYMax(tempData);
+							tempYMin = RenderDataPointUtil.getYMin(tempData);
+							if (tempYMin >= newHeight)
 							{
 								//First case
 								//the column we are checking is higher than the current column
-								newDepth = tempDepth;
-								newHeight = tempHeight;
+								newDepth = tempYMin;
+								newHeight = tempYMax;
 								Arrays.fill(increaseIndex, false);
 								Arrays.fill(indexHandled, false);
 								increaseIndex[index] = true;
 								indexHandled[index] = true;
 							}
-							else if ((tempDepth >= newDepth) && (tempHeight <= newHeight))
+							else if ((tempYMin >= newDepth) && (tempYMax <= newHeight))
 							{
 								//the column we are checking is contained in the current column
 								//we simply increase this index
 								increaseIndex[index] = true;
 								indexHandled[index] = true;
 							}
-							else if (tempHeight > newHeight && tempDepth <= newDepth)
+							else if (tempYMax > newHeight && tempYMin <= newDepth)
 							{
-								newDepth = tempDepth;
-								newHeight = tempHeight;
+								newDepth = tempYMin;
+								newHeight = tempYMax;
 								increaseIndex[index] = true;
 								indexHandled[index] = true;
 							}
-							else if (tempHeight > newDepth && tempHeight <= newHeight)
+							else if (tempYMax > newDepth && tempYMax <= newHeight)
 							{
 								//the column we are checking touches the current column from the bottom
 								//for this reason we extend what's below
@@ -408,17 +409,17 @@ public class RenderDataPointUtil
 								//this index
 								if (!indexHandled[index])
 								{
-									newDepth = tempDepth;
+									newDepth = tempYMin;
 									increaseIndex[index] = true;
 									indexHandled[index] = true;
 								}
 							
 							}
-							else if (tempDepth < newHeight && tempDepth > newDepth)
+							else if (tempYMin < newHeight && tempYMin > newDepth)
 							{
 								//the column we are checking touches the current column from the top
 								//for this reason we extend the top
-								newHeight = tempHeight;
+								newHeight = tempYMax;
 								increaseIndex[index] = true;
 							}
 						}
@@ -523,11 +524,11 @@ public class RenderDataPointUtil
 			{
 				//We firstly collect height and depth data
 				//this will be added to each realtive long DataPoint
-				height = heightAndDepth[j * 2];
-				depth = heightAndDepth[j * 2 + 1];
+				yMax = heightAndDepth[j * 2];
+				yMin = heightAndDepth[j * 2 + 1];
 			
 				//if both height and depth are at 0 then we finished
-				if ((depth == 0 && height == 0) || j >= heightAndDepth.length / 2)
+				if ((yMin == 0 && yMax == 0) || j >= heightAndDepth.length / 2)
 				{
 					break;
 				}
@@ -556,8 +557,8 @@ public class RenderDataPointUtil
 						if (doesDataPointExist(singleData) && !isVoid(singleData))
 						{
 							dataIndexesCache[index]++;
-							if ((depth <= getDepth(singleData) && getDepth(singleData) < height)
-									|| (depth < getHeight(singleData) && getHeight(singleData) <= height))
+							if ((yMin <= getYMin(singleData) && getYMin(singleData) < yMax)
+									|| (yMin < getYMax(singleData) && getYMax(singleData) <= yMax))
 							{
 								data = singleData;
 								break;
@@ -607,7 +608,7 @@ public class RenderDataPointUtil
 				//	add simplification at the end due to color
 				//}
 				
-				output.set(j, createDataPoint(tempAlpha, (int) Math.sqrt(tempRed), (int) Math.sqrt(tempGreen), (int) Math.sqrt(tempBlue), height, depth, tempLightSky, tempLightBlock, genMode));
+				output.set(j, createDataPoint(tempAlpha, (int) Math.sqrt(tempRed), (int) Math.sqrt(tempGreen), (int) Math.sqrt(tempBlue), yMax, yMin, tempLightSky, tempLightBlock, genMode));
 			
 			}
 		}
