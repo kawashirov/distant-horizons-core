@@ -28,8 +28,13 @@ public abstract class DhLevel implements IDhLevel {
         CompletableFuture<ChunkSizedFullDataAccessor> future = this.chunkToLodBuilder.tryGenerateData(chunk);
         if (future != null)
         {
-            future.thenAccept((chunkSizedFullDataAccessor) -> 
-				{ 
+            future.thenAccept((chunkSizedFullDataAccessor) ->
+				{
+					if (chunkSizedFullDataAccessor == null) {
+						// This can happen if, among other reasons, a chunk save is superceded by a later event
+						return;
+					}
+
 					this.saveWrites(chunkSizedFullDataAccessor);
 					ApiEventInjector.INSTANCE.fireAllEvents(
 							DhApiChunkModifiedEvent.class,
@@ -40,5 +45,5 @@ public abstract class DhLevel implements IDhLevel {
 
     @Override
     public void close() { this.chunkToLodBuilder.close(); }
-	
+
 }
