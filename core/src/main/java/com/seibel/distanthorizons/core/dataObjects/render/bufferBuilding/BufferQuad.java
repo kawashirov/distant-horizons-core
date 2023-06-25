@@ -34,7 +34,7 @@ public final class BufferQuad
 	 */
 	public static final int NORMAL_MAX_QUAD_WIDTH = 2048;
 	/** The maximum number of blocks wide a quad can be
-	 * when {@link Config.Client.Graphics.AdvancedGraphics#earthCurveRatio earthCurveRatio} 
+	 * when {@link Config.Client.Advanced.Graphics.AdvancedGraphics#earthCurveRatio earthCurveRatio} 
 	 * is enabled. 
 	 */
 	public static final int MAX_QUAD_WIDTH_FOR_EARTH_CURVATURE = LodUtil.CHUNK_WIDTH;
@@ -147,7 +147,8 @@ public final class BufferQuad
 	 */
 	public boolean tryMerge(BufferQuad quad, BufferMergeDirectionEnum mergeDirection)
 	{
-		if (quad.hasError || this.hasError) return false;
+		if (quad.hasError || this.hasError) 
+			return false;
 		// only merge quads that are in the same direction
 		if (this.direction != quad.direction)
 			return false;
