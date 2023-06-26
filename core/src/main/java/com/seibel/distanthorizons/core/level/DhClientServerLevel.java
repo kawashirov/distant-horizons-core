@@ -39,7 +39,7 @@ public class DhClientServerLevel extends DhLevel implements IDhClientLevel, IDhS
 		{
 			LOGGER.warn("unable to create data folder.");
 		}
-		serverside = new ServerLevelModule(this, serverLevelWrapper, saveStructure);
+		serverside = new ServerLevelModule(this, serverLevelWrapper, saveStructure, false);
 		clientside = new ClientLevelModule(this);
 		LOGGER.info("Started "+DhClientServerLevel.class.getSimpleName()+" for "+ serverLevelWrapper +" with saves at "+saveStructure);
 	}
