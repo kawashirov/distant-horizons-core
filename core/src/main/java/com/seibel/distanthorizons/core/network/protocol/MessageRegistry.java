@@ -1,4 +1,4 @@
-package com.seibel.distanthorizons.core.network.messageHandling;
+package com.seibel.distanthorizons.core.network.protocol;
 
 import com.seibel.distanthorizons.core.network.messages.HelloMessage;
 import com.seibel.distanthorizons.core.network.messages.Message;

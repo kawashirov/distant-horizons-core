@@ -6,8 +6,8 @@ import io.netty.channel.ChannelHandlerContext;
 public abstract class Message {
     public Message() { }
 
-    public abstract void encode(ByteBuf out);
-    public abstract void decode(ByteBuf in);
+    public abstract void encode(ChannelHandlerContext ctx, ByteBuf out);
+    public abstract void decode(ChannelHandlerContext ctx, ByteBuf in);
 
     public void handle_Server(ChannelHandlerContext ctx) {
         throw new UnsupportedOperationException();

@@ -1,9 +1,6 @@
 package com.seibel.distanthorizons.core.network;
 
-import com.seibel.distanthorizons.core.network.messageHandling.MessageDecoder;
-import com.seibel.distanthorizons.core.network.messageHandling.MessageHandler;
-import com.seibel.distanthorizons.core.network.messageHandling.MessageHandlerSide;
-import com.seibel.distanthorizons.core.network.messageHandling.MessageRegistry;
+import com.seibel.distanthorizons.core.network.protocol.*;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -12,8 +9,10 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import org.jetbrains.annotations.NotNull;
 
 public class LodServer {
     // TODO move to config of some sort
@@ -47,15 +46,18 @@ public class LodServer {
     private ChannelInitializer<SocketChannel> getInitializer() {
         return new ChannelInitializer<SocketChannel>() {
             @Override
-            public void initChannel(SocketChannel ch) {
+            public void initChannel(@NotNull SocketChannel ch) {
                 ChannelPipeline pipeline = ch.pipeline();
 
                 MessageRegistry messageRegistry = new MessageRegistry();
 
                 // Encoding
-                pipeline.addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 2, 0, 2));
+                pipeline.addLast(new LengthFieldBasedFrameDecoder(Short.MAX_VALUE, 0, Short.BYTES, 0, Short.BYTES));
                 pipeline.addLast(new MessageDecoder(messageRegistry));
-                // TODO packet encoder
+
+                // Encoder
+                pipeline.addLast(new LengthFieldPrepender(Short.BYTES));
+                pipeline.addLast(new MessageEncoder(messageRegistry));
 
                 pipeline.addLast(new MessageHandler(MessageHandlerSide.SERVER));
             }
