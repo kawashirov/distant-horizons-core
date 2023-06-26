@@ -25,7 +25,8 @@ build_api_javadoc:
   artifacts:
     name: "ApiJavaDoc-${CI_COMMIT_SHORT_SHA}-${CI_COMMIT_TIMESTAMP}"
     paths:
-      - api/build/docs/javadoc
+      - api/build/docs/javadoc/
+    expose_as: "doc"
     when: always
   cache:
     key: "gradleCache"
