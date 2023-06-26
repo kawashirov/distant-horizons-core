@@ -1,4 +1,4 @@
-package com.seibel.distanthorizons.core.network.messageHandling;
+package com.seibel.distanthorizons.core.network.protocol;
 
 import com.seibel.distanthorizons.core.network.messages.Message;
 import io.netty.buffer.ByteBuf;
@@ -8,7 +8,7 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 import java.util.List;
 
 public class MessageDecoder extends ByteToMessageDecoder {
-    private MessageRegistry messageRegistry;
+    private final MessageRegistry messageRegistry;
 
     public MessageDecoder(MessageRegistry messageRegistry) {
         this.messageRegistry = messageRegistry;
@@ -17,7 +17,7 @@ public class MessageDecoder extends ByteToMessageDecoder {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
         Message message = messageRegistry.createMessage(in.readShort());
-        message.decode(in);
+        message.decode(ctx, in);
         out.add(message);
     }
 }

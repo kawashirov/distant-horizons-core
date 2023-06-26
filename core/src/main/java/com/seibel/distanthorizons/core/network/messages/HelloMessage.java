@@ -5,17 +5,17 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 
 // This message is critical to maintain backwards compatibility
-// as it's used to receive version BEFORE everything else.
+// as it's used to receive version before everything else.
 public class HelloMessage extends Message {
     public int version = ModInfo.PROTOCOL_VERSION;
 
     @Override
-    public void encode(ByteBuf out) {
+    public void encode(ChannelHandlerContext ctx, ByteBuf out) {
         out.writeInt(version);
     }
 
     @Override
-    public void decode(ByteBuf in) {
+    public void decode(ChannelHandlerContext ctx, ByteBuf in) {
         version = in.readInt();
     }
 
