@@ -23,7 +23,7 @@ uniform float mircoOffset;
  * author: James Seibel
  * updated: TomTheFurry
  * updated: coolGi
- * version: 24-1-2023
+ * version: 2023-6-25
  */
 void main()
 {
@@ -42,10 +42,8 @@ void main()
     // format is: 0b00zzyyxx
     float mx = (mirco & 1u)!=0u ? mircoOffset : 0.0;
     mx = (mirco & 2u)!=0u ? -mx : mx;
-    // commented out to try fixing an issue with SSAO that causes the black borders on some blocks.
-    // (Also the vertical offset shouldn't be necessary since all vertical LODs should be the same size.)
-//  float my = (mirco & 4u)!=0u ? mircoOffset : 0.0;
-//  my = (mirco & 8u)!=0u ? -my : my;
+    float my = (mirco & 4u)!=0u ? mircoOffset : 0.0;
+    my = (mirco & 8u)!=0u ? -my : my;
     float mz = (mirco & 16u)!=0u ? mircoOffset : 0.0;
     mz = (mirco & 32u)!=0u ? -mz : mz;
 
