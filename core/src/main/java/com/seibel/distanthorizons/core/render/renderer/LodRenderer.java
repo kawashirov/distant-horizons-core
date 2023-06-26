@@ -228,7 +228,7 @@ public class LodRenderer
 		//GL32.glEnable( GL32.GL_POLYGON_OFFSET_FILL );
 		//GL32.glPolygonOffset( 1f, 1f );
 
-		bufferHandler.buildRenderList(this.getLookVector());
+		bufferHandler.buildRenderListAndUpdateSections(this.getLookVector());
 
 		//===========//
 		// rendering //
@@ -253,7 +253,7 @@ public class LodRenderer
 		if (LodRenderer.transparencyEnabled) {
 			GL32.glEnable(GL32.GL_BLEND);
 			GL32.glBlendFunc(GL32.GL_SRC_ALPHA, GL32.GL_ONE_MINUS_SRC_ALPHA);
-			GL32.glDepthMask(false); // This so that even on incorrect sorting of transparent blocks, it still mostly looks correct
+			//GL32.glDepthMask(false); // This so that even on incorrect sorting of transparent blocks, it still mostly looks correct
 			bufferHandler.renderTransparent(this);
 			GL32.glDepthMask(true); // Apparently the depth mask state is stored in the FBO, so glState fails to restore it...
 		}

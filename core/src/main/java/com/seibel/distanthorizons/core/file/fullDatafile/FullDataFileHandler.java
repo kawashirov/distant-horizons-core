@@ -8,15 +8,18 @@ import com.seibel.distanthorizons.core.dataObjects.fullData.sources.HighDetailIn
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.LowDetailIncompleteFullDataSource;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IIncompleteFullDataSource;
+import com.seibel.distanthorizons.core.file.structure.AbstractSaveStructure;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhLodPos;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.CompleteFullDataSource;
+import com.seibel.distanthorizons.core.util.FileScanUtil;
 import com.seibel.distanthorizons.core.util.FileUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.ThreadUtil;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,43 +29,74 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static com.seibel.distanthorizons.core.util.FileScanUtil.LOD_FILE_POSTFIX;
+import static com.seibel.distanthorizons.core.util.FileScanUtil.RENDER_FILE_POSTFIX;
+
 public class FullDataFileHandler implements IFullDataSourceProvider
 {
+	public static final boolean USE_LAZY_LOADING = true;
+
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
 	protected static ExecutorService fileHandlerThreadPool;
 	protected static ConfigChangeListener<Integer> configListener;
-	
-	protected final ConcurrentHashMap<DhSectionPos, FullDataMetaFile> fileBySectionPos = new ConcurrentHashMap<>();
+
+	private final ConcurrentHashMap<DhSectionPos, File> unloadedFiles = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<DhSectionPos, FullDataMetaFile> fileBySectionPos = new ConcurrentHashMap<>();
+	public void ForEachFile(Consumer<FullDataMetaFile> consumer) {
+		fileBySectionPos.values().forEach(consumer);
+	}
+
 	protected final IDhLevel level;
 	protected final File saveDir;
 	protected final AtomicInteger topDetailLevel = new AtomicInteger(-1);
 	protected final int minDetailLevel = CompleteFullDataSource.SECTION_SIZE_OFFSET;
 	
-	
-	
-    public FullDataFileHandler(IDhLevel level, File saveRootDir)
+    public FullDataFileHandler(IDhLevel level, AbstractSaveStructure saveStructure)
 	{
 		this.level = level;
-        this.saveDir = saveRootDir;
+        this.saveDir = saveStructure.getFullDataFolder(level.getLevelWrapper());
 		if (!this.saveDir.exists() && !this.saveDir.mkdirs())
 		{
 			LOGGER.warn("Unable to create full data folder, file saving may fail.");
 		}
+		FileScanUtil.scanFiles(saveStructure, level.getLevelWrapper(), this, null);
     }
-	
-	
-	
-    /**
-    * Caller must ensure that this method is called only once,
-    *  and that the {@link FullDataFileHandler} is not used before this method is called.
-     */
-    @Override
-    public void addScannedFile(Collection<File> detectedFiles)
+
+	/**
+	 * Caller must ensure that this method is called only once,
+	 *  and that the {@link FullDataFileHandler} is not used before this method is called.
+	 */
+	@Override
+	public void addScannedFile(Collection<File> detectedFiles)
+	{
+		if (USE_LAZY_LOADING) {
+			lazyAddScannedFile(detectedFiles);
+		}
+		else {
+			immediateAddScannedFile(detectedFiles);
+		}
+	}
+
+	private void lazyAddScannedFile(Collection<File> detectedFiles) {
+		for (File file : detectedFiles) {
+			try {
+				DhSectionPos pos = decodePositionByFile(file);
+				if (pos != null) {
+					unloadedFiles.put(pos, file);
+					this.topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetailLevel));
+				}
+			}
+			catch (Exception e) {
+				LOGGER.error("Failed to read data meta file at " + file + ": ", e);
+				FileUtil.renameCorruptedFile(file);
+			}
+		}
+	}
+
+	private void immediateAddScannedFile(Collection<File> detectedFiles)
 	{
         HashMultimap<DhSectionPos, FullDataMetaFile> filesByPos = HashMultimap.create();
-        LOGGER.info("Detected {} valid files in {}", detectedFiles.size(), this.saveDir);
-
         { // Sort files by pos.
             for (File file : detectedFiles)
 			{
@@ -138,29 +172,52 @@ public class FullDataFileHandler implements IFullDataSourceProvider
         }
     }
 	
-    protected FullDataMetaFile getOrMakeFile(DhSectionPos pos)
+    protected FullDataMetaFile getLoadOrMakeFile(DhSectionPos pos, boolean allowCreateFile)
 	{
         FullDataMetaFile metaFile = this.fileBySectionPos.get(pos);
-        if (metaFile == null)
-		{
-            FullDataMetaFile newMetaFile;
-            try
-			{
-                newMetaFile = new FullDataMetaFile(this, this.level, pos);
-            }
-			catch (IOException e)
-			{
-                LOGGER.error("IOException on creating new data file at {}", pos, e);
-                return null;
-            }
-			
-            metaFile = this.fileBySectionPos.putIfAbsent(pos, newMetaFile); // This is a CAS with expected null value.
-            if (metaFile == null) 
-			{
-				metaFile = newMetaFile;
+		if (metaFile != null) return metaFile;
+
+		File fileToLoad = unloadedFiles.get(pos);
+		// File does exist, but not loaded yet.
+		if (fileToLoad != null) {
+			synchronized (this) {
+				// Double check locking for loading file, as loading file means also loading the metadata, which
+				// while not... Very expensive, is still better to avoid multiple threads doing it, and dumping the
+				// duplicated work to the trash. Therefore, eating the overhead of 'synchronized' is worth it.
+				metaFile = this.fileBySectionPos.get(pos);
+				if (metaFile != null) return metaFile; // someone else loaded it already.
+				try {
+					metaFile = new FullDataMetaFile(this, this.level, fileToLoad);
+					this.topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetailLevel));
+					this.fileBySectionPos.put(pos, metaFile);
+					return metaFile;
+				}
+				catch (IOException e) {
+					LOGGER.error("Failed to read data meta file at " + fileToLoad + ": ", e);
+					FileUtil.renameCorruptedFile(fileToLoad);
+				}
+				finally {
+					unloadedFiles.remove(pos);
+				}
 			}
-        }
-        return metaFile;
+		}
+		if (!allowCreateFile) return null;
+		// File does not exist, create it.
+		// In this case, since 'creating' a file object doesn't actually do anything heavy on IO yet, we use CAS
+		// to avoid overhead of 'synchronized', and eat the mini-overhead of possibly creating duplicate objects.
+		try
+		{
+			metaFile = new FullDataMetaFile(this, this.level, pos);
+		}
+		catch (IOException e)
+		{
+			LOGGER.error("IOException on creating new data file at {}", pos, e);
+			return null;
+		}
+		// This is a CAS with expected null value.
+		this.topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetailLevel));
+		FullDataMetaFile metaFileCas = this.fileBySectionPos.putIfAbsent(pos, metaFile);
+		return metaFileCas == null ? metaFile : metaFileCas;
     }
 	
 	/**
@@ -247,14 +304,16 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	/**
 	 * Returns the {@link IFullDataSource} for the given section position. <Br>
 	 * The returned data source may be null. <Br> <Br>
-	 * 
+	 *
+	 * For now, if result is null, it prob means error has occurred when loading or creating the file object. <Br> <Br>
+	 *
 	 * This call is concurrent. I.e. it supports being called by multiple threads at the same time.
 	 */
 	@Override
     public CompletableFuture<IFullDataSource> read(DhSectionPos pos)
 	{
 		this.topDetailLevel.updateAndGet(intVal -> Math.max(intVal, pos.sectionDetailLevel));
-        FullDataMetaFile metaFile = this.getOrMakeFile(pos);
+        FullDataMetaFile metaFile = this.getLoadOrMakeFile(pos, true);
         if (metaFile == null)
 		{
 			return CompletableFuture.completedFuture(null);
@@ -386,7 +445,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	protected void makeFiles(ArrayList<DhSectionPos> posList, ArrayList<FullDataMetaFile> output) {
 		for (DhSectionPos missingPos : posList)
 		{
-			FullDataMetaFile newFile = this.getOrMakeFile(missingPos);
+			FullDataMetaFile newFile = this.getLoadOrMakeFile(missingPos, true);
 			if (newFile != null)
 			{
 				output.add(newFile);
@@ -427,7 +486,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		// remove the FullDataMetaFile since the old one was corrupted
 		this.fileBySectionPos.remove(pos);
 		// create a new FullDataMetaFile to write new data to
-		return this.getOrMakeFile(pos);
+		return this.getLoadOrMakeFile(pos, true);
 	}
 	
 	@Override
@@ -455,8 +514,16 @@ public class FullDataFileHandler implements IFullDataSourceProvider
     }
 	
     @Override
-    public File computeDataFilePath(DhSectionPos pos) { return new File(this.saveDir, pos.serialize() + ".lod"); }
-	
+    public File computeDataFilePath(DhSectionPos pos) { return new File(this.saveDir, pos.serialize() + LOD_FILE_POSTFIX); }
+
+	@Nullable
+	public DhSectionPos decodePositionByFile(File file)
+	{
+		String fileName = file.getName();
+		if (!fileName.endsWith(LOD_FILE_POSTFIX)) return null;
+		fileName = fileName.substring(0, fileName.length() - 4);
+		return DhSectionPos.deserialize(fileName);
+	}
 	
 	
 	//==========================//

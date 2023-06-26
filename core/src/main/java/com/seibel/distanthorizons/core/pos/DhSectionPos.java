@@ -3,6 +3,7 @@ package com.seibel.distanthorizons.core.pos;
 import com.seibel.distanthorizons.core.enums.ELodDirection;
 import com.seibel.distanthorizons.coreapi.util.BitShiftUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
@@ -73,9 +74,8 @@ public class DhSectionPos
 		this.sectionX = dhLodPos.x;
 		this.sectionZ = dhLodPos.z;
 	}
-	
-	
-	
+
+
 	/** Returns the center for the highest detail level (0) */
 	public DhLodPos getCenter() { return this.getCenter((byte) 0); } // TODO why does this use detail level 0 instead of this object's detail level?
 	public DhLodPos getCenter(byte returnDetailLevel)
@@ -211,8 +211,15 @@ public class DhSectionPos
 	
 	/** Serialize() is different from toString() as it must NEVER be changed, and should be in a short format */
 	public String serialize() { return "[" + this.sectionDetailLevel + ',' + this.sectionX + ',' + this.sectionZ + ']'; }
-	
-	
+
+	@Nullable
+	public static DhSectionPos deserialize(String value) {
+		if (value.charAt(0) != '[' || value.charAt(value.length() - 1) != ']') return null;
+		String[] split = value.substring(1, value.length() - 1).split(",");
+		if (split.length != 3) return null;
+		return new DhSectionPos(Byte.parseByte(split[0]), Integer.parseInt(split[1]), Integer.parseInt(split[2]));
+
+	}
 	
 	@Override
 	public String toString() { return "{" + this.sectionDetailLevel + "*" + this.sectionX + "," + this.sectionZ + "}"; }

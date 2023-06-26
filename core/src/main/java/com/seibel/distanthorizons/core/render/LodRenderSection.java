@@ -361,7 +361,6 @@ public class LodRenderSection implements IDebugRenderable
 	}
 
 	public void markBufferDirty() {
-		tellNeighborsUpdated();
 		lastSwapLocalVersion = -1;
 	}
 }

@@ -84,8 +84,6 @@ public class ClientLevelModule {
         if (isBuffersDirty) {
             clientRenderState.renderer.bufferHandler.MarkAllBuffersDirty();
         }
-
-        clientRenderState.renderer.bufferHandler.updateQuadTreeRenderSources();
     }
 
 
@@ -256,13 +254,12 @@ public class ClientLevelModule {
                 AbstractSaveStructure saveStructure)
         {
             this.levelWrapper = dhClientLevel.getLevelWrapper();
-            this.renderSourceFileHandler = new RenderSourceFileHandler(fullDataSourceProvider, dhClientLevel, saveStructure.getRenderCacheFolder(this.levelWrapper));
+            this.renderSourceFileHandler = new RenderSourceFileHandler(fullDataSourceProvider, dhClientLevel, saveStructure);
 
             this.quadtree = new LodQuadTree(dhClientLevel, Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH,
                     MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, this.renderSourceFileHandler);
 
             RenderBufferHandler renderBufferHandler = new RenderBufferHandler(this.quadtree);
-            FileScanUtil.scanFiles(saveStructure, this.levelWrapper, fullDataSourceProvider, this.renderSourceFileHandler);
             this.renderer = new LodRenderer(renderBufferHandler);
         }
 

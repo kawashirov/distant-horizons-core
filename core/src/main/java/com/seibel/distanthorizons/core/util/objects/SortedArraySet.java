@@ -67,6 +67,10 @@ public class SortedArraySet<E> implements SortedSet<E> {
         return list.listIterator();
     }
 
+    public ListIterator<E> listIterator(int index) {
+        return list.listIterator(index);
+    }
+
 
     @Override
     public Object[] toArray() {

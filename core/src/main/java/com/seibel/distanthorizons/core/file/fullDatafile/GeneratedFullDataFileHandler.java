@@ -4,7 +4,7 @@ import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedF
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IIncompleteFullDataSource;
-import com.seibel.distanthorizons.core.file.metaData.BaseMetaData;
+import com.seibel.distanthorizons.core.file.structure.AbstractSaveStructure;
 import com.seibel.distanthorizons.core.generation.WorldGenerationQueue;
 import com.seibel.distanthorizons.core.generation.tasks.IWorldGenTaskTracker;
 import com.seibel.distanthorizons.core.generation.tasks.WorldGenResult;
@@ -13,8 +13,6 @@ import com.seibel.distanthorizons.core.level.IDhServerLevel;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhLodPos;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
-import com.seibel.distanthorizons.core.dataObjects.fullData.sources.HighDetailIncompleteFullDataSource;
-import com.seibel.distanthorizons.core.dataObjects.fullData.sources.LowDetailIncompleteFullDataSource;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
@@ -26,8 +24,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class GeneratedFullDataFileHandler extends FullDataFileHandler
 {
@@ -40,7 +36,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	// Use to hold onto incomplete data sources that are waiting for generation, so that they don't get GC'd before they are generated
 	private final ConcurrentHashMap<DhSectionPos, IIncompleteFullDataSource> incompleteDataSources = new ConcurrentHashMap<>();
 	
-	public GeneratedFullDataFileHandler(IDhServerLevel level, File saveRootDir) { super(level, saveRootDir); }
+	public GeneratedFullDataFileHandler(IDhServerLevel level, AbstractSaveStructure saveStructure) { super(level, saveStructure); }
 	
 	
 	
@@ -69,17 +65,14 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		boolean oldQueueExists = this.worldGenQueueRef.compareAndSet(null, newWorldGenQueue);
 		LodUtil.assertTrue(oldQueueExists, "previous world gen queue is still here!");
 		LOGGER.info("Set world gen queue for level {} to start.", this.level);
-		for (FullDataMetaFile metaFile : this.fileBySectionPos.values())
-		{
+		this.ForEachFile(metaFile -> {
 			IFullDataSource data = metaFile.getCachedDataSourceNowOrNull();
-			if (data instanceof CompleteFullDataSource) {
-				continue;
-			}
+			if (data instanceof CompleteFullDataSource) return;
 			metaFile.genQueueChecked = false; // unset it so it can be checked again
 			if (data != null) {
 				metaFile.markNeedUpdate();
 			}
-		}
+		});
 		flushAndSave(); // Trigger an update to the meta files
 	}
 	
@@ -130,7 +123,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 			if (targetDataDetailLevel > maxSectDataDetailLevel) {
 				ArrayList<FullDataMetaFile> existingFiles = new ArrayList<>();
 				byte sectDetailLevel = (byte) (DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL + maxSectDataDetailLevel);
-				pos.forEachChildAtLevel(sectDetailLevel, p -> existingFiles.add(getOrMakeFile(p)));
+				pos.forEachChildAtLevel(sectDetailLevel, p -> existingFiles.add(getLoadOrMakeFile(p, true)));
 				return sampleFromFiles(dataSource, existingFiles).thenApply(this::tryPromoteDataSource)
 						.exceptionally((e) ->
 						{

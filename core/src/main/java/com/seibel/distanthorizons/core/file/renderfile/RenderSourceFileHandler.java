@@ -1,8 +1,11 @@
 package com.seibel.distanthorizons.core.file.renderfile;
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
 import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
+import com.seibel.distanthorizons.core.file.fullDatafile.FullDataMetaFile;
+import com.seibel.distanthorizons.core.file.structure.AbstractSaveStructure;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhLodPos;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
@@ -11,30 +14,34 @@ import com.seibel.distanthorizons.core.dataObjects.transformers.DataRenderTransf
 import com.seibel.distanthorizons.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.distanthorizons.core.level.IDhClientLevel;
 import com.seibel.distanthorizons.core.render.renderer.DebugRenderer;
+import com.seibel.distanthorizons.core.util.FileScanUtil;
 import com.seibel.distanthorizons.core.util.FileUtil;
 import com.seibel.distanthorizons.core.util.ThreadUtil;
 import com.seibel.distanthorizons.core.util.objects.UncheckedInterruptedException;
 import com.seibel.distanthorizons.core.config.Config;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.RejectedExecutionException;
+import java.util.List;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.seibel.distanthorizons.core.util.FileScanUtil.RENDER_FILE_POSTFIX;
 
 public class RenderSourceFileHandler implements ILodRenderSourceProvider
 {
-	public static final String RENDER_FILE_EXTENSION = ".rlod";
+	public static final boolean USE_LAZY_LOADING = true;
 	public static final long RENDER_SOURCE_TYPE_ID = ColumnRenderSource.TYPE_ID;
 	
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
 	private final ExecutorService fileHandlerThreadPool = ThreadUtil.makeSingleThreadPool("Render Source File Handler");
+
+	private final ConcurrentHashMap<DhSectionPos, File> unloadedFiles = new ConcurrentHashMap<>();
 	private final ConcurrentHashMap<DhSectionPos, RenderMetaDataFile> filesBySectionPos = new ConcurrentHashMap<>();
 	
 	private final IDhClientLevel level;
@@ -42,21 +49,18 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	/** This is the lowest (highest numeric) detail level that this {@link RenderSourceFileHandler} is keeping track of. */
 	AtomicInteger topDetailLevel = new AtomicInteger(6);
 	private final IFullDataSourceProvider fullDataSourceProvider;
-	
-	private final ConcurrentHashMap<DhSectionPos, Object> cacheUpdateLockBySectionPos = new ConcurrentHashMap<>();
-	
-	
-	
-	
-	public RenderSourceFileHandler(IFullDataSourceProvider sourceProvider, IDhClientLevel level, File saveRootDir)
+
+
+	public RenderSourceFileHandler(IFullDataSourceProvider sourceProvider, IDhClientLevel level, AbstractSaveStructure saveStructure)
 	{
         this.fullDataSourceProvider = sourceProvider;
         this.level = level;
-        this.saveDir = saveRootDir;
+        this.saveDir = saveStructure.getRenderCacheFolder(level.getLevelWrapper());
 		if (!this.saveDir.exists() && !this.saveDir.mkdirs())
 		{
 			LOGGER.warn("Unable to create render data folder, file saving may fail.");
 		}
+		FileScanUtil.scanFiles(saveStructure, level.getLevelWrapper(), null, this);
     }
 	
 	
@@ -70,7 +74,33 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	 * and that the given files are not used before this method is called.
 	 */
 	@Override
-	public void addScannedFile(Collection<File> newRenderFiles)
+	public void addScannedFile(Collection<File> detectedFiles)
+	{
+		if (USE_LAZY_LOADING) {
+			lazyAddScannedFile(detectedFiles);
+		}
+		else {
+			immediateAddScannedFile(detectedFiles);
+		}
+	}
+
+	private void lazyAddScannedFile(Collection<File> detectedFiles) {
+		for (File file : detectedFiles) {
+			try {
+				DhSectionPos pos = decodePositionByFile(file);
+				if (pos != null) {
+					unloadedFiles.put(pos, file);
+					this.topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetailLevel));
+				}
+			}
+			catch (Exception e) {
+				LOGGER.error("Failed to read data meta file at " + file + ": ", e);
+				FileUtil.renameCorruptedFile(file);
+			}
+		}
+	}
+
+	private void immediateAddScannedFile(Collection<File> newRenderFiles)
 	{
 		HashMultimap<DhSectionPos, RenderMetaDataFile> filesByPos = HashMultimap.create();
 		
@@ -88,8 +118,6 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 				FileUtil.renameCorruptedFile(file);
 			}
 		}
-		
-		
 		
 		// Warn for multiple files with the same pos, and then select the one with the latest timestamp.
 		for (DhSectionPos pos : filesByPos.keySet())
@@ -148,19 +176,61 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 			{
 				fileToUse = metaFiles.iterator().next();
 			}
-			
-			
 			// Add this file to the list of files.
 			this.filesBySectionPos.put(pos, fileToUse);
-			
 			// increase the lowest detail level if a new lower detail file is found
-			if (this.topDetailLevel.get() < pos.sectionDetailLevel)
-			{
-				this.topDetailLevel.set(pos.sectionDetailLevel);
-			}
+			this.topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetailLevel));
 		}
 	}
-	
+
+	protected RenderMetaDataFile getLoadOrMakeFile(DhSectionPos pos, boolean allowCreateFile)
+	{
+		RenderMetaDataFile metaFile = this.filesBySectionPos.get(pos);
+		if (metaFile != null) return metaFile;
+
+		File fileToLoad = unloadedFiles.get(pos);
+		// File does exist, but not loaded yet.
+		if (fileToLoad != null) {
+			synchronized (this) {
+				// Double check locking for loading file, as loading file means also loading the metadata, which
+				// while not... Very expensive, is still better to avoid multiple threads doing it, and dumping the
+				// duplicated work to the trash. Therefore, eating the overhead of 'synchronized' is worth it.
+				metaFile = this.filesBySectionPos.get(pos);
+				if (metaFile != null) return metaFile; // someone else loaded it already.
+				try {
+					metaFile = RenderMetaDataFile.createFromExistingFile(this, fileToLoad);
+					this.topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetailLevel));
+					this.filesBySectionPos.put(pos, metaFile);
+					return metaFile;
+				}
+				catch (IOException e) {
+					LOGGER.error("Failed to read render meta file at " + fileToLoad + ": ", e);
+					FileUtil.renameCorruptedFile(fileToLoad);
+				}
+				finally {
+					unloadedFiles.remove(pos);
+				}
+			}
+		}
+		if (!allowCreateFile) return null;
+		// File does not exist, create it.
+		// In this case, since 'creating' a file object doesn't actually do anything heavy on IO yet, we use CAS
+		// to avoid overhead of 'synchronized', and eat the mini-overhead of possibly creating duplicate objects.
+		try
+		{
+			metaFile = RenderMetaDataFile.createNewFileForPos(this, pos);
+		}
+		catch (IOException e)
+		{
+			LOGGER.error("IOException on creating new data file at {}", pos, e);
+			return null;
+		}
+		this.topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetailLevel));
+		// This is a CAS with expected null value.
+		RenderMetaDataFile metaFileCas = this.filesBySectionPos.putIfAbsent(pos, metaFile);
+		return metaFileCas == null ? metaFile : metaFileCas;
+	}
+
 	/** This call is concurrent. I.e. it supports multiple threads calling this method at the same time. */
     @Override
     public CompletableFuture<ColumnRenderSource> readAsync(DhSectionPos pos)
@@ -171,45 +241,10 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 			return CompletableFuture.completedFuture(null);
 		}
 		
-		
-		
-        RenderMetaDataFile metaFile = this.filesBySectionPos.get(pos);
-		if (metaFile == null)
-		{
-			RenderMetaDataFile newMetaFile;
-			try
-			{
-				File renderMetaFile = this.computeRenderFilePath(pos);
-				boolean renderFileExists = renderMetaFile.exists();
-				
-				if (renderFileExists)
-				{
-					newMetaFile = RenderMetaDataFile.createFromExistingFile(this, renderMetaFile);
-				}
-				else
-				{
-					newMetaFile = RenderMetaDataFile.createNewFileForPos(this, pos);
-				}
-			}
-			catch (IOException e)
-			{
-				LOGGER.error("IOException on creating new render file at "+pos, e);
-				return null;
-			}
-			
-			
-			metaFile = this.filesBySectionPos.putIfAbsent(pos, newMetaFile); // This is a CAS with expected null value.
-			if (metaFile == null)
-			{
-				metaFile = newMetaFile;
-			}
-			
-			// increase the lowest detail level if a new lower detail file was added
-			if (this.topDetailLevel.get() < pos.sectionDetailLevel)
-			{
-				this.topDetailLevel.set(pos.sectionDetailLevel);
-			}
-		}
+        RenderMetaDataFile metaFile = this.getLoadOrMakeFile(pos, true);
+
+		// On error, (when it returns null,) return an empty render source
+		if (metaFile == null) return CompletableFuture.completedFuture(ColumnRenderSource.createEmptyRenderSource(pos));
 		
         return metaFile.loadOrGetCachedDataSourceAsync(this.fileHandlerThreadPool, this.level).handle(
 			(renderSource, exception) ->
@@ -258,7 +293,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		for (int ox = 0; ox < width; ox++) {
 			for (int oz = 0; oz < width; oz++) {
 				DhSectionPos sectPos = new DhSectionPos(sectionDetailLevel, sectPosMin.x + ox, sectPosMin.z + oz);
-				RenderMetaDataFile metaFile = this.filesBySectionPos.get(sectPos);
+				RenderMetaDataFile metaFile = this.filesBySectionPos.get(sectPos); // bypass the getLoadOrMakeFile(), as we only want in-cache files.
 				if (metaFile != null)
 				{
 					metaFile.updateChunkIfSourceExists(chunk, this.level);
@@ -431,9 +466,12 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 				}
 			}
 		}
-		
+		else {
+			renderFiles = new File[0];
+		}
 		// clear the cached files
 		this.filesBySectionPos.clear();
+		addScannedFile(ImmutableList.copyOf(renderFiles));
 	}
 	
 	
@@ -442,7 +480,15 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	// helper methods //
 	//================//
 	
-	public File computeRenderFilePath(DhSectionPos pos) { return new File(this.saveDir, pos.serialize() + RENDER_FILE_EXTENSION);}
-	
+	public File computeRenderFilePath(DhSectionPos pos) { return new File(this.saveDir, pos.serialize() + RENDER_FILE_POSTFIX);}
+
+	@Nullable
+	public DhSectionPos decodePositionByFile(File file)
+	{
+		String fileName = file.getName();
+		if (!fileName.endsWith(RENDER_FILE_POSTFIX)) return null;
+		fileName = fileName.substring(0, fileName.length() - RENDER_FILE_POSTFIX.length());
+		return DhSectionPos.deserialize(fileName);
+	}
 	
 }

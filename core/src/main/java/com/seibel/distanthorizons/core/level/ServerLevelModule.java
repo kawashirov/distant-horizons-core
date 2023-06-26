@@ -69,8 +69,7 @@ public class ServerLevelModule {
         this.parent = parent;
         this.levelWrapper = levelWrapper;
         this.saveStructure = saveStructure;
-        this.dataFileHandler = new GeneratedFullDataFileHandler(parent, saveStructure.getFullDataFolder(levelWrapper));
-        FileScanUtil.scanFiles(saveStructure, this.levelWrapper, this.dataFileHandler, null);
+        this.dataFileHandler = new GeneratedFullDataFileHandler(parent, saveStructure);
         this.worldGeneratorEnabledConfig = new AppliedConfigState<>(Config.Client.Advanced.WorldGenerator.enableDistantGeneration);
     }
 
