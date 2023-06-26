@@ -21,8 +21,9 @@ public interface IDhApiCancelableEvent<T> extends IDhApiEvent<T>
 	 * The {@link IDhApiCancelableEvent#fireEvent(DhApiCancelableEventParam)} method should be used instead.
 	 * This override method is present to prevent API users from having to implement it themselves.
 	 * 
-	 * @implNote Is there a better way to format the {@link IDhApiEvent} classes so we don't need this method?
-	 *           It would be better to completely hide this method so it isn't possible to accidentally call.
+	 * @deprecated marked as deprecated to warn that this method shouldn't be used. <br>
+	 * 			   <strong>DH Internal Note:</strong> Is there a better way to format the {@link IDhApiEvent} classes so we don't need this method?
+	 *             It would be better to completely hide this method so it isn't possible to accidentally call.
 	 */
 	@Deprecated
 	@Override

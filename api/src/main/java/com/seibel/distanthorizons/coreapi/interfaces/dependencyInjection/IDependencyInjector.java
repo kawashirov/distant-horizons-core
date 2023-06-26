@@ -50,7 +50,7 @@ public interface IDependencyInjector<BindableType extends IBindable>
 	 * Returns a dependency of type T if one has been bound. <br>
 	 * Returns null if a dependency hasn't been bound. <br> <br>
 	 *
-	 * If the handler's {@link #allowDuplicateBindings} is true this returns the first bound dependency.
+	 * If the handler allows duplicate bindings, this will return the first bound dependency.
 	 *
 	 * @param <T> class of the dependency
 	 *            (inferred from the interfaceClass parameter)

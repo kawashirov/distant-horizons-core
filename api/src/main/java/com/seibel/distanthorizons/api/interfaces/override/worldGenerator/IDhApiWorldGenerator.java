@@ -90,7 +90,7 @@ public interface IDhApiWorldGenerator extends Closeable, IDhApiOverrideable
 	 * Please run your generator in game at least once to confirm the objects you are returning are correct. <br><br>
 	 * 
 	 * Consumer expected inputs for each minecraft version (in order): <br>
-	 * <strong>1.18:</strong> {@link net.minecraft.world.level.chunk.ChunkAccess} and {@link net.minecraft.world.level.LevelReader} <br>
+	 * <strong>1.18:</strong> [net.minecraft.world.level.chunk.ChunkAccess] and [net.minecraft.world.level.LevelReader] <br>
 	 */
 	CompletableFuture<Void> generateChunks(int chunkPosMinX, int chunkPosMinZ,
 			byte granularity, byte targetDataDetail, EDhApiDistantGeneratorMode generatorMode,

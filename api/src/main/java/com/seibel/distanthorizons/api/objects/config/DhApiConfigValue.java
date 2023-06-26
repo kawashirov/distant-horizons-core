@@ -10,7 +10,7 @@ import com.seibel.distanthorizons.coreapi.util.converters.DefaultConverter;
  *
  * When using this object you need to explicitly define the generic types,
  * otherwise Intellij won't do any type checking and the wrong types can be used. <br>
- * For example a method returning IDhApiConfig<Integer> when the config should be a Boolean.
+ * For example a method returning {@literal IDhApiConfig<Integer> } when the config should be a Boolean.
  *
  * @param <apiType> The datatype you, an API dev will use.
  * @param <coreType> The datatype Distant Horizons uses in the background; implementing developers can ignore this.

@@ -11,14 +11,14 @@ public class BitShiftUtil
 {
 	/** 
 	 * Equivalent to: <br>
-	 * 1 << value, <br>
+	 * {@literal 1 << value0, } <br>
 	 * 2^value, <br>
 	 * Math.pow(2, value) <br><br>
 	 * 
 	 * Note: Math.pow() isn't identical for large values where bits would be lost in the shift, however for medium to small values they function the same. <br><br>
 	 * 
 	 * Can also be used to replace bit shifts in the format: <br>
-	 * multiplier << value; <br>
+	 * {@literal multiplier << value; } <br>
 	 * multiplier * powerOfTwo(value);
 	 */
 	public static int powerOfTwo(int value) { return 1 << value; }
@@ -52,7 +52,7 @@ public class BitShiftUtil
 	
 	/**
 	 * Equivalent to: <br>
-	 * value << 1, <br>
+	 * {@literal value << 1, } <br>
 	 * value^2, <br>
 	 * Math.pow(value, 2) <br><br>
 	 * 
@@ -65,7 +65,7 @@ public class BitShiftUtil
 	
 	/**
 	 * Equivalent to: <br>
-	 * value << power, <br>
+	 * {@literal value << power, } <br>
 	 * value^power, <br>
 	 * Math.pow(value, power) <br><br>
 	 * 
