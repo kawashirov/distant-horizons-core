@@ -3,6 +3,7 @@ package com.seibel.distanthorizons.core.world;
 import com.seibel.distanthorizons.core.file.structure.ClientOnlySaveStructure;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.level.DhClientLevel;
+import com.seibel.distanthorizons.core.network.NetworkClient;
 import com.seibel.distanthorizons.core.util.ThreadUtil;
 import com.seibel.distanthorizons.core.util.objects.EventLoop;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
@@ -17,6 +18,7 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 {
     private final HashMap<IClientLevelWrapper, DhClientLevel> levels;
     public final ClientOnlySaveStructure saveStructure;
+    private final NetworkClient networkClient;
 	
 	// TODO why does this executor have 2 threads?
     public ExecutorService dhTickerThread = ThreadUtil.makeSingleThreadPool("DH Client World Ticker Thread", 2);
@@ -27,8 +29,11 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
     public DhClientWorld()
 	{
 		super(EWorldEnvironment.Client_Only);
-		this.saveStructure = new ClientOnlySaveStructure();
+
+        this.saveStructure = new ClientOnlySaveStructure();
 		this.levels = new HashMap<>();
+        this.networkClient = new NetworkClient("127.0.0.1", 25049);
+
 		LOGGER.info("Started DhWorld of type "+this.environment);
 	}
 	

@@ -8,15 +8,9 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 import java.util.List;
 
 public class MessageDecoder extends ByteToMessageDecoder {
-    private final MessageRegistry messageRegistry;
-
-    public MessageDecoder(MessageRegistry messageRegistry) {
-        this.messageRegistry = messageRegistry;
-    }
-
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
-        Message message = messageRegistry.createMessage(in.readShort());
+        Message message = MessageRegistry.INSTANCE.createMessage(in.readShort());
         message.decode(ctx, in);
         out.add(message);
     }
