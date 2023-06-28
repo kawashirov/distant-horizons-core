@@ -77,8 +77,10 @@ public class ChunkToLodBuilder implements AutoCloseable
 		{
 			return;
 		}
-		else if (!MC.playerExists())
+		else if (MC == null || !MC.playerExists())
 		{
+			// TODO handle server side properly
+
 			// MC hasn't finished loading (or is currently unloaded)
 			
 			// can be uncommented if tasks aren't being cleared correctly

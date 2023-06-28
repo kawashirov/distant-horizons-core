@@ -3,6 +3,7 @@ package com.seibel.distanthorizons.core.world;
 import com.seibel.distanthorizons.core.file.structure.LocalSaveStructure;
 import com.seibel.distanthorizons.core.level.DhServerLevel;
 import com.seibel.distanthorizons.core.level.IDhLevel;
+import com.seibel.distanthorizons.core.network.NetworkServer;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
@@ -15,7 +16,7 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 {
 	private final HashMap<IServerLevelWrapper, DhServerLevel> levels;
 	public final LocalSaveStructure saveStructure;
-	
+	private final NetworkServer networkServer;
 	
 	
 	public DhServerWorld()
@@ -24,6 +25,7 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 		
 		this.saveStructure = new LocalSaveStructure();
 		this.levels = new HashMap<>();
+		this.networkServer = new NetworkServer(25049);
 		
 		LOGGER.info("Started "+DhServerWorld.class.getSimpleName()+" of type "+this.environment);
 	}

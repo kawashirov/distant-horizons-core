@@ -6,15 +6,9 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 
 public class MessageEncoder extends MessageToByteEncoder<Message> {
-    private final MessageRegistry messageRegistry;
-
-    public MessageEncoder(MessageRegistry messageRegistry) {
-        this.messageRegistry = messageRegistry;
-    }
-
     @Override
     protected void encode(ChannelHandlerContext ctx, Message msg, ByteBuf out) throws IllegalArgumentException {
-        out.writeShort(messageRegistry.getMessageId(msg));
+        out.writeShort(MessageRegistry.INSTANCE.getMessageId(msg));
         msg.encode(ctx, out);
     }
 }
