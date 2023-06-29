@@ -64,7 +64,7 @@ public class ServerLevelModule {
     public final AppliedConfigState<Boolean> worldGeneratorEnabledConfig;
     private final AtomicReference<WorldGenState> worldGenStateRef = new AtomicReference<>();
 
-    public ServerLevelModule(IDhServerLevel parent, IServerLevelWrapper levelWrapper, AbstractSaveStructure saveStructure, boolean startLodServer)
+    public ServerLevelModule(IDhServerLevel parent, IServerLevelWrapper levelWrapper, AbstractSaveStructure saveStructure)
     {
         this.parent = parent;
         this.levelWrapper = levelWrapper;
