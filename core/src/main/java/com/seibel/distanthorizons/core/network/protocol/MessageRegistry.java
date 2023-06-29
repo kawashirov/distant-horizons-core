@@ -14,13 +14,13 @@ public class MessageRegistry {
         registerMessage(1, HelloMessage.class, HelloMessage::new);
     }};
 
-    private final Map<Integer, Supplier<Message>> idToSupplier = new HashMap<>();
-    private final Map<Class<?>, Integer> classToId = new HashMap<>();
+    private final Map<Integer, Supplier<? extends Message>> idToSupplier = new HashMap<>();
+    private final Map<Class<? extends Message>, Integer> classToId = new HashMap<>();
 
     private MessageRegistry() { }
 
     public <T extends Message> void registerMessage(int id, Class<T> clazz, Supplier<T> supplier) {
-        idToSupplier.put(id, (Supplier<Message>) supplier);
+        idToSupplier.put(id, supplier);
         classToId.put(clazz, id);
     }
 

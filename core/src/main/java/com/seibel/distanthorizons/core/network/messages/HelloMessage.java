@@ -7,8 +7,6 @@ import io.netty.channel.ChannelHandlerContext;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 
-// This message is critical to maintain backwards compatibility
-// as it's used to receive version before everything else.
 public class HelloMessage extends Message {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 
@@ -22,15 +20,5 @@ public class HelloMessage extends Message {
     @Override
     public void decode(ChannelHandlerContext ctx, ByteBuf in) {
         version = in.readInt();
-    }
-
-    @Override
-    public void handle_Server(ChannelHandlerContext ctx) {
-        LOGGER.log(Level.INFO, "Client version: " + version);
-    }
-
-    @Override
-    public void handle_Client(ChannelHandlerContext ctx) {
-        LOGGER.log(Level.INFO, "Server version: " + version);
     }
 }

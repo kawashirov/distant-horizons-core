@@ -25,6 +25,8 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 		
 		this.saveStructure = new LocalSaveStructure();
 		this.levels = new HashMap<>();
+
+		// TODO move to global config once server specific configs are implemented
 		this.networkServer = new NetworkServer(25049);
 		
 		LOGGER.info("Started "+DhServerWorld.class.getSimpleName()+" of type "+this.environment);
@@ -90,6 +92,8 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 	@Override
 	public void close()
 	{
+		this.networkServer.close();
+
 		for (DhServerLevel level : this.levels.values())
 		{
 			LOGGER.info("Unloading level " + level.getLevelWrapper().getDimensionType().getDimensionName());

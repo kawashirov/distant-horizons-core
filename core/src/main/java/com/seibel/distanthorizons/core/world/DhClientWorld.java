@@ -1,11 +1,13 @@
 package com.seibel.distanthorizons.core.world;
 
+import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.file.structure.ClientOnlySaveStructure;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.level.DhClientLevel;
 import com.seibel.distanthorizons.core.network.NetworkClient;
 import com.seibel.distanthorizons.core.util.ThreadUtil;
 import com.seibel.distanthorizons.core.util.objects.EventLoop;
+import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 
@@ -16,6 +18,8 @@ import java.util.concurrent.ExecutorService;
 
 public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 {
+    private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
+
     private final ConcurrentHashMap<IClientLevelWrapper, DhClientLevel> levels;
     public final ClientOnlySaveStructure saveStructure;
 
@@ -32,8 +36,10 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 		super(EWorldEnvironment.Client_Only);
 
         this.saveStructure = new ClientOnlySaveStructure();
-		this.levels = new ConcurrentHashMap<>();
-        this.networkClient = new NetworkClient("127.0.0.1", 25049);
+        this.levels = new ConcurrentHashMap<>();
+
+        // TODO server specific configs
+        this.networkClient = new NetworkClient(MC_CLIENT.getCurrentServerIp(), 25049);
 
 		LOGGER.info("Started DhWorld of type "+this.environment);
 	}
@@ -105,6 +111,8 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
     @Override
     public void close()
 	{
+        this.networkClient.close();
+
 		this.saveAndFlush().join();
         for (DhClientLevel dhClientLevel : this.levels.values())
 		{
