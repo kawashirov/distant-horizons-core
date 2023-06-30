@@ -21,6 +21,7 @@ package com.seibel.distanthorizons.core.api.internal;
 
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiLevelLoadEvent;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiLevelUnloadEvent;
+import com.seibel.distanthorizons.core.wrapperInterfaces.misc.IServerPlayerWrapper;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.world.AbstractDhWorld;
@@ -159,5 +160,23 @@ public class ServerApi
 			}
 		}
 	}
-	
+
+	public void serverPlayerJoinEvent(IServerPlayerWrapper player)
+	{
+		IDhServerWorld serverWorld = SharedApi.getIDhServerWorld();
+		if (serverWorld instanceof DhServerWorld)
+		{
+			LOGGER.debug("Waiting for player to connect: " + player.getUUID());
+			((DhServerWorld) serverWorld).addPlayer(player);
+		}
+	}
+	public void serverPlayerDisconnectEvent(IServerPlayerWrapper player)
+	{
+		IDhServerWorld serverWorld = SharedApi.getIDhServerWorld();
+		if (serverWorld instanceof DhServerWorld)
+		{
+			LOGGER.debug("Removing player from connect wait list: " + player.getUUID());
+			((DhServerWorld) serverWorld).removePlayer(player);
+		}
+	}
 }

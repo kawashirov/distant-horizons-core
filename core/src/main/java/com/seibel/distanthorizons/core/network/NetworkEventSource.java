@@ -17,8 +17,7 @@ public abstract class NetworkEventSource implements AutoCloseable {
         registerHandler(HelloMessage.class, (msg, ctx) -> {
             if (msg.version != ModInfo.PROTOCOL_VERSION) {
                 try {
-                    closeReason = "Protocol version mismatch";
-                    close();
+                    close("Protocol version mismatch");
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -30,7 +29,8 @@ public abstract class NetworkEventSource implements AutoCloseable {
         messageHandler.registerHandler(clazz, handler);
     }
 
-    public void registerDisconnectHandler(Consumer<ChannelHandlerContext> handler) {
-        messageHandler.registerDisconnectHandler(handler);
+    public void close(String reason) throws Exception {
+        closeReason = reason;
+        close();
     }
 }

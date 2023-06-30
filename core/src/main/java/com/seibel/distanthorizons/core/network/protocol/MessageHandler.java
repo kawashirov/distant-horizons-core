@@ -1,9 +1,8 @@
 package com.seibel.distanthorizons.core.network.protocol;
 
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.network.messages.HelloMessage;
+import com.seibel.distanthorizons.core.network.messages.CloseMessage;
 import com.seibel.distanthorizons.core.network.messages.Message;
-import com.seibel.distanthorizons.coreapi.ModInfo;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -15,22 +14,16 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 @ChannelHandler.Sharable
 public class MessageHandler extends SimpleChannelInboundHandler<Message> {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 
     private Map<Class<? extends Message>, List<BiConsumer<Message, ChannelHandlerContext>>> handlers = new HashMap<>();
-    private List<Consumer<ChannelHandlerContext>> disconnectHandlers = new LinkedList<>();
 
     public <T extends Message> void registerHandler(Class<T> clazz, BiConsumer<T, ChannelHandlerContext> handler) {
         handlers.computeIfAbsent(clazz, k -> new LinkedList<>())
                 .add((BiConsumer<Message, ChannelHandlerContext>) handler);
-    }
-
-    public void registerDisconnectHandler(Consumer<ChannelHandlerContext> handler) {
-        disconnectHandlers.add(handler);
     }
 
     @Override
@@ -47,7 +40,6 @@ public class MessageHandler extends SimpleChannelInboundHandler<Message> {
 
     @Override
     public void channelInactive(@NotNull ChannelHandlerContext ctx) {
-        for (Consumer<ChannelHandlerContext> handler : disconnectHandlers)
-            handler.accept(ctx);
+        channelRead0(ctx, new CloseMessage());
     }
 }

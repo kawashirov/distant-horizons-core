@@ -4,20 +4,30 @@ import com.seibel.distanthorizons.core.file.structure.LocalSaveStructure;
 import com.seibel.distanthorizons.core.level.DhServerLevel;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.network.NetworkServer;
+import com.seibel.distanthorizons.core.network.messages.CloseMessage;
+import com.seibel.distanthorizons.core.network.messages.CloseReasonMessage;
+import com.seibel.distanthorizons.core.network.messages.HelloMessage;
+import com.seibel.distanthorizons.core.network.messages.PlayerIdMessage;
 import com.seibel.distanthorizons.core.util.LodUtil;
+import com.seibel.distanthorizons.core.wrapperInterfaces.misc.IServerPlayerWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
+import io.netty.channel.ChannelHandlerContext;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 {
 	private final HashMap<IServerLevelWrapper, DhServerLevel> levels;
 	public final LocalSaveStructure saveStructure;
+
 	private final NetworkServer networkServer;
-	
+	private final HashMap<UUID, DhPlayer> players;
+	private final HashMap<ChannelHandlerContext, DhPlayer> connections;
+
 	
 	public DhServerWorld()
 	{
@@ -28,11 +38,47 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 
 		// TODO move to global config once server specific configs are implemented
 		this.networkServer = new NetworkServer(25049);
+		this.players = new HashMap<>();
+		this.connections = new HashMap<>();
+		registerNetworkHandlers();
 		
 		LOGGER.info("Started "+DhServerWorld.class.getSimpleName()+" of type "+this.environment);
 	}
+
+	private void registerNetworkHandlers() {
+		networkServer.registerHandler(PlayerIdMessage.class, (msg, ctx) -> {
+			DhPlayer dhPlayer = players.get(msg.playerUUID);
+
+			if (dhPlayer == null) {
+				ctx.writeAndFlush(new CloseReasonMessage("Player is not logged in."))
+						.addListener(future -> ctx.close());
+				return;
+			}
+
+			if (dhPlayer.ctx != null) {
+				ctx.writeAndFlush(new CloseReasonMessage("Another connection is already in use."))
+						.addListener(future -> ctx.close());
+				return;
+			}
+
+			dhPlayer.ctx = ctx;
+			connections.put(ctx, dhPlayer);
+		});
+
+		networkServer.registerHandler(CloseMessage.class, (msg, ctx) -> {
+			DhPlayer dhPlayer = connections.remove(ctx);
+			if (dhPlayer != null)
+				dhPlayer.ctx = null;
+		});
+	}
 	
-	
+	public void addPlayer(IServerPlayerWrapper serverPlayer) {
+		players.put(serverPlayer.getUUID(), new DhPlayer(serverPlayer));
+	}
+
+	public void removePlayer(IServerPlayerWrapper serverPlayer) {
+		players.remove(serverPlayer.getUUID());
+	}
 	
 	@Override
 	public DhServerLevel getOrLoadLevel(ILevelWrapper wrapper)

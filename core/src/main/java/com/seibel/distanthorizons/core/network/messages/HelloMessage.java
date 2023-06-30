@@ -8,17 +8,15 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 
 public class HelloMessage extends Message {
-    private static final Logger LOGGER = DhLoggerBuilder.getLogger();
-
     public int version = ModInfo.PROTOCOL_VERSION;
 
     @Override
-    public void encode(ChannelHandlerContext ctx, ByteBuf out) {
+    public void encode(ByteBuf out) {
         out.writeInt(version);
     }
 
     @Override
-    public void decode(ChannelHandlerContext ctx, ByteBuf in) {
+    public void decode(ByteBuf in) {
         version = in.readInt();
     }
 }

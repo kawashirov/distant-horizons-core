@@ -1,6 +1,7 @@
 package com.seibel.distanthorizons.core.network;
 
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.network.messages.CloseMessage;
 import com.seibel.distanthorizons.core.network.messages.HelloMessage;
 import com.seibel.distanthorizons.core.network.protocol.*;
 import io.netty.bootstrap.ServerBootstrap;
@@ -50,7 +51,7 @@ public class NetworkServer extends NetworkEventSource implements AutoCloseable {
             ctx.channel().writeAndFlush(new HelloMessage());
         });
 
-        registerDisconnectHandler(ctx -> {
+        registerHandler(CloseMessage.class, (msg, ctx) -> {
             LOGGER.info("Client disconnected: {}", ctx.channel().remoteAddress());
         });
     }

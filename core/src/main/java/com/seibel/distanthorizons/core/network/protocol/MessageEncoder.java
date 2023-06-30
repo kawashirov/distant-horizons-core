@@ -9,6 +9,6 @@ public class MessageEncoder extends MessageToByteEncoder<Message> {
     @Override
     protected void encode(ChannelHandlerContext ctx, Message msg, ByteBuf out) throws IllegalArgumentException {
         out.writeShort(MessageRegistry.INSTANCE.getMessageId(msg));
-        msg.encode(ctx, out);
+        msg.encode(out);
     }
 }
