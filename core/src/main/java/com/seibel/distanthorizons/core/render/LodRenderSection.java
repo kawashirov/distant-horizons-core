@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -60,6 +61,7 @@ public class LodRenderSection implements IDebugRenderable
 
 	/** a reference is used so the render buffer can be swapped to and from the buffer builder */
 	public final AtomicReference<ColumnRenderBuffer> activeRenderBufferRef = new AtomicReference<>();
+	private volatile boolean doDisposeActiveBuffer = false;
 
 	private final QuadTree<LodRenderSection> parentQuadTree;
 	
@@ -261,6 +263,11 @@ public class LodRenderSection implements IDebugRenderable
 	 */
 	public boolean tryBuildAndSwapBuffer()
 	{
+		if (doDisposeActiveBuffer && this.activeRenderBufferRef.get() != null) {
+			doDisposeActiveBuffer = false;
+			this.activeRenderBufferRef.getAndSet(null).close();
+			return false;
+		}
 		boolean didSwapped = false;
 		if (canBuildBuffer()) {
 			//if (false)
@@ -337,27 +344,26 @@ public class LodRenderSection implements IDebugRenderable
 	public void dispose() {
 		disposeRenderData();
 		DebugRenderer.unregister(this);
+		if (doDisposeActiveBuffer && this.activeRenderBufferRef.get() != null) {
+			this.activeRenderBufferRef.get().close();
+		}
 	}
 
 	public void disposeRenderData()
 	{
 		disposeRenderBuffer();
+		this.renderSource = null;
 		if (this.renderSourceLoadFuture != null)
 		{
 			this.renderSourceLoadFuture.cancel(true);
 			this.renderSourceLoadFuture = null;
 		}
-		this.renderSource = null;
 	}
 
 	public void disposeRenderBuffer()
 	{
 		cancelBuildBuffer();
-		if (this.activeRenderBufferRef.get() != null)
-		{
-			ColumnRenderBuffer buffer = this.activeRenderBufferRef.getAndSet(null);
-			buffer.close();
-		}
+		doDisposeActiveBuffer = true;
 	}
 
 	public void markBufferDirty() {
