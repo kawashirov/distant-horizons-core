@@ -16,26 +16,29 @@
  *    You should have received a copy of the GNU Lesser General Public License
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
- 
-package com.seibel.distanthorizons.api.enums.config;
+
+package com.seibel.distanthorizons.core.enums;
 
 /**
- * NONE, GAME_SHADING
+ * Minecraft, 		<br>
+ * Lod_Builder,		<br>
+ * Proxy_Worker,	<br>
+ * None				<br>
  * 
  * @author James Seibel
- * @version 7-25-2020
+ * @version 10-1-2021
  */
-public enum EShadingMode
+public enum EGLProxyContext
 {
-	/**
-	 * LODs will have darker sides and bottoms to simulate
-	 * Minecraft's fast lighting.
-	 */
-	GAME_SHADING,
+	/** Minecraft's render thread */
+	MINECRAFT,
 	
-	/**
-	 * LODs will use ambient occlusion to mimic Minecraft's
-	 * Fancy lighting.
-	 */
-	AMBIENT_OCCLUSION
+	/** The context we send buffers to the GPU on */
+	LOD_BUILDER,
+	
+	/** A context that can be used for miscellaneous tasks, owned by the GLProxy */
+	PROXY_WORKER,
+	
+	/** used to un-bind threads */
+	NONE,
 }

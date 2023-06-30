@@ -24,6 +24,7 @@ package com.seibel.distanthorizons.api.enums.config;
  * LOW <br>
  * MEDIUM <br>
  * HIGH <br>
+ * UNLIMITED <br>
  */
 public enum EHorizontalQuality
 {

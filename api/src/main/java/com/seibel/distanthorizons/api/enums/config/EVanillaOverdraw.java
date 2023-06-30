@@ -30,6 +30,7 @@ package com.seibel.distanthorizons.api.enums.config;
  * @author James Seibel
  * @version 2022-6-30
  */
+@Deprecated // not currently in use, if the config this enum represents is re-implemented, the deprecated flag can be removed
 public enum EVanillaOverdraw
 {
 	// Reminder:

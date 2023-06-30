@@ -26,7 +26,7 @@ import com.seibel.distanthorizons.coreapi.util.MathUtil;
  * LOW <br>
  * MEDIUM <br>
  * HIGH <br>
- * ULTRA <br>
+ * EXTREME <br>
  *
  * @author Leonardo Amato
  * @version 2023-2-5

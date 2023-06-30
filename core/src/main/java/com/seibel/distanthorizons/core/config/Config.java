@@ -630,16 +630,16 @@ public class Config
 						.build();
 				
 				public static ConfigEntry<ELightGenerationMode> lightingEngine = new ConfigEntry.Builder<ELightGenerationMode>()
-						.set(ELightGenerationMode.DISTANT_HORIZONS)
+						.set(ELightGenerationMode.MINECRAFT)
 						.comment(""
 								+ " How should distant generation chunk lighting be generated? \n"
 								+ "\n"
-								+ ELightGenerationMode.DISTANT_HORIZONS + ": Uses Distant Horizons' lighting engine to estimate chunk lighting. \n"
-								+ "    Generally lower quality; but more stable for large numbers of world generator threads. \n"
 								+ ELightGenerationMode.MINECRAFT + ": Use Minecraft's lighting engine to generate chunk lighting. \n"
 								+ "    Generally higher quality; but may crash MC's lighting engine if there is an issue. \n"
+								+ ELightGenerationMode.DISTANT_HORIZONS + ": Uses Distant Horizons' lighting engine to estimate chunk lighting. \n"
+								+ "    Generally lower quality; but more stable for large numbers of world generator threads. \n"
 								+ "\n"
-								+ "This will effect generation speed, but not the rendering performance.")
+								+ "This will effect generation speed, but not rendering performance.")
 						.build();
 				
 				// deprecated and not implemented, can be made public if we ever re-implement it

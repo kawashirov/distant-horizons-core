@@ -1,7 +1,7 @@
 package com.seibel.distanthorizons.core.render.glObject.buffer;
 
 import com.seibel.distanthorizons.api.enums.config.EGpuUploadMethod;
-import com.seibel.distanthorizons.api.enums.rendering.EGLProxyContext;
+import com.seibel.distanthorizons.core.enums.EGLProxyContext;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.render.glObject.GLProxy;
 import com.seibel.distanthorizons.core.util.LodUtil;

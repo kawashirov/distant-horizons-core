@@ -52,7 +52,7 @@ public class RenderQualityPresetConfigEventHandler extends AbstractPresetConfigE
 		new HashMap<EQualityPreset, ETransparency>()
 		{{
 			this.put(EQualityPreset.MINIMUM, ETransparency.DISABLED);
-			this.put(EQualityPreset.LOW, ETransparency.FAKE);
+			this.put(EQualityPreset.LOW, ETransparency.DISABLED); // should be fake if/when fake is fixed
 			this.put(EQualityPreset.MEDIUM, ETransparency.COMPLETE);
 			this.put(EQualityPreset.HIGH, ETransparency.COMPLETE);
 			this.put(EQualityPreset.EXTREME, ETransparency.COMPLETE);
