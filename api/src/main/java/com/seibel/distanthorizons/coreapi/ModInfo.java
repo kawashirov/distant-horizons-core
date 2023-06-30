@@ -24,7 +24,7 @@ package com.seibel.distanthorizons.coreapi;
  *
  * @author James Seibel
  * @author Ran
- * @version 2022-4-27
+ * @version 2023-6-29
  */
 public final class ModInfo
 {
@@ -40,8 +40,10 @@ public final class ModInfo
 	public static boolean IS_DEV_BUILD = VERSION.toLowerCase().contains("dev");
 
 	/** This version should only be updated when breaking changes are introduced to the DH API */
-	public static final int API_MAJOR_VERSION = 0;
+	public static final int API_MAJOR_VERSION = 1;
 	/** This version should be updated whenever new methods are added to the DH API */
 	public static final int API_MINOR_VERSION = 0;
+	/** This version should be updated whenever non-breaking fixes are added to the DH API */
+	public static final int API_PATH_VERSION = 0;
 	
 }

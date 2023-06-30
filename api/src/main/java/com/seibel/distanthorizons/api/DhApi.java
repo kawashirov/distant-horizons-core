@@ -27,7 +27,7 @@ import com.seibel.distanthorizons.coreapi.interfaces.dependencyInjection.IOverri
  * the concrete object we replaced, there would be issues.
  *
  * @author James Seibel
- * @version 2023-2-9
+ * @version 2023-6-29
  */
 public class DhApi
 {
@@ -78,6 +78,8 @@ public class DhApi
 	public static int getApiMajorVersion() { return ModInfo.API_MAJOR_VERSION; }
 	/** This version should be updated whenever new methods are added to the Distant Horizons API. */
 	public static int getApiMinorVersion() { return ModInfo.API_MINOR_VERSION; }
+	/** This version should be updated whenever non-breaking fixes are added to the Distant Horizons API. */
+	public static int getApiPatchVersion() { return ModInfo.API_PATH_VERSION; }
 	
 	/** 
 	 * Returns the mod's semantic version number in the format: Major.Minor.Patch 
