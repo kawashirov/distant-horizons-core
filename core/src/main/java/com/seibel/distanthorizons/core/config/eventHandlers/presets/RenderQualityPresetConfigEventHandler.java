@@ -57,6 +57,15 @@ public class RenderQualityPresetConfigEventHandler extends AbstractPresetConfigE
 			this.put(EQualityPreset.HIGH, ETransparency.COMPLETE);
 			this.put(EQualityPreset.EXTREME, ETransparency.COMPLETE);
 		}});
+	private final ConfigEntryWithPresetOptions<EQualityPreset, Boolean> ssao = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.Graphics.Quality.ssao, 
+		new HashMap<EQualityPreset, Boolean>()
+		{{
+			this.put(EQualityPreset.MINIMUM, false);
+			this.put(EQualityPreset.LOW, false);
+			this.put(EQualityPreset.MEDIUM, true);
+			this.put(EQualityPreset.HIGH, true);
+			this.put(EQualityPreset.EXTREME, true);
+		}});
 	
 	
 	
@@ -72,6 +81,7 @@ public class RenderQualityPresetConfigEventHandler extends AbstractPresetConfigE
 		this.configList.add(this.verticalQuality);
 		this.configList.add(this.horizontalQuality);
 		this.configList.add(this.transparency);
+		this.configList.add(this.ssao);
 		
 		
 		for (ConfigEntryWithPresetOptions<EQualityPreset, ?> config : this.configList)
