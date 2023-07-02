@@ -5,6 +5,7 @@ import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.file.subDimMatching.SubDimensionLevelMatcher;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.api.enums.config.EServerFolderNameMode;
+import com.seibel.distanthorizons.core.level.IServerEnhancedClientLevel;
 import com.seibel.distanthorizons.core.util.objects.ParsedIp;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
@@ -58,6 +59,14 @@ public class ClientOnlySaveStructure extends AbstractSaveStructure
 	{
 		return this.levelToFileMap.computeIfAbsent(level, (newLevel) ->
 		{
+			if (newLevel instanceof IServerEnhancedClientLevel) {
+				IServerEnhancedClientLevel secl = (IServerEnhancedClientLevel) newLevel;
+				// This world was identified by the server directly, so we can know for sure which folder to use.
+				File seclFolder = new File(this.folder.getParent(), MC_CLIENT.getCurrentServerIp().toString());
+				seclFolder = new File(seclFolder, secl.getServerWorldKey());
+				return seclFolder;
+			}
+
 			if (Config.Client.Advanced.Multiplayer.multiverseSimilarityRequiredPercent.get() == 0)
 			{
 				if (this.fileMatcher != null)

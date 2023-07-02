@@ -21,6 +21,11 @@ package com.seibel.distanthorizons.core.api.internal;
 
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.*;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
+import com.seibel.distanthorizons.core.level.IServerEnhancedClientLevel;
+import com.seibel.distanthorizons.core.level.IServerEnhancedManager;
+import com.seibel.distanthorizons.core.world.*;
+import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IFriendlyByteBuf;
+import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import com.seibel.distanthorizons.core.level.IDhClientLevel;
 import com.seibel.distanthorizons.core.config.Config;
@@ -36,10 +41,6 @@ import com.seibel.distanthorizons.coreapi.util.math.Mat4f;
 import com.seibel.distanthorizons.core.render.glObject.GLProxy;
 import com.seibel.distanthorizons.core.render.renderer.TestRenderer;
 import com.seibel.distanthorizons.core.util.RenderUtil;
-import com.seibel.distanthorizons.core.world.DhClientWorld;
-import com.seibel.distanthorizons.core.world.AbstractDhWorld;
-import com.seibel.distanthorizons.core.world.IDhClientWorld;
-import com.seibel.distanthorizons.core.world.EWorldEnvironment;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
@@ -49,13 +50,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
 
+import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 
 /**
  * This holds the methods that should be called
  * by the host mod loader (Fabric, Forge, etc.).
  * Specifically for the client.
- * 
+ *
  * @author James Seibel
  * @version 2022-9-16
  */
@@ -64,36 +66,41 @@ public class ClientApi
 	private static final Logger LOGGER = LogManager.getLogger();
 	public static final boolean ENABLE_EVENT_LOGGING = true;
 	public static boolean prefLoggerEnabled = false;
-	
+
 	public static final ClientApi INSTANCE = new ClientApi();
 	public static TestRenderer testRenderer = new TestRenderer();
 	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
-	
+	private static final IServerEnhancedManager SERVER_ENHANCED_MANAGER
+			= SingletonInjector.INSTANCE.get(IServerEnhancedManager.class);
+
 	public static final long SPAM_LOGGER_FLUSH_NS = TimeUnit.NANOSECONDS.convert(1, TimeUnit.SECONDS);
-	
+
 	private boolean configOverrideReminderPrinted = false;
 	public boolean rendererDisabledBecauseOfExceptions = false;
-	
+
 	private long lastFlushNanoTime = 0;
-	
-	
-	
+
+	private boolean isServerCommunicationEnabled = true;
+
+	private boolean serverIsMalformed = false;
+
+
 	//==============//
 	// constructors //
 	//==============//
-	
+
 	private ClientApi()
 	{
-		
+
 	}
-	
-	
-	
+
+
+
 	//========//
 	// events //
 	//========//
-	
+
 	public void onClientOnlyConnected()
 	{
 		// only continue if the client is connected to a different server
@@ -103,11 +110,11 @@ public class ClientApi
 			{
 				LOGGER.info("Client on ClientOnly mode connecting.");
 			}
-			
+
 			SharedApi.setDhWorld(new DhClientWorld());
 		}
 	}
-	
+
 	public void onClientOnlyDisconnected()
 	{
 		if (MC.clientConnectedToDedicatedServer())
@@ -119,13 +126,17 @@ public class ClientApi
 				{
 					LOGGER.info("Client on ClientOnly mode disconnecting.");
 				}
-				
+
 				world.close();
 				SharedApi.setDhWorld(null);
 			}
+			this.isServerCommunicationEnabled = false;
+			this.serverIsMalformed = false;
+			SERVER_ENHANCED_MANAGER.setUseOverrideWrapper(false);
+			SERVER_ENHANCED_MANAGER.registerServerEnhancedLevel(null);
 		}
 	}
-	
+
 	public void clientChunkLoadEvent(IChunkWrapper chunk, IClientLevelWrapper level)
 	{
 		if (SharedApi.getEnvironment() == EWorldEnvironment.Client_Only)
@@ -137,7 +148,7 @@ public class ClientApi
 			}
 		}
 	}
-	
+
 	public void clientChunkSaveEvent(IChunkWrapper chunk, IClientLevelWrapper level)
 	{
 		if (SharedApi.getEnvironment() == EWorldEnvironment.Client_Only)
@@ -149,14 +160,14 @@ public class ClientApi
 			}
 		}
 	}
-	
+
 	public void clientLevelUnloadEvent(IClientLevelWrapper level)
 	{
 		if (ENABLE_EVENT_LOGGING)
 		{
 			LOGGER.info("Client level "+level+" unloading.");
 		}
-		
+
 		AbstractDhWorld world = SharedApi.getAbstractDhWorld();
 		if (world != null)
 		{
@@ -164,14 +175,18 @@ public class ClientApi
 			ApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelUnloadEvent.class, new DhApiLevelUnloadEvent.EventParam(level));
 		}
 	}
-	
+
 	public void clientLevelLoadEvent(IClientLevelWrapper level)
 	{
-		if (ENABLE_EVENT_LOGGING)
-		{
-			LOGGER.info("Client level "+level+" loading.");
+		if (ENABLE_EVENT_LOGGING) {
+			if (this.isServerCommunicationEnabled) {
+				LOGGER.info("Server supports communication, deferring loading.");
+				return;
+			}
+
+			LOGGER.info("Client level " + level + " loading.");
 		}
-		
+
 		AbstractDhWorld world = SharedApi.getAbstractDhWorld();
 		if (world != null)
 		{
@@ -179,40 +194,55 @@ public class ClientApi
 			ApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelLoadEvent.class, new DhApiLevelLoadEvent.EventParam(level));
 		}
 	}
-	
+
+	public void serverLevelLoadEvent(IServerEnhancedClientLevel level)
+	{
+		if (ENABLE_EVENT_LOGGING)
+		{
+			LOGGER.info("Server level " + level + " (" + level.getServerWorldKey() + ") loading.");
+		}
+
+		AbstractDhWorld world = SharedApi.getAbstractDhWorld();
+		if (world != null)
+		{
+			world.getOrLoadLevel(level);
+			ApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelLoadEvent.class, new DhApiLevelLoadEvent.EventParam(level));
+		}
+	}
+
 	public void rendererShutdownEvent()
 	{
 		if (ENABLE_EVENT_LOGGING)
 		{
 			LOGGER.info("Renderer shutting down.");
 		}
-		
+
 		IProfilerWrapper profiler = MC.getProfiler();
 		profiler.push("DH-RendererShutdown");
-		
+
 		profiler.pop();
 	}
-	
+
 	public void rendererStartupEvent()
 	{
 		if (ENABLE_EVENT_LOGGING)
 		{
 			LOGGER.info("Renderer starting up.");
 		}
-		
+
 		IProfilerWrapper profiler = MC.getProfiler();
 		profiler.push("DH-RendererStartup");
-		
+
 		// make sure the GLProxy is created before the LodBufferBuilder needs it
 		GLProxy.getInstance();
 		profiler.pop();
 	}
-	
+
 	public void clientTickEvent()
 	{
 		IProfilerWrapper profiler = MC.getProfiler();
 		profiler.push("DH-ClientTick");
-		
+
 		boolean doFlush = System.nanoTime() - this.lastFlushNanoTime >= SPAM_LOGGER_FLUSH_NS;
 		if (doFlush)
 		{
@@ -221,7 +251,7 @@ public class ClientApi
 		}
 		ConfigBasedLogger.updateAll();
 		ConfigBasedSpamLogger.updateAll(doFlush);
-		
+
 		IDhClientWorld clientWorld = SharedApi.getIDhClientWorld();
 		if (clientWorld != null)
 		{
@@ -229,13 +259,65 @@ public class ClientApi
 		}
 		profiler.pop();
 	}
-	
-	
-	
+
+	public void serverMessageReceived(IFriendlyByteBuf buf)
+	{
+		// It is important to ensure malicious server input is ignored.
+		if(this.serverIsMalformed) {
+			return;
+		}
+		short commandLength = buf.readShort();
+		if(commandLength > 32) {
+			LOGGER.error("Server sent command > 32");
+			ClientApi.INSTANCE.serverIsMalformed = true;
+			return;
+		}
+		String eventType = buf.readCharSequence(commandLength, Charset.forName("UTF-8")).toString();
+		switch(eventType) {
+			case "ServerCommsEnabled":
+				LOGGER.info("Server supports DH protocol.");
+				ClientApi.INSTANCE.isServerCommunicationEnabled = true;
+				SERVER_ENHANCED_MANAGER.setUseOverrideWrapper(true);
+				MC.execute(() -> {
+					// Go ahead and unload the current world, because it may be wrong. We expect
+					// a followup WorldChanged event from the server soon anyways.
+					clientLevelUnloadEvent((IClientLevelWrapper) MC.getWrappedClientWorld());
+				});
+				break;
+			case "WorldChanged":
+				short worldKeyLength = buf.readShort();
+				if(worldKeyLength > 128) {
+					LOGGER.error("Server sent worldKey > 128");
+					this.serverIsMalformed = true;
+					return;
+				}
+				String worldKey = buf.readCharSequence(worldKeyLength, Charset.forName("UTF-8")).toString();
+				if(!worldKey.matches("[a-zA-Z0-9_]+")) {
+					LOGGER.error("Server sent invalid world key name, and is being ignored.");
+					this.isServerCommunicationEnabled = false;
+					this.serverIsMalformed = true;
+					return;
+				}
+				LOGGER.info("Server sent world change event: " + worldKey);
+				MC.execute(() -> {
+					if(MC.getWrappedClientWorld() != null) {
+						clientLevelUnloadEvent((IClientLevelWrapper) MC.getWrappedClientWorld());
+					}
+					IServerEnhancedClientLevel clientLevel
+							= SERVER_ENHANCED_MANAGER.getServerEnhancedLevel(MC.getWrappedClientWorld(), worldKey);
+					SERVER_ENHANCED_MANAGER.registerServerEnhancedLevel(clientLevel);
+					serverLevelLoadEvent(clientLevel);
+				});
+				break;
+		}
+	}
+
+
+
 	//===========//
 	// rendering //
 	//===========//
-	
+
 	public void renderLods(IClientLevelWrapper levelWrapper, Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, float partialTicks)
 	{
 		if (ModInfo.IS_DEV_BUILD && !this.configOverrideReminderPrinted && MC.playerExists())
@@ -246,8 +328,8 @@ public class ClientApi
 			MC.sendChatMessage("Here be dragons!");
 			this.configOverrideReminderPrinted = true;
 		}
-		
-		
+
+
 		IProfilerWrapper profiler = MC.getProfiler();
 		profiler.pop(); // get out of "terrain"
 		profiler.push("DH-RenderLevel");
@@ -257,20 +339,20 @@ public class ClientApi
 			{
 				return;
 			}
-			
-			
+
+
 			//FIXME: Improve class hierarchy of DhWorld, IClientWorld, IServerWorld to fix all this hard casting
 			// (also in RenderUtil)
 			IDhClientWorld dhClientWorld = SharedApi.getIDhClientWorld();
 			IDhClientLevel level = dhClientWorld.getOrLoadClientLevel(levelWrapper);
-			
+
 			if (prefLoggerEnabled)
 			{
 				level.dumpRamUsage();
 			}
-			
-			
-			
+
+
+
 			profiler.push("Render" + (Config.Client.Advanced.Debugging.rendererMode.get() == ERendererMode.DEFAULT ? "-lods" : "-debug"));
 			try
 			{
@@ -280,7 +362,7 @@ public class ClientApi
 							new DhApiRenderParam(mcProjectionMatrix, mcModelViewMatrix,
 								RenderUtil.createLodProjectionMatrix(mcProjectionMatrix, partialTicks),
 								RenderUtil.createLodModelViewMatrix(mcModelViewMatrix), partialTicks);
-					
+
 					boolean renderingCanceled = ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeRenderEvent.class, new DhApiBeforeRenderEvent.EventParam(renderEventParam));
 					if (!this.rendererDisabledBecauseOfExceptions && !renderingCanceled)
 					{
@@ -298,7 +380,7 @@ public class ClientApi
 			{
 				this.rendererDisabledBecauseOfExceptions = true;
 				LOGGER.error("Renderer thrown an uncaught exception: ", e);
-				
+
 				MC.sendChatMessage("\u00A74\u00A7l\u00A7uERROR: Distant Horizons"
 						+ " renderer has encountered an exception!");
 				MC.sendChatMessage("\u00A74Renderer is now disabled to prevent further issues.");
@@ -316,13 +398,13 @@ public class ClientApi
 			profiler.push("terrain"); // go back into "terrain"
 		}
 	}
-	
-	
-	
+
+
+
 	//=================//
 	//    DEBUG USE    //
 	//=================//
-	
+
 	/** Trigger once on key press, with CLIENT PLAYER. */
 	public void keyPressedEvent(int glfwKey)
 	{
@@ -331,8 +413,8 @@ public class ClientApi
 			// keybindings are disabled
 			return;
 		}
-		
-		
+
+
 		if (glfwKey == GLFW.GLFW_KEY_F8)
 		{
 			Config.Client.Advanced.Debugging.debugRendering.set(EDebugRendering.next(Config.Client.Advanced.Debugging.debugRendering.get()));
@@ -349,6 +431,6 @@ public class ClientApi
 			MC.sendChatMessage("P: Debug Pref Logger is " + (prefLoggerEnabled ? "enabled" : "disabled"));
 		}
 	}
-	
-	
+
+
 }
