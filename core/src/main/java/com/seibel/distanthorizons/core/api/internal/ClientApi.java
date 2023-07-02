@@ -22,10 +22,9 @@ package com.seibel.distanthorizons.core.api.internal;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.*;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
 import com.seibel.distanthorizons.core.level.IServerEnhancedClientLevel;
-import com.seibel.distanthorizons.core.level.IServerEnhancedManager;
+import com.seibel.distanthorizons.core.level.IEnhancedServerManager;
 import com.seibel.distanthorizons.core.world.*;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IFriendlyByteBuf;
-import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import com.seibel.distanthorizons.core.level.IDhClientLevel;
 import com.seibel.distanthorizons.core.config.Config;
@@ -71,8 +70,8 @@ public class ClientApi
 	public static TestRenderer testRenderer = new TestRenderer();
 	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
-	private static final IServerEnhancedManager SERVER_ENHANCED_MANAGER
-			= SingletonInjector.INSTANCE.get(IServerEnhancedManager.class);
+	private static final IEnhancedServerManager ENHANCED_SERVER_MANAGER
+			= SingletonInjector.INSTANCE.get(IEnhancedServerManager.class);
 
 	public static final long SPAM_LOGGER_FLUSH_NS = TimeUnit.NANOSECONDS.convert(1, TimeUnit.SECONDS);
 
@@ -132,8 +131,8 @@ public class ClientApi
 			}
 			this.isServerCommunicationEnabled = false;
 			this.serverIsMalformed = false;
-			SERVER_ENHANCED_MANAGER.setUseOverrideWrapper(false);
-			SERVER_ENHANCED_MANAGER.registerServerEnhancedLevel(null);
+			ENHANCED_SERVER_MANAGER.setUseOverrideWrapper(false);
+			ENHANCED_SERVER_MANAGER.registerServerEnhancedLevel(null);
 		}
 	}
 
@@ -277,7 +276,7 @@ public class ClientApi
 			case "ServerCommsEnabled":
 				LOGGER.info("Server supports DH protocol.");
 				ClientApi.INSTANCE.isServerCommunicationEnabled = true;
-				SERVER_ENHANCED_MANAGER.setUseOverrideWrapper(true);
+				ENHANCED_SERVER_MANAGER.setUseOverrideWrapper(true);
 				MC.execute(() -> {
 					// Go ahead and unload the current world, because it may be wrong. We expect
 					// a followup WorldChanged event from the server soon anyways.
@@ -304,8 +303,8 @@ public class ClientApi
 						clientLevelUnloadEvent((IClientLevelWrapper) MC.getWrappedClientWorld());
 					}
 					IServerEnhancedClientLevel clientLevel
-							= SERVER_ENHANCED_MANAGER.getServerEnhancedLevel(MC.getWrappedClientWorld(), worldKey);
-					SERVER_ENHANCED_MANAGER.registerServerEnhancedLevel(clientLevel);
+							= ENHANCED_SERVER_MANAGER.getServerEnhancedLevel(MC.getWrappedClientWorld(), worldKey);
+					ENHANCED_SERVER_MANAGER.registerServerEnhancedLevel(clientLevel);
 					serverLevelLoadEvent(clientLevel);
 				});
 				break;

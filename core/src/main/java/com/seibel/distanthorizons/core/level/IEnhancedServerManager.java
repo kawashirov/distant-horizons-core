@@ -3,7 +3,7 @@ package com.seibel.distanthorizons.core.level;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.distanthorizons.coreapi.interfaces.dependencyInjection.IBindable;
 
-public interface IServerEnhancedManager extends IBindable {
+public interface IEnhancedServerManager extends IBindable {
     /**
      * Called when a client level is wrapped by a ServerEnhancedClientLevel, for integration into mod internals.
      * @param clientLevel
