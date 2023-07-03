@@ -54,9 +54,7 @@ public interface IDhApiMultiThreadingConfig extends IDhApiConfigGroup
 	 */
 	IDhApiConfigValue<Integer> dataConverterThreads();
 	
-	/**
-	 * TODO
-	 */
+	/** Defines how many threads should be used to convert Minecraft chunks to LOD data. */
 	IDhApiConfigValue<Integer> chunkLodConverterThreads();
 	
 }

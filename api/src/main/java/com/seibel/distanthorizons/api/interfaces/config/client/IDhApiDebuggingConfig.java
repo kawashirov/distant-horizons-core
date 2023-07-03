@@ -37,13 +37,13 @@ public interface IDhApiDebuggingConfig extends IDhApiConfigGroup
 	/** If enabled debug keybindings can be used. */
 	IDhApiConfigValue<Boolean> debugKeybindings();
 	
-	/** TODO */
+	/** If enabled all LODs will be rendered as wireframe. */
 	IDhApiConfigValue<Boolean> renderWireframe();
 	
-	/** TODO */
+	/** If enabled Distant Horizons will attempt to disable Minecraft's block rendering so only LODs will render. */
 	IDhApiConfigValue<Boolean> lodOnlyMode();
 	
-	/** TODO */
+	/** If enabled Distant Horizons' debug wireframe rendering will be enabled. */
 	IDhApiConfigValue<Boolean> debugWireframeRendering();
 	
 	

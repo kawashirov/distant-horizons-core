@@ -96,7 +96,7 @@ public interface IDhApiGraphicsConfig extends IDhApiConfigGroup
 	 */
 	IDhApiConfigValue<Boolean> tintWithAvoidedBlocks();
 	
-	/**
+	/*
 	 * The same as vanilla Minecraft's biome blending. <br><br>
 	 *
 	 * 0 = blending of 1x1 aka off	<br>
@@ -144,8 +144,9 @@ public interface IDhApiGraphicsConfig extends IDhApiConfigGroup
 	/** If enabled vanilla chunk rendering is disabled and only fake chunks are rendered. */
 	IDhApiConfigValue<Boolean> lodOnlyMode();
 	
-	/**
-	 * TODO
+	/** 
+	 * Setting this to a non-zero number will modify vanilla Minecraft's LOD Bias, 
+	 * increasing how quickly its textures fade away.  
 	 */
 	IDhApiConfigValue<Double> lodBias();
 	

@@ -22,7 +22,7 @@ package com.seibel.distanthorizons.api.interfaces.config.client;
 import com.seibel.distanthorizons.api.interfaces.config.IDhApiConfigGroup;
 
 /**
- * Distant Horizons' fog configuration. <br><br>
+ * Distant Horizons' logging configuration. <br><br>
  *
  * @author James Seibel
  * @version 2022-6-14
