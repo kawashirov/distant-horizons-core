@@ -21,10 +21,9 @@ package com.seibel.distanthorizons.core.api.internal;
 
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.*;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
-import com.seibel.distanthorizons.core.level.IServerEnhancedClientLevel;
-import com.seibel.distanthorizons.core.level.IEnhancedServerManager;
+import com.seibel.distanthorizons.core.level.IServerKeyedClientLevel;
+import com.seibel.distanthorizons.core.level.IKeyedClientLevelManager;
 import com.seibel.distanthorizons.core.world.*;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IFriendlyByteBuf;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import com.seibel.distanthorizons.core.level.IDhClientLevel;
 import com.seibel.distanthorizons.core.config.Config;
@@ -45,20 +44,19 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftCli
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
+import io.netty.buffer.ByteBuf;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
 
-import java.nio.charset.Charset;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 /**
  * This holds the methods that should be called
  * by the host mod loader (Fabric, Forge, etc.).
  * Specifically for the client.
- *
- * @author James Seibel
- * @version 2022-9-16
  */
 public class ClientApi
 {
@@ -70,8 +68,7 @@ public class ClientApi
 	public static TestRenderer testRenderer = new TestRenderer();
 	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
-	private static final IEnhancedServerManager ENHANCED_SERVER_MANAGER
-			= SingletonInjector.INSTANCE.get(IEnhancedServerManager.class);
+	private static final IKeyedClientLevelManager KEYED_CLIENT_LEVEL_MANAGER = SingletonInjector.INSTANCE.get(IKeyedClientLevelManager.class);
 
 	public static final long SPAM_LOGGER_FLUSH_NS = TimeUnit.NANOSECONDS.convert(1, TimeUnit.SECONDS);
 
@@ -131,8 +128,8 @@ public class ClientApi
 			}
 			this.isServerCommunicationEnabled = false;
 			this.serverIsMalformed = false;
-			ENHANCED_SERVER_MANAGER.setUseOverrideWrapper(false);
-			ENHANCED_SERVER_MANAGER.registerServerEnhancedLevel(null);
+			KEYED_CLIENT_LEVEL_MANAGER.setUseOverrideWrapper(false);
+			KEYED_CLIENT_LEVEL_MANAGER.setServerKeyedLevel(null);
 		}
 	}
 
@@ -177,15 +174,21 @@ public class ClientApi
 
 	public void clientLevelLoadEvent(IClientLevelWrapper level)
 	{
-		if (ENABLE_EVENT_LOGGING) {
-			if (this.isServerCommunicationEnabled) {
+		if (this.isServerCommunicationEnabled)
+		{
+			if (ENABLE_EVENT_LOGGING)
+			{
 				LOGGER.info("Server supports communication, deferring loading.");
-				return;
 			}
-
+			return;
+		}
+		
+		
+		if (ENABLE_EVENT_LOGGING)
+		{
 			LOGGER.info("Client level " + level + " loading.");
 		}
-
+		
 		AbstractDhWorld world = SharedApi.getAbstractDhWorld();
 		if (world != null)
 		{
@@ -194,11 +197,11 @@ public class ClientApi
 		}
 	}
 
-	public void serverLevelLoadEvent(IServerEnhancedClientLevel level)
+	public void serverLevelLoadEvent(IServerKeyedClientLevel level)
 	{
 		if (ENABLE_EVENT_LOGGING)
 		{
-			LOGGER.info("Server level " + level + " (" + level.getServerWorldKey() + ") loading.");
+			LOGGER.info("Server level " + level + " (" + level.getServerLevelKey() + ") loading.");
 		}
 
 		AbstractDhWorld world = SharedApi.getAbstractDhWorld();
@@ -258,54 +261,65 @@ public class ClientApi
 		}
 		profiler.pop();
 	}
-
-	public void serverMessageReceived(IFriendlyByteBuf buf)
+	
+	/** @param byteBuf is Netty's {@link ByteBuffer} wrapper. */
+	public void serverMessageReceived(ByteBuf byteBuf)
 	{
 		// It is important to ensure malicious server input is ignored.
-		if(this.serverIsMalformed) {
+		if (this.serverIsMalformed)
+		{
 			return;
 		}
-		short commandLength = buf.readShort();
-		if(commandLength > 32) {
+		
+		short commandLength = byteBuf.readShort();
+		if (commandLength > 32)
+		{
 			LOGGER.error("Server sent command > 32");
 			ClientApi.INSTANCE.serverIsMalformed = true;
 			return;
 		}
-		String eventType = buf.readCharSequence(commandLength, Charset.forName("UTF-8")).toString();
-		switch(eventType) {
+		
+		String eventType = byteBuf.readCharSequence(commandLength, StandardCharsets.UTF_8).toString();
+		switch (eventType)
+		{
 			case "ServerCommsEnabled":
 				LOGGER.info("Server supports DH protocol.");
 				ClientApi.INSTANCE.isServerCommunicationEnabled = true;
-				ENHANCED_SERVER_MANAGER.setUseOverrideWrapper(true);
-				MC.execute(() -> {
+				KEYED_CLIENT_LEVEL_MANAGER.setUseOverrideWrapper(true);
+				MC.executeOnRenderThread(() -> {
 					// Go ahead and unload the current world, because it may be wrong. We expect
 					// a followup WorldChanged event from the server soon anyways.
-					clientLevelUnloadEvent((IClientLevelWrapper) MC.getWrappedClientWorld());
+					this.clientLevelUnloadEvent((IClientLevelWrapper) MC.getWrappedClientWorld());
 				});
 				break;
+				
 			case "WorldChanged":
-				short worldKeyLength = buf.readShort();
-				if(worldKeyLength > 128) {
+				short worldKeyLength = byteBuf.readShort();
+				if (worldKeyLength > 128)
+				{
 					LOGGER.error("Server sent worldKey > 128");
 					this.serverIsMalformed = true;
 					return;
 				}
-				String worldKey = buf.readCharSequence(worldKeyLength, Charset.forName("UTF-8")).toString();
-				if(!worldKey.matches("[a-zA-Z0-9_]+")) {
+				
+				String worldKey = byteBuf.readCharSequence(worldKeyLength, StandardCharsets.UTF_8).toString();
+				if (!worldKey.matches("[a-zA-Z0-9_]+"))
+				{
 					LOGGER.error("Server sent invalid world key name, and is being ignored.");
 					this.isServerCommunicationEnabled = false;
 					this.serverIsMalformed = true;
 					return;
 				}
+				
 				LOGGER.info("Server sent world change event: " + worldKey);
-				MC.execute(() -> {
-					if(MC.getWrappedClientWorld() != null) {
-						clientLevelUnloadEvent((IClientLevelWrapper) MC.getWrappedClientWorld());
+				MC.executeOnRenderThread(() -> {
+					if (MC.getWrappedClientWorld() != null)
+					{
+						this.clientLevelUnloadEvent((IClientLevelWrapper) MC.getWrappedClientWorld());
 					}
-					IServerEnhancedClientLevel clientLevel
-							= ENHANCED_SERVER_MANAGER.getServerEnhancedLevel(MC.getWrappedClientWorld(), worldKey);
-					ENHANCED_SERVER_MANAGER.registerServerEnhancedLevel(clientLevel);
-					serverLevelLoadEvent(clientLevel);
+					IServerKeyedClientLevel clientLevel = KEYED_CLIENT_LEVEL_MANAGER.getServerKeyedLevel(MC.getWrappedClientWorld(), worldKey);
+					KEYED_CLIENT_LEVEL_MANAGER.setServerKeyedLevel(clientLevel);
+					this.serverLevelLoadEvent(clientLevel);
 				});
 				break;
 		}

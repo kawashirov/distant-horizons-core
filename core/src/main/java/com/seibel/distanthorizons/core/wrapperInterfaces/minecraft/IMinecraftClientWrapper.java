@@ -139,10 +139,7 @@ public interface IMinecraftClientWrapper extends IBindable
 
     Object getOptionsObject();
 
-	/**
-	 * Executes a task on the Minecraft render thread.
-	 * @param runnable
-	 */
-	void execute(Runnable runnable);
+	/** Executes the given task on Minecraft's render thread. */
+	void executeOnRenderThread(Runnable runnable);
 	
 }

@@ -5,10 +5,11 @@ import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.file.subDimMatching.SubDimensionLevelMatcher;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.api.enums.config.EServerFolderNameMode;
-import com.seibel.distanthorizons.core.level.IServerEnhancedClientLevel;
+import com.seibel.distanthorizons.core.level.IServerKeyedClientLevel;
 import com.seibel.distanthorizons.core.util.objects.ParsedIp;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 
 import javax.annotation.Nullable;
@@ -26,17 +27,17 @@ public class ClientOnlySaveStructure extends AbstractSaveStructure
 {
 	final File folder;
 	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
+	private static final IMinecraftSharedWrapper MC_SHARED = SingletonInjector.INSTANCE.get(IMinecraftSharedWrapper.class);
 	public static final String INVALID_FILE_CHARACTERS_REGEX = "[\\\\/:*?\"<>|]";
 
-	SubDimensionLevelMatcher fileMatcher = null;
-	final HashMap<ILevelWrapper, File> levelToFileMap = new HashMap<>();
+	SubDimensionLevelMatcher subDimMatcher = null;
+	final HashMap<ILevelWrapper, File> levelWrapperToFileMap = new HashMap<>();
 
 
 
 	public ClientOnlySaveStructure()
 	{
-		this.folder = new File(MC_CLIENT.getGameDirectory().getPath() +
-				File.separatorChar + "Distant_Horizons_server_data" + File.separatorChar + getServerFolderName());
+		this.folder = new File(getSaveStructureFolderPath());
 
 		if (!this.folder.exists())
 		{
@@ -55,42 +56,51 @@ public class ClientOnlySaveStructure extends AbstractSaveStructure
 	//================//
 
 	@Override
-	public File getLevelFolder(ILevelWrapper level)
+	public File getLevelFolder(ILevelWrapper levelWrapper)
 	{
-		return this.levelToFileMap.computeIfAbsent(level, (newLevel) ->
+		return this.levelWrapperToFileMap.computeIfAbsent(levelWrapper, (newLevelWrapper) ->
 		{
-			if (newLevel instanceof IServerEnhancedClientLevel) {
-				IServerEnhancedClientLevel secl = (IServerEnhancedClientLevel) newLevel;
+			// Use the server provided key if one was provided
+			if (newLevelWrapper instanceof IServerKeyedClientLevel)
+			{
+				IServerKeyedClientLevel keyedClientLevel = (IServerKeyedClientLevel) newLevelWrapper;
+				LOGGER.info("Loading level "+newLevelWrapper.getDimensionType().getDimensionName()+" with key: "+keyedClientLevel.getServerLevelKey());
 				// This world was identified by the server directly, so we can know for sure which folder to use.
-				File seclFolder = new File(this.folder.getParent(), MC_CLIENT.getCurrentServerIp().toString());
-				seclFolder = new File(seclFolder, secl.getServerWorldKey());
-				return seclFolder;
+				return new File(getSaveStructureFolderPath() + File.separatorChar + keyedClientLevel.getServerLevelKey());
 			}
-
-			if (Config.Client.Advanced.Multiplayer.multiverseSimilarityRequiredPercent.get() == 0)
+			
+			
+			// use multiverse matching if enabled
+			if (Config.Client.Advanced.Multiplayer.multiverseSimilarityRequiredPercent.get() != 0)
 			{
-				if (this.fileMatcher != null)
+				// create the matcher if one doesn't exist
+				if (this.subDimMatcher == null || !this.subDimMatcher.isFindingLevel(newLevelWrapper))
 				{
-					this.fileMatcher.close();
-					this.fileMatcher = null;
+					LOGGER.info("Loading level " + newLevelWrapper.getDimensionType().getDimensionName());
+					this.subDimMatcher = new SubDimensionLevelMatcher(newLevelWrapper, this.folder,
+							this.getMatchingLevelFolders(newLevelWrapper).toArray(new File[0] /* surprisingly we don't need to create an array of any specific size for this to work */));
 				}
-				return this.getLevelFolderWithoutSimilarityMatching(newLevel);
+				
+				File levelFile = this.subDimMatcher.tryGetLevel();
+				if (levelFile != null)
+				{
+					this.subDimMatcher.close();
+					this.subDimMatcher = null;
+				}
+				return levelFile;
 			}
-
-			if (this.fileMatcher == null || !this.fileMatcher.isFindingLevel(newLevel))
+			
+			// we aren't using multiverse matching, shut down the matcher
+			// TODO this additional call may not be needed
+			if (this.subDimMatcher != null)
 			{
-				LOGGER.info("Loading level for world " + newLevel.getDimensionType().getDimensionName());
-				this.fileMatcher = new SubDimensionLevelMatcher(newLevel, this.folder,
-						this.getMatchingLevelFolders(newLevel).toArray(new File[0] /* surprisingly we don't need to create an array of any specific size for this to work */));
+				this.subDimMatcher.close();
+				this.subDimMatcher = null;
 			}
-
-			File levelFile = this.fileMatcher.tryGetLevel();
-			if (levelFile != null)
-			{
-				this.fileMatcher.close();
-				this.fileMatcher = null;
-			}
-			return levelFile;
+			
+			
+			// get the default folder
+			return this.getLevelFolderWithoutSimilarityMatching(newLevelWrapper);
 		});
 	}
 
@@ -138,7 +148,7 @@ public class ClientOnlySaveStructure extends AbstractSaveStructure
 	@Override
 	public File getRenderCacheFolder(ILevelWrapper level)
 	{
-		File levelFolder = this.levelToFileMap.get(level);
+		File levelFolder = this.levelWrapperToFileMap.get(level);
 		if (levelFolder == null)
 		{
 			return null;
@@ -150,7 +160,7 @@ public class ClientOnlySaveStructure extends AbstractSaveStructure
 	@Override
 	public File getFullDataFolder(ILevelWrapper level)
 	{
-		File levelFolder = this.levelToFileMap.get(level);
+		File levelFolder = this.levelWrapperToFileMap.get(level);
 		if (levelFolder == null)
 		{
 			return null;
@@ -182,7 +192,16 @@ public class ClientOnlySaveStructure extends AbstractSaveStructure
 		// a valid level folder needs to have DH specific folders in it
 		return files != null && files.length != 0;
 	}
-
+	
+	
+	private static String getSaveStructureFolderPath()
+	{
+		String path = MC_SHARED.getInstallationDirectory().getPath() + File.separatorChar
+				+ "Distant_Horizons_server_data" + File.separatorChar
+				+ getServerFolderName();
+		return path;
+	}
+	
 	/** Generated from the server the client is currently connected to. */
 	private static String getServerFolderName()
 	{
@@ -222,15 +241,15 @@ public class ClientOnlySaveStructure extends AbstractSaveStructure
 		// This fixes some issues when the server is named something in other languages
 		return new PercentEscaper("", true).escape(folderName);
 	}
-
-
-
+	
+	
+	
 	//==================//
 	// override methods //
 	//==================//
 
 	@Override
-	public void close() { this.fileMatcher.close(); }
+	public void close() { this.subDimMatcher.close(); }
 
 	@Override
 	public String toString() { return "[" + this.getClass().getSimpleName() + "@" + this.folder.getName() + "]"; }
