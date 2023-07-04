@@ -19,12 +19,9 @@
 
 package com.seibel.distanthorizons.coreapi;
 
-/**
- * This file is similar to mcmod.info
- *
- * @author James Seibel
- * @author Ran
- * @version 2023-6-29
+/** 
+ * This file is similar to mcmod.info 
+ * and contains most meta-information related to Distant Horizons.
  */
 public final class ModInfo
 {

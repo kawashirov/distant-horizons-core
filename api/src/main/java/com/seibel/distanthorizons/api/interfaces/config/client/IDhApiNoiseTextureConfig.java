@@ -30,23 +30,20 @@ import com.seibel.distanthorizons.api.interfaces.config.IDhApiConfigValue;
  */
 public interface IDhApiNoiseTextureConfig extends IDhApiConfigGroup
 {
-	/**
-	 * TODO
-	 */
+	/** If enabled a noise texture will be rendered on the LODs. */
 	IDhApiConfigValue<Boolean> noiseEnabled();
 	
-	/**
-	 * TODO
-	 */
+	/** Defines how many steps of noise should be applied. */
 	IDhApiConfigValue<Integer> noiseSteps();
 	
-	/**
-	 * TODO
-	 */
+	/** Defines how intense the noise will be. */
 	IDhApiConfigValue<Double> noiseIntensity();
 	
 	/**
-	 * TODO
+	 * Defines how far should the noise texture render before it fades away. <br><br>
+	 * 
+	 * 0.0 - the noise texture will render the entire LOD render distance. <br>
+	 * 3.0 - the noise texture will fade away at 1/3 of the LOD render distance.
 	 */
 	IDhApiConfigValue<Double> noiseDropoff();
 	

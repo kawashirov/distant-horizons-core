@@ -28,11 +28,13 @@ import com.seibel.distanthorizons.coreapi.interfaces.dependencyInjection.IBindab
  */
 public interface IDimensionTypeWrapper extends IDhApiDimensionTypeWrapper, IBindable
 {
-	
+	@Override
 	String getDimensionName();
 	
+	@Override
 	boolean hasCeiling();
-
+	
+	@Override
 	boolean hasSkyLight();
 	
 }

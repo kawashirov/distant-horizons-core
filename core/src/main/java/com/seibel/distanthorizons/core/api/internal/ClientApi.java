@@ -272,7 +272,7 @@ public class ClientApi
 		}
 		
 		short commandLength = byteBuf.readShort();
-		if (commandLength > 32)
+		if (commandLength > 32) // TODO 32 should be put into a constant somewhere
 		{
 			LOGGER.error("Server sent command > 32");
 			ClientApi.INSTANCE.serverIsMalformed = true;
@@ -295,7 +295,7 @@ public class ClientApi
 				
 			case "WorldChanged":
 				short worldKeyLength = byteBuf.readShort();
-				if (worldKeyLength > 128)
+				if (worldKeyLength > 128) // TODO 128 should be put into a constant somewhere
 				{
 					LOGGER.error("Server sent worldKey > 128");
 					this.serverIsMalformed = true;

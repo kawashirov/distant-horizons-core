@@ -2,7 +2,9 @@ package com.seibel.distanthorizons.api.methods.events.interfaces;
 
 /**
  * @author Cailin
+ * @deprecated marked as deprecated since it isn't currently implemented
  */
+@Deprecated
 public interface IDhServerMessageReceived<T> extends IDhApiEvent<T>
 {
 	/**

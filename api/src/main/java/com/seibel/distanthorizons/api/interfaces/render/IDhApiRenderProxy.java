@@ -22,7 +22,7 @@ package com.seibel.distanthorizons.api.interfaces.render;
 import com.seibel.distanthorizons.api.objects.DhApiResult;
 
 /**
- * Used to interact with Distant Horizons rendering systems.
+ * Used to interact with Distant Horizons' rendering system.
  * 
  * @author James Seibel
  * @version 2023-2-8

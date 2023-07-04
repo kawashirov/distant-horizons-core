@@ -20,7 +20,7 @@ public interface IDhApiTerrainDataRepo
 	// getters //
 	//=========//
 	
-	/** Returns the terrain datapoint at the given block position, at or containing the given Y position. */
+	/** Returns the terrain datapoint at the given block position, at/or containing the given Y position. */
 	DhApiResult<DhApiTerrainDataPoint> getSingleDataPointAtBlockPos(IDhApiLevelWrapper levelWrapper, int blockPosX, int blockPosY, int blockPosZ);
 	/** Returns every datapoint in the column located at the given block X and Z position top to bottom. */
 	DhApiResult<DhApiTerrainDataPoint[]> getColumnDataAtBlockPos(IDhApiLevelWrapper levelWrapper, int blockPosX, int blockPosZ);
@@ -76,7 +76,7 @@ public interface IDhApiTerrainDataRepo
 	 * 
 	 * Notes: <br>
 	 * - Only works if the given {@link IDhApiLevelWrapper} points to a loaded level. <br>
-	 * - If the player travels to this chunk, or the chunk is updated is some other way; your data will be replaced
+	 * - If the player travels to this chunk, or the chunk is updated in some other way; your data will be replaced
 	 *    by whatever the current chunk is. <br>
 	 * - This method may not update the LOD data immediately. Any other chunks have
 	 *    been queued to update, they will be handled first. 

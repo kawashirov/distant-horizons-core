@@ -20,7 +20,8 @@
 package com.seibel.distanthorizons.api.interfaces.world;
 
 /**
- * Used to interact with Distant Horizons current world.
+ * Used to interact with Distant Horizons' current world. <br>
+ * A world is equivalent to a single server connection or a singleplayer world.
  * 
  * @author James Seibel
  * @version 2022-11-20
