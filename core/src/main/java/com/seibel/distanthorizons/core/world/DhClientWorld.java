@@ -45,6 +45,7 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
         return this.levels.computeIfAbsent((IClientLevelWrapper) wrapper, (clientLevelWrapper) ->
 		{
             File file = this.saveStructure.getLevelFolder(wrapper);
+
             if (file == null)
 			{
 				return null;
