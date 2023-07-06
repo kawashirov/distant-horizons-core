@@ -21,6 +21,7 @@ package com.seibel.distanthorizons.core.wrapperInterfaces.minecraft;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.UUID;
 
 import com.seibel.distanthorizons.core.pos.DhBlockPos;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
@@ -70,11 +71,13 @@ public interface IMinecraftClientWrapper extends IBindable
 	//=============//
 	
 	boolean playerExists();
-	
+
+	UUID getPlayerUUID();
+
 	DhBlockPos getPlayerBlockPos();
 	
 	DhChunkPos getPlayerChunkPos();
-	
+
 	/** 
 	 * Returns the level the client is currently in. <br> 
 	 * Returns null if the client isn't in a level.

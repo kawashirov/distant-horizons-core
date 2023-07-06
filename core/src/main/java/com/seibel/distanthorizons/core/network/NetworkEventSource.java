@@ -1,7 +1,8 @@
 package com.seibel.distanthorizons.core.network;
 
+import com.seibel.distanthorizons.core.network.messages.AckMessage;
 import com.seibel.distanthorizons.core.network.messages.HelloMessage;
-import com.seibel.distanthorizons.core.network.messages.Message;
+import com.seibel.distanthorizons.core.network.protocol.INetworkMessage;
 import com.seibel.distanthorizons.core.network.protocol.MessageHandler;
 import com.seibel.distanthorizons.coreapi.ModInfo;
 import io.netty.channel.ChannelHandlerContext;
@@ -25,8 +26,15 @@ public abstract class NetworkEventSource implements AutoCloseable {
         });
     }
 
-    public <T extends Message> void registerHandler(Class<T> clazz, BiConsumer<T, ChannelHandlerContext> handler) {
+    public <T extends INetworkMessage> void registerHandler(Class<T> clazz, BiConsumer<T, ChannelHandlerContext> handler) {
         messageHandler.registerHandler(clazz, handler);
+    }
+
+    public <T extends INetworkMessage> void registerAckHandler(Class<T> clazz, Consumer<ChannelHandlerContext> handler) {
+        messageHandler.registerHandler(AckMessage.class, (msg, ctx) -> {
+            if (msg.messageType == clazz)
+                handler.accept(ctx);
+        });
     }
 
     public void close(String reason) throws Exception {

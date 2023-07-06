@@ -2,7 +2,6 @@ package com.seibel.distanthorizons.core.network.protocol;
 
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.network.messages.CloseMessage;
-import com.seibel.distanthorizons.core.network.messages.Message;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -16,25 +15,25 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 @ChannelHandler.Sharable
-public class MessageHandler extends SimpleChannelInboundHandler<Message> {
+public class MessageHandler extends SimpleChannelInboundHandler<INetworkMessage> {
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 
-    private Map<Class<? extends Message>, List<BiConsumer<Message, ChannelHandlerContext>>> handlers = new HashMap<>();
+    private final Map<Class<? extends INetworkMessage>, List<BiConsumer<INetworkMessage, ChannelHandlerContext>>> handlers = new HashMap<>();
 
-    public <T extends Message> void registerHandler(Class<T> clazz, BiConsumer<T, ChannelHandlerContext> handler) {
+    public <T extends INetworkMessage> void registerHandler(Class<T> clazz, BiConsumer<T, ChannelHandlerContext> handler) {
         handlers.computeIfAbsent(clazz, k -> new LinkedList<>())
-                .add((BiConsumer<Message, ChannelHandlerContext>) handler);
+                .add((BiConsumer<INetworkMessage, ChannelHandlerContext>) handler);
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, Message msg) {
-        List<BiConsumer<Message, ChannelHandlerContext>> handlerList = handlers.get(msg.getClass());
+    protected void channelRead0(ChannelHandlerContext ctx, INetworkMessage msg) {
+        List<BiConsumer<INetworkMessage, ChannelHandlerContext>> handlerList = handlers.get(msg.getClass());
         if (handlerList == null) {
             LOGGER.warn("Unhandled message type: {}", msg.getClass().getSimpleName());
             return;
         }
 
-        for (BiConsumer<Message, ChannelHandlerContext> handler : handlerList)
+        for (BiConsumer<INetworkMessage, ChannelHandlerContext> handler : handlerList)
             handler.accept(msg, ctx);
     }
 

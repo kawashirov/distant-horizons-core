@@ -2,11 +2,13 @@ package com.seibel.distanthorizons.core.network;
 
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.network.messages.CloseMessage;
+import com.seibel.distanthorizons.core.network.messages.CloseReasonMessage;
 import com.seibel.distanthorizons.core.network.messages.HelloMessage;
-import com.seibel.distanthorizons.core.network.protocol.*;
+import com.seibel.distanthorizons.core.network.protocol.DhNetworkChannelInitializer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -22,13 +24,28 @@ public class NetworkServer extends NetworkEventSource implements AutoCloseable {
 
     private final EventLoopGroup bossGroup = new NioEventLoopGroup(1);
     private final EventLoopGroup workerGroup = new NioEventLoopGroup();
-    Channel channel;
+    private Channel channel;
 
     public NetworkServer(int port) {
         this.port = port;
 
         LOGGER.info("Starting server on port {}", port);
+        registerHandlers();
+        bind();
+    }
 
+    private void registerHandlers() {
+        registerHandler(HelloMessage.class, (msg, ctx) -> {
+            LOGGER.info("Client connected: {}", ctx.channel().remoteAddress());
+            ctx.channel().writeAndFlush(new HelloMessage());
+        });
+
+        registerHandler(CloseMessage.class, (msg, ctx) -> {
+            LOGGER.info("Client disconnected: {}", ctx.channel().remoteAddress());
+        });
+    }
+
+    private void bind() {
         ServerBootstrap bootstrap = new ServerBootstrap()
                 .group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class)
@@ -40,20 +57,17 @@ public class NetworkServer extends NetworkEventSource implements AutoCloseable {
             if (!channelFuture.isSuccess())
                 throw new RuntimeException("Failed to bind: " + channelFuture.cause());
 
-            LOGGER.info("Server is ready");
+            LOGGER.info("Server is started on port {}", port);
         });
 
         channel = bindFuture.channel();
         channel.closeFuture().addListener(future -> close());
+    }
 
-        registerHandler(HelloMessage.class, (msg, ctx) -> {
-            LOGGER.info("Client connected: {}", ctx.channel().remoteAddress());
-            ctx.channel().writeAndFlush(new HelloMessage());
-        });
-
-        registerHandler(CloseMessage.class, (msg, ctx) -> {
-            LOGGER.info("Client disconnected: {}", ctx.channel().remoteAddress());
-        });
+    public void disconnectClient(ChannelHandlerContext ctx, String reason) {
+        ctx.channel().config().setAutoRead(false);
+        ctx.writeAndFlush(new CloseReasonMessage(reason))
+                .addListener(future -> ctx.close());
     }
 
     @Override

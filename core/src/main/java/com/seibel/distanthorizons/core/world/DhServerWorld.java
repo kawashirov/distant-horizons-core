@@ -1,13 +1,13 @@
 package com.seibel.distanthorizons.core.world;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.seibel.distanthorizons.core.file.structure.LocalSaveStructure;
 import com.seibel.distanthorizons.core.level.DhServerLevel;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.network.NetworkServer;
-import com.seibel.distanthorizons.core.network.messages.CloseMessage;
-import com.seibel.distanthorizons.core.network.messages.CloseReasonMessage;
-import com.seibel.distanthorizons.core.network.messages.HelloMessage;
-import com.seibel.distanthorizons.core.network.messages.PlayerIdMessage;
+import com.seibel.distanthorizons.core.network.messages.*;
+import com.seibel.distanthorizons.core.network.messages.RequestChunksMessage;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.IServerPlayerWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapper;
@@ -25,8 +25,8 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 	public final LocalSaveStructure saveStructure;
 
 	private final NetworkServer networkServer;
-	private final HashMap<UUID, DhPlayer> players;
-	private final HashMap<ChannelHandlerContext, DhPlayer> connections;
+	private final HashMap<UUID, DhRemotePlayer> playersByUUID;
+	private final BiMap<ChannelHandlerContext, DhRemotePlayer> playersByConnection;
 
 	
 	public DhServerWorld()
@@ -38,46 +38,61 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 
 		// TODO move to global config once server specific configs are implemented
 		this.networkServer = new NetworkServer(25049);
-		this.players = new HashMap<>();
-		this.connections = new HashMap<>();
+		this.playersByUUID = new HashMap<>();
+		this.playersByConnection = HashBiMap.create();
 		registerNetworkHandlers();
 		
 		LOGGER.info("Started "+DhServerWorld.class.getSimpleName()+" of type "+this.environment);
 	}
 
 	private void registerNetworkHandlers() {
-		networkServer.registerHandler(PlayerIdMessage.class, (msg, ctx) -> {
-			DhPlayer dhPlayer = players.get(msg.playerUUID);
+		networkServer.registerHandler(CloseMessage.class, (msg, ctx) -> {
+			DhRemotePlayer dhPlayer = playersByConnection.remove(ctx);
+			if (dhPlayer != null)
+				dhPlayer.ctx = null;
+		});
+
+		networkServer.registerHandler(PlayerUUIDMessage.class, (msg, ctx) -> {
+			DhRemotePlayer dhPlayer = playersByUUID.get(msg.playerUUID);
 
 			if (dhPlayer == null) {
-				ctx.writeAndFlush(new CloseReasonMessage("Player is not logged in."))
-						.addListener(future -> ctx.close());
+				networkServer.disconnectClient(ctx, "Player is not logged in.");
 				return;
 			}
 
 			if (dhPlayer.ctx != null) {
-				ctx.writeAndFlush(new CloseReasonMessage("Another connection is already in use."))
-						.addListener(future -> ctx.close());
+				networkServer.disconnectClient(ctx, "Another connection is already in use.");
 				return;
 			}
 
 			dhPlayer.ctx = ctx;
-			connections.put(ctx, dhPlayer);
+			playersByConnection.put(ctx, dhPlayer);
+
+			ctx.writeAndFlush(new AckMessage(PlayerUUIDMessage.class));
 		});
 
-		networkServer.registerHandler(CloseMessage.class, (msg, ctx) -> {
-			DhPlayer dhPlayer = connections.remove(ctx);
-			if (dhPlayer != null)
-				dhPlayer.ctx = null;
+		networkServer.registerHandler(LodConfigMessage.class, (msg, ctx) -> {
+			// TODO Take notice of received config
+			ctx.writeAndFlush(new AckMessage(LodConfigMessage.class));
+		});
+
+		networkServer.registerHandler(RequestChunksMessage.class, (msg, ctx) -> {
+			// hasReceivedChunkRequest should be false somewhere ???
+			// to avoid sending updates until client says at least something about its state
 		});
 	}
 	
 	public void addPlayer(IServerPlayerWrapper serverPlayer) {
-		players.put(serverPlayer.getUUID(), new DhPlayer(serverPlayer));
+		playersByUUID.put(serverPlayer.getUUID(), new DhRemotePlayer(serverPlayer));
 	}
 
 	public void removePlayer(IServerPlayerWrapper serverPlayer) {
-		players.remove(serverPlayer.getUUID());
+		DhRemotePlayer dhPlayer = playersByUUID.remove(serverPlayer.getUUID());
+		ChannelHandlerContext ctx = playersByConnection.inverse().remove(dhPlayer);
+		if (ctx != null) {
+			ctx.writeAndFlush(new CloseReasonMessage("You are being disconnected."))
+					.addListener(future -> ctx.close());
+		}
 	}
 	
 	@Override

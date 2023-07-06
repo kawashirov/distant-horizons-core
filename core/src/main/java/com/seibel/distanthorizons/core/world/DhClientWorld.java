@@ -5,6 +5,10 @@ import com.seibel.distanthorizons.core.file.structure.ClientOnlySaveStructure;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.level.DhClientLevel;
 import com.seibel.distanthorizons.core.network.NetworkClient;
+import com.seibel.distanthorizons.core.network.messages.HelloMessage;
+import com.seibel.distanthorizons.core.network.messages.LodConfigMessage;
+import com.seibel.distanthorizons.core.network.messages.PlayerUUIDMessage;
+import com.seibel.distanthorizons.core.network.messages.RequestChunksMessage;
 import com.seibel.distanthorizons.core.util.ThreadUtil;
 import com.seibel.distanthorizons.core.util.objects.EventLoop;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
@@ -40,11 +44,29 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 
         // TODO server specific configs
         this.networkClient = new NetworkClient(MC_CLIENT.getCurrentServerIp(), 25049);
+        registerNetworkHandlers();
 
 		LOGGER.info("Started DhWorld of type "+this.environment);
 	}
 
+    private void registerNetworkHandlers() {
+        networkClient.registerHandler(HelloMessage.class, (msg, ctx) -> {
+            ctx.writeAndFlush(new PlayerUUIDMessage(MC_CLIENT.getPlayerUUID()));
+        });
 
+        // TODO Proper config handling
+        networkClient.registerAckHandler(PlayerUUIDMessage.class, ctx -> {
+            ctx.writeAndFlush(new LodConfigMessage());
+        });
+        networkClient.registerHandler(LodConfigMessage.class, (msg, ctx) -> {
+
+        });
+
+        networkClient.registerAckHandler(LodConfigMessage.class, ctx -> {
+            // TODO Actually request chunks
+            ctx.writeAndFlush(new RequestChunksMessage());
+        });
+    }
 
     @Override
     public DhClientLevel getOrLoadLevel(ILevelWrapper wrapper)

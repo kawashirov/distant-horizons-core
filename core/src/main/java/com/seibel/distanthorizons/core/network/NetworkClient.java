@@ -2,6 +2,7 @@ package com.seibel.distanthorizons.core.network;
 
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.network.messages.CloseMessage;
+import com.seibel.distanthorizons.core.network.messages.CloseReasonMessage;
 import com.seibel.distanthorizons.core.network.messages.HelloMessage;
 import com.seibel.distanthorizons.core.network.protocol.DhNetworkChannelInitializer;
 import io.netty.bootstrap.Bootstrap;
@@ -13,6 +14,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import org.apache.logging.log4j.Logger;
 
+import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 public class NetworkClient extends NetworkEventSource implements AutoCloseable {
@@ -21,14 +23,15 @@ public class NetworkClient extends NetworkEventSource implements AutoCloseable {
     private enum State {
         OPEN,
         RECONNECT,
+        RECONNECT_FORCE,
+        CLOSE_WAIT,
         CLOSED
     }
 
     private static final int FAILURE_RECONNECT_DELAY_SEC = 5;
 
     // TODO move to config of some sort
-    private final String host;
-    private final int port;
+    private final InetSocketAddress address;
 
     private final EventLoopGroup workerGroup = new NioEventLoopGroup();
     private final Bootstrap clientBootstrap = new Bootstrap()
@@ -37,19 +40,36 @@ public class NetworkClient extends NetworkEventSource implements AutoCloseable {
             .option(ChannelOption.SO_KEEPALIVE, true)
             .handler(new DhNetworkChannelInitializer(messageHandler));
 
-    private State state = State.OPEN;
+    private State state;
     private Channel channel;
 
     public NetworkClient(String host, int port) {
-        this.host = host;
-        this.port = port;
+        this.address = new InetSocketAddress(host, port);
+
+        registerHandlers();
         connect();
     }
 
-    private void connect() {
-        LOGGER.info("Connecting to {}:{}", host, port);
+    private void registerHandlers() {
+        registerHandler(HelloMessage.class, (msg, ctx) -> {
+            LOGGER.info("Connected to server: {}", ctx.channel().remoteAddress());
+        });
 
-        ChannelFuture connectFuture = clientBootstrap.connect(host, port);
+        registerHandler(CloseReasonMessage.class, (msg, ctx) -> {
+            LOGGER.info(msg.reason);
+            state = State.CLOSE_WAIT;
+        });
+
+        registerHandler(CloseMessage.class, (msg, ctx) -> {
+            LOGGER.info("Disconnected from server: {}", ctx.channel().remoteAddress());
+        });
+    }
+
+    private void connect() {
+        LOGGER.info("Connecting to server: {}", address);
+        state = State.OPEN;
+
+        ChannelFuture connectFuture = clientBootstrap.connect(address);
         connectFuture.addListener((ChannelFuture channelFuture) -> {
             if (!channelFuture.isSuccess()) return;
             channel.writeAndFlush(new HelloMessage());
@@ -57,24 +77,25 @@ public class NetworkClient extends NetworkEventSource implements AutoCloseable {
 
         channel = connectFuture.channel();
         channel.closeFuture().addListener((ChannelFuture channelFuture) -> {
-            if (state == State.CLOSED) return;
-
-            workerGroup.schedule(this::connect, state == State.RECONNECT ? 0 : FAILURE_RECONNECT_DELAY_SEC, TimeUnit.SECONDS);
-            state = State.OPEN;
-        });
-
-        registerHandler(HelloMessage.class, (msg, ctx) -> {
-            LOGGER.info("Connected.");
-        });
-
-        registerHandler(CloseMessage.class, (msg, ctx) -> {
-            LOGGER.info("Disconnected.");
+            switch (state) {
+                case CLOSE_WAIT:
+                    close();
+                    break;
+                case OPEN:
+                    state = State.RECONNECT;
+                    workerGroup.schedule(this::connect, FAILURE_RECONNECT_DELAY_SEC, TimeUnit.SECONDS);
+                    break;
+                case RECONNECT_FORCE:
+                    state = State.RECONNECT;
+                    workerGroup.schedule(this::connect, 0, TimeUnit.SECONDS);
+                    break;
+            }
         });
     }
 
     /** Kills the current connection, triggering auto-reconnection immediately. */
     public void reconnect() {
-        state = State.RECONNECT;
+        state = State.RECONNECT_FORCE;
         channel.disconnect();
     }
 

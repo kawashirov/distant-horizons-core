@@ -1,12 +1,13 @@
 package com.seibel.distanthorizons.core.network.messages;
 
+import com.seibel.distanthorizons.core.network.protocol.INetworkMessage;
 import io.netty.buffer.ByteBuf;
 
 /**
  * This is not a "real" message, and only used as indication of disconnection.
  * To send a "disconnect reason" message, use {@link CloseReasonMessage}.
  */
-public class CloseMessage extends Message {
+public class CloseMessage implements INetworkMessage {
     @Override
     public void encode(ByteBuf out) {
         throw new UnsupportedOperationException("CloseMessage is not a real message, and must not be sent.");
