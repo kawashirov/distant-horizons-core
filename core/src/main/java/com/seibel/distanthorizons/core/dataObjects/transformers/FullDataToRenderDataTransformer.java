@@ -22,9 +22,6 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.block.IBlockStateWrappe
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.distanthorizons.coreapi.util.BitShiftUtil;
-import com.seibel.distanthorizons.coreapi.util.MathUtil;
-
-import java.util.Arrays;
 
 /**
  * Handles converting {@link ChunkSizedFullDataAccessor}, {@link IIncompleteFullDataSource},

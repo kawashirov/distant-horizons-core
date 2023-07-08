@@ -4,7 +4,6 @@ package com.seibel.distanthorizons.core.config.types;
 import com.seibel.distanthorizons.core.config.listeners.IConfigListener;
 import com.seibel.distanthorizons.core.config.types.enums.EConfigEntryAppearance;
 import com.seibel.distanthorizons.core.config.types.enums.EConfigEntryPerformance;
-import com.seibel.distanthorizons.core.config.types.enums.*;
 import com.seibel.distanthorizons.coreapi.interfaces.config.IConfigEntry;
 
 import java.util.ArrayList;

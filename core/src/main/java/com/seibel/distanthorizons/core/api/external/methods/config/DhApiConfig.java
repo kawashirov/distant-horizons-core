@@ -5,7 +5,6 @@ import com.seibel.distanthorizons.api.interfaces.config.both.IDhApiWorldGenerati
 import com.seibel.distanthorizons.api.interfaces.config.client.*;
 import com.seibel.distanthorizons.core.api.external.methods.config.client.*;
 import com.seibel.distanthorizons.core.api.external.methods.config.common.DhApiWorldGenerationConfig;
-import com.seibel.distanthorizons.core.api.external.methods.config.client.*;
 
 public class DhApiConfig implements IDhApiConfig
 {

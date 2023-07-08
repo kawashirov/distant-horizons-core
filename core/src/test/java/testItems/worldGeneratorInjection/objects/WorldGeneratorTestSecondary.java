@@ -1,6 +1,5 @@
 package testItems.worldGeneratorInjection.objects;
 
-import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiWorldGenThreadMode;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.OverrideInjector;
 
 /**

@@ -1,6 +1,5 @@
 package com.seibel.distanthorizons.api.methods.events.interfaces;
 
-import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiCancelableEventParam;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiEventParam;
 import com.seibel.distanthorizons.coreapi.interfaces.dependencyInjection.IBindable;
 

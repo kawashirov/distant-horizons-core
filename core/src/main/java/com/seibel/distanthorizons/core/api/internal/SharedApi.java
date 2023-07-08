@@ -5,8 +5,6 @@ import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.ColumnR
 import com.seibel.distanthorizons.core.dataObjects.transformers.DataRenderTransformer;
 import com.seibel.distanthorizons.core.file.fullDatafile.FullDataFileHandler;
 import com.seibel.distanthorizons.core.generation.WorldGenerationQueue;
-import com.seibel.distanthorizons.core.level.IDhClientLevel;
-import com.seibel.distanthorizons.core.world.*;
 import com.seibel.distanthorizons.core.world.*;
 
 /** Contains code and variables used by both {@link ClientApi} and {@link ServerApi} */
