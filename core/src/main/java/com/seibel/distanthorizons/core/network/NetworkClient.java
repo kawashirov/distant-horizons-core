@@ -77,7 +77,7 @@ public class NetworkClient extends NetworkEventSource implements AutoCloseable {
         ChannelFuture connectFuture = clientBootstrap.connect(address);
         connectFuture.addListener((ChannelFuture channelFuture) -> {
             if (!channelFuture.isSuccess()) {
-                LOGGER.warn("Connection failed: {0}", channelFuture.cause());
+                LOGGER.warn("Connection failed: {}", channelFuture.cause());
                 return;
             }
             channel.writeAndFlush(new HelloMessage());
