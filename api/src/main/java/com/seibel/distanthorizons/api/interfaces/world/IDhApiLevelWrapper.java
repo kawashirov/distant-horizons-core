@@ -23,7 +23,8 @@ import com.seibel.distanthorizons.api.interfaces.IDhApiUnsafeWrapper;
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiLevelType;
 
 /**
- * Can be either a Server or Client level.
+ * Can be either a Server or Client level.<br>
+ * A level is equivalent to a dimension in vanilla Minecraft.
  * 
  * @author James Seibel
  * @version 2022-7-14

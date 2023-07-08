@@ -30,6 +30,7 @@ package com.seibel.distanthorizons.api.enums.config;
  * @author Leonardo Amato
  * @version 12-1-2021
  */
+@Deprecated // not currently in use, if the config this enum represents is re-implemented, the deprecated flag can be removed
 public enum EGenerationPriority
 {
 	// Reminder:

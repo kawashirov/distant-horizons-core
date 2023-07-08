@@ -8,6 +8,7 @@ package com.seibel.distanthorizons.api.enums.worldGeneration;
  * @author James Seibel
  * @version 7-14-2022
  */
+@Deprecated // not currently in use, if the config this enum represents is re-implemented, the deprecated flag can be removed
 public enum EDhApiWorldGenThreadMode
 {
 	/**

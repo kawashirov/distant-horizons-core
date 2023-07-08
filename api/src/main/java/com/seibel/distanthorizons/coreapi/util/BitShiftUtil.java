@@ -23,7 +23,7 @@ public class BitShiftUtil
 	 */
 	public static int powerOfTwo(int value) { return 1 << value; }
 	/** see {@link BitShiftUtil#powerOfTwo(int)} for documentation */
-	public static long powerOfTwo(long value) { return 1 << value; }
+	public static long powerOfTwo(long value) { return 1L << value; }
 	
 	
 	/**

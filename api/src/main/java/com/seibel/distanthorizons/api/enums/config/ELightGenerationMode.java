@@ -20,8 +20,8 @@
 package com.seibel.distanthorizons.api.enums.config;
 
 /**
- * FAST, <br>
- * FANCY,
+ * DISTANT_HORIZONS, <br>
+ * MINECRAFT,
  *
  * @author Leetom
  * @version 2023-6-7

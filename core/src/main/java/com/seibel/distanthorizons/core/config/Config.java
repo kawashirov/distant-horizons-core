@@ -508,6 +508,20 @@ public class Config
 							.setPerformance(EConfigEntryPerformance.NONE)
 							.build();
 					
+					public static ConfigEntry<Boolean> seamlessOverdraw = new ConfigEntry.Builder<Boolean>()
+							.set(false)
+							.comment(""
+									+ "Buggy experimental option that will attempt to match up \n"
+									+ "Distant Horizons' and Minecraft's near/far clip planes, \n"
+									+ "reducing overdraw. \n"
+									+ "\n"
+									+ "Only tested in Minecraft 1.18.2.\n"
+									+ "Works best with an overdraw prevention setting of "+EOverdrawPrevention.MEDIUM+" or higher \n"
+									+ " nd cave culling disabled. \n"
+									+ "")
+							.setPerformance(EConfigEntryPerformance.NONE)
+							.build();
+					
 					public static ConfigEntry<Double> brightnessMultiplier = new ConfigEntry.Builder<Double>() // TODO: Make this a float (the ClassicConfigGUI doesnt support floats)
 							.set(1.0)
 							.comment(""
@@ -630,16 +644,16 @@ public class Config
 						.build();
 				
 				public static ConfigEntry<ELightGenerationMode> lightingEngine = new ConfigEntry.Builder<ELightGenerationMode>()
-						.set(ELightGenerationMode.DISTANT_HORIZONS)
+						.set(ELightGenerationMode.MINECRAFT)
 						.comment(""
 								+ " How should distant generation chunk lighting be generated? \n"
 								+ "\n"
-								+ ELightGenerationMode.DISTANT_HORIZONS + ": Uses Distant Horizons' lighting engine to estimate chunk lighting. \n"
-								+ "    Generally lower quality; but more stable for large numbers of world generator threads. \n"
 								+ ELightGenerationMode.MINECRAFT + ": Use Minecraft's lighting engine to generate chunk lighting. \n"
 								+ "    Generally higher quality; but may crash MC's lighting engine if there is an issue. \n"
+								+ ELightGenerationMode.DISTANT_HORIZONS + ": Uses Distant Horizons' lighting engine to estimate chunk lighting. \n"
+								+ "    Generally lower quality; but more stable for large numbers of world generator threads. \n"
 								+ "\n"
-								+ "This will effect generation speed, but not the rendering performance.")
+								+ "This will effect generation speed, but not rendering performance.")
 						.build();
 				
 				// deprecated and not implemented, can be made public if we ever re-implement it

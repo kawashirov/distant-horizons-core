@@ -234,6 +234,10 @@
     "Overdraw Prevention",
   "distanthorizons.config.client.advanced.graphics.advancedGraphics.overdrawPrevention.@tooltip":
     "Enabling this will prevent some overdraw issues,\nbut may cause nearby LODs to render incorrectly, especially when near fancy leaves or non-full blocks.\nLess noticeable with a longer vanilla render distance.",
+  "distanthorizons.config.client.advanced.graphics.advancedGraphics.seamlessOverdraw":
+    "(Experimental) Seamless Overdraw",
+  "distanthorizons.config.client.advanced.graphics.advancedGraphics.seamlessOverdraw.@tooltip":
+    "Buggy experimental option that will attempt to match up \nDistant Horizons' and Minecraft's near/far clip planes, \nreducing overdraw.",
   "distanthorizons.config.client.advanced.graphics.advancedGraphics.brightnessMultiplier":
     "Brightness Multiplier",
   "distanthorizons.config.client.advanced.graphics.advancedGraphics.brightnessMultiplier.@tooltip":

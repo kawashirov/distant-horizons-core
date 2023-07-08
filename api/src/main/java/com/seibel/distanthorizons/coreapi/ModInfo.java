@@ -19,12 +19,9 @@
 
 package com.seibel.distanthorizons.coreapi;
 
-/**
- * This file is similar to mcmod.info
- *
- * @author James Seibel
- * @author Ran
- * @version 2022-4-27
+/** 
+ * This file is similar to mcmod.info 
+ * and contains most meta-information related to Distant Horizons.
  */
 public final class ModInfo
 {
@@ -40,8 +37,10 @@ public final class ModInfo
 	public static boolean IS_DEV_BUILD = VERSION.toLowerCase().contains("dev");
 
 	/** This version should only be updated when breaking changes are introduced to the DH API */
-	public static final int API_MAJOR_VERSION = 0;
+	public static final int API_MAJOR_VERSION = 1;
 	/** This version should be updated whenever new methods are added to the DH API */
 	public static final int API_MINOR_VERSION = 0;
+	/** This version should be updated whenever non-breaking fixes are added to the DH API */
+	public static final int API_PATH_VERSION = 0;
 	
 }

@@ -38,30 +38,20 @@ public enum EGpuUploadMethod
 	// commented out since it isn't currently in use
 	//BUFFER_STORAGE_MAPPING(true, true),
 	
-	/**
-	 * Default for NVIDIA if OpenGL 4.5 is supported. <br>
-	 * Fast rendering, no stuttering.
-	 */
+	/** Fast rendering, no stuttering. */
 	BUFFER_STORAGE(false, true),
 	
-	/**
-	 * Backup option for NVIDIA. <br>
-	 * Fast rendering but may stutter when uploading.
-	 */
+	/** Fast rendering but may stutter when uploading. */
 	SUB_DATA(false, false),
 
 	/** 
-	 * Default option for AMD/Intel. <br>
 	 * May end up storing buffers in System memory. <br>
 	 * Fast rending if in GPU memory, slow if in system memory, <br>
 	 * but won't stutter when uploading. 
 	 */
 	BUFFER_MAPPING(true, false),
 
-	/** 
-	 * Backup option for AMD/Intel. <br>
-	 * Fast rendering but may stutter when uploading. 
-	 */
+	/** Fast rendering but may stutter when uploading. */
 	DATA(false, false);
 	
 	

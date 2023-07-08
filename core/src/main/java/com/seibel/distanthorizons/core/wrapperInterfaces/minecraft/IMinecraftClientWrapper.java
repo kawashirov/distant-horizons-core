@@ -141,5 +141,8 @@ public interface IMinecraftClientWrapper extends IBindable
 	void crashMinecraft(String errorMessage, Throwable exception); //FIXME: Move to IMinecraftSharedWrapper
 
     Object getOptionsObject();
+
+	/** Executes the given task on Minecraft's render thread. */
+	void executeOnRenderThread(Runnable runnable);
 	
 }

@@ -1,1 +1,0 @@
-The external api package holds any code that interfaces between Distant Horizons and other mods or projects.
