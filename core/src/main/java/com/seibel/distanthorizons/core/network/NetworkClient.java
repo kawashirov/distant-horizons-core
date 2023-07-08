@@ -5,6 +5,7 @@ import com.seibel.distanthorizons.core.network.messages.CloseMessage;
 import com.seibel.distanthorizons.core.network.messages.CloseReasonMessage;
 import com.seibel.distanthorizons.core.network.messages.HelloMessage;
 import com.seibel.distanthorizons.core.network.protocol.DhNetworkChannelInitializer;
+import com.seibel.distanthorizons.core.network.protocol.MessageHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -29,6 +30,7 @@ public class NetworkClient extends NetworkEventSource implements AutoCloseable {
     }
 
     private static final int FAILURE_RECONNECT_DELAY_SEC = 5;
+    private static final int FAILURE_RECONNECT_ATTEMPTS = 5;
 
     // TODO move to config of some sort
     private final InetSocketAddress address;
@@ -42,6 +44,7 @@ public class NetworkClient extends NetworkEventSource implements AutoCloseable {
 
     private State state;
     private Channel channel;
+    private int reconnectAttempts = FAILURE_RECONNECT_ATTEMPTS;
 
     public NetworkClient(String host, int port) {
         this.address = new InetSocketAddress(host, port);
@@ -62,6 +65,8 @@ public class NetworkClient extends NetworkEventSource implements AutoCloseable {
 
         registerHandler(CloseMessage.class, (msg, ctx) -> {
             LOGGER.info("Disconnected from server: {}", ctx.channel().remoteAddress());
+            if (state == State.CLOSE_WAIT)
+                close();
         });
     }
 
@@ -71,21 +76,31 @@ public class NetworkClient extends NetworkEventSource implements AutoCloseable {
 
         ChannelFuture connectFuture = clientBootstrap.connect(address);
         connectFuture.addListener((ChannelFuture channelFuture) -> {
-            if (!channelFuture.isSuccess()) return;
+            if (!channelFuture.isSuccess()) {
+                LOGGER.warn("Connection failed: {0}", channelFuture.cause());
+                return;
+            }
             channel.writeAndFlush(new HelloMessage());
         });
 
         channel = connectFuture.channel();
         channel.closeFuture().addListener((ChannelFuture channelFuture) -> {
             switch (state) {
-                case CLOSE_WAIT:
-                    close();
-                    break;
                 case OPEN:
+                    reconnectAttempts--;
+                    LOGGER.info("Reconnection attempts left: {} of {}", reconnectAttempts, FAILURE_RECONNECT_ATTEMPTS);
+                    if (reconnectAttempts == 0) {
+                        state = State.CLOSE_WAIT;
+                        return;
+                    }
+
                     state = State.RECONNECT;
                     workerGroup.schedule(this::connect, FAILURE_RECONNECT_DELAY_SEC, TimeUnit.SECONDS);
                     break;
                 case RECONNECT_FORCE:
+                    LOGGER.info("Reconnecting forcefully.");
+                    reconnectAttempts = FAILURE_RECONNECT_ATTEMPTS;
+
                     state = State.RECONNECT;
                     workerGroup.schedule(this::connect, 0, TimeUnit.SECONDS);
                     break;
@@ -104,6 +119,7 @@ public class NetworkClient extends NetworkEventSource implements AutoCloseable {
         if (closeReason != null)
             LOGGER.error(closeReason);
 
+        if (state == State.CLOSED) return;
         state = State.CLOSED;
         workerGroup.shutdownGracefully().syncUninterruptibly();
         channel.close().syncUninterruptibly();

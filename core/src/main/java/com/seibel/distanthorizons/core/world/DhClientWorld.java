@@ -56,7 +56,7 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 
         // TODO Proper config handling
         networkClient.registerAckHandler(PlayerUUIDMessage.class, ctx -> {
-            ctx.writeAndFlush(new LodConfigMessage());
+            ctx.writeAndFlush(new LodConfigMessage(new DhRemotePlayer.Config()));
         });
         networkClient.registerHandler(LodConfigMessage.class, (msg, ctx) -> {
 

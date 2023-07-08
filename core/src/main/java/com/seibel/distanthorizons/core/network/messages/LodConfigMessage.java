@@ -8,6 +8,11 @@ import io.netty.buffer.ByteBuf;
 public class LodConfigMessage implements INetworkMessage {
     public DhRemotePlayer.Config config;
 
+    public LodConfigMessage() { }
+    public LodConfigMessage(DhRemotePlayer.Config config) {
+        this.config = config;
+    }
+
     @Override
     public void encode(ByteBuf out) {
         config.encode(out);

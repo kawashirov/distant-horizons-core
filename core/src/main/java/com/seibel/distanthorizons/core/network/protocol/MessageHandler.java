@@ -27,6 +27,8 @@ public class MessageHandler extends SimpleChannelInboundHandler<INetworkMessage>
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, INetworkMessage msg) {
+        LOGGER.trace("Received message: {}", msg.getClass().getSimpleName());
+
         List<BiConsumer<INetworkMessage, ChannelHandlerContext>> handlerList = handlers.get(msg.getClass());
         if (handlerList == null) {
             LOGGER.warn("Unhandled message type: {}", msg.getClass().getSimpleName());

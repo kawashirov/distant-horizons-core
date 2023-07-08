@@ -72,11 +72,12 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 		});
 
 		networkServer.registerHandler(LodConfigMessage.class, (msg, ctx) -> {
-			// TODO Take notice of received config
+			// TODO Take notice of received config and possibly echo back a constrained version
 			ctx.writeAndFlush(new AckMessage(LodConfigMessage.class));
 		});
 
 		networkServer.registerHandler(RequestChunksMessage.class, (msg, ctx) -> {
+			LOGGER.info("RequestChunksMessage");
 			// hasReceivedChunkRequest should be false somewhere ???
 			// to avoid sending updates until client says at least something about its state
 		});
@@ -89,10 +90,8 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 	public void removePlayer(IServerPlayerWrapper serverPlayer) {
 		DhRemotePlayer dhPlayer = playersByUUID.remove(serverPlayer.getUUID());
 		ChannelHandlerContext ctx = playersByConnection.inverse().remove(dhPlayer);
-		if (ctx != null) {
-			ctx.writeAndFlush(new CloseReasonMessage("You are being disconnected."))
-					.addListener(future -> ctx.close());
-		}
+		if (ctx != null)
+			networkServer.disconnectClient(ctx, "You are being disconnected.");
 	}
 	
 	@Override

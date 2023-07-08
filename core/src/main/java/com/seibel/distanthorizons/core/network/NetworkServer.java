@@ -6,10 +6,7 @@ import com.seibel.distanthorizons.core.network.messages.CloseReasonMessage;
 import com.seibel.distanthorizons.core.network.messages.HelloMessage;
 import com.seibel.distanthorizons.core.network.protocol.DhNetworkChannelInitializer;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
@@ -25,6 +22,7 @@ public class NetworkServer extends NetworkEventSource implements AutoCloseable {
     private final EventLoopGroup bossGroup = new NioEventLoopGroup(1);
     private final EventLoopGroup workerGroup = new NioEventLoopGroup();
     private Channel channel;
+    private boolean isClosed = false;
 
     public NetworkServer(int port) {
         this.port = port;
@@ -67,7 +65,7 @@ public class NetworkServer extends NetworkEventSource implements AutoCloseable {
     public void disconnectClient(ChannelHandlerContext ctx, String reason) {
         ctx.channel().config().setAutoRead(false);
         ctx.writeAndFlush(new CloseReasonMessage(reason))
-                .addListener(future -> ctx.close());
+                .addListener(ChannelFutureListener.CLOSE);
     }
 
     @Override
@@ -75,8 +73,12 @@ public class NetworkServer extends NetworkEventSource implements AutoCloseable {
         if (closeReason != null)
             LOGGER.error(closeReason);
 
-        bossGroup.shutdownGracefully().syncUninterruptibly();
+        if (isClosed) return;
+        isClosed = true;
+
+        LOGGER.info("Shutting down the server.");
         workerGroup.shutdownGracefully().syncUninterruptibly();
-        channel.close().syncUninterruptibly();
+        bossGroup.shutdownGracefully().syncUninterruptibly();
+        LOGGER.info("Server is closed.");
     }
 }
