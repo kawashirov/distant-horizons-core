@@ -37,9 +37,6 @@ import org.apache.logging.log4j.Logger;
 /**
  * This holds the methods that should be called by the host mod loader (Fabric,
  * Forge, etc.). Specifically server events.
- *
- * @author James Seibel
- * @version 2022-9-16
  */
 public class ServerApi
 {
@@ -160,11 +157,11 @@ public class ServerApi
 			}
 		}
 	}
-
+	
 	public void serverPlayerJoinEvent(IServerPlayerWrapper player)
 	{
 		IDhServerWorld serverWorld = SharedApi.getIDhServerWorld();
-		if (serverWorld instanceof DhServerWorld)
+		if (serverWorld instanceof DhServerWorld) // TODO add support for DhClientServerWorld's (lan worlds) as well
 		{
 			LOGGER.debug("Waiting for player to connect: " + player.getUUID());
 			((DhServerWorld) serverWorld).addPlayer(player);
@@ -173,10 +170,11 @@ public class ServerApi
 	public void serverPlayerDisconnectEvent(IServerPlayerWrapper player)
 	{
 		IDhServerWorld serverWorld = SharedApi.getIDhServerWorld();
-		if (serverWorld instanceof DhServerWorld)
+		if (serverWorld instanceof DhServerWorld) // TODO add support for DhClientServerWorld's (lan worlds) as well
 		{
 			LOGGER.debug("Removing player from connect wait list: " + player.getUUID());
 			((DhServerWorld) serverWorld).removePlayer(player);
 		}
 	}
+	
 }

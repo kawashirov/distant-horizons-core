@@ -4,6 +4,7 @@ import com.seibel.distanthorizons.api.interfaces.IDhApiUnsafeWrapper;
 
 import java.util.UUID;
 
-public interface IServerPlayerWrapper extends IDhApiUnsafeWrapper {
+public interface IServerPlayerWrapper extends IDhApiUnsafeWrapper 
+{
     UUID getUUID();
 }

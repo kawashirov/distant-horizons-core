@@ -1,6 +1,11 @@
 package com.seibel.distanthorizons.core.network.protocol;
 
-public enum MessageHandlerSide {
+/**
+ * CLIENT, <br>
+ * SERVER, <br>
+ */
+public enum EMessageHandlerSide
+{
     CLIENT,
     SERVER
 }

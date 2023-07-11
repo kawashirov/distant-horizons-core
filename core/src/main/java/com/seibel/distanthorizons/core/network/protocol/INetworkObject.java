@@ -4,23 +4,28 @@ import io.netty.buffer.ByteBuf;
 
 import java.nio.charset.StandardCharsets;
 
-public interface INetworkObject {
-    void encode(ByteBuf out);
-
-    void decode(ByteBuf in);
-
-    static <T extends INetworkObject> T decode(T o, ByteBuf in) {
-        o.decode(in);
-        return o;
-    }
-
-    static void encodeString(String str, ByteBuf out) {
-        out.writeShort(str.length());
-        out.writeBytes(str.getBytes(StandardCharsets.UTF_8));
-    }
-
-    static String decodeString(ByteBuf in) {
-        int length = in.readShort();
-        return in.readBytes(length).toString(StandardCharsets.UTF_8);
-    }
+public interface INetworkObject
+{
+	void encode(ByteBuf out);
+	
+	void decode(ByteBuf in);
+	
+	static <T extends INetworkObject> T decode(T obj, ByteBuf inputByteBuf)
+	{
+		obj.decode(inputByteBuf);
+		return obj;
+	}
+	
+	static void encodeString(String inputString, ByteBuf outputByteBuf)
+	{
+		outputByteBuf.writeShort(inputString.length());
+		outputByteBuf.writeBytes(inputString.getBytes(StandardCharsets.UTF_8));
+	}
+	
+	static String decodeString(ByteBuf inputByteBuf)
+	{
+		int length = inputByteBuf.readShort();
+		return inputByteBuf.readBytes(length).toString(StandardCharsets.UTF_8);
+	}
+	
 }

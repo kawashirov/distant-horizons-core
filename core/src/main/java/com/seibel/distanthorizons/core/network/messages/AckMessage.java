@@ -8,21 +8,19 @@ import io.netty.buffer.ByteBuf;
  * Simple empty response message.
  * This message is not sent automatically.
  */
-public class AckMessage implements INetworkMessage {
+public class AckMessage implements INetworkMessage
+{
     public Class<? extends INetworkMessage> messageType;
-
+	
+	
+	
     public AckMessage() { }
-    public AckMessage(Class<? extends INetworkMessage> messageType) {
-        this.messageType = messageType;
-    }
-
+    public AckMessage(Class<? extends INetworkMessage> messageType) { this.messageType = messageType; }
+	
     @Override
-    public void encode(ByteBuf out) {
-        out.writeInt(MessageRegistry.INSTANCE.getMessageId(messageType));
-    }
-
+    public void encode(ByteBuf out) { out.writeInt(MessageRegistry.INSTANCE.getMessageId(this.messageType)); }
+	
     @Override
-    public void decode(ByteBuf in) {
-        messageType = MessageRegistry.INSTANCE.getClassById(in.readInt());
-    }
+    public void decode(ByteBuf in) { this.messageType = MessageRegistry.INSTANCE.getMessageClassById(in.readInt()); }
+	
 }
