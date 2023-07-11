@@ -1,10 +1,17 @@
 package com.seibel.distanthorizons.core.world;
 
+import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.file.structure.ClientOnlySaveStructure;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.level.DhClientLevel;
+import com.seibel.distanthorizons.core.network.NetworkClient;
+import com.seibel.distanthorizons.core.network.messages.*;
+import com.seibel.distanthorizons.core.network.messages.PlayerUUIDMessage;
+import com.seibel.distanthorizons.core.network.messages.RemotePlayerConfigMessage;
+import com.seibel.distanthorizons.core.network.objects.RemotePlayer;
 import com.seibel.distanthorizons.core.util.ThreadUtil;
 import com.seibel.distanthorizons.core.util.objects.EventLoop;
+import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 
@@ -15,8 +22,12 @@ import java.util.concurrent.ExecutorService;
 
 public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 {
+    private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
+
     private final ConcurrentHashMap<IClientLevelWrapper, DhClientLevel> levels;
     public final ClientOnlySaveStructure saveStructure;
+
+    private final NetworkClient networkClient;
 
 	// TODO why does this executor have 2 threads?
     public ExecutorService dhTickerThread = ThreadUtil.makeSingleThreadPool("DH Client World Ticker Thread", 2);
@@ -27,12 +38,35 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
     public DhClientWorld()
 	{
 		super(EWorldEnvironment.Client_Only);
-		this.saveStructure = new ClientOnlySaveStructure();
-		this.levels = new ConcurrentHashMap<>();
+
+        this.saveStructure = new ClientOnlySaveStructure();
+        this.levels = new ConcurrentHashMap<>();
+
+        // TODO server specific configs
+        this.networkClient = new NetworkClient(MC_CLIENT.getCurrentServerIp(), 25049);
+        registerNetworkHandlers();
+
 		LOGGER.info("Started DhWorld of type "+this.environment);
 	}
 
+    private void registerNetworkHandlers() {
+        networkClient.registerHandler(HelloMessage.class, (msg, ctx) -> {
+            ctx.writeAndFlush(new PlayerUUIDMessage(MC_CLIENT.getPlayerUUID()));
+        });
 
+        // TODO Proper payload handling
+        networkClient.registerAckHandler(PlayerUUIDMessage.class, ctx -> {
+            ctx.writeAndFlush(new RemotePlayerConfigMessage(new RemotePlayer.Payload()));
+        });
+        networkClient.registerHandler(RemotePlayerConfigMessage.class, (msg, ctx) -> {
+
+        });
+
+        networkClient.registerAckHandler(RemotePlayerConfigMessage.class, ctx -> {
+            // TODO Actually request chunks
+            ctx.writeAndFlush(new RequestChunksMessage());
+        });
+    }
 
     @Override
     public DhClientLevel getOrLoadLevel(ILevelWrapper wrapper)
@@ -100,6 +134,8 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
     @Override
     public void close()
 	{
+        this.networkClient.close();
+
 		this.saveAndFlush().join();
         for (DhClientLevel dhClientLevel : this.levels.values())
 		{
