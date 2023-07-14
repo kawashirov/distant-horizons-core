@@ -329,9 +329,9 @@
     "Debug",
     
   "distanthorizons.config.client.advanced.debugging.rendererMode":
-    "Renderer mode",
-  "distanthorizons.config.client.advanced.debugging.debugMode":
-    "Debug mode",
+    "Renderer Mode",
+  "distanthorizons.config.client.advanced.debugging.debugRendering":
+    "Debug Rendering",
   "distanthorizons.config.client.advanced.debugging.debugMode.@tooltip":
     "The active debug mode.",
   "distanthorizons.config.client.advanced.debugging.renderWireframe":
