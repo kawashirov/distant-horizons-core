@@ -138,7 +138,7 @@ public class ClientLevelModule {
                 return;
             }
         }
-        ClientRenderState.closeAsync().join(); //TODO: Make it async.
+        ClientRenderState.closeAsync();
     }
 
     //===============//
@@ -189,7 +189,7 @@ public class ClientLevelModule {
 
             if (ClientRenderState != null)
             {
-                ClientRenderState.closeAsync().join(); //TODO: Make this async.
+                ClientRenderState.closeAsync();
             }
         }
     }

@@ -136,7 +136,7 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 	{
         this.networkClient.close();
 
-		this.saveAndFlush().join();
+		this.saveAndFlush();
         for (DhClientLevel dhClientLevel : this.levels.values())
 		{
             LOGGER.info("Unloading level " + dhClientLevel.getLevelWrapper().getDimensionType().getDimensionName());

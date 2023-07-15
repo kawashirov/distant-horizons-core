@@ -50,7 +50,7 @@ public class FileScanUtil
 			{
 				List<File> files = pathStream.filter(
 						path -> path.toFile().getName().endsWith(RENDER_FILE_POSTFIX) && path.toFile().isFile()
-				).map(Path::toFile).collect(Collectors.toList());
+						).map(Path::toFile).collect(Collectors.toList());
 				LOGGER.info("Found "+files.size()+" render cache files for "+levelWrapper+" in "+saveStructure);
 				renderSourceProvider.addScannedFile(files);
 			}
