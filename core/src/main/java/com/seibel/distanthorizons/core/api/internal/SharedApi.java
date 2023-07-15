@@ -2,6 +2,7 @@ package com.seibel.distanthorizons.core.api.internal;
 
 import com.seibel.distanthorizons.core.Initializer;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.ColumnRenderBufferBuilder;
+import com.seibel.distanthorizons.core.dataObjects.transformers.ChunkToLodBuilder;
 import com.seibel.distanthorizons.core.dataObjects.transformers.DataRenderTransformer;
 import com.seibel.distanthorizons.core.file.fullDatafile.FullDataFileHandler;
 import com.seibel.distanthorizons.core.generation.WorldGenerationQueue;
@@ -30,19 +31,21 @@ public class SharedApi
 		// access the MC level at inappropriate times, which can cause exceptions
 		if (currentWorld != null)
 		{
-			// thread pool setup
+			// static thread pool setup
 			DataRenderTransformer.setupExecutorService();
 			FullDataFileHandler.setupExecutorService();
 			ColumnRenderBufferBuilder.setupExecutorService();
 			WorldGenerationQueue.setupWorldGenThreadPool();
+			ChunkToLodBuilder.setupExecutorService();
 		}
 		else
 		{
-			// thread pool shutdown
+			// static thread pool shutdown
 			DataRenderTransformer.shutdownExecutorService();
 			FullDataFileHandler.shutdownExecutorService();
 			ColumnRenderBufferBuilder.shutdownExecutorService();
 			WorldGenerationQueue.shutdownWorldGenThreadPool();
+			ChunkToLodBuilder.shutdownExecutorService();
 		}
 	}
 	

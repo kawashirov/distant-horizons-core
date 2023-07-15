@@ -19,6 +19,10 @@ public class ChunkToLodBuilder implements AutoCloseable
 	public static final ConfigBasedLogger LOGGER = new ConfigBasedLogger(LogManager.getLogger(), () -> Config.Client.Advanced.Logging.logLodBuilderEvent.get());
 	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	
+	private static int threadCount = -1;
+	private static ExecutorService executorThreadPool = null;
+	private static ConfigChangeListener<Integer> threadConfigListener;
+	
 	public static final long MAX_TICK_TIME_NS = 1000000000L / 20L;
 	/** 
 	 * This is done to prevent tasks infinitely piling up if a queued chunk could never be generated, 
@@ -30,17 +34,13 @@ public class ChunkToLodBuilder implements AutoCloseable
 	private final ConcurrentLinkedDeque<Task> concurrentTaskToBuildList = new ConcurrentLinkedDeque<>();
 	private final AtomicInteger runningCount = new AtomicInteger(0);
 	
-	private int threadCount = -1;
-	private ExecutorService executorThreadPool = null;
-	private ConfigChangeListener<Integer> configListener;
-	
 	
 	
 	//==============//
 	// constructors //
 	//==============//
 	
-	public ChunkToLodBuilder() { this.setupExecutorService(); }
+	public ChunkToLodBuilder() { }
 	
 	
 	
@@ -92,7 +92,7 @@ public class ChunkToLodBuilder implements AutoCloseable
 		}
 		
 		
-		for (int i = 0; i< this.threadCount; i++)
+		for (int i = 0; i< threadCount; i++)
 		{
 			this.runningCount.incrementAndGet();
 			CompletableFuture.runAsync(() ->
@@ -105,7 +105,7 @@ public class ChunkToLodBuilder implements AutoCloseable
 				{
 					this.runningCount.decrementAndGet();
 				}
-			}, this.executorThreadPool);
+			}, executorThreadPool);
 		}
 	}
 	private void tickThreadTask()
@@ -207,42 +207,42 @@ public class ChunkToLodBuilder implements AutoCloseable
 	 * Creates a new executor. <br>
 	 * Does nothing if an executor already exists.
 	 */
-	public void setupExecutorService()
+	public static void setupExecutorService()
 	{
 		// static setup
-		if (this.configListener == null)
+		if (threadConfigListener == null)
 		{
-			this.configListener = new ConfigChangeListener<>(Config.Client.Advanced.MultiThreading.numberOfChunkLodConverterThreads, (threadCount) -> { this.setThreadPoolSize(threadCount); });
+			threadConfigListener = new ConfigChangeListener<>(Config.Client.Advanced.MultiThreading.numberOfChunkLodConverterThreads, (threadCount) -> { setThreadPoolSize(threadCount); });
 		}
 		
 		
-		if (this.executorThreadPool == null || this.executorThreadPool.isTerminated())
+		if (executorThreadPool == null || executorThreadPool.isTerminated())
 		{
 			LOGGER.info("Starting "+ChunkToLodBuilder.class.getSimpleName());
-			this.setThreadPoolSize(Config.Client.Advanced.MultiThreading.numberOfChunkLodConverterThreads.get());
+			setThreadPoolSize(Config.Client.Advanced.MultiThreading.numberOfChunkLodConverterThreads.get());
 		}
 	}
-	public void setThreadPoolSize(int threadPoolSize)
+	public static void setThreadPoolSize(int threadPoolSize)
 	{
-		if (this.executorThreadPool != null && !this.executorThreadPool.isTerminated())
+		if (executorThreadPool != null && !executorThreadPool.isTerminated())
 		{
-			this.executorThreadPool.shutdownNow();
+			executorThreadPool.shutdownNow();
 		}
 		
-		this.threadCount = threadPoolSize;
-		this.executorThreadPool = ThreadUtil.makeThreadPool(threadPoolSize, ChunkToLodBuilder.class);
+		threadCount = threadPoolSize;
+		executorThreadPool = ThreadUtil.makeThreadPool(threadPoolSize, ChunkToLodBuilder.class);
 	}
 	
 	/**
 	 * Stops any executing tasks and destroys the executor. <br>
 	 * Does nothing if the executor isn't running.
 	 */
-	public void shutdownExecutorService()
+	public static void shutdownExecutorService()
 	{
-		if (this.executorThreadPool != null)
+		if (executorThreadPool != null)
 		{
 			LOGGER.info("Stopping "+ChunkToLodBuilder.class.getSimpleName());
-			this.executorThreadPool.shutdownNow();
+			executorThreadPool.shutdownNow();
 		}
 	}
 	
@@ -253,11 +253,7 @@ public class ChunkToLodBuilder implements AutoCloseable
 	//==============//
 	
 	@Override
-	public void close()
-	{
-		this.shutdownExecutorService();
-		this.clearCurrentTasks();
-	}
+	public void close() { this.clearCurrentTasks(); }
 	
 	
 	
