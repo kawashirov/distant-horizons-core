@@ -12,7 +12,6 @@ import com.seibel.distanthorizons.core.pos.DhChunkPos;
 import com.seibel.distanthorizons.core.util.ThreadUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
-import com.seibel.distanthorizons.core.util.*;
 import org.apache.logging.log4j.LogManager;
 
 public class ChunkToLodBuilder implements AutoCloseable
@@ -21,10 +20,14 @@ public class ChunkToLodBuilder implements AutoCloseable
 	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	
 	public static final long MAX_TICK_TIME_NS = 1000000000L / 20L;
+	/** 
+	 * This is done to prevent tasks infinitely piling up if a queued chunk could never be generated, 
+	 * But should also prevent de-queuing chunks that should still be generated.
+	 */
+	public static final short MAX_NUMBER_OF_CHUNK_GENERATION_ATTEMPTS_BEFORE_DISCARDING = 64;
 	
-	
-	private final ConcurrentHashMap<DhChunkPos, IChunkWrapper> latestChunkToBuild = new ConcurrentHashMap<>();
-	private final ConcurrentLinkedDeque<Task> taskToBuild = new ConcurrentLinkedDeque<>();
+	private final ConcurrentHashMap<DhChunkPos, IChunkWrapper> concurrentChunkToBuildByChunkPos = new ConcurrentHashMap<>();
+	private final ConcurrentLinkedDeque<Task> concurrentTaskToBuildList = new ConcurrentLinkedDeque<>();
 	private final AtomicInteger runningCount = new AtomicInteger(0);
 	
 	private int threadCount = -1;
@@ -52,7 +55,7 @@ public class ChunkToLodBuilder implements AutoCloseable
 			throw new NullPointerException("ChunkWrapper cannot be null!");
 		}
 		
-		IChunkWrapper oldChunk = this.latestChunkToBuild.put(chunkWrapper.getChunkPos(), chunkWrapper); // an Exchange operation
+		IChunkWrapper oldChunk = this.concurrentChunkToBuildByChunkPos.put(chunkWrapper.getChunkPos(), chunkWrapper); // an Exchange operation
 		// If there's old chunk, that means we just replaced an unprocessed old request on generating data on this pos.
 		//   if so, we can just return null to signal this, as the old request's future will instead be the proper one
 		//   that will return the latest generated data.
@@ -63,7 +66,7 @@ public class ChunkToLodBuilder implements AutoCloseable
 		
 		// Otherwise, it means we're the first to do so. Let's submit our task to this entry.
 		CompletableFuture<ChunkSizedFullDataAccessor> future = new CompletableFuture<>();
-		this.taskToBuild.addLast(new Task(chunkWrapper.getChunkPos(), future));
+		this.concurrentTaskToBuildList.addLast(new Task(chunkWrapper.getChunkPos(), future));
 		return future;
 	}
 	
@@ -73,7 +76,7 @@ public class ChunkToLodBuilder implements AutoCloseable
 		{
 			return;
 		}
-		else if (this.taskToBuild.isEmpty())
+		else if (this.concurrentTaskToBuildList.isEmpty())
 		{
 			return;
 		}
@@ -96,7 +99,7 @@ public class ChunkToLodBuilder implements AutoCloseable
 			{
 				try
 				{
-					this._tick();
+					this.tickThreadTask();
 				}
 				finally
 				{
@@ -105,7 +108,7 @@ public class ChunkToLodBuilder implements AutoCloseable
 			}, this.executorThreadPool);
 		}
 	}
-	private void _tick()
+	private void tickThreadTask()
 	{
 		long time = System.nanoTime();
 		int count = 0;
@@ -113,20 +116,21 @@ public class ChunkToLodBuilder implements AutoCloseable
 		while (true)
 		{
 			// run until we either run out of time, or all tasks are complete
-			if (System.nanoTime() - time > MAX_TICK_TIME_NS && !this.taskToBuild.isEmpty())
+			if (System.nanoTime() - time > MAX_TICK_TIME_NS && !this.concurrentTaskToBuildList.isEmpty())
 			{
 				break;
 			}
 			
-			Task task = this.taskToBuild.pollFirst();
+			Task task = this.concurrentTaskToBuildList.pollFirst();
 			if (task == null)
 			{
 				allDone = true;
 				break;
 			}
+			task.generationAttemptNumber++;
 			
 			count++;
-			IChunkWrapper latestChunk = this.latestChunkToBuild.remove(task.chunkPos); // Basically an Exchange operation
+			IChunkWrapper latestChunk = this.concurrentChunkToBuildByChunkPos.remove(task.chunkPos); // Basically an Exchange operation
 			if (latestChunk == null)
 			{
 				LOGGER.error("Somehow Task at "+task.chunkPos+" has latestChunk as null. Skipping task.");
@@ -145,17 +149,23 @@ public class ChunkToLodBuilder implements AutoCloseable
 						continue;
 					}
 				}
+				else if(task.generationAttemptNumber > MAX_NUMBER_OF_CHUNK_GENERATION_ATTEMPTS_BEFORE_DISCARDING)
+				{
+					// this task won't be re-queued
+					continue;
+				}
 			}
 			catch (Exception ex)
 			{
 				LOGGER.error("Error while processing Task at "+task.chunkPos, ex);
 			}
 			
-			// Failed to build due to chunk not meeting requirement.
-			IChunkWrapper casChunk = this.latestChunkToBuild.putIfAbsent(task.chunkPos, latestChunk); // CAS operation with expected=null
+			// Failed to build due to chunk not meeting requirement,
+			// re-add it to the queue so it can be tested next time
+			IChunkWrapper casChunk = this.concurrentChunkToBuildByChunkPos.putIfAbsent(task.chunkPos, latestChunk); // CAS operation with expected=null
 			if (casChunk == null || latestChunk.isStillValid()) // That means CAS have been successful
 			{
-				this.taskToBuild.addLast(task); // Then add back the same old task.
+				this.concurrentTaskToBuildList.addLast(task); // Then add back the same old task.
 			}
 			else // Else, it means someone managed to sneak in a new gen request in this pos. Then lets drop this old task.
 			{
@@ -183,8 +193,8 @@ public class ChunkToLodBuilder implements AutoCloseable
 	 */
 	public void clearCurrentTasks()
 	{
-		this.taskToBuild.clear();
-		this.latestChunkToBuild.clear();
+		this.concurrentTaskToBuildList.clear();
+		this.concurrentChunkToBuildByChunkPos.clear();
 	}
 	
 	
@@ -214,6 +224,11 @@ public class ChunkToLodBuilder implements AutoCloseable
 	}
 	public void setThreadPoolSize(int threadPoolSize)
 	{
+		if (this.executorThreadPool != null && !this.executorThreadPool.isTerminated())
+		{
+			this.executorThreadPool.shutdownNow();
+		}
+		
 		this.threadCount = threadPoolSize;
 		this.executorThreadPool = ThreadUtil.makeThreadPool(threadPoolSize, ChunkToLodBuilder.class);
 	}
@@ -252,8 +267,10 @@ public class ChunkToLodBuilder implements AutoCloseable
 	
 	private static class Task
 	{
-		final DhChunkPos chunkPos;
-		final CompletableFuture<ChunkSizedFullDataAccessor> future;
+		public final DhChunkPos chunkPos;
+		public final CompletableFuture<ChunkSizedFullDataAccessor> future;
+		/** This is tracked so impossible tasks can be removed from the queue */
+		public short generationAttemptNumber = 0;
 		
 		Task(DhChunkPos chunkPos, CompletableFuture<ChunkSizedFullDataAccessor> future)
 		{
