@@ -1,10 +1,8 @@
 package com.seibel.distanthorizons.core.file.renderfile;
 
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableList;
 import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
-import com.seibel.distanthorizons.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.distanthorizons.core.file.structure.AbstractSaveStructure;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhLodPos;
@@ -26,7 +24,6 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -39,7 +36,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	
     private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
-	private final ExecutorService fileHandlerThreadPool = ThreadUtil.makeSingleThreadPool("Render Source File Handler");
+	private final ThreadPoolExecutor fileHandlerThreadPool;
 
 	private final ConcurrentHashMap<DhSectionPos, File> unloadedFiles = new ConcurrentHashMap<>();
 	private final ConcurrentHashMap<DhSectionPos, RenderMetaDataFile> filesBySectionPos = new ConcurrentHashMap<>();
@@ -47,10 +44,15 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	private final IDhClientLevel level;
 	private final File saveDir;
 	/** This is the lowest (highest numeric) detail level that this {@link RenderSourceFileHandler} is keeping track of. */
-	AtomicInteger topDetailLevel = new AtomicInteger(6);
+	AtomicInteger topDetailLevel = new AtomicInteger(DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL);
 	private final IFullDataSourceProvider fullDataSourceProvider;
-
-
+	
+	
+	
+	//=============//
+	// constructor //
+	//=============//
+	
 	public RenderSourceFileHandler(IFullDataSourceProvider sourceProvider, IDhClientLevel level, AbstractSaveStructure saveStructure)
 	{
         this.fullDataSourceProvider = sourceProvider;
@@ -60,6 +62,8 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		{
 			LOGGER.warn("Unable to create render data folder, file saving may fail.");
 		}
+		this.fileHandlerThreadPool = ThreadUtil.makeSingleThreadPool("Render Source File Handler ["+this.level.getClientLevelWrapper().getDimensionType().getDimensionName()+"]");
+		
 		FileScanUtil.scanFiles(saveStructure, level.getLevelWrapper(), null, this);
     }
 	
@@ -356,7 +360,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (RenderMetaDataFile metaFile : this.filesBySectionPos.values())
 		{
-			futures.add(metaFile.flushAndSave(this.fileHandlerThreadPool));
+			futures.add(metaFile.flushAndSaveAsync(this.fileHandlerThreadPool));
 		}
 		
 		return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
@@ -481,15 +485,43 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	// clearing / shutdown //
 	//=====================//
 	
+	/** closes the handler after any necessary saving has been completed */
+	public CompletableFuture<Void> saveAndCloseAsync()
+	{
+		CompletableFuture<Void> shutdownFuture = this.flushAndSaveAsync();
+		shutdownFuture.whenComplete((voidObj, ex) -> { this.close(); });
+		
+		return shutdownFuture;
+	}
+	
 	@Override
 	public void close()
 	{
+		LOGGER.info("Closing "+this.getClass().getSimpleName()+" with ["+this.filesBySectionPos.size()+"] files...");
+		
+		// queue the file save futures
 		ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (RenderMetaDataFile metaFile : this.filesBySectionPos.values())
 		{
-			futures.add(metaFile.flushAndSave(this.fileHandlerThreadPool));
+			futures.add(metaFile.flushAndSaveAsync(this.fileHandlerThreadPool));
 		}
-		CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+		
+		
+		// if the save futures didn't already complete, wait for them and then shut down the thread pool
+		CompletableFuture<Void> combinedFuture = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+		combinedFuture.thenRun(() ->
+		{
+			LOGGER.info("Finished closing "+this.getClass().getSimpleName()+", ["+futures.size()+"] files were saved.");
+			this.fileHandlerThreadPool.shutdown();
+		});
+		
+		// if the save futures were already completed, the above "thenRun" won't fire,
+		// if the executor isn't currently running anything, shut it down
+		if (!this.fileHandlerThreadPool.isTerminated() && this.fileHandlerThreadPool.getActiveCount() == 0)
+		{
+			LOGGER.info("Finished closing "+this.getClass().getSimpleName()+", thread pool manually shut down due to file save futures already being completed.");
+			this.fileHandlerThreadPool.shutdown();
+		}
 	}
 	
 	

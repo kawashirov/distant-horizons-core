@@ -1,8 +1,6 @@
 package com.seibel.distanthorizons.core.file.renderfile;
 
 import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
-import com.seibel.distanthorizons.core.dataObjects.fullData.sources.CompleteFullDataSource;
-import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.distanthorizons.core.file.metaData.AbstractMetaDataContainerFile;
 import com.seibel.distanthorizons.core.file.metaData.BaseMetaData;
 import com.seibel.distanthorizons.core.level.IDhLevel;
@@ -134,7 +132,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 		});
 	}
 	
-    public CompletableFuture<Void> flushAndSave(ExecutorService renderCacheThread)
+    public CompletableFuture<Void> flushAndSaveAsync(ExecutorService renderCacheThread)
 	{
 		if (!this.file.exists())
 		{

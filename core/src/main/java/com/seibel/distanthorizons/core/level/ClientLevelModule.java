@@ -269,7 +269,7 @@ public class ClientLevelModule {
 
             this.renderer.close();
             this.quadtree.close();
-            return this.renderSourceFileHandler.flushAndSaveAsync();
+            return this.renderSourceFileHandler.saveAndCloseAsync();
         }
 
     }
