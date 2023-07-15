@@ -76,25 +76,40 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	@Override
 	public void addScannedFile(Collection<File> detectedFiles)
 	{
-		if (USE_LAZY_LOADING) {
-			lazyAddScannedFile(detectedFiles);
+		if (USE_LAZY_LOADING)
+		{
+			this.lazyAddScannedFile(detectedFiles);
 		}
-		else {
-			immediateAddScannedFile(detectedFiles);
+		else
+		{
+			this.immediateAddScannedFile(detectedFiles);
 		}
 	}
 
-	private void lazyAddScannedFile(Collection<File> detectedFiles) {
-		for (File file : detectedFiles) {
-			try {
-				DhSectionPos pos = decodePositionByFile(file);
-				if (pos != null) {
-					unloadedFiles.put(pos, file);
+	private void lazyAddScannedFile(Collection<File> detectedFiles)
+	{
+		for (File file : detectedFiles)
+		{
+			if (file == null || !file.exists())
+			{
+				// can rarely happen if the user rapidly travels between dimensions
+				LOGGER.warn("Null or non-existent render file: " + ((file != null) ? file.getPath() : "NULL"));
+				continue;
+			}
+			
+			
+			try
+			{
+				DhSectionPos pos = this.decodePositionByFile(file);
+				if (pos != null)
+				{
+					this.unloadedFiles.put(pos, file);
 					this.topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetailLevel));
 				}
 			}
-			catch (Exception e) {
-				LOGGER.error("Failed to read data meta file at " + file + ": ", e);
+			catch (Exception e)
+			{
+				LOGGER.error("Failed to read data meta file at "+file+": ", e);
 				FileUtil.renameCorruptedFile(file);
 			}
 		}
@@ -186,33 +201,58 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	protected RenderMetaDataFile getLoadOrMakeFile(DhSectionPos pos, boolean allowCreateFile)
 	{
 		RenderMetaDataFile metaFile = this.filesBySectionPos.get(pos);
-		if (metaFile != null) return metaFile;
+		if (metaFile != null)
+		{
+			return metaFile;
+		}
+		
 
-		File fileToLoad = unloadedFiles.get(pos);
+		File fileToLoad = this.unloadedFiles.get(pos);
+		if (fileToLoad != null && !fileToLoad.exists())
+		{
+			fileToLoad = null;
+			this.unloadedFiles.remove(pos);
+		}
+		
 		// File does exist, but not loaded yet.
-		if (fileToLoad != null) {
-			synchronized (this) {
+		if (fileToLoad != null)
+		{
+			synchronized (this)
+			{
 				// Double check locking for loading file, as loading file means also loading the metadata, which
 				// while not... Very expensive, is still better to avoid multiple threads doing it, and dumping the
 				// duplicated work to the trash. Therefore, eating the overhead of 'synchronized' is worth it.
 				metaFile = this.filesBySectionPos.get(pos);
-				if (metaFile != null) return metaFile; // someone else loaded it already.
-				try {
+				if (metaFile != null)
+				{
+					return metaFile; // someone else loaded it already.
+				}
+					
+				try
+				{
 					metaFile = RenderMetaDataFile.createFromExistingFile(this, fileToLoad);
 					this.topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetailLevel));
 					this.filesBySectionPos.put(pos, metaFile);
 					return metaFile;
 				}
-				catch (IOException e) {
+				catch (IOException e)
+				{
 					LOGGER.error("Failed to read render meta file at " + fileToLoad + ": ", e);
 					FileUtil.renameCorruptedFile(fileToLoad);
 				}
-				finally {
-					unloadedFiles.remove(pos);
+				finally
+				{
+					this.unloadedFiles.remove(pos);
 				}
 			}
 		}
-		if (!allowCreateFile) return null;
+		
+		
+		if (!allowCreateFile)
+		{
+			return null;
+		}
+		
 		// File does not exist, create it.
 		// In this case, since 'creating' a file object doesn't actually do anything heavy on IO yet, we use CAS
 		// to avoid overhead of 'synchronized', and eat the mini-overhead of possibly creating duplicate objects.
@@ -225,6 +265,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 			LOGGER.error("IOException on creating new data file at {}", pos, e);
 			return null;
 		}
+		
 		this.topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetailLevel));
 		// This is a CAS with expected null value.
 		RenderMetaDataFile metaFileCas = this.filesBySectionPos.putIfAbsent(pos, metaFile);
@@ -462,16 +503,13 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 			{
 				if (!renderFile.delete())
 				{
-					LOGGER.error("Unable to delete render file: " + renderFile.getPath());
+					LOGGER.warn("Unable to delete render file: " + renderFile.getPath());
 				}
 			}
 		}
-		else {
-			renderFiles = new File[0];
-		}
+		
 		// clear the cached files
 		this.filesBySectionPos.clear();
-		addScannedFile(ImmutableList.copyOf(renderFiles));
 	}
 	
 	

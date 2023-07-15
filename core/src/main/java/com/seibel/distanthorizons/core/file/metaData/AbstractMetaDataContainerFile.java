@@ -5,10 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.zip.Adler32;
 import java.util.zip.CheckedOutputStream;
 
@@ -253,6 +250,10 @@ public abstract class AbstractMetaDataContainerFile
 				//LOGGER.info("replaced file: "+this.file.toPath());
 			}
 		}
+		catch (NoSuchFileException e)
+		{
+			// can be thrown by the "Files.move" method if the system tries writing to an unloaded level
+		}
 		catch (ClosedChannelException e) // includes ClosedByInterruptException
 		{
 			// expected if the file handler is shut down, the exception can be ignored
@@ -282,7 +283,7 @@ public abstract class AbstractMetaDataContainerFile
 			{
 				LOGGER.error(tempDeleteErrorMessage);
 			}
-			DebugThreadCheck = false;
+			this.DebugThreadCheck = false;
 		}
 	}
 	
