@@ -43,13 +43,20 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 
 	private final ConcurrentHashMap<DhSectionPos, File> unloadedFiles = new ConcurrentHashMap<>();
 	private final ConcurrentHashMap<DhSectionPos, FullDataMetaFile> fileBySectionPos = new ConcurrentHashMap<>();
-	public void ForEachFile(Consumer<FullDataMetaFile> consumer) {
-		fileBySectionPos.values().forEach(consumer);
-	}
+	public void ForEachFile(Consumer<FullDataMetaFile> consumer) { this.fileBySectionPos.values().forEach(consumer); }
 
 	protected final IDhLevel level;
 	protected final File saveDir;
-	protected final AtomicInteger topDetailLevel = new AtomicInteger(-1);
+	/** 
+	 * The starting value here denotes how far into the tree LOD writes should occur. <br>
+	 * This is a band-aid fix to prevent lower detail sections from not being generated until the detail level
+	 * is requested. <br><br>
+	 * 
+	 * Note: that problem may still happen at a sufficiently large render distance, 
+	 * however this should kick the problem down the road
+	 * far enough that it can be ignored for now.
+	 */
+	protected final AtomicInteger topDetailLevel = new AtomicInteger(DhSectionPos.SECTION_REGION_DETAIL_LEVEL);
 	protected final int minDetailLevel = CompleteFullDataSource.SECTION_SIZE_OFFSET;
 	
     public FullDataFileHandler(IDhLevel level, AbstractSaveStructure saveStructure)
@@ -84,7 +91,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 				DhSectionPos pos = decodePositionByFile(file);
 				if (pos != null) {
 					unloadedFiles.put(pos, file);
-					this.topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetailLevel));
+					this.topDetailLevel.updateAndGet(oldDetailLevel -> Math.max(oldDetailLevel, pos.sectionDetailLevel));
 				}
 			}
 			catch (Exception e) {
@@ -167,7 +174,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
                 fileToUse = metaFiles.iterator().next();
             }
             // Add file to the list of files.
-			this.topDetailLevel.updateAndGet(v -> Math.max(v, fileToUse.pos.sectionDetailLevel));
+			this.topDetailLevel.updateAndGet(oldDetailLevel -> Math.max(oldDetailLevel, fileToUse.pos.sectionDetailLevel));
 			this.fileBySectionPos.put(pos, fileToUse);
         }
     }
@@ -177,31 +184,46 @@ public class FullDataFileHandler implements IFullDataSourceProvider
         FullDataMetaFile metaFile = this.fileBySectionPos.get(pos);
 		if (metaFile != null) return metaFile;
 
-		File fileToLoad = unloadedFiles.get(pos);
+		File fileToLoad = this.unloadedFiles.get(pos);
 		// File does exist, but not loaded yet.
-		if (fileToLoad != null) {
-			synchronized (this) {
+		if (fileToLoad != null)
+		{
+			synchronized (this)
+			{
 				// Double check locking for loading file, as loading file means also loading the metadata, which
 				// while not... Very expensive, is still better to avoid multiple threads doing it, and dumping the
 				// duplicated work to the trash. Therefore, eating the overhead of 'synchronized' is worth it.
 				metaFile = this.fileBySectionPos.get(pos);
-				if (metaFile != null) return metaFile; // someone else loaded it already.
-				try {
+				if (metaFile != null)
+				{
+					return metaFile; // someone else loaded it already.
+				}
+				
+				try
+				{
 					metaFile = new FullDataMetaFile(this, this.level, fileToLoad);
-					this.topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetailLevel));
+					this.topDetailLevel.updateAndGet(oldDetailLevel -> Math.max(oldDetailLevel, pos.sectionDetailLevel));
 					this.fileBySectionPos.put(pos, metaFile);
 					return metaFile;
 				}
-				catch (IOException e) {
+				catch (IOException e)
+				{
 					LOGGER.error("Failed to read data meta file at " + fileToLoad + ": ", e);
 					FileUtil.renameCorruptedFile(fileToLoad);
 				}
-				finally {
-					unloadedFiles.remove(pos);
+				finally
+				{
+					this.unloadedFiles.remove(pos);
 				}
 			}
 		}
-		if (!allowCreateFile) return null;
+		
+		
+		if (!allowCreateFile)
+		{
+			return null;
+		}
+		
 		// File does not exist, create it.
 		// In this case, since 'creating' a file object doesn't actually do anything heavy on IO yet, we use CAS
 		// to avoid overhead of 'synchronized', and eat the mini-overhead of possibly creating duplicate objects.
@@ -214,8 +236,9 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 			LOGGER.error("IOException on creating new data file at {}", pos, e);
 			return null;
 		}
+		
 		// This is a CAS with expected null value.
-		this.topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetailLevel));
+		this.topDetailLevel.updateAndGet(oldDetailLevel -> Math.max(oldDetailLevel, pos.sectionDetailLevel));
 		FullDataMetaFile metaFileCas = this.fileBySectionPos.putIfAbsent(pos, metaFile);
 		return metaFileCas == null ? metaFile : metaFileCas;
     }
@@ -312,7 +335,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	@Override
     public CompletableFuture<IFullDataSource> read(DhSectionPos pos)
 	{
-		this.topDetailLevel.updateAndGet(intVal -> Math.max(intVal, pos.sectionDetailLevel));
+		this.topDetailLevel.updateAndGet(oldDetailLevel -> Math.max(oldDetailLevel, pos.sectionDetailLevel));
         FullDataMetaFile metaFile = this.getLoadOrMakeFile(pos, true);
         if (metaFile == null)
 		{
@@ -350,6 +373,12 @@ public class FullDataFileHandler implements IFullDataSourceProvider
     private void writeChunkDataToMetaFile(DhSectionPos sectionPos, ChunkSizedFullDataAccessor chunkData)
 	{
         FullDataMetaFile metaFile = this.fileBySectionPos.get(sectionPos);
+		if (metaFile == null)
+		{
+			// create a new file if one doesn't exist,
+			// this is done so we don't end up with holes where LODs should have been generated
+			metaFile = this.getLoadOrMakeFile(sectionPos, true);
+		}
         if (metaFile != null)
 		{ 
 			// there is a file for this position
