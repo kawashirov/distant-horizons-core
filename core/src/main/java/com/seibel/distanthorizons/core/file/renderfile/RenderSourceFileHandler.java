@@ -485,15 +485,6 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	// clearing / shutdown //
 	//=====================//
 	
-	/** closes the handler after any necessary saving has been completed */
-	public CompletableFuture<Void> saveAndCloseAsync()
-	{
-		CompletableFuture<Void> shutdownFuture = this.flushAndSaveAsync();
-		shutdownFuture.whenComplete((voidObj, ex) -> { this.close(); });
-		
-		return shutdownFuture;
-	}
-	
 	@Override
 	public void close()
 	{
@@ -503,23 +494,32 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (RenderMetaDataFile metaFile : this.filesBySectionPos.values())
 		{
-			futures.add(metaFile.flushAndSaveAsync(this.fileHandlerThreadPool));
+			CompletableFuture<Void> saveFuture = metaFile.flushAndSaveAsync(this.fileHandlerThreadPool);
+			if (!saveFuture.isDone())
+			{
+				futures.add(saveFuture);
+			}
 		}
 		
 		
-		// if the save futures didn't already complete, wait for them and then shut down the thread pool
-		CompletableFuture<Void> combinedFuture = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-		combinedFuture.thenRun(() ->
+		if (futures.size() != 0)
 		{
-			LOGGER.info("Finished closing "+this.getClass().getSimpleName()+", ["+futures.size()+"] files were saved.");
-			this.fileHandlerThreadPool.shutdown();
-		});
+			LOGGER.info("Waiting for ["+futures.size()+"] files to save...");
+			
+			// if the save futures didn't already complete, wait for them and then shut down the thread pool
+			CompletableFuture<Void> combinedFuture = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+			combinedFuture.thenRun(() ->
+			{
+				LOGGER.info("Finished closing "+this.getClass().getSimpleName()+", ["+futures.size()+"] files were saved out of ["+this.filesBySectionPos.size()+"] total files.");
+				this.fileHandlerThreadPool.shutdown();
+			});
+		}
 		
 		// if the save futures were already completed, the above "thenRun" won't fire,
 		// if the executor isn't currently running anything, shut it down
 		if (!this.fileHandlerThreadPool.isTerminated() && this.fileHandlerThreadPool.getActiveCount() == 0)
 		{
-			LOGGER.info("Finished closing "+this.getClass().getSimpleName()+", thread pool manually shut down due to file save futures already being completed.");
+			LOGGER.info("Finished closing " + this.getClass().getSimpleName() + " when files were already saved.");
 			this.fileHandlerThreadPool.shutdown();
 		}
 	}

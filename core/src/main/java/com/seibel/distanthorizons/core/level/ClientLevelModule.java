@@ -60,13 +60,13 @@ public class ClientLevelModule {
                 return;
             }
 
-            clientRenderState.closeAsync().join(); //TODO: Make it async.
+            clientRenderState.close();
             clientRenderState = new ClientRenderState(parent, parent.getFileHandler(), parent.getSaveStructure());
             if (!this.ClientRenderStateRef.compareAndSet(null, clientRenderState))
             {
                 //FIXME: How to handle this?
                 LOGGER.warn("Failed to set render state due to concurrency after changing view distance");
-                clientRenderState.closeAsync();
+                clientRenderState.close();
                 return;
             }
         }
@@ -96,7 +96,7 @@ public class ClientLevelModule {
         if (!this.ClientRenderStateRef.compareAndSet(null, ClientRenderState))
         {
             LOGGER.warn("Failed to start renderer due to concurrency");
-            ClientRenderState.closeAsync();
+            ClientRenderState.close();
             return false;
         }
         else
@@ -138,7 +138,7 @@ public class ClientLevelModule {
                 return;
             }
         }
-        ClientRenderState.closeAsync();
+        ClientRenderState.close();
     }
 
     //===============//
@@ -189,7 +189,7 @@ public class ClientLevelModule {
 
             if (ClientRenderState != null)
             {
-                ClientRenderState.closeAsync();
+                ClientRenderState.close();
             }
         }
     }
@@ -263,13 +263,13 @@ public class ClientLevelModule {
 
 
 
-        public CompletableFuture<Void> closeAsync()
+        public void close()
         {
-            LOGGER.info("Shutting down "+ ClientRenderState.class.getSimpleName()+" async...");
+            LOGGER.info("Shutting down "+ ClientRenderState.class.getSimpleName());
 
             this.renderer.close();
             this.quadtree.close();
-            return this.renderSourceFileHandler.saveAndCloseAsync();
+	        this.renderSourceFileHandler.close();
         }
 
     }
