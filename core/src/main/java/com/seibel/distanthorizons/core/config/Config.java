@@ -739,8 +739,11 @@ public class Config
 				
 				public static final String THREAD_RUN_TIME_RATIO_NOTE = ""
 						+ "If this value is less than 1.0, it will be treated as a percentage \n"
-						+ "of time a each thread can run before going idle. \n"
-						+ "";
+						+ "of time each thread can run before going idle. \n"
+						+ "\n"
+						+ "This can be used to reduce CPU usage if the thread count \n"
+						+ "is already set to 1 for the given option, or more finely \n"
+						+ "tune CPU performance.";
 				
 				
 				public static final ConfigEntry<Integer> numberOfWorldGenerationThreads = new ConfigEntry.Builder<Integer>()
@@ -759,7 +762,7 @@ public class Config
 								+ THREAD_NOTE)
 						.build();
 				public static final ConfigEntry<Double> runTimeRatioForWorldGenerationThreads = new ConfigEntry.Builder<Double>()
-						.setMinDefaultMax(0.01, 1.0, 1.0)
+						.setMinDefaultMax(0.01, ThreadPresetConfigEventHandler.getWorldGenDefaultRunTimeRatio(), 1.0)
 						.comment(THREAD_RUN_TIME_RATIO_NOTE)
 						.build();
 				
@@ -777,7 +780,7 @@ public class Config
 								+ THREAD_NOTE)
 						.build();
 				public static final ConfigEntry<Double> runTimeRatioForBufferBuilderThreads = new ConfigEntry.Builder<Double>()
-						.setMinDefaultMax(0.01, 1.0, 1.0)
+						.setMinDefaultMax(0.01, ThreadPresetConfigEventHandler.getBufferBuilderDefaultRunTimeRatio(), 1.0)
 						.comment(THREAD_RUN_TIME_RATIO_NOTE)
 						.build();
 				
@@ -795,7 +798,7 @@ public class Config
 								+ THREAD_NOTE)
 						.build();
 				public static final ConfigEntry<Double> runTimeRatioForFileHandlerThreads = new ConfigEntry.Builder<Double>()
-						.setMinDefaultMax(0.01, 1.0, 1.0)
+						.setMinDefaultMax(0.01, ThreadPresetConfigEventHandler.getFileHandlerDefaultRunTimeRatio(), 1.0)
 						.comment(THREAD_RUN_TIME_RATIO_NOTE)
 						.build();
 				
@@ -816,13 +819,13 @@ public class Config
 								+ THREAD_NOTE)
 						.build();
 				public static final ConfigEntry<Double> runTimeRatioForDataConverterThreads = new ConfigEntry.Builder<Double>()
-						.setMinDefaultMax(0.01, 1.0, 1.0)
+						.setMinDefaultMax(0.01, ThreadPresetConfigEventHandler.getDataConverterDefaultRunTimeRatio(), 1.0)
 						.comment(THREAD_RUN_TIME_RATIO_NOTE)
 						.build();
 				
 				public static final ConfigEntry<Integer> numberOfChunkLodConverterThreads = new ConfigEntry.Builder<Integer>()
 						.setMinDefaultMax(1,
-								ThreadPresetConfigEventHandler.getChunkLodConvertersDefaultThreadCount(),
+								ThreadPresetConfigEventHandler.getChunkLodConverterDefaultThreadCount(),
 								Runtime.getRuntime().availableProcessors())
 						.comment(""
 								+ "How many threads should be used to convert Minecraft chunks into LOD data? \n"
@@ -833,7 +836,7 @@ public class Config
 								+ THREAD_NOTE)
 						.build();
 				public static final ConfigEntry<Double> runTimeRatioForChunkLodConverterThreads = new ConfigEntry.Builder<Double>()
-						.setMinDefaultMax(0.01, 1.0, 1.0)
+						.setMinDefaultMax(0.01, ThreadPresetConfigEventHandler.getChunkLodConverterDefaultRunTimeRatio(), 1.0)
 						.comment(THREAD_RUN_TIME_RATIO_NOTE)
 						.build();
 				
