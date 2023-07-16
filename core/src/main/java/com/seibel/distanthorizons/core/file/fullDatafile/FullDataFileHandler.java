@@ -586,7 +586,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 			fileHandlerThreadPool.shutdown();
 		}
 		
-		fileHandlerThreadPool = ThreadUtil.makeThreadPool(threadPoolSize, FullDataFileHandler.class.getSimpleName()+"Thread"); 
+		fileHandlerThreadPool = ThreadUtil.makeRateLimitedThreadPool(threadPoolSize, FullDataFileHandler.class.getSimpleName()+"Thread", Config.Client.Advanced.MultiThreading.runTimeRatioForFileHandlerThreads); 
 	}
 	
 	/**

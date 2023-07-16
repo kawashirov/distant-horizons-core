@@ -95,7 +95,7 @@ public class DataRenderTransformer
 			transformerThreadPool.shutdown();
 		}
 		
-		transformerThreadPool = ThreadUtil.makeThreadPool(threadPoolSize, "Full/Render Data Transformer"); 
+		transformerThreadPool = ThreadUtil.makeRateLimitedThreadPool(threadPoolSize, "Full/Render Data Transformer", Config.Client.Advanced.MultiThreading.runTimeRatioForDataConverterThreads); 
 	}
 	
 	/** 

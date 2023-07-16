@@ -510,7 +510,16 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 			setThreadPoolSize(Config.Client.Advanced.MultiThreading.numberOfWorldGenerationThreads.get());
 		}
 	}
-	public static void setThreadPoolSize(int threadPoolSize) { worldGeneratorThreadPool = ThreadUtil.makeThreadPool(threadPoolSize, "DH-Gen-Worker-Thread", Thread.MIN_PRIORITY); }
+	public static void setThreadPoolSize(int threadPoolSize) 
+	{
+		if (worldGeneratorThreadPool != null)
+		{
+			// close the previous thread pool if one exists
+			worldGeneratorThreadPool.shutdown();
+		}
+		
+		worldGeneratorThreadPool = ThreadUtil.makeRateLimitedThreadPool(threadPoolSize, "DH-Gen-Worker-Thread", Thread.MIN_PRIORITY, Config.Client.Advanced.MultiThreading.runTimeRatioForWorldGenerationThreads); 
+	}
 	
 	/**
 	 * Stops any executing tasks and destroys the executor. <br>

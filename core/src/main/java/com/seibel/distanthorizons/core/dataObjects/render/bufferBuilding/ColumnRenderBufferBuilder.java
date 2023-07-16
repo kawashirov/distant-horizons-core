@@ -393,7 +393,7 @@ public class ColumnRenderBufferBuilder
 			bufferBuilderThreadPool.shutdown();
 		}
 		
-		bufferBuilderThreadPool = ThreadUtil.makeThreadPool(threadPoolSize, "Buffer Builder");
+		bufferBuilderThreadPool = ThreadUtil.makeRateLimitedThreadPool(threadPoolSize, "Buffer Builder", Config.Client.Advanced.MultiThreading.runTimeRatioForBufferBuilderThreads);
 		maxNumberOfConcurrentCalls = threadPoolSize * MAX_NUMBER_OF_CONCURRENT_CALLS_PER_THREAD;
 	}
 	
