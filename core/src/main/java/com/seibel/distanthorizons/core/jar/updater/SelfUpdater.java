@@ -94,13 +94,22 @@ public class SelfUpdater {
     public static boolean updateMod(String minecraftVersion, File file) {
         try {
             LOGGER.info("Attempting to auto update " + ModInfo.READABLE_NAME);
+
             Files.createDirectories(file.getParentFile().toPath());
             WebDownloader.downloadAsFile(ModrinthGetter.getLatestDownloadForVersion(minecraftVersion), file);
+
+            // Check if the checksum of the downloaded jar is correct (not required, but good to have to prevent corruption or interception)
+            if (!JarUtils.getFileChecksum(MessageDigest.getInstance("SHA"), file).equals(ModrinthGetter.getLatestShaForVersion(minecraftVersion))) {
+                LOGGER.warn("DH update checksum failed, aborting install");
+                throw new Exception("Checksum failed");
+            }
+
             deleteOldOnClose = true;
+
             LOGGER.info(ModInfo.READABLE_NAME + " successfully updated. It will apply on game's relaunch");
             return true;
         } catch (Exception e) {
-            LOGGER.info("Failed to update "+ModInfo.READABLE_NAME+" to version "+ModrinthGetter.getLatestNameForVersion(minecraftVersion));
+            LOGGER.warn("Failed to update "+ModInfo.READABLE_NAME+" to version "+ModrinthGetter.getLatestNameForVersion(minecraftVersion));
             e.printStackTrace();
             return false;
         }
