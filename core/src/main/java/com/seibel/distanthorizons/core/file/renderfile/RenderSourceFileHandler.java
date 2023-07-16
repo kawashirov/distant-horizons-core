@@ -14,6 +14,7 @@ import com.seibel.distanthorizons.core.level.IDhClientLevel;
 import com.seibel.distanthorizons.core.render.renderer.DebugRenderer;
 import com.seibel.distanthorizons.core.util.FileScanUtil;
 import com.seibel.distanthorizons.core.util.FileUtil;
+import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.ThreadUtil;
 import com.seibel.distanthorizons.core.util.objects.UncheckedInterruptedException;
 import com.seibel.distanthorizons.core.config.Config;
@@ -378,9 +379,9 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		DebugRenderer.BoxWithLife box = new DebugRenderer.BoxWithLife(new DebugRenderer.Box(renderSource.sectionPos, 74f, 86f, 0.1f, Color.red), 1.0, 32f, Color.green.darker());
 
 		// get the full data source loading future
-		CompletableFuture<IFullDataSource> fullDataSourceFuture = this.fullDataSourceProvider.read(renderSource.getSectionPos());
-		fullDataSourceFuture = fullDataSourceFuture.thenApply((fullDataSource) -> 
-			{
+		CompletableFuture<IFullDataSource> fullDataSourceFuture =
+				this.fullDataSourceProvider.read(renderSource.getSectionPos())
+				.thenApply((fullDataSource) -> {
 				// the fullDataSource can be null if the thread this was running on was interrupted
 				box.box.color = Color.yellow.darker();
 				return fullDataSource;
@@ -400,40 +401,30 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 				{
 					if (ex == null)
 					{
-						this.writeRenderSourceToFile(renderSource, file, newRenderSource);
+						try {
+							this.writeRenderSourceToFile(renderSource, file, newRenderSource);
+						} catch (Throwable e) {
+							LOGGER.error("Exception when writing render data to file: ", e);
+						}
 					}
-					else
+					else if (!LodUtil.isInterruptOrReject(ex))
 					{
-						if (ex instanceof InterruptedException)
-						{
-							// expected if the transformer is shut down, the exception can be ignored
-//							LOGGER.warn("RenderSource file transforming interrupted.");
-							
-							int ignoreEmptyWarning = 0; // explicitly handling these exceptions is important so we know where they are going and if there is an issue we can easily re-enable the logging
-						}
-						else if (ex instanceof RejectedExecutionException || ex.getCause() instanceof RejectedExecutionException)
-						{
-							// expected if the transformer was already shut down, the exception can be ignored
-//							LOGGER.warn("RenderSource file transforming interrupted.");
-							
-							int ignoreEmptyWarning = 0;
-						}
-						else if (!UncheckedInterruptedException.isInterrupt(ex))
-						{
-							LOGGER.error("Exception when updating render file using data source: ", ex);
-						}
+						LOGGER.error("Exception when updating render file using data source: ", ex);
 					}
 					box.close();
 					transformationCompleteFuture.complete(null);
 				});
 		return transformationCompleteFuture;
 	}
-	
-	/** TODO at some point this method may need to be made "async" like {@link RenderSourceFileHandler#onReadRenderSourceLoadedFromCacheAsync} since the insides are async */ 
-    public ColumnRenderSource onRenderFileLoaded(ColumnRenderSource renderSource, RenderMetaDataFile file)
+
+    public CompletableFuture<ColumnRenderSource> onRenderFileLoaded(ColumnRenderSource renderSource, RenderMetaDataFile file)
 	{
-		this.updateCacheAsync(renderSource, file).join();
-        return renderSource;
+		return this.updateCacheAsync(renderSource, file).handle((voidObj, ex) -> {
+			if (ex != null && !LodUtil.isInterruptOrReject(ex)) {
+				LOGGER.error("Exception when updating render file using data source: ", ex);
+			}
+			return renderSource;
+		});
     }
 	
 	public CompletableFuture<Void> onReadRenderSourceLoadedFromCacheAsync(RenderMetaDataFile file, ColumnRenderSource data) {
@@ -508,17 +499,18 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 			
 			// if the save futures didn't already complete, wait for them and then shut down the thread pool
 			CompletableFuture<Void> combinedFuture = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-			combinedFuture.thenRun(() ->
+			combinedFuture.handle((result, ex) -> {
+				if (ex != null && !LodUtil.isInterruptOrReject(ex)) {
+					LOGGER.error("Exception when waiting for render source files to save", ex);
+				}
+				return null;
+			}).thenRun(() ->
 			{
 				LOGGER.info("Finished closing "+this.getClass().getSimpleName()+", ["+futures.size()+"] files were saved out of ["+this.filesBySectionPos.size()+"] total files.");
 				this.fileHandlerThreadPool.shutdown();
 			});
 		}
-		
-		// if the save futures were already completed, the above "thenRun" won't fire,
-		// if the executor isn't currently running anything, shut it down
-		if (!this.fileHandlerThreadPool.isTerminated() && this.fileHandlerThreadPool.getActiveCount() == 0)
-		{
+		else {
 			LOGGER.info("Finished closing " + this.getClass().getSimpleName() + " when files were already saved.");
 			this.fileHandlerThreadPool.shutdown();
 		}

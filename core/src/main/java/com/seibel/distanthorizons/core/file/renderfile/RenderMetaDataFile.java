@@ -139,7 +139,9 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 		{
 			return CompletableFuture.completedFuture(null); // No need to save if the file doesn't exist.
 		}
-		CompletableFuture<ColumnRenderSource> source = getCachedDataSourceAsync(true);
+		// FIXME: TODO: Change doTriggerUpdate to true. Currently is false cause a dead future making render handler hang,
+		//   and that render cache aren't actually used really yet due to missing versioning atm. So disabling for now.
+		CompletableFuture<ColumnRenderSource> source = getCachedDataSourceAsync(false);
 		if (source == null)
 		{
 			return CompletableFuture.completedFuture(null); // If there is no cached data, there is no need to save.
@@ -187,6 +189,9 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 				this.fileHandler.onReadRenderSourceLoadedFromCacheAsync(this, cachedRenderDataSource)
 						// wait for the handler to finish before returning the renderSource
 						.handle((voidObj, ex) -> {
+							if (ex != null) {
+								LOGGER.error("Error while updating render source from cache", ex);
+							}
 							newFuture.complete(cachedRenderDataSource);
 							renderSourceLoadFutureRef.set(null);
 							return null;
@@ -218,7 +223,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 					this.baseMetaData = this.makeMetaData(renderSource);
 					return renderSource;
 				})
-				.thenApply((renderSource) -> this.fileHandler.onRenderFileLoaded(renderSource, this))
+				.thenCompose((renderSource) -> this.fileHandler.onRenderFileLoaded(renderSource, this))
 				.whenComplete((renderSource, ex) -> 
 				{
 					if (ex != null)
@@ -239,13 +244,13 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 		}
 		else
 		{
-			CompletableFuture.supplyAsync(() -> 
+			CompletableFuture.supplyAsync(() ->
 				{
 					if (this.baseMetaData == null)
 					{
 						throw new IllegalStateException("Meta data not loaded!");
 					}
-					
+
 					// Load the file.
 					ColumnRenderSource renderSource;
 					try (FileInputStream fileInputStream = this.getFileInputStream();
@@ -257,10 +262,10 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 					{
 						throw new CompletionException(ex);
 					}
-					
-					renderSource = this.fileHandler.onRenderFileLoaded(renderSource, this);
 					return renderSource;
 				}, fileReaderThreads)
+					// TODO: Check for file version and only update if needed.
+				.thenCompose((renderSource) -> this.fileHandler.onRenderFileLoaded(renderSource, this))
 				.whenComplete((renderSource, ex) ->
 				{
 					if (ex != null)

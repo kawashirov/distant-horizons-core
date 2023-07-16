@@ -426,8 +426,7 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 			if (exception != null)
 			{
 				// don't log the shutdown exceptions
-				if (!UncheckedInterruptedException.isInterrupt(exception)
-					&& !(exception instanceof CancellationException || exception.getCause() instanceof CancellationException))
+				if (!LodUtil.isInterruptOrReject(exception))
 				{
 					LOGGER.error("Error generating data for section "+taskPos, exception);
 				}
