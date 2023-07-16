@@ -1,6 +1,7 @@
 package com.seibel.distanthorizons.core.config.types;
 
 
+import com.seibel.distanthorizons.core.config.NumberUtil;
 import com.seibel.distanthorizons.core.config.listeners.IConfigListener;
 import com.seibel.distanthorizons.core.config.types.enums.EConfigEntryAppearance;
 import com.seibel.distanthorizons.core.config.types.enums.EConfigEntryPerformance;
@@ -14,7 +15,7 @@ import java.util.Arrays;
  * for types that are not supported by it look in ConfigBase
  *
  * @author coolGi
- * @version 2022-5-26
+ * @version 2023-7-16
  */
 public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implements IConfigEntry<T>
 {
@@ -41,8 +42,7 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
         super(appearance, value);
         this.defaultValue = value;
         this.comment = comment;
-        this.min = min;
-        this.max = max;
+        this.setMinMax(min, max);
         this.allowApiOverride = allowApiOverride;
         this.performance = performance;
         this.listenerList = listenerList;
@@ -104,19 +104,47 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
     public T getMin() { return this.min; }
     /** Sets the min value */
 	@Override
-    public void setMin(T newMin) { this.min = newMin; }
+    @SuppressWarnings("unchecked") // Suppress due to its always safe
+    public void setMin(T newMin) {
+        if (newMin == null)
+            newMin = (T) NumberUtil.getMinimum(newMin.getClass());
+        this.min = newMin;
+    }
     /** Gets the max value */
 	@Override
     public T getMax() { return this.max; }
     /** Sets the max value */
 	@Override
-    public void setMax(T newMax) { this.max = newMax; }
-    /** Sets the min and max in 1 setter */
+    @SuppressWarnings("unchecked") // Suppress due to its always safe
+    public void setMax(T newMax) {
+        if (newMax == null)
+            newMax = (T) NumberUtil.getMinimum(newMax.getClass());
+        this.max = newMax;
+    }
+    /** Sets the min and max within a single setter */
 	@Override
-    public void setMinMax(T newMin, T newMax)
-	{
-        this.max = newMin;
-        this.min = newMax;
+    public void setMinMax(T newMin, T newMax) {
+        this.setMin(newMin);
+        this.setMax(newMax);
+    }
+
+    /**
+     * Clamps the value within the set range
+     * @apiNote This does not save the value
+     */
+    public void clampWithinRange() { this.clampWithinRange(this.min, this.max); }
+    /**
+     * Clamps the value within a set range
+     *
+     * @param min The minimum that the value can be
+     * @param max The maximum that the value can be
+     * @apiNote This does not save the value
+     */
+    @SuppressWarnings("unchecked") // Suppress due to its always safe
+    public void clampWithinRange(T min, T max) {
+        byte validness = this.isValid(min, max);
+        if (validness == -1) this.value = (T) NumberUtil.getMinimum(min.getClass());
+        if (validness == 1) this.value = (T) NumberUtil.getMinimum(max.getClass());
     }
 
 	@Override
@@ -150,17 +178,41 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
      *         <p> -1 == number too low
      */
 	@Override
-    public byte isValid() { return isValid(this.value); }
+    public byte isValid() { return isValid(this.value, this.min, this.max); }
     /**
      * Checks if a new value is valid
      *
+     * @param value Value that is being checked whether valid
      * @return      0 == valid
      *         <p>  2 == invalid
      *         <p>  1 == number too high
      *         <p> -1 == number too low
      */
-	@Override
-    public byte isValid(T value) {
+    @Override
+    public byte isValid(T value) { return this.isValid(value, this.min, this.max); }
+    /**
+     * Checks if a new value is valid
+     *
+     * @param min The minimum that the value can be
+     * @param max The maximum that the value can be
+     * @return      0 == valid
+     *         <p>  2 == invalid
+     *         <p>  1 == number too high
+     *         <p> -1 == number too low
+     */
+    public byte isValid(T min, T max) { return this.isValid(this.value, min, max); }
+    /**
+     * Checks if a new value is valid
+     *
+     * @param value Value that is being checked whether valid
+     * @param min The minimum that the value can be
+     * @param max The maximum that the value can be
+     * @return      0 == valid
+     *         <p>  2 == invalid
+     *         <p>  1 == number too high
+     *         <p> -1 == number too low
+     */
+    public byte isValid(T value, T min, T max) {
         if (this.configBase.disableMinMax)
             return 0;
 

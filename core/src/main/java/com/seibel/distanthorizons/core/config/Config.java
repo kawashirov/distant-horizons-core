@@ -51,7 +51,7 @@ import java.util.*;
  * Otherwise, you will have issues where only some of the config entries will exist when your listener is created.
  * 
  * @author coolGi
- * @version 2023-6-12
+ * @version 2023-7-16
  */
 
 public class Config
@@ -456,7 +456,7 @@ public class Config
 							.build();
 					
 					public static ConfigEntry<Integer> noiseSteps = new ConfigEntry.Builder<Integer>()
-							.setMinDefaultMax(0, 4, null)
+							.setMinDefaultMax(1, 4, null)
 							.comment(""
 									+ "How many steps of noise should be applied to LODs?")
 							.build();
