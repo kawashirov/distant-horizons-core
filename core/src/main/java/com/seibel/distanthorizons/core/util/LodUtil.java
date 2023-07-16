@@ -20,6 +20,7 @@
 package com.seibel.distanthorizons.core.util;
 
 import java.util.Iterator;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.RejectedExecutionException;
 
@@ -308,7 +309,8 @@ public class LodUtil
 	public static boolean isInterruptOrReject(Throwable t) {
 		Throwable unwrapped = LodUtil.ensureUnwrap(t);
 		return UncheckedInterruptedException.isInterrupt(unwrapped) ||
-				unwrapped instanceof RejectedExecutionException;
+				unwrapped instanceof RejectedExecutionException ||
+				unwrapped instanceof CancellationException;
 	}
 	
 }

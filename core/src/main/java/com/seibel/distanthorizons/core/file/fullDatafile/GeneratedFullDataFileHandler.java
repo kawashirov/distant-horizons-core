@@ -47,10 +47,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	@Override
 	public CompletableFuture<IFullDataSource> read(DhSectionPos pos)
 	{
-		return super.read(pos).whenComplete((fullDataSource, ex) ->
-		{
-			//this.checkIfSectionNeedsAdditionalGeneration(pos, fullDataSource);
-		});
+		return super.read(pos);
 	}
 	
 	
