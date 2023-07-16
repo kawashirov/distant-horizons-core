@@ -207,7 +207,7 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
         if (this.configBase.disableMinMax)
             return 0;
 
-        if (value.getClass() != this.value.getClass()) // If the 2 variables aren't the same type then it will be invalid
+        if (value == null || this.value == null || value.getClass() != this.value.getClass()) // If the 2 variables aren't the same type then it will be invalid
             return 2;
         if (Number.class.isAssignableFrom(value.getClass())) { // Only check min max if it is a number
             if (max != null && NumberUtil.greaterThan((Number) value, (Number) max))
