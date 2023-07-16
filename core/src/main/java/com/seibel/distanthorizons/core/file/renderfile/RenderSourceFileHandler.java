@@ -418,7 +418,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 							
 							int ignoreEmptyWarning = 0;
 						}
-						else if (!UncheckedInterruptedException.isThrowableInterruption(ex))
+						else if (!UncheckedInterruptedException.isInterrupt(ex))
 						{
 							LOGGER.error("Exception when updating render file using data source: ", ex);
 						}

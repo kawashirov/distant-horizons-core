@@ -205,16 +205,10 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 			})
 			.whenComplete((fullDataSource, ex) ->
 			{
-				if (ex instanceof CompletionException) {
-					ex = ex.getCause();
-				}
-				if (ex instanceof InterruptedException || ex instanceof RejectedExecutionException)
-				{
-					// this exception can be ignored
-				}
-				else if (ex != null) {
+				if (ex != null && !LodUtil.isInterruptOrReject(ex)) {
 					LOGGER.error("Error updating file "+this.file+": ", ex);
 				}
+
 				if (fullDataSource != null) {
 					new DataObjTracker(fullDataSource);
 					new DataObjSoftTracker(this, fullDataSource);

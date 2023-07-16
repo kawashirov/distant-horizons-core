@@ -14,6 +14,7 @@ import com.seibel.distanthorizons.core.level.IDhClientLevel;
 import com.seibel.distanthorizons.core.render.renderer.IDebugRenderable;
 import com.seibel.distanthorizons.core.util.AtomicsUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
+import com.seibel.distanthorizons.core.util.objects.UncheckedInterruptedException;
 import com.seibel.distanthorizons.core.util.objects.dataStreams.DhDataInputStream;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -222,7 +223,8 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 				{
 					if (ex != null)
 					{
-						LOGGER.error("Uncaught error on creation {}: ", this.file, ex);
+						if (!LodUtil.isInterruptOrReject(ex))
+							LOGGER.error("Uncaught error on creation {}: ", this.file, ex);
 						cachedRenderDataSource = new SoftReference<>(null);
 						renderSourceLoadFutureRef.set(null);
 						future.complete(null);
@@ -263,7 +265,8 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 				{
 					if (ex != null)
 					{
-						LOGGER.error("Error loading file {}: ", this.file, ex);
+						if (!LodUtil.isInterruptOrReject(ex))
+							LOGGER.error("Error loading file {}: ", this.file, ex);
 						cachedRenderDataSource = new SoftReference<>(null);
 						renderSourceLoadFutureRef.set(null);
 						future.complete(null);
