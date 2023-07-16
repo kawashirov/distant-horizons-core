@@ -27,6 +27,7 @@ import com.seibel.distanthorizons.api.enums.config.quickOptions.EThreadPreset;
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.distanthorizons.core.config.eventHandlers.QuickRenderToggleConfigEventHandler;
 import com.seibel.distanthorizons.core.config.eventHandlers.RenderCacheConfigEventHandler;
+import com.seibel.distanthorizons.core.config.eventHandlers.UnsafeValuesConfigListener;
 import com.seibel.distanthorizons.core.config.eventHandlers.presets.ThreadPresetConfigEventHandler;
 import com.seibel.distanthorizons.core.config.eventHandlers.presets.RenderQualityPresetConfigEventHandler;
 import com.seibel.distanthorizons.core.config.types.ConfigCategory;
@@ -51,7 +52,7 @@ import java.util.*;
  * Otherwise, you will have issues where only some of the config entries will exist when your listener is created.
  * 
  * @author coolGi
- * @version 2023-6-12
+ * @version 2023-7-16
  */
 
 public class Config
@@ -456,7 +457,7 @@ public class Config
 							.build();
 					
 					public static ConfigEntry<Integer> noiseSteps = new ConfigEntry.Builder<Integer>()
-							.setMinDefaultMax(0, 4, null)
+							.setMinDefaultMax(1, 4, null)
 							.comment(""
 									+ "How many steps of noise should be applied to LODs?")
 							.build();
@@ -1011,10 +1012,17 @@ public class Config
 								+ "   Additionally, only stuff that's loaded after you enable this \n"
 								+ "   will render their debug wireframes.")
 						.build();
-				
+
+				// Note: This will reset on game restart, and should have a warning on the tooltip
+				public static ConfigEntry<Boolean> allowUnsafeValues = new ConfigEntry.Builder<Boolean>()
+						.set(false)
+						.setAppearance(EConfigEntryAppearance.ONLY_IN_GUI)
+						.addListener(UnsafeValuesConfigListener.INSTANCE)
+						.build();
+
 				
 				// can be set to public inorder to show in the config file and UI
-				private static ConfigCategory exampleConfigScreen = new ConfigCategory.Builder()
+				public static ConfigCategory exampleConfigScreen = new ConfigCategory.Builder()
 						.set(ExampleConfigScreen.class)
 						.build();
 				
