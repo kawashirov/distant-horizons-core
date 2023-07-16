@@ -147,6 +147,7 @@ public class ConfigFileHandling {
                 if (entry.getType() == workConfig.get(entry.getNameWCategory()).getClass()) { // If the types are the same
                     entry.setWithoutSaving((T) workConfig.get(entry.getNameWCategory()));
                     entry.clampWithinRange();
+                    return;
                 }
 
                 LOGGER.warn("Entry ["+ entry.getNameWCategory() +"] is invalid. Expected " + entry.getType() + " but got " + workConfig.get(entry.getNameWCategory()).getClass() + ". Using default value.");

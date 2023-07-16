@@ -107,7 +107,7 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
     @SuppressWarnings("unchecked") // Suppress due to its always safe
     public void setMin(T newMin) {
         if (newMin == null)
-            newMin = (T) NumberUtil.getMinimum(newMin.getClass());
+            newMin = (T) NumberUtil.getMinimum(this.value.getClass());
         this.min = newMin;
     }
     /** Gets the max value */
@@ -118,7 +118,7 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
     @SuppressWarnings("unchecked") // Suppress due to its always safe
     public void setMax(T newMax) {
         if (newMax == null)
-            newMax = (T) NumberUtil.getMinimum(newMax.getClass());
+            newMax = (T) NumberUtil.getMinimum(this.value.getClass());
         this.max = newMax;
     }
     /** Sets the min and max within a single setter */
@@ -143,8 +143,8 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
     @SuppressWarnings("unchecked") // Suppress due to its always safe
     public void clampWithinRange(T min, T max) {
         byte validness = this.isValid(min, max);
-        if (validness == -1) this.value = (T) NumberUtil.getMinimum(min.getClass());
-        if (validness == 1) this.value = (T) NumberUtil.getMinimum(max.getClass());
+        if (validness == -1) this.value = (T) NumberUtil.getMinimum(this.value.getClass());
+        if (validness == 1) this.value = (T) NumberUtil.getMaximum(this.value.getClass());
     }
 
 	@Override
@@ -221,7 +221,7 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
         if (Number.class.isAssignableFrom(value.getClass())) { // Only check min max if it is a number
             if (this.max != null && Float.parseFloat(value.toString()) > Float.parseFloat(max.toString()))
                 return 1;
-            if (this.min != null && Float.parseFloat(value.toString()) < Float.parseFloat(min.toString()))
+            if (min != null && Float.parseFloat(value.toString()) < Float.parseFloat(min.toString()))
                 return -1;
 
             return 0;

@@ -27,6 +27,7 @@ import com.seibel.distanthorizons.api.enums.config.quickOptions.EThreadPreset;
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.distanthorizons.core.config.eventHandlers.QuickRenderToggleConfigEventHandler;
 import com.seibel.distanthorizons.core.config.eventHandlers.RenderCacheConfigEventHandler;
+import com.seibel.distanthorizons.core.config.eventHandlers.UnsafeValuesConfigListener;
 import com.seibel.distanthorizons.core.config.eventHandlers.presets.ThreadPresetConfigEventHandler;
 import com.seibel.distanthorizons.core.config.eventHandlers.presets.RenderQualityPresetConfigEventHandler;
 import com.seibel.distanthorizons.core.config.types.ConfigCategory;
@@ -1011,10 +1012,17 @@ public class Config
 								+ "   Additionally, only stuff that's loaded after you enable this \n"
 								+ "   will render their debug wireframes.")
 						.build();
-				
+
+				// Note: This will reset on game restart, and should have a warning on the tooltip
+				public static ConfigEntry<Boolean> allowUnsafeValues = new ConfigEntry.Builder<Boolean>()
+						.set(false)
+						.setAppearance(EConfigEntryAppearance.ONLY_IN_GUI)
+						.addListener(UnsafeValuesConfigListener.INSTANCE)
+						.build();
+
 				
 				// can be set to public inorder to show in the config file and UI
-				private static ConfigCategory exampleConfigScreen = new ConfigCategory.Builder()
+				public static ConfigCategory exampleConfigScreen = new ConfigCategory.Builder()
 						.set(ExampleConfigScreen.class)
 						.build();
 				
