@@ -578,7 +578,16 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 			setThreadPoolSize(Config.Client.Advanced.MultiThreading.numberOfFileHandlerThreads.get());
 		}
 	}
-	public static void setThreadPoolSize(int threadPoolSize) { fileHandlerThreadPool = ThreadUtil.makeThreadPool(threadPoolSize, FullDataFileHandler.class.getSimpleName()+"Thread"); }
+	public static void setThreadPoolSize(int threadPoolSize) 
+	{
+		if (fileHandlerThreadPool != null)
+		{
+			// close the previous thread pool if one exists
+			fileHandlerThreadPool.shutdown();
+		}
+		
+		fileHandlerThreadPool = ThreadUtil.makeThreadPool(threadPoolSize, FullDataFileHandler.class.getSimpleName()+"Thread"); 
+	}
 	
 	/**
 	 * Stops any executing tasks and destroys the executor. <br>
