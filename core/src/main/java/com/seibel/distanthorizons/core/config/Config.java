@@ -878,7 +878,7 @@ public class Config
 						.build();
 				
 				public static ConfigEntry<Boolean> enableSilentUpdates = new ConfigEntry.Builder<Boolean>()
-						.set(true)
+						.set(false)
 						.comment("" 
 								+ "Should Distant Horizons silently, automatically download and install new versions? "
 								+ "")
