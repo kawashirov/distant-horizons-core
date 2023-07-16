@@ -52,12 +52,7 @@ public class ConfigBase
      */
     public static final List<Class<?>> acceptableInputs = new ArrayList<Class<?>>() {{
         add(Boolean.class);
-        add(Byte.class);
-        add(Integer.class);
-        add(Double.class);
-        add(Short.class);
-        add(Long.class);
-        add(Float.class);
+        add(Number.class); // Contains: Byte, Short, Int, Long, Double, Float0
         add(String.class);
 
         // TODO[CONFIG]: Check the type of these is valid

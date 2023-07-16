@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Gets the minimum or maximum values of a given type
+ * Helps with working with numbers that the value of which is unknown
  *
  * @author coolGi
  * @version 2023-7-16
@@ -34,5 +34,35 @@ public class NumberUtil {
     }
     public static Number getMaximum(Class c) {
         return maxValues.get(c);
+    }
+
+    /** Does a greater than (>) operator on any number */
+    public static boolean greaterThan(Number a, Number b) {
+        if (a.getClass() != b.getClass())
+            return false;
+        Class typeClass = a.getClass();
+
+        if (typeClass == Byte.class)        return a.byteValue() > b.byteValue();
+        if (typeClass == Short.class)       return a.shortValue() > b.shortValue();
+        if (typeClass == Integer.class)     return a.intValue() > b.intValue();
+        if (typeClass == Long.class)        return a.longValue() > b.longValue();
+        if (typeClass == Double.class)      return a.doubleValue() > b.doubleValue();
+        if (typeClass == Float.class)       return a.floatValue() > b.floatValue();
+        return false;
+    }
+
+    /** Does a less than (<) operator on any number */
+    public static boolean lessThan(Number a, Number b) {
+        if (a.getClass() != b.getClass())
+            return false;
+        Class typeClass = a.getClass();
+
+        if (typeClass == Byte.class)        return a.byteValue() < b.byteValue();
+        if (typeClass == Short.class)       return a.shortValue() < b.shortValue();
+        if (typeClass == Integer.class)     return a.intValue() < b.intValue();
+        if (typeClass == Long.class)        return a.longValue() < b.longValue();
+        if (typeClass == Double.class)      return a.doubleValue() < b.doubleValue();
+        if (typeClass == Float.class)       return a.floatValue() < b.floatValue();
+        return false;
     }
 }

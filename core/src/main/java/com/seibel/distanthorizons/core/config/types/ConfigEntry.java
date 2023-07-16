@@ -42,7 +42,8 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
         super(appearance, value);
         this.defaultValue = value;
         this.comment = comment;
-        this.setMinMax(min, max);
+        this.min = min;
+        this.max = max;
         this.allowApiOverride = allowApiOverride;
         this.performance = performance;
         this.listenerList = listenerList;
@@ -104,23 +105,13 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
     public T getMin() { return this.min; }
     /** Sets the min value */
 	@Override
-    @SuppressWarnings("unchecked") // Suppress due to its always safe
-    public void setMin(T newMin) {
-        if (newMin == null)
-            newMin = (T) NumberUtil.getMinimum(this.value.getClass());
-        this.min = newMin;
-    }
+    public void setMin(T newMin) { this.min = newMin; }
     /** Gets the max value */
 	@Override
     public T getMax() { return this.max; }
     /** Sets the max value */
 	@Override
-    @SuppressWarnings("unchecked") // Suppress due to its always safe
-    public void setMax(T newMax) {
-        if (newMax == null)
-            newMax = (T) NumberUtil.getMinimum(this.value.getClass());
-        this.max = newMax;
-    }
+    public void setMax(T newMax) { this.max = newMax; }
     /** Sets the min and max within a single setter */
 	@Override
     public void setMinMax(T newMin, T newMax) {
@@ -219,9 +210,9 @@ public class ConfigEntry<T> extends AbstractConfigType<T, ConfigEntry<T>> implem
         if (value.getClass() != this.value.getClass()) // If the 2 variables aren't the same type then it will be invalid
             return 2;
         if (Number.class.isAssignableFrom(value.getClass())) { // Only check min max if it is a number
-            if (this.max != null && Float.parseFloat(value.toString()) > Float.parseFloat(max.toString()))
+            if (max != null && NumberUtil.greaterThan((Number) value, (Number) max))
                 return 1;
-            if (min != null && Float.parseFloat(value.toString()) < Float.parseFloat(min.toString()))
+            if (min != null && NumberUtil.lessThan((Number) value, (Number) min))
                 return -1;
 
             return 0;
