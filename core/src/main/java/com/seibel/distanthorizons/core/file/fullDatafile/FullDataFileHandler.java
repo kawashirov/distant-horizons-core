@@ -288,7 +288,8 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 						continue;
 					}
 					
-                    if (this.fileBySectionPos.containsKey(subPos))
+					// check if a file for this pos exists, either loaded and unloaded
+					if (this.fileBySectionPos.containsKey(subPos) || this.unloadedFiles.containsKey(subPos))
 					{
                         allEmpty = false;
                         break outerLoop;
@@ -317,6 +318,13 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		DhSectionPos childPos = pos.getChildByIndex(childIndex);
 		if (CompleteFullDataSource.firstDataPosCanAffectSecond(basePos, childPos))
 		{
+			// load the file if it isn't already
+			if (this.unloadedFiles.containsKey(childPos))
+			{
+				this.getLoadOrMakeFile(childPos, true);
+			}
+			
+			
 			FullDataMetaFile metaFile = this.fileBySectionPos.get(childPos);
 			if (metaFile != null)
 			{
@@ -386,12 +394,6 @@ public class FullDataFileHandler implements IFullDataSourceProvider
     private void writeChunkDataToMetaFile(DhSectionPos sectionPos, ChunkSizedFullDataAccessor chunkData)
 	{
         FullDataMetaFile metaFile = this.fileBySectionPos.get(sectionPos);
-//		if (metaFile == null && sectionPos.sectionDetailLevel <= this.topDetailLevel.get())
-//		{
-//			// create a new file if one doesn't exist,
-//			// this is done so we don't end up with holes where LODs should have been generated
-//			metaFile = this.getLoadOrMakeFile(sectionPos, true);
-//		}
         if (metaFile != null)
 		{ 
 			// there is a file for this position
