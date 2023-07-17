@@ -254,9 +254,9 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 		}, executorService));
 	}
 
-	private void makeCreateCompletionStage(ExecutorService executorService, CompletableFuture<IFullDataSource> completer)
+	private void makeCreateCompletionStage(CompletableFuture<IFullDataSource> completer)
 	{
-		makeUpdateCompletionStage(completer, this.fullDataSourceProvider.onCreateDataFile(this)
+		this.makeUpdateCompletionStage(completer, this.fullDataSourceProvider.onCreateDataFile(this)
 			.thenApply((fullDataSource) ->
 			{
 				this.baseMetaData = this._makeBaseMetaData(fullDataSource);
@@ -273,31 +273,39 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 
 		CacheQueryResult result = this.getCachedDataSourceAsync();
 
-		if (result.needsLoad) {
-			LodUtil.assertTrue(!inCrit);
-			inCrit = true;
+		if (result.needsLoad)
+		{
+			LodUtil.assertTrue(!this.inCrit);
+			this.inCrit = true;
 
 			CompletableFuture<IFullDataSource> future = result.future;
 			// don't continue if the provider has been shut down
 			ExecutorService executorService = this.fullDataSourceProvider.getIOExecutor();
 			if (executorService.isTerminated())
 			{
-				inCrit = false;
-				dataSourceLoadFutureRef.set(null);
+				this.inCrit = false;
+				this.dataSourceLoadFutureRef.set(null);
 				future.complete(null);
 				return future;
 			}
 
 			// create a new Meta file
-			if (!doesFileExist) {
-				makeCreateCompletionStage(executorService, future);
+			if (!this.doesFileExist) 
+			{
+				this.makeCreateCompletionStage(future);
 			}
-			// Otherwise, load and update file
-			else {
-				if (this.baseMetaData == null) throw new IllegalStateException("Meta data not loaded!");
-				makeLoadCompletionStage(executorService, future);
+			else 
+			{
+				// Otherwise, load and update file
+				if (this.baseMetaData == null)
+				{
+					throw new IllegalStateException("Meta data not loaded!");
+				}
+				
+				this.makeLoadCompletionStage(executorService, future);
 			}
 		}
+		
 		return result.future;
 	}
 

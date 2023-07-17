@@ -737,6 +737,14 @@ public class Config
 						+ "CPU performance may suffer if Distant Horizons has a lot to load or generate. \n"
 						+ "This can be an issue when first loading into a world, when flying, and/or when generating new terrain.";
 				
+				public static final String THREAD_RUN_TIME_RATIO_NOTE = ""
+						+ "If this value is less than 1.0, it will be treated as a percentage \n"
+						+ "of time each thread can run before going idle. \n"
+						+ "\n"
+						+ "This can be used to reduce CPU usage if the thread count \n"
+						+ "is already set to 1 for the given option, or more finely \n"
+						+ "tune CPU performance.";
+				
 				
 				public static final ConfigEntry<Integer> numberOfWorldGenerationThreads = new ConfigEntry.Builder<Integer>()
 						.setMinDefaultMax(1,
@@ -753,6 +761,10 @@ public class Config
 								+ "\n"
 								+ THREAD_NOTE)
 						.build();
+				public static final ConfigEntry<Double> runTimeRatioForWorldGenerationThreads = new ConfigEntry.Builder<Double>()
+						.setMinDefaultMax(0.01, ThreadPresetConfigEventHandler.getWorldGenDefaultRunTimeRatio(), 1.0)
+						.comment(THREAD_RUN_TIME_RATIO_NOTE)
+						.build();
 				
 				public static ConfigEntry<Integer> numberOfBufferBuilderThreads = new ConfigEntry.Builder<Integer>()
 						.setMinDefaultMax(1,
@@ -767,6 +779,10 @@ public class Config
 								+ "\n"
 								+ THREAD_NOTE)
 						.build();
+				public static final ConfigEntry<Double> runTimeRatioForBufferBuilderThreads = new ConfigEntry.Builder<Double>()
+						.setMinDefaultMax(0.01, ThreadPresetConfigEventHandler.getBufferBuilderDefaultRunTimeRatio(), 1.0)
+						.comment(THREAD_RUN_TIME_RATIO_NOTE)
+						.build();
 				
 				public static final ConfigEntry<Integer> numberOfFileHandlerThreads = new ConfigEntry.Builder<Integer>()
 						.setMinDefaultMax(1,
@@ -780,6 +796,10 @@ public class Config
 								+ "quickly flying through existing LODs. \n"
 								+ "\n"
 								+ THREAD_NOTE)
+						.build();
+				public static final ConfigEntry<Double> runTimeRatioForFileHandlerThreads = new ConfigEntry.Builder<Double>()
+						.setMinDefaultMax(0.01, ThreadPresetConfigEventHandler.getFileHandlerDefaultRunTimeRatio(), 1.0)
+						.comment(THREAD_RUN_TIME_RATIO_NOTE)
 						.build();
 				
 				public static final ConfigEntry<Integer> numberOfDataConverterThreads = new ConfigEntry.Builder<Integer>()
@@ -798,10 +818,14 @@ public class Config
 								+ "\n"
 								+ THREAD_NOTE)
 						.build();
+				public static final ConfigEntry<Double> runTimeRatioForDataConverterThreads = new ConfigEntry.Builder<Double>()
+						.setMinDefaultMax(0.01, ThreadPresetConfigEventHandler.getDataConverterDefaultRunTimeRatio(), 1.0)
+						.comment(THREAD_RUN_TIME_RATIO_NOTE)
+						.build();
 				
 				public static final ConfigEntry<Integer> numberOfChunkLodConverterThreads = new ConfigEntry.Builder<Integer>()
 						.setMinDefaultMax(1,
-								ThreadPresetConfigEventHandler.getChunkLodConvertersDefaultThreadCount(),
+								ThreadPresetConfigEventHandler.getChunkLodConverterDefaultThreadCount(),
 								Runtime.getRuntime().availableProcessors())
 						.comment(""
 								+ "How many threads should be used to convert Minecraft chunks into LOD data? \n"
@@ -810,6 +834,10 @@ public class Config
 								+ "chunks are loaded, unloaded, and modified. \n"
 								+ "\n"
 								+ THREAD_NOTE)
+						.build();
+				public static final ConfigEntry<Double> runTimeRatioForChunkLodConverterThreads = new ConfigEntry.Builder<Double>()
+						.setMinDefaultMax(0.01, ThreadPresetConfigEventHandler.getChunkLodConverterDefaultRunTimeRatio(), 1.0)
+						.comment(THREAD_RUN_TIME_RATIO_NOTE)
 						.build();
 				
 			}
@@ -878,7 +906,7 @@ public class Config
 						.build();
 				
 				public static ConfigEntry<Boolean> enableSilentUpdates = new ConfigEntry.Builder<Boolean>()
-						.set(true)
+						.set(false)
 						.comment("" 
 								+ "Should Distant Horizons silently, automatically download and install new versions? "
 								+ "")
