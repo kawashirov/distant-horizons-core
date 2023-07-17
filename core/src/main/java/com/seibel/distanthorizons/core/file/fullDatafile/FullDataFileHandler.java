@@ -48,16 +48,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	
 	protected final IDhLevel level;
 	protected final File saveDir;
-	/** 
-	 * The starting value here denotes how far into the tree LOD writes should occur. <br>
-	 * This is a band-aid fix to prevent lower detail sections from not being generated until the detail level
-	 * is requested. <br><br>
-	 * 
-	 * Note: that problem may still happen at a sufficiently large render distance, 
-	 * however this should kick the problem down the road
-	 * far enough that it can be ignored for now.
-	 */
-	protected final AtomicInteger topDetailLevel = new AtomicInteger(DhSectionPos.SECTION_REGION_DETAIL_LEVEL);
+	protected final AtomicInteger topDetailLevel = new AtomicInteger(0);
 	protected final int minDetailLevel = CompleteFullDataSource.SECTION_SIZE_OFFSET;
 	
 	
