@@ -146,7 +146,11 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 		{
 			return CompletableFuture.completedFuture(null); // If there is no cached data, there is no need to save.
 		}
-		return source.thenAccept((columnRenderSource) -> { }); // Otherwise, wait for the data to be read (which also flushes changes to the file).
+		return source.handle((columnRenderSource, ex) -> {
+			if (ex != null && !LodUtil.isInterruptOrReject(ex))
+				LOGGER.error("Failed to load render source for "+this.pos+" for flush and saving", ex);
+			return null;
+		}); // Otherwise, wait for the data to be read (which also flushes changes to the file).
 	}
 	private CacheQueryResult getOrStartCachedDataSourceAsync()
 	{
