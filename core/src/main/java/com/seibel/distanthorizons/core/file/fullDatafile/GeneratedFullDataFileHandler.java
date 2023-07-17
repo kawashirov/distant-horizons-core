@@ -17,7 +17,6 @@ import com.seibel.distanthorizons.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
-import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.*;
@@ -180,8 +179,8 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	public CompletableFuture<IFullDataSource> onCreateDataFile(FullDataMetaFile file)
 	{
 		DhSectionPos pos = file.pos;
-		IIncompleteFullDataSource data = makeDataSource(pos);
 		CompletableFuture<IFullDataSource> future = updateDataGenStatus(file, data);
+		IIncompleteFullDataSource data = makeEmptyDataSource(pos);
 		// Cant start gen task, so return the data
 		return future == null ? CompletableFuture.completedFuture(data) : future;
 	}

@@ -30,7 +30,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static com.seibel.distanthorizons.core.util.FileScanUtil.LOD_FILE_POSTFIX;
-import static com.seibel.distanthorizons.core.util.FileScanUtil.RENDER_FILE_POSTFIX;
 
 public class FullDataFileHandler implements IFullDataSourceProvider
 {
@@ -40,11 +39,13 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	
 	protected static ExecutorService fileHandlerThreadPool;
 	protected static ConfigChangeListener<Integer> configListener;
-
+	
 	private final ConcurrentHashMap<DhSectionPos, File> unloadedFiles = new ConcurrentHashMap<>();
 	private final ConcurrentHashMap<DhSectionPos, FullDataMetaFile> fileBySectionPos = new ConcurrentHashMap<>();
 	public void ForEachFile(Consumer<FullDataMetaFile> consumer) { this.fileBySectionPos.values().forEach(consumer); }
-
+	
+	private LinkedList<Consumer<IFullDataSource>> onUpdatedListeners = new LinkedList<>();
+	
 	protected final IDhLevel level;
 	protected final File saveDir;
 	/** 
@@ -59,6 +60,11 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	protected final AtomicInteger topDetailLevel = new AtomicInteger(DhSectionPos.SECTION_REGION_DETAIL_LEVEL);
 	protected final int minDetailLevel = CompleteFullDataSource.SECTION_SIZE_OFFSET;
 	
+	
+	//=============//
+	// constructor //
+	//=============//
+	
     public FullDataFileHandler(IDhLevel level, AbstractSaveStructure saveStructure)
 	{
 		this.level = level;
@@ -69,7 +75,9 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		}
 		FileScanUtil.scanFiles(saveStructure, level.getLevelWrapper(), this, null);
     }
-
+	
+	// constructor helpers //
+	
 	/**
 	 * Caller must ensure that this method is called only once,
 	 *  and that the {@link FullDataFileHandler} is not used before this method is called.
@@ -178,6 +186,9 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 			this.fileBySectionPos.put(pos, fileToUse);
         }
     }
+	
+	
+	
 	
     protected FullDataMetaFile getLoadOrMakeFile(DhSectionPos pos, boolean allowCreateFile)
 	{
@@ -414,41 +425,19 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		}
 		return metaFile.flushAndSaveAsync();
 	}
-
-
-	private LinkedList<Consumer<IFullDataSource>> onUpdatedListeners = new LinkedList<>();
+	
+	
 	@Override
 	public synchronized void addOnUpdatedListener(Consumer<IFullDataSource> listener)
 	{
 		this.onUpdatedListeners.add(listener);
 	}
-
-//    @Override
-//    public long getCacheVersion(DhSectionPos sectionPos)
-//	{
-//        FullDataMetaFile file = this.files.get(sectionPos);
-//        if (file == null)
-//		{
-//			return 0;
-//		}
-//        return file.getCacheVersion();
-//    }
 	
-//    @Override
-//    public boolean isCacheVersionValid(DhSectionPos sectionPos, long cacheVersion)
-//	{
-//        FullDataMetaFile file = this.files.get(sectionPos);
-//        if (file == null)
-//		 {
-//			return cacheVersion >= 0;
-//		}
-//        return file.isCacheVersionValid(cacheVersion);
-//    }
-
-	protected IIncompleteFullDataSource makeDataSource(DhSectionPos pos)
+	protected IIncompleteFullDataSource makeEmptyDataSource(DhSectionPos pos)
 	{
 		return pos.sectionDetailLevel <= HighDetailIncompleteFullDataSource.MAX_SECTION_DETAIL ?
-				HighDetailIncompleteFullDataSource.createEmpty(pos) : LowDetailIncompleteFullDataSource.createEmpty(pos);
+				HighDetailIncompleteFullDataSource.createEmpty(pos) : 
+				LowDetailIncompleteFullDataSource.createEmpty(pos);
 	}
 
 	protected CompletableFuture<IIncompleteFullDataSource> sampleFromFiles(IIncompleteFullDataSource source, ArrayList<FullDataMetaFile> existingFiles)
@@ -486,7 +475,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
     public CompletableFuture<IFullDataSource> onCreateDataFile(FullDataMetaFile file)
 	{
         DhSectionPos pos = file.pos;
-		IIncompleteFullDataSource source = this.makeDataSource(pos);
+		IIncompleteFullDataSource source = this.makeEmptyDataSource(pos);
         ArrayList<FullDataMetaFile> existFiles = new ArrayList<>();
         ArrayList<DhSectionPos> missing = new ArrayList<>();
 		this.getDataFilesForPosition(pos, pos, existFiles, missing);
