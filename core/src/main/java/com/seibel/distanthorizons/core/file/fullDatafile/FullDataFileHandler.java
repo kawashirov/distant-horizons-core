@@ -248,8 +248,9 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 			return null;
 		}
 		
-		// This is a CAS with expected null value.
 		this.topDetailLevel.updateAndGet(oldDetailLevel -> Math.max(oldDetailLevel, pos.sectionDetailLevel));
+		
+		// This is a CAS with expected null value.
 		FullDataMetaFile metaFileCas = this.fileBySectionPos.putIfAbsent(pos, metaFile);
 		return metaFileCas == null ? metaFile : metaFileCas;
     }
@@ -266,6 +267,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
         byte sectionDetail = posAreaToGet.sectionDetailLevel;
         boolean allEmpty = true;
 		
+		// get all existing files for this position
         outerLoop:
         while (--sectionDetail >= this.minDetailLevel)
 		{
@@ -439,28 +441,33 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 				HighDetailIncompleteFullDataSource.createEmpty(pos) : 
 				LowDetailIncompleteFullDataSource.createEmpty(pos);
 	}
-
-	protected CompletableFuture<IIncompleteFullDataSource> sampleFromFiles(IIncompleteFullDataSource source, ArrayList<FullDataMetaFile> existingFiles)
+	
+	/** populates the given data source using the given array of files */
+	protected CompletableFuture<IIncompleteFullDataSource> sampleFromFileArray(IIncompleteFullDataSource recipientFullDataSource, ArrayList<FullDataMetaFile> existingFiles)
 	{
 		// read in the existing data
 		final ArrayList<CompletableFuture<Void>> loadDataFutures = new ArrayList<>(existingFiles.size());
 		for (FullDataMetaFile existingFile : existingFiles)
 		{
 			loadDataFutures.add(existingFile.loadOrGetCachedDataSourceAsync()
-					.exceptionally((ex) -> /*Ignore file read errors*/null)
-					.thenAccept((fullDataSource) ->
+				.exceptionally((ex) -> /*Ignore file read errors*/null)
+				.thenAccept((existingFullDataSource) ->
+				{
+					if (existingFullDataSource == null)
 					{
-						if (fullDataSource == null) return;
-						//this.checkIfSectionNeedsAdditionalGeneration(pos, fullDataSource);
-						//LOGGER.info("Merging data from {} into {}", data.getSectionPos(), pos);
-						source.sampleFrom(fullDataSource);
-					})
+						return;
+					}
+					
+					//LOGGER.info("Merging data from {} into {}", data.getSectionPos(), pos);
+					recipientFullDataSource.sampleFrom(existingFullDataSource);
+				})
 			);
 		}
-		return CompletableFuture.allOf(loadDataFutures.toArray(new CompletableFuture[0])).thenApply(v -> source);
+		return CompletableFuture.allOf(loadDataFutures.toArray(new CompletableFuture[0])).thenApply(voidObj -> recipientFullDataSource);
 	}
 
-	protected void makeFiles(ArrayList<DhSectionPos> posList, ArrayList<FullDataMetaFile> output) {
+	protected void makeFiles(ArrayList<DhSectionPos> posList, ArrayList<FullDataMetaFile> output)
+	{
 		for (DhSectionPos missingPos : posList)
 		{
 			FullDataMetaFile newFile = this.getLoadOrMakeFile(missingPos, true);
@@ -487,8 +494,8 @@ public class FullDataFileHandler implements IFullDataSourceProvider
         }
 		else
 		{
-			makeFiles(missing, existFiles);
-			return sampleFromFiles(source, existFiles).thenApply(IIncompleteFullDataSource::tryPromotingToCompleteDataSource)
+			this.makeFiles(missing, existFiles);
+			return this.sampleFromFileArray(source, existFiles).thenApply(IIncompleteFullDataSource::tryPromotingToCompleteDataSource)
 				.exceptionally((e) ->
 				{
 					FullDataMetaFile newMetaFile = this.removeCorruptedFile(pos, file, e);
