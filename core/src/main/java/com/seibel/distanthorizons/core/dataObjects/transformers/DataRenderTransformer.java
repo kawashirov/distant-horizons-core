@@ -77,14 +77,15 @@ public class DataRenderTransformer
 		// static setup
 		if (configListener == null)
 		{
-			configListener = new ConfigChangeListener<>(Config.Client.Advanced.MultiThreading.numberOfDataConverterThreads, (threadCount) -> { setThreadPoolSize(threadCount); });
+			configListener = new ConfigChangeListener<>(Config.Client.Advanced.MultiThreading.numberOfDataTransformerThreads, (threadCount) -> { setThreadPoolSize(threadCount); });
 		}
 		
 		
+		// TODO this didn't seem to be re-sizing when changed via the config
 		if (transformerThreadPool == null || transformerThreadPool.isTerminated())
 		{
 			LOGGER.info("Starting "+DataRenderTransformer.class.getSimpleName());
-			setThreadPoolSize(Config.Client.Advanced.MultiThreading.numberOfDataConverterThreads.get());
+			setThreadPoolSize(Config.Client.Advanced.MultiThreading.numberOfDataTransformerThreads.get());
 		}
 	}
 	public static void setThreadPoolSize(int threadPoolSize) 
@@ -95,7 +96,7 @@ public class DataRenderTransformer
 			transformerThreadPool.shutdown();
 		}
 		
-		transformerThreadPool = ThreadUtil.makeRateLimitedThreadPool(threadPoolSize, "Full/Render Data Transformer", Config.Client.Advanced.MultiThreading.runTimeRatioForDataConverterThreads); 
+		transformerThreadPool = ThreadUtil.makeRateLimitedThreadPool(threadPoolSize, "Full/Render Data Transformer", Config.Client.Advanced.MultiThreading.runTimeRatioForDataTransformerThreads); 
 	}
 	
 	/** 

@@ -323,12 +323,12 @@
   "distanthorizons.config.client.advanced.multiThreading.runTimeRatioForFileHandlerThreads":
     "Runtime % for file handler threads",
   
-  "distanthorizons.config.client.advanced.multiThreading.numberOfDataConverterThreads":
-    "NO. of data converter threads",
-  "distanthorizons.config.client.advanced.multiThreading.numberOfDataConverterThreads.@tooltip":
+  "distanthorizons.config.client.advanced.multiThreading.numberOfDataTransformerThreads":
+    "NO. of data transformer threads",
+  "distanthorizons.config.client.advanced.multiThreading.numberOfDataTransformerThreads.@tooltip":
     "The number of threads used when converting ID data to render-able data. \n(This generally happens when generating new terrain or changing graphics settings). \nCan only be between 1 and your CPU's processor count.",
-  "distanthorizons.config.client.advanced.multiThreading.runTimeRatioForDataConverterThreads":
-    "Runtime % for data converter threads",
+  "distanthorizons.config.client.advanced.multiThreading.runTimeRatioForDataTransformerThreads":
+    "Runtime % for data transformer threads",
   
   "distanthorizons.config.client.advanced.multiThreading.numberOfChunkLodConverterThreads":
     "NO. of chunk LOD converter threads",

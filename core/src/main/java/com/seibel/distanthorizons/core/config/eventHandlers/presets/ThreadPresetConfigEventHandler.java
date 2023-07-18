@@ -88,7 +88,7 @@ public class ThreadPresetConfigEventHandler extends AbstractPresetConfigEventHan
 	
 	
 	public static int getDataConverterDefaultThreadCount() { return getThreadCountByPercent(0.1); }
-	private final ConfigEntryWithPresetOptions<EThreadPreset, Integer> dataConverterThreadCount = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.MultiThreading.numberOfDataConverterThreads, 
+	private final ConfigEntryWithPresetOptions<EThreadPreset, Integer> dataTransformerThreadCount = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.MultiThreading.numberOfDataTransformerThreads, 
 		new HashMap<EThreadPreset, Integer>()
 		{{
 			this.put(EThreadPreset.MINIMAL_IMPACT, 1);
@@ -98,7 +98,7 @@ public class ThreadPresetConfigEventHandler extends AbstractPresetConfigEventHan
 			this.put(EThreadPreset.I_PAID_FOR_THE_WHOLE_CPU, getThreadCountByPercent(1.0));
 		}});
 	public static double getDataConverterDefaultRunTimeRatio() { return 0.25; }
-	private final ConfigEntryWithPresetOptions<EThreadPreset, Double> dataConverterRunTime = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.MultiThreading.runTimeRatioForDataConverterThreads,
+	private final ConfigEntryWithPresetOptions<EThreadPreset, Double> dataTransformerRunTime = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.MultiThreading.runTimeRatioForDataTransformerThreads,
 		new HashMap<EThreadPreset, Double>()
 		{{
 			this.put(EThreadPreset.MINIMAL_IMPACT, 0.1);
@@ -149,8 +149,8 @@ public class ThreadPresetConfigEventHandler extends AbstractPresetConfigEventHan
 		this.configList.add(this.fileHandlerThreadCount);
 		this.configList.add(this.fileHandlerRunTime);
 		
-		this.configList.add(this.dataConverterThreadCount);
-		this.configList.add(this.dataConverterRunTime);
+		this.configList.add(this.dataTransformerThreadCount);
+		this.configList.add(this.dataTransformerRunTime);
 		
 		this.configList.add(this.chunkLodConverterThreadCount);
 		this.configList.add(this.chunkLodConverterRunTime);
