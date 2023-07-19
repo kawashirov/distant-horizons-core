@@ -30,6 +30,9 @@ import com.seibel.distanthorizons.core.render.glObject.GLProxy;
 import com.seibel.distanthorizons.core.render.glObject.GLState;
 import com.seibel.distanthorizons.core.render.glObject.buffer.GLVertexBuffer;
 import com.seibel.distanthorizons.core.render.glObject.buffer.QuadElementBuffer;
+import com.seibel.distanthorizons.core.render.renderer.shaders.DarkShader;
+import com.seibel.distanthorizons.core.render.renderer.shaders.FogShader;
+import com.seibel.distanthorizons.core.render.renderer.shaders.SSAORenderer;
 import com.seibel.distanthorizons.core.render.renderer.shaders.SSAOShader;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.RenderUtil;
@@ -244,7 +247,12 @@ public class LodRenderer
 		bufferHandler.renderOpaque(this);
 
 		if (Config.Client.Advanced.Graphics.Quality.ssao.get()) {
-			SSAOShader.INSTANCE.render(partialTicks);
+//			SSAOShader.INSTANCE.render(partialTicks);
+			SSAORenderer.INSTANCE.render(partialTicks);
+		}
+		{
+//			FogShader.INSTANCE.render(partialTicks);
+//			DarkShader.INSTANCE.render(partialTicks);
 		}
 
 		//======================//

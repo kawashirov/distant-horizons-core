@@ -30,6 +30,11 @@ vec3 calcViewPosition(vec2 coords) {
     vs_pos.xyz = vs_pos.xyz / vs_pos.w;
     return vs_pos.xyz;
 }
+// The modulus function dosnt exist in GLSL so I made my own
+// To speed up the mod function, this only accepts full numbers for y
+float mod(float x, int y) {
+    return x - y * floor(x/y);
+}
 
 void main()
 {
