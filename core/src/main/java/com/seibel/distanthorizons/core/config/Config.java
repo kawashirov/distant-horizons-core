@@ -802,7 +802,7 @@ public class Config
 						.comment(THREAD_RUN_TIME_RATIO_NOTE)
 						.build();
 				
-				public static final ConfigEntry<Integer> numberOfDataConverterThreads = new ConfigEntry.Builder<Integer>()
+				public static final ConfigEntry<Integer> numberOfDataTransformerThreads = new ConfigEntry.Builder<Integer>()
 						.setMinDefaultMax(1,
 								ThreadPresetConfigEventHandler.getDataConverterDefaultThreadCount(),
 								Runtime.getRuntime().availableProcessors())
@@ -818,7 +818,7 @@ public class Config
 								+ "\n"
 								+ THREAD_NOTE)
 						.build();
-				public static final ConfigEntry<Double> runTimeRatioForDataConverterThreads = new ConfigEntry.Builder<Double>()
+				public static final ConfigEntry<Double> runTimeRatioForDataTransformerThreads = new ConfigEntry.Builder<Double>()
 						.setMinDefaultMax(0.01, ThreadPresetConfigEventHandler.getDataConverterDefaultRunTimeRatio(), 1.0)
 						.comment(THREAD_RUN_TIME_RATIO_NOTE)
 						.build();
