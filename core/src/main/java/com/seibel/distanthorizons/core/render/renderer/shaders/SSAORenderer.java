@@ -192,5 +192,8 @@ public class SSAORenderer {
         state.restore();
     }
 
-
+    public void free() {
+        ssaoShader.free();
+        applyShader.free();
+    }
 }

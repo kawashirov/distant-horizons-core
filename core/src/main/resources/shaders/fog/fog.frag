@@ -1,7 +1,7 @@
 
 in vec3 vertexWorldPos;
 in float vertexYPos;
-in vec2 TexCoord;
+//in vec2 TexCoord;
 
 out vec4 fragColor;
 
@@ -67,14 +67,22 @@ void main() {
 
         fragColor = vec4(fogColor.r, fogColor.g, fogColor.b, mixedFogThickness);
     }
-    if (fragColor.r != 6969.) {
-        fragColor = vec4(
-            mod(vertexWorldPos.x, 1),
-            mod(vertexWorldPos.y, 1),
-            mod(vertexWorldPos.z, 1),
-            1.
-        );
-    }
+
+    // Testing
+//    if (fragColor.r != 6969.) { // This line is so that the compiler doesnt delete the previos code
+////        fragColor = vec4(
+////            mod(vertexWorldPos.x, 1),
+////            mod(vertexWorldPos.y, 1),
+////            mod(vertexWorldPos.z, 1),
+////            1.
+////        );
+//        fragColor = vec4(
+//            mod(vertexYPos, 1),
+//            mod(vertexYPos, 1),
+//            mod(vertexYPos, 1),
+//            1.
+//        );
+//    }
 }
 
 

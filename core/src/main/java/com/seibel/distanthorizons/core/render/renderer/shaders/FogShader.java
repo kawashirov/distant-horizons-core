@@ -10,6 +10,7 @@ import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IVersionConstants;
 import com.seibel.distanthorizons.coreapi.util.math.Mat4f;
+import com.seibel.distanthorizons.coreapi.util.math.Vec3f;
 import org.lwjgl.opengl.GL32;
 
 import java.awt.*;
@@ -17,6 +18,10 @@ import java.awt.*;
 public class FogShader extends AbstractShaderRenderer {
     public static FogShader INSTANCE = new FogShader(LodFogConfig.generateFogConfig());
     private static final IVersionConstants VERSION_CONSTANTS = SingletonInjector.INSTANCE.get(IVersionConstants.class);
+
+
+//    public final int modelOffsetUniform;
+    public final int worldYOffsetUniform;
 
     // Fog Uniforms
     public final int fogColorUniform;
@@ -27,13 +32,17 @@ public class FogShader extends AbstractShaderRenderer {
     public final int fullFogModeUniform;
 
     public FogShader(LodFogConfig fogConfig) {
-        // TODO & Note: This code is a bit jank, so try to update it later (preferably not using something to process the shader)
+        // TODO & Note: This code is a bit jank, so try to make it better later (preferably not using something to process the shader)
+        // This code is just a temp fix so that it looks fine for the time being
+        // and even with the jank soloution, i cannot get it to work
         super(new ShaderProgram(
-                () -> Shader.loadFile("shaders/normal.vert", false, new StringBuilder()).toString(),
+                () -> Shader.loadFile("shaders/fog/fog.vert", false, new StringBuilder()).toString(),
                 () -> fogConfig.loadAndProcessFragShader("shaders/fog/fog.frag", false).toString(),
-                "fragColor", new String[] { "vPos", "vPosition", "color" }
+                "fragColor", new String[] { "vPosition", "vPos", "color" }
         ));
 
+//        modelOffsetUniform = this.shader.getUniformLocation("modelOffset");
+        worldYOffsetUniform = this.shader.getUniformLocation("worldYOffset");
         // Fog uniforms
         fogColorUniform = this.shader.getUniformLocation("fogColor");
         fullFogModeUniform = this.shader.getUniformLocation("fullFogMode");
@@ -51,14 +60,9 @@ public class FogShader extends AbstractShaderRenderer {
         int vanillaDrawDistance = MC_RENDER.getRenderDistance() * LodUtil.CHUNK_WIDTH;
 //        super.bind();
         vanillaDrawDistance += 32; // Give it a 2 chunk boundary for near fog.
-//        // uniforms
-//        this.shader.setUniform(combinedMatUniform, combinedMatrix);
-//        this.shader.setUniform(mircoOffsetUniform, 0.01f); // 0.01 block offset
-//
-//        // setUniform(skyLightUniform, skyLight);
-//        this.shader.setUniform(lightMapUniform, lightmapBindPoint);
-//
-//        if (worldYOffsetUniform != -1) this.shader.setUniform(worldYOffsetUniform, (float)worldYOffset);
+
+
+        this.shader.setUniform(worldYOffsetUniform, (float) MC.getWrappedClientWorld().getMinHeight());
 
         // Fog
         this.shader.setUniform(fullFogModeUniform, MC_RENDER.isFogStateSpecial() ? 1 : 0);
@@ -88,5 +92,9 @@ public class FogShader extends AbstractShaderRenderer {
     private Color getSpecialFogColor(float partialTicks)
     {
         return MC_RENDER.getSpecialFogColor(partialTicks);
+    }
+
+    public void setModelPos(Vec3f modelPos) {
+//        this.shader.setUniform(modelOffsetUniform, modelPos);
     }
 }
