@@ -60,7 +60,7 @@ public class LodFogConfig
 	public final boolean noiseEnable;
 	public final int noiseSteps;
 	public final float noiseIntensity;
-	public final float noiseDropoff;
+	public final int noiseDropoff;
 
 	
 	public static LodFogConfig generateFogConfig()
@@ -82,7 +82,7 @@ public class LodFogConfig
 		noiseEnable = Config.Client.Advanced.Graphics.NoiseTextureSettings.noiseEnabled.get();
 		noiseSteps = Config.Client.Advanced.Graphics.NoiseTextureSettings.noiseSteps.get();
 		noiseIntensity = Config.Client.Advanced.Graphics.NoiseTextureSettings.noiseIntensity.get().floatValue();
-		noiseDropoff = Config.Client.Advanced.Graphics.NoiseTextureSettings.noiseDropoff.get().floatValue();
+		noiseDropoff = Config.Client.Advanced.Graphics.NoiseTextureSettings.noiseDropoff.get();
 
 
 		if (fogDrawMode != EFogDrawMode.FOG_DISABLED)

@@ -6,16 +6,21 @@ in vec4 vPos;
 
 out vec4 fragColor;
 
+// Fog uniforms
 uniform float fogScale;
 uniform float fogVerticalScale;
 uniform float nearFogStart;
 uniform float nearFogLength;
 uniform int fullFogMode;
 
+// Noise uniforms
 uniform bool noiseEnabled;
 uniform int noiseSteps;
 uniform float noiseIntensity;
-uniform float noiseDropoff;
+uniform int noiseDropoff;
+
+// SSAO uniforms
+//uniform bool ssaoEnabled;
 
 /* ========MARCO DEFINED BY RUNTIME CODE GEN=========
 
@@ -84,20 +89,82 @@ vec3 HSV2RGB(vec3 c) {
 }
 
 
-/** 
+/**
  * Fragment Shader
- * 
+ *
  * author: James Seibel
  * author: coolGi
  * version: 7-2-2023
  */
 void main()
 {
-	vec4 returnColor;
+	fragColor = vertexColor;
+
+    // TODO: Move into its own function instead of in an if statement
+    if (noiseEnabled) {
+        // This bit of code is required to fix the vertex position problem cus of floats in the verted world position varuable
+        vec3 vertexNormal = normalize(cross(dFdx(vPos.xyz), dFdy(vPos.xyz)));
+        vec3 fixedVPos = vec3(
+            vPos.x - vertexNormal.x * 0.001,
+            vPos.y - vertexNormal.y * 0.001,
+            vPos.z - vertexNormal.z * 0.001
+        );
 
 
+        float noiseAmplification = noiseIntensity / 100;
+        noiseAmplification = (-1 * pow(2*((fragColor.x + fragColor.y + fragColor.z) / 3) - 1, 2) + 1) * noiseAmplification; // Lessen the effect on depending on how dark the object is, equasion for this is -(2x-1)^{2}+1
+        noiseAmplification *= fragColor.w; // The effect would lessen on transparent objects
+
+        // Random value for each position
+        float randomValue = rand(vec3(
+            quantize(fixedVPos.x, noiseSteps),
+            quantize(fixedVPos.y, noiseSteps),
+            quantize(fixedVPos.z, noiseSteps)
+        ))
+        * 2. * noiseAmplification - noiseAmplification;
+
+
+        // Modifies the color
+        // A value of 0 on the randomValue will result in the original color, while a value of 1 will result in a fully bright color
+        vec3 newCol = fragColor.rgb + (vec3(1.0) - fragColor.rgb) * randomValue;
+
+        // Clamps it and turns it back into a vec4
+        if (noiseDropoff == 0)
+            fragColor = vec4(
+                clamp(newCol.r, 0., 1.),
+                clamp(newCol.g, 0., 1.),
+                clamp(newCol.b, 0., 1.),
+                fragColor.w
+            );
+        else
+            fragColor = mix(
+                vec4(
+                    clamp(newCol.r, 0., 1.),
+                    clamp(newCol.g, 0., 1.),
+                    clamp(newCol.b, 0., 1.),
+                    fragColor.w
+                ), fragColor,
+                clamp(length(vertexWorldPos) / noiseDropoff, 0., 1.) // The further away it gets, the less noise gets applied
+            );
+
+        // For testing
+        //        if (fragColor.r != 69420.) {
+        //            fragColor = vec4(
+        //                mod(fixedVPos.x, 1),
+        //                mod(fixedVPos.y, 1),
+        //                mod(fixedVPos.z, 1),
+        //            fragColor.w);
+        //        }
+    }
+
+//    // TODO: Move into its own function instead of in an if statement
+//    if (ssaoEnabled) {
+//
+//    }
+
+    // TODO: Move into its own function instead of in an if statement
     if (fullFogMode != 0) {
-        returnColor = vec4(fogColor.rgb, 1.0);
+        fragColor = vec4(fogColor.rgb, 1.0);
     } else {
         // TODO: add a white texture to support Optifine shaders
         //vec4 textureColor = texture(texImage, textureCoord);
@@ -115,59 +182,8 @@ void main()
         float mixedFogThickness = clamp(mixFogThickness(
             nearFogThickness, farFogThickness, heightFogThickness), 0.0, 1.0);
 
-        returnColor = mix(vertexColor, vec4(fogColor.rgb, 1.0), mixedFogThickness);
+        fragColor = mix(fragColor, vec4(fogColor.rgb, 1.0), mixedFogThickness);
 	}
-
-    if (noiseEnabled) {
-        // This bit of code is required to fix the vertex position problem cus of floats in the verted world position varuable
-        vec3 vertexNormal = normalize(cross(dFdx(vPos.xyz), dFdy(vPos.xyz)));
-        vec3 fixedVPos = vec3(
-            vPos.x - vertexNormal.x * 0.001,
-            vPos.y - vertexNormal.y * 0.001,
-            vPos.z - vertexNormal.z * 0.001
-        );
-
-
-        float noiseAmplification = noiseIntensity / 100;
-        noiseAmplification = (-1 * pow(2*((returnColor.x + returnColor.y + returnColor.z) / 3) - 1, 2) + 1) * noiseAmplification; // Lessen the effect on depending on how dark the object is, equasion for this is -(2x-1)^{2}+1
-        noiseAmplification *= returnColor.w; // The effect would lessen on transparent objects
-
-        // Random value for each position
-        float randomValue = rand(vec3(
-            quantize(fixedVPos.x, noiseSteps),
-            quantize(fixedVPos.y, noiseSteps),
-            quantize(fixedVPos.z, noiseSteps)
-        ))
-            * 2. * noiseAmplification - noiseAmplification;
-
-
-        // Modifies the color
-        // A value of 0 on the randomValue will result in the original color, while a value of 1 will result in a fully bright color
-        vec3 newCol = returnColor.rgb + (vec3(1.0) - returnColor.rgb) * randomValue;
-
-        // Clamps it and turns it back into a vec4
-        returnColor = mix(
-            vec4(
-                clamp(newCol.r, 0., 1.),
-                clamp(newCol.g, 0., 1.),
-                clamp(newCol.b, 0., 1.),
-                returnColor.w
-            ), returnColor,
-            clamp(length(vertexWorldPos) * fogScale * noiseDropoff, 0., 1.) // The further away it gets, the less noise gets applied
-        );
-
-        // For testing
-//        if (returnColor.r != 69420.) {
-//            returnColor = vec4(
-//                mod(fixedVPos.x, 1),
-//                mod(fixedVPos.y, 1),
-//                mod(fixedVPos.z, 1),
-//            returnColor.w);
-//        }
-    }
-
-    // If "w" is just set to just 1. then it would crash
-	fragColor = returnColor;
 }
 
 
