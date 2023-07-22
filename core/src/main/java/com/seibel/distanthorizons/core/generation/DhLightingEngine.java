@@ -1,6 +1,6 @@
 package com.seibel.distanthorizons.core.generation;
 
-import com.seibel.distanthorizons.core.enums.ELodDirection;
+import com.seibel.distanthorizons.core.enums.EDhDirection;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhBlockPos;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
@@ -100,7 +100,7 @@ public class DhLightingEngine
 						{
 							// get the light
 							int maxY = chunk.getLightBlockingHeightMapValue(relX, relZ);
-							DhBlockPos skyLightPos = new DhBlockPos(chunk.getMinX() + relX, maxY, chunk.getMinZ() + relZ);
+							DhBlockPos skyLightPos = new DhBlockPos(chunk.getMinBlockX() + relX, maxY, chunk.getMinBlockZ() + relZ);
 							skyLightPosQueue.add(new LightPos(skyLightPos, maxSkyLight));
 							
 							// set the light
@@ -155,7 +155,7 @@ public class DhLightingEngine
 			int lightValue = lightPos.lightValue;
 			
 			// propagate the lighting in each cardinal direction, IE: -x, +x, -y, +y, -z, +z
-			for (ELodDirection direction : ELodDirection.CARDINAL_DIRECTIONS)
+			for (EDhDirection direction : EDhDirection.CARDINAL_DIRECTIONS)
 			{
 				DhBlockPos neighbourBlockPos = pos.offset(direction);
 				DhChunkPos neighbourChunkPos = new DhChunkPos(neighbourBlockPos);

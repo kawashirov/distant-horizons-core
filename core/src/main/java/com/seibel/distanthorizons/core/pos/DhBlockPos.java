@@ -19,7 +19,7 @@
  
 package com.seibel.distanthorizons.core.pos;
 
-import com.seibel.distanthorizons.core.enums.ELodDirection;
+import com.seibel.distanthorizons.core.enums.EDhDirection;
 import com.seibel.distanthorizons.core.util.LodUtil;
 
 import java.util.Objects;
@@ -113,7 +113,7 @@ public class DhBlockPos {
         return asLong(x, y, z);
     }
 
-    public DhBlockPos offset(ELodDirection direction) { return this.offset(direction.getNormal().x, direction.getNormal().y, direction.getNormal().z); }
+    public DhBlockPos offset(EDhDirection direction) { return this.offset(direction.getNormal().x, direction.getNormal().y, direction.getNormal().z); }
     public DhBlockPos offset(int x, int y, int z) { return new DhBlockPos(this.x + x, this.y + y, this.z + z); }
 	
 	/** Limits the block position to a value between 0 and 15 (inclusive) */

@@ -45,10 +45,10 @@ public interface IChunkWrapper extends IBindable
 	 */
 	int getLightBlockingHeightMapValue(int xRel, int zRel);
 	
-	int getMaxX();
-	int getMaxZ();
-	int getMinX();
-	int getMinZ();
+	int getMaxBlockX();
+	int getMaxBlockZ();
+	int getMinBlockX();
+	int getMinBlockZ();
 
 	long getLongChunkPos();
 	
@@ -72,17 +72,17 @@ public interface IChunkWrapper extends IBindable
 	default boolean blockPosInsideChunk(DhBlockPos blockPos) { return this.blockPosInsideChunk(blockPos.x, blockPos.y, blockPos.z); }
 	default boolean blockPosInsideChunk(int x, int y, int z)
 	{
-		return (x >= this.getMinX() && x <= this.getMaxX()
+		return (x >= this.getMinBlockX() && x <= this.getMaxBlockX()
 				&& y >= this.getMinBuildHeight() && y < this.getMaxBuildHeight()
-				&& z >= this.getMinZ() && z <= this.getMaxZ());
+				&& z >= this.getMinBlockZ() && z <= this.getMaxBlockZ());
 	}
 	default boolean blockPosInsideChunk(DhBlockPos2D blockPos) 
 	{
-		return (blockPos.x >= this.getMinX() && blockPos.x <= this.getMaxX()
-				&& blockPos.z >= this.getMinZ() && blockPos.z <= this.getMaxZ());
+		return (blockPos.x >= this.getMinBlockX() && blockPos.x <= this.getMaxBlockX()
+				&& blockPos.z >= this.getMinBlockZ() && blockPos.z <= this.getMaxBlockZ());
 	}
 	
-	boolean doesNearbyChunksExist();
+	boolean doNearbyChunksExist();
 	String toString();
 	
 	/** This is a bad hash algorithm, but can be used for rough debugging. */
