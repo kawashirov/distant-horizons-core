@@ -657,6 +657,15 @@ public class Config
 								+ "This will effect generation speed, but not rendering performance.")
 						.build();
 				
+				public static ConfigEntry<Integer> worldGenerationTimeoutLengthInSeconds = new ConfigEntry.Builder<Integer>()
+						.setMinDefaultMax(5, 60, 60*10/*10 minutes*/)
+						.comment(""
+								+ "How long should a world generator thread run for before timing out? \n"
+								+ "Note: If you are experiencing timeout errors it is better to lower your CPU usage first \n"
+								+ "via the thread config before changing this value. \n"
+								+ "")
+						.build();
+				
 				// deprecated and not implemented, can be made public if we ever re-implement it
 				@Deprecated
 				private static ConfigEntry<EGenerationPriority> generationPriority = new ConfigEntry.Builder<EGenerationPriority>()
