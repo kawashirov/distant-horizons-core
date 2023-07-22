@@ -29,7 +29,7 @@ import com.seibel.distanthorizons.coreapi.util.math.Vec3i;
 
 /**
  * An (almost) exact copy of Minecraft's
- * Direction enum.
+ * Direction enum. <Br><Br>
  *
  * Up <Br>
  * Down <Br>
@@ -49,7 +49,12 @@ public enum ELodDirection
 	SOUTH(3, 2, 0, "south", ELodDirection.AxisDirection.POSITIVE, ELodDirection.Axis.Z, new Vec3i(0, 0, 1)),
 	WEST(4, 5, 1, "west", ELodDirection.AxisDirection.NEGATIVE, ELodDirection.Axis.X, new Vec3i(-1, 0, 0)),
 	EAST(5, 4, 3, "east", ELodDirection.AxisDirection.POSITIVE, ELodDirection.Axis.X, new Vec3i(1, 0, 0));
-	public static final ELodDirection[] DIRECTIONS = new ELodDirection[] {
+	
+	/**
+	 * Up, Down, West, East, North, South <br>
+	 * Similar to {@link ELodDirection#OPPOSITE_DIRECTIONS}, just with a different order 
+	 */
+	public static final ELodDirection[] CARDINAL_DIRECTIONS = new ELodDirection[] {
 			ELodDirection.UP,
 			ELodDirection.DOWN,
 			ELodDirection.WEST,
@@ -57,6 +62,10 @@ public enum ELodDirection
 			ELodDirection.NORTH,
 			ELodDirection.SOUTH };
 	
+	/** 
+	 * Up, Down, South, North, East, West <br>
+	 * Similar to {@link ELodDirection#CARDINAL_DIRECTIONS}, just with a different order 
+	 */
 	public static final ELodDirection[] OPPOSITE_DIRECTIONS = new ELodDirection[] {
 			ELodDirection.UP,
 			ELodDirection.DOWN,
@@ -64,12 +73,14 @@ public enum ELodDirection
 			ELodDirection.NORTH,
 			ELodDirection.EAST,
 			ELodDirection.WEST };
-	/** North, South, East, West */
+	
+	/** North, South, East, West */ // TODO rename to state this is just X/Z or flat directions
 	public static final ELodDirection[] ADJ_DIRECTIONS = new ELodDirection[] {
 			ELodDirection.EAST,
 			ELodDirection.WEST,
 			ELodDirection.SOUTH,
 			ELodDirection.NORTH };
+	
 //	private final int data3d;
 //	private final int oppositeIndex;
 //	private final int data2d;
