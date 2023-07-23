@@ -1,5 +1,6 @@
 package com.seibel.distanthorizons.core.world;
 
+import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.file.structure.ClientOnlySaveStructure;
 import com.seibel.distanthorizons.core.level.IDhLevel;
@@ -32,9 +33,13 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 	// TODO why does this executor have 2 threads?
     public ExecutorService dhTickerThread = ThreadUtil.makeSingleThreadPool("DH Client World Ticker Thread", 2);
     public EventLoop eventLoop = new EventLoop(this.dhTickerThread, this::_clientTick);
-
-
-
+	
+	
+	
+	//==============//
+	// constructors //
+	//==============//
+	
     public DhClientWorld()
 	{
 		super(EWorldEnvironment.Client_Only);
@@ -42,32 +47,50 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
         this.saveStructure = new ClientOnlySaveStructure();
         this.levels = new ConcurrentHashMap<>();
 
-        // TODO server specific configs
-        this.networkClient = new NetworkClient(MC_CLIENT.getCurrentServerIp(), 25049);
-        registerNetworkHandlers();
+		if (Config.Client.Advanced.Multiplayer.enableMultiverseNetworking.get())
+		{
+			// TODO server specific configs
+			this.networkClient = new NetworkClient(MC_CLIENT.getCurrentServerIp(), 25049);
+			this.registerNetworkHandlers();
+		}
+		else
+		{
+			this.networkClient = null;
+		}
 
 		LOGGER.info("Started DhWorld of type "+this.environment);
 	}
 
-    private void registerNetworkHandlers() {
-        networkClient.registerHandler(HelloMessage.class, (msg, ctx) -> {
+    private void registerNetworkHandlers()
+    {
+        this.networkClient.registerHandler(HelloMessage.class, (msg, ctx) ->
+        {
             ctx.writeAndFlush(new PlayerUUIDMessage(MC_CLIENT.getPlayerUUID()));
         });
 
         // TODO Proper payload handling
-        networkClient.registerAckHandler(PlayerUUIDMessage.class, ctx -> {
+	    this.networkClient.registerAckHandler(PlayerUUIDMessage.class, ctx ->
+        {
             ctx.writeAndFlush(new RemotePlayerConfigMessage(new RemotePlayer.Payload()));
         });
-        networkClient.registerHandler(RemotePlayerConfigMessage.class, (msg, ctx) -> {
+	    this.networkClient.registerHandler(RemotePlayerConfigMessage.class, (msg, ctx) ->
+        {
 
         });
-
-        networkClient.registerAckHandler(RemotePlayerConfigMessage.class, ctx -> {
+	    
+	    this.networkClient.registerAckHandler(RemotePlayerConfigMessage.class, ctx ->
+        {
             // TODO Actually request chunks
             ctx.writeAndFlush(new RequestChunksMessage());
         });
     }
-
+	
+	
+	
+	//=========//
+	// methods //
+	//=========//
+	
     @Override
     public DhClientLevel getOrLoadLevel(ILevelWrapper wrapper)
 	{
@@ -134,7 +157,11 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
     @Override
     public void close()
 	{
-        this.networkClient.close();
+		if (this.networkClient != null)
+		{
+			this.networkClient.close();
+		}
+        
 
 		this.saveAndFlush();
         for (DhClientLevel dhClientLevel : this.levels.values())
