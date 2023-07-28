@@ -47,6 +47,12 @@ public class ClientLevelModule implements Closeable {
 
     public void clientTick()
     {
+	    // can be false if the level is unloading
+	    if (!MC_CLIENT.playerExists())
+	    {
+		    return;
+	    }
+		
         ClientRenderState clientRenderState = this.ClientRenderStateRef.get();
         if (clientRenderState == null)
         {
