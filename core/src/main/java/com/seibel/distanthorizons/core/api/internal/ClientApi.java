@@ -166,7 +166,7 @@ public class ClientApi
 	
 	public void clientLevelUnloadEvent(IClientLevelWrapper level)
 	{
-		LOGGER.info("Client level "+level+" unloading.");
+		LOGGER.info("Unloading client level ["+level+"].");
 		
 		AbstractDhWorld world = SharedApi.getAbstractDhWorld();
 		if (world != null)
@@ -174,18 +174,24 @@ public class ClientApi
 			world.unloadLevel(level);
 			ApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelUnloadEvent.class, new DhApiLevelUnloadEvent.EventParam(level));
 		}
+		else
+		{
+			this.waitingClientLevels.remove(level);
+		}
 	}
 	
-	public void clientLevelLoadEvent(IClientLevelWrapper level)
+	public void clientLevelLoadEvent(IClientLevelWrapper level) { this.clientLevelLoadEvent(level, false); }
+	public void multiverseClientLevelLoadEvent(IClientLevelWrapper level) { this.clientLevelLoadEvent(level, true); }
+	private void clientLevelLoadEvent(IClientLevelWrapper level, boolean isServerCommunication)
 	{
-		if (this.isServerCommunicationEnabled)
+		if (this.isServerCommunicationEnabled && !isServerCommunication)
 		{
 			LOGGER.info("Server supports communication, deferring loading.");
 			return;
 		}
 		
 		
-		LOGGER.info("Client level " + level + " loading.");
+		LOGGER.info("Loading "+(isServerCommunication ? "Multiverse" : "")+" client level [" + level + "].");
 		
 		AbstractDhWorld world = SharedApi.getAbstractDhWorld();
 		if (world != null)
@@ -326,22 +332,56 @@ public class ClientApi
 	/** @param byteBuf is Netty's {@link ByteBuffer} wrapper. */
 	public void serverMessageReceived(ByteBuf byteBuf)
 	{
+		// either value can be set to true to debug the received byte stream
+		boolean stopAndDisplayInputAsByteArray = false;
+		boolean stopAndDisplayInputAsString = false;
+		if (stopAndDisplayInputAsByteArray || stopAndDisplayInputAsString)
+		{
+			String messageString = "";
+			if (stopAndDisplayInputAsByteArray)
+			{
+				int byteCount = byteBuf.readableBytes();
+				byte[] arr = new byte[byteCount];
+				StringBuilder stringBuilder = new StringBuilder("Server message received: [");
+				for (int i = 0; i < byteCount; i++)
+				{
+					arr[i] = byteBuf.readByte();
+					stringBuilder.append(arr[i]);
+				}
+				stringBuilder.append("]");
+				
+				messageString = stringBuilder.toString();
+			}
+			else if (stopAndDisplayInputAsString)
+			{
+				messageString = byteBuf.toString(StandardCharsets.UTF_8);
+			}
+			
+			// this is logged as an error so it is easier to see in an Intellij log
+			LOGGER.error(messageString);
+			return;
+		}
+		
+		
+		
+		
 		// It is important to ensure malicious server input is ignored.
 		if (this.serverNetworkingIsMalformed)
 		{
 			return;
 		}
 		
+		// check that the incoming message is within the expected size
 		short commandLength = byteBuf.readShort();
-		if (commandLength > 32) // TODO 32 should be put into a constant somewhere, what does it represent?
+		if (commandLength < 1 || commandLength > 32)
 		{
-			LOGGER.error("Server sent command > 32");
+			LOGGER.error("Server command length ["+commandLength+"] outside the expected range of 1 to 32 (inclusive).");
 			ClientApi.INSTANCE.serverNetworkingIsMalformed = true;
 			return;
 		}
 		
-		
-		String eventType = null;
+		// parse the command
+		String eventType;
 		try
 		{
 			eventType = byteBuf.readCharSequence(commandLength, StandardCharsets.UTF_8).toString();
@@ -355,27 +395,29 @@ public class ClientApi
 		switch (eventType)
 		{
 			case "ServerCommsEnabled":
-				LOGGER.info("Server supports DH protocol.");
+				LOGGER.info("Server supports DH multiverse protocol.");
 				ClientApi.INSTANCE.isServerCommunicationEnabled = true;
 				KEYED_CLIENT_LEVEL_MANAGER.setUseOverrideWrapper(true);
-				MC.executeOnRenderThread(() -> {
-					// Go ahead and unload the current world, because it may be wrong. We expect
-					// a followup WorldChanged event from the server soon anyways.
+				MC.executeOnRenderThread(() -> 
+				{
+					// Unload the current world, since it may be wrong.
+					// A followup WorldChanged event should be received from the server soon after this.
+					LOGGER.info("Unloading current client level so the server can define the correct multiverse level.");
 					this.clientLevelUnloadEvent((IClientLevelWrapper) MC.getWrappedClientWorld());
 				});
 				break;
 			
-			case "WorldChanged":
-				short worldKeyLength = byteBuf.readShort();
-				if (worldKeyLength > 128) // TODO 128 should be put into a constant somewhere
+			case "LevelChanged":
+				short levelKeyLength = byteBuf.readShort();
+				if (levelKeyLength < 1 || levelKeyLength > 128) // TODO 128 should be put into a constant somewhere
 				{
-					LOGGER.error("Server sent worldKey > 128");
+					LOGGER.error("Server [LevelChanged] command length ["+commandLength+"] outside the expected range of 1 to 128 (inclusive).");
 					this.serverNetworkingIsMalformed = true;
 					return;
 				}
 				
-				String worldKey = byteBuf.readCharSequence(worldKeyLength, StandardCharsets.UTF_8).toString();
-				if (!worldKey.matches("[a-zA-Z0-9_]+"))
+				String levelKey = byteBuf.readCharSequence(levelKeyLength, StandardCharsets.UTF_8).toString();
+				if (!levelKey.matches("[a-zA-Z0-9_]+"))
 				{
 					LOGGER.error("Server sent invalid world key name, and is being ignored.");
 					this.isServerCommunicationEnabled = false;
@@ -383,15 +425,15 @@ public class ClientApi
 					return;
 				}
 				
-				LOGGER.info("Server sent world change event: " + worldKey);
+				LOGGER.info("Server level change event received, changing the level to ["+levelKey+"].");
 				MC.executeOnRenderThread(() -> {
 					if (MC.getWrappedClientWorld() != null)
 					{
 						this.clientLevelUnloadEvent((IClientLevelWrapper) MC.getWrappedClientWorld());
 					}
-					IServerKeyedClientLevel clientLevel = KEYED_CLIENT_LEVEL_MANAGER.getServerKeyedLevel(MC.getWrappedClientWorld(), worldKey);
+					IServerKeyedClientLevel clientLevel = KEYED_CLIENT_LEVEL_MANAGER.getServerKeyedLevel(MC.getWrappedClientWorld(), levelKey);
 					KEYED_CLIENT_LEVEL_MANAGER.setServerKeyedLevel(clientLevel);
-					this.clientLevelLoadEvent(clientLevel);
+					this.multiverseClientLevelLoadEvent(clientLevel);
 				});
 				break;
 		}
