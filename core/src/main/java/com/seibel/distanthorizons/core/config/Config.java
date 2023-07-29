@@ -741,9 +741,18 @@ public class Config
 						.comment(""
 								+ "If true Distant Horizons will attempt to communicate with the connected \n"
 								+ "server in order to improve multiverse support. \n"
-								+ "If you experience network issues when attempting to join a server, disable this option. \n"
+								+ "")
+						.build();
+				
+				public static ConfigEntry<Boolean> enableServerNetworking = new ConfigEntry.Builder<Boolean>()
+						.set(false)
+						.comment(""
+								+ "Attention: this is only for developers and hasn't been implemented.\n"
 								+ "\n"
-								+ "Note: this requires setup on the server in order to function. \n"
+								+ "If true Distant Horizons will attempt to communicate with the connected \n"
+								+ "server in order to load LODs outside your vanilla render distance. \n"
+								+ "\n"
+								+ "Note: This requires DH to be installed on the server in order to function. \n"
 								+ "")
 						.build();
 				

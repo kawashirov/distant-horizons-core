@@ -332,6 +332,14 @@ public class ClientApi
 	/** @param byteBuf is Netty's {@link ByteBuffer} wrapper. */
 	public void serverMessageReceived(ByteBuf byteBuf)
 	{
+		if (!Config.Client.Advanced.Multiplayer.enableMultiverseNetworking.get())
+		{
+			// multiverse networking disabled, ignore anything sent from the server
+			return;
+		}
+		
+		
+		
 		// either value can be set to true to debug the received byte stream
 		boolean stopAndDisplayInputAsByteArray = false;
 		boolean stopAndDisplayInputAsString = false;
