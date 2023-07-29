@@ -1125,10 +1125,6 @@ public class Config
 							.set(new ArrayList<String>(Arrays.asList("option 1", "option 2", "option 3")))
 							.build();
 					
-					public static ConfigEntry<Map<String, String>> mapTest = new ConfigEntry.Builder<Map<String, String>>()
-							.set(new HashMap<String, String>())
-							.build();
-					
 					public static ConfigCategory categoryTest = new ConfigCategory.Builder().set(CategoryTest.class).build();
 					
 					public static ConfigEntry<Integer> linkableTest = new ConfigEntry.Builder<Integer>()
