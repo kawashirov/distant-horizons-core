@@ -259,9 +259,9 @@
   "distanthorizons.config.client.advanced.graphics.advancedGraphics.earthCurveRatio.@tooltip":
     "A value of 1 is equivalent to the curvature of Earth in real life.",
   "distanthorizons.config.client.advanced.graphics.advancedGraphics.lodBias":
-    "LOD Bias §6(Effects vanilla terrain)§r",
+    "LOD Bias §6(Affects vanilla terrain)§r",
   "distanthorizons.config.client.advanced.graphics.advancedGraphics.lodBias.@tooltip":
-    "Sets vanilla's lod bias value\nPlease press F3+T to reload the texture packs and apply this effect",
+    "Sets vanilla's lod bias value\nPlease press F3+T to reload the texture packs and apply this affect",
   
   
   "distanthorizons.config.client.advanced.worldGenerator":
