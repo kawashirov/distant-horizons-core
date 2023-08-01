@@ -237,7 +237,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 				{
 					// FIXME having world generation enabled in a pre-generated world that doesn't have any DH data can cause this to happen
 					//  surprisingly reloadPos() doesn't appear to be the culprit, maybe there is an issue with reloading/changing the full data source?
-					LOGGER.warn("Potential QuadTree concurrency issue. All child sections should be enabled and ready to render for pos: "+sectionPos);
+					//LOGGER.warn("Potential QuadTree concurrency issue. All child sections should be enabled and ready to render for pos: "+sectionPos);
 				}
 
 				// this section is now being rendered via its children
