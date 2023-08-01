@@ -43,6 +43,8 @@ public enum EThreadPreset
 	LOW_IMPACT,
 	BALANCED,
 	AGGRESSIVE,
-	I_PAID_FOR_THE_WHOLE_CPU;
+	
+	// temporarily removed due to stability concerns
+	//I_PAID_FOR_THE_WHOLE_CPU;
 	
 }

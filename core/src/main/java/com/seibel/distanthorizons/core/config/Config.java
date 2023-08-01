@@ -833,7 +833,7 @@ public class Config
 				
 				public static final ConfigEntry<Integer> numberOfDataTransformerThreads = new ConfigEntry.Builder<Integer>()
 						.setMinDefaultMax(1,
-								ThreadPresetConfigEventHandler.getDataConverterDefaultThreadCount(),
+								ThreadPresetConfigEventHandler.getDataTransformerDefaultThreadCount(),
 								Runtime.getRuntime().availableProcessors())
 						.comment(""
 								+ "How many threads should be used when converting full ID data to render data? \n"
@@ -848,7 +848,7 @@ public class Config
 								+ THREAD_NOTE)
 						.build();
 				public static final ConfigEntry<Double> runTimeRatioForDataTransformerThreads = new ConfigEntry.Builder<Double>()
-						.setMinDefaultMax(0.01, ThreadPresetConfigEventHandler.getDataConverterDefaultRunTimeRatio(), 1.0)
+						.setMinDefaultMax(0.01, ThreadPresetConfigEventHandler.getDataTransformerDefaultRunTimeRatio(), 1.0)
 						.comment(THREAD_RUN_TIME_RATIO_NOTE)
 						.build();
 				
