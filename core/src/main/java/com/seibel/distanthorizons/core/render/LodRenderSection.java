@@ -104,6 +104,19 @@ public class LodRenderSection implements IDebugRenderable
 	
 	public void enableRendering() 
 	{
+		// FIXME this is a temporary fix for sections not building the first time,
+		//  this may cause LODs to flash when first loading
+		//  Problem reproduction steps:
+		//  1. connect to a multiplayer server
+		//  2. enter spectator
+		//  3. fly in one direction until section detail levels 7 and 8 appear
+		//  4. empty LODs should appear
+		if (!this.isRenderingEnabled)
+		{
+			// this only needs to be called when first enabling the section
+			this.markBufferDirty();
+		}
+		
 		this.isRenderingEnabled = true;
 	}
 	public void disableRendering() { this.isRenderingEnabled = false; }

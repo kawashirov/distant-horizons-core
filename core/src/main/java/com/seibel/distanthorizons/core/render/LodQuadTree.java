@@ -254,17 +254,21 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 			// wait for the parent to disable before enabling this section, so we don't overdraw/overlap render sections
 			if (!parentRenderSectionIsEnabled && renderSection.canRenderNow())
 			{
-				renderSection.enableRendering();
-
-				// delete/disable children, all of them will be a lower detail level than requested
-				quadNode.deleteAllChildren((childRenderSection) ->
+				// if rendering is already enabled we don't have to re-enable it
+				if (!renderSection.isRenderingEnabled())
 				{
-					if (childRenderSection != null)
+					renderSection.enableRendering();
+					
+					// delete/disable children, all of them will be a lower detail level than requested
+					quadNode.deleteAllChildren((childRenderSection) ->
 					{
-						childRenderSection.disableRendering();
-						childRenderSection.disposeRenderData();
-					}
-				});
+						if (childRenderSection != null)
+						{
+							childRenderSection.disableRendering();
+							childRenderSection.disposeRenderData();
+						}
+					});
+				}
 			}
 			return renderSection.canRenderNow();
 		}
