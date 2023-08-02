@@ -24,6 +24,9 @@ public class FogShader extends AbstractShaderRenderer {
 //    public final int modelOffsetUniform;
 //    public final int worldYOffsetUniform;
 
+    public final int gProjUniform;
+    public final int gDepthMapUniform;
+
     // Fog Uniforms
     public final int fogColorUniform;
     public final int fogScaleUniform;
@@ -37,13 +40,16 @@ public class FogShader extends AbstractShaderRenderer {
         // This code is just a temp fix so that it looks fine for the time being
         // and even with the jank soloution, i cannot get it to work
         super(new ShaderProgram(
-                () -> Shader.loadFile("shaders/fog/fog.vert", false, new StringBuilder()).toString(),
+                () -> Shader.loadFile("shaders/normal.vert", false, new StringBuilder()).toString(),
                 () -> fogConfig.loadAndProcessFragShader("shaders/fog/fog.frag", false).toString(),
-                "fragColor", new String[] { "vPos", "vPosition" }
+                "fragColor", new String[] { "vPosition" }
         ));
 
 //        modelOffsetUniform = this.shader.getUniformLocation("modelOffset");
 //        worldYOffsetUniform = this.shader.tryGetUniformLocation("worldYOffset");
+
+        gProjUniform = this.shader.getUniformLocation("gProj");
+        gDepthMapUniform = this.shader.getUniformLocation("gDepthMap");
         // Fog uniforms
         fogColorUniform = this.shader.getUniformLocation("fogColor");
         fullFogModeUniform = this.shader.getUniformLocation("fullFogMode");
@@ -56,8 +62,7 @@ public class FogShader extends AbstractShaderRenderer {
 
     @Override
     void setVertexAttributes() {
-        this.va.setVertexAttribute(0, 0, VertexAttribute.VertexPointer.addVec2Pointer(false));
-        this.va.setVertexAttribute(0, 1, VertexAttribute.VertexPointer.addUnsignedShortsPointer(8, false, true)); // 2+2+2+2
+        va.setVertexAttribute(0, 0, VertexAttribute.VertexPointer.addVec2Pointer(false));
     };
 
     @Override
@@ -68,8 +73,19 @@ public class FogShader extends AbstractShaderRenderer {
         vanillaDrawDistance += 32; // Give it a 2 chunk boundary for near fog.
 
 
+        Mat4f perspective = Mat4f.perspective(
+                (float) MC_RENDER.getFov(partialTicks),
+                MC_RENDER.getTargetFrameBufferViewportWidth() / (float) MC_RENDER.getTargetFrameBufferViewportHeight(),
+                RenderUtil.getNearClipPlaneDistanceInBlocks(partialTicks),
+                (float) ((lodDrawDistance + LodUtil.REGION_WIDTH) * Math.sqrt(2)));
+
+
+
 //        if (worldYOffsetUniform != -1) this.shader.setUniform(worldYOffsetUniform, (float) MC.getWrappedClientWorld().getMinHeight());
 
+
+        this.shader.setUniform(this.shader.getUniformLocation("gProj"), perspective);
+        GL32.glUniform1i(gDepthMapUniform, 0);
         // Fog
         this.shader.setUniform(fullFogModeUniform, MC_RENDER.isFogStateSpecial() ? 1 : 0);
         this.shader.setUniform(fogColorUniform, MC_RENDER.isFogStateSpecial() ? getSpecialFogColor(partialTicks) : getFogColor(partialTicks));

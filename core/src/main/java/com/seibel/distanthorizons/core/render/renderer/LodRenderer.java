@@ -252,11 +252,11 @@ public class LodRenderer
 		bufferHandler.renderOpaque(this);
 
 		if (Config.Client.Advanced.Graphics.Quality.ssao.get()) {
-//			SSAOShader.INSTANCE.render(partialTicks);
+//			SSAOShader.INSTANCE.render(partialTicks); // For some reason this looks slightly different :/
 			SSAORenderer.INSTANCE.render(partialTicks);
 		}
 		{
-//			FogShader.INSTANCE.render(partialTicks);
+			FogShader.INSTANCE.render(partialTicks);
 //			DarkShader.INSTANCE.render(partialTicks); // A test shader to make the world darker
 		}
 
