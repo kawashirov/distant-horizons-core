@@ -19,6 +19,20 @@ uniform int fullFogMode;
 uniform vec4 fogColor;
 
 
+/* ========MARCO DEFINED BY RUNTIME CODE GEN=========
+
+float farFogStart;
+float farFogLength;
+float farFogMin;
+float farFogRange;
+float farFogDensity;
+
+float heightFogStart;
+float heightFogLength;
+float heightFogMin;
+float heightFogRange;
+float heightFogDensity;
+*/
 
 // method definitions
 // ==== The below 5 methods will be run-time generated. ====

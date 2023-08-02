@@ -53,13 +53,6 @@ public class LodRenderProgram extends ShaderProgram
 	public final int earthRadiusUniform;
 
 	public final int lightMapUniform;
-	// Fog Uniforms
-	public final int fogColorUniform;
-	public final int fogScaleUniform;
-	public final int fogVerticalScaleUniform;
-	public final int nearFogStartUniform;
-	public final int nearFogLengthUniform;;
-	public final int fullFogModeUniform;
 
 	// Noise Uniforms
 	public final int noiseEnabledUniform;
@@ -71,10 +64,11 @@ public class LodRenderProgram extends ShaderProgram
 
 	// This will bind  VertexAttribute
 	public LodRenderProgram(LodFogConfig fogConfig) {
-		super(() -> Shader.loadFile(fogConfig.earthCurveRatio!=0 ? VERTEX_CURVE_SHADER_PATH : VERTEX_SHADER_PATH,
-						false, new StringBuilder()).toString(),
-				() -> fogConfig.loadAndProcessFragShader(FRAGMENT_SHADER_PATH, false).toString(),
-				"fragColor", new String[] { "vPosition", "color" });
+		super(
+				fogConfig.earthCurveRatio!=0 ? VERTEX_CURVE_SHADER_PATH : VERTEX_SHADER_PATH,
+				FRAGMENT_SHADER_PATH,
+				"fragColor", new String[] { "vPosition", "color" }
+		);
 		this.fogConfig = fogConfig;
 
 		combinedMatUniform = getUniformLocation("combinedMatrix");
@@ -84,15 +78,6 @@ public class LodRenderProgram extends ShaderProgram
 		earthRadiusUniform = tryGetUniformLocation("earthRadius");
 
 		lightMapUniform = getUniformLocation("lightMap");
-
-		// Fog Uniforms
-		fullFogModeUniform = getUniformLocation("fullFogMode");
-		fogColorUniform = getUniformLocation("fogColor");
-		fogScaleUniform = tryGetUniformLocation("fogScale");
-		fogVerticalScaleUniform = tryGetUniformLocation("fogVerticalScale");
-		// near
-		nearFogStartUniform = tryGetUniformLocation("nearFogStart");
-		nearFogLengthUniform = tryGetUniformLocation("nearFogLength");
 
 		// Noise Uniforms
 		noiseEnabledUniform = getUniformLocation("noiseEnabled");
@@ -175,17 +160,6 @@ public class LodRenderProgram extends ShaderProgram
 		setUniform(lightMapUniform, lightmapBindPoint);
 
 		if (worldYOffsetUniform != -1) setUniform(worldYOffsetUniform, (float)worldYOffset);
-
-		// Fog
-		setUniform(fullFogModeUniform, fullFogMode ? 1 : 0);
-		setUniform(fogColorUniform, fogColor);
-
-		float nearFogLen = vanillaDrawDistance * 0.2f / lodDrawDistance;
-		float nearFogStart = vanillaDrawDistance * (VERSION_CONSTANTS.isVanillaRenderedChunkSquare() ? (float)Math.sqrt(2.) : 1.f) / lodDrawDistance;
-		if (nearFogStartUniform != -1) setUniform(nearFogStartUniform, nearFogStart);
-		if (nearFogLengthUniform != -1) setUniform(nearFogLengthUniform, nearFogLen);
-		if (fogScaleUniform != -1) setUniform(fogScaleUniform, 1.f/lodDrawDistance);
-		if (fogVerticalScaleUniform != -1) setUniform(fogVerticalScaleUniform, 1.f/worldHeight);
 	}
 
 	public void setModelPos(Vec3f modelPos) {
