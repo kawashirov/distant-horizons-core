@@ -586,6 +586,20 @@ public class Config
 									+ "If set to 0 the mod wont overwrite vanilla's default (which so happens to also be 0)")
 							.build();
 					
+					public static ConfigEntry<ELodShading> lodShading = new ConfigEntry.Builder<ELodShading>()
+							.set(ELodShading.MINECRAFT)
+							.comment(""
+									+ "How should LODs be shaded? \n"
+									+ "\n"
+									+ ELodShading.MINECRAFT + ": Uses the same side shading as vanilla Minecraft blocks. \n"
+									+ ELodShading.OLD_LIGHTING + ": Simulates Minecraft's block shading for LODs. \n"
+									+ "              Can be used to force LOD shading when using some shaders. \n"
+									+ ELodShading.NONE + ": All LOD sides will be rendered with the same brightness. \n"
+									+ "")
+							.setPerformance(EConfigEntryPerformance.NONE)
+							.addListener(RenderCacheConfigEventHandler.INSTANCE)
+							.build();
+					
 				}
 				
 			}
