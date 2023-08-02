@@ -85,7 +85,7 @@ public class LodRenderProgram extends ShaderProgram
 
 		lightMapUniform = getUniformLocation("lightMap");
 
-		// Fog uniforms
+		// Fog Uniforms
 		fullFogModeUniform = getUniformLocation("fullFogMode");
 		fogColorUniform = getUniformLocation("fogColor");
 		fogScaleUniform = tryGetUniformLocation("fogScale");
@@ -94,11 +94,12 @@ public class LodRenderProgram extends ShaderProgram
 		nearFogStartUniform = tryGetUniformLocation("nearFogStart");
 		nearFogLengthUniform = tryGetUniformLocation("nearFogLength");
 
-		// Noise uniforms
+		// Noise Uniforms
 		noiseEnabledUniform = getUniformLocation("noiseEnabled");
 		noiseStepsUniform = getUniformLocation("noiseSteps");
 		noiseIntensityUniform = getUniformLocation("noiseIntensity");
 		noiseDropoffUniform = getUniformLocation("noiseDropoff");
+
 
 		// TODO: Add better use of the LODFormat thing
 		int vertexByteCount = LodUtil.LOD_VERTEX_FORMAT.getByteSize();
@@ -122,6 +123,7 @@ public class LodRenderProgram extends ShaderProgram
 		if (earthRadiusUniform != -1) setUniform(earthRadiusUniform,
 				/*6371KM*/ 6371000.0f / fogConfig.earthCurveRatio);
 
+		// Noise Uniforms
 		setUniform(noiseEnabledUniform, fogConfig.noiseEnable);
 		setUniform(noiseStepsUniform, fogConfig.noiseSteps);
 		setUniform(noiseIntensityUniform, fogConfig.noiseIntensity);

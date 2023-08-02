@@ -6,21 +6,18 @@ in vec4 vPos;
 
 out vec4 fragColor;
 
-// Fog uniforms
+// Fog Uniforms
 uniform float fogScale;
 uniform float fogVerticalScale;
 uniform float nearFogStart;
 uniform float nearFogLength;
 uniform int fullFogMode;
 
-// Noise uniforms
+// Noise Uniforms
 uniform bool noiseEnabled;
 uniform int noiseSteps;
 uniform float noiseIntensity;
 uniform int noiseDropoff;
-
-// SSAO uniforms
-//uniform bool ssaoEnabled;
 
 /* ========MARCO DEFINED BY RUNTIME CODE GEN=========
 
@@ -89,6 +86,7 @@ vec3 HSV2RGB(vec3 c) {
 }
 
 
+
 /**
  * Fragment Shader
  *
@@ -100,10 +98,11 @@ void main()
 {
 	fragColor = vertexColor;
 
+
     // TODO: Move into its own function instead of in an if statement
     if (noiseEnabled) {
-        // This bit of code is required to fix the vertex position problem cus of floats in the verted world position varuable
         vec3 vertexNormal = normalize(cross(dFdx(vPos.xyz), dFdy(vPos.xyz)));
+        // This bit of code is required to fix the vertex position problem cus of floats in the verted world position varuable
         vec3 fixedVPos = vec3(
             vPos.x - vertexNormal.x * 0.001,
             vPos.y - vertexNormal.y * 0.001,
@@ -156,11 +155,6 @@ void main()
         //            fragColor.w);
         //        }
     }
-
-//    // TODO: Move into its own function instead of in an if statement
-//    if (ssaoEnabled) {
-//
-//    }
 
     // TODO: Move into its own function instead of in an if statement
     if (fullFogMode != 0) {

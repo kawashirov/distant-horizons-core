@@ -57,6 +57,7 @@ public class LodFogConfig
 	// TODO: Move these out of here
 	public final int earthCurveRatio;
 
+	// Noise Values
 	public final boolean noiseEnable;
 	public final int noiseSteps;
 	public final float noiseIntensity;
