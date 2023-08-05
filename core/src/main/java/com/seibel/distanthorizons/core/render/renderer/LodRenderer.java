@@ -256,7 +256,7 @@ public class LodRenderer
 			SSAORenderer.INSTANCE.render(partialTicks);
 		}
 		{
-			FogShader.INSTANCE.render(partialTicks);
+//			FogShader.INSTANCE.render(partialTicks);
 //			DarkShader.INSTANCE.render(partialTicks); // A test shader to make the world darker
 		}
 
