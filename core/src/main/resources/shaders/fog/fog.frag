@@ -1,9 +1,7 @@
 
 in vec2 TexCoord;
 
-in float vertexYPos;
-//in uvec4 vPosition;
-//in vec2 TexCoord;
+//in float vertexYPos;
 
 out vec4 fragColor;
 
@@ -82,6 +80,7 @@ vec3 calcViewPosition(vec2 coords) {
  * version: 2023-6-21
  */
 void main() {
+    float vertexYPos = 100f;
     vec3 vertexWorldPos = calcViewPosition(TexCoord);
 
     if (fullFogMode != 0) {
@@ -103,20 +102,14 @@ void main() {
     }
 
     // Testing
-    if (fragColor.r != 6969.) { // This line is so that the compiler doesnt delete the previos code
+//    if (fragColor.r != 6969.) { // This line is so that the compiler doesnt delete the previos code
 //        fragColor = vec4(
-//            mod(vertexWorldPos.x, 1),
-//            mod(vertexWorldPos.y, 1),
-//            mod(vertexWorldPos.z, 1),
+//            mod(texture(gDepthMap, TexCoord).x, 1),
+//            mod(texture(gDepthMap, TexCoord).y, 1),
+//            mod(texture(gDepthMap, TexCoord).z, 1),
 //            1.
 //        );
-//        fragColor = vec4(
-//            mod(vPosition.x, 1),
-//            mod(vPosition.y, 1),
-//            mod(vPosition.z, 1),
-//            1.
-//        );
-    }
+//    }
 }
 
 
