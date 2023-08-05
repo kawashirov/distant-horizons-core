@@ -47,6 +47,12 @@ public class ClientLevelModule implements Closeable {
 
     public void clientTick()
     {
+	    // can be false if the level is unloading
+	    if (!MC_CLIENT.playerExists())
+	    {
+		    return;
+	    }
+		
         ClientRenderState clientRenderState = this.ClientRenderStateRef.get();
         if (clientRenderState == null)
         {
@@ -257,7 +263,9 @@ public class ClientLevelModule implements Closeable {
             this.renderSourceFileHandler = new RenderSourceFileHandler(fullDataSourceProvider, dhClientLevel, saveStructure);
 
             this.quadtree = new LodQuadTree(dhClientLevel, Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH,
-                    MC_CLIENT.getPlayerBlockPos().x, MC_CLIENT.getPlayerBlockPos().z, this.renderSourceFileHandler);
+                    // initial position is (0,0) just in case the player hasn't loaded in yet, the tree will be moved once the level starts ticking
+		            0, 0, 
+		            this.renderSourceFileHandler);
 
             RenderBufferHandler renderBufferHandler = new RenderBufferHandler(this.quadtree);
             this.renderer = new LodRenderer(renderBufferHandler);

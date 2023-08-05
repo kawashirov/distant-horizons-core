@@ -259,9 +259,13 @@
   "distanthorizons.config.client.advanced.graphics.advancedGraphics.earthCurveRatio.@tooltip":
     "A value of 1 is equivalent to the curvature of Earth in real life.",
   "distanthorizons.config.client.advanced.graphics.advancedGraphics.lodBias":
-    "LOD Bias §6(Effects vanilla terrain)§r",
+    "LOD Bias §6(Affects vanilla terrain)§r",
   "distanthorizons.config.client.advanced.graphics.advancedGraphics.lodBias.@tooltip":
-    "Sets vanilla's lod bias value\nPlease press F3+T to reload the texture packs and apply this effect",
+    "Sets vanilla's lod bias value\nPlease press F3+T to reload the texture packs and apply this affect.",
+  "distanthorizons.config.client.advanced.graphics.advancedGraphics.lodShading":
+    "LOD Shading",
+  "distanthorizons.config.client.advanced.graphics.advancedGraphics.lodShading.@tooltip":
+    "Defines how LODs should be shaded. \nCan be used to improve shader compatibility.",
   
   
   "distanthorizons.config.client.advanced.worldGenerator":
@@ -275,10 +279,14 @@
     "Distance Generator Mode",
   "distanthorizons.config.client.advanced.worldGenerator.distantGeneratorMode.@tooltip":
     "How complicated the generation should be when generating LODs outside the vanilla render distance.\n\n§6§6Fastest:§r Biome only\n§6Best Quality:§r Features (suggested)",
-  "distanthorizons.config.client.advanced.worldGenerator.lightingEngine":
+  "distanthorizons.config.client.advanced.worldGenerator.worldGenLightingEngine":
     "Lighting Engine",
-  "distanthorizons.config.client.advanced.worldGenerator.lightingEngine.@tooltip":
+  "distanthorizons.config.client.advanced.worldGenerator.worldGenLightingEngine.@tooltip":
     "§6Minecraft:§r use Minecraft's lighting engine, gives accurate lighting.\n§6Distant Horizons:§r estimates lighting, shadows won't be as smooth, but is more stable.\n\nIf the LODs appear black, set this to §6Distant Horizons§r.",
+  "distanthorizons.config.client.advanced.worldGenerator.worldGenerationTimeoutLengthInSeconds":
+    "Timeout Length In Seconds",
+  "distanthorizons.config.client.advanced.worldGenerator.worldGenerationTimeoutLengthInSeconds.@tooltip":
+    "How long should a world generator thread run for before timing out? \nNote: If you are experiencing timeout errors it is better to lower your CPU usage first \nvia the thread config before changing this value.",
   "distanthorizons.config.client.advanced.worldGenerator.generationPriority":
     "Generation Priority",
   "distanthorizons.config.client.advanced.worldGenerator.generationPriority.@tooltip":
@@ -296,6 +304,14 @@
     "Multiverse Required Similarity %",
   "distanthorizons.config.client.advanced.multiplayer.multiverseSimilarityRequiredPercent.@tooltip":
     "When matching worlds of the same dimension type the\ntested chunk(s) must be at least this percent the same\nin order to be considered the same world.\n\nNote: If you use portals to enter a dimension at two\ndifferent locations this system may think it is two different worlds.\n\n§61.0:§r the chunks must be identical.\n§60.5:§r the chunks must be half the same.\n§60.0:§r disables multi-dimension support\n     only one world will be used per dimension.",
+  "distanthorizons.config.client.advanced.multiplayer.enableMultiverseNetworking":
+    "Networked Multiverse Support",
+  "distanthorizons.config.client.advanced.multiplayer.enableMultiverseNetworking.@tooltip":
+    "If true Distant Horizons will attempt to communicate with the connected \nserver in order to improve multiverse support.",
+  "distanthorizons.config.client.advanced.multiplayer.enableServerNetworking":
+  "§4Unimplemented, Dev Use Only§r - Server Support",
+  "distanthorizons.config.client.advanced.multiplayer.enableServerNetworking.@tooltip":
+  "§6Attention:§r this is only for developers and hasn't been implemented. \n\nIf true Distant Horizons will attempt to communicate with the connected \nserver in order to load LODs outside your vanilla render distance. \n\nNote: This requires DH to be installed on the server in order to function.",
   
   
   
@@ -710,5 +726,13 @@
   "distanthorizons.config.enum.EBufferRebuildTimes.NORMAL":
     "Normal",
   "distanthorizons.config.enum.EBufferRebuildTimes.RARE":
-    "Rare"
+    "Rare",
+    
+  "distanthorizons.config.enum.ELodShading.MINECRAFT":
+    "Minecraft",
+  "distanthorizons.config.enum.ELodShading.OLD_LIGHTING":
+    "Old Lighting",
+  "distanthorizons.config.enum.ELodShading.NONE":
+    "None"
+  
 }

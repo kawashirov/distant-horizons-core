@@ -583,6 +583,20 @@ public class Config
 									+ "If set to 0 the mod wont overwrite vanilla's default (which so happens to also be 0)")
 							.build();
 					
+					public static ConfigEntry<ELodShading> lodShading = new ConfigEntry.Builder<ELodShading>()
+							.set(ELodShading.MINECRAFT)
+							.comment(""
+									+ "How should LODs be shaded? \n"
+									+ "\n"
+									+ ELodShading.MINECRAFT + ": Uses the same side shading as vanilla Minecraft blocks. \n"
+									+ ELodShading.OLD_LIGHTING + ": Simulates Minecraft's block shading for LODs. \n"
+									+ "              Can be used to force LOD shading when using some shaders. \n"
+									+ ELodShading.NONE + ": All LOD sides will be rendered with the same brightness. \n"
+									+ "")
+							.setPerformance(EConfigEntryPerformance.NONE)
+							.addListener(RenderCacheConfigEventHandler.INSTANCE)
+							.build();
+					
 				}
 				
 			}
@@ -641,17 +655,26 @@ public class Config
 							*/
 						.build();
 				
-				public static ConfigEntry<ELightGenerationMode> lightingEngine = new ConfigEntry.Builder<ELightGenerationMode>()
-						.set(ELightGenerationMode.MINECRAFT)
+				public static ConfigEntry<ELightGenerationMode> worldGenLightingEngine = new ConfigEntry.Builder<ELightGenerationMode>()
+						.set(ELightGenerationMode.DISTANT_HORIZONS)
 						.comment(""
-								+ " How should distant generation chunk lighting be generated? \n"
+								+ " How should Distant Horizons world generation chunk lighting be handled? \n"
 								+ "\n"
 								+ ELightGenerationMode.MINECRAFT + ": Use Minecraft's lighting engine to generate chunk lighting. \n"
 								+ "    Generally higher quality; but may crash MC's lighting engine if there is an issue. \n"
-								+ ELightGenerationMode.DISTANT_HORIZONS + ": Uses Distant Horizons' lighting engine to estimate chunk lighting. \n"
-								+ "    Generally lower quality; but more stable for large numbers of world generator threads. \n"
+								+ ELightGenerationMode.DISTANT_HORIZONS + ": Uses Distant Horizons' lighting engine to generate chunk lighting. \n"
+								+ "    May not exactly match MC's, but is more stable for large numbers of world generator threads. \n"
 								+ "\n"
 								+ "This will effect generation speed, but not rendering performance.")
+						.build();
+				
+				public static ConfigEntry<Integer> worldGenerationTimeoutLengthInSeconds = new ConfigEntry.Builder<Integer>()
+						.setMinDefaultMax(5, 60, 60*10/*10 minutes*/)
+						.comment(""
+								+ "How long should a world generator thread run for before timing out? \n"
+								+ "Note: If you are experiencing timeout errors it is better to lower your CPU usage first \n"
+								+ "via the thread config before changing this value. \n"
+								+ "")
 						.build();
 				
 				// deprecated and not implemented, can be made public if we ever re-implement it
@@ -721,6 +744,26 @@ public class Config
 								+ "and tweak the sensitivity from there."
 								+ "Lower values mean the matching is less strict.\n"
 								+ "Higher values mean the matching is more strict.\n"
+								+ "")
+						.build();
+				
+				public static ConfigEntry<Boolean> enableMultiverseNetworking = new ConfigEntry.Builder<Boolean>()
+						.set(true)
+						.comment(""
+								+ "If true Distant Horizons will attempt to communicate with the connected \n"
+								+ "server in order to improve multiverse support. \n"
+								+ "")
+						.build();
+				
+				public static ConfigEntry<Boolean> enableServerNetworking = new ConfigEntry.Builder<Boolean>()
+						.set(false)
+						.comment(""
+								+ "Attention: this is only for developers and hasn't been implemented.\n"
+								+ "\n"
+								+ "If true Distant Horizons will attempt to communicate with the connected \n"
+								+ "server in order to load LODs outside your vanilla render distance. \n"
+								+ "\n"
+								+ "Note: This requires DH to be installed on the server in order to function. \n"
 								+ "")
 						.build();
 				
@@ -801,7 +844,7 @@ public class Config
 				
 				public static final ConfigEntry<Integer> numberOfDataTransformerThreads = new ConfigEntry.Builder<Integer>()
 						.setMinDefaultMax(1,
-								ThreadPresetConfigEventHandler.getDataConverterDefaultThreadCount(),
+								ThreadPresetConfigEventHandler.getDataTransformerDefaultThreadCount(),
 								Runtime.getRuntime().availableProcessors())
 						.comment(""
 								+ "How many threads should be used when converting full ID data to render data? \n"
@@ -816,7 +859,7 @@ public class Config
 								+ THREAD_NOTE)
 						.build();
 				public static final ConfigEntry<Double> runTimeRatioForDataTransformerThreads = new ConfigEntry.Builder<Double>()
-						.setMinDefaultMax(0.01, ThreadPresetConfigEventHandler.getDataConverterDefaultRunTimeRatio(), 1.0)
+						.setMinDefaultMax(0.01, ThreadPresetConfigEventHandler.getDataTransformerDefaultRunTimeRatio(), 1.0)
 						.comment(THREAD_RUN_TIME_RATIO_NOTE)
 						.build();
 				
@@ -1091,10 +1134,6 @@ public class Config
 					
 					public static ConfigEntry<List<String>> listTest = new ConfigEntry.Builder<List<String>>()
 							.set(new ArrayList<String>(Arrays.asList("option 1", "option 2", "option 3")))
-							.build();
-					
-					public static ConfigEntry<Map<String, String>> mapTest = new ConfigEntry.Builder<Map<String, String>>()
-							.set(new HashMap<String, String>())
 							.build();
 					
 					public static ConfigCategory categoryTest = new ConfigCategory.Builder().set(CategoryTest.class).build();

@@ -31,7 +31,7 @@ public class NetworkClient extends NetworkEventSource implements AutoCloseable
     }
 	
     private static final int FAILURE_RECONNECT_DELAY_SEC = 5;
-    private static final int FAILURE_RECONNECT_ATTEMPTS = 5;
+    private static final int FAILURE_RECONNECT_ATTEMPTS = 3;
 	
     // TODO move to payload of some sort
     private final InetSocketAddress address;
@@ -85,6 +85,8 @@ public class NetworkClient extends NetworkEventSource implements AutoCloseable
         LOGGER.info("Connecting to server: "+this.address);
 		this.connectionState = EConnectionState.OPEN;
 
+		// FIXME sometimes this causes the MC connection to crash 
+		//  this might happen if the URL can't be converted to a IP (IE UnknownHostException)
         ChannelFuture connectFuture = this.clientBootstrap.connect(this.address);
         connectFuture.addListener((ChannelFuture channelFuture) -> 
 		{
