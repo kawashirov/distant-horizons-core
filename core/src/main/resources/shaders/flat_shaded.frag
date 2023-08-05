@@ -104,9 +104,9 @@ void main()
         vec3 vertexNormal = normalize(cross(dFdx(vPos.xyz), dFdy(vPos.xyz)));
         // This bit of code is required to fix the vertex position problem cus of floats in the verted world position varuable
         vec3 fixedVPos = vec3(
-        vPos.x - vertexNormal.x * 0.001,
-        vPos.y - vertexNormal.y * 0.001,
-        vPos.z - vertexNormal.z * 0.001
+            vPos.x - vertexNormal.x * 0.001,
+            vPos.y - vertexNormal.y * 0.001,
+            vPos.z - vertexNormal.z * 0.001
         );
 
 
@@ -116,9 +116,9 @@ void main()
 
         // Random value for each position
         float randomValue = rand(vec3(
-        quantize(fixedVPos.x, noiseSteps),
-        quantize(fixedVPos.y, noiseSteps),
-        quantize(fixedVPos.z, noiseSteps)
+            quantize(fixedVPos.x, noiseSteps),
+            quantize(fixedVPos.y, noiseSteps),
+            quantize(fixedVPos.z, noiseSteps)
         ))
         * 2. * noiseAmplification - noiseAmplification;
 
@@ -129,22 +129,22 @@ void main()
 
         // Clamps it and turns it back into a vec4
         if (noiseDropoff == 0)
-        fragColor = vec4(
-        clamp(newCol.r, 0., 1.),
-        clamp(newCol.g, 0., 1.),
-        clamp(newCol.b, 0., 1.),
-        fragColor.w
-        );
+            fragColor = vec4(
+                clamp(newCol.r, 0., 1.),
+                clamp(newCol.g, 0., 1.),
+                clamp(newCol.b, 0., 1.),
+                fragColor.w
+            );
         else
-        fragColor = mix(
-        vec4(
-        clamp(newCol.r, 0., 1.),
-        clamp(newCol.g, 0., 1.),
-        clamp(newCol.b, 0., 1.),
-        fragColor.w
-        ), fragColor,
-        clamp(length(vertexWorldPos) / noiseDropoff, 0., 1.) // The further away it gets, the less noise gets applied
-        );
+            fragColor = mix(
+                vec4(
+                    clamp(newCol.r, 0., 1.),
+                    clamp(newCol.g, 0., 1.),
+                    clamp(newCol.b, 0., 1.),
+                    fragColor.w
+                ), fragColor,
+                    clamp(length(vertexWorldPos) / noiseDropoff, 0., 1.) // The further away it gets, the less noise gets applied
+            );
 
         // For testing
         //        if (fragColor.r != 69420.) {
@@ -167,15 +167,15 @@ void main()
 
         float horizontalDist = length(vertexWorldPos.xz) * fogScale;
         float heightDist = calculateHeightFogDepth(
-        vertexWorldPos.y, vertexYPos) * fogVerticalScale;
+            vertexWorldPos.y, vertexYPos) * fogVerticalScale;
         float farDist = calculateFarFogDepth(horizontalDist,
-        length(vertexWorldPos.xyz) * fogScale, nearFogStart);
+            length(vertexWorldPos.xyz) * fogScale, nearFogStart);
 
         float nearFogThickness = getNearFogThickness(horizontalDist);
         float farFogThickness = getFarFogThickness(farDist);
         float heightFogThickness = getHeightFogThickness(heightDist);
         float mixedFogThickness = clamp(mixFogThickness(
-        nearFogThickness, farFogThickness, heightFogThickness), 0.0, 1.0);
+            nearFogThickness, farFogThickness, heightFogThickness), 0.0, 1.0);
 
         fragColor = mix(fragColor, vec4(fogColor.rgb, 1.0), mixedFogThickness);
     }
