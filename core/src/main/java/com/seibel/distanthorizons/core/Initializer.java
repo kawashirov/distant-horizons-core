@@ -9,7 +9,7 @@ import com.seibel.distanthorizons.core.dataObjects.fullData.loader.HighDetailInc
 import com.seibel.distanthorizons.api.DhApi;
 import com.seibel.distanthorizons.core.dataObjects.fullData.loader.LowDetailIncompleteFullDataSourceLoader;
 import com.seibel.distanthorizons.core.render.DhApiRenderProxy;
-import io.netty.buffer.ByteBuf;
+//import io.netty.buffer.ByteBuf;
 import net.jpountz.lz4.LZ4Compressor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,7 +27,7 @@ public class Initializer
 			// if any library isn't present in the jar its class
 			// will throw an error (not an exception)
 			Class<?> compressor = LZ4Compressor.class;
-			Class<?> networking = ByteBuf.class;
+			//Class<?> networking = ByteBuf.class;
 			Class<?> toml = com.electronwill.nightconfig.core.Config.class;
 			Class<?> flatlaf = com.formdev.flatlaf.FlatDarculaLaf.class;
 		}
