@@ -237,7 +237,7 @@
   "distanthorizons.config.client.advanced.graphics.advancedGraphics.seamlessOverdraw":
     "(Experimental) Seamless Overdraw",
   "distanthorizons.config.client.advanced.graphics.advancedGraphics.seamlessOverdraw.@tooltip":
-    "Buggy experimental option that will attempt to match up \nDistant Horizons' and Minecraft's near/far clip planes, \nreducing overdraw.",
+    "Buggy experimental option that will attempt to match up \nDistant Horizons' and Minecraft's near/far clip planes, \nreducing overdraw. \n\nNote: only works with Fabric.",
   "distanthorizons.config.client.advanced.graphics.advancedGraphics.brightnessMultiplier":
     "Brightness Multiplier",
   "distanthorizons.config.client.advanced.graphics.advancedGraphics.brightnessMultiplier.@tooltip":

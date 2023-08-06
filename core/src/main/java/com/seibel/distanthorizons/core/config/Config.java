@@ -511,9 +511,9 @@ public class Config
 									+ "Distant Horizons' and Minecraft's near/far clip planes, \n"
 									+ "reducing overdraw. \n"
 									+ "\n"
-									+ "Only tested in Minecraft 1.18.2.\n"
+									+ "Only functional on Fabric.\n"
 									+ "Works best with an overdraw prevention setting of "+EOverdrawPrevention.MEDIUM+" or higher \n"
-									+ " nd cave culling disabled. \n"
+									+ " and cave culling is disabled. \n"
 									+ "")
 							.setPerformance(EConfigEntryPerformance.NONE)
 							.build();
@@ -1129,6 +1129,7 @@ public class Config
 							.set(42069L)
 							.build();
 					
+					// doesn't show up in the UI right now
 					public static ConfigEntry<Float> floatTest = new ConfigEntry.Builder<Float>()
 							.set(0.42069f)
 							.build();
