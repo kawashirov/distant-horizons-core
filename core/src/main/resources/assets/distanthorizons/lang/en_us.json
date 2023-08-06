@@ -460,6 +460,8 @@
     "Float test",
   "distanthorizons.config.client.advanced.debugging.exampleConfigScreen.stringTest":
     "String test",
+  "distanthorizons.config.client.advanced.debugging.exampleConfigScreen.uiButtonTest":
+    "UI Button test",
   "distanthorizons.config.client.advanced.debugging.exampleConfigScreen.listTest":
     "List (ArrayList) test",
   "distanthorizons.config.client.advanced.debugging.exampleConfigScreen.mapTest":

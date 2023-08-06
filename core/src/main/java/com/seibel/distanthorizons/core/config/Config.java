@@ -30,16 +30,14 @@ import com.seibel.distanthorizons.core.config.eventHandlers.RenderCacheConfigEve
 import com.seibel.distanthorizons.core.config.eventHandlers.UnsafeValuesConfigListener;
 import com.seibel.distanthorizons.core.config.eventHandlers.presets.ThreadPresetConfigEventHandler;
 import com.seibel.distanthorizons.core.config.eventHandlers.presets.RenderQualityPresetConfigEventHandler;
-import com.seibel.distanthorizons.core.config.types.ConfigCategory;
-import com.seibel.distanthorizons.core.config.types.ConfigEntry;
-import com.seibel.distanthorizons.core.config.types.ConfigLinkedEntry;
-import com.seibel.distanthorizons.core.config.types.ConfigUIComment;
+import com.seibel.distanthorizons.core.config.types.*;
 import com.seibel.distanthorizons.core.config.types.enums.EConfigEntryAppearance;
 import com.seibel.distanthorizons.core.config.types.enums.EConfigEntryPerformance;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.coreapi.ModInfo;
 import org.apache.logging.log4j.Logger;
 
+import javax.swing.*;
 import java.util.*;
 
 
@@ -1142,6 +1140,11 @@ public class Config
 					public static ConfigEntry<List<String>> listTest = new ConfigEntry.Builder<List<String>>()
 							.set(new ArrayList<String>(Arrays.asList("option 1", "option 2", "option 3")))
 							.build();
+
+					public static ConfigUIButton uiButtonTest = new ConfigUIButton(() -> {
+						System.setProperty("java.awt.headless", "false"); // Required to make it work
+                        JOptionPane.showMessageDialog(null, "Button pressed!", "UITester dialog", JOptionPane.INFORMATION_MESSAGE);
+                    });
 					
 					public static ConfigCategory categoryTest = new ConfigCategory.Builder().set(CategoryTest.class).build();
 					
