@@ -379,7 +379,11 @@
   "distanthorizons.config.client.advanced.debugging.debugWireframeRendering":
     "Enable Debug Wireframe Rendering",
   "distanthorizons.config.client.advanced.debugging.debugWireframeRendering.@tooltip":
-    "If enabled, various wireframes for debugging internal functions will be drawn.", 
+    "If enabled, various wireframes for debugging internal functions will be drawn.",
+  "distanthorizons.config.client.advanced.debugging.enableWhiteWorld":
+    "Enable white world",
+  "distanthorizons.config.client.advanced.debugging.enableWhiteWorld.@tooltip":
+    "If enabled, vertex color will not be passed.\nUseful for debugging shaders.",
   "distanthorizons.config.client.advanced.debugging.allowUnsafeValues":
     "Allow Unsafe UI Values",
   "distanthorizons.config.client.advanced.debugging.allowUnsafeValues.@tooltip":

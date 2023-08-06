@@ -1081,6 +1081,13 @@ public class Config
 								+ "   will render their debug wireframes.")
 						.build();
 
+				public static ConfigEntry<Boolean> enableWhiteWorld = new ConfigEntry.Builder<Boolean>()
+						.set(false)
+						.comment(""
+								+ "Stops vertex colors from being passed. \n"
+								+ "Useful for debugging shaders")
+						.build();
+
 				// Note: This will reset on game restart, and should have a warning on the tooltip
 				public static ConfigEntry<Boolean> allowUnsafeValues = new ConfigEntry.Builder<Boolean>()
 						.set(false)

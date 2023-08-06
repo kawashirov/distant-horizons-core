@@ -21,6 +21,7 @@ package com.seibel.distanthorizons.core.render.renderer;
 
 import java.awt.Color;
 
+import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.render.glObject.GLProxy;
 import com.seibel.distanthorizons.core.render.glObject.shader.Shader;
@@ -68,6 +69,9 @@ public class LodRenderProgram extends ShaderProgram
 	public final int noiseIntensityUniform;
 	public final int noiseDropoffUniform;
 
+	// Debug Uniform
+	public final int whiteWorldUniform;
+
 	public final LodFogConfig fogConfig;
 
 	// This will bind  VertexAttribute
@@ -100,6 +104,9 @@ public class LodRenderProgram extends ShaderProgram
 		noiseStepsUniform = getUniformLocation("noiseSteps");
 		noiseIntensityUniform = getUniformLocation("noiseIntensity");
 		noiseDropoffUniform = getUniformLocation("noiseDropoff");
+
+		// Debug Uniform
+		whiteWorldUniform = getUniformLocation("whiteWorld");
 
 
 		// TODO: Add better use of the LODFormat thing
@@ -180,6 +187,9 @@ public class LodRenderProgram extends ShaderProgram
 		// Fog
 		setUniform(fullFogModeUniform, fullFogMode ? 1 : 0);
 		setUniform(fogColorUniform, fogColor);
+
+		// Debug
+		setUniform(whiteWorldUniform, Config.Client.Advanced.Debugging.enableWhiteWorld.get());
 
 		float nearFogLen = vanillaDrawDistance * 0.2f / lodDrawDistance;
 		float nearFogStart = vanillaDrawDistance * (VERSION_CONSTANTS.isVanillaRenderedChunkSquare() ? (float)Math.sqrt(2.) : 1.f) / lodDrawDistance;
