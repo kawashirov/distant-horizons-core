@@ -46,7 +46,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftCli
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
-import io.netty.buffer.ByteBuf;
+//import io.netty.buffer.ByteBuf;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
@@ -329,123 +329,123 @@ public class ClientApi
 	// networking //
 	//============//
 	
-	/** @param byteBuf is Netty's {@link ByteBuffer} wrapper. */
-	public void serverMessageReceived(ByteBuf byteBuf)
-	{
-		if (!Config.Client.Advanced.Multiplayer.enableMultiverseNetworking.get())
-		{
-			// multiverse networking disabled, ignore anything sent from the server
-			return;
-		}
-		
-		
-		
-		// either value can be set to true to debug the received byte stream
-		boolean stopAndDisplayInputAsByteArray = false;
-		boolean stopAndDisplayInputAsString = false;
-		if (stopAndDisplayInputAsByteArray || stopAndDisplayInputAsString)
-		{
-			String messageString = "";
-			if (stopAndDisplayInputAsByteArray)
-			{
-				int byteCount = byteBuf.readableBytes();
-				byte[] arr = new byte[byteCount];
-				StringBuilder stringBuilder = new StringBuilder("Server message received: [");
-				for (int i = 0; i < byteCount; i++)
-				{
-					arr[i] = byteBuf.readByte();
-					stringBuilder.append(arr[i]);
-				}
-				stringBuilder.append("]");
-				
-				messageString = stringBuilder.toString();
-			}
-			else if (stopAndDisplayInputAsString)
-			{
-				messageString = byteBuf.toString(StandardCharsets.UTF_8);
-			}
-			
-			// this is logged as an error so it is easier to see in an Intellij log
-			LOGGER.error(messageString);
-			return;
-		}
-		
-		
-		
-		
-		// It is important to ensure malicious server input is ignored.
-		if (this.serverNetworkingIsMalformed)
-		{
-			return;
-		}
-		
-		// check that the incoming message is within the expected size
-		short commandLength = byteBuf.readShort();
-		if (commandLength < 1 || commandLength > 32)
-		{
-			LOGGER.error("Server command length ["+commandLength+"] outside the expected range of 1 to 32 (inclusive).");
-			ClientApi.INSTANCE.serverNetworkingIsMalformed = true;
-			return;
-		}
-		
-		// parse the command
-		String eventType;
-		try
-		{
-			eventType = byteBuf.readCharSequence(commandLength, StandardCharsets.UTF_8).toString();
-		}
-		catch (Exception e)
-		{
-			LOGGER.error("Server sent un-parsable command. Error: "+e.getMessage());
-			return;
-		}
-		
-		switch (eventType)
-		{
-			case "ServerCommsEnabled":
-				LOGGER.info("Server supports DH multiverse protocol.");
-				ClientApi.INSTANCE.isServerCommunicationEnabled = true;
-				KEYED_CLIENT_LEVEL_MANAGER.setUseOverrideWrapper(true);
-				MC.executeOnRenderThread(() -> 
-				{
-					// Unload the current world, since it may be wrong.
-					// A followup WorldChanged event should be received from the server soon after this.
-					LOGGER.info("Unloading current client level so the server can define the correct multiverse level.");
-					this.clientLevelUnloadEvent((IClientLevelWrapper) MC.getWrappedClientWorld());
-				});
-				break;
-			
-			case "LevelChanged":
-				short levelKeyLength = byteBuf.readShort();
-				if (levelKeyLength < 1 || levelKeyLength > 128) // TODO 128 should be put into a constant somewhere
-				{
-					LOGGER.error("Server [LevelChanged] command length ["+commandLength+"] outside the expected range of 1 to 128 (inclusive).");
-					this.serverNetworkingIsMalformed = true;
-					return;
-				}
-				
-				String levelKey = byteBuf.readCharSequence(levelKeyLength, StandardCharsets.UTF_8).toString();
-				if (!levelKey.matches("[a-zA-Z0-9_]+"))
-				{
-					LOGGER.error("Server sent invalid world key name, and is being ignored.");
-					this.isServerCommunicationEnabled = false;
-					this.serverNetworkingIsMalformed = true;
-					return;
-				}
-				
-				LOGGER.info("Server level change event received, changing the level to ["+levelKey+"].");
-				MC.executeOnRenderThread(() -> {
-					if (MC.getWrappedClientWorld() != null)
-					{
-						this.clientLevelUnloadEvent((IClientLevelWrapper) MC.getWrappedClientWorld());
-					}
-					IServerKeyedClientLevel clientLevel = KEYED_CLIENT_LEVEL_MANAGER.getServerKeyedLevel(MC.getWrappedClientWorld(), levelKey);
-					KEYED_CLIENT_LEVEL_MANAGER.setServerKeyedLevel(clientLevel);
-					this.multiverseClientLevelLoadEvent(clientLevel);
-				});
-				break;
-		}
-	}
+//	/** @param byteBuf is Netty's {@link ByteBuffer} wrapper. */
+//	public void serverMessageReceived(ByteBuf byteBuf)
+//	{
+//		if (!Config.Client.Advanced.Multiplayer.enableMultiverseNetworking.get())
+//		{
+//			// multiverse networking disabled, ignore anything sent from the server
+//			return;
+//		}
+//		
+//		
+//		
+//		// either value can be set to true to debug the received byte stream
+//		boolean stopAndDisplayInputAsByteArray = false;
+//		boolean stopAndDisplayInputAsString = false;
+//		if (stopAndDisplayInputAsByteArray || stopAndDisplayInputAsString)
+//		{
+//			String messageString = "";
+//			if (stopAndDisplayInputAsByteArray)
+//			{
+//				int byteCount = byteBuf.readableBytes();
+//				byte[] arr = new byte[byteCount];
+//				StringBuilder stringBuilder = new StringBuilder("Server message received: [");
+//				for (int i = 0; i < byteCount; i++)
+//				{
+//					arr[i] = byteBuf.readByte();
+//					stringBuilder.append(arr[i]);
+//				}
+//				stringBuilder.append("]");
+//				
+//				messageString = stringBuilder.toString();
+//			}
+//			else if (stopAndDisplayInputAsString)
+//			{
+//				messageString = byteBuf.toString(StandardCharsets.UTF_8);
+//			}
+//			
+//			// this is logged as an error so it is easier to see in an Intellij log
+//			LOGGER.error(messageString);
+//			return;
+//		}
+//		
+//		
+//		
+//		
+//		// It is important to ensure malicious server input is ignored.
+//		if (this.serverNetworkingIsMalformed)
+//		{
+//			return;
+//		}
+//		
+//		// check that the incoming message is within the expected size
+//		short commandLength = byteBuf.readShort();
+//		if (commandLength < 1 || commandLength > 32)
+//		{
+//			LOGGER.error("Server command length ["+commandLength+"] outside the expected range of 1 to 32 (inclusive).");
+//			ClientApi.INSTANCE.serverNetworkingIsMalformed = true;
+//			return;
+//		}
+//		
+//		// parse the command
+//		String eventType;
+//		try
+//		{
+//			eventType = byteBuf.readCharSequence(commandLength, StandardCharsets.UTF_8).toString();
+//		}
+//		catch (Exception e)
+//		{
+//			LOGGER.error("Server sent un-parsable command. Error: "+e.getMessage());
+//			return;
+//		}
+//		
+//		switch (eventType)
+//		{
+//			case "ServerCommsEnabled":
+//				LOGGER.info("Server supports DH multiverse protocol.");
+//				ClientApi.INSTANCE.isServerCommunicationEnabled = true;
+//				KEYED_CLIENT_LEVEL_MANAGER.setUseOverrideWrapper(true);
+//				MC.executeOnRenderThread(() -> 
+//				{
+//					// Unload the current world, since it may be wrong.
+//					// A followup WorldChanged event should be received from the server soon after this.
+//					LOGGER.info("Unloading current client level so the server can define the correct multiverse level.");
+//					this.clientLevelUnloadEvent((IClientLevelWrapper) MC.getWrappedClientWorld());
+//				});
+//				break;
+//			
+//			case "LevelChanged":
+//				short levelKeyLength = byteBuf.readShort();
+//				if (levelKeyLength < 1 || levelKeyLength > 128) // TODO 128 should be put into a constant somewhere
+//				{
+//					LOGGER.error("Server [LevelChanged] command length ["+commandLength+"] outside the expected range of 1 to 128 (inclusive).");
+//					this.serverNetworkingIsMalformed = true;
+//					return;
+//				}
+//				
+//				String levelKey = byteBuf.readCharSequence(levelKeyLength, StandardCharsets.UTF_8).toString();
+//				if (!levelKey.matches("[a-zA-Z0-9_]+"))
+//				{
+//					LOGGER.error("Server sent invalid world key name, and is being ignored.");
+//					this.isServerCommunicationEnabled = false;
+//					this.serverNetworkingIsMalformed = true;
+//					return;
+//				}
+//				
+//				LOGGER.info("Server level change event received, changing the level to ["+levelKey+"].");
+//				MC.executeOnRenderThread(() -> {
+//					if (MC.getWrappedClientWorld() != null)
+//					{
+//						this.clientLevelUnloadEvent((IClientLevelWrapper) MC.getWrappedClientWorld());
+//					}
+//					IServerKeyedClientLevel clientLevel = KEYED_CLIENT_LEVEL_MANAGER.getServerKeyedLevel(MC.getWrappedClientWorld(), levelKey);
+//					KEYED_CLIENT_LEVEL_MANAGER.setServerKeyedLevel(clientLevel);
+//					this.multiverseClientLevelLoadEvent(clientLevel);
+//				});
+//				break;
+//		}
+//	}
 	
 	
 	

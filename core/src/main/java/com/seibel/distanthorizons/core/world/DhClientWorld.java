@@ -28,7 +28,7 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
     private final ConcurrentHashMap<IClientLevelWrapper, DhClientLevel> levels;
     public final ClientOnlySaveStructure saveStructure;
 
-    private final NetworkClient networkClient;
+//    private final NetworkClient networkClient;
 
 	// TODO why does this executor have 2 threads?
     public ExecutorService dhTickerThread = ThreadUtil.makeSingleThreadPool("DH Client World Ticker Thread", 2);
@@ -50,12 +50,12 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 		if (Config.Client.Advanced.Multiplayer.enableServerNetworking.get())
 		{
 			// TODO server specific configs
-			this.networkClient = new NetworkClient(MC_CLIENT.getCurrentServerIp(), 25049);
+//			this.networkClient = new NetworkClient(MC_CLIENT.getCurrentServerIp(), 25049);
 			this.registerNetworkHandlers();
 		}
 		else
 		{
-			this.networkClient = null;
+//			this.networkClient = null;
 		}
 
 		LOGGER.info("Started DhWorld of type "+this.environment);
@@ -63,26 +63,26 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 
     private void registerNetworkHandlers()
     {
-        this.networkClient.registerHandler(HelloMessage.class, (msg, ctx) ->
-        {
-            ctx.writeAndFlush(new PlayerUUIDMessage(MC_CLIENT.getPlayerUUID()));
-        });
-
-        // TODO Proper payload handling
-	    this.networkClient.registerAckHandler(PlayerUUIDMessage.class, ctx ->
-        {
-            ctx.writeAndFlush(new RemotePlayerConfigMessage(new RemotePlayer.Payload()));
-        });
-	    this.networkClient.registerHandler(RemotePlayerConfigMessage.class, (msg, ctx) ->
-        {
-
-        });
-	    
-	    this.networkClient.registerAckHandler(RemotePlayerConfigMessage.class, ctx ->
-        {
-            // TODO Actually request chunks
-            ctx.writeAndFlush(new RequestChunksMessage());
-        });
+//        this.networkClient.registerHandler(HelloMessage.class, (msg, ctx) ->
+//        {
+//            ctx.writeAndFlush(new PlayerUUIDMessage(MC_CLIENT.getPlayerUUID()));
+//        });
+//
+//        // TODO Proper payload handling
+//	    this.networkClient.registerAckHandler(PlayerUUIDMessage.class, ctx ->
+//        {
+//            ctx.writeAndFlush(new RemotePlayerConfigMessage(new RemotePlayer.Payload()));
+//        });
+//	    this.networkClient.registerHandler(RemotePlayerConfigMessage.class, (msg, ctx) ->
+//        {
+//
+//        });
+//	    
+//	    this.networkClient.registerAckHandler(RemotePlayerConfigMessage.class, ctx ->
+//        {
+//            // TODO Actually request chunks
+//            ctx.writeAndFlush(new RequestChunksMessage());
+//        });
     }
 	
 	
@@ -157,10 +157,10 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
     @Override
     public void close()
 	{
-		if (this.networkClient != null)
-		{
-			this.networkClient.close();
-		}
+//		if (this.networkClient != null)
+//		{
+////			this.networkClient.close();
+//		}
         
 
 		this.saveAndFlush();
