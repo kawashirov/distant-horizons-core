@@ -224,7 +224,7 @@
   "distanthorizons.config.client.advanced.graphics.noiseTextureSettings.noiseDropoff":
     "Noise Dropoff",
   "distanthorizons.config.client.advanced.graphics.noiseTextureSettings.noiseDropoff.@tooltip":
-    "How far should the noise texture render before it fades away? \n\n0.0 - the noise texture will render the entire LOD render distance. \n3.0 - the noise texture will fade away at 1/3 of the LOD render distance. ",
+    "Defines how far should the noise texture render before it fades away. (in blocks). \nSet to 0 to disable noise from fading away.",
     
     
   "distanthorizons.config.client.advanced.graphics.advancedGraphics":

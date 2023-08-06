@@ -468,14 +468,11 @@ public class Config
 									+ "How intense should the noise should be?")
 							.build();
 					
-					public static ConfigEntry<Double> noiseDropoff = new ConfigEntry.Builder<Double>()    // TODO: Make this a float (the ClassicConfigGUI doesn't support floats)
-							.setMinDefaultMax(0d, 3d, null)
+					public static ConfigEntry<Integer> noiseDropoff = new ConfigEntry.Builder<Integer>()    // TODO: Make this a float (the ClassicConfigGUI doesn't support floats)
+							.setMinDefaultMax(0, 1024, null)
 							.comment(""
-									+ "How far should the noise texture render before it fades away? \n"
-									+ "\n"
-									+ "0.0 - the noise texture will render the entire LOD render distance. \n"
-									+ "3.0 - the noise texture will fade away at 1/3 of the LOD render distance. \n"
-									+ "")
+									+ "Defines how far should the noise texture render before it fades away. (in blocks) \n"
+									+ "Set to 0 to disable noise from fading away")
 							.build();
 				}
 				
