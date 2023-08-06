@@ -112,6 +112,8 @@ public class ConfigFileHandling {
     @SuppressWarnings("unchecked")
     public void saveEntry(ConfigEntry<?> entry, CommentedFileConfig workConfig) {
         if (!entry.getAppearance().showInFile) return;
+        if (entry.getTrueValue() == null)
+            throw new IllegalArgumentException("Entry ["+ entry.getNameWCategory() +"] is null, this may be a problem with ["+ configBase.modName +"]. Please contact the authors");
 
         if (ConfigTypeConverters.convertObjects.containsKey(entry.getType())) {
             workConfig.set(entry.getNameWCategory(), ConfigTypeConverters.convertToString(entry.getType(), entry.getTrueValue()));
