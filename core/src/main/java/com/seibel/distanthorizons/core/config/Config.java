@@ -1101,6 +1101,7 @@ public class Config
 				
 				/** This class is used to debug the different features of the config GUI */
 				// FIXME: WARNING: Some of the options in this class dont get show n in the default UI
+				// This will throw a warning when opened in the default ui to tell you about it not showing
 				public static class ExampleConfigScreen
 				{
 					// Defined in the lang, just a note about this screen
