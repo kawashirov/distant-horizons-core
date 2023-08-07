@@ -161,8 +161,6 @@ public class LodRenderer
 		drawSaveGLState.end("drawSaveGLState");
 
 		GLProxy glProxy = GLProxy.getInstance();
-		if (Config.Client.Advanced.Graphics.Fog.disableVanillaFog.get())
-			MC_RENDER.tryDisableVanillaFog();
 		
 		//===================//
 		// draw params setup //
