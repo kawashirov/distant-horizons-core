@@ -1100,6 +1100,7 @@ public class Config
 						.build();
 				
 				/** This class is used to debug the different features of the config GUI */
+				// FIXME: WARNING: Some of the options in this class dont get show n in the default UI
 				public static class ExampleConfigScreen
 				{
 					// Defined in the lang, just a note about this screen
@@ -1128,8 +1129,7 @@ public class Config
 					public static ConfigEntry<Long> longTest = new ConfigEntry.Builder<Long>()
 							.set(42069L)
 							.build();
-					
-					// doesn't show up in the UI right now
+
 					public static ConfigEntry<Float> floatTest = new ConfigEntry.Builder<Float>()
 							.set(0.42069f)
 							.build();
@@ -1140,6 +1140,10 @@ public class Config
 					
 					public static ConfigEntry<List<String>> listTest = new ConfigEntry.Builder<List<String>>()
 							.set(new ArrayList<String>(Arrays.asList("option 1", "option 2", "option 3")))
+							.build();
+
+					public static ConfigEntry<Map<String, String>> mapTest = new ConfigEntry.Builder<Map<String, String>>()
+							.set(new HashMap<String, String>())
 							.build();
 
 					public static ConfigUIButton uiButtonTest = new ConfigUIButton(() -> {
