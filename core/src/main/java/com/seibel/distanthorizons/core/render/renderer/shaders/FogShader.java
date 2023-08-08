@@ -16,7 +16,8 @@ import org.lwjgl.opengl.GL32;
 
 import java.awt.*;
 
-public class FogShader extends AbstractShaderRenderer {
+public class FogShader extends AbstractShaderRenderer
+{
     public static FogShader INSTANCE = new FogShader(LodFogConfig.generateFogConfig());
     private static final IVersionConstants VERSION_CONSTANTS = SingletonInjector.INSTANCE.get(IVersionConstants.class);
 
