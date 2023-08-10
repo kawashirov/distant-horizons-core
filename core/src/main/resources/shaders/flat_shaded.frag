@@ -97,7 +97,7 @@ vec3 HSV2RGB(vec3 c) {
 void main()
 {
     fragColor = vertexColor;
-
+    
 
     // TODO: Move into its own function instead of in an if statement
     if (noiseEnabled) {
@@ -161,9 +161,6 @@ void main()
     if (fullFogMode != 0) {
         fragColor = vec4(fogColor.rgb, 1.0);
     } else {
-        // TODO: add a white texture to support Optifine shaders
-        //vec4 textureColor = texture(texImage, textureCoord);
-        //fragColor = vertexColor * textureColor;
 
         float horizontalDist = length(vertexWorldPos.xz) * fogScale;
         float heightDist = calculateHeightFogDepth(

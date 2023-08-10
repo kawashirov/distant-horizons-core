@@ -11,7 +11,6 @@ import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IVersionConstants;
 import com.seibel.distanthorizons.coreapi.util.math.Mat4f;
-import com.seibel.distanthorizons.coreapi.util.math.Vec3f;
 import org.lwjgl.opengl.GL32;
 
 import java.awt.*;
@@ -25,7 +24,7 @@ public class FogShader extends AbstractShaderRenderer
 //    public final int modelOffsetUniform;
 //    public final int worldYOffsetUniform;
 
-    public final int gProjUniform;
+    public final int gModelViewProjectionUniform;
     public final int gDepthMapUniform;
 
     // Fog Uniforms
@@ -35,8 +34,11 @@ public class FogShader extends AbstractShaderRenderer
     public final int nearFogStartUniform;
     public final int nearFogLengthUniform;;
     public final int fullFogModeUniform;
-
-    public FogShader(LodFogConfig fogConfig) {
+	
+	
+	
+    public FogShader(LodFogConfig fogConfig) 
+    {
         // TODO & Note: This code is a bit jank, so try to make it better later (preferably not using something to process the shader)
         // This code is just a temp fix so that it looks fine for the time being
         // and even with the jank soloution, i cannot get it to work
@@ -45,11 +47,8 @@ public class FogShader extends AbstractShaderRenderer
                 () -> fogConfig.loadAndProcessFragShader("shaders/fog/fog.frag", false).toString(),
                 "fragColor", new String[] { "vPosition" }
         ));
-
-//        modelOffsetUniform = this.shader.getUniformLocation("modelOffset");
-//        worldYOffsetUniform = this.shader.tryGetUniformLocation("worldYOffset");
-
-        gProjUniform = this.shader.getUniformLocation("gProj");
+		
+	    gModelViewProjectionUniform = this.shader.getUniformLocation("gMvmProj");
         gDepthMapUniform = this.shader.getUniformLocation("gDepthMap");
         // Fog uniforms
         fogColorUniform = this.shader.getUniformLocation("fogColor");
@@ -64,29 +63,25 @@ public class FogShader extends AbstractShaderRenderer
     @Override
     void setVertexAttributes() {
         va.setVertexAttribute(0, 0, VertexAttribute.VertexPointer.addVec2Pointer(false));
-    };
+    }
 
     @Override
-    void setShaderUniforms(float partialTicks) {
+    void setShaderUniforms(float partialTicks) 
+    {
+	    this.shader.bind();
+		
         int lodDrawDistance = RenderUtil.getFarClipPlaneDistanceInBlocks();
         int vanillaDrawDistance = MC_RENDER.getRenderDistance() * LodUtil.CHUNK_WIDTH;
-//        super.bind();
-        vanillaDrawDistance += 32; // Give it a 2 chunk boundary for near fog.
+	    vanillaDrawDistance += 32; // Give it a 2 chunk boundary for near fog.
+		
 
-
-        Mat4f perspective = Mat4f.perspective(
-                (float) MC_RENDER.getFov(partialTicks),
-                MC_RENDER.getTargetFrameBufferViewportWidth() / (float) MC_RENDER.getTargetFrameBufferViewportHeight(),
-                RenderUtil.getNearClipPlaneDistanceInBlocks(partialTicks),
-                (float) ((lodDrawDistance + LodUtil.REGION_WIDTH) * Math.sqrt(2)));
-
-
-
-//        if (worldYOffsetUniform != -1) this.shader.setUniform(worldYOffsetUniform, (float) MC.getWrappedClientWorld().getMinHeight());
-
-
-        this.shader.setUniform(this.shader.getUniformLocation("gProj"), perspective);
-        GL32.glUniform1i(gDepthMapUniform, 0);
+	    // bind the depth buffer
+	    // FIXME having this texture bound causes rendering issues
+	    GL32.glActiveTexture(GL32.GL_TEXTURE3);
+	    GL32.glBindTexture(GL32.GL_TEXTURE_2D, MC_RENDER.getDepthTextureId());
+	    GL32.glUniform1i(gDepthMapUniform, 3);
+	    
+		
         // Fog
         this.shader.setUniform(fullFogModeUniform, MC_RENDER.isFogStateSpecial() ? 1 : 0);
         this.shader.setUniform(fogColorUniform, MC_RENDER.isFogStateSpecial() ? getSpecialFogColor(partialTicks) : getFogColor(partialTicks));
@@ -117,7 +112,12 @@ public class FogShader extends AbstractShaderRenderer
         return MC_RENDER.getSpecialFogColor(partialTicks);
     }
 
-    public void setModelPos(Vec3f modelPos) {
-//        this.shader.setUniform(modelOffsetUniform, modelPos);
-    }
+	public void setModelViewProjectionMatrix(Mat4f combinedModelViewProjectionMatrix)
+	{
+	    this.shader.bind();
+		this.shader.setUniform(gModelViewProjectionUniform, combinedModelViewProjectionMatrix);
+	    this.shader.unbind();
+	}
+	
+	
 }

@@ -76,9 +76,9 @@ public class LodRenderer
 	{
 		Vec3d cam = MC_RENDER.getCameraExactPosition();
 		Vec3f modelPos = new Vec3f((float) (pos.x - cam.x), (float) (pos.y - cam.y), (float) (pos.z - cam.z));
-
+		
+		this.shaderProgram.bind();
 		this.shaderProgram.setModelPos(modelPos);
-//		FogShader.INSTANCE.setModelPos(modelPos);
 	}
 
 	public void drawVbo(GLVertexBuffer vbo)
@@ -152,37 +152,40 @@ public class LodRenderer
 			EVENT_LOGGER.error("drawLODs() called after close()!");
 			return;
 		}
-
+		
+		
 		// get MC's shader program
 		// Save all MC render state
 		LagSpikeCatcher drawSaveGLState = new LagSpikeCatcher();
 		GLState currentState = new GLState();
-		if (ENABLE_DUMP_GL_STATE) 
+		if (ENABLE_DUMP_GL_STATE)
 		{
 			tickLogger.debug("Saving GL state: {}", currentState);
 		}
 		drawSaveGLState.end("drawSaveGLState");
-
+		
 		GLProxy glProxy = GLProxy.getInstance();
 		
+		
+			
 		//===================//
 		// draw params setup //
 		//===================//
-
+		
 		profiler.push("LOD draw setup");
 		/*---------Set GL State--------*/
 		// Make sure to unbind current VBO so we don't mess up vanilla settings
 		//GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, MC_RENDER.getTargetFrameBuffer());
-		GL32.glViewport(0,0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight());
+		GL32.glViewport(0, 0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight());
 		GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, 0);
 		// set the required open GL settings
 		boolean renderWireframe = Config.Client.Advanced.Debugging.renderWireframe.get();
-		if (renderWireframe) 
+		if (renderWireframe)
 		{
 			GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_LINE);
 			//GL32.glDisable(GL32.GL_CULL_FACE);
 		}
-		else 
+		else
 		{
 			GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_FILL);
 			GL32.glEnable(GL32.GL_CULL_FACE);
@@ -190,16 +193,16 @@ public class LodRenderer
 		GL32.glEnable(GL32.GL_DEPTH_TEST);
 		// GL32.glDisable(GL32.GL_DEPTH_TEST);
 		GL32.glDepthFunc(GL32.GL_LESS);
-
-
-
+		
+		
+		
 		transparencyEnabled = Config.Client.Advanced.Graphics.Quality.transparency.get().transparencyEnabled;
 		fakeOceanFloor = Config.Client.Advanced.Graphics.Quality.transparency.get().fakeTransparencyEnabled;
-
+		
 		GL32.glDisable(GL32.GL_BLEND); // We render opaque first, then transparent
 		GL32.glDepthMask(true);
 		GL32.glClear(GL32.GL_DEPTH_BUFFER_BIT);
-
+		
 		/*---------Bind required objects--------*/
 		// Setup LodRenderProgram and the LightmapTexture if it has not yet been done
 		// also binds LightmapTexture, VAO, and ShaderProgram
@@ -207,20 +210,19 @@ public class LodRenderer
 		{
 			this.setup();
 		}
-		else 
+		else
 		{
 			LodFogConfig newConfig = this.shaderProgram.isShaderUsable();
-			if (newConfig != null) 
+			if (newConfig != null)
 			{
 				this.shaderProgram.free();
 				this.shaderProgram = new LodRenderProgram(newConfig);
-//				FogShader.INSTANCE.free();
-//				FogShader.INSTANCE = new FogShader(newConfig);
+				FogShader.INSTANCE.free();
+				FogShader.INSTANCE = new FogShader(newConfig);
 			}
 			this.shaderProgram.bind();
 		}
 		GL32.glActiveTexture(GL32.GL_TEXTURE0);
-		//LightmapTexture lightmapTexture = new LightmapTexture();
 		
 		/*---------Get required data--------*/
 		int vanillaBlockRenderedDistance = MC_RENDER.getRenderDistance() * LodUtil.CHUNK_WIDTH;
@@ -232,7 +234,7 @@ public class LodRenderer
 				MC_RENDER.isFogStateSpecial() ? this.getSpecialFogColor(partialTicks) : this.getFogColor(partialTicks),
 				0, MC.getWrappedClientWorld().getHeight(), MC.getWrappedClientWorld().getMinHeight(), RenderUtil.getFarClipPlaneDistanceInBlocks(),
 				vanillaBlockRenderedDistance, MC_RENDER.isFogStateSpecial());
-
+		
 		// Note: Since lightmapTexture is changing every frame, it's faster to recreate it than to reuse the old one.
 		ILightMapWrapper lightmap = MC_RENDER.getLightmapWrapper();
 		lightmap.bind();
@@ -242,48 +244,47 @@ public class LodRenderer
 		}
 		
 		this.bufferHandler.buildRenderListAndUpdateSections(this.getLookVector());
-
+		
 		//===========//
 		// rendering //
 		//===========//
 		profiler.popPush("LOD draw");
 		LagSpikeCatcher draw = new LagSpikeCatcher();
-		
-		Vec3d cameraPos = MC_RENDER.getCameraExactPosition();
-		DhBlockPos cameraBlockPos = MC_RENDER.getCameraBlockPosition();
-		Vec3f cameraDir = MC_RENDER.getLookAtVector();
-		
+			
 		//TODO: Directional culling
 		this.bufferHandler.renderOpaque(this);
-
-		if (Config.Client.Advanced.Graphics.Quality.ssao.get()) 
+		
+		if (Config.Client.Advanced.Graphics.Quality.ssao.get())
 		{
 			// broken, causes renderer to crash
 			// TODO remove duplicate SSAO shader
-//			SSAOShader.INSTANCE.render(partialTicks); // For some reason this looks slightly different :/
+			//SSAOShader.INSTANCE.render(partialTicks); // For some reason this looks slightly different :/
 			
 			SSAORenderer.INSTANCE.render(partialTicks);
 		}
 		
 		{
-//			FogShader.INSTANCE.render(partialTicks);
-//			DarkShader.INSTANCE.render(partialTicks); // A test shader to make the world darker
+			FogShader.INSTANCE.setModelViewProjectionMatrix(modelViewProjectionMatrix);
+			FogShader.INSTANCE.render(partialTicks);
+			
+			//	DarkShader.INSTANCE.render(partialTicks); // A test shader to make the world darker
 		}
-
+		
 		//======================//
 		// render transparency //
 		//======================//
-		if (LodRenderer.transparencyEnabled) 
+		if (LodRenderer.transparencyEnabled)
 		{
 			GL32.glEnable(GL32.GL_BLEND);
 			GL32.glBlendFunc(GL32.GL_SRC_ALPHA, GL32.GL_ONE_MINUS_SRC_ALPHA);
 			//GL32.glDepthMask(false); // This so that even on incorrect sorting of transparent blocks, it still mostly looks correct
 			this.bufferHandler.renderTransparent(this);
 			GL32.glDepthMask(true); // Apparently the depth mask state is stored in the FBO, so glState fails to restore it...
+			
+			FogShader.INSTANCE.render(partialTicks);
 		}
-		//if (drawCall==0)
-		//	tickLogger.info("DrawCall Count: {}", drawCount);
-
+		
+		
 		//================//
 		// render cleanup //
 		//================//
@@ -295,21 +296,19 @@ public class LodRenderer
 		{
 			this.quadIBO.unbind();
 		}
-
+		
 		GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, 0);
 		
 		this.shaderProgram.unbind();
-		//lightmapTexture.free();
 		DebugRenderer.INSTANCE.render(modelViewProjectionMatrix);
 		GL32.glClear(GL32.GL_DEPTH_BUFFER_BIT);
-
+		
 		currentState.restore();
 		drawCleanup.end("LodDrawCleanup");
-
+		
 		// end of internal LOD profiling
 		profiler.pop();
 		tickLogger.incLogTries();
-
 	}
 	
 	
@@ -386,7 +385,7 @@ public class LodRenderer
 		this.isSetupComplete = false;
 		EVENT_LOGGER.info("Renderer Cleanup Started");
 		this.shaderProgram.free();
-//		FogShader.INSTANCE.free();
+		FogShader.INSTANCE.free();
 		if (this.quadIBO != null)
 		{
 			this.quadIBO.destroy(false);

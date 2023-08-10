@@ -75,6 +75,7 @@ public abstract class AbstractShaderRenderer {
     /** Overwrite if you need to run something on runtime */
     void postInit() {};
 
+	// TODO pass in the Model View and Projection Matrices along with the ticks
     public void render(float partialTicks) {
         GLState state = new GLState();
 		init();
@@ -106,7 +107,8 @@ public abstract class AbstractShaderRenderer {
 
         GL32.glDrawArrays(GL32.GL_TRIANGLES, 0, 6);
 
-        if (applyShader != null) {
+        if (applyShader != null) 
+		{
             applyShader.bind();
             this.setApplyShaderUniforms(partialTicks);
         }
