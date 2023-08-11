@@ -264,6 +264,7 @@ public class LodRenderer
 		}
 		
 		{
+			// TODO add the model view/projection matricies to the render() function
 			FogShader.INSTANCE.setModelViewProjectionMatrix(modelViewProjectionMatrix);
 			FogShader.INSTANCE.render(partialTicks);
 			
