@@ -212,13 +212,13 @@ public class LodRenderer
 		}
 		else
 		{
-			LodFogConfig newConfig = this.shaderProgram.isShaderUsable();
-			if (newConfig != null)
+			LodFogConfig newFogConfig = this.shaderProgram.isShaderUsable();
+			if (newFogConfig != null)
 			{
 				this.shaderProgram.free();
-				this.shaderProgram = new LodRenderProgram(newConfig);
+				this.shaderProgram = new LodRenderProgram(newFogConfig);
 				FogShader.INSTANCE.free();
-				FogShader.INSTANCE = new FogShader(newConfig);
+				FogShader.INSTANCE = new FogShader(newFogConfig);
 			}
 			this.shaderProgram.bind();
 		}
