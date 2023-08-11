@@ -66,7 +66,7 @@ public class LodRenderProgram extends ShaderProgram
 	// Debug Uniform
 	public final int whiteWorldUniform;
 
-	public final LodFogConfig fogConfig;
+	private final LodFogConfig fogConfig;
 
 	// This will bind  VertexAttribute
 	public LodRenderProgram(LodFogConfig fogConfig) {
@@ -125,9 +125,13 @@ public class LodRenderProgram extends ShaderProgram
 	}
 
 	// If not usable, return a new LodFogConfig to be constructed
-	public LodFogConfig isShaderUsable() {
+	public LodFogConfig isShaderUsable() // TODO replace with a config listener, look at LodFogConfig for more info
+	{
 		LodFogConfig newConfig = LodFogConfig.generateFogConfig();
-		if (fogConfig.equals(newConfig)) return null;
+		if (fogConfig.equals(newConfig))
+		{
+			return null;
+		}
 		return newConfig;
 	}
 	
@@ -156,9 +160,8 @@ public class LodRenderProgram extends ShaderProgram
 		vao.unbindBuffersFromAllBindingPoint();
 	}
 	
-	public void fillUniformData(Mat4f combinedMatrix, Color fogColor,
-								int lightmapBindPoint, int worldHeight, int worldYOffset, int lodDrawDistance,
-								int vanillaDrawDistance, boolean fullFogMode) {
+	public void fillUniformData(Mat4f combinedMatrix, int lightmapBindPoint, int worldYOffset, int vanillaDrawDistance)
+	{
         super.bind();
 		vanillaDrawDistance += 32; // Give it a 2 chunk boundary for near fog.
 		// uniforms

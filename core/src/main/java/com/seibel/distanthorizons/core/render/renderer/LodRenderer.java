@@ -229,11 +229,8 @@ public class LodRenderer
 		Mat4f modelViewProjectionMatrix = RenderUtil.createCombinedModelViewProjectionMatrix(baseProjectionMatrix, baseModelViewMatrix, partialTicks);
 		
 		/*---------Fill uniform data--------*/
-		// Fill the uniform data. Note: GL33.GL_TEXTURE0 == texture bindpoint 0
-		this.shaderProgram.fillUniformData(modelViewProjectionMatrix,
-				MC_RENDER.isFogStateSpecial() ? this.getSpecialFogColor(partialTicks) : this.getFogColor(partialTicks),
-				0, MC.getWrappedClientWorld().getHeight(), MC.getWrappedClientWorld().getMinHeight(), RenderUtil.getFarClipPlaneDistanceInBlocks(),
-				vanillaBlockRenderedDistance, MC_RENDER.isFogStateSpecial());
+		this.shaderProgram.fillUniformData(modelViewProjectionMatrix, /*Light map = GL_TEXTURE0*/ 0, 
+				MC.getWrappedClientWorld().getMinHeight(), vanillaBlockRenderedDistance);
 		
 		// Note: Since lightmapTexture is changing every frame, it's faster to recreate it than to reuse the old one.
 		ILightMapWrapper lightmap = MC_RENDER.getLightmapWrapper();
