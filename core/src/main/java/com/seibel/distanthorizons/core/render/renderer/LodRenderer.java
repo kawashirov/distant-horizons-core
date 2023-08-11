@@ -386,7 +386,6 @@ public class LodRenderer
 		this.isSetupComplete = false;
 		EVENT_LOGGER.info("Renderer Cleanup Started");
 		this.shaderProgram.free();
-		FogShader.INSTANCE.free();
 		if (this.quadIBO != null)
 		{
 			this.quadIBO.destroy(false);
