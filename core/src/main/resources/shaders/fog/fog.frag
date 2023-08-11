@@ -57,12 +57,11 @@ float mod(float x, int y) {
 }
 
 
-vec3 calcViewPosition(vec2 coords) {
-    float fragmentDepth = texture(gDepthMap, coords).r;
-
+vec3 calcViewPosition(float fragmentDepth)
+{
     vec4 ndc = vec4(
-        coords.x * 2.0 - 1.0,
-        coords.y * 2.0 - 1.0,
+        TexCoord.x * 2.0 - 1.0,
+        TexCoord.y * 2.0 - 1.0,
         fragmentDepth * 2.0 - 1.0,
         1.0
     );
@@ -81,30 +80,43 @@ vec3 calcViewPosition(vec2 coords) {
 void main() 
 {
     float vertexYPos = 100.0f;
-    vec3 vertexWorldPos = calcViewPosition(TexCoord);
     
-    if (fullFogMode == 1) 
+    float fragmentDepth = texture(gDepthMap, TexCoord).r;
+    
+    if (fullFogMode == 0)
+    {
+        // a fragment depth of "1" means the fragment is infinitely far from the camera
+        if (fragmentDepth != 1.0)
+        {
+            // render fog based on distance from the camera
+            vec3 vertexWorldPos = calcViewPosition(fragmentDepth);
+            
+            float horizontalDist = length(vertexWorldPos.xz) * fogScale;
+            float heightDist = calculateHeightFogDepth(vertexWorldPos.y, vertexYPos) * fogVerticalScale;
+            float farDist = calculateFarFogDepth(horizontalDist, length(vertexWorldPos.xyz) * fogScale, nearFogStart);
+    
+            float nearFogThickness = getNearFogThickness(horizontalDist);
+            float farFogThickness = getFarFogThickness(farDist);
+            float heightFogThickness = getHeightFogThickness(heightDist);
+            float mixedFogThickness = 
+                clamp(
+                    mixFogThickness(nearFogThickness, farFogThickness, heightFogThickness)
+                    , 0.0, 1.0);
+
+            fragColor = vec4(fogColor.r, fogColor.g, fogColor.b, mixedFogThickness);
+        }
+        else
+        {
+            // the fragment is infinitely far from the camera,
+            // we don't render fog any fog here because it would cover the sun and sky
+            // (and this also reduces the amount of work the GPU has to do as well)
+            fragColor = vec4(0.0, 0.0, 0.0, 0.0);
+        }
+    }
+    else if (fullFogMode == 1)
     {
         // render everything with the fog color
         fragColor = vec4(fogColor.r, fogColor.g, fogColor.b, 1.0);
-    } 
-    else if (fullFogMode == 0)
-    {
-        // render fog based on distance from the camera
-        
-        float horizontalDist = length(vertexWorldPos.xz) * fogScale;
-        float heightDist = calculateHeightFogDepth(vertexWorldPos.y, vertexYPos) * fogVerticalScale;
-        float farDist = calculateFarFogDepth(horizontalDist, length(vertexWorldPos.xyz) * fogScale, nearFogStart);
-
-        float nearFogThickness = getNearFogThickness(horizontalDist);
-        float farFogThickness = getFarFogThickness(farDist);
-        float heightFogThickness = getHeightFogThickness(heightDist);
-        float mixedFogThickness = 
-            clamp(
-                mixFogThickness(nearFogThickness, farFogThickness, heightFogThickness)
-                , 0.0, 1.0);
-
-        fragColor = vec4(fogColor.r, fogColor.g, fogColor.b, mixedFogThickness);
     }
     else
     {
