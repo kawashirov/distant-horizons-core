@@ -45,6 +45,7 @@ import com.seibel.distanthorizons.coreapi.util.math.Mat4f;
 import com.seibel.distanthorizons.coreapi.util.math.Vec3d;
 import com.seibel.distanthorizons.coreapi.util.math.Vec3f;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL32;
 
 import java.awt.*;
@@ -59,9 +60,9 @@ public class LodRenderer
 {
 	public static final ConfigBasedLogger EVENT_LOGGER = new ConfigBasedLogger(LogManager.getLogger(LodRenderer.class),
 			() -> Config.Client.Advanced.Logging.logRendererBufferEvent.get());
-
 	public static ConfigBasedSpamLogger tickLogger = new ConfigBasedSpamLogger(LogManager.getLogger(LodRenderer.class),
 			() -> Config.Client.Advanced.Logging.logRendererBufferEvent.get(),1);
+	
 	public static final boolean ENABLE_DRAW_LAG_SPIKE_LOGGING = false;
 	public static final boolean ENABLE_DUMP_GL_STATE = true;
 	public static final long DRAW_LAG_SPIKE_THRESHOLD_NS = TimeUnit.NANOSECONDS.convert(20, TimeUnit.MILLISECONDS);
@@ -154,31 +155,28 @@ public class LodRenderer
 		}
 		
 		
-		// get MC's shader program
-		// Save all MC render state
+		// get MC's shader program and save MC's render state so we can restore it later
 		LagSpikeCatcher drawSaveGLState = new LagSpikeCatcher();
-		GLState currentState = new GLState();
+		GLState minecraftGlState = new GLState();
 		if (ENABLE_DUMP_GL_STATE)
 		{
-			tickLogger.debug("Saving GL state: {}", currentState);
+			tickLogger.debug("Saving GL state: "+minecraftGlState);
 		}
 		drawSaveGLState.end("drawSaveGLState");
 		
+		// make sure everything has been initialized
 		GLProxy glProxy = GLProxy.getInstance();
 		
 		
-			
+		
 		//===================//
 		// draw params setup //
 		//===================//
 		
 		profiler.push("LOD draw setup");
 		/*---------Set GL State--------*/
-		// Make sure to unbind current VBO so we don't mess up vanilla settings
-		//GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, MC_RENDER.getTargetFrameBuffer());
 		GL32.glViewport(0, 0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight());
 		GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, 0);
-		// set the required open GL settings
 		boolean renderWireframe = Config.Client.Advanced.Debugging.renderWireframe.get();
 		if (renderWireframe)
 		{
@@ -191,7 +189,6 @@ public class LodRenderer
 			GL32.glEnable(GL32.GL_CULL_FACE);
 		}
 		GL32.glEnable(GL32.GL_DEPTH_TEST);
-		// GL32.glDisable(GL32.GL_DEPTH_TEST);
 		GL32.glDepthFunc(GL32.GL_LESS);
 		
 		
@@ -229,7 +226,7 @@ public class LodRenderer
 		Mat4f modelViewProjectionMatrix = RenderUtil.createCombinedModelViewProjectionMatrix(baseProjectionMatrix, baseModelViewMatrix, partialTicks);
 		
 		/*---------Fill uniform data--------*/
-		this.shaderProgram.fillUniformData(modelViewProjectionMatrix, /*Light map = GL_TEXTURE0*/ 0, 
+		this.shaderProgram.fillUniformData(modelViewProjectionMatrix, /*Light map = GL_TEXTURE0*/ 0,
 				MC.getWrappedClientWorld().getMinHeight(), vanillaBlockRenderedDistance);
 		
 		// Note: Since lightmapTexture is changing every frame, it's faster to recreate it than to reuse the old one.
@@ -242,13 +239,16 @@ public class LodRenderer
 		
 		this.bufferHandler.buildRenderListAndUpdateSections(this.getLookVector());
 		
+		
+		
 		//===========//
 		// rendering //
 		//===========//
-		profiler.popPush("LOD draw");
-		LagSpikeCatcher draw = new LagSpikeCatcher();
-			
-		//TODO: Directional culling
+		
+		LagSpikeCatcher drawLagSpikeCatcher = new LagSpikeCatcher();
+		
+		profiler.popPush("LOD Opaque");
+		// TODO: Directional culling
 		this.bufferHandler.renderOpaque(this);
 		
 		if (Config.Client.Advanced.Graphics.Quality.ssao.get())
@@ -257,36 +257,39 @@ public class LodRenderer
 			// TODO remove duplicate SSAO shader
 			//SSAOShader.INSTANCE.render(partialTicks); // For some reason this looks slightly different :/
 			
+			profiler.popPush("LOD SSAO");
 			SSAORenderer.INSTANCE.render(partialTicks);
 		}
 		
-		{
-			// TODO add the model view/projection matricies to the render() function
-			FogShader.INSTANCE.setModelViewProjectionMatrix(modelViewProjectionMatrix);
-			FogShader.INSTANCE.render(partialTicks);
-			
-			//	DarkShader.INSTANCE.render(partialTicks); // A test shader to make the world darker
-		}
 		
-		//======================//
-		// render transparency //
-		//======================//
-		if (LodRenderer.transparencyEnabled)
+		profiler.popPush("LOD Fog");
+		// TODO add the model view/projection matrices to the render() function
+		FogShader.INSTANCE.setModelViewProjectionMatrix(modelViewProjectionMatrix);
+		FogShader.INSTANCE.render(partialTicks);
+		
+		//	DarkShader.INSTANCE.render(partialTicks); // A test shader to make the world darker
+		
+		
+		if (Config.Client.Advanced.Graphics.Quality.transparency.get().transparencyEnabled)
 		{
+			profiler.popPush("LOD Transparent");
+			
 			GL32.glEnable(GL32.GL_BLEND);
 			GL32.glBlendFunc(GL32.GL_SRC_ALPHA, GL32.GL_ONE_MINUS_SRC_ALPHA);
-			//GL32.glDepthMask(false); // This so that even on incorrect sorting of transparent blocks, it still mostly looks correct
 			this.bufferHandler.renderTransparent(this);
 			GL32.glDepthMask(true); // Apparently the depth mask state is stored in the FBO, so glState fails to restore it...
 			
 			FogShader.INSTANCE.render(partialTicks);
 		}
 		
+		drawLagSpikeCatcher.end("LodDraw");
+		
+		
 		
 		//================//
 		// render cleanup //
 		//================//
-		draw.end("LodDraw");
+		
 		profiler.popPush("LOD cleanup");
 		LagSpikeCatcher drawCleanup = new LagSpikeCatcher();
 		lightmap.unbind();
@@ -301,12 +304,13 @@ public class LodRenderer
 		DebugRenderer.INSTANCE.render(modelViewProjectionMatrix);
 		GL32.glClear(GL32.GL_DEPTH_BUFFER_BIT);
 		
-		currentState.restore();
+		minecraftGlState.restore();
 		drawCleanup.end("LodDrawCleanup");
 		
 		// end of internal LOD profiling
 		profiler.pop();
 		tickLogger.incLogTries();
+		
 	}
 	
 	

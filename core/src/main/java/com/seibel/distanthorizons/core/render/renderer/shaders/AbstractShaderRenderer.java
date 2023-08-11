@@ -171,7 +171,9 @@ public abstract class AbstractShaderRenderer {
     {
 	    this.shader.free();
 	    if (this.applyShader != null)
+	    {
 		    this.applyShader.free();
+	    }
     }
 	
 }
