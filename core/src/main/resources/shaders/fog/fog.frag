@@ -80,55 +80,48 @@ vec3 calcViewPosition(float fragmentDepth)
 void main() 
 {
     float vertexYPos = 100.0f;
-    
     float fragmentDepth = texture(gDepthMap, TexCoord).r;
-    
-    if (fullFogMode == 0)
+
+    // a fragment depth of "1" means the fragment wasn't drawn to,
+    // we only want to apply Fog to LODs, not to the sky outside the LODs
+    if (fragmentDepth != 1.0)
     {
-        // a fragment depth of "1" means the fragment is infinitely far from the camera
-        if (fragmentDepth != 1.0)
+        if (fullFogMode == 0)
         {
             // render fog based on distance from the camera
             vec3 vertexWorldPos = calcViewPosition(fragmentDepth);
-            
+
             float horizontalDist = length(vertexWorldPos.xz) * fogScale;
             float heightDist = calculateHeightFogDepth(vertexWorldPos.y, vertexYPos) * fogVerticalScale;
             float farDist = calculateFarFogDepth(horizontalDist, length(vertexWorldPos.xyz) * fogScale, nearFogStart);
-    
+
             float nearFogThickness = getNearFogThickness(horizontalDist);
             float farFogThickness = getFarFogThickness(farDist);
             float heightFogThickness = getHeightFogThickness(heightDist);
-            float mixedFogThickness = 
-                clamp(
-                    mixFogThickness(nearFogThickness, farFogThickness, heightFogThickness)
-                    , 0.0, 1.0);
+            float mixedFogThickness =
+            clamp(
+                mixFogThickness(nearFogThickness, farFogThickness, heightFogThickness)
+            , 0.0, 1.0);
 
             fragColor = vec4(fogColor.r, fogColor.g, fogColor.b, mixedFogThickness);
         }
+        else if (fullFogMode == 1)
+        {
+            // render everything with the fog color
+            fragColor = vec4(fogColor.r, fogColor.g, fogColor.b, 1.0);
+        }
         else
         {
-            // the fragment is infinitely far from the camera,
-            // we don't render fog any fog here because it would cover the sun and sky
-            // (and this also reduces the amount of work the GPU has to do as well)
-            fragColor = vec4(0.0, 0.0, 0.0, 0.0);
+            // test code.
+
+            // this can be fired by manually changing the fullFogMode to a (normally)
+            // invalid value (like 7). By having a separate if statement defined by
+            // a uniform we don't have to worry about GLSL optimizing away different
+            // options when testing, causing a bunch of headaches if we just want to render the screen red.
+
+            float depthValue = texture(gDepthMap, TexCoord).r;
+            fragColor = vec4(vec3(depthValue), 1.0); // Convert depth value to grayscale color
         }
-    }
-    else if (fullFogMode == 1)
-    {
-        // render everything with the fog color
-        fragColor = vec4(fogColor.r, fogColor.g, fogColor.b, 1.0);
-    }
-    else
-    {
-        // test code.
-        
-        // this can be fired by manually changing the fullFogMode to a (normally)
-        // invalid value (like 7). By having a separate if statement defined by
-        // a uniform we don't have to worry about GLSL optimizing away different
-        // options when testing, causing a bunch of headaches if we just want to render the screen red.
-        
-        float depthValue = texture(gDepthMap, TexCoord).r;
-        fragColor = vec4(vec3(depthValue), 1.0); // Convert depth value to grayscale color
     }
 }
 
