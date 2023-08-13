@@ -46,6 +46,10 @@ public class DhSectionPos
 	
 	
 	
+	//==============//
+	// constructors //
+	//==============//
+	
 	public DhSectionPos(byte sectionDetailLevel, int sectionX, int sectionZ)
 	{
 		this.sectionDetailLevel = sectionDetailLevel;
