@@ -79,23 +79,23 @@ public class ServerApi
 		catch (Exception e)
 		{
 			// try catch is necessary to prevent crashing the internal server when an exception is thrown
-			LOGGER.error("ServerTickEvent error: "+e.getMessage(), e);
+			LOGGER.error("ServerTickEvent error: " + e.getMessage(), e);
 		}
 	}
 	public void serverLevelTickEvent(IServerLevelWrapper level)
 	{
 		//TODO
 	}
-
+	
 	public void serverLoadEvent(boolean isDedicatedEnvironment)
 	{
-		LOGGER.debug("Server World loading with (dedicated?:"+isDedicatedEnvironment+")");
+		LOGGER.debug("Server World loading with (dedicated?:" + isDedicatedEnvironment + ")");
 		SharedApi.setDhWorld(isDedicatedEnvironment ? new DhServerWorld() : new DhClientServerWorld());
 	}
 	
 	public void serverUnloadEvent()
 	{
-		LOGGER.debug("Server World "+SharedApi.getAbstractDhWorld()+" unloading");
+		LOGGER.debug("Server World " + SharedApi.getAbstractDhWorld() + " unloading");
 		
 		SharedApi.getAbstractDhWorld().close();
 		SharedApi.setDhWorld(null);
@@ -103,7 +103,7 @@ public class ServerApi
 	
 	public void serverLevelLoadEvent(IServerLevelWrapper level)
 	{
-		LOGGER.debug("Server Level "+level+" loading");
+		LOGGER.debug("Server Level " + level + " loading");
 		
 		AbstractDhWorld serverWorld = SharedApi.getAbstractDhWorld();
 		if (serverWorld != null)
@@ -114,7 +114,7 @@ public class ServerApi
 	}
 	public void serverLevelUnloadEvent(IServerLevelWrapper level)
 	{
-		LOGGER.debug("Server Level "+level+" unloading");
+		LOGGER.debug("Server Level " + level + " unloading");
 		
 		AbstractDhWorld serverWorld = SharedApi.getAbstractDhWorld();
 		if (serverWorld != null)
@@ -123,11 +123,11 @@ public class ServerApi
 			ApiEventInjector.INSTANCE.fireAllEvents(DhApiLevelUnloadEvent.class, new DhApiLevelUnloadEvent.EventParam(level));
 		}
 	}
-
+	
 	@Deprecated // TODO not implemented, remove
 	public void serverSaveEvent()
 	{
-		LOGGER.debug("Server world "+SharedApi.getAbstractDhWorld()+" saving");
+		LOGGER.debug("Server world " + SharedApi.getAbstractDhWorld() + " saving");
 		
 		AbstractDhWorld serverWorld = SharedApi.getAbstractDhWorld();
 		if (serverWorld != null)
@@ -135,7 +135,7 @@ public class ServerApi
 			serverWorld.saveAndFlush();
 		}
 	}
-
+	
 	public void serverChunkLoadEvent(IChunkWrapper chunk, ILevelWrapper level)
 	{
 		// the world should always be non-null, this != null is just in case the world was removed accidentally 

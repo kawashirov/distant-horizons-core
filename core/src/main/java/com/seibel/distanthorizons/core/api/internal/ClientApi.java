@@ -106,7 +106,7 @@ public class ClientApi
 	// world events //
 	//==============//
 	
-	/** 
+	/**
 	 * May be fired slightly before or after the associated
 	 * {@link ClientApi#clientLevelLoadEvent(IClientLevelWrapper)} event
 	 * depending on how the host mod loader functions.
@@ -123,7 +123,7 @@ public class ClientApi
 			SharedApi.setDhWorld(new DhClientWorld());
 			
 			
-			LOGGER.info("Loading ["+this.waitingClientLevels.size()+"] waiting client level wrappers.");
+			LOGGER.info("Loading [" + this.waitingClientLevels.size() + "] waiting client level wrappers.");
 			for (IClientLevelWrapper level : this.waitingClientLevels)
 			{
 				this.clientLevelLoadEvent(level);
@@ -132,7 +132,7 @@ public class ClientApi
 			this.waitingClientLevels.clear();
 		}
 	}
-
+	
 	public void onClientOnlyDisconnected()
 	{
 		if (MC.clientConnectedToDedicatedServer())
@@ -141,7 +141,7 @@ public class ClientApi
 			if (world != null)
 			{
 				LOGGER.info("Client on ClientOnly mode disconnecting.");
-
+				
 				world.close();
 				SharedApi.setDhWorld(null);
 			}
@@ -166,7 +166,7 @@ public class ClientApi
 	
 	public void clientLevelUnloadEvent(IClientLevelWrapper level)
 	{
-		LOGGER.info("Unloading client level ["+level+"].");
+		LOGGER.info("Unloading client level [" + level + "].");
 		
 		AbstractDhWorld world = SharedApi.getAbstractDhWorld();
 		if (world != null)
@@ -191,7 +191,7 @@ public class ClientApi
 		}
 		
 		
-		LOGGER.info("Loading "+(isServerCommunication ? "Multiverse" : "")+" client level [" + level + "].");
+		LOGGER.info("Loading " + (isServerCommunication ? "Multiverse" : "") + " client level [" + level + "].");
 		
 		AbstractDhWorld world = SharedApi.getAbstractDhWorld();
 		if (world != null)
@@ -220,7 +220,7 @@ public class ClientApi
 				keysToRemove.add(levelChunkPair);
 			}
 		}
-		LOGGER.info("Loaded ["+keysToRemove.size()+"] waiting chunk wrappers.");
+		LOGGER.info("Loaded [" + keysToRemove.size() + "] waiting chunk wrappers.");
 		
 		for (Pair<IClientLevelWrapper, DhChunkPos> keyToRemove : keysToRemove)
 		{
@@ -263,8 +263,8 @@ public class ClientApi
 		{
 			for (int zOffset = -1; zOffset <= 1; zOffset++)
 			{
-				DhChunkPos neighbourPos = new DhChunkPos(chunk.getChunkPos().x+xOffset, chunk.getChunkPos().z+zOffset);
-				IChunkWrapper neighbourChunk =  dhLevel.getLevelWrapper().tryGetChunk(neighbourPos);
+				DhChunkPos neighbourPos = new DhChunkPos(chunk.getChunkPos().x + xOffset, chunk.getChunkPos().z + zOffset);
+				IChunkWrapper neighbourChunk = dhLevel.getLevelWrapper().tryGetChunk(neighbourPos);
 				if (neighbourChunk != null)
 				{
 					dhLevel.updateChunkAsync(neighbourChunk);
@@ -282,20 +282,20 @@ public class ClientApi
 	public void rendererShutdownEvent()
 	{
 		LOGGER.info("Renderer shutting down.");
-
+		
 		IProfilerWrapper profiler = MC.getProfiler();
 		profiler.push("DH-RendererShutdown");
-
+		
 		profiler.pop();
 	}
 	
 	public void rendererStartupEvent()
 	{
 		LOGGER.info("Renderer starting up.");
-
+		
 		IProfilerWrapper profiler = MC.getProfiler();
 		profiler.push("DH-RendererStartup");
-
+		
 		// make sure the GLProxy is created before the LodBufferBuilder needs it
 		GLProxy.getInstance();
 		profiler.pop();
@@ -305,7 +305,7 @@ public class ClientApi
 	{
 		IProfilerWrapper profiler = MC.getProfiler();
 		profiler.push("DH-ClientTick");
-
+		
 		boolean doFlush = System.nanoTime() - this.lastFlushNanoTime >= SPAM_LOGGER_FLUSH_NS;
 		if (doFlush)
 		{
@@ -314,7 +314,7 @@ public class ClientApi
 		}
 		ConfigBasedLogger.updateAll();
 		ConfigBasedSpamLogger.updateAll(doFlush);
-
+		
 		IDhClientWorld clientWorld = SharedApi.getIDhClientWorld();
 		if (clientWorld != null)
 		{
@@ -328,7 +328,7 @@ public class ClientApi
 	//============//
 	// networking //
 	//============//
-	
+
 //	/** @param byteBuf is Netty's {@link ByteBuffer} wrapper. */
 //	public void serverMessageReceived(ByteBuf byteBuf)
 //	{
@@ -463,8 +463,8 @@ public class ClientApi
 			MC.sendChatMessage("Here be dragons!");
 			this.configOverrideReminderPrinted = true;
 		}
-
-
+		
+		
 		IProfilerWrapper profiler = MC.getProfiler();
 		profiler.pop(); // get out of "terrain"
 		profiler.push("DH-RenderLevel");
@@ -474,20 +474,20 @@ public class ClientApi
 			{
 				return;
 			}
-
-
+			
+			
 			//FIXME: Improve class hierarchy of DhWorld, IClientWorld, IServerWorld to fix all this hard casting
 			// (also in RenderUtil)
 			IDhClientWorld dhClientWorld = SharedApi.getIDhClientWorld();
 			IDhClientLevel level = dhClientWorld.getOrLoadClientLevel(levelWrapper);
-
+			
 			if (prefLoggerEnabled)
 			{
 				level.dumpRamUsage();
 			}
-
-
-
+			
+			
+			
 			
 			try
 			{
@@ -495,9 +495,9 @@ public class ClientApi
 				{
 					DhApiRenderParam renderEventParam =
 							new DhApiRenderParam(mcProjectionMatrix, mcModelViewMatrix,
-								RenderUtil.createLodProjectionMatrix(mcProjectionMatrix, partialTicks),
-								RenderUtil.createLodModelViewMatrix(mcModelViewMatrix), partialTicks);
-
+									RenderUtil.createLodProjectionMatrix(mcProjectionMatrix, partialTicks),
+									RenderUtil.createLodModelViewMatrix(mcModelViewMatrix), partialTicks);
+					
 					boolean renderingCanceled = ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeRenderEvent.class, new DhApiBeforeRenderEvent.EventParam(renderEventParam));
 					if (!this.rendererDisabledBecauseOfExceptions && !renderingCanceled)
 					{
@@ -517,7 +517,7 @@ public class ClientApi
 			{
 				this.rendererDisabledBecauseOfExceptions = true;
 				LOGGER.error("Renderer thrown an uncaught exception: ", e);
-
+				
 				MC.sendChatMessage("\u00A74\u00A7l\u00A7uERROR: Distant Horizons"
 						+ " renderer has encountered an exception!");
 				MC.sendChatMessage("\u00A74Renderer is now disabled to prevent further issues.");
@@ -534,13 +534,13 @@ public class ClientApi
 			profiler.push("terrain"); // go back into "terrain"
 		}
 	}
-
-
-
+	
+	
+	
 	//=================//
 	//    DEBUG USE    //
 	//=================//
-
+	
 	/** Trigger once on key press, with CLIENT PLAYER. */
 	public void keyPressedEvent(int glfwKey)
 	{
@@ -549,8 +549,8 @@ public class ClientApi
 			// keybindings are disabled
 			return;
 		}
-
-
+		
+		
 		if (glfwKey == GLFW.GLFW_KEY_F8)
 		{
 			Config.Client.Advanced.Debugging.debugRendering.set(EDebugRendering.next(Config.Client.Advanced.Debugging.debugRendering.get()));
@@ -567,6 +567,6 @@ public class ClientApi
 			MC.sendChatMessage("P: Debug Pref Logger is " + (prefLoggerEnabled ? "enabled" : "disabled"));
 		}
 	}
-
-
+	
+	
 }

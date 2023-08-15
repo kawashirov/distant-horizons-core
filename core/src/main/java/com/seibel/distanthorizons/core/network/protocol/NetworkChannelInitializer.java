@@ -4,17 +4,18 @@ package com.seibel.distanthorizons.core.network.protocol;
 //import io.netty.channel.socket.SocketChannel;
 //import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 //import io.netty.handler.codec.LengthFieldPrepender;
+
 import org.jetbrains.annotations.NotNull;
 
 /** used when creating a network channel */
 public class NetworkChannelInitializer //extends ChannelInitializer<SocketChannel> 
 {
-    private final MessageHandler messageHandler;
+	private final MessageHandler messageHandler;
 	
 	
 	
-    public NetworkChannelInitializer(MessageHandler messageHandler) { this.messageHandler = messageHandler; }
-	
+	public NetworkChannelInitializer(MessageHandler messageHandler) { this.messageHandler = messageHandler; }
+
 //    @Override
 //    public void initChannel(@NotNull SocketChannel socketChannel) 
 //	{

@@ -10,13 +10,13 @@ import com.seibel.distanthorizons.core.network.protocol.MessageRegistry;
  */
 public class AckMessage implements INetworkMessage
 {
-    public Class<? extends INetworkMessage> messageType;
+	public Class<? extends INetworkMessage> messageType;
 	
 	
 	
-    public AckMessage() { }
-    public AckMessage(Class<? extends INetworkMessage> messageType) { this.messageType = messageType; }
-	
+	public AckMessage() { }
+	public AckMessage(Class<? extends INetworkMessage> messageType) { this.messageType = messageType; }
+
 //    @Override
 //    public void encode(ByteBuf out) { out.writeInt(MessageRegistry.INSTANCE.getMessageId(this.messageType)); }
 //	

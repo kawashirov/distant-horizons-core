@@ -7,6 +7,6 @@ import java.io.File;
 
 public class RemoteFullDataFileHandler extends FullDataFileHandler
 {
-    public RemoteFullDataFileHandler(IDhLevel level, AbstractSaveStructure saveStructure) { super(level, saveStructure); }
+	public RemoteFullDataFileHandler(IDhLevel level, AbstractSaveStructure saveStructure) { super(level, saveStructure); }
 	
 }

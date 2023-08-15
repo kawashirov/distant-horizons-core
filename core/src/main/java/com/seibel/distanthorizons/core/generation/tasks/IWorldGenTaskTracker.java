@@ -10,8 +10,9 @@ import java.util.function.Consumer;
  */
 public interface IWorldGenTaskTracker
 {
-	/**  Returns true if the task hasn't been garbage collected. */
+	/** Returns true if the task hasn't been garbage collected. */
 	boolean isMemoryAddressValid();
 	
 	Consumer<ChunkSizedFullDataAccessor> getChunkDataConsumer();
+	
 }

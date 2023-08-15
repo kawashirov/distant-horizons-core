@@ -7,13 +7,13 @@ import java.util.UUID;
 
 public class PlayerUUIDMessage implements INetworkMessage
 {
-    public UUID playerUUID;
+	public UUID playerUUID;
 	
 	
 	
-    public PlayerUUIDMessage() { }
-    public PlayerUUIDMessage(UUID playerUUID) { this.playerUUID = playerUUID; }
-	
+	public PlayerUUIDMessage() { }
+	public PlayerUUIDMessage(UUID playerUUID) { this.playerUUID = playerUUID; }
+
 //    @Override
 //    public void encode(ByteBuf out)
 //	{
