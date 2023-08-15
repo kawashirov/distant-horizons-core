@@ -12,7 +12,7 @@ public class CloseReasonMessage implements INetworkMessage
 	
 	public CloseReasonMessage() { }
 	public CloseReasonMessage(String reason) { this.reason = reason; }
-	
+
 //	@Override
 //	public void encode(ByteBuf out) { INetworkObject.encodeString(this.reason, out); }
 //	

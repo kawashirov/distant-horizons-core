@@ -29,5 +29,6 @@ import com.seibel.distanthorizons.coreapi.interfaces.dependencyInjection.IBindab
 public interface IBiomeWrapper extends IDhApiBiomeWrapper, IBindable
 {
 	String getName();
-    String serialize();
+	String serialize();
+	
 }

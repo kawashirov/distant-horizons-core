@@ -7,13 +7,13 @@ import com.seibel.distanthorizons.core.network.objects.RemotePlayer;
 
 public class RemotePlayerConfigMessage implements INetworkMessage
 {
-    public RemotePlayer.Payload payload;
+	public RemotePlayer.Payload payload;
 	
 	
 	
-    public RemotePlayerConfigMessage() { }
-    public RemotePlayerConfigMessage(RemotePlayer.Payload payload) { this.payload = payload; }
-	
+	public RemotePlayerConfigMessage() { }
+	public RemotePlayerConfigMessage(RemotePlayer.Payload payload) { this.payload = payload; }
+
 //    @Override
 //    public void encode(ByteBuf out) { this.payload.encode(out); }
 //	

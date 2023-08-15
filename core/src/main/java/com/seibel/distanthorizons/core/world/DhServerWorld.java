@@ -24,7 +24,7 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 {
 	private final HashMap<IServerLevelWrapper, DhServerLevel> levels;
 	public final LocalSaveStructure saveStructure;
-	
+
 //	private final NetworkServer networkServer;
 //	private final HashMap<UUID, RemotePlayer> playersByUUID;
 //	private final BiMap<ChannelHandlerContext, RemotePlayer> playersByConnection;
@@ -37,16 +37,16 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 		
 		this.saveStructure = new LocalSaveStructure();
 		this.levels = new HashMap<>();
-	
+		
 		// TODO move to global payload once server specific configs are implemented
 //		this.networkServer = new NetworkServer(25049);
 //		this.playersByUUID = new HashMap<>();
 //		this.playersByConnection = HashBiMap.create();
 //		this.registerNetworkHandlers();
 		
-		LOGGER.info("Started "+DhServerWorld.class.getSimpleName()+" of type "+this.environment);
+		LOGGER.info("Started " + DhServerWorld.class.getSimpleName() + " of type " + this.environment);
 	}
-
+	
 	private void registerNetworkHandlers()
 	{
 //		this.networkServer.registerHandler(CloseMessage.class, (closeMessage, channelContext) -> 
@@ -167,7 +167,7 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 	public void close()
 	{
 //		this.networkServer.close();
-
+		
 		for (DhServerLevel level : this.levels.values())
 		{
 			LOGGER.info("Unloading level " + level.getLevelWrapper().getDimensionType().getDimensionName());
@@ -175,7 +175,7 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 		}
 		
 		this.levels.clear();
-		LOGGER.info("Closed DhWorld of type "+this.environment);
+		LOGGER.info("Closed DhWorld of type " + this.environment);
 	}
 	
 }

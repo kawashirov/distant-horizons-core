@@ -6,6 +6,6 @@ package com.seibel.distanthorizons.core.network.protocol;
  */
 public enum EMessageHandlerSide
 {
-    CLIENT,
-    SERVER
+	CLIENT,
+	SERVER
 }

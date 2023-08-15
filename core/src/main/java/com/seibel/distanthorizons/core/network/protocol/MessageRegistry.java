@@ -10,14 +10,14 @@ import java.util.function.Supplier;
 
 public class MessageRegistry
 {
-    public static final MessageRegistry INSTANCE = new MessageRegistry();
+	public static final MessageRegistry INSTANCE = new MessageRegistry();
 	
-    private final Map<Integer, Supplier<? extends INetworkMessage>> idToSupplier = new HashMap<>();
-    private final BiMap<Class<? extends INetworkMessage>, Integer> classToId = HashBiMap.create();
+	private final Map<Integer, Supplier<? extends INetworkMessage>> idToSupplier = new HashMap<>();
+	private final BiMap<Class<? extends INetworkMessage>, Integer> classToId = HashBiMap.create();
 	
 	
 	
-    private MessageRegistry() 
+	private MessageRegistry()
 	{
 		// Note: Messages must have parameterless constructors
 		
@@ -34,16 +34,16 @@ public class MessageRegistry
 	
 	
 	
-    public <T extends INetworkMessage> void registerMessage(Class<T> clazz, Supplier<T> supplier)
+	public <T extends INetworkMessage> void registerMessage(Class<T> clazz, Supplier<T> supplier)
 	{
-        int id = this.idToSupplier.size() + 1;
+		int id = this.idToSupplier.size() + 1;
 		this.idToSupplier.put(id, supplier);
 		this.classToId.put(clazz, id);
-    }
+	}
 	
-    public Class<? extends INetworkMessage> getMessageClassById(int messageId) { return this.classToId.inverse().get(messageId); }
+	public Class<? extends INetworkMessage> getMessageClassById(int messageId) { return this.classToId.inverse().get(messageId); }
 	
-    public INetworkMessage createMessage(int messageId) throws IllegalArgumentException
+	public INetworkMessage createMessage(int messageId) throws IllegalArgumentException
 	{
 		try
 		{
@@ -55,8 +55,8 @@ public class MessageRegistry
 		}
 	}
 	
-    public int getMessageId(INetworkMessage message) { return this.getMessageId(message.getClass()); }
+	public int getMessageId(INetworkMessage message) { return this.getMessageId(message.getClass()); }
 	
-    public int getMessageId(Class<? extends INetworkMessage> messageClass) { return this.classToId.get(messageClass); }
+	public int getMessageId(Class<? extends INetworkMessage> messageClass) { return this.classToId.get(messageClass); }
 	
 }

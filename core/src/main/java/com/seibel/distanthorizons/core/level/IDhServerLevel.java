@@ -5,9 +5,9 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapp
 
 public interface IDhServerLevel extends IDhLevel, GeneratedFullDataFileHandler.IOnWorldGenCompleteListener
 {
-    void serverTick();
-    void doWorldGen();
+	void serverTick();
+	void doWorldGen();
 	
-    IServerLevelWrapper getServerLevelWrapper();
+	IServerLevelWrapper getServerLevelWrapper();
 	
 }

@@ -31,7 +31,7 @@ public class ThreadUtil
 			THREAD_CHANGE_LISTENERS_BY_THREAD_NAME.remove(name);
 		}
 		
-		RateLimitedThreadPoolExecutor executor = new RateLimitedThreadPoolExecutor(poolSize, runTimeRatioConfigEntry.get(), new DhThreadFactory("DH-" + name, Thread.NORM_PRIORITY+relativePriority));
+		RateLimitedThreadPoolExecutor executor = new RateLimitedThreadPoolExecutor(poolSize, runTimeRatioConfigEntry.get(), new DhThreadFactory("DH-" + name, Thread.NORM_PRIORITY + relativePriority));
 		
 		ConfigChangeListener<Double> changeListener = new ConfigChangeListener<>(runTimeRatioConfigEntry, (newRunTimeRatio) -> { executor.runTimeRatio = newRunTimeRatio; });
 		THREAD_CHANGE_LISTENERS_BY_THREAD_NAME.put(name, changeListener);
@@ -47,10 +47,10 @@ public class ThreadUtil
 		// this is what was being internally used by Executors.newFixedThreadPool
 		// I'm just calling it explicitly here so we can reference the more feature-rich
 		// ThreadPoolExecutor vs the more generic ExecutorService
-		return new ThreadPoolExecutor(/*corePoolSize*/poolSize, /*maxPoolSize*/poolSize,
+		return new ThreadPoolExecutor(/*corePoolSize*/ poolSize, /*maxPoolSize*/ poolSize,
 				0L, TimeUnit.MILLISECONDS,
 				new LinkedBlockingQueue<Runnable>(),
-				new DhThreadFactory("DH-" + name, Thread.NORM_PRIORITY+relativePriority));
+				new DhThreadFactory("DH-" + name, Thread.NORM_PRIORITY + relativePriority));
 	}
 	
 	public static ThreadPoolExecutor makeThreadPool(int poolSize, Class<?> clazz, int relativePriority) { return makeThreadPool(poolSize, clazz.getSimpleName(), relativePriority); }

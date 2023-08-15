@@ -18,9 +18,9 @@ public abstract class NetworkEventSource implements AutoCloseable
 	
 	protected final MessageHandler messageHandler = new MessageHandler();
 	protected String closeReason = null;
-	
-	
-	
+
+
+
 //	public NetworkEventSource()
 //	{
 //		this.registerHandler(HelloMessage.class, (helloMessage, channelContext) -> 
