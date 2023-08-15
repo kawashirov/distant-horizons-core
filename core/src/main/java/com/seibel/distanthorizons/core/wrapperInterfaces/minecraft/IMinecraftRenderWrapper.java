@@ -86,6 +86,7 @@ public interface IMinecraftRenderWrapper extends IBindable
 	 */
 	default HashSet<DhChunkPos> getVanillaRenderedChunks()
 	{
+		// FIXME: Is this actually required? Does it make a differance if it exists or not?
 		ISodiumAccessor sodium = ModAccessorInjector.INSTANCE.get(ISodiumAccessor.class);
 		return sodium==null ? getMaximumRenderedChunks() : sodium.getNormalRenderedChunks();
 	}
