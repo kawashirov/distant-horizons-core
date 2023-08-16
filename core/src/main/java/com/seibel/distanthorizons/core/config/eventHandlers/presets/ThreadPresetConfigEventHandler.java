@@ -125,7 +125,7 @@ public class ThreadPresetConfigEventHandler extends AbstractPresetConfigEventHan
 			new HashMap<EThreadPreset, Double>()
 			{{
 				this.put(EThreadPreset.MINIMAL_IMPACT, LOW_THREAD_COUNT_CPU ? 0.1 : 0.25);
-				this.put(EThreadPreset.LOW_IMPACT, getDataTransformerDefaultRunTimeRatio());
+				this.put(EThreadPreset.LOW_IMPACT, getChunkLodConverterDefaultRunTimeRatio());
 				this.put(EThreadPreset.BALANCED, LOW_THREAD_COUNT_CPU ? 0.75 : 1);
 				this.put(EThreadPreset.AGGRESSIVE, 1.0);
 				//this.put(EThreadPreset.I_PAID_FOR_THE_WHOLE_CPU, 1.0);
