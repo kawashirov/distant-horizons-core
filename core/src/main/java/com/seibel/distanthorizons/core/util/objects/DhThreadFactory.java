@@ -49,7 +49,7 @@ public class DhThreadFactory implements ThreadFactory
 	{
 		if (priority < Thread.MIN_PRIORITY || priority > Thread.MAX_PRIORITY)
 		{
-			throw new IllegalArgumentException("Thread priority should be [" + Thread.MIN_PRIORITY + "-" + Thread.MAX_PRIORITY + "]!");
+			throw new IllegalArgumentException("Thread priority [" + priority + "] out of bounds. Priority should be between [" + Thread.MIN_PRIORITY + "-" + Thread.MAX_PRIORITY + "]!");
 		}
 		
 		this.threadName = newThreadName + " Thread";
