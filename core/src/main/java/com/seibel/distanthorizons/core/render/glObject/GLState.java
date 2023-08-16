@@ -97,6 +97,8 @@ public class GLState
 	
 	public void restore()
 	{
+		// TODO this can cause issues if any of the values don't exist any more 
+		
 		GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, this.fbo);
 		if (this.blend)
 		{
