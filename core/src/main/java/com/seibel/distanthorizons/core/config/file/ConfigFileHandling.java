@@ -40,6 +40,10 @@ public class ConfigFileHandling
 		if (!Files.exists(configPath)) // Try to check if the config exists
 			try
 			{
+				if (!this.configPath.getParent().toFile().exists())
+				{
+					Files.createDirectory(this.configPath.getParent());
+				}
 				Files.createFile(configPath);
 			}
 			catch (IOException ex)
@@ -240,14 +244,13 @@ public class ConfigFileHandling
 				{
 					Files.createDirectory(this.configPath.getParent());
 				}
-				else
+				
+				boolean fileDeleted = Files.deleteIfExists(this.configPath);
+				if (!fileDeleted)
 				{
-					boolean fileDeleted = Files.deleteIfExists(this.configPath);
-					if (!fileDeleted)
-					{
-						System.err.println("Unable to delete config at path: ["+this.configPath+"]");
-					}
+					System.err.println("Unable to delete config at path: [" + this.configPath + "]");
 				}
+				
 				
 				Files.createFile(this.configPath);
 				config.load();
