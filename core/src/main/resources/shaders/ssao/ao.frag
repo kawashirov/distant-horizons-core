@@ -9,6 +9,7 @@ uniform float gSampleRad;
 uniform float gFactor;
 uniform float gPower;
 uniform mat4 gProj;
+uniform mat4 gProjInv;
 
 const int MAX_KERNEL_SIZE = 32;
 const float INV_MAX_KERNEL_SIZE_F = 1.0 / float(MAX_KERNEL_SIZE);
@@ -20,8 +21,7 @@ vec3 calcViewPosition(vec2 coords) {
     vec4 ndc = vec4(coords.xy, fragmentDepth, 1.0);
     ndc.xyz = ndc.xyz * 2.0 - 1.0;
 
-    // TODO: This inverse() call should be moved CPU side
-    vec4 vs_pos = inverse(gProj) * ndc;
+    vec4 vs_pos = gProjInv * ndc;
     return vs_pos.xyz / vs_pos.w;
 }
 
