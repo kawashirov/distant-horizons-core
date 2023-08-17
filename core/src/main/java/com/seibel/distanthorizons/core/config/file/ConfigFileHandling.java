@@ -246,10 +246,7 @@ public class ConfigFileHandling
 				}
 				
 				boolean fileDeleted = Files.deleteIfExists(this.configPath);
-				if (!fileDeleted)
-				{
-					System.err.println("Unable to delete config at path: [" + this.configPath + "]");
-				}
+				System.out.println("File at [" + this.configPath + "] was " + (fileDeleted? "": "not ") + "able to be deleted.");
 				
 				
 				Files.createFile(this.configPath);
