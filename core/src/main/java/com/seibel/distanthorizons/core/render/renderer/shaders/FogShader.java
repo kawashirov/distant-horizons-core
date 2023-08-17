@@ -49,7 +49,7 @@ public class FogShader extends AbstractShaderRenderer
 		// because disabling fog can cause the GLSL to optimize out most (if not all) uniforms
 		
 		
-		this.gModelViewProjectionUniform = this.shader.tryGetUniformLocation("gMvmProj");
+		this.gModelViewProjectionUniform = this.shader.tryGetUniformLocation("gMvmProjInv");
 		this.gDepthMapUniform = this.shader.tryGetUniformLocation("gDepthMap");
 		
 		// Fog uniforms
@@ -115,13 +115,13 @@ public class FogShader extends AbstractShaderRenderer
 		
 		return fogColor;
 	}
+
 	private Color getSpecialFogColor(float partialTicks) { return MC_RENDER.getSpecialFogColor(partialTicks); }
 	
 	public void setModelViewProjectionMatrix(Mat4f combinedModelViewProjectionMatrix)
 	{
 		this.shader.bind();
-		this.shader.setUniform(this.gModelViewProjectionUniform, combinedModelViewProjectionMatrix);
+		this.shader.setUniform(this.gModelViewProjectionUniform, combinedModelViewProjectionMatrix.invert());
 		this.shader.unbind();
 	}
-	
 }

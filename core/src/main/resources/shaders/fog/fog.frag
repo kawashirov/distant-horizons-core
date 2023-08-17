@@ -5,7 +5,7 @@ out vec4 fragColor;
 
 uniform sampler2D gDepthMap;
 // model view matrix and projection matrix
-uniform mat4 gMvmProj;
+uniform mat4 gMvmProjInv;
 
 uniform float fogScale;
 uniform float fogVerticalScale;
@@ -63,7 +63,7 @@ vec3 calcViewPosition(float fragmentDepth)
     ndc.xyz = ndc.xyz * 2.0 - 1.0;
 
     // TODO: This inverse() should be moved CPU side
-    vec4 eyeCoord = inverse(gMvmProj) * ndc;
+    vec4 eyeCoord = gMvmProjInv * ndc;
     return eyeCoord.xyz / eyeCoord.w;
 }
 
