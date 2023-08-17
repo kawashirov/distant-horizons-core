@@ -17,40 +17,30 @@ uniform vec3 gKernel[MAX_KERNEL_SIZE];
 
 vec3 calcViewPosition(vec2 coords) {
     float fragmentDepth = texture(gDepthMap, coords).r;
+    vec4 ndc = vec4(coords.xy, fragmentDepth, 1.0);
+    ndc.xyz = ndc.xyz * 2.0 - 1.0;
 
-    vec4 ndc = vec4(
-        coords.x * 2.0 - 1.0,
-        coords.y * 2.0 - 1.0,
-        fragmentDepth * 2.0 - 1.0,
-        1.0
-    );
-
+    // TODO: This inverse() call should be moved CPU side
     vec4 vs_pos = inverse(gProj) * ndc;
-    vs_pos.xyz = vs_pos.xyz / vs_pos.w;
-    return vs_pos.xyz;
+    return vs_pos.xyz / vs_pos.w;
 }
 
 void main()
 {
     vec3 viewPos = calcViewPosition(TexCoord);
-    vec3 viewNormal = normalize(cross(dFdy(viewPos.xyz), dFdx(viewPos.xyz)) * -1.0);
+    vec3 viewNormal = normalize(cross(dFdx(viewPos.xyz), dFdy(viewPos.xyz)));
 
-    vec3 randomVec = vec3(
-        0.0,
-        -1.0,
-        0.0
-    );
+    vec3 randomVec = vec3(0.0, -1.0, 0.0);
 
     vec3 tangent = normalize(randomVec - viewNormal * dot(randomVec, viewNormal));
     vec3 bitangent = cross(viewNormal, tangent);
     mat3 TBN = mat3(tangent, bitangent, viewNormal);
+
     float occlusion_factor = 0.0;
     for (int i = 0; i < MAX_KERNEL_SIZE; i++) {
-        vec3 samplePos = vec3(0.0) + (TBN * gKernel[i]);
-        samplePos = viewPos + samplePos * gSampleRad;
+        vec3 samplePos = TBN * gKernel[i] * gSampleRad;
 
-        vec4 offset = vec4(samplePos, 1.0);
-        offset = gProj * offset;
+        vec4 offset = gProj * vec4(samplePos + viewPos, 1.0);
         offset.xy /= offset.w;
         offset.xy = offset.xy * HALF_2 + HALF_2;
 
