@@ -95,7 +95,7 @@ void main()
             float nearFogThickness = getNearFogThickness(horizontalDist);
             float farFogThickness = getFarFogThickness(farDist);
             float heightFogThickness = getHeightFogThickness(heightDist);
-            float mixedFogThickness = mixFogThickness(nearFogThickness, farFogThickness, heightFogThickness)
+            float mixedFogThickness = mixFogThickness(nearFogThickness, farFogThickness, heightFogThickness);
             mixedFogThickness = clamp(mixedFogThickness, 0.0, 1.0);
 
             fragColor = vec4(fogColor.rgb, mixedFogThickness);
