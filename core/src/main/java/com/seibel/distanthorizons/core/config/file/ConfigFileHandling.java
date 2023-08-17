@@ -24,23 +24,23 @@ public class ConfigFileHandling
 	private static final Logger LOGGER = ConfigBase.LOGGER;
 	
 	public final ConfigBase configBase;
-	public final Path ConfigPath;
+	public final Path configPath;
 	
 	public ConfigFileHandling(ConfigBase configBase)
 	{
 		this.configBase = configBase;
-		ConfigPath = SingletonInjector.INSTANCE.get(IMinecraftSharedWrapper.class)
+		configPath = SingletonInjector.INSTANCE.get(IMinecraftSharedWrapper.class)
 				.getInstallationDirectory().toPath().resolve("config").resolve(this.configBase.modName + ".toml");
 	}
 	
 	/** Saves the entire config to the file */
 	public void saveToFile()
 	{
-		CommentedFileConfig config = CommentedFileConfig.builder(ConfigPath.toFile()).build();
-		if (!Files.exists(ConfigPath)) // Try to check if the config exists
+		CommentedFileConfig config = CommentedFileConfig.builder(configPath.toFile()).build();
+		if (!Files.exists(configPath)) // Try to check if the config exists
 			try
 			{
-				Files.createFile(ConfigPath);
+				Files.createFile(configPath);
 			}
 			catch (IOException ex)
 			{
@@ -66,7 +66,7 @@ public class ConfigFileHandling
 		catch (Exception e)
 		{
 			// If it fails to save, crash game
-			SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class).crashMinecraft("Failed to save config at [" + ConfigPath.toString() + "]", e);
+			SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class).crashMinecraft("Failed to save config at [" + configPath.toString() + "]", e);
 		}
 		config.close();
 	}
@@ -77,11 +77,11 @@ public class ConfigFileHandling
 	 */
 	public void loadFromFile()
 	{
-		CommentedFileConfig config = CommentedFileConfig.builder(ConfigPath.toFile()).build();
+		CommentedFileConfig config = CommentedFileConfig.builder(configPath.toFile()).build();
 		// Attempt to load the file and if it fails then save config to file
 		try
 		{
-			if (Files.exists(ConfigPath))
+			if (Files.exists(configPath))
 				config.load();
 			else
 			{
@@ -114,7 +114,7 @@ public class ConfigFileHandling
 		catch (Exception e)
 		{
 			// If it fails to save, crash game
-			SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class).crashMinecraft("Failed to save config at [" + ConfigPath.toString() + "]", e);
+			SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class).crashMinecraft("Failed to save config at [" + configPath.toString() + "]", e);
 		}
 		config.close();
 	}
@@ -125,7 +125,7 @@ public class ConfigFileHandling
 	// Save an entry when only given the entry
 	public void saveEntry(ConfigEntry<?> entry)
 	{
-		CommentedFileConfig config = CommentedFileConfig.builder(ConfigPath.toFile()).build();
+		CommentedFileConfig config = CommentedFileConfig.builder(configPath.toFile()).build();
 		loadConfig(config);
 		saveEntry(entry, config);
 		config.save();
@@ -151,7 +151,7 @@ public class ConfigFileHandling
 	// Loads an entry when only given the entry
 	public void loadEntry(ConfigEntry<?> entry)
 	{
-		CommentedFileConfig config = CommentedFileConfig.builder(ConfigPath.toFile()).autosave().build();
+		CommentedFileConfig config = CommentedFileConfig.builder(configPath.toFile()).autosave().build();
 		loadConfig(config);
 		loadEntry(entry, config);
 		config.close();
@@ -205,7 +205,7 @@ public class ConfigFileHandling
 	// Creates the comment for an entry when only given the entry
 	public void createComment(ConfigEntry<?> entry)
 	{
-		CommentedFileConfig config = CommentedFileConfig.builder(ConfigPath.toFile()).autosave().build();
+		CommentedFileConfig config = CommentedFileConfig.builder(configPath.toFile()).autosave().build();
 		loadConfig(config);
 		createComment(entry, config);
 		config.close();
@@ -236,18 +236,27 @@ public class ConfigFileHandling
 			System.out.println("Loading file failed because of this expectation:\n" + e);
 			try
 			{ // Now try remaking the file and loading it
-				if (!ConfigPath.getParent().toFile().exists())
-					Files.createDirectory(ConfigPath.getParent());
+				if (!this.configPath.getParent().toFile().exists())
+				{
+					Files.createDirectory(this.configPath.getParent());
+				}
 				else
-					Files.deleteIfExists(ConfigPath);
-				Files.createFile(ConfigPath);
+				{
+					boolean fileDeleted = Files.deleteIfExists(this.configPath);
+					if (!fileDeleted)
+					{
+						System.err.println("Unable to delete config at path: ["+this.configPath+"]");
+					}
+				}
+				
+				Files.createFile(this.configPath);
 				config.load();
 			}
 			catch (IOException ex)
 			{
 				System.out.println("Creating file failed");
 				ex.printStackTrace();
-				SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class).crashMinecraft("Loading file and resetting config file failed at path [" + ConfigPath + "]. Please check the file is ok and you have the permissions", ex);
+				SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class).crashMinecraft("Loading file and resetting config file failed at path [" + configPath + "]. Please check the file is ok and you have the permissions", ex);
 			}
 		}
 	}
