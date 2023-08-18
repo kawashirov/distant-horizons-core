@@ -10,6 +10,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftSha
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -246,8 +247,12 @@ public class ConfigFileHandling
 					Files.createDirectory(this.configPath.getParent());
 				}
 				
-				boolean fileDeleted = Files.deleteIfExists(this.configPath);
-				System.out.println("File at [" + this.configPath + "] was " + (fileDeleted? "": "not ") + "able to be deleted.");
+				try
+				{
+					boolean fileDeleted = Files.deleteIfExists(this.configPath);
+					System.out.println("File at [" + this.configPath + "] was " + (fileDeleted ? "" : "not ") + "able to be deleted.");
+				}
+				catch (AccessDeniedException ignored) { /* temporary fix due to windows/Intellij issues either locking or changing the permissions of the file */ }
 				
 				
 				try
