@@ -34,6 +34,8 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
+	public static final DhThreadFactory THREAD_FACTORY = new DhThreadFactory(ThreadUtil.THREAD_NAME_PREFIX + "Gen-Worker-Thread", Thread.MIN_PRIORITY);
+	
 	private final IDhApiWorldGenerator generator;
 	
 	/** contains the positions that need to be generated */
@@ -496,8 +498,6 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 	//==========================//
 	// executor handler methods //
 	//==========================//
-	
-	public static final DhThreadFactory THREAD_FACTORY = new DhThreadFactory("Gen-Worker-Thread", Thread.MIN_PRIORITY);
 	
 	/**
 	 * Creates a new executor. <br>
