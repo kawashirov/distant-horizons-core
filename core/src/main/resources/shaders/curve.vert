@@ -29,7 +29,7 @@ uniform float earthRadius;
  */
 void main()
 {
-    vPos = vPosition.x; // This is so it can be passed to the fragment shader
+    vPos = vPosition; // This is so it can be passed to the fragment shader
 
     vertexWorldPos = vPosition.xyz + modelOffset;
 
