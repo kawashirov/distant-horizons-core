@@ -2,6 +2,7 @@ package com.seibel.distanthorizons.core.generation;
 
 import com.seibel.distanthorizons.core.enums.EDhDirection;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.logging.SpamReducedLogger;
 import com.seibel.distanthorizons.core.pos.DhBlockPos;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
 import com.seibel.distanthorizons.core.util.LodUtil;
@@ -63,6 +64,7 @@ public class DhLightingEngine
 		
 		// find all adjacent chunks
 		// and get any necessary info from them
+		boolean warningLogged = false;
 		for (IChunkWrapper chunk : nearbyChunkList)
 		{
 			if (chunk != null && requestedAdjacentPositions.contains(chunk.getChunkPos()))
@@ -103,7 +105,19 @@ public class DhLightingEngine
 							// get the light
 							int maxY = chunk.getLightBlockingHeightMapValue(relX, relZ);
 							DhBlockPos skyLightPos = new DhBlockPos(chunk.getMinBlockX() + relX, maxY, chunk.getMinBlockZ() + relZ);
+							
+							if (skyLightPos.y < chunk.getMinBuildHeight() || skyLightPos.y > chunk.getMaxBuildHeight())
+							{
+								// this shouldn't normally happen
+								if (!warningLogged)
+								{
+									warningLogged = true;
+									LOGGER.debug("Lighting chunk at pos " + chunk.getChunkPos() + " may have a missing or incomplete heightmap. Chunk min/max [" + chunk.getMinBuildHeight() + "/" + chunk.getMaxBuildHeight() + "], skylight pos: " + skyLightPos);
+								}
+								continue;
+							}
 							skyLightPosQueue.add(new LightPos(skyLightPos, maxSkyLight));
+							
 							
 							// set the light
 							DhBlockPos relBlockPos = skyLightPos.convertToChunkRelativePos();
