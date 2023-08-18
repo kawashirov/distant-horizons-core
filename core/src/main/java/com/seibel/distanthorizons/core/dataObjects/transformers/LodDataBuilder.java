@@ -38,7 +38,7 @@ public class LodDataBuilder
 				// FIXME: The +1 offset to reproduce the old behavior. Remove this when we get per-face lighting
 				byte light = (byte) ((chunkWrapper.getBlockLight(x, lastY + 1, z) << 4) + chunkWrapper.getSkyLight(x, lastY + 1, z));
 				
-				int y = chunkWrapper.getLightBlockingHeightMapValue(x, z);
+				int y = chunkWrapper.getLightBlockingHeightMapValue(x, z) + 2;
 				
 				for (; y >= chunkWrapper.getMinBuildHeight(); y--)
 				{
