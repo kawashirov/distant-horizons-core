@@ -656,19 +656,6 @@ public class Config
 						*/
 						.build();
 				
-				public static ConfigEntry<ELightGenerationMode> worldGenLightingEngine = new ConfigEntry.Builder<ELightGenerationMode>()
-						.set(ELightGenerationMode.DISTANT_HORIZONS)
-						.comment(""
-								+ " How should Distant Horizons world generation chunk lighting be handled? \n"
-								+ "\n"
-								+ ELightGenerationMode.MINECRAFT + ": Use Minecraft's lighting engine to generate chunk lighting. \n"
-								+ "    Generally higher quality; but may crash MC's lighting engine if there is an issue. \n"
-								+ ELightGenerationMode.DISTANT_HORIZONS + ": Uses Distant Horizons' lighting engine to generate chunk lighting. \n"
-								+ "    May not exactly match MC's, but is more stable for large numbers of world generator threads. \n"
-								+ "\n"
-								+ "This will effect generation speed, but not rendering performance.")
-						.build();
-				
 				public static ConfigEntry<Integer> worldGenerationTimeoutLengthInSeconds = new ConfigEntry.Builder<Integer>()
 						.setMinDefaultMax(5, 60, 60 * 10/*10 minutes*/ )
 						.comment(""
