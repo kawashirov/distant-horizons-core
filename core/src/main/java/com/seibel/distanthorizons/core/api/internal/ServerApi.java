@@ -198,7 +198,7 @@ public class ServerApi
 				// not a perfect solution, but should prevent chunks from having completely broken lighting
 				List<IChunkWrapper> nearbyChunkList = new LinkedList<>();
 				nearbyChunkList.add(chunkWrapper);
-				DhLightingEngine.INSTANCE.lightChunks(chunkWrapper, nearbyChunkList, level.hasSkyLight() ? 15 : 0);
+				DhLightingEngine.INSTANCE.lightChunk(chunkWrapper, nearbyChunkList, level.hasSkyLight() ? 15 : 0);
 				chunkWrapper.setUseDhLighting(true);
 			}
 			

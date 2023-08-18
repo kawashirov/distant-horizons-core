@@ -10,7 +10,6 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This logic was roughly based on
@@ -36,7 +35,7 @@ public class DhLightingEngine
 	 * @param nearbyChunkList should also contain centerChunk
 	 * @param maxSkyLight should be a value between 0 and 15
 	 */
-	public void lightChunks(IChunkWrapper centerChunk, List<IChunkWrapper> nearbyChunkList, int maxSkyLight)
+	public void lightChunk(IChunkWrapper centerChunk, List<IChunkWrapper> nearbyChunkList, int maxSkyLight)
 	{
 		DhChunkPos centerChunkPos = centerChunk.getChunkPos();
 		
@@ -142,6 +141,7 @@ public class DhLightingEngine
 				(neighbourChunk, relBlockPos, newLightValue) -> neighbourChunk.setDhSkyLight(relBlockPos.x, relBlockPos.y, relBlockPos.z, newLightValue));
 		
 		
+		centerChunk.setIsDhLightCorrect(true);
 		LOGGER.trace("Finished generating lighting for chunk: [" + centerChunkPos + "]");
 	}
 	
@@ -221,18 +221,10 @@ public class DhLightingEngine
 	//================//
 	
 	@FunctionalInterface
-	interface IGetLightFunc
-	{
-		int getLight(IChunkWrapper chunk, DhBlockPos pos);
-		
-	}
+	interface IGetLightFunc { int getLight(IChunkWrapper chunk, DhBlockPos pos); }
 	
 	@FunctionalInterface
-	interface ISetLightFunc
-	{
-		void setLight(IChunkWrapper chunk, DhBlockPos pos, int lightValue);
-		
-	}
+	interface ISetLightFunc { void setLight(IChunkWrapper chunk, DhBlockPos pos, int lightValue); }
 	
 	private static class LightPos
 	{
