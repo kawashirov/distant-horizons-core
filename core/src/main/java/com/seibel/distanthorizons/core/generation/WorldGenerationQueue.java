@@ -17,6 +17,7 @@ import com.seibel.distanthorizons.core.file.fullDatafile.FullDataFileHandler;
 import com.seibel.distanthorizons.core.render.renderer.DebugRenderer;
 import com.seibel.distanthorizons.core.render.renderer.IDebugRenderable;
 import com.seibel.distanthorizons.core.util.ThreadUtil;
+import com.seibel.distanthorizons.core.util.objects.DhThreadFactory;
 import com.seibel.distanthorizons.core.util.objects.UncheckedInterruptedException;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IWrapperFactory;
@@ -496,6 +497,8 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 	// executor handler methods //
 	//==========================//
 	
+	public static final DhThreadFactory THREAD_FACTORY = new DhThreadFactory("Gen-Worker-Thread", Thread.MIN_PRIORITY);
+	
 	/**
 	 * Creates a new executor. <br>
 	 * Does nothing if an executor already exists.
@@ -523,7 +526,7 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 			worldGeneratorThreadPool.shutdown();
 		}
 		
-		worldGeneratorThreadPool = ThreadUtil.makeRateLimitedThreadPool(threadPoolSize, "DH-Gen-Worker-Thread", Thread.MIN_PRIORITY, Config.Client.Advanced.MultiThreading.runTimeRatioForWorldGenerationThreads);
+		worldGeneratorThreadPool = ThreadUtil.makeRateLimitedThreadPool(threadPoolSize, THREAD_FACTORY, Config.Client.Advanced.MultiThreading.runTimeRatioForWorldGenerationThreads);
 	}
 	
 	/**

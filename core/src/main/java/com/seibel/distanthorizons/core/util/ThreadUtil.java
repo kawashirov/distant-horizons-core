@@ -20,29 +20,43 @@ public class ThreadUtil
 	
 	// create rate limited thread pool //
 	
-	public static RateLimitedThreadPoolExecutor makeRateLimitedThreadPool(int poolSize, String name, ConfigEntry<Double> runTimeRatioConfigEntry) { return makeRateLimitedThreadPool(poolSize, name, DEFAULT_RELATIVE_PRIORITY, runTimeRatioConfigEntry); }
+	public static RateLimitedThreadPoolExecutor makeRateLimitedThreadPool(int poolSize, String name, ConfigEntry<Double> runTimeRatioConfigEntry) 
+	{
+		return makeRateLimitedThreadPool(poolSize, name, DEFAULT_RELATIVE_PRIORITY, runTimeRatioConfigEntry); 
+	}
 	public static RateLimitedThreadPoolExecutor makeRateLimitedThreadPool(int poolSize, String name, int relativePriority, ConfigEntry<Double> runTimeRatioConfigEntry)
 	{
+		DhThreadFactory threadFactory = new DhThreadFactory("DH-" + name, Thread.NORM_PRIORITY + relativePriority);
+		return makeRateLimitedThreadPool(poolSize, threadFactory, runTimeRatioConfigEntry);
+	}
+	public static RateLimitedThreadPoolExecutor makeRateLimitedThreadPool(int poolSize, DhThreadFactory threadFactory, ConfigEntry<Double> runTimeRatioConfigEntry)
+	{
 		// remove the old listener if one exists
-		if (THREAD_CHANGE_LISTENERS_BY_THREAD_NAME.containsKey(name))
+		if (THREAD_CHANGE_LISTENERS_BY_THREAD_NAME.containsKey(threadFactory.threadName))
 		{
 			// note: this assumes only one thread pool exists with a given name
-			THREAD_CHANGE_LISTENERS_BY_THREAD_NAME.get(name).close();
-			THREAD_CHANGE_LISTENERS_BY_THREAD_NAME.remove(name);
+			THREAD_CHANGE_LISTENERS_BY_THREAD_NAME.get(threadFactory.threadName).close();
+			THREAD_CHANGE_LISTENERS_BY_THREAD_NAME.remove(threadFactory.threadName);
 		}
 		
-		RateLimitedThreadPoolExecutor executor = makeRateLimitedThreadPool(poolSize, name, runTimeRatioConfigEntry.get(), relativePriority);
+		
+		RateLimitedThreadPoolExecutor executor = makeRateLimitedThreadPool(poolSize, runTimeRatioConfigEntry.get(), threadFactory);
 		
 		ConfigChangeListener<Double> changeListener = new ConfigChangeListener<>(runTimeRatioConfigEntry, (newRunTimeRatio) -> { executor.runTimeRatio = newRunTimeRatio; });
-		THREAD_CHANGE_LISTENERS_BY_THREAD_NAME.put(name, changeListener);
+		THREAD_CHANGE_LISTENERS_BY_THREAD_NAME.put(threadFactory.threadName, changeListener);
 		
 		return executor;
 	}
+	
 	
 	/** should only be used if there isn't a config controlling the run time ratio of this thread pool */
 	public static RateLimitedThreadPoolExecutor makeRateLimitedThreadPool(int poolSize, String name, Double runTimeRatio, int relativePriority) 
 	{
 		return new RateLimitedThreadPoolExecutor(poolSize, runTimeRatio, new DhThreadFactory("DH-" + name, Thread.NORM_PRIORITY + relativePriority));
+	}
+	public static RateLimitedThreadPoolExecutor makeRateLimitedThreadPool(int poolSize, Double runTimeRatio, DhThreadFactory threadFactory) 
+	{
+		return new RateLimitedThreadPoolExecutor(poolSize, runTimeRatio, threadFactory);
 	}
 	
 	
