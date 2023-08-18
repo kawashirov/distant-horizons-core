@@ -10,6 +10,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftSha
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -249,7 +250,12 @@ public class ConfigFileHandling
 				System.out.println("File at [" + this.configPath + "] was " + (fileDeleted? "": "not ") + "able to be deleted.");
 				
 				
-				Files.createFile(this.configPath);
+				try
+				{
+					Files.createFile(this.configPath);	
+				}
+				catch (FileAlreadyExistsException ignore) { /* temporary fix due to windows/Intellij issues either locking or changing the permissions of the file */ }
+				
 				config.load();
 			}
 			catch (IOException ex)
