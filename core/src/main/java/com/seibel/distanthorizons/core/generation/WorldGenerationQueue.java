@@ -18,6 +18,7 @@ import com.seibel.distanthorizons.core.render.renderer.DebugRenderer;
 import com.seibel.distanthorizons.core.render.renderer.IDebugRenderable;
 import com.seibel.distanthorizons.core.util.ThreadUtil;
 import com.seibel.distanthorizons.core.util.objects.DhThreadFactory;
+import com.seibel.distanthorizons.core.util.objects.RateLimitedThreadPoolExecutor;
 import com.seibel.distanthorizons.core.util.objects.UncheckedInterruptedException;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IWrapperFactory;
@@ -34,7 +35,7 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
-	public static final DhThreadFactory THREAD_FACTORY = new DhThreadFactory(ThreadUtil.THREAD_NAME_PREFIX + "Gen-Worker-Thread", Thread.MIN_PRIORITY);
+	public static final DhThreadFactory THREAD_FACTORY = new DhThreadFactory(ThreadUtil.THREAD_NAME_PREFIX + "World-Gen-Worker-Thread", Thread.MIN_PRIORITY);
 	
 	private final IDhApiWorldGenerator generator;
 	
@@ -73,7 +74,7 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 	private final HashMap<DhLodPos, StackTraceElement[]> alreadyGeneratedPosHashSet = new HashMap<>(MAX_ALREADY_GENERATED_COUNT);
 	private final Queue<DhLodPos> alreadyGeneratedPosQueue = new LinkedList<>();
 	
-	private static ExecutorService worldGeneratorThreadPool;
+	private static RateLimitedThreadPoolExecutor worldGeneratorThreadPool;
 	private static ConfigChangeListener<Integer> configListener;
 	
 	
@@ -527,6 +528,7 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 		}
 		
 		worldGeneratorThreadPool = ThreadUtil.makeRateLimitedThreadPool(threadPoolSize, THREAD_FACTORY, Config.Client.Advanced.MultiThreading.runTimeRatioForWorldGenerationThreads);
+		worldGeneratorThreadPool.setOnTerminatedEventHandler(WorldGenerationQueue::onWorldGenThreadPoolTerminated);
 	}
 	
 	/**
@@ -540,6 +542,12 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 			LOGGER.info("Stopping " + FullDataFileHandler.class.getSimpleName());
 			worldGeneratorThreadPool.shutdownNow();
 		}
+	}
+	
+	private static void onWorldGenThreadPoolTerminated()
+	{
+		LOGGER.debug("World generator thread pool terminated. Suggesting the JVM runs a garbage collection to clean up any loose world generation objects...");
+		System.gc();
 	}
 	
 	
