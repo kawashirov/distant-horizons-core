@@ -215,10 +215,11 @@ public abstract class AbstractMetaDataContainerFile
 		{
 			fileChannel.position(METADATA_SIZE_IN_BYTES);
 			
-			try (DhDataOutputStream compressedOut = new DhDataOutputStream(Channels.newOutputStream(fileChannel));
-					CheckedOutputStream checkedOut = new CheckedOutputStream(compressedOut, new Adler32())) // TODO: Is Adler32 ok?
+			try (CheckedOutputStream checkedOut = new CheckedOutputStream(Channels.newOutputStream(fileChannel), new Adler32()); // TODO: Is Adler32 ok?
+					DhDataOutputStream compressedOut = new DhDataOutputStream(checkedOut))
 			{
 				dataWriterFunc.writeBufferToFile(compressedOut);
+				compressedOut.flush();
 				this.baseMetaData.checksum = (int) checkedOut.getChecksum().getValue();
 			}
 			
