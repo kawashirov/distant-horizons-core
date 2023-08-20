@@ -31,6 +31,10 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 	
 	
 	
+	//==============//
+	// constructors //
+	//==============//
+	
 	public DhServerWorld()
 	{
 		super(EWorldEnvironment.Server_Only);
@@ -94,6 +98,12 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 //		});
 	}
 	
+	
+	
+	//=========//
+	// methods //
+	//=========//
+	
 	public void addPlayer(IServerPlayerWrapper serverPlayer)
 	{
 		//this.playersByUUID.put(serverPlayer.getUUID(), new RemotePlayer(serverPlayer));
@@ -149,6 +159,7 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 		if (this.levels.containsKey(wrapper))
 		{
 			LOGGER.info("Unloading level {} ", this.levels.get(wrapper));
+			wrapper.onUnload();
 			this.levels.remove(wrapper).close();
 		}
 	}

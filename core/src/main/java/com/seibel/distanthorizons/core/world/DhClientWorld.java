@@ -30,8 +30,7 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 
 //    private final NetworkClient networkClient;
 	
-	// TODO why does this executor have 2 threads?
-	public ExecutorService dhTickerThread = ThreadUtil.makeSingleThreadPool("DH Client World Ticker Thread", 2);
+	public ExecutorService dhTickerThread = ThreadUtil.makeSingleThreadPool("DH Client World Ticker Thread");
 	public EventLoop eventLoop = new EventLoop(this.dhTickerThread, this::_clientTick);
 	
 	
@@ -137,6 +136,7 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 		if (this.levels.containsKey(wrapper))
 		{
 			LOGGER.info("Unloading level " + this.levels.get(wrapper));
+			wrapper.onUnload();
 			this.levels.remove(wrapper).close();
 		}
 	}
