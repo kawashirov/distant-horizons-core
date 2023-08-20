@@ -46,16 +46,16 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 		this.saveStructure = new ClientOnlySaveStructure();
 		this.levels = new ConcurrentHashMap<>();
 		
-		if (Config.Client.Advanced.Multiplayer.enableServerNetworking.get())
-		{
-			// TODO server specific configs
-//			this.networkClient = new NetworkClient(MC_CLIENT.getCurrentServerIp(), 25049);
-			this.registerNetworkHandlers();
-		}
-		else
-		{
-//			this.networkClient = null;
-		}
+		//if (Config.Client.Advanced.Multiplayer.enableServerNetworking.get())
+		//{
+		//	// TODO server specific configs
+		//	this.networkClient = new NetworkClient(MC_CLIENT.getCurrentServerIp(), 25049);
+		//	this.registerNetworkHandlers();
+		//}
+		//else
+		//{
+		//	this.networkClient = null;
+		//}
 		
 		LOGGER.info("Started DhWorld of type " + this.environment);
 	}

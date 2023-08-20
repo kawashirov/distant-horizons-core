@@ -734,7 +734,8 @@ public class Config
 								+ "")
 						.build();
 				
-				public static ConfigEntry<Boolean> enableMultiverseNetworking = new ConfigEntry.Builder<Boolean>()
+				// not currently implemented
+				private static ConfigEntry<Boolean> enableMultiverseNetworking = new ConfigEntry.Builder<Boolean>()
 						.set(true)
 						.comment(""
 								+ "If true Distant Horizons will attempt to communicate with the connected \n"
@@ -742,7 +743,8 @@ public class Config
 								+ "")
 						.build();
 				
-				public static ConfigEntry<Boolean> enableServerNetworking = new ConfigEntry.Builder<Boolean>()
+				// not currently implemented
+				private static ConfigEntry<Boolean> enableServerNetworking = new ConfigEntry.Builder<Boolean>()
 						.set(false)
 						.comment(""
 								+ "Attention: this is only for developers and hasn't been implemented.\n"
