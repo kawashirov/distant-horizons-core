@@ -544,6 +544,14 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 	
 	
 	
+	//=========//
+	// getters //
+	//=========//
+	
+	public int getWaitingTaskCount() { return this.waitingTasks.size(); }
+	public int getInProgressTaskCount() { return this.inProgressGenTasksByLodPos.size(); }
+	
+	
 	//==========//
 	// shutdown //
 	//==========//
@@ -674,6 +682,11 @@ public class WorldGenerationQueue implements Closeable, IDebugRenderable
 		return index;
 	}
 	
+	
+	
+	//=======//
+	// debug //
+	//=======//
 	
 	@Override
 	public void debugRender(DebugRenderer r)

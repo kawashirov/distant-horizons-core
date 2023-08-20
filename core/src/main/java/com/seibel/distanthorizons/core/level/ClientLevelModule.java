@@ -202,7 +202,8 @@ public class ClientLevelModule implements Closeable
 				ClientRenderState.close();
 			}
 		}
-		f3Message.close();
+		
+		this.f3Message.close();
 	}
 	
 	

@@ -8,6 +8,7 @@ import com.seibel.distanthorizons.core.file.structure.AbstractSaveStructure;
 import com.seibel.distanthorizons.core.generation.BatchGenerator;
 import com.seibel.distanthorizons.core.generation.WorldGenerationQueue;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.logging.f3.F3Screen;
 import com.seibel.distanthorizons.core.pos.DhBlockPos2D;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapper;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.WorldGeneratorInjector;
@@ -18,53 +19,18 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class ServerLevelModule
 {
-	private static class WorldGenState
-	{
-		public final WorldGenerationQueue worldGenerationQueue;
-		WorldGenState(IDhServerLevel level)
-		{
-			IDhApiWorldGenerator worldGenerator = WorldGeneratorInjector.INSTANCE.get(level.getLevelWrapper());
-			if (worldGenerator == null)
-			{
-				// no override generator is bound, use the Core world generator
-				worldGenerator = new BatchGenerator(level);
-				// binding the core generator won't prevent other mods from binding their own generators
-				// since core world generator's should have the lowest override priority
-				WorldGeneratorInjector.INSTANCE.bind(level.getLevelWrapper(), worldGenerator);
-			}
-			this.worldGenerationQueue = new WorldGenerationQueue(worldGenerator);
-		}
-		
-		CompletableFuture<Void> closeAsync(boolean doInterrupt)
-		{
-			return this.worldGenerationQueue.startClosing(true, doInterrupt)
-					.exceptionally(ex ->
-							{
-								LOGGER.error("Error closing generation queue", ex);
-								return null;
-							}
-					).thenRun(this.worldGenerationQueue::close)
-					.exceptionally(ex ->
-					{
-						LOGGER.error("Error closing world gen", ex);
-						return null;
-					});
-		}
-		
-		public void tick(DhBlockPos2D targetPosForGeneration)
-		{
-			worldGenerationQueue.runCurrentGenTasksUntilBusy(targetPosForGeneration);
-		}
-		
-	}
-	
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	
 	public final IServerLevelWrapper levelWrapper;
 	public final IDhServerLevel parent;
 	public final AbstractSaveStructure saveStructure;
 	public final GeneratedFullDataFileHandler dataFileHandler;
 	public final AppliedConfigState<Boolean> worldGeneratorEnabledConfig;
+	
 	private final AtomicReference<WorldGenState> worldGenStateRef = new AtomicReference<>();
+	private final F3Screen.DynamicMessage worldGenF3Message;
+	
+	
 	
 	public ServerLevelModule(IDhServerLevel parent, IServerLevelWrapper levelWrapper, AbstractSaveStructure saveStructure)
 	{
@@ -73,12 +39,29 @@ public class ServerLevelModule
 		this.saveStructure = saveStructure;
 		this.dataFileHandler = new GeneratedFullDataFileHandler(parent, saveStructure);
 		this.worldGeneratorEnabledConfig = new AppliedConfigState<>(Config.Client.Advanced.WorldGenerator.enableDistantGeneration);
+		
+		this.worldGenF3Message = new F3Screen.DynamicMessage(() ->
+		{
+			WorldGenState worldGenState = this.worldGenStateRef.get();
+			if (worldGenState != null)
+			{
+				int waiting = worldGenState.worldGenerationQueue.getWaitingTaskCount();
+				int inProgress = worldGenState.worldGenerationQueue.getInProgressTaskCount();
+				
+				return "World Gen Tasks: "+waiting+", (in progress: "+inProgress+")";
+			}
+			else
+			{
+				return "World Gen Disabled";	
+			}
+		});
 	}
+	
+	
 	
 	//==============//
 	// tick methods //
 	//==============//
-	
 	
 	public void startWorldGen()
 	{
@@ -131,6 +114,8 @@ public class ServerLevelModule
 		}
 	}
 	
+	
+	
 	//===============//
 	// data handling //
 	//===============//
@@ -154,19 +139,55 @@ public class ServerLevelModule
 				worldGenState.closeAsync(true).join(); //TODO: Make it async.
 			}
 		}
-		dataFileHandler.close();
+		
+		this.dataFileHandler.close();
+		this.worldGenF3Message.close();
 	}
 	
 	
 	
+	//================//
+	// helper classes //
+	//================//
 	
-	//=======================//
-	// misc helper functions //
-	//=======================//
-	
-	public void dumpRamUsage()
+	private static class WorldGenState
 	{
-		//TODO
+		public final WorldGenerationQueue worldGenerationQueue;
+		WorldGenState(IDhServerLevel level)
+		{
+			IDhApiWorldGenerator worldGenerator = WorldGeneratorInjector.INSTANCE.get(level.getLevelWrapper());
+			if (worldGenerator == null)
+			{
+				// no override generator is bound, use the Core world generator
+				worldGenerator = new BatchGenerator(level);
+				// binding the core generator won't prevent other mods from binding their own generators
+				// since core world generator's should have the lowest override priority
+				WorldGeneratorInjector.INSTANCE.bind(level.getLevelWrapper(), worldGenerator);
+			}
+			this.worldGenerationQueue = new WorldGenerationQueue(worldGenerator);
+		}
+		
+		CompletableFuture<Void> closeAsync(boolean doInterrupt)
+		{
+			return this.worldGenerationQueue.startClosing(true, doInterrupt)
+					.exceptionally(ex ->
+							{
+								LOGGER.error("Error closing generation queue", ex);
+								return null;
+							}
+					).thenRun(this.worldGenerationQueue::close)
+					.exceptionally(ex ->
+					{
+						LOGGER.error("Error closing world gen", ex);
+						return null;
+					});
+		}
+		
+		public void tick(DhBlockPos2D targetPosForGeneration)
+		{
+			worldGenerationQueue.runCurrentGenTasksUntilBusy(targetPosForGeneration);
+		}
+		
 	}
 	
 }
