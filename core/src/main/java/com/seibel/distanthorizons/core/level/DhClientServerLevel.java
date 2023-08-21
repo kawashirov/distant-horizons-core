@@ -32,7 +32,6 @@ public class DhClientServerLevel extends DhLevel implements IDhClientLevel, IDhS
 	public final ClientLevelModule clientside;
 	
 	private final IServerLevelWrapper serverLevelWrapper;
-	public IClientLevelWrapper clientLevelWrapper;
 	
 	
 	
@@ -109,11 +108,7 @@ public class DhClientServerLevel extends DhLevel implements IDhClientLevel, IDhS
 		clientside.startRenderer();
 	}
 	
-	public void stopRenderer()
-	{
-		clientside.stopRenderer();
-		clientLevelWrapper = null;
-	}
+	public void stopRenderer() { this.clientside.stopRenderer(); }
 	
 	//================//
 	// level handling //

@@ -15,6 +15,7 @@ import com.seibel.distanthorizons.core.util.objects.EventLoop;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapper;
 
 import java.io.File;
 import java.util.concurrent.CompletableFuture;
@@ -167,6 +168,14 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 		for (DhClientLevel dhClientLevel : this.levels.values())
 		{
 			LOGGER.info("Unloading level " + dhClientLevel.getLevelWrapper().getDimensionType().getDimensionName());
+			
+			// level wrapper shouldn't be null, but just in case
+			IClientLevelWrapper clientLevelWrapper = dhClientLevel.getClientLevelWrapper();
+			if (clientLevelWrapper != null)
+			{
+				clientLevelWrapper.onUnload();
+			}
+			
 			dhClientLevel.close();
 		}
 		

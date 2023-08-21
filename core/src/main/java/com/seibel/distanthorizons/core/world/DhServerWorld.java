@@ -182,6 +182,14 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 		for (DhServerLevel level : this.levels.values())
 		{
 			LOGGER.info("Unloading level " + level.getLevelWrapper().getDimensionType().getDimensionName());
+			
+			// level wrapper shouldn't be null, but just in case
+			IServerLevelWrapper serverLevelWrapper = level.getServerLevelWrapper();
+			if (serverLevelWrapper != null)
+			{
+				serverLevelWrapper.onUnload();
+			}
+			
 			level.close();
 		}
 		
