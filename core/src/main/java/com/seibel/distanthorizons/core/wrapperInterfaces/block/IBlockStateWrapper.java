@@ -2,6 +2,8 @@ package com.seibel.distanthorizons.core.wrapperInterfaces.block;
 
 import com.seibel.distanthorizons.api.interfaces.block.IDhApiBlockStateWrapper;
 
+import java.util.List;
+
 /** A Minecraft version independent way of handling Blocks. */
 public interface IBlockStateWrapper extends IDhApiBlockStateWrapper
 {
