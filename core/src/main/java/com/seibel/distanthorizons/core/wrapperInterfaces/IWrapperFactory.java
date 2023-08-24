@@ -23,11 +23,12 @@ import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IBiomeWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.worldGeneration.AbstractBatchGenerationEnvironmentWrapper;
 import com.seibel.distanthorizons.coreapi.interfaces.dependencyInjection.IBindable;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * This handles creating abstract wrapper objects.
@@ -41,7 +42,11 @@ public interface IWrapperFactory extends IBindable
 	IBiomeWrapper deserializeBiomeWrapper(String str) throws IOException;
 	IBlockStateWrapper deserializeBlockStateWrapper(String str) throws IOException;
 	IBlockStateWrapper getAirBlockStateWrapper();
-	HashMap<String, ? extends IBlockStateWrapper> getRendererIgnoredBlocks();
+	/**
+	 * Returns the set of {@link IBlockStateWrapper}'s that shouldn't be rendered. <br>
+	 * Generally this contains blocks like: air, barriers, light blocks, etc. 
+	 */
+	HashSet<IBlockStateWrapper> getRendererIgnoredBlocks(ILevelWrapper levelWrapper);
 	
 	/**
 	 * Specifically designed to be used with the API.
