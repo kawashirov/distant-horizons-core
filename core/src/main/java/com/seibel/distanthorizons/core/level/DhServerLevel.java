@@ -67,21 +67,21 @@ public class DhServerLevel extends DhLevel implements IDhServerLevel
 	public void doWorldGen()
 	{
 		boolean shouldDoWorldGen = true; //todo;
-		boolean isWorldGenRunning = serverside.isWorldGenRunning();
+		boolean isWorldGenRunning = serverside.worldGenModule.isWorldGenRunning();
 		if (shouldDoWorldGen && !isWorldGenRunning)
 		{
 			// start world gen
-			serverside.startWorldGen();
+			serverside.worldGenModule.startWorldGen(serverside.dataFileHandler, new ServerLevelModule.WorldGenState(this));
 		}
 		else if (!shouldDoWorldGen && isWorldGenRunning)
 		{
 			// stop world gen
-			serverside.stopWorldGen();
+			serverside.worldGenModule.stopWorldGen(serverside.dataFileHandler);
 		}
 		
-		if (serverside.isWorldGenRunning())
+		if (serverside.worldGenModule.isWorldGenRunning())
 		{
-			serverside.worldGenTick(new DhBlockPos2D(0, 0)); // todo;
+			serverside.worldGenModule.worldGenTick(new DhBlockPos2D(0, 0)); // todo;
 		}
 	}
 	

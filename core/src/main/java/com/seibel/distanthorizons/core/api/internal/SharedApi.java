@@ -12,6 +12,7 @@ import com.seibel.distanthorizons.core.world.*;
 public class SharedApi
 {
 	private static AbstractDhWorld currentWorld;
+	private static int lastWorldGenTickDelta = 0;
 	
 	
 	
@@ -49,6 +50,16 @@ public class SharedApi
 			
 			// recommend that the garbage collector cleans up any objects from the old world
 			System.gc();
+		}
+	}
+	
+	public static void worldGenTick(Runnable worldGenRunnable)
+	{
+		lastWorldGenTickDelta--;
+		if (lastWorldGenTickDelta <= 0)
+		{
+			worldGenRunnable.run();
+			lastWorldGenTickDelta = 20;
 		}
 	}
 	
