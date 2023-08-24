@@ -8,8 +8,9 @@ import com.seibel.distanthorizons.core.config.types.enums.EConfigEntryAppearance
  *
  * @author coolGi
  */
+// Note for devs: The "S" is the class that is extending this
 public abstract class AbstractConfigType<T, S>
-{ // The S is the class that is extending this
+{
 	public String category = "";    // This should only be set once in the init
 	public String name;            // This should only be set once in the init
 	protected T value;
@@ -74,11 +75,13 @@ public abstract class AbstractConfigType<T, S>
 		
 		
 		// Put this into your own builder
+		@SuppressWarnings("unchecked")
 		public S setAppearance(EConfigEntryAppearance newAppearance)
 		{
 			this.tmpAppearance = newAppearance;
 			return (S) this;
 		}
+		@SuppressWarnings("unchecked")
 		public S set(T newValue)
 		{
 			this.tmpValue = newValue;

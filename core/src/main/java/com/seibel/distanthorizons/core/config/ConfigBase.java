@@ -22,7 +22,7 @@ import java.util.*;
 // Init the config after singletons have been blinded
 public class ConfigBase
 {
-	/** Our own config instance, don't modify */
+	/** Our own config instance, don't modify unless you are the DH mod */
 	public static ConfigBase INSTANCE;
 	public ConfigFileHandling configFileINSTANCE;
 	
@@ -31,24 +31,27 @@ public class ConfigBase
 	public final String modName;
 	public final int configVersion;
 	
+	
+	
 	/**
-	 * What the config works with
-	 *
-	 * Enum
-	 * Boolean
-	 * Byte
-	 * Integer
-	 * Double
-	 * Short
-	 * Long
-	 * Float
-	 * String
-	 *
-	 * // Below, "T" should be a value from above
-	 * List<T>
-	 * ArrayList<T>
-	 * Map<String, T>
-	 * HashMap<String, T>
+	 *      What the config works with
+	 * <br> 
+	 * <br> {@link Enum}
+	 * <br> {@link Boolean}
+	 * <br> {@link Byte}
+	 * <br> {@link Integer}
+	 * <br> {@link Double}
+	 * <br> {@link Short}
+	 * <br> {@link Long}
+	 * <br> {@link Float}
+	 * <br> {@link String}
+	 * <br> 
+	 * <br> // Below, "T" should be a value from above
+	 * <br> // Note: This is not checked, so we trust that you are doing the right thing
+	 * <br> List<T>
+	 * <br> ArrayList<T>
+	 * <br> Map<String, T>
+	 * <br> HashMap<String, T>
 	 */
 	public static final List<Class<?>> acceptableInputs = new ArrayList<Class<?>>()
 	{{
@@ -102,7 +105,7 @@ public class ConfigBase
 				}
 				catch (IllegalAccessException exception)
 				{
-					exception.printStackTrace();
+					LOGGER.warn(exception);
 				}
 				
 				AbstractConfigType<?, ?> entry = entries.get(entries.size() - 1);
@@ -151,10 +154,11 @@ public class ConfigBase
 	 * @param checkEnums Checks if all the lang for the enum's exist
 	 */
 	// This is just to re-format the lang or check if there is something in the lang that is missing
+	@SuppressWarnings("unchecked")
 	public String generateLang(boolean onlyShowNew, boolean checkEnums)
 	{
 		ILangWrapper langWrapper = SingletonInjector.INSTANCE.get(ILangWrapper.class);
-		List<Class<? extends Enum>> enumList = new ArrayList<>();
+		List<Class<? extends Enum<?>>> enumList = new ArrayList<>();
 		
 		String generatedLang = "";
 		
@@ -168,7 +172,7 @@ public class ConfigBase
 			
 			if (checkEnums && entry.getType().isEnum() && !enumList.contains(entry.getType()))
 			{ // Put it in an enum list to work with at the end
-				enumList.add((Class<? extends Enum>) entry.getType());
+				enumList.add((Class<? extends Enum<?>>) entry.getType());
 			}
 			if (!onlyShowNew || langWrapper.langExists(entryPrefix))
 			{
