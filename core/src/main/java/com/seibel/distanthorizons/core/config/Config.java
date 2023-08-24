@@ -1147,10 +1147,10 @@ public class Config
 							.set(new HashMap<String, String>())
 							.build();
 					
-					public static ConfigUIButton uiButtonTest = new ConfigUIButton(() -> {
-						System.setProperty("java.awt.headless", "false"); // Required to make it work
-						JOptionPane.showMessageDialog(null, "Button pressed!", "UITester dialog", JOptionPane.INFORMATION_MESSAGE);
-					});
+					public static ConfigUIButton uiButtonTest = new ConfigUIButton(() -> { new Thread(() -> {
+                        System.setProperty("java.awt.headless", "false"); // Required to make it work
+                        JOptionPane.showMessageDialog(null, "Button pressed!", "UITester dialog", JOptionPane.INFORMATION_MESSAGE);
+                    });});
 					
 					public static ConfigCategory categoryTest = new ConfigCategory.Builder().set(CategoryTest.class).build();
 					
