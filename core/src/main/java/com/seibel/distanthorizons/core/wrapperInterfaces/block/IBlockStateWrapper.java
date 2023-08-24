@@ -5,6 +5,7 @@ import com.seibel.distanthorizons.api.interfaces.block.IDhApiBlockStateWrapper;
 /** A Minecraft version independent way of handling Blocks. */
 public interface IBlockStateWrapper extends IDhApiBlockStateWrapper
 {
+	/** will only work if a level is currently loaded */
 	String serialize();
 	
 	/**

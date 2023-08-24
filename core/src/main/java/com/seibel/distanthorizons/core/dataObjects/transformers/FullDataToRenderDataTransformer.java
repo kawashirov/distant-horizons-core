@@ -18,10 +18,12 @@ import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.core.util.FullDataPointUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.RenderDataPointUtil;
+import com.seibel.distanthorizons.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.distanthorizons.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IBiomeWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.distanthorizons.coreapi.util.BitShiftUtil;
+
+import java.util.HashSet;
 
 /**
  * Handles converting {@link ChunkSizedFullDataAccessor}, {@link IIncompleteFullDataSource},
@@ -30,7 +32,6 @@ import com.seibel.distanthorizons.coreapi.util.BitShiftUtil;
 public class FullDataToRenderDataTransformer
 {
 	private static final IWrapperFactory WRAPPER_FACTORY = SingletonInjector.INSTANCE.get(IWrapperFactory.class);
-	private static final IBlockStateWrapper AIR = WRAPPER_FACTORY.getAirBlockStateWrapper();
 	
 	
 	
@@ -290,6 +291,7 @@ public class FullDataToRenderDataTransformer
 		boolean colorBelowWithAvoidedBlocks = Config.Client.Advanced.Graphics.Quality.tintWithAvoidedBlocks.get();
 		
 		FullDataPointIdMap fullDataMapping = data.getMapping();
+		HashSet<IBlockStateWrapper> blockStatesToIgnore = WRAPPER_FACTORY.getRendererIgnoredBlocks(level.getLevelWrapper());
 		
 		boolean isVoid = true;
 		int colorToApplyToNextBlock = -1;
@@ -305,9 +307,10 @@ public class FullDataToRenderDataTransformer
 			int light = FullDataPointUtil.getLight(fullData);
 			IBiomeWrapper biome = fullDataMapping.getBiomeWrapper(id);
 			IBlockStateWrapper block = fullDataMapping.getBlockStateWrapper(id);
-			if (block.equals(AIR))
+			
+			if (blockStatesToIgnore.contains(block))
 			{
-				// we don't render air
+				// Don't render: air, barriers, light blocks, etc.
 				continue;
 			}
 			
