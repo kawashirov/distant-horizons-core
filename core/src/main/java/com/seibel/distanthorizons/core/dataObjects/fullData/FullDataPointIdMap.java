@@ -7,6 +7,7 @@ import com.seibel.distanthorizons.core.util.objects.dataStreams.DhDataOutputStre
 import com.seibel.distanthorizons.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IWrapperFactory;
+import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -182,7 +183,7 @@ public class FullDataPointIdMap
 	}
 	
 	/** Creates a new IdBiomeBlockStateMap from the given UTF formatted stream */
-	public static FullDataPointIdMap deserialize(DhDataInputStream inputStream, DhSectionPos pos) throws IOException, InterruptedException
+	public static FullDataPointIdMap deserialize(DhDataInputStream inputStream, DhSectionPos pos, ILevelWrapper levelWrapper) throws IOException, InterruptedException
 	{
 		int entityCount = inputStream.readInt();
 		
@@ -193,7 +194,7 @@ public class FullDataPointIdMap
 		for (int i = 0; i < entityCount; i++)
 		{
 			String entryString = inputStream.readUTF();
-			Entry newEntry = Entry.deserialize(entryString);
+			Entry newEntry = Entry.deserialize(entryString, levelWrapper);
 			newMap.entryList.add(newEntry);
 			
 			if (RUN_SERIALIZATION_DUPLICATE_VALIDATION)
@@ -280,7 +281,7 @@ public class FullDataPointIdMap
 			
 			Entry other = (Entry) otherObj;
 			return other.biome.serialize().equals(this.biome.serialize())
-					&& other.blockState.serialize().equals(this.blockState.serialize());
+					&& other.blockState.getSerialString().equals(this.blockState.getSerialString());
 		}
 		
 		@Override
@@ -288,9 +289,9 @@ public class FullDataPointIdMap
 		
 		
 		
-		public String serialize() { return this.biome.serialize() + BLOCK_STATE_SEPARATOR_STRING + this.blockState.serialize(); }
+		public String serialize() { return this.biome.serialize() + BLOCK_STATE_SEPARATOR_STRING + this.blockState.getSerialString(); }
 		
-		public static Entry deserialize(String str) throws IOException, InterruptedException
+		public static Entry deserialize(String str, ILevelWrapper levelWrapper) throws IOException, InterruptedException
 		{
 			String[] stringArray = str.split(BLOCK_STATE_SEPARATOR_STRING);
 			if (stringArray.length != 2)
@@ -305,7 +306,7 @@ public class FullDataPointIdMap
 			}
 			
 			IBiomeWrapper biome = WRAPPER_FACTORY.deserializeBiomeWrapper(stringArray[0]);
-			IBlockStateWrapper blockState = WRAPPER_FACTORY.deserializeBlockStateWrapper(stringArray[1]);
+			IBlockStateWrapper blockState = WRAPPER_FACTORY.deserializeBlockStateWrapper(stringArray[1], levelWrapper);
 			return new Entry(biome, blockState);
 		}
 		

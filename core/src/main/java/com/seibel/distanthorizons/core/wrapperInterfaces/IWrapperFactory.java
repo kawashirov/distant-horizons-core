@@ -40,7 +40,7 @@ public interface IWrapperFactory extends IBindable
 {
 	AbstractBatchGenerationEnvironmentWrapper createBatchGenerator(IDhLevel targetLevel);
 	IBiomeWrapper deserializeBiomeWrapper(String str) throws IOException;
-	IBlockStateWrapper deserializeBlockStateWrapper(String str) throws IOException;
+	IBlockStateWrapper deserializeBlockStateWrapper(String str, ILevelWrapper levelWrapper) throws IOException;
 	IBlockStateWrapper getAirBlockStateWrapper();
 	/**
 	 * Returns the set of {@link IBlockStateWrapper}'s that shouldn't be rendered. <br>

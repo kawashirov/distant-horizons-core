@@ -17,6 +17,7 @@ import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.objects.dataStreams.DhDataInputStream;
 import com.seibel.distanthorizons.core.util.objects.dataStreams.DhDataOutputStream;
 import com.seibel.distanthorizons.core.dataObjects.fullData.FullDataPointIdMap;
+import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.distanthorizons.coreapi.util.BitShiftUtil;
 import org.apache.logging.log4j.Logger;
 
@@ -232,7 +233,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 		this.mapping.serialize(outputStream);
 	}
 	@Override
-	public FullDataPointIdMap readIdMappings(long[][] dataPoints, DhDataInputStream inputStream) throws IOException, InterruptedException
+	public FullDataPointIdMap readIdMappings(long[][] dataPoints, DhDataInputStream inputStream, ILevelWrapper levelWrapper) throws IOException, InterruptedException
 	{
 		int guardByte = inputStream.readInt();
 		if (guardByte != IFullDataSource.DATA_GUARD_BYTE)
@@ -240,7 +241,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 			throw new IOException("Invalid data content end guard for ID mapping");
 		}
 		
-		return FullDataPointIdMap.deserialize(inputStream, this.sectionPos);
+		return FullDataPointIdMap.deserialize(inputStream, this.sectionPos, levelWrapper);
 	}
 	@Override
 	public void setIdMapping(FullDataPointIdMap mappings) { this.mapping.mergeAndReturnRemappedEntityIds(mappings); }

@@ -17,6 +17,7 @@ import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.objects.dataStreams.DhDataInputStream;
 import com.seibel.distanthorizons.core.util.objects.dataStreams.DhDataOutputStream;
 import com.seibel.distanthorizons.core.dataObjects.fullData.FullDataPointIdMap;
+import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.distanthorizons.coreapi.util.BitShiftUtil;
 import org.apache.logging.log4j.Logger;
 
@@ -350,7 +351,7 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 	
 	
 	@Override
-	public FullDataPointIdMap readIdMappings(long[][][] dataPoints, DhDataInputStream inputStream) throws IOException, InterruptedException
+	public FullDataPointIdMap readIdMappings(long[][][] dataPoints, DhDataInputStream inputStream, ILevelWrapper levelWrapper) throws IOException, InterruptedException
 	{
 		// mark the start of the ID data
 		int idMappingStartByte = inputStream.readInt();
@@ -361,7 +362,7 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 		}
 		
 		// deserialize the ID data
-		return FullDataPointIdMap.deserialize(inputStream, this.sectionPos);
+		return FullDataPointIdMap.deserialize(inputStream, this.sectionPos, levelWrapper);
 	}
 	@Override
 	public void writeIdMappings(DhDataOutputStream dataOutputStream) throws IOException

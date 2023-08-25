@@ -8,6 +8,7 @@ import com.seibel.distanthorizons.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.distanthorizons.core.util.objects.dataStreams.DhDataInputStream;
 import com.seibel.distanthorizons.core.util.objects.dataStreams.DhDataOutputStream;
 import com.seibel.distanthorizons.core.util.objects.dataStreams.*;
+import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 
 import java.io.IOException;
 
@@ -54,7 +55,7 @@ public interface IStreamableFullDataSource<SummaryDataType extends IStreamableFu
 		this.setDataPoints(dataPoints);
 		
 		
-		FullDataPointIdMap mapping = this.readIdMappings(dataPoints, inputStream);
+		FullDataPointIdMap mapping = this.readIdMappings(dataPoints, inputStream, level.getLevelWrapper());
 		this.setIdMapping(mapping);
 		
 	}
@@ -96,7 +97,7 @@ public interface IStreamableFullDataSource<SummaryDataType extends IStreamableFu
 	
 	
 	void writeIdMappings(DhDataOutputStream outputStream) throws IOException;
-	FullDataPointIdMap readIdMappings(DataContainerType dataPoints, DhDataInputStream inputStream) throws IOException, InterruptedException;
+	FullDataPointIdMap readIdMappings(DataContainerType dataPoints, DhDataInputStream inputStream, ILevelWrapper levelWrapper) throws IOException, InterruptedException;
 	void setIdMapping(FullDataPointIdMap mappings);
 	
 	
