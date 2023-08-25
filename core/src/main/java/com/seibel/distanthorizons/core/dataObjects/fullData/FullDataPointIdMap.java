@@ -280,7 +280,7 @@ public class FullDataPointIdMap
 				return false;
 			
 			Entry other = (Entry) otherObj;
-			return other.biome.serialize().equals(this.biome.serialize())
+			return other.biome.getSerialString().equals(this.biome.getSerialString())
 					&& other.blockState.getSerialString().equals(this.blockState.getSerialString());
 		}
 		
@@ -289,7 +289,7 @@ public class FullDataPointIdMap
 		
 		
 		
-		public String serialize() { return this.biome.serialize() + BLOCK_STATE_SEPARATOR_STRING + this.blockState.getSerialString(); }
+		public String serialize() { return this.biome.getSerialString() + BLOCK_STATE_SEPARATOR_STRING + this.blockState.getSerialString(); }
 		
 		public static Entry deserialize(String str, ILevelWrapper levelWrapper) throws IOException, InterruptedException
 		{
@@ -305,7 +305,7 @@ public class FullDataPointIdMap
 				throw new InterruptedException(FullDataPointIdMap.class.getSimpleName() + " task interrupted.");
 			}
 			
-			IBiomeWrapper biome = WRAPPER_FACTORY.deserializeBiomeWrapper(stringArray[0]);
+			IBiomeWrapper biome = WRAPPER_FACTORY.deserializeBiomeWrapper(stringArray[0], levelWrapper);
 			IBlockStateWrapper blockState = WRAPPER_FACTORY.deserializeBlockStateWrapper(stringArray[1], levelWrapper);
 			return new Entry(biome, blockState);
 		}
