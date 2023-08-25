@@ -64,7 +64,7 @@ public abstract class AbstractPresetConfigEventHandler<TPresetEnum extends Enum<
 	public void onConfigValueSet()
 	{
 		// don't try modifying the config before it's been loaded from file
-		if (this.configList.get(0).configEntry.configBase == null) // If the config is not initialised, then this should not be ran (so it checks the first config item)
+		if (!Config.loaded)
 		{
 			return;
 		}
