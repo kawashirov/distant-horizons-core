@@ -16,7 +16,6 @@ import org.lwjgl.opengl.GL32;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-// TODO: Move over to SSAOShader
 // For some reason this version looks slightly different to that, even tough there isnt much visible change in the code
 public class SSAORenderer
 {
