@@ -34,9 +34,9 @@ public class DhApi
 	/** 
 	 * If you can see this Java Doc, this can be ignored. <br>
 	 * This is just to you know that Javadocs are available and that you should use the API jar
-	 * instead of the full mod jar.
+	 * instead of the full mod jar. <br><br>
 	 * 
-	 * @apiNote Don't use this string in your code. It may change and is only for reference.
+	 * Note: Don't use this string in your code. It may change and is only for reference.
 	 */
 	public static String READ_ME = 
 			"If you don't see Javadocs something is wrong. \n" +
@@ -48,12 +48,10 @@ public class DhApi
 			"Please refer to the example API project or the DH Developer Wiki for additional information " +
 			"and suggested setup. \n" + // DH Dev note: no links were included to prevent link rot. 
 			"";
-	/** @apiNote Don't use the result of this method in your code. It may change and is only for reference. */
 	public static String readMe() { return READ_ME; }
 	/** 
 	 * This is just a humorous way to reference the {@link DhApi#READ_ME} constant string and hopefully peak a few people's attention
 	 * vs the relatively boring "readMe".
-	 * @apiNote Don't use the result of this method in your code. It may change and is only for reference. 
 	 */
 	public static String heyYou_YoureFinallyAwake() { return READ_ME; } 
 	
