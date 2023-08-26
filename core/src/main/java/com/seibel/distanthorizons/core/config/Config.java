@@ -1093,6 +1093,26 @@ public class Config
 						.addListener(UnsafeValuesConfigListener.INSTANCE)
 						.build();
 				
+				public static ConfigEntry<Boolean> overrideVanillaGLLogger = new ConfigEntry.Builder<Boolean>()
+						.set(ModInfo.IS_DEV_BUILD)
+						.comment(""
+								+ "Requires a reboot to change. \n"
+								+ "")
+						.build();
+				
+				public static ConfigEntry<EGLErrorHandlingMode> glErrorHandlingMode = new ConfigEntry.Builder<EGLErrorHandlingMode>()
+						.set(ModInfo.IS_DEV_BUILD ? EGLErrorHandlingMode.LOG : EGLErrorHandlingMode.IGNORE)
+						.comment(""
+								+ "Defines how OpenGL errors are handled. \n"
+								+ "May incorrectly catch OpenGL errors thrown by other mods. \n"
+								+ "\n"
+								+ EGLErrorHandlingMode.IGNORE + ": Do nothing. \n"
+								+ EGLErrorHandlingMode.LOG + ": write an error to the log. \n"
+								+ EGLErrorHandlingMode.LOG_THROW + ": write to the log and throw an exception. \n"
+								+ "           Warning: this should only be enabled when debugging the LOD renderer \n" 
+								+ "           as it may break Minecraft's renderer when an exception is thrown. \n"
+								+ "")
+						.build();
 				
 				// can be set to public inorder to show in the config file and UI
 				public static ConfigCategory exampleConfigScreen = new ConfigCategory.Builder()
