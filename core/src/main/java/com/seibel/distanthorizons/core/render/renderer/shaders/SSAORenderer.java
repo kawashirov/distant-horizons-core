@@ -1,7 +1,6 @@
 package com.seibel.distanthorizons.core.render.renderer.shaders;
 
 import com.seibel.distanthorizons.api.enums.config.EGpuUploadMethod;
-import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.render.glObject.GLState;
 import com.seibel.distanthorizons.core.render.glObject.buffer.GLVertexBuffer;
@@ -23,6 +22,7 @@ public class SSAORenderer
 	
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	
+	private static final int MAX_KERNEL_SIZE = 128;
 	private static final float[] box_vertices = {
 			-1, -1,
 			1, -1,
@@ -33,13 +33,13 @@ public class SSAORenderer
 	};
 	
 	
-	ShaderProgram ssaoShader;
-	ShaderProgram applyShader;
-	GLVertexBuffer boxBuffer;
-	VertexAttribute va;
-	boolean init = false;
 	
-	private static final int MAX_KERNEL_SIZE = 128;
+	private ShaderProgram ssaoShader;
+	private ShaderProgram applyShader;
+	private GLVertexBuffer boxBuffer;
+	private VertexAttribute va;
+	private boolean init = false;
+	
 	private float[] kernel = new float[MAX_KERNEL_SIZE * 3];
 	
 	private int width = -1;
@@ -48,56 +48,99 @@ public class SSAORenderer
 	
 	private int ssaoTexture = -1;
 	
+	// ssao uniforms
+	private final SsaoShaderUniforms ssaoShaderUniforms = new SsaoShaderUniforms();
+	private static class SsaoShaderUniforms
+	{
+		public int gProjUniform;
+		public int gSampleRadUniform;
+		public int gFactorUniform;
+		public int gPowerUniform;
+		public int gKernelUniform;
+		public int gDepthMapUniform;
+	}
 	
+	// apply uniforms
+	private final ApplyShaderUniforms applyShaderUniforms = new ApplyShaderUniforms();
+	private static class ApplyShaderUniforms
+	{
+		public int gSSAOMapUniform;
+		public int gDepthMapUniform;
+	}
+	
+	
+	
+	//=============//
+	// constructor //
+	//=============//
 	
 	private SSAORenderer() { }
 	
 	public void init()
 	{
-		if (init) return;
+		if (this.init)
+		{
+			return;
+		}
 		
-		init = true;
-		va = VertexAttribute.create();
-		va.bind();
+		
+		this.init = true;
+		this.va = VertexAttribute.create();
+		this.va.bind();
 		// Pos
-		va.setVertexAttribute(0, 0, VertexAttribute.VertexPointer.addVec2Pointer(false));
-		va.completeAndCheck(Float.BYTES * 2);
-		ssaoShader = new ShaderProgram("shaders/normal.vert", "shaders/ssao/ao.frag",
+		this.va.setVertexAttribute(0, 0, VertexAttribute.VertexPointer.addVec2Pointer(false));
+		this.va.completeAndCheck(Float.BYTES * 2);
+		this.ssaoShader = new ShaderProgram("shaders/normal.vert", "shaders/ssao/ao.frag",
 				"fragColor", new String[]{"vPosition"});
 		
-		applyShader = new ShaderProgram("shaders/normal.vert", "shaders/ssao/apply-frag.frag",
+		this.applyShader = new ShaderProgram("shaders/normal.vert", "shaders/ssao/apply-frag.frag",
 				"fragColor", new String[]{"vPosition"});
+		
+		
+		
+		// SSAO uniform setup
+		this.ssaoShaderUniforms.gProjUniform = this.ssaoShader.getUniformLocation("gProj");
+		this.ssaoShaderUniforms.gSampleRadUniform = this.ssaoShader.getUniformLocation("gSampleRad");
+		this.ssaoShaderUniforms.gFactorUniform = this.ssaoShader.getUniformLocation("gFactor");
+		this.ssaoShaderUniforms.gPowerUniform = this.ssaoShader.getUniformLocation("gPower");
+		this.ssaoShaderUniforms.gKernelUniform = this.ssaoShader.getUniformLocation("gKernel");
+		this.ssaoShaderUniforms.gDepthMapUniform = this.ssaoShader.getUniformLocation("gDepthMap");
+		
+		// Apply uniform setup
+		this.applyShaderUniforms.gSSAOMapUniform = this.applyShader.getUniformLocation("gSSAOMap");
+		this.applyShaderUniforms.gDepthMapUniform = this.applyShader.getUniformLocation("gDepthMap");
+		
 		
 		
 		// Generate kernel
-		kernel = genKernel();
+		this.kernel = genKernel();
 		// Framebuffer
-		createBuffer();
+		this.createBuffer();
 	}
 	
 	private void createFramebuffer(int width, int height)
 	{
-		if (ssaoFramebuffer != -1)
+		if (this.ssaoFramebuffer != -1)
 		{
-			GL32.glDeleteFramebuffers(ssaoFramebuffer);
-			ssaoFramebuffer = -1;
+			GL32.glDeleteFramebuffers(this.ssaoFramebuffer);
+			this.ssaoFramebuffer = -1;
 		}
 		
-		if (ssaoTexture != -1)
+		if (this.ssaoTexture != -1)
 		{
-			GL32.glDeleteTextures(ssaoTexture);
-			ssaoTexture = -1;
+			GL32.glDeleteTextures(this.ssaoTexture);
+			this.ssaoTexture = -1;
 		}
 		
-		ssaoFramebuffer = GL32.glGenFramebuffers();
-		GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, ssaoFramebuffer);
+		this.ssaoFramebuffer = GL32.glGenFramebuffers();
+		GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, this.ssaoFramebuffer);
 		
-		ssaoTexture = GL32.glGenTextures();
-		GL32.glBindTexture(GL32.GL_TEXTURE_2D, ssaoTexture);
+		this.ssaoTexture = GL32.glGenTextures();
+		GL32.glBindTexture(GL32.GL_TEXTURE_2D, this.ssaoTexture);
 		GL32.glTexImage2D(GL32.GL_TEXTURE_2D, 0, GL32.GL_RED, width, height, 0, GL32.GL_RED, GL32.GL_FLOAT, (ByteBuffer) null);
 		GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MIN_FILTER, GL32.GL_NEAREST);
 		GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MAG_FILTER, GL32.GL_NEAREST);
-		GL32.glFramebufferTexture2D(GL32.GL_FRAMEBUFFER, GL32.GL_COLOR_ATTACHMENT0, GL32.GL_TEXTURE_2D, ssaoTexture, 0);
+		GL32.glFramebufferTexture2D(GL32.GL_FRAMEBUFFER, GL32.GL_COLOR_ATTACHMENT0, GL32.GL_TEXTURE_2D, this.ssaoTexture, 0);
 	}
 	
 	private void createBuffer()
@@ -106,9 +149,9 @@ public class SSAORenderer
 		buffer.order(ByteOrder.nativeOrder());
 		buffer.asFloatBuffer().put(box_vertices);
 		buffer.rewind();
-		boxBuffer = new GLVertexBuffer(false);
-		boxBuffer.bind();
-		boxBuffer.uploadBuffer(buffer, box_vertices.length, EGpuUploadMethod.DATA, box_vertices.length * Float.BYTES);
+		this.boxBuffer = new GLVertexBuffer(false);
+		this.boxBuffer.bind();
+		this.boxBuffer.uploadBuffer(buffer, box_vertices.length, EGpuUploadMethod.DATA, box_vertices.length * Float.BYTES);
 	}
 	
 	private static float[] genKernel()
@@ -140,10 +183,16 @@ public class SSAORenderer
 		return kernel;
 	}
 	
+	
+	
+	//========//
+	// render //
+	//========//
+	
 	public void render(float partialTicks)
 	{
 		GLState state = new GLState();
-		init();
+		this.init();
 		int width = MC_RENDER.getTargetFrameBufferViewportWidth();
 		int height = MC_RENDER.getTargetFrameBufferViewportHeight();
 		
@@ -151,10 +200,10 @@ public class SSAORenderer
 		{
 			this.width = width;
 			this.height = height;
-			createFramebuffer(width, height);
+			this.createFramebuffer(width, height);
 		}
 		
-		GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, ssaoFramebuffer);
+		GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, this.ssaoFramebuffer);
 		GL32.glViewport(0, 0, width, height);
 		GL32.glDisable(GL32.GL_DEPTH_TEST);
 		GL32.glDisable(GL32.GL_BLEND);
@@ -167,36 +216,36 @@ public class SSAORenderer
 				RenderUtil.getNearClipPlaneDistanceInBlocks(partialTicks),
 				(float) ((RenderUtil.getFarClipPlaneDistanceInBlocks() + LodUtil.REGION_WIDTH) * Math.sqrt(2)));
 		
-		ssaoShader.bind();
-		ssaoShader.setUniform(ssaoShader.getUniformLocation("gProj"), perspective);
-		ssaoShader.setUniform(ssaoShader.getUniformLocation("gSampleRad"), 3.0f);
-		ssaoShader.setUniform(ssaoShader.getUniformLocation("gFactor"), 0.8f);
-		ssaoShader.setUniform(ssaoShader.getUniformLocation("gPower"), 1.0f);
+		this.ssaoShader.bind();
+		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gProjUniform, perspective);
+		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gSampleRadUniform, 3.0f);
+		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gFactorUniform, 0.8f);
+		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gPowerUniform, 1.0f);
 		
-		va.bind();
-		va.bindBufferToAllBindingPoint(boxBuffer.getId());
+		this.va.bind();
+		this.va.bindBufferToAllBindingPoint(this.boxBuffer.getId());
 		
 		GL32.glActiveTexture(GL32.GL_TEXTURE0);
 		GL32.glBindTexture(GL32.GL_TEXTURE_2D, MC_RENDER.getDepthTextureId());
 		
-		GL32.glUniform3fv(ssaoShader.getUniformLocation("gKernel"), kernel);
-		GL32.glUniform1i(ssaoShader.getUniformLocation("gDepthMap"), 0);
+		GL32.glUniform3fv(this.ssaoShaderUniforms.gKernelUniform, this.kernel);
+		GL32.glUniform1i(this.ssaoShaderUniforms.gDepthMapUniform, 0);
 		GL32.glDrawArrays(GL32.GL_TRIANGLES, 0, 6);
 		
 		
 		
-		applyShader.bind();
+		this.applyShader.bind();
 		
 		GL32.glEnable(GL11.GL_BLEND);
 		GL32.glBlendFunc(GL32.GL_SRC_ALPHA, GL32.GL_ONE_MINUS_SRC_ALPHA);
 		GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, MC_RENDER.getTargetFrameBuffer());
 		
 		GL32.glActiveTexture(GL32.GL_TEXTURE0);
-		GL32.glBindTexture(GL32.GL_TEXTURE_2D, ssaoTexture);
-		GL32.glUniform1i(applyShader.getUniformLocation("gSSAOMap"), 0);
+		GL32.glBindTexture(GL32.GL_TEXTURE_2D, this.ssaoTexture);
+		GL32.glUniform1i(this.applyShaderUniforms.gSSAOMapUniform, 0);
 		GL32.glActiveTexture(GL32.GL_TEXTURE1);
 		GL32.glBindTexture(GL32.GL_TEXTURE_2D, MC_RENDER.getDepthTextureId());
-		GL32.glUniform1i(applyShader.getUniformLocation("gDepthMap"), 1);
+		GL32.glUniform1i(this.applyShaderUniforms.gDepthMapUniform, 1);
 		
 		GL32.glDrawArrays(GL32.GL_TRIANGLES, 0, 6);
 		
@@ -206,8 +255,8 @@ public class SSAORenderer
 	
 	public void free()
 	{
-		ssaoShader.free();
-		applyShader.free();
+		this.ssaoShader.free();
+		this.applyShader.free();
 	}
 	
 }
