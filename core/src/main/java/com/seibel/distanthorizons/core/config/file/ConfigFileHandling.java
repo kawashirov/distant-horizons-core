@@ -1,13 +1,13 @@
 package com.seibel.distanthorizons.core.config.file;
 
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
-import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.config.ConfigBase;
 import com.seibel.distanthorizons.core.config.types.AbstractConfigType;
 import com.seibel.distanthorizons.core.config.types.ConfigEntry;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
@@ -27,11 +27,20 @@ public class ConfigFileHandling
 	public final ConfigBase configBase;
 	public final Path configPath;
 	
+	private final Logger LOGGER;
+	
+	/** This is the object for night-config */
+	private final CommentedFileConfig configFileConfig;
+	
 	public ConfigFileHandling(ConfigBase configBase)
 	{
+		this.LOGGER = LogManager.getLogger(this.getClass().getSimpleName() + ", " + configBase.modID);
 		this.configBase = configBase;
+		
 		configPath = SingletonInjector.INSTANCE.get(IMinecraftSharedWrapper.class)
 				.getInstallationDirectory().toPath().resolve("config").resolve(this.configBase.modName + ".toml");
+		
+		this.configFileConfig = CommentedFileConfig.builder(configPath.toFile()).build();
 	}
 	
 	/** Saves the entire config to the file */
@@ -229,7 +238,11 @@ public class ConfigFileHandling
 	
 	
 	
-	/** Does config.load(); but with error checking */
+	/**
+	 * Does config.load(); but with error checking
+	 *
+	 * @apiNote This overwrites any value currently stored in the config
+	 */
 	public void loadConfig(CommentedFileConfig config)
 	{
 		try
@@ -261,10 +274,6 @@ public class ConfigFileHandling
 				SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class).crashMinecraft("Loading file and resetting config file failed at path [" + configPath + "]. Please check the file is ok and you have the permissions", ex);
 			}
 		}
-		
-		// if the config is modified before having been loaded it can cause file corruption
-		// and permissions errors
-		Config.loaded = true;
 	}
 	
 	

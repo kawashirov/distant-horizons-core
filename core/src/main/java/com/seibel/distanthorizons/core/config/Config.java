@@ -60,14 +60,6 @@ public class Config
 	
 	public static ConfigCategory client = new ConfigCategory.Builder().set(Client.class).build();
 	
-	/**
-	 * <strong>False</strong> if the config hasn't been loaded in from file yet. 
-	 * While in this state the config shouldn't be modified since it may cause file corruption. <br><br>
-	 * 
-	 * <strong>True</strong> if the config has been loaded and is ready to use.
-	 */
-	public static boolean loaded = false;
-	
 	
 	
 	public static class Client

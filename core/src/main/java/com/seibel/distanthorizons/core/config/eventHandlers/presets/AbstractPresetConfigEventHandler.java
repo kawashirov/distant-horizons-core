@@ -1,6 +1,7 @@
 package com.seibel.distanthorizons.core.config.eventHandlers.presets;
 
 import com.seibel.distanthorizons.core.config.Config;
+import com.seibel.distanthorizons.core.config.ConfigBase;
 import com.seibel.distanthorizons.core.config.ConfigEntryWithPresetOptions;
 import com.seibel.distanthorizons.core.config.listeners.IConfigListener;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
@@ -64,7 +65,7 @@ public abstract class AbstractPresetConfigEventHandler<TPresetEnum extends Enum<
 	public void onConfigValueSet()
 	{
 		// don't try modifying the config before it's been loaded from file
-		if (!Config.loaded)
+		if (!ConfigBase.INSTANCE.isLoaded)
 		{
 			return;
 		}

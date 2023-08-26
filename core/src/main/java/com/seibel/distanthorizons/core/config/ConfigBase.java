@@ -26,10 +26,12 @@ public class ConfigBase
 	public static ConfigBase INSTANCE;
 	public ConfigFileHandling configFileINSTANCE;
 	
-	public static final Logger LOGGER = LogManager.getLogger(ConfigBase.class.getSimpleName());
+	private final Logger LOGGER;
 	public final String modID;
 	public final String modName;
 	public final int configVersion;
+	
+	public boolean isLoaded = false;
 	
 	
 	
@@ -78,6 +80,8 @@ public class ConfigBase
 	
 	public ConfigBase(String modID, String modName, Class<?> config, int configVersion)
 	{
+		this.LOGGER = LogManager.getLogger(this.getClass().getSimpleName() + ", " + modID);
+		
 		LOGGER.info("Initialising config for " + modName);
 		this.modID = modID;
 		this.modName = modName;
@@ -88,6 +92,8 @@ public class ConfigBase
 		// File handling (load from file)
 		this.configFileINSTANCE = new ConfigFileHandling(this);
 		this.configFileINSTANCE.loadFromFile();
+		
+		isLoaded = true;
 		LOGGER.info("Config for " + modName + " initialised");
 	}
 	
