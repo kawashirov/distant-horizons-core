@@ -5,11 +5,11 @@ import com.seibel.distanthorizons.core.dataObjects.fullData.sources.CompleteFull
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IIncompleteFullDataSource;
 import com.seibel.distanthorizons.core.file.structure.AbstractSaveStructure;
-import com.seibel.distanthorizons.core.generation.WorldGenerationQueue;
+import com.seibel.distanthorizons.core.generation.IWorldGenerationQueue;
 import com.seibel.distanthorizons.core.generation.tasks.IWorldGenTaskTracker;
 import com.seibel.distanthorizons.core.generation.tasks.WorldGenResult;
 import com.seibel.distanthorizons.core.level.DhLevel;
-import com.seibel.distanthorizons.core.level.IDhServerLevel;
+import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhLodPos;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
@@ -28,14 +28,14 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
-	private final AtomicReference<WorldGenerationQueue> worldGenQueueRef = new AtomicReference<>(null);
+	private final AtomicReference<IWorldGenerationQueue> worldGenQueueRef = new AtomicReference<>(null);
 	
 	private final ArrayList<IOnWorldGenCompleteListener> onWorldGenTaskCompleteListeners = new ArrayList<>();
 	
 	// Use to hold onto incomplete data sources that are waiting for generation, so that they don't get GC'd before they are generated
 	private final ConcurrentHashMap<DhSectionPos, IIncompleteFullDataSource> incompleteDataSources = new ConcurrentHashMap<>();
 	
-	public GeneratedFullDataFileHandler(IDhServerLevel level, AbstractSaveStructure saveStructure) { super(level, saveStructure); }
+	public GeneratedFullDataFileHandler(IDhLevel level, AbstractSaveStructure saveStructure) { super(level, saveStructure); }
 	
 	
 	
@@ -56,7 +56,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	//==================//
 	
 	/** Assumes there isn't a pre-existing queue. */
-	public void setGenerationQueue(WorldGenerationQueue newWorldGenQueue)
+	public void setGenerationQueue(IWorldGenerationQueue newWorldGenQueue)
 	{
 		boolean oldQueueExists = this.worldGenQueueRef.compareAndSet(null, newWorldGenQueue);
 		LodUtil.assertTrue(oldQueueExists, "previous world gen queue is still here!");
@@ -115,13 +115,13 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	@Nullable
 	private CompletableFuture<IFullDataSource> tryStartGenTask(FullDataMetaFile file, IIncompleteFullDataSource dataSource)
 	{
-		WorldGenerationQueue worldGenQueue = this.worldGenQueueRef.get();
+		IWorldGenerationQueue worldGenQueue = this.worldGenQueueRef.get();
 		// breaks down the missing positions into the desired detail level that the gen queue could accept
 		if (worldGenQueue != null && !file.genQueueChecked)
 		{
 			DhSectionPos pos = file.pos;
 			file.genQueueChecked = true;
-			byte maxSectDataDetailLevel = worldGenQueue.largestDataDetail;
+			byte maxSectDataDetailLevel = worldGenQueue.largestDataDetail();
 			byte targetDataDetailLevel = dataSource.getDataDetailLevel();
 			
 			if (targetDataDetailLevel > maxSectDataDetailLevel)
@@ -222,7 +222,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		
 		if (source instanceof IIncompleteFullDataSource && !file.genQueueChecked)
 		{
-			WorldGenerationQueue worldGenQueue = this.worldGenQueueRef.get();
+			IWorldGenerationQueue worldGenQueue = this.worldGenQueueRef.get();
 			if (worldGenQueue != null)
 			{
 				CompletableFuture<IFullDataSource> future = this.updateFromExistingDataSources(file, (IIncompleteFullDataSource) source);

@@ -149,8 +149,12 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 	
 	public void clientTick() { this.eventLoop.tick(); }
 	
-	@Override
-	public CompletableFuture<Void> saveAndFlush()
+	public void doWorldGen() {
+		// Not implemented
+	}
+
+    @Override
+    public CompletableFuture<Void> saveAndFlush()
 	{
 		return CompletableFuture.allOf(this.levels.values().stream().map(DhClientLevel::saveAsync).toArray(CompletableFuture[]::new));
 	}
