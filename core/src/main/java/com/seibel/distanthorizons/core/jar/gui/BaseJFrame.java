@@ -1,7 +1,5 @@
 package com.seibel.distanthorizons.core.jar.gui;
 
-import com.kitfox.svg.SVGUniverse;
-import com.kitfox.svg.app.beans.SVGIcon;
 import com.seibel.distanthorizons.core.jar.JarUtils;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.wrapperInterfaces.config.ILangWrapper;
