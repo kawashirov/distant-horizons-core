@@ -1,5 +1,7 @@
 package com.seibel.distanthorizons.api.interfaces.config;
 
+import java.util.function.Consumer;
+
 /**
  * An interface for Distant Horizon's Config.
  *
@@ -47,5 +49,9 @@ public interface IDhApiConfigValue<T>
 	T getMaxValue();
 	/** Returns the min value for this config, null if there is no min. */
 	T getMinValue();
+	
+	/** Adds a {@link Consumer} that will be called whenever the config changes to a new value. */
+	void addChangeListener(Consumer<T> onValueChangeFunc);
+	//void removeListener(Consumer<T> onValueChangeFunc); // not currently implemented
 	
 }
