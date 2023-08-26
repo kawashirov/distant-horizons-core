@@ -16,8 +16,7 @@ public class ServerLevelModule
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
-	public final IServerLevelWrapper levelWrapper;
-	public final IDhServerLevel parent;
+	public final IDhServerLevel parentServerLevel;
 	public final AbstractSaveStructure saveStructure;
 	public final GeneratedFullDataFileHandler dataFileHandler;
 	public final AppliedConfigState<Boolean> worldGeneratorEnabledConfig;
@@ -26,24 +25,22 @@ public class ServerLevelModule
 	
 	
 	
-	public ServerLevelModule(IDhServerLevel parent, IServerLevelWrapper levelWrapper, AbstractSaveStructure saveStructure)
+	public ServerLevelModule(IDhServerLevel parentServerLevel, AbstractSaveStructure saveStructure)
 	{
-		this.parent = parent;
-		this.levelWrapper = levelWrapper;
+		this.parentServerLevel = parentServerLevel;
 		this.saveStructure = saveStructure;
-		this.dataFileHandler = new GeneratedFullDataFileHandler(parent, saveStructure);
+		this.dataFileHandler = new GeneratedFullDataFileHandler(parentServerLevel, saveStructure);
 		this.worldGeneratorEnabledConfig = new AppliedConfigState<>(Config.Client.Advanced.WorldGenerator.enableDistantGeneration);
-		this.worldGenModule = new WorldGenModule(this.dataFileHandler, this.parent);
+		this.worldGenModule = new WorldGenModule(this.dataFileHandler, this.parentServerLevel);
 	}
 	
-	//===============//
-	// data handling //
-	//===============//
+	
+	
 	public void close()
 	{
 		// shutdown the world-gen
 		this.worldGenModule.close();
-		dataFileHandler.close();
+		this.dataFileHandler.close();
 	}
 	
 	
@@ -52,7 +49,7 @@ public class ServerLevelModule
 	// helper classes //
 	//================//
 	
-	public static class WorldGenState extends WorldGenModule.WorldGenState
+	public static class WorldGenState extends WorldGenModule.AbstractWorldGenState
 	{
 		WorldGenState(IDhServerLevel level)
 		{

@@ -322,7 +322,9 @@ public class ClientApi
 			
 			// Ignore local world gen, as it's managed by server ticking
 			if (!(clientWorld instanceof DhClientServerWorld))
+			{
 				SharedApi.worldGenTick(clientWorld::doWorldGen);
+			}
 		}
 		profiler.pop();
 	}
