@@ -1,6 +1,7 @@
 package com.seibel.distanthorizons.core.render.renderer.shaders;
 
 import com.seibel.distanthorizons.api.enums.config.EGpuUploadMethod;
+import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.render.glObject.GLState;
 import com.seibel.distanthorizons.core.render.glObject.buffer.GLVertexBuffer;
@@ -16,14 +17,9 @@ import org.lwjgl.opengl.GL32;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-// For some reason this version looks slightly different to that, even tough there isnt much visible change in the code
 public class SSAORenderer
 {
 	public static SSAORenderer INSTANCE = new SSAORenderer();
-	
-	public SSAORenderer()
-	{
-	}
 	
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	
@@ -36,14 +32,25 @@ public class SSAORenderer
 			-1, 1,
 	};
 	
+	
 	ShaderProgram ssaoShader;
 	ShaderProgram applyShader;
 	GLVertexBuffer boxBuffer;
 	VertexAttribute va;
 	boolean init = false;
 	
-	private static final int MAX_KERNEL_SIZE = 32;
+	private static final int MAX_KERNEL_SIZE = 128;
 	private float[] kernel = new float[MAX_KERNEL_SIZE * 3];
+	
+	private int width = -1;
+	private int height = -1;
+	private int ssaoFramebuffer = -1;
+	
+	private int ssaoTexture = -1;
+	
+	
+	
+	private SSAORenderer() { }
 	
 	public void init()
 	{
@@ -67,12 +74,6 @@ public class SSAORenderer
 		// Framebuffer
 		createBuffer();
 	}
-	
-	private int width = -1;
-	private int height = -1;
-	private int ssaoFramebuffer = -1;
-	
-	private int ssaoTexture = -1;
 	
 	private void createFramebuffer(int width, int height)
 	{
@@ -143,7 +144,6 @@ public class SSAORenderer
 	{
 		GLState state = new GLState();
 		init();
-		//GL32.glDepthMask(false);
 		int width = MC_RENDER.getTargetFrameBufferViewportWidth();
 		int height = MC_RENDER.getTargetFrameBufferViewportHeight();
 		
@@ -172,6 +172,7 @@ public class SSAORenderer
 		ssaoShader.setUniform(ssaoShader.getUniformLocation("gSampleRad"), 3.0f);
 		ssaoShader.setUniform(ssaoShader.getUniformLocation("gFactor"), 0.8f);
 		ssaoShader.setUniform(ssaoShader.getUniformLocation("gPower"), 1.0f);
+		
 		va.bind();
 		va.bindBufferToAllBindingPoint(boxBuffer.getId());
 		
