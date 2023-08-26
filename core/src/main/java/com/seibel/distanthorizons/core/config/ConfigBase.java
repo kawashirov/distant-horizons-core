@@ -18,6 +18,7 @@ import java.util.*;
  *
  * @author coolGi
  * @author Ran
+ * @version 2023-8-26
  */
 // Init the config after singletons have been blinded
 public class ConfigBase

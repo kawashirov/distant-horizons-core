@@ -13,6 +13,7 @@ public abstract class AbstractConfigType<T, S>
 {
 	public String category = "";    // This should only be set once in the init
 	public String name;            // This should only be set once in the init
+	protected final T defaultValue;
 	protected T value;
 	public ConfigBase configBase;
 	
@@ -22,8 +23,9 @@ public abstract class AbstractConfigType<T, S>
 	
 	protected AbstractConfigType(EConfigEntryAppearance appearance, T value)
 	{
-		this.appearance = appearance;
+		this.defaultValue = value;
 		this.value = value;
+		this.appearance = appearance;
 	}
 	
 	
@@ -65,7 +67,7 @@ public abstract class AbstractConfigType<T, S>
 	// Gets the class of T
 	public Class<?> getType()
 	{
-		return value.getClass();
+		return this.defaultValue.getClass();
 	}
 	
 	protected static abstract class Builder<T, S>
