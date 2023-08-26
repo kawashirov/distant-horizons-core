@@ -1,8 +1,7 @@
 package com.seibel.distanthorizons.core.jar.gui;
 
-import com.formdev.flatlaf.FlatDarkLaf;
-import com.formdev.flatlaf.FlatLightLaf;
-import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.kitfox.svg.SVGUniverse;
+import com.kitfox.svg.app.beans.SVGIcon;
 import com.seibel.distanthorizons.core.jar.JarUtils;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.wrapperInterfaces.config.ILangWrapper;
@@ -13,6 +12,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
@@ -41,7 +41,7 @@ public class BaseJFrame extends JFrame
 		setTitle(SingletonInjector.INSTANCE.get(ILangWrapper.class).getLang("lod.title"));
 		try
 		{
-			setIconImage(new FlatSVGIcon(JarUtils.accessFile("iconLegacy.svg")).getImage()); // SVG Salamander (the library which we use for svg files) doesn't support css class colors
+			setIconImage(ImageIO.read(JarUtils.accessFile("icon.png")));
 		}
 		catch (Exception e)
 		{
@@ -96,7 +96,8 @@ public class BaseJFrame extends JFrame
 		add(languageBox);
 		
 		
-		// ========== THEMING ==========
+		// ========== THEMING ========== //
+		/**
 		// TODO: Change the theme to a toggle switch rather than having 2 buttons
 		int themeButtonSize = 25;
 		JButton lightMode = null;
@@ -132,6 +133,7 @@ public class BaseJFrame extends JFrame
 		// Finally add the buttons
 		add(lightMode);
 		add(darkMode);
+		 */
 	}
 	
 	public BaseJFrame addLogo()
