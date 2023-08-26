@@ -19,8 +19,6 @@
 
 package com.seibel.distanthorizons.core.pos;
 
-import java.util.Objects;
-
 public class DhChunkPos
 {
 	public final int x; // Low 32 bits
@@ -28,6 +26,7 @@ public class DhChunkPos
 	
 	/** cached to improve hashing speed */
 	public final int hashCode;
+	
 	
 	
 	public DhChunkPos(int x, int z)
@@ -48,29 +47,24 @@ public class DhChunkPos
 		// >> 4 is the Same as div 16
 		this(blockPos.x >> 4, blockPos.z >> 4);
 	}
-	public DhChunkPos(long packed) { this(getX(packed), getZ(packed)); }
+	public DhChunkPos(long packed) { this(getXFromPackedLong(packed), getZFromPackedLong(packed)); }
 	
 	
 	
-	public DhBlockPos center() { return new DhBlockPos(8 + x << 4, 0, 8 + z << 4); }
-	public DhBlockPos corner() { return new DhBlockPos(x << 4, 0, z << 4); }
+	public DhBlockPos center() { return new DhBlockPos(8 + this.x << 4, 0, 8 + this.z << 4); }
+	public DhBlockPos corner() { return new DhBlockPos(this.x << 4, 0, this.z << 4); }
 	
 	public static long toLong(int x, int z) { return ((long) x & 0xFFFFFFFFL) << 32 | (long) z & 0xFFFFFFFFL; }
 	
-	public static int getX(long chunkPos) { return (int) (chunkPos >> 32); }
-	public static int getZ(long chunkPos) { return (int) (chunkPos & 0xFFFFFFFFL); }
+	private static int getXFromPackedLong(long chunkPos) { return (int) (chunkPos >> 32); }
+	private static int getZFromPackedLong(long chunkPos) { return (int) (chunkPos & 0xFFFFFFFFL); }
 	
-	@Deprecated
-	public int getX() { return x; }
-	@Deprecated
-	public int getZ() { return z; }
+	public int getMinBlockX() { return this.x << 4; }
+	public int getMinBlockZ() { return this.z << 4; }
 	
-	public int getMinBlockX() { return x << 4; }
-	public int getMinBlockZ() { return z << 4; }
+	public DhBlockPos2D getMinBlockPos() { return new DhBlockPos2D(this.x << 4, this.z << 4); }
 	
-	public DhBlockPos2D getMinBlockPos() { return new DhBlockPos2D(x << 4, z << 4); }
-	
-	public long getLong() { return toLong(x, z); }
+	public long getLong() { return toLong(this.x, this.z); }
 	
 	@Override
 	public boolean equals(Object obj)
@@ -79,14 +73,14 @@ public class DhChunkPos
 		{
 			return true;
 		}
-		else if (obj == null || getClass() != obj.getClass())
+		else if (obj == null || this.getClass() != obj.getClass())
 		{
 			return false;
 		}
 		else
 		{
 			DhChunkPos that = (DhChunkPos) obj;
-			return x == that.x && z == that.z;
+			return this.x == that.x && this.z == that.z;
 		}
 	}
 	
@@ -94,7 +88,7 @@ public class DhChunkPos
 	public int hashCode() { return this.hashCode; }
 	
 	@Override
-	public String toString() { return "C[" + x + "," + z + "]"; }
+	public String toString() { return "C[" + this.x + "," + this.z + "]"; }
 	
 	
 	
