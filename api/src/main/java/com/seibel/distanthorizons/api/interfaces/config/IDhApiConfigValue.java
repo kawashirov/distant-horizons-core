@@ -16,17 +16,17 @@ public interface IDhApiConfigValue<T>
 	 * Returns the True value if either the config cannot be overridden by
 	 * the API or if it hasn't been set by the API.
 	 */
-	public T getValue();
+	T getValue();
 	/**
 	 * Returns the value held by this config. <br>
 	 * This is the value stored in the config file.
 	 */
-	public T getTrueValue();
-	/**
+	T getTrueValue();
+	/*
 	 * Returns the value of the config if it was set by the API.
 	 * Returns null if the config wasn't set by the API.
 	 */
-	public T getApiValue();
+	//T getApiValue(); // not currently implemented
 	
 	/**
 	 * Sets the config's value. <br>
@@ -36,16 +36,16 @@ public interface IDhApiConfigValue<T>
 	 *
 	 * @return true if the value was set, false otherwise.
 	 */
-	public boolean setValue(T newValue);
+	boolean setValue(T newValue);
 	
 	/** Returns true if this config can be set via the API, false otherwise. */
-	public boolean getCanBeOverrodeByApi();
+	boolean getCanBeOverrodeByApi();
 	
 	/** Returns the default value for this config. */
-	public T getDefaultValue();
+	T getDefaultValue();
 	/** Returns the max value for this config, null if there is no max. */
-	public T getMaxValue();
+	T getMaxValue();
 	/** Returns the min value for this config, null if there is no min. */
-	public T getMinValue();
+	T getMinValue();
 	
 }
