@@ -26,7 +26,7 @@ import com.seibel.distanthorizons.coreapi.interfaces.dependencyInjection.IOverri
  * the concrete object we replaced, there would be issues.
  *
  * @author James Seibel
- * @version 2023-6-29
+ * @version 2023-8-26
  * @since API 1.0.0
  */
 public class DhApi
@@ -49,9 +49,10 @@ public class DhApi
 			"and suggested setup. \n" + // DH Dev note: no links were included to prevent link rot. 
 			"";
 	/** @apiNote Don't use the result of this method in your code. It may change and is only for reference. */
-	public static String getReadMe() { return READ_ME; }
+	public static String readMe() { return READ_ME; }
 	/** 
-	 * This is just a humorous way to reference the {@link DhApi#READ_ME} constant string. 
+	 * This is just a humorous way to reference the {@link DhApi#READ_ME} constant string and hopefully peak a few people's attention
+	 * vs the relatively boring "readMe".
 	 * @apiNote Don't use the result of this method in your code. It may change and is only for reference. 
 	 */
 	public static String heyYou_YoureFinallyAwake() { return READ_ME; } 
