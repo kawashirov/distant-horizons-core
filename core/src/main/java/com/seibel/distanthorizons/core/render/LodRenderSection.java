@@ -154,7 +154,7 @@ public class LodRenderSection implements IDebugRenderable
 		{
 			DebugRenderer.makeParticle(
 					new DebugRenderer.BoxParticle(
-							new DebugRenderer.Box(pos, 0, 256f, 0.03f, Color.cyan),
+							new DebugRenderer.Box(this.pos, 0, 256f, 0.03f, Color.cyan),
 							0.5, 512f
 					)
 			);
