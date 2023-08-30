@@ -3,7 +3,6 @@ package com.seibel.distanthorizons.core.generation;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.enums.EDhDirection;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.logging.SpamReducedLogger;
 import com.seibel.distanthorizons.core.pos.DhBlockPos;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
 import com.seibel.distanthorizons.core.util.LodUtil;
@@ -50,11 +49,9 @@ public class DhLightingEngine
 		
 		HashMap<DhChunkPos, IChunkWrapper> chunksByChunkPos = new HashMap<>(9);
 		
-		// from some quick testing on James' part,
-		// these initial capacities should be big enough to fit most lighting jobs
-		// with a bit of room to spare
-		ArrayList<LightPos> blockLightPosQueue = new ArrayList<>(40_000); // when tested with a normal 1.20 world James saw a max of: 36_709
-		ArrayList<LightPos> skyLightPosQueue = new ArrayList<>(3_000); // when tested with a normal 1.20 world James saw a max of: 2355
+		// TODO get from a cache instead of creating new each time
+		StableLightPosArrayList blockLightPosQueue = new StableLightPosArrayList();
+		StableLightPosArrayList skyLightPosQueue = new StableLightPosArrayList();
 		
 		
 		// generate the list of chunk pos we need,
@@ -93,7 +90,7 @@ public class DhLightingEngine
 					DhBlockPos relLightBlockPos = blockLightPos.convertToChunkRelativePos();
 					IBlockStateWrapper blockState = chunk.getBlockState(relLightBlockPos);
 					int lightValue = blockState.getLightEmission();
-					blockLightPosQueue.add(new LightPos(blockLightPos, lightValue));
+					blockLightPosQueue.add(blockLightPos.x, blockLightPos.y, blockLightPos.z, lightValue);
 					
 					// set the light
 					DhBlockPos relBlockPos = blockLightPos.convertToChunkRelativePos();
@@ -123,7 +120,7 @@ public class DhLightingEngine
 								}
 								continue;
 							}
-							skyLightPosQueue.add(new LightPos(skyLightPos, maxSkyLight));
+							skyLightPosQueue.add(skyLightPos.x, skyLightPos.y, skyLightPos.z, maxSkyLight);
 							
 							
 							// set the light
@@ -168,7 +165,7 @@ public class DhLightingEngine
 	
 	/** Applies each {@link LightPos} from the queue to the given set of {@link IChunkWrapper}'s. */
 	private void propagateLightPosList(
-			ArrayList<LightPos> lightPosQueue, HashMap<DhChunkPos, IChunkWrapper> chunksByChunkPos,
+			StableLightPosArrayList lightPosQueue, HashMap<DhChunkPos, IChunkWrapper> chunksByChunkPos,
 			IGetLightFunc getLightFunc, ISetLightFunc setLightFunc)
 	{
 		// update each light position
@@ -176,8 +173,7 @@ public class DhLightingEngine
 		{
 			// since we don't care about the order the positions are processed,
 			// we can grab the last position instead of the first for a slight performance increase (this way the array doesn't need to be shifted over every loop)
-			int lastIndex = lightPosQueue.size() - 1;
-			LightPos lightPos = lightPosQueue.remove(lastIndex);
+			LightPos lightPos = lightPosQueue.pop();
 			
 			DhBlockPos pos = lightPos.pos;
 			int lightValue = lightPos.lightValue;
@@ -227,7 +223,7 @@ public class DhLightingEngine
 					
 					// now that light has been propagated to this blockPos
 					// we need to queue it up so its neighbours can be propagated as well
-					lightPosQueue.add(new LightPos(neighbourBlockPos, targetLevel));
+					lightPosQueue.add(neighbourBlockPos.x, neighbourBlockPos.y, neighbourBlockPos.z, targetLevel);
 				}
 			}
 		}
@@ -250,7 +246,7 @@ public class DhLightingEngine
 	private static class LightPos
 	{
 		public final DhBlockPos pos;
-		public final int lightValue;
+		public int lightValue;
 		
 		public LightPos(DhBlockPos pos, int lightValue)
 		{
@@ -260,5 +256,50 @@ public class DhLightingEngine
 		
 	}
 	
+	
+	private static class StableLightPosArrayList
+	{
+		/** the index of the last item in the array, -1 if empty */
+		private int index = -1;
+		
+		// when tested with a normal 1.20 world James saw a maximum of 36,709 block and 2,355 sky lights,
+		// so this should give us a good base that should be able to contain most lighting tasks
+		private final ArrayList<LightPos> arrayList = new ArrayList<>(40_000);
+		
+		
+		
+		public boolean isEmpty() { return this.index == -1; }
+		public int size() { return this.index+1; }
+		
+		public void add(int blockX, int blockY, int blockZ, int lightValue)
+		{
+			this.index++;
+			if (this.index < this.arrayList.size())
+			{
+				// modify the existing pos in the array
+				LightPos lightPos = this.arrayList.get(this.index);
+				lightPos.pos.x = blockX;
+				lightPos.pos.y = blockY;
+				lightPos.pos.z = blockZ;
+				lightPos.lightValue = lightValue;
+			}
+			else
+			{
+				// add a new pos
+				this.arrayList.add(new LightPos(new DhBlockPos(blockX, blockY, blockZ), lightValue));
+			}
+		}
+		
+		public LightPos pop()
+		{
+			LightPos pos = this.arrayList.get(this.index);
+			this.index--;
+			return pos;
+		}
+		
+		@Override
+		public String toString() { return this.index + " / " + this.size(); }
+		
+	}
 	
 }
