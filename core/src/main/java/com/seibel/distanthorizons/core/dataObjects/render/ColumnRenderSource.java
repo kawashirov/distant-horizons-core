@@ -346,6 +346,34 @@ public class ColumnRenderSource
 	public boolean isEmpty() { return this.isEmpty; }
 	public void markNotEmpty() { this.isEmpty = false; }
 	
+	/** can be used when debugging */
+	public boolean hasNonVoidDataPoints()
+	{
+		if (this.isEmpty)
+		{
+			return false;
+		}
+		
+		
+		for (int x = 0; x < SECTION_SIZE; x++)
+		{
+			for (int z = 0; z < SECTION_SIZE; z++)
+			{
+				ColumnArrayView columnArrayView = this.getVerticalDataPointView(x,z);
+				for (int i = 0; i < columnArrayView.size; i++)
+				{
+					long dataPoint = columnArrayView.get(i);
+					if (!RenderDataPointUtil.isVoid(dataPoint))
+					{
+						return true;
+					}
+				}
+			}
+		}
+		
+		return false;
+	}
+	
 	
 	
 	//=======//

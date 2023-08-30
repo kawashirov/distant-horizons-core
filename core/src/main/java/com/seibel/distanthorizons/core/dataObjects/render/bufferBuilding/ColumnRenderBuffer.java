@@ -260,6 +260,20 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer implements IDebugRe
 	// misc methods //
 	//==============//
 	
+	/** can be used when debugging */
+	public boolean hasNonEmptyBuffers()
+	{
+		for (GLVertexBuffer vertexBuffer : this.vbos)
+		{
+			if (vertexBuffer != null && vertexBuffer.getSize() != 0)
+			{
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
 	@Override
 	public void debugDumpStats(StatsMap statsMap)
 	{
