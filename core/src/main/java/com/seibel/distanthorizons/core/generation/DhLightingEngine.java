@@ -1,5 +1,6 @@
 package com.seibel.distanthorizons.core.generation;
 
+import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.enums.EDhDirection;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.logging.SpamReducedLogger;
@@ -38,6 +39,13 @@ public class DhLightingEngine
 	 */
 	public void lightChunk(IChunkWrapper centerChunk, List<IChunkWrapper> nearbyChunkList, int maxSkyLight)
 	{
+		if (Config.Client.Advanced.Debugging.disableDhLightingEngine.get())
+		{
+			centerChunk.setIsDhLightCorrect(true);
+			return;
+		}
+		
+		
 		DhChunkPos centerChunkPos = centerChunk.getChunkPos();
 		
 		HashMap<DhChunkPos, IChunkWrapper> chunksByChunkPos = new HashMap<>(9);

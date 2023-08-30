@@ -19,6 +19,7 @@
 
 package com.seibel.distanthorizons.core.wrapperInterfaces.chunk;
 
+import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.pos.DhBlockPos;
 import com.seibel.distanthorizons.core.pos.DhBlockPos2D;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
@@ -74,20 +75,23 @@ public interface IChunkWrapper extends IBindable
 	 */
 	default void bakeDhLightingUsingMcLightingEngine() throws IllegalStateException
 	{
-		if (!this.isLightCorrect())
+		if (!Config.Client.Advanced.Debugging.disableChunkWrapperLightBaking.get())
 		{
-			throw new IllegalStateException("Unable to bake lighting for for chunk [" + this.getChunkPos() + "], Minecraft lighting not valid.");
-		}
-		
-		// get the lighting for every relative block pos
-		for (int relX = 0; relX < LodUtil.CHUNK_WIDTH; relX++)
-		{
-			for (int relZ = 0; relZ < LodUtil.CHUNK_WIDTH; relZ++)
+			if (!this.isLightCorrect())
 			{
-				for (int y = this.getMinBuildHeight(); y < this.getMaxBuildHeight(); y++)
+				throw new IllegalStateException("Unable to bake lighting for for chunk [" + this.getChunkPos() + "], Minecraft lighting not valid.");
+			}
+			
+			// get the lighting for every relative block pos
+			for (int relX = 0; relX < LodUtil.CHUNK_WIDTH; relX++)
+			{
+				for (int relZ = 0; relZ < LodUtil.CHUNK_WIDTH; relZ++)
 				{
-					this.setDhSkyLight(relX, y, relZ, this.getSkyLight(relX, y, relZ));
-					this.setDhBlockLight(relX, y, relZ, this.getBlockLight(relX, y, relZ));
+					for (int y = this.getMinBuildHeight(); y < this.getMaxBuildHeight(); y++)
+					{
+						this.setDhSkyLight(relX, y, relZ, this.getSkyLight(relX, y, relZ));
+						this.setDhBlockLight(relX, y, relZ, this.getBlockLight(relX, y, relZ));
+					}
 				}
 			}
 		}

@@ -1111,6 +1111,21 @@ public class Config
 						.set(ExampleConfigScreen.class)
 						.build();
 				
+				public static ConfigEntry<Boolean> disableDhLightingEngine = new ConfigEntry.Builder<Boolean>()
+						.set(false)
+						.comment(""
+								+ "Temporary, only for testing."
+								+ "")
+						.build();
+				
+				public static ConfigEntry<Boolean> disableChunkWrapperLightBaking = new ConfigEntry.Builder<Boolean>()
+						.set(false)
+						.comment(""
+								+ "Temporary, only for testing."
+								+ "")
+						.build();
+				
+				
 				/** This class is used to debug the different features of the config GUI */
 				// FIXME: WARNING: Some of the options in this class dont get show n in the default UI
 				// This will throw a warning when opened in the default ui to tell you about it not showing
