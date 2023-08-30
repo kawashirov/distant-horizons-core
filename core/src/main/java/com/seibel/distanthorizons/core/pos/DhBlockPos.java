@@ -44,9 +44,9 @@ public class DhBlockPos
 	public static final int PACKED_Z_OFFSET = PACKED_Y_LENGTH;
 	public static final int PACKED_X_OFFSET = PACKED_Y_LENGTH + PACKED_Z_LENGTH;
 	
-	public final int x;
-	public final int y;
-	public final int z;
+	public int x;
+	public int y;
+	public int z;
 	
 	public DhBlockPos(int x, int y, int z)
 	{
