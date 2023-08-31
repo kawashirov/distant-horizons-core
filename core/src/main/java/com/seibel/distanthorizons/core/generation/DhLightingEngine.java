@@ -11,6 +11,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * This logic was roughly based on
@@ -49,114 +50,131 @@ public class DhLightingEngine
 		
 		HashMap<DhChunkPos, IChunkWrapper> chunksByChunkPos = new HashMap<>(9);
 		
-		// TODO get from a cache instead of creating new each time
-		StableLightPosArrayList blockLightPosQueue = new StableLightPosArrayList();
-		StableLightPosArrayList skyLightPosQueue = new StableLightPosArrayList();
 		
-		
-		// generate the list of chunk pos we need,
-		// currently a 3x3 grid
-		HashSet<DhChunkPos> requestedAdjacentPositions = new HashSet<>(9);
-		for (int xOffset = -1; xOffset <= 1; xOffset++)
+		// try-finally to handle the stableArray resources
+		StableLightPosStack blockLightPosQueue = null;
+		StableLightPosStack skyLightPosQueue = null;
+		try
 		{
-			for (int zOffset = -1; zOffset <= 1; zOffset++)
+			blockLightPosQueue = StableLightPosStack.borrowStableLightPosArray();
+			skyLightPosQueue = StableLightPosStack.borrowStableLightPosArray();
+			
+			
+			
+			// generate the list of chunk pos we need,
+			// currently a 3x3 grid
+			HashSet<DhChunkPos> requestedAdjacentPositions = new HashSet<>(9);
+			for (int xOffset = -1; xOffset <= 1; xOffset++)
 			{
-				DhChunkPos adjacentPos = new DhChunkPos(centerChunkPos.x + xOffset, centerChunkPos.z + zOffset);
-				requestedAdjacentPositions.add(adjacentPos);
-			}
-		}
-		
-		
-		// find all adjacent chunks
-		// and get any necessary info from them
-		boolean warningLogged = false;
-		for (IChunkWrapper chunk : nearbyChunkList)
-		{
-			if (chunk != null && requestedAdjacentPositions.contains(chunk.getChunkPos()))
-			{
-				// remove the newly found position
-				requestedAdjacentPositions.remove(chunk.getChunkPos());
-				
-				// add the adjacent chunk
-				chunksByChunkPos.put(chunk.getChunkPos(), chunk);
-				
-				
-				
-				// get and set the adjacent chunk's initial block lights
-				List<DhBlockPos> blockLightPosList = chunk.getBlockLightPosList();
-				for (DhBlockPos blockLightPos : blockLightPosList)
+				for (int zOffset = -1; zOffset <= 1; zOffset++)
 				{
-					// get the light
-					DhBlockPos relLightBlockPos = blockLightPos.convertToChunkRelativePos();
-					IBlockStateWrapper blockState = chunk.getBlockState(relLightBlockPos);
-					int lightValue = blockState.getLightEmission();
-					blockLightPosQueue.add(blockLightPos.x, blockLightPos.y, blockLightPos.z, lightValue);
-					
-					// set the light
-					DhBlockPos relBlockPos = blockLightPos.convertToChunkRelativePos();
-					chunk.setDhBlockLight(relBlockPos.x, relBlockPos.y, relBlockPos.z, lightValue);
+					DhChunkPos adjacentPos = new DhChunkPos(centerChunkPos.x + xOffset, centerChunkPos.z + zOffset);
+					requestedAdjacentPositions.add(adjacentPos);
 				}
-				
-				
-				// get and set the adjacent chunk's initial skylights,
-				// if the dimension has skylights
-				if (maxSkyLight > 0)
+			}
+			
+			
+			// find all adjacent chunks
+			// and get any necessary info from them
+			boolean warningLogged = false;
+			for (IChunkWrapper chunk : nearbyChunkList)
+			{
+				if (chunk != null && requestedAdjacentPositions.contains(chunk.getChunkPos()))
 				{
-					// get the adjacent chunk's sky lights
-					for (int relX = 0; relX < LodUtil.CHUNK_WIDTH; relX++) // relative block pos
+					// remove the newly found position
+					requestedAdjacentPositions.remove(chunk.getChunkPos());
+					
+					// add the adjacent chunk
+					chunksByChunkPos.put(chunk.getChunkPos(), chunk);
+					
+					
+					
+					// get and set the adjacent chunk's initial block lights
+					List<DhBlockPos> blockLightPosList = chunk.getBlockLightPosList();
+					for (DhBlockPos blockLightPos : blockLightPosList)
 					{
-						for (int relZ = 0; relZ < LodUtil.CHUNK_WIDTH; relZ++)
+						// get the light
+						DhBlockPos relLightBlockPos = blockLightPos.convertToChunkRelativePos();
+						IBlockStateWrapper blockState = chunk.getBlockState(relLightBlockPos);
+						int lightValue = blockState.getLightEmission();
+						blockLightPosQueue.push(blockLightPos.x, blockLightPos.y, blockLightPos.z, lightValue);
+						
+						// set the light
+						DhBlockPos relBlockPos = blockLightPos.convertToChunkRelativePos();
+						chunk.setDhBlockLight(relBlockPos.x, relBlockPos.y, relBlockPos.z, lightValue);
+					}
+					
+					
+					// get and set the adjacent chunk's initial skylights,
+					// if the dimension has skylights
+					if (maxSkyLight > 0)
+					{
+						// get the adjacent chunk's sky lights
+						for (int relX = 0; relX < LodUtil.CHUNK_WIDTH; relX++) // relative block pos
 						{
-							// get the light
-							int maxY = chunk.getLightBlockingHeightMapValue(relX, relZ);
-							DhBlockPos skyLightPos = new DhBlockPos(chunk.getMinBlockX() + relX, maxY, chunk.getMinBlockZ() + relZ);
-							if (skyLightPos.y < chunk.getMinBuildHeight() || skyLightPos.y > chunk.getMaxBuildHeight())
+							for (int relZ = 0; relZ < LodUtil.CHUNK_WIDTH; relZ++)
 							{
-								// this shouldn't normally happen
-								if (!warningLogged)
+								// get the light
+								int maxY = chunk.getLightBlockingHeightMapValue(relX, relZ);
+								DhBlockPos skyLightPos = new DhBlockPos(chunk.getMinBlockX() + relX, maxY, chunk.getMinBlockZ() + relZ);
+								if (skyLightPos.y < chunk.getMinBuildHeight() || skyLightPos.y > chunk.getMaxBuildHeight())
 								{
-									warningLogged = true;
-									LOGGER.debug("Lighting chunk at pos " + chunk.getChunkPos() + " may have a missing or incomplete heightmap. Chunk min/max [" + chunk.getMinBuildHeight() + "/" + chunk.getMaxBuildHeight() + "], skylight pos: " + skyLightPos);
+									// this shouldn't normally happen
+									if (!warningLogged)
+									{
+										warningLogged = true;
+										LOGGER.debug("Lighting chunk at pos " + chunk.getChunkPos() + " may have a missing or incomplete heightmap. Chunk min/max [" + chunk.getMinBuildHeight() + "/" + chunk.getMaxBuildHeight() + "], skylight pos: " + skyLightPos);
+									}
+									continue;
 								}
-								continue;
+								skyLightPosQueue.push(skyLightPos.x, skyLightPos.y, skyLightPos.z, maxSkyLight);
+								
+								
+								// set the light
+								DhBlockPos relBlockPos = skyLightPos.convertToChunkRelativePos();
+								chunk.setDhSkyLight(relBlockPos.x, relBlockPos.y, relBlockPos.z, maxSkyLight);
 							}
-							skyLightPosQueue.add(skyLightPos.x, skyLightPos.y, skyLightPos.z, maxSkyLight);
-							
-							
-							// set the light
-							DhBlockPos relBlockPos = skyLightPos.convertToChunkRelativePos();
-							chunk.setDhSkyLight(relBlockPos.x, relBlockPos.y, relBlockPos.z, maxSkyLight);
 						}
 					}
 				}
+				
+				
+				if (requestedAdjacentPositions.isEmpty())
+				{
+					// we found every chunk we needed, we don't need to keep iterating
+					break;
+				}
 			}
 			
-			
-			if (requestedAdjacentPositions.isEmpty())
+			// validate that at least 1 chunk was found
+			if (chunksByChunkPos.size() == 0)
 			{
-				// we found every chunk we needed, we don't need to keep iterating
-				break;
+				LOGGER.warn("Attempted to generate lighting for position [" + centerChunkPos + "], but neither that chunk nor any adjacent chunks were found. No chunk lighting was performed.");
+				return;
 			}
+			
+			
+			
+			// block light
+			this.propagateLightPosList(blockLightPosQueue, chunksByChunkPos,
+					(neighbourChunk, relBlockPos) -> neighbourChunk.getDhBlockLight(relBlockPos.x, relBlockPos.y, relBlockPos.z),
+					(neighbourChunk, relBlockPos, newLightValue) -> neighbourChunk.setDhBlockLight(relBlockPos.x, relBlockPos.y, relBlockPos.z, newLightValue));
+			
+			// sky light
+			this.propagateLightPosList(skyLightPosQueue, chunksByChunkPos,
+					(neighbourChunk, relBlockPos) -> neighbourChunk.getDhSkyLight(relBlockPos.x, relBlockPos.y, relBlockPos.z),
+					(neighbourChunk, relBlockPos, newLightValue) -> neighbourChunk.setDhSkyLight(relBlockPos.x, relBlockPos.y, relBlockPos.z, newLightValue));
 		}
-		
-		// validate that at least 1 chunk was found
-		if (chunksByChunkPos.size() == 0)
+		catch (Exception e)
 		{
-			LOGGER.warn("Attempted to generate lighting for position [" + centerChunkPos + "], but neither that chunk nor any adjacent chunks were found. No chunk lighting was performed.");
-			return;
+			LOGGER.error("Unexpected lighting issue for center chunk: "+centerChunkPos, e);
+		}
+		finally
+		{
+			StableLightPosStack.returnStableLightPosArray(blockLightPosQueue);
+			StableLightPosStack.returnStableLightPosArray(skyLightPosQueue);
 		}
 		
-		
-		
-		// block light
-		this.propagateLightPosList(blockLightPosQueue, chunksByChunkPos,
-				(neighbourChunk, relBlockPos) -> neighbourChunk.getDhBlockLight(relBlockPos.x, relBlockPos.y, relBlockPos.z),
-				(neighbourChunk, relBlockPos, newLightValue) -> neighbourChunk.setDhBlockLight(relBlockPos.x, relBlockPos.y, relBlockPos.z, newLightValue));
-		
-		// sky light
-		this.propagateLightPosList(skyLightPosQueue, chunksByChunkPos,
-				(neighbourChunk, relBlockPos) -> neighbourChunk.getDhSkyLight(relBlockPos.x, relBlockPos.y, relBlockPos.z),
-				(neighbourChunk, relBlockPos, newLightValue) -> neighbourChunk.setDhSkyLight(relBlockPos.x, relBlockPos.y, relBlockPos.z, newLightValue));
 		
 		
 		centerChunk.setIsDhLightCorrect(true);
@@ -165,7 +183,7 @@ public class DhLightingEngine
 	
 	/** Applies each {@link LightPos} from the queue to the given set of {@link IChunkWrapper}'s. */
 	private void propagateLightPosList(
-			StableLightPosArrayList lightPosQueue, HashMap<DhChunkPos, IChunkWrapper> chunksByChunkPos,
+			StableLightPosStack lightPosQueue, HashMap<DhChunkPos, IChunkWrapper> chunksByChunkPos,
 			IGetLightFunc getLightFunc, ISetLightFunc setLightFunc)
 	{
 		// update each light position
@@ -223,7 +241,7 @@ public class DhLightingEngine
 					
 					// now that light has been propagated to this blockPos
 					// we need to queue it up so its neighbours can be propagated as well
-					lightPosQueue.add(neighbourBlockPos.x, neighbourBlockPos.y, neighbourBlockPos.z, targetLevel);
+					lightPosQueue.push(neighbourBlockPos.x, neighbourBlockPos.y, neighbourBlockPos.z, targetLevel);
 				}
 			}
 		}
@@ -256,9 +274,17 @@ public class DhLightingEngine
 		
 	}
 	
-	
-	private static class StableLightPosArrayList
+	/** 
+	 * Holds all potential {@link LightPos} objects a lighting task may need.
+	 * This is done so existing {@link LightPos} objects can be repurposed instead of destroyed,
+	 * reducing garbage collector load.
+	 */
+	private static class StableLightPosStack
 	{
+		/** necessary to prevent multiple threads from modifying the cache at once */
+		private static final ReentrantLock cacheLock = new ReentrantLock();
+		private static final Queue<StableLightPosStack> lightArrayCache = new ArrayDeque<>();
+		
 		/** the index of the last item in the array, -1 if empty */
 		private int index = -1;
 		
@@ -268,10 +294,53 @@ public class DhLightingEngine
 		
 		
 		
+		//================//
+		// cache handling //
+		//================//
+		
+		private static StableLightPosStack borrowStableLightPosArray()
+		{
+			try
+			{
+				// prevent multiple threads modifying the cache at once
+				cacheLock.lock();
+				
+				return lightArrayCache.isEmpty() ? new StableLightPosStack() : lightArrayCache.remove();
+			}
+			finally
+			{
+				cacheLock.unlock();
+			}
+		}
+		
+		private static void returnStableLightPosArray(StableLightPosStack stableArray)
+		{
+			try
+			{
+				// prevent multiple threads modifying the cache at once
+				cacheLock.lock();
+				
+				if (stableArray != null)
+				{
+					lightArrayCache.add(stableArray);
+				}
+			}
+			finally
+			{
+				cacheLock.unlock();
+			}
+		}
+		
+		
+		
+		//===============//
+		// stack methods //
+		//===============//
+		
 		public boolean isEmpty() { return this.index == -1; }
 		public int size() { return this.index+1; }
 		
-		public void add(int blockX, int blockY, int blockZ, int lightValue)
+		public void push(int blockX, int blockY, int blockZ, int lightValue)
 		{
 			this.index++;
 			if (this.index < this.arrayList.size())
@@ -298,7 +367,7 @@ public class DhLightingEngine
 		}
 		
 		@Override
-		public String toString() { return this.index + " / " + this.size(); }
+		public String toString() { return this.index + "/" + this.arrayList.size(); }
 		
 	}
 	
