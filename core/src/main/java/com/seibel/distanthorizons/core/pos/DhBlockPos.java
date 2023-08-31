@@ -22,6 +22,7 @@ package com.seibel.distanthorizons.core.pos;
 import com.seibel.distanthorizons.core.enums.EDhDirection;
 import com.seibel.distanthorizons.core.util.LodUtil;
 
+import javax.annotation.Nullable;
 import java.util.Objects;
 
 public class DhBlockPos
@@ -128,11 +129,39 @@ public class DhBlockPos
 		return asLong(x, y, z);
 	}
 	
-	public DhBlockPos offset(EDhDirection direction) { return this.offset(direction.getNormal().x, direction.getNormal().y, direction.getNormal().z); }
-	public DhBlockPos offset(int x, int y, int z) { return new DhBlockPos(this.x + x, this.y + y, this.z + z); }
+	/** creates a new {@link DhBlockPos} with the given offset from the current pos. */
+	public DhBlockPos offset(EDhDirection direction) { return this.offset(direction, null); }
+	/** if not null, mutates "mutablePos" so it matches the current pos after being offset. Otherwise creates a new {@link DhBlockPos}. */
+	public DhBlockPos offset(EDhDirection direction, @Nullable DhBlockPos mutablePos) { return this.offset(direction.getNormal().x, direction.getNormal().y, direction.getNormal().z, mutablePos); }
 	
-	/** Limits the block position to a value between 0 and 15 (inclusive) */
-	public DhBlockPos convertToChunkRelativePos()
+	public DhBlockPos offset(int x, int y, int z) { return this.offset(x,y,z, null); }
+	public DhBlockPos offset(int x, int y, int z, @Nullable DhBlockPos mutablePos) 
+	{
+		int newX = this.x + x;
+		int newY = this.y + y;
+		int newZ = this.z + z;
+		
+		if (mutablePos != null)
+		{
+			mutablePos.x = newX;
+			mutablePos.y = newY;
+			mutablePos.z = newZ;
+			
+			return mutablePos;
+		}
+		else
+		{
+			return new DhBlockPos(this.x + x, this.y + y, this.z + z);
+		}
+	}
+	
+	/** Returns a new {@link DhBlockPos} limits to a value between 0 and 15 (inclusive) */
+	public DhBlockPos convertToChunkRelativePos() { return this.convertToChunkRelativePos(null); }
+	/** 
+	 * Limits the block position to a value between 0 and 15 (inclusive) 
+	 * If not null, mutates "mutableBlockPos" 
+	 */
+	public DhBlockPos convertToChunkRelativePos(@Nullable DhBlockPos mutableBlockPos)
 	{
 		// move the position into the range -15 and +15
 		int relX = (this.x % LodUtil.CHUNK_WIDTH);
@@ -143,7 +172,19 @@ public class DhBlockPos
 		relZ = (relZ < 0) ? (relZ + LodUtil.CHUNK_WIDTH) : relZ;
 		
 		// the y value shouldn't need to be changed
-		return new DhBlockPos(relX, this.y, relZ);
+		
+		
+		if (mutableBlockPos != null)
+		{
+			mutableBlockPos.x = relX;
+			mutableBlockPos.z = relX;
+			
+			return mutableBlockPos;
+		}
+		else
+		{
+			return new DhBlockPos(relX, this.y, relZ);
+		}
 	}
 	
 	/**

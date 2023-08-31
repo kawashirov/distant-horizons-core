@@ -47,8 +47,7 @@ public class DhLightingEngine
 		
 		
 		DhChunkPos centerChunkPos = centerChunk.getChunkPos();
-		
-		HashMap<DhChunkPos, IChunkWrapper> chunksByChunkPos = new HashMap<>(9);
+		AdjacentChunkHolder adjacentChunkHolder = new AdjacentChunkHolder(centerChunk);
 		
 		
 		// try-finally to handle the stableArray resources
@@ -85,7 +84,7 @@ public class DhLightingEngine
 					requestedAdjacentPositions.remove(chunk.getChunkPos());
 					
 					// add the adjacent chunk
-					chunksByChunkPos.put(chunk.getChunkPos(), chunk);
+					adjacentChunkHolder.add(chunk);
 					
 					
 					
@@ -147,7 +146,7 @@ public class DhLightingEngine
 			}
 			
 			// validate that at least 1 chunk was found
-			if (chunksByChunkPos.size() == 0)
+			if (adjacentChunkHolder.size() == 0)
 			{
 				LOGGER.warn("Attempted to generate lighting for position [" + centerChunkPos + "], but neither that chunk nor any adjacent chunks were found. No chunk lighting was performed.");
 				return;
@@ -156,12 +155,12 @@ public class DhLightingEngine
 			
 			
 			// block light
-			this.propagateLightPosList(blockLightPosQueue, chunksByChunkPos,
+			this.propagateLightPosList(blockLightPosQueue, adjacentChunkHolder,
 					(neighbourChunk, relBlockPos) -> neighbourChunk.getDhBlockLight(relBlockPos.x, relBlockPos.y, relBlockPos.z),
 					(neighbourChunk, relBlockPos, newLightValue) -> neighbourChunk.setDhBlockLight(relBlockPos.x, relBlockPos.y, relBlockPos.z, newLightValue));
 			
 			// sky light
-			this.propagateLightPosList(skyLightPosQueue, chunksByChunkPos,
+			this.propagateLightPosList(skyLightPosQueue, adjacentChunkHolder,
 					(neighbourChunk, relBlockPos) -> neighbourChunk.getDhSkyLight(relBlockPos.x, relBlockPos.y, relBlockPos.z),
 					(neighbourChunk, relBlockPos, newLightValue) -> neighbourChunk.setDhSkyLight(relBlockPos.x, relBlockPos.y, relBlockPos.z, newLightValue));
 		}
@@ -183,9 +182,15 @@ public class DhLightingEngine
 	
 	/** Applies each {@link LightPos} from the queue to the given set of {@link IChunkWrapper}'s. */
 	private void propagateLightPosList(
-			StableLightPosStack lightPosQueue, HashMap<DhChunkPos, IChunkWrapper> chunksByChunkPos,
+			StableLightPosStack lightPosQueue, AdjacentChunkHolder adjacentChunkHolder,
 			IGetLightFunc getLightFunc, ISetLightFunc setLightFunc)
 	{
+		// these objects are saved so they can be mutated throughout the method,
+		// this reduces the number of allocations necessary, reducing GC pressure
+		final DhBlockPos neighbourBlockPos = new DhBlockPos();
+		final DhBlockPos relNeighbourBlockPos = new DhBlockPos();
+		
+		
 		// update each light position
 		while (!lightPosQueue.isEmpty())
 		{
@@ -200,14 +205,13 @@ public class DhLightingEngine
 			// propagate the lighting in each cardinal direction, IE: -x, +x, -y, +y, -z, +z
 			for (EDhDirection direction : EDhDirection.CARDINAL_DIRECTIONS)
 			{
-				DhBlockPos neighbourBlockPos = pos.offset(direction);
-				DhChunkPos neighbourChunkPos = new DhChunkPos(neighbourBlockPos);
+				pos.offset(direction, neighbourBlockPos); // mutates neighbourBlockPos
 				// converting the block pos into a relative position is necessary for accessing the light values in the chunk
-				DhBlockPos relNeighbourBlockPos = neighbourBlockPos.convertToChunkRelativePos();
+				neighbourBlockPos.convertToChunkRelativePos(relNeighbourBlockPos); // mutates relNeighbourBlockPos
 				
 				
 				// only continue if the light position is inside one of our chunks
-				IChunkWrapper neighbourChunk = chunksByChunkPos.get(neighbourChunkPos);
+				IChunkWrapper neighbourChunk = adjacentChunkHolder.getByBlockPos(neighbourBlockPos.x, neighbourBlockPos.z);
 				if (neighbourChunk == null)
 				{
 					// the light pos is outside our generator's range, ignore it
@@ -272,6 +276,41 @@ public class DhLightingEngine
 			this.lightValue = lightValue;
 		}
 		
+	}
+	
+	/** holds the adjacent chunks without having to create new Pos objects */
+	private static class AdjacentChunkHolder
+	{
+		ArrayList<IChunkWrapper> chunkArray = new ArrayList<>(9);
+		
+		
+		public AdjacentChunkHolder(IChunkWrapper centerWrapper)
+		{
+			this.chunkArray.add(centerWrapper);
+		}
+		
+		
+		public int size() { return this.chunkArray.size(); }
+		
+		public void add(IChunkWrapper centerWrapper) { this.chunkArray.add(centerWrapper); }
+		
+		public IChunkWrapper getByBlockPos(int blockX, int blockZ)
+		{
+			// >> 4 is equivalent to dividing by 16
+			int chunkX = blockX >> 4;
+			int chunkZ = blockZ >> 4;
+			
+			// since there will only ever be 9 items in the array, this sequential search should be fast enough
+			for (IChunkWrapper chunk : this.chunkArray)
+			{
+				if (chunk != null 
+					&& chunk.getChunkPos().x == chunkX && chunk.getChunkPos().z == chunkZ)
+				{
+					return chunk;
+				}
+			}
+			return null;
+		}
 	}
 	
 	/** 
