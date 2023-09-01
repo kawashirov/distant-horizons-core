@@ -105,13 +105,13 @@ public class SSAORenderer
 	private static float[] genKernel()
 	{
 		float[] kernel = new float[MAX_KERNEL_SIZE * 3];
+		
 		for (int i = 0; i < MAX_KERNEL_SIZE; i++)
 		{
-			float sampleX = (float) (Math.random() * 2.0 - 1.0);
-			float sampleY = (float) (Math.random() * 2.0 - 1.0);
-			float sampleZ = (float) Math.random();
-			
-			
+			float sampleX = (float)Math.random() * 2f - 1f;
+			float sampleY = (float)Math.random() * 2f - 1f;
+			float sampleZ = (float)Math.random() * 2f - 1f;
+						
 			// Normalize
 			float magnitude = (float) Math.sqrt(Math.pow(sampleX, 2) + Math.pow(sampleY, 2) + Math.pow(sampleZ, 2));
 			sampleX /= magnitude;
@@ -119,15 +119,17 @@ public class SSAORenderer
 			sampleZ /= magnitude;
 			
 			float scale = i / (float) MAX_KERNEL_SIZE;
-			float interpolatedScale = (float) (0.1 + (scale * scale) * (0.9));
+			float interpolatedScale = (float) (0.1 + 0.9 * (scale * scale));
 			
 			sampleX *= interpolatedScale;
 			sampleY *= interpolatedScale;
 			sampleZ *= interpolatedScale;
-			kernel[i * 3] = sampleX;
+			
+			kernel[i * 3    ] = sampleX;
 			kernel[i * 3 + 1] = sampleY;
 			kernel[i * 3 + 2] = sampleZ;
 		}
+		
 		return kernel;
 	}
 	

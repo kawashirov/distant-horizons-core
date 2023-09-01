@@ -60,7 +60,7 @@ void main() {
         float occlusion_factor = 0.0;
         for (int i = 0; i < MAX_KERNEL_SIZE; i++) {
             vec3 samplePos = TBN * gKernel[i];
-            //samplePos *= sign(dot(samplePos, viewNormal));
+            samplePos *= sign(dot(samplePos, viewNormal));
             samplePos = viewPos + samplePos * gSampleRad;
 
             vec4 sampleNdcPos = gProj * vec4(samplePos + viewPos, 1.0);
