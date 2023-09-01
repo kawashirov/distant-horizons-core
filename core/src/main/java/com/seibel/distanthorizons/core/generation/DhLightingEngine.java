@@ -39,13 +39,6 @@ public class DhLightingEngine
 	 */
 	public void lightChunk(IChunkWrapper centerChunk, List<IChunkWrapper> nearbyChunkList, int maxSkyLight)
 	{
-		if (Config.Client.Advanced.Debugging.disableDhLightingEngine.get())
-		{
-			centerChunk.setIsDhLightCorrect(true);
-			return;
-		}
-		
-		
 		DhChunkPos centerChunkPos = centerChunk.getChunkPos();
 		AdjacentChunkHolder adjacentChunkHolder = new AdjacentChunkHolder(centerChunk);
 		
