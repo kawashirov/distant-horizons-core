@@ -147,14 +147,14 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 		if (renderSourceLoadFuture == null) return;
 		
 		renderSourceLoadFuture.thenAccept((renderSource) -> {
-			boolean worked = renderSource.fastWrite(chunkDataView, level);
+			boolean dataUpdated = renderSource.fastWrite(chunkDataView, level);
 			
 			//if (pos.sectionDetailLevel == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL+5) {
 			float offset = new Random(System.nanoTime() ^ Thread.currentThread().getId()).nextFloat() * 16f;
-			Color c = worked ? Color.blue : Color.red;
+			Color debugColor = dataUpdated ? Color.blue : Color.red;
 			DebugRenderer.makeParticle(
 					new DebugRenderer.BoxParticle(
-							new DebugRenderer.Box(chunkDataView.getLodPos(), 32f, 64f + offset, 0.07f, c),
+							new DebugRenderer.Box(chunkDataView.getLodPos(), 32f, 64f + offset, 0.07f, debugColor),
 							2.0, 16f
 					)
 			);

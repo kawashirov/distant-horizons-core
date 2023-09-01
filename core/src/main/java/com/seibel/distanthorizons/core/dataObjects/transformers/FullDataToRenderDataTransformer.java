@@ -159,6 +159,8 @@ public class FullDataToRenderDataTransformer
 	/**
 	 * @throws InterruptedException Can be caused by interrupting the thread upstream.
 	 * Generally thrown if the method is running after the client leaves the current world.
+	 * 
+	 * @return true if any data was changed, false otherwise
 	 */
 	public static boolean writeFullDataChunkToColumnData(ColumnRenderSource renderSource, IDhClientLevel level, ChunkSizedFullDataAccessor chunkDataView) throws InterruptedException, IllegalArgumentException
 	{

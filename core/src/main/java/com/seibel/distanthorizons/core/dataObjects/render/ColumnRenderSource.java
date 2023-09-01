@@ -281,13 +281,14 @@ public class ColumnRenderSource
 		}
 	}
 	
+	/** @return true if any data was changed, false otherwise */
 	public boolean fastWrite(ChunkSizedFullDataAccessor chunkData, IDhClientLevel level)
 	{
 		try
 		{
 			if (FullDataToRenderDataTransformer.writeFullDataChunkToColumnData(this, level, chunkData))
 			{
-				localVersion.incrementAndGet();
+				this.localVersion.incrementAndGet();
 				return true;
 			}
 			else
