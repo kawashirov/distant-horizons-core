@@ -167,8 +167,8 @@ public class SSAORenderer
 		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gProjUniform, perspective);
 		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gInvProjUniform, invertedPerspective);
 		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gSampleRadUniform, 3.0f);
-		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gFactorUniform, 0.7f);
-		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gPowerUniform, 1.5f);
+		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gFactorUniform, 0.8f);
+		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gPowerUniform, 1.0f);
 		
 		this.va.bind();
 		this.va.bindBufferToAllBindingPoint(this.boxBuffer.getId());
