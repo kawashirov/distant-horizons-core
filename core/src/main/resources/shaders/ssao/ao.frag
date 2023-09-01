@@ -9,6 +9,7 @@ uniform float gSampleRad;
 uniform float gFactor;
 uniform float gPower;
 uniform mat4 gProj;
+uniform mat4 gInvProj;
 
 const int MAX_KERNEL_SIZE = 128;
 const float INV_MAX_KERNEL_SIZE_F = 1.0 / float(MAX_KERNEL_SIZE);
@@ -25,7 +26,7 @@ vec3 calcViewPosition(vec2 coords) {
         1.0
     );
 
-    vec4 vs_pos = inverse(gProj) * ndc;
+    vec4 vs_pos = gInvProj * ndc;
     vs_pos.xyz = vs_pos.xyz / vs_pos.w;
     return vs_pos.xyz;
 }

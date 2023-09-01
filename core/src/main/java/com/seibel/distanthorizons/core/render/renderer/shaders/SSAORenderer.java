@@ -53,6 +53,7 @@ public class SSAORenderer
 	private static class SsaoShaderUniforms
 	{
 		public int gProjUniform;
+		public int gInvProjUniform;
 		public int gSampleRadUniform;
 		public int gFactorUniform;
 		public int gPowerUniform;
@@ -100,6 +101,7 @@ public class SSAORenderer
 		
 		// SSAO uniform setup
 		this.ssaoShaderUniforms.gProjUniform = this.ssaoShader.getUniformLocation("gProj");
+		this.ssaoShaderUniforms.gInvProjUniform = this.ssaoShader.getUniformLocation("gInvProj");
 		this.ssaoShaderUniforms.gSampleRadUniform = this.ssaoShader.getUniformLocation("gSampleRad");
 		this.ssaoShaderUniforms.gFactorUniform = this.ssaoShader.getUniformLocation("gFactor");
 		this.ssaoShaderUniforms.gPowerUniform = this.ssaoShader.getUniformLocation("gPower");
@@ -216,8 +218,13 @@ public class SSAORenderer
 				RenderUtil.getNearClipPlaneDistanceInBlocks(partialTicks),
 				(float) ((RenderUtil.getFarClipPlaneDistanceInBlocks() + LodUtil.REGION_WIDTH) * Math.sqrt(2)));
 		
+		Mat4f invertedPerspective = new Mat4f(perspective);
+		invertedPerspective.invert();
+		
+		
 		this.ssaoShader.bind();
 		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gProjUniform, perspective);
+		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gInvProjUniform, invertedPerspective);
 		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gSampleRadUniform, 3.0f);
 		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gFactorUniform, 0.8f);
 		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gPowerUniform, 1.0f);

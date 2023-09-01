@@ -287,17 +287,18 @@ public class Mat4f
 		this.m23 = f;
 	}
 	
-	public boolean invert()
+	public boolean canInvert()
+	{
+		float det = this.adjudicateAndDet();
+		return (Math.abs(det) > 1.0E-6F);
+	}
+	
+	public void invert()
 	{
 		float det = this.adjudicateAndDet();
 		if (Math.abs(det) > 1.0E-6F)
 		{
 			this.multiply(det);
-			return true;
-		}
-		else
-		{
-			return false;
 		}
 	}
 	
