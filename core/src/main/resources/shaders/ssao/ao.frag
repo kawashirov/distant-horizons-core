@@ -13,7 +13,7 @@ uniform mat4 gProj;
 uniform mat4 gInvProj;
 
 const float MIN_LIGHT = 0.6;
-const float SAMPLE_BIAS = 0.5;
+const float SAMPLE_BIAS = 0.6;
 const int MAX_KERNEL_SIZE = 32;
 const float INV_MAX_KERNEL_SIZE_F = 1.0 / float(MAX_KERNEL_SIZE);
 uniform vec3 gKernel[MAX_KERNEL_SIZE];
@@ -60,7 +60,7 @@ void main() {
         float occlusion_factor = 0.0;
         for (int i = 0; i < MAX_KERNEL_SIZE; i++) {
             vec3 samplePos = TBN * gKernel[i];
-            samplePos *= sign(dot(samplePos, viewNormal));
+            //samplePos *= sign(dot(samplePos, viewNormal));
             samplePos = viewPos + samplePos * gSampleRad;
 
             vec4 sampleNdcPos = gProj * vec4(samplePos + viewPos, 1.0);
