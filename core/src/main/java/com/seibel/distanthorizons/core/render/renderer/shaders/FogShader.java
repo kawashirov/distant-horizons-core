@@ -21,7 +21,7 @@ public class FogShader extends AbstractShaderRenderer
 	private static final IVersionConstants VERSION_CONSTANTS = SingletonInjector.INSTANCE.get(IVersionConstants.class);
 	
 	
-	public final int gModelViewProjectionUniform;
+	public final int gInvertedModelViewProjectionUniform;
 	public final int gDepthMapUniform;
 	
 	// Fog Uniforms
@@ -48,7 +48,7 @@ public class FogShader extends AbstractShaderRenderer
 		// because disabling fog can cause the GLSL to optimize out most (if not all) uniforms
 		
 		
-		this.gModelViewProjectionUniform = this.shader.tryGetUniformLocation("gMvmProj");
+		this.gInvertedModelViewProjectionUniform = this.shader.tryGetUniformLocation("gInvMvmProj");
 		this.gDepthMapUniform = this.shader.tryGetUniformLocation("gDepthMap");
 		
 		// Fog uniforms
@@ -119,7 +119,11 @@ public class FogShader extends AbstractShaderRenderer
 	public void setModelViewProjectionMatrix(Mat4f combinedModelViewProjectionMatrix)
 	{
 		this.shader.bind();
-		this.shader.setUniform(this.gModelViewProjectionUniform, combinedModelViewProjectionMatrix);
+		
+		Mat4f inverseMvmProjMatrix = new Mat4f(combinedModelViewProjectionMatrix);
+		inverseMvmProjMatrix.invert();
+		this.shader.setUniform(this.gInvertedModelViewProjectionUniform, inverseMvmProjMatrix);
+		
 		this.shader.unbind();
 	}
 	
