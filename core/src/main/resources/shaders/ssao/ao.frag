@@ -1,4 +1,5 @@
 #version 150 core
+#extension GL_ARB_derivative_control : enable
 
 in vec2 TexCoord;
 
@@ -11,55 +12,73 @@ uniform float gPower;
 uniform mat4 gProj;
 uniform mat4 gInvProj;
 
-const int MAX_KERNEL_SIZE = 128;
+const float SAMPLE_BIAS = 0.1;
+const int MAX_KERNEL_SIZE = 32;
 const float INV_MAX_KERNEL_SIZE_F = 1.0 / float(MAX_KERNEL_SIZE);
-const vec2 HALF_2 = vec2(0.5);
 uniform vec3 gKernel[MAX_KERNEL_SIZE];
 
-vec3 calcViewPosition(vec2 coords) {
-    float fragmentDepth = texture(gDepthMap, coords).r;
+const vec3 MAGIC = vec3(0.06711056, 0.00583715, 52.9829189);
+const float PI = 3.1415926538;
 
-    vec4 ndc = vec4(
-        coords.x * 2.0 - 1.0,
-        coords.y * 2.0 - 1.0,
-        fragmentDepth * 2.0 - 1.0,
-        1.0
-    );
 
-    vec4 vs_pos = gInvProj * ndc;
-    vs_pos.xyz = vs_pos.xyz / vs_pos.w;
-    return vs_pos.xyz;
+float InterleavedGradientNoise(const in vec2 pixel) {
+    float x = dot(pixel, MAGIC.xy);
+    return fract(MAGIC.z * fract(x));
 }
 
-void main()
-{
-    vec3 viewPos = calcViewPosition(TexCoord);
-    vec3 viewNormal = normalize(cross(dFdy(viewPos.xyz), dFdx(viewPos.xyz)) * -1.0);
+vec3 calcViewPosition(const in vec3 clipPos) {
+    vec4 viewPos = gInvProj * vec4(clipPos * 2.0 - 1.0, 1.0);
+    return viewPos.xyz / viewPos.w;
+}
 
-    vec3 randomVec = vec3(0.0, -1.0, 0.0);
+void main() {
+    float fragmentDepth = textureLod(gDepthMap, TexCoord, 0).r;
+    float occlusion = 1.0;
+    
+    if (fragmentDepth < 1.0) {
+        float dither = InterleavedGradientNoise(gl_FragCoord.xy);
+        vec3 viewPos = calcViewPosition(vec3(TexCoord, fragmentDepth));
+        
+        #ifdef GL_ARB_derivative_control
+            vec3 viewNormal = normalize(cross(dFdxFine(viewPos.xyz), dFdyFine(viewPos.xyz)));
+        #else
+            vec3 viewNormal = normalize(cross(dFdx(viewPos.xyz), dFdy(viewPos.xyz)));
+        #endif
 
-    vec3 tangent = normalize(randomVec - viewNormal * dot(randomVec, viewNormal));
-    vec3 bitangent = cross(viewNormal, tangent);
-    mat3 TBN = mat3(tangent, bitangent, viewNormal);
+        const vec3 upVec = vec3(0.0, -1.0, 0.0);
 
-    float occlusion_factor = 0.0;
-    for (int i = 0; i < MAX_KERNEL_SIZE; i++) 
-    {
-        vec3 samplePos = vec3(0.0) + (TBN * gKernel[i]);
-        samplePos = viewPos + samplePos * gSampleRad;
+        float angle = dither * (PI * 2.0);
+        vec3 rotation = vec3(sin(angle), cos(angle), 0.0);
+        vec3 tangent = normalize(cross(viewNormal, rotation));
         
-        vec4 offset = gProj * vec4(samplePos + viewPos, 1.0);
-        offset.xy /= offset.w;
-        offset.xy = offset.xy * HALF_2 + HALF_2;
-        
-        float geometryDepth = calcViewPosition(offset.xy).z;
-        
-        float rangeCheck = smoothstep(0.0, 1.0, gSampleRad / abs(viewPos.z - geometryDepth));
-        // the number added to the samplePos.z can be used to reduce noise in the SSAO application at the cost of reducing the overall affect
-        occlusion_factor += float(geometryDepth >= samplePos.z + 0.1) * rangeCheck;
-        
+        vec3 bitangent = normalize(cross(viewNormal, tangent));
+        mat3 TBN = mat3(tangent, bitangent, viewNormal);
+
+        float maxWeight = 0.0;
+        float occlusion_factor = 0.0;
+        for (int i = 0; i < MAX_KERNEL_SIZE; i++) {
+            vec3 samplePos = TBN * gKernel[i];
+            samplePos = viewPos + samplePos * gSampleRad;
+
+            vec4 sampleNdcPos = gProj * vec4(samplePos + viewPos, 1.0);
+            sampleNdcPos = sampleNdcPos / sampleNdcPos.w;
+            if (any(greaterThanEqual(abs(sampleNdcPos.xy), vec2(1.0)))) continue;
+            
+            maxWeight += 1.0;
+            
+            vec2 sampleTexPos = sampleNdcPos.xy * 0.5 + 0.5;
+            float sampleDepth = textureLod(gDepthMap, sampleTexPos, 0).r;
+            float geometryDepth = calcViewPosition(vec3(sampleTexPos, sampleDepth)).z;
+
+            float rangeCheck = smoothstep(0.0, 1.0, gSampleRad / abs(viewPos.z - geometryDepth));
+            // the number added to the samplePos.z can be used to reduce noise in the SSAO application at the cost of reducing the overall affect
+            occlusion_factor += step(samplePos.z + SAMPLE_BIAS, geometryDepth) * rangeCheck;
+        }
+
+        float visibility_factor = 1.0 - (occlusion_factor / maxWeight);
+        occlusion = (1.0 - pow(visibility_factor, gFactor)) * gPower;
+        occlusion = clamp(1.0 - occlusion, 0.25, 1.0);
     }
-
-    float visibility_factor = 1.0 - (occlusion_factor / MAX_KERNEL_SIZE);
-    fragColor = vec4(clamp(1.0 - ((1.0 - pow(visibility_factor, gFactor)) * gPower), 0.1, 1.0));
+    
+    fragColor = vec4(vec3(1.0), occlusion);
 }
