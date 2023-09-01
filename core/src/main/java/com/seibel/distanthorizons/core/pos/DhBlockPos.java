@@ -151,7 +151,7 @@ public class DhBlockPos
 		}
 		else
 		{
-			return new DhBlockPos(this.x + x, this.y + y, this.z + z);
+			return new DhBlockPos(newX, newY, newZ);
 		}
 	}
 	
@@ -177,7 +177,8 @@ public class DhBlockPos
 		if (mutableBlockPos != null)
 		{
 			mutableBlockPos.x = relX;
-			mutableBlockPos.z = relX;
+			mutableBlockPos.y = this.y;
+			mutableBlockPos.z = relZ;
 			
 			return mutableBlockPos;
 		}
