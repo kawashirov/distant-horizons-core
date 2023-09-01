@@ -6,6 +6,7 @@ import java.nio.channels.Channels;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.file.*;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.Adler32;
 import java.util.zip.CheckedOutputStream;
 
@@ -33,7 +34,7 @@ import org.apache.logging.log4j.Logger;
  * 4 bytes: section Y position (Unused, for future proofing) <br>
  * 4 bytes: section Z position <br> <br>
  *
- * 4 bytes: data checksum <br> //TODO: Implement checksum
+ * 4 bytes: data checksum <br>
  * 1 byte: section detail level <br>
  * 1 byte: data detail level // Note: not sure if this is needed <br>
  * 1 byte: loader version <br>
@@ -74,6 +75,7 @@ public abstract class AbstractMetaDataContainerFile
 	
 	/** Should be used instead of the position inside {@link AbstractMetaDataContainerFile#baseMetaData} */
 	public final DhSectionPos pos;
+	public final ReentrantLock writeLock = new ReentrantLock();
 	
 	public File file;
 	
@@ -192,103 +194,116 @@ public abstract class AbstractMetaDataContainerFile
 	
 	protected void writeData(IMetaDataWriterFunc<DhDataOutputStream> dataWriterFunc) throws IOException
 	{
-		LodUtil.assertTrue(!DebugThreadCheck);
-		DebugThreadCheck = true;
+		LodUtil.assertTrue(!this.DebugThreadCheck);
+		this.DebugThreadCheck = true;
 		LodUtil.assertTrue(this.baseMetaData != null);
 		if (this.file.exists())
 		{
 			validateMetaDataFile(this.file);
 		}
 		
-		File tempFile;
-		if (USE_ATOMIC_MOVE_REPLACE)
-		{
-			tempFile = new File(this.file.getPath() + ".tmp");
-			//tempFile.deleteOnExit();
-		}
-		else
-		{
-			tempFile = this.file;
-		}
 		
-		try (FileChannel fileChannel = FileChannel.open(tempFile.toPath(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))
+		
+		try
 		{
-			fileChannel.position(METADATA_SIZE_IN_BYTES);
-			
-			// the order of these streams is important, otherwise the checksum won't be calculated
-			CheckedOutputStream checkedOut = new CheckedOutputStream(Channels.newOutputStream(fileChannel), new Adler32());
-			// normally a DhStream should be the topmost stream to prevent closing the stream accidentally, but since this stream will be closed immediately after writing anyway, it won't be an issue
-			DhDataOutputStream compressedOut = new DhDataOutputStream(checkedOut);
-			
-			// write the contained data
-			dataWriterFunc.writeBufferToFile(compressedOut);
-			compressedOut.flush();
-			this.baseMetaData.checksum = (int) checkedOut.getChecksum().getValue();
+			// done to try preventing a rare issue where multiple threads would write/delete the same file at the same time 
+			this.writeLock.lock();
 			
 			
-			// Write metadata
-			fileChannel.position(0);
-			ByteBuffer buffer = ByteBuffer.allocate(METADATA_SIZE_IN_BYTES);
-			buffer.putInt(METADATA_IDENTITY_BYTES);
-			buffer.putInt(this.pos.sectionX);
-			buffer.putInt(Integer.MIN_VALUE); // Unused - y pos
-			buffer.putInt(this.pos.sectionZ);
-			buffer.putInt(this.baseMetaData.checksum);
-			buffer.put(this.pos.sectionDetailLevel);
-			buffer.put(this.baseMetaData.dataLevel);
-			buffer.put(this.baseMetaData.binaryDataFormatVersion);
-			buffer.put(this.baseMetaData.worldGenStep != null ? this.baseMetaData.worldGenStep.value : EDhApiWorldGenerationStep.EMPTY.value); // TODO this null check shouldn't be necessary
-			buffer.putLong(this.baseMetaData.dataTypeId);
-			buffer.putLong(this.baseMetaData.dataVersion.get()); // for types that doesn't need data versioning, this will be Long.MAX_VALUE
-			LodUtil.assertTrue(buffer.remaining() == METADATA_RESERVED_SIZE);
-			buffer.flip();
-			fileChannel.write(buffer);
-			
-			
-			fileChannel.close();
-			//LOGGER.info("Saved file: "+this.file.getName());
-			
+			File tempFile;
 			if (USE_ATOMIC_MOVE_REPLACE)
 			{
-				// Atomic move / replace the actual file
-				Files.move(tempFile.toPath(), this.file.toPath(), StandardCopyOption.REPLACE_EXISTING); // TODO couldn't StandardCopyOption. also work here?
-				//LOGGER.info("replaced file: "+this.file.toPath());
+				tempFile = new File(this.file.getPath() + ".tmp");
+				//tempFile.deleteOnExit();
 			}
-		}
-		catch (NoSuchFileException e)
-		{
-			// can be thrown by the "Files.move" method if the system tries writing to an unloaded level
-		}
-		catch (ClosedChannelException e) // includes ClosedByInterruptException
-		{
-			// expected if the file handler is shut down, the exception can be ignored
-//			LOGGER.warn(AbstractMetaDataContainerFile.class.getSimpleName()+" file writing interrupted. Error: "+e.getMessage());
+			else
+			{
+				tempFile = this.file;
+			}
+			
+			try (FileChannel fileChannel = FileChannel.open(tempFile.toPath(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))
+			{
+				fileChannel.position(METADATA_SIZE_IN_BYTES);
+				
+				// the order of these streams is important, otherwise the checksum won't be calculated
+				CheckedOutputStream checkedOut = new CheckedOutputStream(Channels.newOutputStream(fileChannel), new Adler32());
+				// normally a DhStream should be the topmost stream to prevent closing the stream accidentally, but since this stream will be closed immediately after writing anyway, it won't be an issue
+				DhDataOutputStream compressedOut = new DhDataOutputStream(checkedOut);
+				
+				// write the contained data
+				dataWriterFunc.writeBufferToFile(compressedOut);
+				compressedOut.flush();
+				this.baseMetaData.checksum = (int) checkedOut.getChecksum().getValue();
+				
+				
+				// Write metadata
+				fileChannel.position(0);
+				ByteBuffer buffer = ByteBuffer.allocate(METADATA_SIZE_IN_BYTES);
+				buffer.putInt(METADATA_IDENTITY_BYTES);
+				buffer.putInt(this.pos.sectionX);
+				buffer.putInt(Integer.MIN_VALUE); // Unused - y pos
+				buffer.putInt(this.pos.sectionZ);
+				buffer.putInt(this.baseMetaData.checksum);
+				buffer.put(this.pos.sectionDetailLevel);
+				buffer.put(this.baseMetaData.dataLevel);
+				buffer.put(this.baseMetaData.binaryDataFormatVersion);
+				buffer.put(this.baseMetaData.worldGenStep != null ? this.baseMetaData.worldGenStep.value : EDhApiWorldGenerationStep.EMPTY.value); // TODO this null check shouldn't be necessary
+				buffer.putLong(this.baseMetaData.dataTypeId);
+				buffer.putLong(this.baseMetaData.dataVersion.get()); // for types that doesn't need data versioning, this will be Long.MAX_VALUE
+				LodUtil.assertTrue(buffer.remaining() == METADATA_RESERVED_SIZE);
+				buffer.flip();
+				fileChannel.write(buffer);
+				
+				
+				fileChannel.close();
+				//LOGGER.info("Saved file: "+this.file.getName());
+				
+				if (USE_ATOMIC_MOVE_REPLACE)
+				{
+					// Atomic move / replace the actual file
+					Files.move(tempFile.toPath(), this.file.toPath(), StandardCopyOption.REPLACE_EXISTING); // TODO couldn't StandardCopyOption. also work here?
+					//LOGGER.info("replaced file: "+this.file.toPath());
+				}
+			}
+			catch (NoSuchFileException e)
+			{
+				// can be thrown by the "Files.move" method if the system tries writing to an unloaded level
+			}
+			catch (ClosedChannelException e) // includes ClosedByInterruptException
+			{
+				// expected if the file handler is shut down, the exception can be ignored
+			    //LOGGER.warn(AbstractMetaDataContainerFile.class.getSimpleName()+" file writing interrupted. Error: "+e.getMessage());
+			}
+			finally
+			{
+				String tempDeleteErrorMessage = null;
+				try
+				{
+					// Delete temp file if it exists (this generally means there was an issue saving)
+					if (USE_ATOMIC_MOVE_REPLACE && tempFile.exists())
+					{
+						boolean fileRemoved = tempFile.delete();
+						if (!fileRemoved)
+						{
+							tempDeleteErrorMessage = "Unable to remove Temporary file at: " + tempFile.getPath();
+						}
+					}
+				}
+				catch (SecurityException exception)
+				{
+					tempDeleteErrorMessage = "Security error: [" + exception.getMessage() + "] when attempting to remove Temporary file at: " + tempFile.getPath();
+				}
+				
+				if (tempDeleteErrorMessage != null)
+				{
+					LOGGER.error(tempDeleteErrorMessage);
+				}
+				this.DebugThreadCheck = false;
+			}
 		}
 		finally
 		{
-			String tempDeleteErrorMessage = null;
-			try
-			{
-				// Delete temp file if it exists (this generally means there was an issue saving)
-				if (USE_ATOMIC_MOVE_REPLACE && tempFile.exists())
-				{
-					boolean fileRemoved = tempFile.delete();
-					if (!fileRemoved)
-					{
-						tempDeleteErrorMessage = "Unable to remove Temporary file at: " + tempFile.getPath();
-					}
-				}
-			}
-			catch (SecurityException exception)
-			{
-				tempDeleteErrorMessage = "Security error: [" + exception.getMessage() + "] when attempting to remove Temporary file at: " + tempFile.getPath();
-			}
-			
-			if (tempDeleteErrorMessage != null)
-			{
-				LOGGER.error(tempDeleteErrorMessage);
-			}
-			this.DebugThreadCheck = false;
+			this.writeLock.unlock();
 		}
 	}
 	
