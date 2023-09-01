@@ -156,7 +156,7 @@ public class SSAORenderer
 		
 		Mat4f perspective = Mat4f.perspective(
 				(float) MC_RENDER.getFov(partialTicks),
-				MC_RENDER.getTargetFrameBufferViewportWidth() / (float) MC_RENDER.getTargetFrameBufferViewportHeight(),
+				width / (float) height,
 				RenderUtil.getNearClipPlaneDistanceInBlocks(partialTicks),
 				(float) ((RenderUtil.getFarClipPlaneDistanceInBlocks() + LodUtil.REGION_WIDTH) * Math.sqrt(2)));
 		
@@ -167,8 +167,8 @@ public class SSAORenderer
 		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gProjUniform, perspective);
 		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gInvProjUniform, invertedPerspective);
 		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gSampleRadUniform, 3.0f);
-		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gFactorUniform, 0.8f);
-		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gPowerUniform, 1.0f);
+		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gFactorUniform, 0.5f);
+		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gPowerUniform, 6.0f);
 		
 		this.va.bind();
 		this.va.bindBufferToAllBindingPoint(this.boxBuffer.getId());

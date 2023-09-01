@@ -12,7 +12,8 @@ uniform float gPower;
 uniform mat4 gProj;
 uniform mat4 gInvProj;
 
-const float SAMPLE_BIAS = 0.1;
+const float MIN_LIGHT = 0.6;
+const float SAMPLE_BIAS = 0.5;
 const int MAX_KERNEL_SIZE = 32;
 const float INV_MAX_KERNEL_SIZE_F = 1.0 / float(MAX_KERNEL_SIZE);
 uniform vec3 gKernel[MAX_KERNEL_SIZE];
@@ -40,12 +41,13 @@ void main() {
         vec3 viewPos = calcViewPosition(vec3(TexCoord, fragmentDepth));
         
         #ifdef GL_ARB_derivative_control
-            vec3 viewNormal = normalize(cross(dFdxFine(viewPos.xyz), dFdyFine(viewPos.xyz)));
+            vec3 viewNormal = cross(dFdxFine(viewPos.xyz), dFdyFine(viewPos.xyz));
         #else
-            vec3 viewNormal = normalize(cross(dFdx(viewPos.xyz), dFdy(viewPos.xyz)));
+            vec3 viewNormal = cross(dFdx(viewPos.xyz), dFdy(viewPos.xyz));
         #endif
 
-        const vec3 upVec = vec3(0.0, -1.0, 0.0);
+        viewNormal = normalize(viewNormal);
+        //const vec3 upVec = vec3(0.0, -1.0, 0.0);
 
         float angle = dither * (PI * 2.0);
         vec3 rotation = vec3(sin(angle), cos(angle), 0.0);
@@ -58,6 +60,7 @@ void main() {
         float occlusion_factor = 0.0;
         for (int i = 0; i < MAX_KERNEL_SIZE; i++) {
             vec3 samplePos = TBN * gKernel[i];
+            samplePos *= sign(dot(samplePos, viewNormal));
             samplePos = viewPos + samplePos * gSampleRad;
 
             vec4 sampleNdcPos = gProj * vec4(samplePos + viewPos, 1.0);
@@ -77,7 +80,7 @@ void main() {
 
         float visibility_factor = 1.0 - (occlusion_factor / maxWeight);
         occlusion = (1.0 - pow(visibility_factor, gFactor)) * gPower;
-        occlusion = clamp(1.0 - occlusion, 0.25, 1.0);
+        occlusion = clamp(1.0 - occlusion, MIN_LIGHT, 1.0);
     }
     
     fragColor = vec4(vec3(1.0), occlusion);
