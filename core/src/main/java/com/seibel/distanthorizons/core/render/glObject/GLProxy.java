@@ -486,6 +486,13 @@ public class GLProxy
 			
 			GLMessage.ESeverity severity = msg.severity;
 			RuntimeException ex = new RuntimeException("GL MESSAGE: " + msg);
+			
+			if (severity == null)
+			{
+				// just in case the message was malformed
+				severity = GLMessage.ESeverity.LOW;
+			}
+			
 			switch (severity)
 			{
 				case HIGH:
