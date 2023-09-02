@@ -101,7 +101,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		
 		this.threadPoolMsg = new F3Screen.NestedMessage(this::f3Log);
 		
-		FileScanUtil.scanFiles(saveStructure, level.getLevelWrapper(), null, this);
+		FileScanUtil.scanRenderFiles(saveStructure, level.getLevelWrapper(), this);
 	}
 	
 	/** Returns what should be displayed in Minecraft's F3 debug menu */

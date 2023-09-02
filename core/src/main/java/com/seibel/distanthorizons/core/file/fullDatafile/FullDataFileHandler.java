@@ -83,7 +83,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		{
 			LOGGER.warn("Unable to create full data folder, file saving may fail.");
 		}
-		FileScanUtil.scanFiles(saveStructure, level.getLevelWrapper(), this, null);
+		FileScanUtil.scanFullDataFiles(saveStructure, level.getLevelWrapper(), this);
 	}
 	
 	// constructor helpers //
