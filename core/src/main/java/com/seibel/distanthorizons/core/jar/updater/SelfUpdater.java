@@ -57,9 +57,11 @@ public class SelfUpdater
 	 */
 	public static boolean onStart()
 	{
+		LOGGER.info("Checking for DH update");
 		// Some init stuff
 		// We use sha1 to check the version as our versioning system is different to the one on modrinth
-		if (!ModrinthGetter.init()) return false;
+		if (!ModrinthGetter.init())
+			return false;
 		String jarSha = "";
 		try
 		{
@@ -71,6 +73,11 @@ public class SelfUpdater
 			return false;
 		}
 		String mcVersion = SingletonInjector.INSTANCE.get(IVersionConstants.class).getMinecraftVersion();
+		if (!ModrinthGetter.mcVersions.contains(mcVersion))
+		{
+			LOGGER.warn("Minecraft version ["+ mcVersion +"] is not findable on Modrinth, only findable versions are ["+ ModrinthGetter.mcVersions.toString() +"]");
+			return false;
+		}
 		
 		// Check the sha's of both our stuff
 		if (jarSha.equals(ModrinthGetter.getLatestShaForVersion(mcVersion)))
