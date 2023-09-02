@@ -264,7 +264,7 @@ public class RenderUtil
 			return false; //Level is not ready yet.
 		}
 		
-		if (MC_RENDER.playerHasBlindnessEffect())
+		if (MC_RENDER.playerHasBlindingEffect())
 		{
 			// if the player is blind, don't render LODs,
 			// and don't change minecraft's fog

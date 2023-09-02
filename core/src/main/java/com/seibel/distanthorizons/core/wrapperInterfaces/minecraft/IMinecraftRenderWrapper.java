@@ -49,7 +49,7 @@ public interface IMinecraftRenderWrapper extends IBindable
 	
 	DhBlockPos getCameraBlockPosition();
 	
-	boolean playerHasBlindnessEffect();
+	boolean playerHasBlindingEffect();
 	
 	Vec3d getCameraExactPosition();
 	
