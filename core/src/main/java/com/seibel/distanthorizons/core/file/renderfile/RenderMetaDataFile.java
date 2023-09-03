@@ -21,6 +21,10 @@ package com.seibel.distanthorizons.core.file.renderfile;
 
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
+import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
+import com.seibel.distanthorizons.core.dataObjects.transformers.FullDataToRenderDataTransformer;
+import com.seibel.distanthorizons.core.file.fullDatafile.FullDataMetaFile;
+import com.seibel.distanthorizons.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.distanthorizons.core.file.metaData.AbstractMetaDataContainerFile;
 import com.seibel.distanthorizons.core.file.metaData.BaseMetaData;
 import com.seibel.distanthorizons.core.level.IDhLevel;
@@ -34,6 +38,7 @@ import com.seibel.distanthorizons.core.level.IDhClientLevel;
 import com.seibel.distanthorizons.core.render.renderer.IDebugRenderable;
 import com.seibel.distanthorizons.core.util.AtomicsUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
+import com.seibel.distanthorizons.core.util.objects.Reference;
 import com.seibel.distanthorizons.core.util.objects.dataStreams.DhDataInputStream;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -63,37 +68,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 	private final RenderSourceFileHandler fileHandler;
 	private boolean doesFileExist;
 	
-	private static final class CacheQueryResult
-	{
-		public final CompletableFuture<ColumnRenderSource> future;
-		public final boolean needsLoad;
-		public CacheQueryResult(CompletableFuture<ColumnRenderSource> future, boolean needsLoad)
-		{
-			this.future = future;
-			this.needsLoad = needsLoad;
-		}
-		
-	}
 	
-	@Override
-	public void debugRender(DebugRenderer r)
-	{
-		ColumnRenderSource cached = cachedRenderDataSource.get();
-		Color c = Color.black;
-		if (cached != null)
-		{
-			c = Color.GREEN;
-		}
-		else if (renderSourceLoadFutureRef.get() != null)
-		{
-			c = Color.BLUE;
-		}
-		else if (doesFileExist)
-		{
-			c = Color.RED;
-		}
-		r.renderBox(new DebugRenderer.Box(pos, 64, 72, 0.05f, c));
-	}
 	
 	//=============//
 	// constructor //
@@ -135,6 +110,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 		DebugRenderer.register(this);
 	}
 	
+	
 	/**
 	 * NOTE: should only be used if there IS an existing file.
 	 *
@@ -144,7 +120,6 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 	{
 		return new RenderMetaDataFile(fileHandler, path);
 	}
-	
 	private RenderMetaDataFile(RenderSourceFileHandler fileHandler, File path) throws IOException
 	{
 		super(path);
@@ -156,19 +131,30 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 		DebugRenderer.register(this);
 	}
 	
-	public void updateChunkIfSourceExists(ChunkSizedFullDataAccessor chunkDataView, IDhClientLevel level)
+	
+	
+	//=============//
+	// data update //
+	//=============//
+	
+	public void updateChunkIfSourceExistsAsync(ChunkSizedFullDataAccessor chunkDataView, IDhClientLevel level)
 	{
 		DhLodPos chunkPos = chunkDataView.getLodPos();
 		LodUtil.assertTrue(this.pos.getSectionBBoxPos().overlapsExactly(chunkPos), "Chunk pos " + chunkPos + " doesn't overlap with section " + this.pos);
 		
 		// update the render source if one exists
-		CompletableFuture<ColumnRenderSource> renderSourceLoadFuture = getCachedDataSourceAsync(false);
-		if (renderSourceLoadFuture == null) return;
+		CompletableFuture<ColumnRenderSource> renderSourceLoadFuture = this.getCachedDataSourceAsync(false);
+		if (renderSourceLoadFuture == null)
+		{
+			return;
+		}
 		
-		renderSourceLoadFuture.thenAccept((renderSource) -> {
+		
+		renderSourceLoadFuture.thenAccept((renderSource) ->
+		{
 			boolean dataUpdated = renderSource.updateWithChunkData(chunkDataView, level);
 			
-			//if (pos.sectionDetailLevel == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL+5) {
+			// add a debug renderer
 			float offset = new Random(System.nanoTime() ^ Thread.currentThread().getId()).nextFloat() * 16f;
 			Color debugColor = dataUpdated ? Color.blue : Color.red;
 			DebugRenderer.makeParticle(
@@ -177,55 +163,318 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 							2.0, 16f
 					)
 			);
-			//}
 		});
 	}
 	
-	public CompletableFuture<Void> flushAndSaveAsync(ExecutorService renderCacheThread)
+	
+	
+	//======================//
+	// render source getter //
+	//======================//
+	
+	public CompletableFuture<ColumnRenderSource> getOrLoadCachedDataSourceAsync(Executor fileReaderThreads, IDhLevel level)
+	{
+		CacheQueryResult cacheQueryResult = this.getOrStartCachedDataSourceAsync();
+		if (cacheQueryResult.cacheQueryAlreadyInProcess)
+		{
+			// return the in-process future
+			return cacheQueryResult.future;
+		}
+		
+		
+		
+		CompletableFuture<ColumnRenderSource> getSourceFuture = cacheQueryResult.future;
+		if (!this.doesFileExist)
+		{
+			// create a new Meta file and render source
+			
+			
+			// create an empty render source
+			byte dataDetailLevel = (byte) (this.pos.sectionDetailLevel - ColumnRenderSource.SECTION_SIZE_OFFSET);
+			int verticalSize = Config.Client.Advanced.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(dataDetailLevel);
+			ColumnRenderSource newColumnRenderSource = new ColumnRenderSource(this.pos, verticalSize, level.getMinY());
+			
+			this.baseMetaData = new BaseMetaData(
+					newColumnRenderSource.getSectionPos(), -1, newColumnRenderSource.getDataDetail(), 
+					newColumnRenderSource.worldGenStep, RenderSourceFileHandler.RENDER_SOURCE_TYPE_ID, 
+					newColumnRenderSource.getRenderDataFormatVersion(), Long.MAX_VALUE);
+			
+			this.fileHandler.onRenderFileLoadedAsync(newColumnRenderSource, this) // TODO just calls // metaFile.updateRenderCacheAsync()
+					// wait for the file handler to finish before returning the render source
+					.whenComplete((renderSource, ex) ->
+					{
+						this.cachedRenderDataSource = new SoftReference<>(renderSource);
+						
+						this.renderSourceLoadFutureRef.set(null);
+						getSourceFuture.complete(renderSource);
+					});
+		}
+		else
+		{
+			CompletableFuture.supplyAsync(() ->
+					{
+						if (this.baseMetaData == null)
+						{
+							throw new IllegalStateException("Meta data not loaded!");
+						}
+						
+						// Load the render source file.
+						ColumnRenderSource renderSource;
+						try (FileInputStream fileInputStream = this.getFileInputStream(); // throws IoException
+								DhDataInputStream compressedInputStream = new DhDataInputStream(fileInputStream))
+						{
+							renderSource = ColumnRenderLoader.INSTANCE.loadRenderSource(this, compressedInputStream, level);
+						}
+						catch (IOException ex)
+						{
+							throw new CompletionException(ex);
+						}
+						
+						return renderSource;
+					}, fileReaderThreads)
+					// TODO: Check for file version and only update if needed.
+					.thenCompose((renderSource) -> this.fileHandler.onRenderFileLoadedAsync(renderSource, this)) // TODO just calls // metaFile.updateRenderCacheAsync()
+					.whenComplete((renderSource, ex) ->
+					{
+						if (ex != null)
+						{
+							if (!LodUtil.isInterruptOrReject(ex))
+							{
+								LOGGER.error("Error loading file "+this.file+": ", ex);
+							}
+							
+							// set the render source to null to prevent instances where a corrupt or incomplete render source is returned
+							renderSource = null;
+						}
+						
+						this.renderSourceLoadFutureRef.set(null);
+						
+						this.cachedRenderDataSource = new SoftReference<>(renderSource);
+						getSourceFuture.complete(renderSource);
+					});
+		}
+		
+		return getSourceFuture;
+	}
+	// TODO why is this being used vs just // this.getCachedDataSourceAsync(true); ?
+	private CacheQueryResult getOrStartCachedDataSourceAsync()
+	{
+		CompletableFuture<ColumnRenderSource> renderSourceLoadFuture = this.getCachedDataSourceAsync(true);
+		if (renderSourceLoadFuture != null)
+		{
+			// return the existing load future
+			return new CacheQueryResult(renderSourceLoadFuture, true);
+		}
+		else
+		{
+			// Create a new future if one doesn't already exist
+			CompletableFuture<ColumnRenderSource> newFuture = new CompletableFuture<>();
+			CompletableFuture<ColumnRenderSource> oldFuture = AtomicsUtil.compareAndExchange(this.renderSourceLoadFutureRef, null, newFuture);
+			
+			CompletableFuture<ColumnRenderSource> activeFuture = (oldFuture == null) ? newFuture : oldFuture;
+			// if a loading future is already active we don't need to trigger another load
+			boolean cacheQueryAlreadyInProcess = (oldFuture != null);
+			return new CacheQueryResult(activeFuture, cacheQueryAlreadyInProcess);
+		}
+	}
+	private FileInputStream getFileInputStream() throws IOException
+	{
+		FileInputStream inputStream = new FileInputStream(this.file);
+		int toSkip = METADATA_SIZE_IN_BYTES;
+		while (toSkip > 0)
+		{
+			long skipped = inputStream.skip(toSkip);
+			if (skipped == 0)
+			{
+				throw new IOException("Invalid file: Failed to skip metadata.");
+			}
+			toSkip -= skipped;
+		}
+		
+		if (toSkip != 0)
+		{
+			throw new IOException("File IO Error: Failed to skip metadata.");
+		}
+		else
+		{
+			return inputStream;
+		}
+	}
+	
+	
+	
+	//===============//
+	// cache handler //
+	//===============//
+	
+	public CompletableFuture<Void> updateRenderCacheAsync(ColumnRenderSource renderSource, IFullDataSourceProvider fullDataSourceProvider, IDhClientLevel clientLevel)
+	{
+		DebugRenderer.BoxWithLife debugBox = new DebugRenderer.BoxWithLife(new DebugRenderer.Box(renderSource.sectionPos, 74f, 86f, 0.1f, Color.red), 1.0, 32f, Color.green.darker());
+		
+		
+		// Skip updating the cache if the data file is already up-to-date
+		FullDataMetaFile dataFile = fullDataSourceProvider.getFileIfExist(this.pos);
+		if (!RenderSourceFileHandler.ALWAYS_INVALIDATE_CACHE && dataFile != null && dataFile.baseMetaData != null && dataFile.baseMetaData.checksum == this.baseMetaData.dataVersion.get()) // TODO can we make it so the version comparisons either both use the checksum or the dataVersion? Comparing checksum and dataVersion is kinda confusing
+		{
+			LOGGER.debug("Skipping render cache update for " + this.pos);
+			renderSource.localVersion.incrementAndGet();
+			return CompletableFuture.completedFuture(null);
+		}
+		
+		
+		
+		final Reference<Integer> renderDataVersionRef = new Reference<>(Integer.MAX_VALUE);
+		
+		// get the full data source
+		CompletableFuture<IFullDataSource> fullDataSourceFuture =
+				fullDataSourceProvider.readAsync(renderSource.getSectionPos())
+						.thenApply((fullDataSource) ->
+						{
+							debugBox.box.color = Color.yellow.darker();
+							
+							// get the metaFile's version
+							FullDataMetaFile renderSourceMetaFile = fullDataSourceProvider.getFileIfExist(this.pos);
+							if (renderSourceMetaFile != null)
+							{
+								renderDataVersionRef.value = renderSourceMetaFile.baseMetaData.checksum;
+							}
+							
+							return fullDataSource;
+						}).exceptionally((ex) ->
+						{
+							LOGGER.error("Exception when getting data for updateCache()", ex);
+							return null;
+						});
+		
+		
+		
+		// convert the full data source into a render source
+		CompletableFuture<Void> transformFuture = FullDataToRenderDataTransformer.transformFullDataToRenderSourceAsync(fullDataSourceFuture, clientLevel)
+				.handle((newRenderSource, ex) ->
+				{
+					if (ex == null)
+					{
+						try
+						{
+							renderSource.updateFromRenderSource(newRenderSource);
+							
+							// update the meta data
+							this.baseMetaData.dataVersion.set(renderDataVersionRef.value);
+							this.baseMetaData.dataLevel = renderSource.getDataDetail();
+							this.baseMetaData.dataTypeId = RenderSourceFileHandler.RENDER_SOURCE_TYPE_ID;
+							this.baseMetaData.binaryDataFormatVersion = renderSource.getRenderDataFormatVersion();
+							
+							// save to file
+							this.save(renderSource);
+						}
+						catch (Throwable e)
+						{
+							LOGGER.error("Exception when writing render data to file: ", e);
+						}
+					}
+					else if (!LodUtil.isInterruptOrReject(ex))
+					{
+						LOGGER.error("Exception when updating render file using data source: ", ex);
+					}
+					
+					debugBox.close();
+					return null;
+				});
+		return transformFuture;
+	}
+	
+	
+	
+	//===============//
+	// file handling //
+	//===============//
+	
+	public CompletableFuture<Void> flushAndSaveAsync()
 	{
 		if (!this.file.exists())
 		{
 			return CompletableFuture.completedFuture(null); // No need to save if the file doesn't exist.
 		}
+		
 		// FIXME: TODO: Change doTriggerUpdate to true. Currently is false cause a dead future making render handler hang,
 		//   and that render cache aren't actually used really yet due to missing versioning atm. So disabling for now.
-		CompletableFuture<ColumnRenderSource> source = getCachedDataSourceAsync(false);
-		if (source == null)
+		CompletableFuture<ColumnRenderSource> getSourceFuture = this.getCachedDataSourceAsync(false);
+		if (getSourceFuture == null)
 		{
 			return CompletableFuture.completedFuture(null); // If there is no cached data, there is no need to save.
 		}
-		return source.handle((columnRenderSource, ex) -> {
-			if (ex != null && !LodUtil.isInterruptOrReject(ex))
-				LOGGER.error("Failed to load render source for " + this.pos + " for flush and saving", ex);
-			return null;
-		}); // Otherwise, wait for the data to be read (which also flushes changes to the file).
+		
+		// Wait for the data to be read, which also flushes changes to the file.
+		return getSourceFuture.thenAccept((columnRenderSource) -> { /* discard the render source, it doesn't need to be returned */ });
 	}
-	private CacheQueryResult getOrStartCachedDataSourceAsync()
+	
+	/** writes the given {@link ColumnRenderSource} to file */
+	private void save(ColumnRenderSource renderSource)
 	{
-		// use the existing future
-		CompletableFuture<ColumnRenderSource> renderSourceLoadFuture = getCachedDataSourceAsync(true);
-		if (renderSourceLoadFuture == null)
+		if (renderSource.isEmpty())
 		{
-			// Make a new future, and CAS it, or return the existing future
-			CompletableFuture<ColumnRenderSource> newFuture = new CompletableFuture<>();
-			CompletableFuture<ColumnRenderSource> cas = AtomicsUtil.compareAndExchange(renderSourceLoadFutureRef, null, newFuture);
-			if (cas == null)
+			if (this.file.exists())
 			{
-				return new CacheQueryResult(newFuture, true);
+				// attempt to remove the empty render source
+				if (!this.file.delete())
+				{
+					LOGGER.warn("Failed to delete render file at " + this.file);
+				}
 			}
-			else
-			{
-				return new CacheQueryResult(cas, false);
-			}
+			
+			this.doesFileExist = false;
 		}
 		else
 		{
-			return new CacheQueryResult(renderSourceLoadFuture, false);
+			//LOGGER.info("Saving updated render file v[{}] at sect {}", this.metaData.dataVersion.get(), this.pos);
+			try
+			{
+				super.writeData((dhDataOutputStream) -> renderSource.writeData(dhDataOutputStream));
+				this.doesFileExist = true;
+			}
+			catch (IOException e)
+			{
+				LOGGER.error("Failed to save updated render file at {} for sect {}", this.file, this.pos, e);
+			}
 		}
 	}
 	
+	
+	
+	//=======//
+	// debug //
+	//=======//
+	
+	@Override
+	public void debugRender(DebugRenderer debugRenderer)
+	{
+		Color color = Color.black;
+		
+		ColumnRenderSource cached = this.cachedRenderDataSource.get();
+		if (cached != null)
+		{
+			color = Color.GREEN;
+		}
+		else if (this.renderSourceLoadFutureRef.get() != null)
+		{
+			color = Color.BLUE;
+		}
+		else if (this.doesFileExist)
+		{
+			color = Color.RED;
+		}
+		
+		debugRenderer.renderBox(new DebugRenderer.Box(this.pos, 64, 72, 0.05f, color));
+	}
+	
+	
+	
+	//================//
+	// helper methods //
+	//================//
+	
 	@Nullable
-	private CompletableFuture<ColumnRenderSource> getCachedDataSourceAsync(boolean doTriggerUpdate)
+	private CompletableFuture<ColumnRenderSource> getCachedDataSourceAsync(boolean triggerAndWaitForListener)
 	{
 		// use the existing future
 		CompletableFuture<ColumnRenderSource> renderSourceLoadFuture = this.renderSourceLoadFutureRef.get();
@@ -243,173 +492,56 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 		}
 		else
 		{
-			if (!doTriggerUpdate) return CompletableFuture.completedFuture(cachedRenderDataSource);
-			
-			// Make a new future, and CAS it, or return the existing future
-			CompletableFuture<ColumnRenderSource> newFuture = new CompletableFuture<>();
-			CompletableFuture<ColumnRenderSource> cas = AtomicsUtil.compareAndExchange(renderSourceLoadFutureRef, null, newFuture);
-			if (cas == null)
+			if (!triggerAndWaitForListener)
 			{
-				this.fileHandler.onRenderSourceLoadedFromCacheAsync(this, cachedRenderDataSource)
+				// immediately return the render source
+				return CompletableFuture.completedFuture(cachedRenderDataSource);
+			}
+			
+			// trigger the listener, wait for it to finish, then return the render source  
+			
+			// Create a new future if one doesn't already exist
+			CompletableFuture<ColumnRenderSource> newFuture = new CompletableFuture<>();
+			CompletableFuture<ColumnRenderSource> oldFuture = AtomicsUtil.compareAndExchange(this.renderSourceLoadFutureRef, null, newFuture);
+			
+			if (oldFuture != null)
+			{
+				return oldFuture;
+			}
+			else
+			{
+				this.fileHandler.onRenderSourceLoadedFromCacheAsync(this, cachedRenderDataSource) // TODO just calls // metaFile.updateRenderCacheAsync()
 						// wait for the handler to finish before returning the renderSource
-						.handle((voidObj, ex) -> {
-							if (ex != null)
-							{
-								LOGGER.error("Error while updating render source from cache", ex);
-							}
+						.handle((voidObj, ex) -> 
+						{
 							newFuture.complete(cachedRenderDataSource);
-							renderSourceLoadFutureRef.set(null);
+							this.renderSourceLoadFutureRef.set(null);
+							
 							return null;
 						});
 				return newFuture;
 			}
-			else
-			{
-				return cas;
-			}
 		}
 	}
 	
-	public CompletableFuture<ColumnRenderSource> loadOrGetCachedDataSourceAsync(Executor fileReaderThreads, IDhLevel level)
+	
+	
+	//================//
+	// helper classes //
+	//================//
+	
+	/** TODO couldn't this just be made into an atomic future or something? */
+	private static final class CacheQueryResult
 	{
-		CacheQueryResult getCachedFuture = this.getOrStartCachedDataSourceAsync();
-		if (!getCachedFuture.needsLoad)
+		public final CompletableFuture<ColumnRenderSource> future;
+		public final boolean cacheQueryAlreadyInProcess;
+		
+		public CacheQueryResult(CompletableFuture<ColumnRenderSource> future, boolean cacheQueryAlreadyInProcess)
 		{
-			return getCachedFuture.future;
+			this.future = future;
+			this.cacheQueryAlreadyInProcess = cacheQueryAlreadyInProcess;
 		}
 		
-		CompletableFuture<ColumnRenderSource> future = getCachedFuture.future;
-		// load or create the render source
-		if (!this.doesFileExist)
-		{
-			// create a new Meta file and render source
-			
-			
-			// create the new render source
-			byte dataDetailLevel = (byte) (this.pos.sectionDetailLevel - ColumnRenderSource.SECTION_SIZE_OFFSET);
-			int verticalSize = Config.Client.Advanced.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(dataDetailLevel);
-			ColumnRenderSource newColumnRenderSource = new ColumnRenderSource(this.pos, verticalSize, level.getMinY());
-			
-			this.baseMetaData = new BaseMetaData(
-					newColumnRenderSource.getSectionPos(), -1, newColumnRenderSource.getDataDetail(), 
-					newColumnRenderSource.worldGenStep, RenderSourceFileHandler.RENDER_SOURCE_TYPE_ID, 
-					newColumnRenderSource.getRenderDataFormatVersion(), Long.MAX_VALUE);
-			
-			this.fileHandler.onRenderFileLoadedAsync(newColumnRenderSource, this)
-					.whenComplete((renderSource, ex) ->
-					{
-						if (ex != null)
-						{
-							if (!LodUtil.isInterruptOrReject(ex))
-							{
-								LOGGER.error("Uncaught error on RenderMetaDataFile ColumnRenderSource creation for file: ["+this.file+"]. Error: ", ex);
-							}
-							
-							// set the render source to null to prevent instances where a corrupt or incomplete render source was returned
-							renderSource = null;
-						}
-						
-						this.renderSourceLoadFutureRef.set(null);
-						
-						this.cachedRenderDataSource = new SoftReference<>(renderSource);
-						future.complete(renderSource);
-					});
-		}
-		else
-		{
-			CompletableFuture.supplyAsync(() ->
-					{
-						if (this.baseMetaData == null)
-						{
-							throw new IllegalStateException("Meta data not loaded!");
-						}
-						
-						// Load the file.
-						ColumnRenderSource renderSource;
-						try (FileInputStream fileInputStream = this.getFileInputStream();
-								DhDataInputStream compressedStream = new DhDataInputStream(fileInputStream))
-						{
-							renderSource = ColumnRenderLoader.INSTANCE.loadRenderSource(this, compressedStream, level);
-						}
-						catch (IOException ex)
-						{
-							throw new CompletionException(ex);
-						}
-						return renderSource;
-					}, fileReaderThreads)
-					// TODO: Check for file version and only update if needed.
-					.thenCompose((renderSource) -> this.fileHandler.onRenderFileLoadedAsync(renderSource, this))
-					.whenComplete((renderSource, ex) ->
-					{
-						if (ex != null)
-						{
-							if (!LodUtil.isInterruptOrReject(ex))
-								LOGGER.error("Error loading file {}: ", this.file, ex);
-							cachedRenderDataSource = new SoftReference<>(null);
-							renderSourceLoadFutureRef.set(null);
-							future.complete(null);
-						}
-						else
-						{
-							cachedRenderDataSource = new SoftReference<>(renderSource);
-							renderSourceLoadFutureRef.set(null);
-							future.complete(renderSource);
-						}
-					});
-		}
-		return future;
-	}
-	
-	private FileInputStream getFileInputStream() throws IOException
-	{
-		FileInputStream fin = new FileInputStream(this.file);
-		int toSkip = METADATA_SIZE_IN_BYTES;
-		while (toSkip > 0)
-		{
-			long skipped = fin.skip(toSkip);
-			if (skipped == 0)
-			{
-				throw new IOException("Invalid file: Failed to skip metadata.");
-			}
-			toSkip -= skipped;
-		}
-		
-		if (toSkip != 0)
-		{
-			throw new IOException("File IO Error: Failed to skip metadata.");
-		}
-		else
-		{
-			return fin;
-		}
-	}
-	
-	public void save(ColumnRenderSource renderSource)
-	{
-		if (renderSource.isEmpty())
-		{
-			if (this.file.exists())
-			{
-				if (!this.file.delete())
-				{
-					LOGGER.warn("Failed to delete render file at {}", this.file);
-				}
-			}
-			this.doesFileExist = false;
-		}
-		else
-		{
-			//LOGGER.info("Saving updated render file v[{}] at sect {}", this.metaData.dataVersion.get(), this.pos);
-			try
-			{
-				super.writeData((out) -> renderSource.writeData(out));
-				this.doesFileExist = true;
-			}
-			catch (IOException e)
-			{
-				LOGGER.error("Failed to save updated render file at {} for sect {}", this.file, this.pos, e);
-			}
-		}
 	}
 	
 }

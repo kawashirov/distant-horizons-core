@@ -21,9 +21,6 @@ package com.seibel.distanthorizons.core.file.renderfile;
 
 import com.google.common.collect.HashMultimap;
 import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
-import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
-import com.seibel.distanthorizons.core.dataObjects.transformers.FullDataToRenderDataTransformer;
-import com.seibel.distanthorizons.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.distanthorizons.core.file.structure.AbstractSaveStructure;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.logging.f3.F3Screen;
@@ -32,17 +29,13 @@ import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.distanthorizons.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.distanthorizons.core.level.IDhClientLevel;
-import com.seibel.distanthorizons.core.render.renderer.DebugRenderer;
 import com.seibel.distanthorizons.core.util.FileScanUtil;
 import com.seibel.distanthorizons.core.util.FileUtil;
-import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.ThreadUtil;
-import com.seibel.distanthorizons.core.util.objects.Reference;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -67,7 +60,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	/** contains the loaded {@link RenderMetaDataFile}'s */
 	private final ConcurrentHashMap<DhSectionPos, RenderMetaDataFile> metaFileBySectionPos = new ConcurrentHashMap<>();
 	
-	private final IDhClientLevel level;
+	private final IDhClientLevel clientLevel;
 	private final File saveDir;
 	/** This is the lowest (highest numeric) detail level that this {@link RenderSourceFileHandler} is keeping track of. */
 	AtomicInteger topDetailLevel = new AtomicInteger(DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL);
@@ -81,21 +74,21 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	// constructor //
 	//=============//
 	
-	public RenderSourceFileHandler(IFullDataSourceProvider sourceProvider, IDhClientLevel level, AbstractSaveStructure saveStructure)
+	public RenderSourceFileHandler(IFullDataSourceProvider sourceProvider, IDhClientLevel clientLevel, AbstractSaveStructure saveStructure)
 	{
 		this.fullDataSourceProvider = sourceProvider;
-		this.level = level;
-		this.saveDir = saveStructure.getRenderCacheFolder(level.getLevelWrapper());
+		this.clientLevel = clientLevel;
+		this.saveDir = saveStructure.getRenderCacheFolder(clientLevel.getLevelWrapper());
 		if (!this.saveDir.exists() && !this.saveDir.mkdirs())
 		{
 			LOGGER.warn("Unable to create render data folder, file saving may fail.");
 		}
-		this.fileHandlerThreadPool = ThreadUtil.makeSingleThreadPool("Render Source File Handler [" + this.level.getLevelWrapper().getDimensionType().getDimensionName() + "]");
+		this.fileHandlerThreadPool = ThreadUtil.makeSingleThreadPool("Render Source File Handler [" + this.clientLevel.getLevelWrapper().getDimensionType().getDimensionName() + "]");
 		
 		
 		this.threadPoolMsg = new F3Screen.NestedMessage(this::f3Log);
 		
-		FileScanUtil.scanRenderFiles(saveStructure, level.getLevelWrapper(), this);
+		FileScanUtil.scanRenderFiles(saveStructure, clientLevel.getLevelWrapper(), this);
 	}
 	
 	/**
@@ -251,7 +244,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 			return CompletableFuture.completedFuture(ColumnRenderSource.createEmptyRenderSource(pos));
 		}
 		
-		CompletableFuture<ColumnRenderSource> getDataSourceFuture = metaFile.loadOrGetCachedDataSourceAsync(this.fileHandlerThreadPool, this.level)
+		CompletableFuture<ColumnRenderSource> getDataSourceFuture = metaFile.getOrLoadCachedDataSourceAsync(this.fileHandlerThreadPool, this.clientLevel)
 				.handle((renderSource, exception) ->
 				{
 					if (exception != null)
@@ -380,7 +373,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 				RenderMetaDataFile metaFile = this.metaFileBySectionPos.get(sectionPos); // bypass the getLoadOrMakeFile() since we only want cached files.
 				if (metaFile != null)
 				{
-					metaFile.updateChunkIfSourceExists(chunk, this.level);
+					metaFile.updateChunkIfSourceExistsAsync(chunk, this.clientLevel);
 				}
 			}
 		}
@@ -401,7 +394,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
 		for (RenderMetaDataFile metaFile : this.metaFileBySectionPos.values())
 		{
-			futures.add(metaFile.flushAndSaveAsync(this.fileHandlerThreadPool));
+			futures.add(metaFile.flushAndSaveAsync());
 		}
 		
 		return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
@@ -414,9 +407,10 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	// meta file cache updating //
 	//==========================//
 	
-	public CompletableFuture<ColumnRenderSource> onRenderFileLoadedAsync(ColumnRenderSource renderSource, RenderMetaDataFile file)
+	@Deprecated
+	public CompletableFuture<ColumnRenderSource> onRenderFileLoadedAsync(ColumnRenderSource renderSource, RenderMetaDataFile metaFile)
 	{
-		CompletableFuture<ColumnRenderSource> future = this.updateMetaFileCacheAsync(renderSource, file).handle((voidObj, ex) -> renderSource);
+		CompletableFuture<ColumnRenderSource> future = metaFile.updateRenderCacheAsync(renderSource, this.fullDataSourceProvider, this.clientLevel).handle((voidObj, ex) -> renderSource);
 		
 		synchronized (this.taskTracker)
 		{
@@ -425,105 +419,8 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		return future;
 	}
 	
-	public CompletableFuture<Void> onRenderSourceLoadedFromCacheAsync(RenderMetaDataFile file, ColumnRenderSource renderSource) { return this.updateMetaFileCacheAsync(renderSource, file); }
-	
-	private CompletableFuture<Void> updateMetaFileCacheAsync(ColumnRenderSource renderSource, RenderMetaDataFile renderMetaFile)
-	{
-		DebugRenderer.BoxWithLife debugBox = new DebugRenderer.BoxWithLife(new DebugRenderer.Box(renderSource.sectionPos, 74f, 86f, 0.1f, Color.red), 1.0, 32f, Color.green.darker());
-		
-		
-		// Skip updating the cache if the data file is already up-to-date
-		FullDataMetaFile dataFile = this.fullDataSourceProvider.getFileIfExist(renderMetaFile.pos);
-		if (!ALWAYS_INVALIDATE_CACHE && dataFile != null && dataFile.baseMetaData != null && dataFile.baseMetaData.checksum == renderMetaFile.baseMetaData.dataVersion.get()) // TODO can we make it so the version comparisons either both use the checksum or the dataVersion? Comparing checksum and dataVersion is kinda confusing
-		{
-			LOGGER.debug("Skipping render cache update for " + renderMetaFile.pos);
-			renderSource.localVersion.incrementAndGet();
-			return CompletableFuture.completedFuture(null);
-		}
-		
-		
-		
-		final Reference<Integer> renderDataVersionRef = new Reference<>(Integer.MAX_VALUE);
-		
-		// get the full data source
-		CompletableFuture<IFullDataSource> fullDataSourceFuture =
-				this.fullDataSourceProvider.readAsync(renderSource.getSectionPos())
-					.thenApply((fullDataSource) -> 
-					{
-						debugBox.box.color = Color.yellow.darker();
-						
-						// get the metaFile's version
-						FullDataMetaFile renderSourceMetaFile = this.fullDataSourceProvider.getFileIfExist(renderMetaFile.pos);
-						if (renderSourceMetaFile != null)
-						{
-							renderDataVersionRef.value = renderSourceMetaFile.baseMetaData.checksum;
-						}
-						
-						return fullDataSource;
-					}).exceptionally((ex) ->
-					{
-						LOGGER.error("Exception when getting data for updateCache()", ex);
-						return null;
-					});
-		
-		synchronized (this.taskTracker)
-		{
-			this.taskTracker.put(fullDataSourceFuture, ETaskType.UPDATE_READ_DATA);
-		}
-		
-		
-		
-		// convert the full data source into a render source
-		CompletableFuture<Void> transformFuture = FullDataToRenderDataTransformer.transformFullDataToRenderSourceAsync(fullDataSourceFuture, this.level)
-				.handle((newRenderSource, ex) ->
-				{
-					if (ex == null)
-					{
-						try
-						{
-							renderMetaFile.baseMetaData.dataVersion.set(renderDataVersionRef.value);
-							this.mergeRenderSourcesAndWriteToFile(renderSource, renderMetaFile, newRenderSource);
-						}
-						catch (Throwable e)
-						{
-							LOGGER.error("Exception when writing render data to file: ", e);
-						}
-					}
-					else if (!LodUtil.isInterruptOrReject(ex))
-					{
-						LOGGER.error("Exception when updating render file using data source: ", ex);
-					}
-					
-					debugBox.close();
-					return null;
-				});
-		
-		synchronized (this.taskTracker)
-		{
-			this.taskTracker.put(transformFuture, ETaskType.UPDATE);
-		}
-		
-		
-		return transformFuture;
-	}
-	
-	
-	
-	
-	private void mergeRenderSourcesAndWriteToFile(ColumnRenderSource currentRenderSource, RenderMetaDataFile metaFile, ColumnRenderSource newRenderSource)
-	{
-		if (currentRenderSource == null || newRenderSource == null)
-		{
-			return;
-		}
-		
-		currentRenderSource.updateFromRenderSource(newRenderSource);
-		
-		metaFile.baseMetaData.dataLevel = currentRenderSource.getDataDetail();
-		metaFile.baseMetaData.dataTypeId = RENDER_SOURCE_TYPE_ID;
-		metaFile.baseMetaData.binaryDataFormatVersion = currentRenderSource.getRenderDataFormatVersion();
-		metaFile.save(currentRenderSource);
-	}
+	@Deprecated
+	public CompletableFuture<Void> onRenderSourceLoadedFromCacheAsync(RenderMetaDataFile metaFile, ColumnRenderSource renderSource) { return metaFile.updateRenderCacheAsync(renderSource, this.fullDataSourceProvider, this.clientLevel); }
 	
 	
 	
@@ -535,7 +432,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	private String[] f3Log()
 	{
 		ArrayList<String> lines = new ArrayList<>();
-		lines.add("Render Source File Handler [" + this.level.getClientLevelWrapper().getDimensionType().getDimensionName() + "]");
+		lines.add("Render Source File Handler [" + this.clientLevel.getClientLevelWrapper().getDimensionType().getDimensionName() + "]");
 		lines.add("  Loaded files: " + this.metaFileBySectionPos.size() + " / " + (this.unloadedFileBySectionPos.size() + this.metaFileBySectionPos.size()));
 		lines.add("  Thread pool tasks: " + this.fileHandlerThreadPool.getQueue().size() + " (completed: " + this.fileHandlerThreadPool.getCompletedTaskCount() + ")");
 		

@@ -55,13 +55,23 @@ public class AtomicsUtil
 		}
 	}
 	
+	/** 
+	 * If the {@link AtomicReference}'s current value matches the expected value, the newValue will be swapped in and the expected value returned. <br>
+	 * If the {@link AtomicReference}'s current value DOESN'T match the expected value, the {@link AtomicReference}'s current value will be returned without modification.
+	 */
 	public static <T> T compareAndExchange(AtomicReference<T> atomic, T expected, T newValue)
 	{
 		while (true)
 		{
 			T oldValue = atomic.get();
-			if (oldValue != expected) return oldValue;
-			if (atomic.weakCompareAndSet(expected, newValue)) return expected;
+			if (oldValue != expected)
+			{
+				return oldValue;
+			}
+			else if (atomic.weakCompareAndSet(expected, newValue))
+			{
+				return expected;
+			}
 		}
 	}
 	
