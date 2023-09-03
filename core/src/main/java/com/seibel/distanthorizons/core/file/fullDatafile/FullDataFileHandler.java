@@ -369,7 +369,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	 * This call is concurrent. I.e. it supports being called by multiple threads at the same time.
 	 */
 	@Override
-	public CompletableFuture<IFullDataSource> read(DhSectionPos pos)
+	public CompletableFuture<IFullDataSource> readAsync(DhSectionPos pos)
 	{
 		this.topDetailLevel.updateAndGet(oldDetailLevel -> Math.max(oldDetailLevel, pos.sectionDetailLevel));
 		FullDataMetaFile metaFile = this.getLoadOrMakeFile(pos, true);
@@ -398,7 +398,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	
 	/** This call is concurrent. I.e. it supports being called by multiple threads at the same time. */
 	@Override
-	public void write(DhSectionPos sectionPos, ChunkSizedFullDataAccessor chunkDataView)
+	public void writeChunkDataToFile(DhSectionPos sectionPos, ChunkSizedFullDataAccessor chunkDataView)
 	{
 		DhLodPos chunkPos = chunkDataView.getLodPos();
 		LodUtil.assertTrue(chunkPos.overlapsExactly(sectionPos.getSectionBBoxPos()), "Chunk " + chunkPos + " does not overlap section " + sectionPos);

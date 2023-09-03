@@ -21,7 +21,6 @@ package com.seibel.distanthorizons.core.file.fullDatafile;
 
 import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
-import com.seibel.distanthorizons.core.file.metaData.BaseMetaData;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,8 +35,8 @@ public interface IFullDataSourceProvider extends AutoCloseable
 {
 	void addScannedFile(Collection<File> detectedFiles);
 	
-	CompletableFuture<IFullDataSource> read(DhSectionPos pos);
-	void write(DhSectionPos sectionPos, ChunkSizedFullDataAccessor chunkData);
+	CompletableFuture<IFullDataSource> readAsync(DhSectionPos pos);
+	void writeChunkDataToFile(DhSectionPos sectionPos, ChunkSizedFullDataAccessor chunkData);
 	CompletableFuture<Void> flushAndSave();
 	CompletableFuture<Void> flushAndSave(DhSectionPos sectionPos);
 	

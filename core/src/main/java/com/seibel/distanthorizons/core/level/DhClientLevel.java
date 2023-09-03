@@ -102,10 +102,7 @@ public class DhClientLevel extends DhLevel implements IDhClientLevel
 	}
 	
 	@Override
-	public void saveWrites(ChunkSizedFullDataAccessor data)
-	{
-		clientside.saveWrites(data);
-	}
+	public void saveWrites(ChunkSizedFullDataAccessor data) { this.clientside.writeChunkDataToFile(data); }
 	
 	@Override
 	public int getMinY() { return levelWrapper.getMinHeight(); }

@@ -21,13 +21,11 @@ package com.seibel.distanthorizons.core.util;
 
 import com.seibel.distanthorizons.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.distanthorizons.core.file.renderfile.ILodRenderSourceProvider;
-import com.seibel.distanthorizons.core.file.renderfile.RenderSourceFileHandler;
 import com.seibel.distanthorizons.core.file.structure.AbstractSaveStructure;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import org.apache.logging.log4j.Logger;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -69,7 +67,7 @@ public class FileScanUtil
 					path -> path.toFile().getName().endsWith(RENDER_FILE_POSTFIX) && path.toFile().isFile()
 			).map(Path::toFile).collect(Collectors.toList());
 			LOGGER.info("Found " + files.size() + " render cache files for " + levelWrapper + " in " + saveStructure);
-			renderSourceProvider.addScannedFile(files);
+			renderSourceProvider.addScannedFiles(files);
 		}
 		catch (Exception e)
 		{

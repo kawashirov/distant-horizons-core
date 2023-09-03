@@ -50,12 +50,12 @@ public class ClientLevelModule implements Closeable
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
-	private final IDhClientLevel parent;
+	private final IDhClientLevel parentClientLevel;
 	public final AtomicReference<ClientRenderState> ClientRenderStateRef = new AtomicReference<>();
 	public final F3Screen.NestedMessage f3Message;
-	public ClientLevelModule(IDhClientLevel parent)
+	public ClientLevelModule(IDhClientLevel parentClientLevel)
 	{
-		this.parent = parent;
+		this.parentClientLevel = parentClientLevel;
 		this.f3Message = new F3Screen.NestedMessage(this::f3Log);
 	}
 	
@@ -88,7 +88,7 @@ public class ClientLevelModule implements Closeable
 			}
 			
 			clientRenderState.close();
-			clientRenderState = new ClientRenderState(parent, parent.getFileHandler(), parent.getSaveStructure());
+			clientRenderState = new ClientRenderState(parentClientLevel, parentClientLevel.getFileHandler(), parentClientLevel.getSaveStructure());
 			if (!this.ClientRenderStateRef.compareAndSet(null, clientRenderState))
 			{
 				//FIXME: How to handle this?
@@ -120,7 +120,7 @@ public class ClientLevelModule implements Closeable
 	/** @return if the {@link ClientRenderState} was successfully swapped */
 	public boolean startRenderer()
 	{
-		ClientRenderState ClientRenderState = new ClientRenderState(parent, parent.getFileHandler(), parent.getSaveStructure());
+		ClientRenderState ClientRenderState = new ClientRenderState(parentClientLevel, parentClientLevel.getFileHandler(), parentClientLevel.getSaveStructure());
 		if (!this.ClientRenderStateRef.compareAndSet(null, ClientRenderState))
 		{
 			LOGGER.warn("Failed to start renderer due to concurrency");
@@ -173,17 +173,18 @@ public class ClientLevelModule implements Closeable
 	//===============//
 	// data handling //
 	//===============//
-	public void saveWrites(ChunkSizedFullDataAccessor data)
+	public void writeChunkDataToFile(ChunkSizedFullDataAccessor data)
 	{
-		ClientRenderState ClientRenderState = this.ClientRenderStateRef.get();
 		DhLodPos pos = data.getLodPos().convertToDetailLevel(CompleteFullDataSource.SECTION_SIZE_OFFSET);
+		
+		ClientRenderState ClientRenderState = this.ClientRenderStateRef.get();
 		if (ClientRenderState != null)
 		{
 			ClientRenderState.renderSourceFileHandler.writeChunkDataToFile(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);
 		}
 		else
 		{
-			parent.getFileHandler().write(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);
+			this.parentClientLevel.getFileHandler().writeChunkDataToFile(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);
 		}
 	}
 	
@@ -240,7 +241,7 @@ public class ClientLevelModule implements Closeable
 	/** Returns what should be displayed in Minecraft's F3 debug menu */
 	protected String[] f3Log()
 	{
-		String dimName = parent.getClientLevelWrapper().getDimensionType().getDimensionName();
+		String dimName = parentClientLevel.getClientLevelWrapper().getDimensionType().getDimensionName();
 		ClientRenderState renderState = this.ClientRenderStateRef.get();
 		if (renderState == null)
 		{

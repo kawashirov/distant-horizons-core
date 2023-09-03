@@ -59,7 +59,7 @@ public class DhServerLevel extends DhLevel implements IDhServerLevel
 	public void saveWrites(ChunkSizedFullDataAccessor data)
 	{
 		DhLodPos pos = data.getLodPos().convertToDetailLevel(CompleteFullDataSource.SECTION_SIZE_OFFSET);
-		getFileHandler().write(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);
+		getFileHandler().writeChunkDataToFile(new DhSectionPos(pos.detailLevel, pos.x, pos.z), data);
 	}
 	
 	@Override

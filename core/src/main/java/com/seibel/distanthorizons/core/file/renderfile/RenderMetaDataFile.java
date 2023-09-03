@@ -19,6 +19,7 @@
 
 package com.seibel.distanthorizons.core.file.renderfile;
 
+import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.distanthorizons.core.file.metaData.AbstractMetaDataContainerFile;
 import com.seibel.distanthorizons.core.file.metaData.BaseMetaData;
@@ -33,7 +34,6 @@ import com.seibel.distanthorizons.core.level.IDhClientLevel;
 import com.seibel.distanthorizons.core.render.renderer.IDebugRenderable;
 import com.seibel.distanthorizons.core.util.AtomicsUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
-import com.seibel.distanthorizons.core.util.objects.UncheckedInterruptedException;
 import com.seibel.distanthorizons.core.util.objects.dataStreams.DhDataInputStream;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -228,11 +228,13 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 	private CompletableFuture<ColumnRenderSource> getCachedDataSourceAsync(boolean doTriggerUpdate)
 	{
 		// use the existing future
-		CompletableFuture<ColumnRenderSource> renderSourceLoadFuture = renderSourceLoadFutureRef.get();
+		CompletableFuture<ColumnRenderSource> renderSourceLoadFuture = this.renderSourceLoadFutureRef.get();
 		if (renderSourceLoadFuture != null)
 		{
 			return renderSourceLoadFuture;
 		}
+		
+		
 		// attempt to get the cached render source
 		ColumnRenderSource cachedRenderDataSource = this.cachedRenderDataSource.get();
 		if (cachedRenderDataSource == null)
@@ -248,7 +250,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 			CompletableFuture<ColumnRenderSource> cas = AtomicsUtil.compareAndExchange(renderSourceLoadFutureRef, null, newFuture);
 			if (cas == null)
 			{
-				this.fileHandler.onReadRenderSourceLoadedFromCacheAsync(this, cachedRenderDataSource)
+				this.fileHandler.onRenderSourceLoadedFromCacheAsync(this, cachedRenderDataSource)
 						// wait for the handler to finish before returning the renderSource
 						.handle((voidObj, ex) -> {
 							if (ex != null)
@@ -280,30 +282,37 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 		// load or create the render source
 		if (!this.doesFileExist)
 		{
-			// create a new Meta file
-			this.fileHandler.onCreateRenderFileAsync(this)
-					.thenApply((renderSource) ->
-					{
-						this.baseMetaData = this.makeMetaData(renderSource);
-						return renderSource;
-					})
-					.thenCompose((renderSource) -> this.fileHandler.onRenderFileLoaded(renderSource, this))
+			// create a new Meta file and render source
+			
+			
+			// create the new render source
+			byte dataDetailLevel = (byte) (this.pos.sectionDetailLevel - ColumnRenderSource.SECTION_SIZE_OFFSET);
+			int verticalSize = Config.Client.Advanced.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(dataDetailLevel);
+			ColumnRenderSource newColumnRenderSource = new ColumnRenderSource(this.pos, verticalSize, level.getMinY());
+			
+			this.baseMetaData = new BaseMetaData(
+					newColumnRenderSource.getSectionPos(), -1, newColumnRenderSource.getDataDetail(), 
+					newColumnRenderSource.worldGenStep, RenderSourceFileHandler.RENDER_SOURCE_TYPE_ID, 
+					newColumnRenderSource.getRenderDataFormatVersion(), Long.MAX_VALUE);
+			
+			this.fileHandler.onRenderFileLoadedAsync(newColumnRenderSource, this)
 					.whenComplete((renderSource, ex) ->
 					{
 						if (ex != null)
 						{
 							if (!LodUtil.isInterruptOrReject(ex))
-								LOGGER.error("Uncaught error on creation {}: ", this.file, ex);
-							cachedRenderDataSource = new SoftReference<>(null);
-							renderSourceLoadFutureRef.set(null);
-							future.complete(null);
+							{
+								LOGGER.error("Uncaught error on RenderMetaDataFile ColumnRenderSource creation for file: ["+this.file+"]. Error: ", ex);
+							}
+							
+							// set the render source to null to prevent instances where a corrupt or incomplete render source was returned
+							renderSource = null;
 						}
-						else
-						{
-							cachedRenderDataSource = new SoftReference<>(renderSource);
-							renderSourceLoadFutureRef.set(null);
-							future.complete(renderSource);
-						}
+						
+						this.renderSourceLoadFutureRef.set(null);
+						
+						this.cachedRenderDataSource = new SoftReference<>(renderSource);
+						future.complete(renderSource);
 					});
 		}
 		else
@@ -329,7 +338,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 						return renderSource;
 					}, fileReaderThreads)
 					// TODO: Check for file version and only update if needed.
-					.thenCompose((renderSource) -> this.fileHandler.onRenderFileLoaded(renderSource, this))
+					.thenCompose((renderSource) -> this.fileHandler.onRenderFileLoadedAsync(renderSource, this))
 					.whenComplete((renderSource, ex) ->
 					{
 						if (ex != null)
@@ -349,12 +358,6 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 					});
 		}
 		return future;
-	}
-	
-	private BaseMetaData makeMetaData(ColumnRenderSource renderSource)
-	{
-		return new BaseMetaData(renderSource.getSectionPos(), -1,
-				renderSource.getDataDetail(), renderSource.worldGenStep, RenderSourceFileHandler.RENDER_SOURCE_TYPE_ID, renderSource.getRenderDataFormatVersion(), Long.MAX_VALUE);
 	}
 	
 	private FileInputStream getFileInputStream() throws IOException

@@ -242,7 +242,7 @@ public class SubDimensionLevelMatcher implements AutoCloseable
 				}
 				IDhLevel tempLevel = new DhClientLevel(new ClientOnlySaveStructure(), clientLevelWrapper);
 				IFullDataSourceProvider fileHandler = new FullDataFileHandler(tempLevel, tempLevel.getSaveStructure());
-				CompletableFuture<IFullDataSource> testDataSource = fileHandler.read(new DhSectionPos(playerChunkPos));
+				CompletableFuture<IFullDataSource> testDataSource = fileHandler.readAsync(new DhSectionPos(playerChunkPos));
 				IFullDataSource lodDataSource = testDataSource.get();
 				
 				

@@ -30,7 +30,6 @@ import com.seibel.distanthorizons.core.generation.tasks.WorldGenResult;
 import com.seibel.distanthorizons.core.level.DhLevel;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.pos.DhLodPos;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import org.apache.logging.log4j.Logger;
@@ -63,9 +62,9 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	//======//
 	
 	@Override
-	public CompletableFuture<IFullDataSource> read(DhSectionPos pos)
+	public CompletableFuture<IFullDataSource> readAsync(DhSectionPos pos)
 	{
-		return super.read(pos);
+		return super.readAsync(pos);
 	}
 	
 	

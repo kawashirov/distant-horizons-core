@@ -36,7 +36,7 @@ import java.util.concurrent.CompletableFuture;
 public interface ILodRenderSourceProvider extends AutoCloseable
 {
 	CompletableFuture<ColumnRenderSource> readAsync(DhSectionPos pos);
-	void addScannedFile(Collection<File> detectedFiles);
+	void addScannedFiles(Collection<File> detectedFiles);
 	void writeChunkDataToFile(DhSectionPos sectionPos, ChunkSizedFullDataAccessor chunkData);
 	CompletableFuture<Void> flushAndSaveAsync();
 	

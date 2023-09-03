@@ -49,17 +49,17 @@ public class DataRenderTransformer
 	// transformers //
 	//==============//
 	
-	public static CompletableFuture<ColumnRenderSource> transformDataSourceAsync(IFullDataSource fullDataSource, IDhClientLevel level)
+	public static CompletableFuture<ColumnRenderSource> transformFullDataToRenderSourceAsync(IFullDataSource fullDataSource, IDhClientLevel level)
 	{
-		return CompletableFuture.supplyAsync(() -> transform(fullDataSource, level), transformerThreadPool);
+		return CompletableFuture.supplyAsync(() -> transformFullDataToRenderSource(fullDataSource, level), transformerThreadPool);
 	}
 	
-	public static CompletableFuture<ColumnRenderSource> transformDataSourceAsync(CompletableFuture<IFullDataSource> fullDataSourceFuture, IDhClientLevel level)
+	public static CompletableFuture<ColumnRenderSource> transformFullDataToRenderSourceAsync(CompletableFuture<IFullDataSource> fullDataSourceFuture, IDhClientLevel level)
 	{
-		return fullDataSourceFuture.thenApplyAsync((fullDataSource) -> transform(fullDataSource, level), transformerThreadPool);
+		return fullDataSourceFuture.thenApplyAsync((fullDataSource) -> transformFullDataToRenderSource(fullDataSource, level), transformerThreadPool);
 	}
 	
-	private static ColumnRenderSource transform(IFullDataSource fullDataSource, IDhClientLevel level)
+	private static ColumnRenderSource transformFullDataToRenderSource(IFullDataSource fullDataSource, IDhClientLevel level)
 	{
 		if (fullDataSource == null)
 		{
