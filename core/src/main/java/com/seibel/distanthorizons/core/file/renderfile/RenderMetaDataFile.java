@@ -174,16 +174,27 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 	
 	public CompletableFuture<ColumnRenderSource> getOrLoadCachedDataSourceAsync(Executor fileReaderThreads, IDhLevel level)
 	{
-		CacheQueryResult cacheQueryResult = this.getOrStartCachedDataSourceAsync();
-		if (cacheQueryResult.cacheQueryAlreadyInProcess)
+		CompletableFuture<ColumnRenderSource> renderSourceLoadFuture = this.getCachedDataSourceAsync(true);
+		if (renderSourceLoadFuture != null)
 		{
 			// return the in-process future
-			return cacheQueryResult.future;
+			return renderSourceLoadFuture;
+		}
+		else
+		{
+			// there is no cached data, we'll have to load it
+			
+			renderSourceLoadFuture = new CompletableFuture<>();
+			if (!this.renderSourceLoadFutureRef.compareAndSet(null, renderSourceLoadFuture))
+			{
+				// two threads attempted to start this job at the same time, only use the first future
+				renderSourceLoadFuture = this.renderSourceLoadFutureRef.get();
+			}
 		}
 		
 		
 		
-		CompletableFuture<ColumnRenderSource> getSourceFuture = cacheQueryResult.future;
+		final CompletableFuture<ColumnRenderSource> getSourceFuture = renderSourceLoadFuture;
 		if (!this.doesFileExist)
 		{
 			// create a new Meta file and render source
@@ -255,27 +266,6 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 		}
 		
 		return getSourceFuture;
-	}
-	// TODO why is this being used vs just // this.getCachedDataSourceAsync(true); ?
-	private CacheQueryResult getOrStartCachedDataSourceAsync()
-	{
-		CompletableFuture<ColumnRenderSource> renderSourceLoadFuture = this.getCachedDataSourceAsync(true);
-		if (renderSourceLoadFuture != null)
-		{
-			// return the existing load future
-			return new CacheQueryResult(renderSourceLoadFuture, true);
-		}
-		else
-		{
-			// Create a new future if one doesn't already exist
-			CompletableFuture<ColumnRenderSource> newFuture = new CompletableFuture<>();
-			CompletableFuture<ColumnRenderSource> oldFuture = AtomicsUtil.compareAndExchange(this.renderSourceLoadFutureRef, null, newFuture);
-			
-			CompletableFuture<ColumnRenderSource> activeFuture = (oldFuture == null) ? newFuture : oldFuture;
-			// if a loading future is already active we don't need to trigger another load
-			boolean cacheQueryAlreadyInProcess = (oldFuture != null);
-			return new CacheQueryResult(activeFuture, cacheQueryAlreadyInProcess);
-		}
 	}
 	private FileInputStream getFileInputStream() throws IOException
 	{
@@ -473,10 +463,11 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 	// helper methods //
 	//================//
 	
+	/** @return returns null if {@link RenderMetaDataFile#renderSourceLoadFutureRef} is empty and no cached {@link ColumnRenderSource} exists. */
 	@Nullable
 	private CompletableFuture<ColumnRenderSource> getCachedDataSourceAsync(boolean triggerAndWaitForListener)
 	{
-		// use the existing future
+		// check if another thread is already loading the data source
 		CompletableFuture<ColumnRenderSource> renderSourceLoadFuture = this.renderSourceLoadFutureRef.get();
 		if (renderSourceLoadFuture != null)
 		{
@@ -488,10 +479,13 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 		ColumnRenderSource cachedRenderDataSource = this.cachedRenderDataSource.get();
 		if (cachedRenderDataSource == null)
 		{
+			// no cached data exists and no one is trying to load it
 			return null;
 		}
 		else
 		{
+			// cached data exists
+			
 			if (!triggerAndWaitForListener)
 			{
 				// immediately return the render source
@@ -522,26 +516,6 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 				return newFuture;
 			}
 		}
-	}
-	
-	
-	
-	//================//
-	// helper classes //
-	//================//
-	
-	/** TODO couldn't this just be made into an atomic future or something? */
-	private static final class CacheQueryResult
-	{
-		public final CompletableFuture<ColumnRenderSource> future;
-		public final boolean cacheQueryAlreadyInProcess;
-		
-		public CacheQueryResult(CompletableFuture<ColumnRenderSource> future, boolean cacheQueryAlreadyInProcess)
-		{
-			this.future = future;
-			this.cacheQueryAlreadyInProcess = cacheQueryAlreadyInProcess;
-		}
-		
 	}
 	
 }
