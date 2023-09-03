@@ -22,6 +22,7 @@ package com.seibel.distanthorizons.core.file.renderfile;
 import com.google.common.collect.HashMultimap;
 import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
+import com.seibel.distanthorizons.core.dataObjects.transformers.FullDataToRenderDataTransformer;
 import com.seibel.distanthorizons.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.distanthorizons.core.file.structure.AbstractSaveStructure;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
@@ -29,7 +30,6 @@ import com.seibel.distanthorizons.core.logging.f3.F3Screen;
 import com.seibel.distanthorizons.core.pos.DhLodPos;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.core.dataObjects.render.ColumnRenderSource;
-import com.seibel.distanthorizons.core.dataObjects.transformers.DataRenderTransformer;
 import com.seibel.distanthorizons.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.distanthorizons.core.level.IDhClientLevel;
 import com.seibel.distanthorizons.core.render.renderer.DebugRenderer;
@@ -474,7 +474,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		
 		
 		// convert the full data source into a render source
-		CompletableFuture<Void> transformFuture = DataRenderTransformer.transformFullDataToRenderSourceAsync(fullDataSourceFuture, this.level)
+		CompletableFuture<Void> transformFuture = FullDataToRenderDataTransformer.transformFullDataToRenderSourceAsync(fullDataSourceFuture, this.level)
 				.handle((newRenderSource, ex) ->
 				{
 					if (ex == null)

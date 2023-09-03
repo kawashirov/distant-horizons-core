@@ -22,7 +22,7 @@ package com.seibel.distanthorizons.core.api.internal;
 import com.seibel.distanthorizons.core.Initializer;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.ColumnRenderBufferBuilder;
 import com.seibel.distanthorizons.core.dataObjects.transformers.ChunkToLodBuilder;
-import com.seibel.distanthorizons.core.dataObjects.transformers.DataRenderTransformer;
+import com.seibel.distanthorizons.core.dataObjects.transformers.FullDataToRenderDataTransformer;
 import com.seibel.distanthorizons.core.file.fullDatafile.FullDataFileHandler;
 import com.seibel.distanthorizons.core.generation.WorldGenerationQueue;
 import com.seibel.distanthorizons.core.world.*;
@@ -52,7 +52,7 @@ public class SharedApi
 		if (currentWorld != null)
 		{
 			// static thread pool setup
-			DataRenderTransformer.setupExecutorService();
+			FullDataToRenderDataTransformer.setupExecutorService();
 			FullDataFileHandler.setupExecutorService();
 			ColumnRenderBufferBuilder.setupExecutorService();
 			WorldGenerationQueue.setupWorldGenThreadPool();
@@ -61,7 +61,7 @@ public class SharedApi
 		else
 		{
 			// static thread pool shutdown
-			DataRenderTransformer.shutdownExecutorService();
+			FullDataToRenderDataTransformer.shutdownExecutorService();
 			FullDataFileHandler.shutdownExecutorService();
 			ColumnRenderBufferBuilder.shutdownExecutorService();
 			WorldGenerationQueue.shutdownWorldGenThreadPool();

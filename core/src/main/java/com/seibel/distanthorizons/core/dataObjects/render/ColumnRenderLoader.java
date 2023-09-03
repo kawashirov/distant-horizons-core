@@ -75,22 +75,6 @@ public class ColumnRenderLoader
 		}
 	}
 	
-	/** @throws InterruptedException see {@link FullDataToRenderDataTransformer#transformFullDataToColumnData(IDhClientLevel, CompleteFullDataSource) FullDataToRenderDataTransformer#transformFullDataToColumnData} for documentation */
-	public ColumnRenderSource createRenderSource(IFullDataSource fullDataSource, IDhClientLevel level) throws InterruptedException
-	{
-		if (fullDataSource instanceof CompleteFullDataSource)
-		{
-			return FullDataToRenderDataTransformer.transformFullDataToColumnData(level, (CompleteFullDataSource) fullDataSource);
-		}
-		else if (fullDataSource instanceof IIncompleteFullDataSource)
-		{
-			return FullDataToRenderDataTransformer.transformIncompleteDataToColumnData(level, (IIncompleteFullDataSource) fullDataSource);
-		}
-		
-		LodUtil.assertNotReach();
-		return null;
-	}
-	
 	
 	
 	//========================//
