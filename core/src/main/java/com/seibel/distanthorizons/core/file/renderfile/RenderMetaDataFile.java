@@ -166,7 +166,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 		if (renderSourceLoadFuture == null) return;
 		
 		renderSourceLoadFuture.thenAccept((renderSource) -> {
-			boolean dataUpdated = renderSource.fastWrite(chunkDataView, level);
+			boolean dataUpdated = renderSource.updateWithChunkData(chunkDataView, level);
 			
 			//if (pos.sectionDetailLevel == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL+5) {
 			float offset = new Random(System.nanoTime() ^ Thread.currentThread().getId()).nextFloat() * 16f;
