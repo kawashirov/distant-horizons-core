@@ -206,7 +206,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 					newColumnRenderSource.worldGenStep, RENDER_SOURCE_TYPE_ID, 
 					newColumnRenderSource.getRenderDataFormatVersion(), Long.MAX_VALUE);
 			
-			this.updateRenderCacheAsync(newColumnRenderSource, this.fullDataSourceProvider).whenComplete((voidObj, ex) ->
+			this.updateRenderCacheAsync(newColumnRenderSource).whenComplete((voidObj, ex) ->
 				{
 					this.cachedRenderDataSource = new SoftReference<>(newColumnRenderSource);
 
@@ -238,9 +238,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 						return renderSource;
 					}, fileReaderThreads)
 					// TODO: Check for file version and only update if needed.
-					//.thenCompose((renderSource) -> this.fileHandler.onRenderFileLoadedAsync(renderSource, this)) // TODO just calls // metaFile.updateRenderCacheAsync()
-					//.whenComplete((renderSource, ex) ->
-					.thenCompose(renderSource -> this.updateRenderCacheAsync(renderSource, this.fullDataSourceProvider))
+					.thenCompose(renderSource -> this.updateRenderCacheAsync(renderSource))
 					.whenComplete((renderSource, ex) ->
 					{
 						if (ex != null)
@@ -293,13 +291,14 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 	// cache handler //
 	//===============//
 	
-	public CompletableFuture<ColumnRenderSource> updateRenderCacheAsync(ColumnRenderSource renderSource, IFullDataSourceProvider fullDataSourceProvider)
+	// TODO
+	public CompletableFuture<ColumnRenderSource> updateRenderCacheAsync(ColumnRenderSource renderSource)
 	{
 		DebugRenderer.BoxWithLife debugBox = new DebugRenderer.BoxWithLife(new DebugRenderer.Box(renderSource.sectionPos, 74f, 86f, 0.1f, Color.red), 1.0, 32f, Color.green.darker());
 		
 		
 		// Skip updating the cache if the data file is already up-to-date
-		FullDataMetaFile dataFile = fullDataSourceProvider.getFileIfExist(this.pos);
+		FullDataMetaFile dataFile = this.fullDataSourceProvider.getFileIfExist(this.pos);
 		if (!ALWAYS_INVALIDATE_CACHE && dataFile != null && dataFile.baseMetaData != null && dataFile.baseMetaData.checksum == this.baseMetaData.dataVersion.get()) // TODO can we make it so the version comparisons either both use the checksum or the dataVersion? Comparing checksum and dataVersion is kinda confusing
 		{
 			LOGGER.debug("Skipping render cache update for " + this.pos);
@@ -313,13 +312,13 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 		
 		// get the full data source
 		CompletableFuture<IFullDataSource> fullDataSourceFuture =
-				fullDataSourceProvider.readAsync(renderSource.getSectionPos())
+				this.fullDataSourceProvider.readAsync(renderSource.getSectionPos())
 						.thenApply((fullDataSource) ->
 						{
 							debugBox.box.color = Color.yellow.darker();
 							
 							// get the metaFile's version
-							FullDataMetaFile renderSourceMetaFile = fullDataSourceProvider.getFileIfExist(this.pos);
+							FullDataMetaFile renderSourceMetaFile = this.fullDataSourceProvider.getFileIfExist(this.pos);
 							if (renderSourceMetaFile != null)
 							{
 								renderDataVersionRef.value = renderSourceMetaFile.baseMetaData.checksum;
@@ -382,7 +381,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 			return CompletableFuture.completedFuture(null); // No need to save if the file doesn't exist.
 		}
 		
-		// FIXME: TODO: Change doTriggerUpdate to true. Currently is false cause a dead future making render handler hang,
+		// FIXME: TODO: Change updateRenderSource to true. Currently is false cause a dead future making render handler hang,
 		//   and that render cache aren't actually used really yet due to missing versioning atm. So disabling for now.
 		CompletableFuture<ColumnRenderSource> getSourceFuture = this.getCachedDataSourceAsync(false);
 		if (getSourceFuture == null)
@@ -461,7 +460,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 	
 	/** @return returns null if {@link RenderMetaDataFile#renderSourceLoadFutureRef} is empty and no cached {@link ColumnRenderSource} exists. */
 	@Nullable
-	private CompletableFuture<ColumnRenderSource> getCachedDataSourceAsync(boolean triggerAndWaitForListener)
+	private CompletableFuture<ColumnRenderSource> getCachedDataSourceAsync(boolean updateRenderSourceCache)
 	{
 		// check if another thread is already loading the data source
 		CompletableFuture<ColumnRenderSource> renderSourceLoadFuture = this.renderSourceLoadFutureRef.get();
@@ -482,13 +481,13 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 		{
 			// cached data exists
 			
-			if (!triggerAndWaitForListener)
+			if (!updateRenderSourceCache)
 			{
-				// immediately return the render source
+				// just return the render source
 				return CompletableFuture.completedFuture(cachedRenderDataSource);
 			}
 			
-			// trigger the listener, wait for it to finish, then return the render source  
+			// update the render cache, wait for the update to finish, then return the render source  
 			
 			// Create a new future if one doesn't already exist
 			CompletableFuture<ColumnRenderSource> newFuture = new CompletableFuture<>();
@@ -500,7 +499,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 			}
 			else
 			{
-				this.updateRenderCacheAsync(cachedRenderDataSource, this.fullDataSourceProvider)		
+				this.updateRenderCacheAsync(cachedRenderDataSource)		
 						// wait for the handler to finish before returning the renderSource
 						.handle((ignoredRenderSource, ex) -> 
 						{
