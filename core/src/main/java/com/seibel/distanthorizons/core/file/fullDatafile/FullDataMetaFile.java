@@ -67,6 +67,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	public boolean genQueueChecked = false;
 	
 	private volatile boolean markedNeedUpdate = false;
+	private volatile boolean inCrit = false;
 	
 	public AbstractFullDataSourceLoader fullDataSourceLoader;
 	public Class<? extends IFullDataSource> dataType;
@@ -80,66 +81,12 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	private SoftReference<IFullDataSource> cachedFullDataSource = new SoftReference<>(null);
 	private final AtomicReference<CompletableFuture<IFullDataSource>> dataSourceLoadFutureRef = new AtomicReference<>(null);
 	
-	private static final class CacheQueryResult
-	{
-		public final CompletableFuture<IFullDataSource> future;
-		public final boolean needsLoad;
-		public CacheQueryResult(CompletableFuture<IFullDataSource> future, boolean needsLoad)
-		{
-			this.future = future;
-			this.needsLoad = needsLoad;
-		}
-		
-	}
-	
-	@Override
-	public void debugRender(DebugRenderer r)
-	{
-		if (pos.sectionDetailLevel > DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL) return;
-		
-		IFullDataSource cached = cachedFullDataSource.get();
-		if (markedNeedUpdate)
-			r.renderBox(new DebugRenderer.Box(pos, 80f, 96f, 0.05f, Color.red));
-		
-		Color c = Color.black;
-		if (cached != null)
-		{
-			if (cached instanceof CompleteFullDataSource)
-			{
-				c = Color.GREEN;
-			}
-			else
-			{
-				c = Color.YELLOW;
-			}
-			
-		}
-		else if (dataSourceLoadFutureRef.get() != null)
-		{
-			c = Color.BLUE;
-		}
-		else if (doesFileExist)
-		{
-			c = Color.RED;
-		}
-		boolean needUpdate = !this.writeQueueRef.get().queue.isEmpty() || markedNeedUpdate;
-		if (needUpdate) c = c.darker().darker();
-		r.renderBox(new DebugRenderer.Box(pos, 80f, 96f, 0.05f, c));
-	}
-	
-	//TODO: use ConcurrentAppendSingleSwapContainer<LodDataSource> instead of below:
-	private static class GuardedMultiAppendQueue
-	{
-		ReentrantReadWriteLock appendLock = new ReentrantReadWriteLock();
-		ConcurrentLinkedQueue<ChunkSizedFullDataAccessor> queue = new ConcurrentLinkedQueue<>();
-		
-	}
-	
 	
 	// ===Concurrent Write stuff===
 	private final AtomicReference<GuardedMultiAppendQueue> writeQueueRef = new AtomicReference<>(new GuardedMultiAppendQueue());
 	private GuardedMultiAppendQueue backWriteQueue = new GuardedMultiAppendQueue();
 	// ===========================
+	
 	
 	// ===Object lifetime stuff===
 	private static final ReferenceQueue<IFullDataSource> lifeCycleDebugQueue = new ReferenceQueue<>();
@@ -228,7 +175,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 		DebugRenderer.register(this);
 	}
 	
-	public void markNeedUpdate() { this.markedNeedUpdate = true; }
+	
 	
 	//==========//
 	// get data //
@@ -312,7 +259,8 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 				}));
 	}
 	
-	private volatile boolean inCrit = false;
+	
+	
 	// Cause: Generic Type runtime casting cannot safety check it.
 	// However, the Union type ensures the 'data' should only contain the listed type.
 	public CompletableFuture<IFullDataSource> loadOrGetCachedDataSourceAsync()
@@ -357,29 +305,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 		return result.future;
 	}
 	
-	/** @return a stream for the data contained in this file, skips the metadata from {@link AbstractMetaDataContainerFile}. */
-	private FileInputStream getFileInputStream() throws IOException
-	{
-		FileInputStream fileInputStream = new FileInputStream(this.file);
-		
-		// skip the meta-data bytes
-		int bytesToSkip = AbstractMetaDataContainerFile.METADATA_SIZE_IN_BYTES;
-		while (bytesToSkip > 0)
-		{
-			long skippedByteCount = fileInputStream.skip(bytesToSkip);
-			if (skippedByteCount == 0)
-			{
-				throw new IOException("Invalid file: Failed to skip metadata.");
-			}
-			bytesToSkip -= skippedByteCount;
-		}
-		
-		if (bytesToSkip != 0)
-		{
-			throw new IOException("File IO Error: Failed to skip metadata.");
-		}
-		return fileInputStream;
-	}
+	
 	private BaseMetaData _makeBaseMetaData(IFullDataSource data)
 	{
 		AbstractFullDataSourceLoader loader = AbstractFullDataSourceLoader.getLoader(data.getClass(), data.getBinaryDataFormatVersion());
@@ -401,13 +327,15 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 		{
 			return new CacheQueryResult(dataSourceLoadFuture, false);
 		}
+		
+		
 		// attempt to get the cached data source
 		IFullDataSource cachedFullDataSource = this.cachedFullDataSource.get();
 		if (cachedFullDataSource == null)
 		{
 			// Make a new future, and CAS it into the dataSourceLoadFutureRef, or return the existing future
 			CompletableFuture<IFullDataSource> newFuture = new CompletableFuture<>();
-			CompletableFuture<IFullDataSource> cas = AtomicsUtil.compareAndExchange(dataSourceLoadFutureRef, null, newFuture);
+			CompletableFuture<IFullDataSource> cas = AtomicsUtil.compareAndExchange(this.dataSourceLoadFutureRef, null, newFuture);
 			if (cas == null)
 			{
 				return new CacheQueryResult(newFuture, true);
@@ -420,7 +348,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 		else
 		{
 			// The file is cached in RAM
-			boolean needUpdate = !this.writeQueueRef.get().queue.isEmpty() || markedNeedUpdate;
+			boolean needUpdate = !this.writeQueueRef.get().queue.isEmpty() || this.markedNeedUpdate;
 			
 			if (!needUpdate)
 			{
@@ -434,7 +362,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 				// Do a CAS on inCacheWriteLock to ensure that we are the only thread that is writing to the cache,
 				// or if we fail, then that means someone else is already doing it, and we can just return the future
 				CompletableFuture<IFullDataSource> future = new CompletableFuture<>();
-				CompletableFuture<IFullDataSource> compareAndSwapFuture = AtomicsUtil.compareAndExchange(dataSourceLoadFutureRef, null, future);
+				CompletableFuture<IFullDataSource> compareAndSwapFuture = AtomicsUtil.compareAndExchange(this.dataSourceLoadFutureRef, null, future);
 				if (compareAndSwapFuture != null)
 				{
 					// a write is already in progress, return its future.
@@ -442,21 +370,22 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 				}
 				else
 				{
-					LodUtil.assertTrue(!inCrit);
-					inCrit = true;
+					LodUtil.assertTrue(!this.inCrit);
+					this.inCrit = true;
 					// don't continue if the provider has been shut down
 					ExecutorService executorService = this.fullDataSourceProvider.getIOExecutor();
 					if (executorService.isTerminated())
 					{
-						inCrit = false;
-						dataSourceLoadFutureRef.set(null);
+						this.inCrit = false;
+						this.dataSourceLoadFutureRef.set(null);
 						future.complete(null);
 					}
 					else
 					{
 						// write the queue to the data source by triggering an update
-						makeUpdateCompletionStage(future, CompletableFuture.supplyAsync(() -> cachedFullDataSource, executorService));
+						this.makeUpdateCompletionStage(future, CompletableFuture.supplyAsync(() -> cachedFullDataSource, executorService));
 					}
+					
 					return new CacheQueryResult(future, false);
 				}
 			}
@@ -598,6 +527,9 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	}
 	
 	
+	public void markNeedUpdate() { this.markedNeedUpdate = true; }
+	
+	
 	
 	//===========//
 	// debugging //
@@ -622,6 +554,107 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 			soft.close();
 			soft = (DataObjSoftTracker) softRefDebugQueue.poll();
 		}
+	}
+	
+	@Override
+	public void debugRender(DebugRenderer debugRenderer)
+	{
+		if (this.pos.sectionDetailLevel > DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
+		{
+			return;
+		}
+		
+		IFullDataSource cached = this.cachedFullDataSource.get();
+		if (this.markedNeedUpdate)
+		{
+			debugRenderer.renderBox(new DebugRenderer.Box(this.pos, 80f, 96f, 0.05f, Color.red));
+		}
+		
+		Color color = Color.black;
+		if (cached != null)
+		{
+			if (cached instanceof CompleteFullDataSource)
+			{
+				color = Color.GREEN;
+			}
+			else
+			{
+				color = Color.YELLOW;
+			}
+			
+		}
+		else if (this.dataSourceLoadFutureRef.get() != null)
+		{
+			color = Color.BLUE;
+		}
+		else if (this.doesFileExist)
+		{
+			color = Color.RED;
+		}
+		
+		boolean needsUpdate = !this.writeQueueRef.get().queue.isEmpty() || this.markedNeedUpdate;
+		if (needsUpdate)
+		{
+			color = color.darker().darker();
+		}
+		
+		debugRenderer.renderBox(new DebugRenderer.Box(this.pos, 80f, 96f, 0.05f, color));
+	}
+	
+	
+	
+	//================//
+	// helper methods //
+	//================//
+	
+	/** @return a stream for the data contained in this file, skips the metadata from {@link AbstractMetaDataContainerFile}. */
+	private FileInputStream getFileInputStream() throws IOException
+	{
+		FileInputStream fileInputStream = new FileInputStream(this.file);
+		
+		// skip the meta-data bytes
+		int bytesToSkip = AbstractMetaDataContainerFile.METADATA_SIZE_IN_BYTES;
+		while (bytesToSkip > 0)
+		{
+			long skippedByteCount = fileInputStream.skip(bytesToSkip);
+			if (skippedByteCount == 0)
+			{
+				throw new IOException("Invalid file: Failed to skip metadata.");
+			}
+			bytesToSkip -= skippedByteCount;
+		}
+		
+		if (bytesToSkip != 0)
+		{
+			throw new IOException("File IO Error: Failed to skip metadata.");
+		}
+		return fileInputStream;
+	}
+	
+	
+	
+	//================//
+	// helper classes //
+	//================//
+	
+	private static final class CacheQueryResult
+	{
+		public final CompletableFuture<IFullDataSource> future;
+		public final boolean needsLoad;
+		public CacheQueryResult(CompletableFuture<IFullDataSource> future, boolean needsLoad)
+		{
+			this.future = future;
+			this.needsLoad = needsLoad;
+		}
+		
+	}
+	
+	//TODO: use ConcurrentAppendSingleSwapContainer<LodDataSource> instead of below:
+	private static class GuardedMultiAppendQueue
+	{
+		ReentrantReadWriteLock appendLock = new ReentrantReadWriteLock();
+		ConcurrentLinkedQueue<ChunkSizedFullDataAccessor> queue = new ConcurrentLinkedQueue<>();
+		
 	}
 	
 }
