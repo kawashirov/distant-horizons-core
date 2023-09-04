@@ -1,8 +1,9 @@
 #version 150 core
 #extension GL_ARB_derivative_control : enable
 
+#define SAMPLE_MAX 64
+
 #define saturate(x) (clamp((x), 0.0, 1.0))
-#define rcp(x) (1.0 / (x))
 
 in vec2 TexCoord;
 
@@ -40,28 +41,26 @@ vec3 calcViewPosition(const in vec3 clipPos) {
 
 
 float GetSpiralOcclusion(const in vec2 uv, const in vec3 viewPos, const in vec3 viewNormal) {
-    float inv = rcp(gSampleCount);
-    float rStep = inv * gRadius;
-
     float dither = InterleavedGradientNoise(gl_FragCoord.xy);
     float rotatePhase = dither * TAU;
+    float rStep = gRadius / gSampleCount;
 
-    float radius = rStep;
     vec2 offset;
 
     float ao = 0.0;
     int sampleCount = 0;
-    for (int i = 0; i < gSampleCount; i++) {
-        offset.x = sin(rotatePhase);
-        offset.y = cos(rotatePhase);
-        offset *= radius;
+    float radius = rStep;
+    for (int i = 0; i < clamp(gSampleCount, 1, SAMPLE_MAX); i++) {
+        vec2 offset = vec2(
+            sin(rotatePhase),
+            cos(rotatePhase)
+        ) * radius;
+        
         radius += rStep;
-
         rotatePhase += GOLDEN_ANGLE;
 
         vec3 sampleViewPos = viewPos + vec3(offset, -0.1);
         vec3 sampleClipPos = unproject(gProj * vec4(sampleViewPos, 1.0)) * 0.5 + 0.5;
-        //if (sampleClipPos != saturate(sampleClipPos)) continue;
         sampleClipPos = saturate(sampleClipPos);
 
         float sampleClipDepth = textureLod(gDepthMap, sampleClipPos.xy, 0.0).r;
@@ -77,8 +76,7 @@ float GetSpiralOcclusion(const in vec2 uv, const in vec3 viewPos, const in vec3 
         float sampleNoLm = max(dot(viewNormal, sampleNormal) - gBias, 0.0);
         float aoF = 1.0 - saturate(sampleDist / gRadius);
         ao += sampleNoLm * aoF;
-
-        sampleCount += 1;
+        sampleCount++;
     }
 
     ao /= max(sampleCount, 1);
@@ -92,10 +90,12 @@ void main() {
     float fragmentDepth = textureLod(gDepthMap, TexCoord, 0).r;
     float occlusion = 0.0;
     
+    // Do not apply to sky
     if (fragmentDepth < 1.0) {
         vec3 viewPos = calcViewPosition(vec3(TexCoord, fragmentDepth));
         
         #ifdef GL_ARB_derivative_control
+            // Get higher precision derivatives when available
             vec3 viewNormal = cross(dFdxFine(viewPos.xyz), dFdyFine(viewPos.xyz));
         #else
             vec3 viewNormal = cross(dFdx(viewPos.xyz), dFdy(viewPos.xyz));

@@ -96,6 +96,8 @@ public interface IDhApiGraphicsConfig extends IDhApiConfigGroup
 	
 	IDhApiConfigValue<Double> ambientOcclusion_MinLight();
 	
+	IDhApiConfigValue<Integer> ambientOcclusion_BlurRadius();
+	
 	IDhApiConfigValue<ETransparency> transparency();
 	
 	/** Defines what blocks won't be rendered as LODs. */

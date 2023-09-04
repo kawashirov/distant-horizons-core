@@ -105,6 +105,10 @@ public class DhApiGraphicsConfig implements IDhApiGraphicsConfig
 	{ return new DhApiConfigValue<Double, Double>(Config.Client.Advanced.Graphics.Quality.ssaoMinLight); }
 	
 	@Override
+	public IDhApiConfigValue<Integer> ambientOcclusion_BlurRadius()
+	{ return new DhApiConfigValue<Integer, Integer>(Config.Client.Advanced.Graphics.Quality.ssaoBlurRadius); }
+	
+	@Override
 	public IDhApiConfigValue<ETransparency> transparency()
 	{ return new DhApiConfigValue<ETransparency, ETransparency>(Config.Client.Advanced.Graphics.Quality.transparency); }
 	

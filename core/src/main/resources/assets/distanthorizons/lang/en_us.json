@@ -96,6 +96,8 @@
     "How quickly LODs drop off in quality.\n\nLarger numbers will improve how distant terrain looks\nbut will increase memory and GPU usage.",
   "distanthorizons.config.client.advanced.graphics.quality.ssao":
     "SSAO",
+  "distanthorizons.config.client.advanced.graphics.quality.ssao.@tooltip":
+    "Screen Space Ambient Occlusion adds depth to the lighting of blocks.",
   "distanthorizons.config.client.advanced.graphics.quality.ssaoSampleCount":
     "SSAO Sample Count",
   "distanthorizons.config.client.advanced.graphics.quality.ssaoRadius":
@@ -106,8 +108,8 @@
     "SSAO Min Light",
   "distanthorizons.config.client.advanced.graphics.quality.ssaoBias":
     "SSAO Bias",
-  "distanthorizons.config.client.advanced.graphics.quality.ssao.@tooltip":
-    "Screen Space Ambient Occlusion adds depth to the lighting of blocks.",
+  "distanthorizons.config.client.advanced.graphics.quality.ssaoBlurRadius":
+    "SSAO Blur Radius",
   "distanthorizons.config.client.advanced.graphics.quality.horizontalQuality":
     "Horizontal Quality",
   "distanthorizons.config.client.advanced.graphics.quality.horizontalQuality.@tooltip":

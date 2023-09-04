@@ -1,7 +1,5 @@
 #version 150 core
 
-#define ENABLE_SSAO_BLUR
-
 in vec2 TexCoord;
 
 out vec4 fragColor;
@@ -9,6 +7,7 @@ out vec4 fragColor;
 uniform sampler2D gSSAOMap;
 uniform sampler2D gDepthMap;
 uniform vec2 gViewSize;
+uniform int gBlurRadius;
 uniform float gNear;
 uniform float gFar;
 
@@ -25,20 +24,19 @@ float BilateralGaussianBlur(const in vec2 texcoord, const in float linearDepth, 
     float g_sigmaX = 1.6;
     float g_sigmaY = 1.6;
 
-    const float c_halfSamplesX = 2.0;
-    const float c_halfSamplesY = 2.0;
+    int radius = clamp(gBlurRadius, 1, 3);
     
     vec2 pixelSize = 1.0 / gViewSize;
 
     float accum = 0.0;
     float total = 0.0;
-    for (float iy = -c_halfSamplesY; iy <= c_halfSamplesY; iy++) {
+    for (int iy = -radius; iy <= radius; iy++) {
         float fy = Gaussian(g_sigmaY, iy);
 
-        for (float ix = -c_halfSamplesX; ix <= c_halfSamplesX; ix++) {
+        for (int ix = -radius; ix <= radius; ix++) {
             float fx = Gaussian(g_sigmaX, ix);
 
-            vec2 sampleTex = texcoord + vec2(ix, iy) * pixelSize;
+            vec2 sampleTex = texcoord + ivec2(ix, iy) * pixelSize;
             float sampleValue = textureLod(gSSAOMap, sampleTex, 0).r;
             float sampleDepth = textureLod(gDepthMap, sampleTex, 0).r;
             float sampleLinearDepth = linearizeDepth(sampleDepth);
@@ -66,11 +64,12 @@ void main()
     // a fragment depth of "1" means the fragment wasn't drawn to,
     // we only want to apply SSAO to LODs, not to the sky outside the LODs
     if (fragmentDepth < 1) {
-        #ifdef ENABLE_SSAO_BLUR
+        if (gBlurRadius > 0) {
             float fragmentDepthLinear = linearizeDepth(fragmentDepth);
             fragColor.a = BilateralGaussianBlur(TexCoord, fragmentDepthLinear, 1.6);
-        #else
-            fragColor.a = textureLod(gSSAOMap, TexCoord, 0).r;
-        #endif
+        }
+        else {
+            fragColor.a = texelFetch(gSSAOMap, ivec2(gl_FragCoord.xy), 0).r;
+        }
     }
 }

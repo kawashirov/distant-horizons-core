@@ -55,8 +55,8 @@ public class SSAORenderer
 		public int gSampleCountUniform;
 		public int gRadiusUniform;
 		public int gStrengthUniform;
-		public int gBiasUniform;
 		public int gMinLightUniform;
+		public int gBiasUniform;
 		public int gDepthMapUniform;
 	}
 	
@@ -67,6 +67,7 @@ public class SSAORenderer
 		public int gSSAOMapUniform;
 		public int gDepthMapUniform;
 		public int gViewSizeUniform;
+		public int gBlurRadiusUniform;
 		public int gNearUniform;
 		public int gFarUniform;
 	}
@@ -109,6 +110,7 @@ public class SSAORenderer
 		this.applyShaderUniforms.gSSAOMapUniform = this.applyShader.getUniformLocation("gSSAOMap");
 		this.applyShaderUniforms.gDepthMapUniform = this.applyShader.getUniformLocation("gDepthMap");
 		this.applyShaderUniforms.gViewSizeUniform = tryGetUniformLocation(this.applyShader, "gViewSize");
+		this.applyShaderUniforms.gBlurRadiusUniform = tryGetUniformLocation(this.applyShader, "gBlurRadius");
 		this.applyShaderUniforms.gNearUniform = tryGetUniformLocation(this.applyShader, "gNear");
 		this.applyShaderUniforms.gFarUniform = tryGetUniformLocation(this.applyShader, "gFar");
 		
@@ -192,6 +194,7 @@ public class SSAORenderer
 		invertedPerspective.invert();
 		
 		int sampleCount = Config.Client.Advanced.Graphics.Quality.ssaoSampleCount.get();
+		int blurRadius = Config.Client.Advanced.Graphics.Quality.ssaoBlurRadius.get();
 		float radius = Config.Client.Advanced.Graphics.Quality.ssaoRadius.get().floatValue();
 		float strength = Config.Client.Advanced.Graphics.Quality.ssaoStrength.get().floatValue();
 		float minLight = Config.Client.Advanced.Graphics.Quality.ssaoMinLight.get().floatValue();
@@ -229,6 +232,7 @@ public class SSAORenderer
 		GL32.glActiveTexture(GL32.GL_TEXTURE1);
 		GL32.glBindTexture(GL32.GL_TEXTURE_2D, MC_RENDER.getDepthTextureId());
 		GL32.glUniform1i(this.applyShaderUniforms.gDepthMapUniform, 1);
+		GL32.glUniform1i(this.applyShaderUniforms.gBlurRadiusUniform, blurRadius);
 		
 		if (this.applyShaderUniforms.gViewSizeUniform >= 0)
 			GL32.glUniform2f(this.applyShaderUniforms.gViewSizeUniform, width, height);

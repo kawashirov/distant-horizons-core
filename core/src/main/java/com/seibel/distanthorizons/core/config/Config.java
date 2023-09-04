@@ -204,6 +204,11 @@ public class Config
 							.comment("Minimum brightness of Screen Space Ambient Occlusion effect")
 							.build();
 					
+					public static ConfigEntry<Integer> ssaoBlurRadius = new ConfigEntry.Builder<Integer>()
+							.set(2)
+							.comment("Radius in pixels of Screen Space Ambient Occlusion blurring")
+							.build();
+					
 					public static ConfigEntry<EHorizontalQuality> horizontalQuality = new ConfigEntry.Builder<EHorizontalQuality>()
 							.set(EHorizontalQuality.MEDIUM)
 							.comment(""
