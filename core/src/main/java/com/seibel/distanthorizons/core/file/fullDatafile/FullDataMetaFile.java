@@ -23,7 +23,6 @@ import java.awt.*;
 import java.io.*;
 import java.lang.ref.*;
 import java.nio.channels.ClosedByInterruptException;
-import java.nio.file.FileAlreadyExistsException;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -34,8 +33,6 @@ import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedF
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.distanthorizons.core.file.metaData.AbstractMetaDataContainerFile;
 import com.seibel.distanthorizons.core.file.metaData.BaseMetaData;
-import com.seibel.distanthorizons.core.file.renderfile.RenderMetaDataFile;
-import com.seibel.distanthorizons.core.level.IDhClientLevel;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhLodPos;
@@ -78,7 +75,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	 * When clearing, don't set to null, instead create a SoftReference containing null.
 	 * This will make null checks simpler.
 	 */
-	private SoftReference<IFullDataSource> cachedFullDataSource = new SoftReference<>(null);
+	private SoftReference<IFullDataSource> cachedFullDataSourceRef = new SoftReference<>(null);
 	private final AtomicReference<CompletableFuture<IFullDataSource>> dataSourceLoadFutureRef = new AtomicReference<>(null);
 	
 	
@@ -186,7 +183,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	public IFullDataSource getCachedDataSourceNowOrNull()
 	{
 		debugPhantomLifeCycleCheck();
-		return this.cachedFullDataSource.get();
+		return this.cachedFullDataSourceRef.get();
 	}
 	
 	private void makeUpdateCompletionStage(CompletableFuture<IFullDataSource> completer, CompletableFuture<IFullDataSource> currentStage)
@@ -217,7 +214,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 								)
 						);
 					
-					this.cachedFullDataSource = new SoftReference<>(fullDataSource);
+					this.cachedFullDataSourceRef = new SoftReference<>(fullDataSource);
 					inCrit = false;
 					dataSourceLoadFutureRef.set(null);
 					completer.complete(fullDataSource);
@@ -330,7 +327,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 		
 		
 		// attempt to get the cached data source
-		IFullDataSource cachedFullDataSource = this.cachedFullDataSource.get();
+		IFullDataSource cachedFullDataSource = this.cachedFullDataSourceRef.get();
 		if (cachedFullDataSource == null)
 		{
 			// Make a new future, and CAS it into the dataSourceLoadFutureRef, or return the existing future
@@ -564,7 +561,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 			return;
 		}
 		
-		IFullDataSource cached = this.cachedFullDataSource.get();
+		IFullDataSource cached = this.cachedFullDataSourceRef.get();
 		if (this.markedNeedUpdate)
 		{
 			debugRenderer.renderBox(new DebugRenderer.Box(this.pos, 80f, 96f, 0.05f, Color.red));
