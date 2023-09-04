@@ -85,6 +85,22 @@ public class DhApiGraphicsConfig implements IDhApiGraphicsConfig
 	{ return new DhApiConfigValue<Boolean, Boolean>(Config.Client.Advanced.Graphics.Quality.ssao); }
 	
 	@Override
+	public IDhApiConfigValue<Double> ambientOcclusionRadius()
+	{ return new DhApiConfigValue<Double, Double>(Config.Client.Advanced.Graphics.Quality.ssaoRadius); }
+	
+	@Override
+	public IDhApiConfigValue<Double> ambientOcclusionStrength()
+	{ return new DhApiConfigValue<Double, Double>(Config.Client.Advanced.Graphics.Quality.ssaoStrength); }
+	
+	@Override
+	public IDhApiConfigValue<Double> ambientOcclusionBias()
+	{ return new DhApiConfigValue<Double, Double>(Config.Client.Advanced.Graphics.Quality.ssaoBias); }
+	
+	@Override
+	public IDhApiConfigValue<Double> ambientOcclusionMinLight()
+	{ return new DhApiConfigValue<Double, Double>(Config.Client.Advanced.Graphics.Quality.ssaoMinLight); }
+	
+	@Override
 	public IDhApiConfigValue<ETransparency> transparency()
 	{ return new DhApiConfigValue<ETransparency, ETransparency>(Config.Client.Advanced.Graphics.Quality.transparency); }
 	

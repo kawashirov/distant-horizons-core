@@ -1,26 +1,33 @@
 #version 150 core
 #extension GL_ARB_derivative_control : enable
 
+#define saturate(x) (clamp((x), 0.0, 1.0))
+#define rcp(x) (1.0 / (x))
+
+const float SSAO_SAMPLES = 24; // [2 4 6 8 10 12 14 16 24 32]
+
 in vec2 TexCoord;
 
 out vec4 fragColor;
 
 uniform sampler2D gDepthMap;
-uniform float gSampleRad;
-uniform float gFactor;
-uniform float gPower;
-uniform mat4 gProj;
+uniform float gRadius;
+uniform float gStrength;
+uniform float gMinLight;
+uniform float gBias;
 uniform mat4 gInvProj;
+uniform mat4 gProj;
 
-const float MIN_LIGHT = 0.6;
-const float SAMPLE_BIAS = 0.6;
-const int MAX_KERNEL_SIZE = 32;
-const float INV_MAX_KERNEL_SIZE_F = 1.0 / float(MAX_KERNEL_SIZE);
-uniform vec3 gKernel[MAX_KERNEL_SIZE];
-
+const float EPSILON = 1.e-6;
+const float GOLDEN_ANGLE = 2.39996323;
 const vec3 MAGIC = vec3(0.06711056, 0.00583715, 52.9829189);
 const float PI = 3.1415926538;
+const float TAU = PI * 2.0;
 
+
+vec3 unproject(vec4 pos) {
+    return pos.xyz / pos.w;
+}
 
 float InterleavedGradientNoise(const in vec2 pixel) {
     float x = dot(pixel, MAGIC.xy);
@@ -32,12 +39,64 @@ vec3 calcViewPosition(const in vec3 clipPos) {
     return viewPos.xyz / viewPos.w;
 }
 
+
+float GetSpiralOcclusion(const in vec2 uv, const in vec3 viewPos, const in vec3 viewNormal) {
+    const float inv = rcp(SSAO_SAMPLES);
+    float rStep = inv * gRadius;
+
+    float dither = InterleavedGradientNoise(gl_FragCoord.xy);
+    float rotatePhase = dither * TAU;
+
+    float radius = rStep;
+    vec2 offset;
+
+    float ao = 0.0;
+    int sampleCount = 0;
+    for (int i = 0; i < SSAO_SAMPLES; i++) {
+        offset.x = sin(rotatePhase);
+        offset.y = cos(rotatePhase);
+        offset *= radius;
+        radius += rStep;
+
+        rotatePhase += GOLDEN_ANGLE;
+
+        vec3 sampleViewPos = viewPos + vec3(offset, -0.1);
+        vec3 sampleClipPos = unproject(gProj * vec4(sampleViewPos, 1.0)) * 0.5 + 0.5;
+        //if (sampleClipPos != saturate(sampleClipPos)) continue;
+        sampleClipPos = saturate(sampleClipPos);
+
+        float sampleClipDepth = textureLod(gDepthMap, sampleClipPos.xy, 0.0).r;
+        if (sampleClipDepth >= 1.0 - EPSILON) continue;
+
+        sampleClipPos.z = sampleClipDepth;
+        sampleViewPos = unproject(gInvProj * vec4(sampleClipPos * 2.0 - 1.0, 1.0));
+
+        vec3 diff = sampleViewPos - viewPos;
+        float sampleDist = length(diff);
+        vec3 sampleNormal = diff / sampleDist;
+
+        float sampleNoLm = max(dot(viewNormal, sampleNormal) - gBias, 0.0);
+        float aoF = 1.0 - saturate(sampleDist / gRadius);
+        ao += sampleNoLm * aoF;
+
+        sampleCount += 1;
+    }
+
+    ao /= max(sampleCount, 1);
+    //ao = max(ao - SSAO_THRESHOLD, 0.0) * gStrength;
+    //ao /= ao + 0.25;
+    
+    ao = smoothstep(0.0, gStrength, ao);
+
+    return ao * (1.0 - gMinLight);
+}
+
+
 void main() {
     float fragmentDepth = textureLod(gDepthMap, TexCoord, 0).r;
-    float occlusion = 1.0;
+    float occlusion = 0.0;
     
     if (fragmentDepth < 1.0) {
-        float dither = InterleavedGradientNoise(gl_FragCoord.xy);
         vec3 viewPos = calcViewPosition(vec3(TexCoord, fragmentDepth));
         
         #ifdef GL_ARB_derivative_control
@@ -47,41 +106,9 @@ void main() {
         #endif
 
         viewNormal = normalize(viewNormal);
-        //const vec3 upVec = vec3(0.0, -1.0, 0.0);
 
-        float angle = dither * (PI * 2.0);
-        vec3 rotation = vec3(sin(angle), cos(angle), 0.0);
-        vec3 tangent = normalize(cross(viewNormal, rotation));
-        
-        vec3 bitangent = normalize(cross(viewNormal, tangent));
-        mat3 TBN = mat3(tangent, bitangent, viewNormal);
-
-        float maxWeight = 0.0;
-        float occlusion_factor = 0.0;
-        for (int i = 0; i < MAX_KERNEL_SIZE; i++) {
-            vec3 samplePos = TBN * gKernel[i];
-            samplePos *= sign(dot(samplePos, viewNormal));
-            samplePos = viewPos + samplePos * gSampleRad;
-
-            vec4 sampleNdcPos = gProj * vec4(samplePos + viewPos, 1.0);
-            sampleNdcPos = sampleNdcPos / sampleNdcPos.w;
-            if (any(greaterThanEqual(abs(sampleNdcPos.xy), vec2(1.0)))) continue;
-            
-            maxWeight += 1.0;
-            
-            vec2 sampleTexPos = sampleNdcPos.xy * 0.5 + 0.5;
-            float sampleDepth = textureLod(gDepthMap, sampleTexPos, 0).r;
-            float geometryDepth = calcViewPosition(vec3(sampleTexPos, sampleDepth)).z;
-
-            float rangeCheck = smoothstep(0.0, 1.0, gSampleRad / abs(viewPos.z - geometryDepth));
-            // the number added to the samplePos.z can be used to reduce noise in the SSAO application at the cost of reducing the overall affect
-            occlusion_factor += step(samplePos.z + SAMPLE_BIAS, geometryDepth) * rangeCheck;
-        }
-
-        float visibility_factor = 1.0 - (occlusion_factor / maxWeight);
-        occlusion = (1.0 - pow(visibility_factor, gFactor)) * gPower;
-        occlusion = clamp(1.0 - occlusion, MIN_LIGHT, 1.0);
+        occlusion = GetSpiralOcclusion(TexCoord, viewPos, viewNormal);
     }
     
-    fragColor = vec4(vec3(1.0), occlusion);
+    fragColor = vec4(vec3(1.0 - occlusion), 1.0);
 }
