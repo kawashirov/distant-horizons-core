@@ -104,8 +104,8 @@ public class MetaFileScanUtil
 	 */
 	public static void addScannedFiles(
 			Collection<File> detectedFiles, boolean useLazyLoading, String fileSuffix,
-			CreateMetadataFunc createMetadataFunc,
-			AddUnloadedFileFunc addUnloadedFileFunc, AddLoadedMetaFileFunc addLoadedMetaFileFunc)
+			ICreateMetadataFunc createMetadataFunc,
+			IAddUnloadedFileFunc addUnloadedFileFunc, IAddLoadedMetaFileFunc addLoadedMetaFileFunc)
 	{
 		if (useLazyLoading)
 		{
@@ -116,7 +116,7 @@ public class MetaFileScanUtil
 			immediateAddScannedFile(detectedFiles, createMetadataFunc, addLoadedMetaFileFunc);
 		}
 	}
-	private static void lazyAddScannedFile(Collection<File> detectedFiles, String fileSuffix, AddUnloadedFileFunc addUnloadedFileFunc)
+	private static void lazyAddScannedFile(Collection<File> detectedFiles, String fileSuffix, IAddUnloadedFileFunc addUnloadedFileFunc)
 	{
 		for (File file : detectedFiles)
 		{
@@ -144,7 +144,7 @@ public class MetaFileScanUtil
 	}
 	private static void immediateAddScannedFile(
 			Collection<File> detectedFiles, 
-			CreateMetadataFunc createMetadataFunc, AddLoadedMetaFileFunc addLoadedMetaFileFunc)
+			ICreateMetadataFunc createMetadataFunc, IAddLoadedMetaFileFunc addLoadedMetaFileFunc)
 	{
 		HashMultimap<DhSectionPos, AbstractMetaDataContainerFile> filesByPos = HashMultimap.create();
 		{ // Sort files by pos.
@@ -247,11 +247,11 @@ public class MetaFileScanUtil
 	//===================//
 	
 	@FunctionalInterface
-	public interface CreateMetadataFunc { AbstractMetaDataContainerFile createFile(File file) throws IOException; }
+	public interface ICreateMetadataFunc { AbstractMetaDataContainerFile createFile(File file) throws IOException; }
 	
 	@FunctionalInterface
-	public interface AddUnloadedFileFunc { void addFile(DhSectionPos pos, File file); }
+	public interface IAddUnloadedFileFunc { void addFile(DhSectionPos pos, File file); }
 	@FunctionalInterface
-	public interface AddLoadedMetaFileFunc { void addFile(DhSectionPos pos, AbstractMetaDataContainerFile metaFile); }
+	public interface IAddLoadedMetaFileFunc { void addFile(DhSectionPos pos, AbstractMetaDataContainerFile metaFile); }
 	
 }

@@ -84,14 +84,14 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	@Override
 	public void addScannedFiles(Collection<File> detectedFiles)
 	{
-		MetaFileScanUtil.CreateMetadataFunc createMetadataFunc = (file) -> FullDataMetaFile.createFromExistingFile(this, this.level, file);
+		MetaFileScanUtil.ICreateMetadataFunc createMetadataFunc = (file) -> FullDataMetaFile.createFromExistingFile(this, this.level, file);
 		
-		MetaFileScanUtil.AddUnloadedFileFunc addUnloadedFileFunc = (pos, file) ->
+		MetaFileScanUtil.IAddUnloadedFileFunc addUnloadedFileFunc = (pos, file) ->
 		{
 			this.unloadedFileBySectionPos.put(pos, file);
 			this.topDetailLevelRef.updateAndGet(oldDetailLevel -> Math.max(oldDetailLevel, pos.sectionDetailLevel));
 		};
-		MetaFileScanUtil.AddLoadedMetaFileFunc addLoadedMetaFileFunc = (pos, loadedMetaFile) ->
+		MetaFileScanUtil.IAddLoadedMetaFileFunc addLoadedMetaFileFunc = (pos, loadedMetaFile) ->
 		{
 			this.topDetailLevelRef.updateAndGet(oldDetailLevel -> Math.max(oldDetailLevel, pos.sectionDetailLevel));
 			this.metaFileBySectionPos.put(pos, (FullDataMetaFile) loadedMetaFile);

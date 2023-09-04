@@ -93,14 +93,14 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	@Override
 	public void addScannedFiles(Collection<File> detectedFiles)
 	{
-		MetaFileScanUtil.CreateMetadataFunc createMetadataFunc = (file) -> RenderMetaDataFile.createFromExistingFile(this.fullDataSourceProvider, this.clientLevel, file);
+		MetaFileScanUtil.ICreateMetadataFunc createMetadataFunc = (file) -> RenderMetaDataFile.createFromExistingFile(this.fullDataSourceProvider, this.clientLevel, file);
 		
-		MetaFileScanUtil.AddUnloadedFileFunc addUnloadedFileFunc = (pos, file) -> 
+		MetaFileScanUtil.IAddUnloadedFileFunc addUnloadedFileFunc = (pos, file) -> 
 		{
 			this.unloadedFileBySectionPos.put(pos, file);
 			this.topDetailLevelRef.updateAndGet(oldDetailLevel -> Math.max(oldDetailLevel, pos.sectionDetailLevel));
 		};
-		MetaFileScanUtil.AddLoadedMetaFileFunc addLoadedMetaFileFunc = (pos, loadedMetaFile) -> 
+		MetaFileScanUtil.IAddLoadedMetaFileFunc addLoadedMetaFileFunc = (pos, loadedMetaFile) -> 
 		{
 			this.topDetailLevelRef.updateAndGet(oldDetailLevel -> Math.max(oldDetailLevel, pos.sectionDetailLevel));
 			this.metaFileBySectionPos.put(pos, (RenderMetaDataFile) loadedMetaFile);
