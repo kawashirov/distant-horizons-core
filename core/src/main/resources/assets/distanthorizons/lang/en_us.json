@@ -96,6 +96,8 @@
     "How quickly LODs drop off in quality.\n\nLarger numbers will improve how distant terrain looks\nbut will increase memory and GPU usage.",
   "distanthorizons.config.client.advanced.graphics.quality.ssao":
     "SSAO",
+  "distanthorizons.config.client.advanced.graphics.quality.ssaoSampleCount":
+    "SSAO Sample Count",
   "distanthorizons.config.client.advanced.graphics.quality.ssaoRadius":
     "SSAO Radius",
   "distanthorizons.config.client.advanced.graphics.quality.ssaoStrength":

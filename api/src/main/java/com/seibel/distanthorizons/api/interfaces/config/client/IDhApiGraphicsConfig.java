@@ -86,13 +86,15 @@ public interface IDhApiGraphicsConfig extends IDhApiConfigGroup
 	
 	IDhApiConfigValue<Boolean> ambientOcclusion();
 	
-	IDhApiConfigValue<Double> ambientOcclusionRadius();
+	IDhApiConfigValue<Integer> ambientOcclusion_SampleCount();
 	
-	IDhApiConfigValue<Double> ambientOcclusionStrength();
+	IDhApiConfigValue<Double> ambientOcclusion_Radius();
 	
-	IDhApiConfigValue<Double> ambientOcclusionBias();
+	IDhApiConfigValue<Double> ambientOcclusion_Strength();
 	
-	IDhApiConfigValue<Double> ambientOcclusionMinLight();
+	IDhApiConfigValue<Double> ambientOcclusion_Bias();
+	
+	IDhApiConfigValue<Double> ambientOcclusion_MinLight();
 	
 	IDhApiConfigValue<ETransparency> transparency();
 	

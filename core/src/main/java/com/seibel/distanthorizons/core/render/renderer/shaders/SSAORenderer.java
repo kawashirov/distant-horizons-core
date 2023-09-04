@@ -52,6 +52,7 @@ public class SSAORenderer
 	{
 		public int gProjUniform;
 		public int gInvProjUniform;
+		public int gSampleCountUniform;
 		public int gRadiusUniform;
 		public int gStrengthUniform;
 		public int gBiasUniform;
@@ -97,6 +98,7 @@ public class SSAORenderer
 		// SSAO uniform setup
 		this.ssaoShaderUniforms.gProjUniform = this.ssaoShader.getUniformLocation("gProj");
 		this.ssaoShaderUniforms.gInvProjUniform = this.ssaoShader.getUniformLocation("gInvProj");
+		this.ssaoShaderUniforms.gSampleCountUniform = this.ssaoShader.getUniformLocation("gSampleCount");
 		this.ssaoShaderUniforms.gRadiusUniform = this.ssaoShader.getUniformLocation("gRadius");
 		this.ssaoShaderUniforms.gStrengthUniform = this.ssaoShader.getUniformLocation("gStrength");
 		this.ssaoShaderUniforms.gMinLightUniform = this.ssaoShader.getUniformLocation("gMinLight");
@@ -189,6 +191,7 @@ public class SSAORenderer
 		Mat4f invertedPerspective = new Mat4f(perspective);
 		invertedPerspective.invert();
 		
+		int sampleCount = Config.Client.Advanced.Graphics.Quality.ssaoSampleCount.get();
 		float radius = Config.Client.Advanced.Graphics.Quality.ssaoRadius.get().floatValue();
 		float strength = Config.Client.Advanced.Graphics.Quality.ssaoStrength.get().floatValue();
 		float minLight = Config.Client.Advanced.Graphics.Quality.ssaoMinLight.get().floatValue();
@@ -197,6 +200,7 @@ public class SSAORenderer
 		this.ssaoShader.bind();
 		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gProjUniform, perspective);
 		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gInvProjUniform, invertedPerspective);
+		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gSampleCountUniform, sampleCount);
 		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gRadiusUniform, radius);
 		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gStrengthUniform, strength);
 		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gMinLightUniform, minLight);

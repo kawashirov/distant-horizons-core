@@ -179,23 +179,28 @@ public class Config
 							.comment("Enable Screen Space Ambient Occlusion")
 							.build();
 					
+					public static ConfigEntry<Integer> ssaoSampleCount = new ConfigEntry.Builder<Integer>()
+							.set(6)
+							.comment("Number of samples to use for Screen Space Ambient Occlusion")
+							.build();
+					
 					public static ConfigEntry<Double> ssaoRadius = new ConfigEntry.Builder<Double>()
-							.set(3.0)
+							.set(4.0)
 							.comment("Radius of Screen Space Ambient Occlusion effect in blocks")
 							.build();
 					
 					public static ConfigEntry<Double> ssaoStrength = new ConfigEntry.Builder<Double>()
-							.set(6.0)
+							.set(0.2)
 							.comment("Strength of Screen Space Ambient Occlusion effect")
 							.build();
 					
 					public static ConfigEntry<Double> ssaoBias = new ConfigEntry.Builder<Double>()
-							.set(0.0)
+							.set(0.02)
 							.comment("Bias of Screen Space Ambient Occlusion effect")
 							.build();
 					
 					public static ConfigEntry<Double> ssaoMinLight = new ConfigEntry.Builder<Double>()
-							.set(0.3)
+							.set(0.25)
 							.comment("Minimum brightness of Screen Space Ambient Occlusion effect")
 							.build();
 					

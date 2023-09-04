@@ -4,13 +4,12 @@
 #define saturate(x) (clamp((x), 0.0, 1.0))
 #define rcp(x) (1.0 / (x))
 
-const float SSAO_SAMPLES = 24; // [2 4 6 8 10 12 14 16 24 32]
-
 in vec2 TexCoord;
 
 out vec4 fragColor;
 
 uniform sampler2D gDepthMap;
+uniform int gSampleCount;
 uniform float gRadius;
 uniform float gStrength;
 uniform float gMinLight;
@@ -41,7 +40,7 @@ vec3 calcViewPosition(const in vec3 clipPos) {
 
 
 float GetSpiralOcclusion(const in vec2 uv, const in vec3 viewPos, const in vec3 viewNormal) {
-    const float inv = rcp(SSAO_SAMPLES);
+    float inv = rcp(gSampleCount);
     float rStep = inv * gRadius;
 
     float dither = InterleavedGradientNoise(gl_FragCoord.xy);
@@ -52,7 +51,7 @@ float GetSpiralOcclusion(const in vec2 uv, const in vec3 viewPos, const in vec3 
 
     float ao = 0.0;
     int sampleCount = 0;
-    for (int i = 0; i < SSAO_SAMPLES; i++) {
+    for (int i = 0; i < gSampleCount; i++) {
         offset.x = sin(rotatePhase);
         offset.y = cos(rotatePhase);
         offset *= radius;
@@ -83,9 +82,6 @@ float GetSpiralOcclusion(const in vec2 uv, const in vec3 viewPos, const in vec3 
     }
 
     ao /= max(sampleCount, 1);
-    //ao = max(ao - SSAO_THRESHOLD, 0.0) * gStrength;
-    //ao /= ao + 0.25;
-    
     ao = smoothstep(0.0, gStrength, ao);
 
     return ao * (1.0 - gMinLight);

@@ -85,19 +85,23 @@ public class DhApiGraphicsConfig implements IDhApiGraphicsConfig
 	{ return new DhApiConfigValue<Boolean, Boolean>(Config.Client.Advanced.Graphics.Quality.ssao); }
 	
 	@Override
-	public IDhApiConfigValue<Double> ambientOcclusionRadius()
+	public IDhApiConfigValue<Integer> ambientOcclusion_SampleCount()
+	{ return new DhApiConfigValue<Integer, Integer>(Config.Client.Advanced.Graphics.Quality.ssaoSampleCount); }
+	
+	@Override
+	public IDhApiConfigValue<Double> ambientOcclusion_Radius()
 	{ return new DhApiConfigValue<Double, Double>(Config.Client.Advanced.Graphics.Quality.ssaoRadius); }
 	
 	@Override
-	public IDhApiConfigValue<Double> ambientOcclusionStrength()
+	public IDhApiConfigValue<Double> ambientOcclusion_Strength()
 	{ return new DhApiConfigValue<Double, Double>(Config.Client.Advanced.Graphics.Quality.ssaoStrength); }
 	
 	@Override
-	public IDhApiConfigValue<Double> ambientOcclusionBias()
+	public IDhApiConfigValue<Double> ambientOcclusion_Bias()
 	{ return new DhApiConfigValue<Double, Double>(Config.Client.Advanced.Graphics.Quality.ssaoBias); }
 	
 	@Override
-	public IDhApiConfigValue<Double> ambientOcclusionMinLight()
+	public IDhApiConfigValue<Double> ambientOcclusion_MinLight()
 	{ return new DhApiConfigValue<Double, Double>(Config.Client.Advanced.Graphics.Quality.ssaoMinLight); }
 	
 	@Override

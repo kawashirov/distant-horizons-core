@@ -3,7 +3,6 @@
 #define ENABLE_SSAO_BLUR
 
 in vec2 TexCoord;
-//in vec2 ViewRay;
 
 out vec4 fragColor;
 
