@@ -47,9 +47,6 @@ import static com.seibel.distanthorizons.core.util.FileScanUtil.RENDER_FILE_POST
 public class RenderSourceFileHandler implements ILodRenderSourceProvider
 {
 	public static final boolean USE_LAZY_LOADING = true;
-	public static final boolean ALWAYS_INVALIDATE_CACHE = false;
-	
-	public static final long RENDER_SOURCE_TYPE_ID = ColumnRenderSource.TYPE_ID;
 	
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
@@ -146,7 +143,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		{
 			try
 			{
-				RenderMetaDataFile metaFile = RenderMetaDataFile.createFromExistingFile(this, file);
+				RenderMetaDataFile metaFile = RenderMetaDataFile.createFromExistingFile(this.fullDataSourceProvider, this.clientLevel, file);
 				filesByPos.put(metaFile.pos, metaFile);
 			}
 			catch (IOException e)
@@ -244,7 +241,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 			return CompletableFuture.completedFuture(ColumnRenderSource.createEmptyRenderSource(pos));
 		}
 		
-		CompletableFuture<ColumnRenderSource> getDataSourceFuture = metaFile.getOrLoadCachedDataSourceAsync(this.fileHandlerThreadPool, this.clientLevel)
+		CompletableFuture<ColumnRenderSource> getDataSourceFuture = metaFile.getOrLoadCachedDataSourceAsync(this.fileHandlerThreadPool)
 				.handle((renderSource, exception) ->
 				{
 					if (exception != null)
@@ -302,7 +299,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 				// attempt to load the file
 				try
 				{
-					metaFile = RenderMetaDataFile.createFromExistingFile(this, fileToLoad);
+					metaFile = RenderMetaDataFile.createFromExistingFile(this.fullDataSourceProvider, this.clientLevel, fileToLoad);
 					this.topDetailLevel.updateAndGet(currentTopDetailLevel -> Math.max(currentTopDetailLevel, pos.sectionDetailLevel));
 					this.metaFileBySectionPos.put(pos, metaFile);
 					return metaFile;
@@ -327,7 +324,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		{
 			// createFromExistingOrNewFile() is used instead of createFromExistingFile()
 			// due to a rare issue where the file may already exist but isn't in the file list
-			metaFile = RenderMetaDataFile.createFromExistingOrNewFile(this, pos);
+			metaFile = RenderMetaDataFile.createFromExistingOrNewFile(this.clientLevel, this.fullDataSourceProvider, pos, this.computeRenderFilePath(pos));
 			
 			this.topDetailLevel.updateAndGet(newDetailLevel -> Math.max(newDetailLevel, pos.sectionDetailLevel));
 			
@@ -373,7 +370,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 				RenderMetaDataFile metaFile = this.metaFileBySectionPos.get(sectionPos); // bypass the getLoadOrMakeFile() since we only want cached files.
 				if (metaFile != null)
 				{
-					metaFile.updateChunkIfSourceExistsAsync(chunk, this.clientLevel);
+					metaFile.updateChunkIfSourceExistsAsync(chunk);
 				}
 			}
 		}
@@ -400,27 +397,6 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
 				.whenComplete((voidObj, exception) -> LOGGER.info("Finished saving " + RenderSourceFileHandler.class.getSimpleName()));
 	}
-	
-	
-	
-	//==========================//
-	// meta file cache updating //
-	//==========================//
-	
-	@Deprecated
-	public CompletableFuture<ColumnRenderSource> onRenderFileLoadedAsync(ColumnRenderSource renderSource, RenderMetaDataFile metaFile)
-	{
-		CompletableFuture<ColumnRenderSource> future = metaFile.updateRenderCacheAsync(renderSource, this.fullDataSourceProvider, this.clientLevel).handle((voidObj, ex) -> renderSource);
-		
-		synchronized (this.taskTracker)
-		{
-			this.taskTracker.put(future, ETaskType.ON_LOADED);
-		}
-		return future;
-	}
-	
-	@Deprecated
-	public CompletableFuture<Void> onRenderSourceLoadedFromCacheAsync(RenderMetaDataFile metaFile, ColumnRenderSource renderSource) { return metaFile.updateRenderCacheAsync(renderSource, this.fullDataSourceProvider, this.clientLevel); }
 	
 	
 	

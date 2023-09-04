@@ -56,6 +56,10 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
+	public static final boolean ALWAYS_INVALIDATE_CACHE = false;
+	public static final long RENDER_SOURCE_TYPE_ID = ColumnRenderSource.TYPE_ID;
+	
+	
 	/**
 	 * Can be cleared if the garbage collector determines there isn't enough space. <br><br>
 	 *
@@ -65,7 +69,8 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 	private SoftReference<ColumnRenderSource> cachedRenderDataSource = new SoftReference<>(null);
 	private final AtomicReference<CompletableFuture<ColumnRenderSource>> renderSourceLoadFutureRef = new AtomicReference<>(null);
 	
-	private final RenderSourceFileHandler fileHandler;
+	private final IDhClientLevel clientLevel;
+	private final IFullDataSourceProvider fullDataSourceProvider;
 	private boolean doesFileExist;
 	
 	
@@ -78,33 +83,29 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 	 * Can be used instead of {@link RenderMetaDataFile#createFromExistingFile} or {@link RenderMetaDataFile#createNewFileForPos}, 
 	 * if we are uncertain whether a file exists or not.
 	 */
-	public static RenderMetaDataFile createFromExistingOrNewFile(RenderSourceFileHandler fileHandler, DhSectionPos pos) throws IOException
+	public static RenderMetaDataFile createFromExistingOrNewFile(IDhClientLevel clientLevel, IFullDataSourceProvider fullDataSourceProvider, DhSectionPos pos, File file) throws IOException
 	{
-		File file = fileHandler.computeRenderFilePath(pos);
 		if (file.exists())
 		{
-			return createFromExistingFile(fileHandler, file);
+			return createFromExistingFile(fullDataSourceProvider, clientLevel, file);
 		}
 		else
 		{
-			return createNewFileForPos(fileHandler, pos);
+			return createNewFileForPos(fullDataSourceProvider, clientLevel, pos, file);
 		}
 	}
 	
 	
 	/**
 	 * NOTE: should only be used if there is NOT an existing file.
-	 *
 	 * @throws IOException if a file already exists for this position
 	 */
-	public static RenderMetaDataFile createNewFileForPos(RenderSourceFileHandler fileHandler, DhSectionPos pos) throws IOException
+	public static RenderMetaDataFile createNewFileForPos(IFullDataSourceProvider fullDataSourceProvider, IDhClientLevel clientLevel, DhSectionPos pos, File file) throws IOException { return new RenderMetaDataFile(fullDataSourceProvider, clientLevel, pos, file); }
+	private RenderMetaDataFile(IFullDataSourceProvider fullDataSourceProvider, IDhClientLevel clientLevel, DhSectionPos pos, File file) throws IOException
 	{
-		return new RenderMetaDataFile(fileHandler, pos);
-	}
-	private RenderMetaDataFile(RenderSourceFileHandler fileHandler, DhSectionPos pos) throws IOException
-	{
-		super(fileHandler.computeRenderFilePath(pos), pos);
-		this.fileHandler = fileHandler;
+		super(file, pos);
+		this.fullDataSourceProvider = fullDataSourceProvider;
+		this.clientLevel = clientLevel;
 		LodUtil.assertTrue(this.baseMetaData == null);
 		this.doesFileExist = this.file.exists();
 		DebugRenderer.register(this);
@@ -113,21 +114,16 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 	
 	/**
 	 * NOTE: should only be used if there IS an existing file.
-	 *
 	 * @throws IOException if no file exists for this position
 	 */
-	public static RenderMetaDataFile createFromExistingFile(RenderSourceFileHandler fileHandler, File path) throws IOException
+	public static RenderMetaDataFile createFromExistingFile(IFullDataSourceProvider fullDataSourceProvider, IDhClientLevel clientLevel, File file) throws IOException { return new RenderMetaDataFile(fullDataSourceProvider, clientLevel, file); }
+	private RenderMetaDataFile(IFullDataSourceProvider fullDataSourceProvider, IDhClientLevel clientLevel, File file) throws IOException
 	{
-		return new RenderMetaDataFile(fileHandler, path);
-	}
-	private RenderMetaDataFile(RenderSourceFileHandler fileHandler, File path) throws IOException
-	{
-		super(path);
-		this.fileHandler = fileHandler;
+		super(file);
+		this.fullDataSourceProvider = fullDataSourceProvider;
+		this.clientLevel = clientLevel;
 		LodUtil.assertTrue(this.baseMetaData != null);
-		
 		this.doesFileExist = this.file.exists();
-		
 		DebugRenderer.register(this);
 	}
 	
@@ -137,7 +133,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 	// data update //
 	//=============//
 	
-	public void updateChunkIfSourceExistsAsync(ChunkSizedFullDataAccessor chunkDataView, IDhClientLevel level)
+	public void updateChunkIfSourceExistsAsync(ChunkSizedFullDataAccessor chunkDataView)
 	{
 		DhLodPos chunkPos = chunkDataView.getLodPos();
 		LodUtil.assertTrue(this.pos.getSectionBBoxPos().overlapsExactly(chunkPos), "Chunk pos " + chunkPos + " doesn't overlap with section " + this.pos);
@@ -152,7 +148,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 		
 		renderSourceLoadFuture.thenAccept((renderSource) ->
 		{
-			boolean dataUpdated = renderSource.updateWithChunkData(chunkDataView, level);
+			boolean dataUpdated = renderSource.updateWithChunkData(chunkDataView, clientLevel);
 			
 			// add a debug renderer
 			float offset = new Random(System.nanoTime() ^ Thread.currentThread().getId()).nextFloat() * 16f;
@@ -172,7 +168,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 	// render source getter //
 	//======================//
 	
-	public CompletableFuture<ColumnRenderSource> getOrLoadCachedDataSourceAsync(Executor fileReaderThreads, IDhLevel level)
+	public CompletableFuture<ColumnRenderSource> getOrLoadCachedDataSourceAsync(Executor fileReaderThreads)
 	{
 		CompletableFuture<ColumnRenderSource> renderSourceLoadFuture = this.getCachedDataSourceAsync(true);
 		if (renderSourceLoadFuture != null)
@@ -203,22 +199,20 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 			// create an empty render source
 			byte dataDetailLevel = (byte) (this.pos.sectionDetailLevel - ColumnRenderSource.SECTION_SIZE_OFFSET);
 			int verticalSize = Config.Client.Advanced.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(dataDetailLevel);
-			ColumnRenderSource newColumnRenderSource = new ColumnRenderSource(this.pos, verticalSize, level.getMinY());
+			ColumnRenderSource newColumnRenderSource = new ColumnRenderSource(this.pos, verticalSize, this.clientLevel.getMinY());
 			
 			this.baseMetaData = new BaseMetaData(
 					newColumnRenderSource.getSectionPos(), -1, newColumnRenderSource.getDataDetail(), 
-					newColumnRenderSource.worldGenStep, RenderSourceFileHandler.RENDER_SOURCE_TYPE_ID, 
+					newColumnRenderSource.worldGenStep, RENDER_SOURCE_TYPE_ID, 
 					newColumnRenderSource.getRenderDataFormatVersion(), Long.MAX_VALUE);
 			
-			this.fileHandler.onRenderFileLoadedAsync(newColumnRenderSource, this) // TODO just calls // metaFile.updateRenderCacheAsync()
-					// wait for the file handler to finish before returning the render source
-					.whenComplete((renderSource, ex) ->
-					{
-						this.cachedRenderDataSource = new SoftReference<>(renderSource);
-						
-						this.renderSourceLoadFutureRef.set(null);
-						getSourceFuture.complete(renderSource);
-					});
+			this.updateRenderCacheAsync(newColumnRenderSource, this.fullDataSourceProvider).whenComplete((voidObj, ex) ->
+				{
+					this.cachedRenderDataSource = new SoftReference<>(newColumnRenderSource);
+
+					this.renderSourceLoadFutureRef.set(null);
+					getSourceFuture.complete(newColumnRenderSource);
+				});
 		}
 		else
 		{
@@ -234,7 +228,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 						try (FileInputStream fileInputStream = this.getFileInputStream(); // throws IoException
 								DhDataInputStream compressedInputStream = new DhDataInputStream(fileInputStream))
 						{
-							renderSource = ColumnRenderLoader.INSTANCE.loadRenderSource(this, compressedInputStream, level);
+							renderSource = ColumnRenderLoader.INSTANCE.loadRenderSource(this, compressedInputStream, this.clientLevel);
 						}
 						catch (IOException ex)
 						{
@@ -244,7 +238,9 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 						return renderSource;
 					}, fileReaderThreads)
 					// TODO: Check for file version and only update if needed.
-					.thenCompose((renderSource) -> this.fileHandler.onRenderFileLoadedAsync(renderSource, this)) // TODO just calls // metaFile.updateRenderCacheAsync()
+					//.thenCompose((renderSource) -> this.fileHandler.onRenderFileLoadedAsync(renderSource, this)) // TODO just calls // metaFile.updateRenderCacheAsync()
+					//.whenComplete((renderSource, ex) ->
+					.thenCompose(renderSource -> this.updateRenderCacheAsync(renderSource, this.fullDataSourceProvider))
 					.whenComplete((renderSource, ex) ->
 					{
 						if (ex != null)
@@ -297,18 +293,18 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 	// cache handler //
 	//===============//
 	
-	public CompletableFuture<Void> updateRenderCacheAsync(ColumnRenderSource renderSource, IFullDataSourceProvider fullDataSourceProvider, IDhClientLevel clientLevel)
+	public CompletableFuture<ColumnRenderSource> updateRenderCacheAsync(ColumnRenderSource renderSource, IFullDataSourceProvider fullDataSourceProvider)
 	{
 		DebugRenderer.BoxWithLife debugBox = new DebugRenderer.BoxWithLife(new DebugRenderer.Box(renderSource.sectionPos, 74f, 86f, 0.1f, Color.red), 1.0, 32f, Color.green.darker());
 		
 		
 		// Skip updating the cache if the data file is already up-to-date
 		FullDataMetaFile dataFile = fullDataSourceProvider.getFileIfExist(this.pos);
-		if (!RenderSourceFileHandler.ALWAYS_INVALIDATE_CACHE && dataFile != null && dataFile.baseMetaData != null && dataFile.baseMetaData.checksum == this.baseMetaData.dataVersion.get()) // TODO can we make it so the version comparisons either both use the checksum or the dataVersion? Comparing checksum and dataVersion is kinda confusing
+		if (!ALWAYS_INVALIDATE_CACHE && dataFile != null && dataFile.baseMetaData != null && dataFile.baseMetaData.checksum == this.baseMetaData.dataVersion.get()) // TODO can we make it so the version comparisons either both use the checksum or the dataVersion? Comparing checksum and dataVersion is kinda confusing
 		{
 			LOGGER.debug("Skipping render cache update for " + this.pos);
 			renderSource.localVersion.incrementAndGet();
-			return CompletableFuture.completedFuture(null);
+			return CompletableFuture.completedFuture(renderSource);
 		}
 		
 		
@@ -339,7 +335,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 		
 		
 		// convert the full data source into a render source
-		CompletableFuture<Void> transformFuture = FullDataToRenderDataTransformer.transformFullDataToRenderSourceAsync(fullDataSourceFuture, clientLevel)
+		CompletableFuture<ColumnRenderSource> transformFuture = FullDataToRenderDataTransformer.transformFullDataToRenderSourceAsync(fullDataSourceFuture, this.clientLevel)
 				.handle((newRenderSource, ex) ->
 				{
 					if (ex == null)
@@ -351,7 +347,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 							// update the meta data
 							this.baseMetaData.dataVersion.set(renderDataVersionRef.value);
 							this.baseMetaData.dataLevel = renderSource.getDataDetail();
-							this.baseMetaData.dataTypeId = RenderSourceFileHandler.RENDER_SOURCE_TYPE_ID;
+							this.baseMetaData.dataTypeId = RENDER_SOURCE_TYPE_ID;
 							this.baseMetaData.binaryDataFormatVersion = renderSource.getRenderDataFormatVersion();
 							
 							// save to file
@@ -368,7 +364,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 					}
 					
 					debugBox.close();
-					return null;
+					return renderSource;
 				});
 		return transformFuture;
 	}
@@ -504,9 +500,9 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 			}
 			else
 			{
-				this.fileHandler.onRenderSourceLoadedFromCacheAsync(this, cachedRenderDataSource) // TODO just calls // metaFile.updateRenderCacheAsync()
+				this.updateRenderCacheAsync(cachedRenderDataSource, this.fullDataSourceProvider)		
 						// wait for the handler to finish before returning the renderSource
-						.handle((voidObj, ex) -> 
+						.handle((ignoredRenderSource, ex) -> 
 						{
 							newFuture.complete(cachedRenderDataSource);
 							this.renderSourceLoadFutureRef.set(null);
