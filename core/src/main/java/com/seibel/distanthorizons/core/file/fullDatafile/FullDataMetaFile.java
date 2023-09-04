@@ -45,79 +45,49 @@ import com.seibel.distanthorizons.core.render.renderer.DebugRenderer;
 import com.seibel.distanthorizons.core.render.renderer.IDebugRenderable;
 import org.apache.logging.log4j.Logger;
 
-/**
- * Represents a File that contains a {@link IFullDataSource}.
- */
+/** Represents a File that contains a {@link IFullDataSource}. */
 public class FullDataMetaFile extends AbstractMetaDataContainerFile implements IDebugRenderable
 {
 	public static final String FILE_SUFFIX = ".lod";
 	
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger(FullDataMetaFile.class.getSimpleName());
 	
+	// === Object lifetime tracking ===
+	/** if true both data source creation and garbage collection will be logged */
+	private static final boolean LOG_DATA_SOURCE_LIVES = false;
+	private static final ReferenceQueue<IFullDataSource> LIFE_CYCLE_DEBUG_QUEUE = new ReferenceQueue<>();
+	private static final ReferenceQueue<IFullDataSource> SOFT_REF_DEBUG_QUEUE = new ReferenceQueue<>();
+	private static final Set<DataObjTracker> LIFE_CYCLE_DEBUG_SET = ConcurrentHashMap.newKeySet();
+	private static final Set<DataObjSoftTracker> SOFT_REF_DEBUG_SET = ConcurrentHashMap.newKeySet();
+	// ===========================
 	
 	
-	private final IDhLevel level;
-	private final IFullDataSourceProvider fullDataSourceProvider;
+	
 	public boolean doesFileExist;
-	
 	//TODO: Atm can't find a better way to store when genQueue is checked.
 	public boolean genQueueChecked = false;
 	
+	public AbstractFullDataSourceLoader fullDataSourceLoader;
+	public Class<? extends IFullDataSource> fullDataSourceClass;
+	
+	
 	private volatile boolean markedNeedUpdate = false;
 	
-	public AbstractFullDataSourceLoader fullDataSourceLoader;
-	public Class<? extends IFullDataSource> dataType;
+	private final IDhLevel level;
+	private final IFullDataSourceProvider fullDataSourceProvider;
 	
 	/**
 	 * Can be cleared if the garbage collector determines there isn't enough space. <br><br>
 	 *
 	 * When clearing, don't set to null, instead create a SoftReference containing null.
-	 * This will make null checks simpler.
+	 * This makes null checks simpler.
 	 */
 	private SoftReference<IFullDataSource> cachedFullDataSourceRef = new SoftReference<>(null);
 	private final AtomicReference<CompletableFuture<IFullDataSource>> dataSourceLoadFutureRef = new AtomicReference<>(null);
 	
-	
-	// ===Concurrent Write stuff===
+	// === Concurrent Write tracking ===
 	private final AtomicReference<GuardedMultiAppendQueue> writeQueueRef = new AtomicReference<>(new GuardedMultiAppendQueue());
 	private GuardedMultiAppendQueue backWriteQueue = new GuardedMultiAppendQueue();
-	// ===========================
-	
-	
-	// ===Object lifetime stuff===
-	private static final ReferenceQueue<IFullDataSource> lifeCycleDebugQueue = new ReferenceQueue<>();
-	private static final ReferenceQueue<IFullDataSource> softRefDebugQueue = new ReferenceQueue<>();
-	private static final Set<DataObjTracker> lifeCycleDebugSet = ConcurrentHashMap.newKeySet();
-	private static final Set<DataObjSoftTracker> softRefDebugSet = ConcurrentHashMap.newKeySet();
-	
-	private static class DataObjTracker extends PhantomReference<IFullDataSource> implements Closeable
-	{
-		public final DhSectionPos pos;
-		DataObjTracker(IFullDataSource data)
-		{
-			super(data, lifeCycleDebugQueue);
-			//LOGGER.info("Phantom created on {}! count: {}", data.getSectionPos(), lifeCycleDebugSet.size());
-			lifeCycleDebugSet.add(this);
-			this.pos = data.getSectionPos();
-		}
-		@Override
-		public void close() { lifeCycleDebugSet.remove(this); }
-		
-	}
-	
-	private static class DataObjSoftTracker extends SoftReference<IFullDataSource> implements Closeable
-	{
-		public final FullDataMetaFile file;
-		DataObjSoftTracker(FullDataMetaFile file, IFullDataSource data)
-		{
-			super(data, softRefDebugQueue);
-			softRefDebugSet.add(this);
-			this.file = file;
-		}
-		@Override
-		public void close() { softRefDebugSet.remove(this); }
-		
-	}
 	// ===========================
 	
 	
@@ -134,7 +104,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	private FullDataMetaFile(IFullDataSourceProvider fullDataSourceProvider, IDhLevel level, DhSectionPos pos) throws IOException
 	{
 		super(fullDataSourceProvider.computeDataFilePath(pos), pos);
-		debugPhantomLifeCycleCheck();
+		checkAndLogPhantomDataSourceLifeCycles();
 		
 		this.fullDataSourceProvider = fullDataSourceProvider;
 		this.level = level;
@@ -153,7 +123,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	private FullDataMetaFile(IFullDataSourceProvider fullDataSourceProvider, IDhLevel level, File file) throws IOException, FileNotFoundException
 	{
 		super(file);
-		debugPhantomLifeCycleCheck();
+		checkAndLogPhantomDataSourceLifeCycles();
 		
 		this.fullDataSourceProvider = fullDataSourceProvider;
 		this.level = level;
@@ -167,7 +137,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 			throw new IOException("Invalid file: Data type loader not found: " + this.baseMetaData.dataTypeId + "(v" + this.baseMetaData.binaryDataFormatVersion + ")");
 		}
 		
-		this.dataType = this.fullDataSourceLoader.clazz;
+		this.fullDataSourceClass = this.fullDataSourceLoader.fullDataSourceClass;
 		DebugRenderer.register(this);
 	}
 	
@@ -177,12 +147,14 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	// get data //
 	//==========//
 	
-	// Try get cached data source. Used for temp impl for re-queueing world gen tasks.
-	// (Read-only access! As writes should always be done async)
-	public IFullDataSource getCachedDataSourceNowOrNull()
-	{
-		debugPhantomLifeCycleCheck();
-		return this.cachedFullDataSourceRef.get();
+	/**
+	 * Try get cached data source. Used for temp impl of re-queueing world gen tasks.
+	 * (Read-only access! As writes should always be done async)
+	 */
+	public IFullDataSource getCachedDataSourceNowOrNull() 
+	{ 
+		checkAndLogPhantomDataSourceLifeCycles(); 
+		return this.cachedFullDataSourceRef.get(); 
 	}
 	
 	private void makeUpdateCompletionStage(CompletableFuture<IFullDataSource> completer, CompletableFuture<IFullDataSource> currentStage)
@@ -204,6 +176,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 						new DataObjTracker(fullDataSource);
 						new DataObjSoftTracker(this, fullDataSource);
 					}
+					
 					//LOGGER.info("Updated file "+this.file);
 					if (this.pos.sectionDetailLevel == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
 						DebugRenderer.makeParticle(
@@ -259,7 +232,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	
 	public CompletableFuture<IFullDataSource> getOrLoadCachedDataSourceAsync()
 	{
-		debugPhantomLifeCycleCheck();
+		checkAndLogPhantomDataSourceLifeCycles();
 		
 		CompletableFuture<IFullDataSource> dataSourceLoadFuture = this.getCachedDataSourceAsync();
 		if (dataSourceLoadFuture != null)
@@ -397,7 +370,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	 */
 	public void addToWriteQueue(ChunkSizedFullDataAccessor chunkAccessor)
 	{
-		debugPhantomLifeCycleCheck();
+		checkAndLogPhantomDataSourceLifeCycles();
 		
 		DhLodPos chunkLodPos = new DhLodPos(LodUtil.CHUNK_DETAIL_LEVEL, chunkAccessor.pos.x, chunkAccessor.pos.z);
 		
@@ -427,7 +400,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	/** Applies any queued {@link ChunkSizedFullDataAccessor} to this metadata's {@link IFullDataSource} and writes the data to file. */
 	public CompletableFuture<Void> flushAndSaveAsync()
 	{
-		debugPhantomLifeCycleCheck();
+		checkAndLogPhantomDataSourceLifeCycles();
 		boolean isEmpty = this.writeQueueRef.get().queue.isEmpty() && !markedNeedUpdate;
 		if (!isEmpty)
 		{
@@ -467,7 +440,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 				this.fullDataSourceLoader = AbstractFullDataSourceLoader.getLoader(fullDataSource.getClass(), fullDataSource.getBinaryDataFormatVersion());
 				LodUtil.assertTrue(this.fullDataSourceLoader != null, "No loader for " + fullDataSource.getClass() + " (v" + fullDataSource.getBinaryDataFormatVersion() + ")");
 				
-				this.dataType = fullDataSource.getClass();
+				this.fullDataSourceClass = fullDataSource.getClass();
 				this.baseMetaData.dataTypeId = (this.fullDataSourceLoader == null) ? 0 : this.fullDataSourceLoader.datatypeId;
 				this.baseMetaData.binaryDataFormatVersion = fullDataSource.getBinaryDataFormatVersion();
 				
@@ -528,24 +501,33 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	// debugging //
 	//===========//
 	
-	public static void debugPhantomLifeCycleCheck()
+	/** can be used to log when data sources have been garbage collected */
+	public static void checkAndLogPhantomDataSourceLifeCycles()
 	{
-		DataObjTracker phantom = (DataObjTracker) lifeCycleDebugQueue.poll();
-		
+		DataObjTracker phantomRef = (DataObjTracker) LIFE_CYCLE_DEBUG_QUEUE.poll();
 		// wait for the tracker to be garbage collected(?)
-		while (phantom != null)
+		while (phantomRef != null)
 		{
-			//LOGGER.info("Full Data at pos: "+phantom.pos+" has been freed. "+lifeCycleDebugSet.size()+" Full Data files remaining.");
-			phantom.close();
-			phantom = (DataObjTracker) lifeCycleDebugQueue.poll();
+			if (LOG_DATA_SOURCE_LIVES)
+			{
+				LOGGER.info("Full Data at pos: " + phantomRef.pos + " has been freed. [" + LIFE_CYCLE_DEBUG_SET.size() + "] Full Data sources remaining.");
+			}
+			
+			phantomRef.close();
+			phantomRef = (DataObjTracker) LIFE_CYCLE_DEBUG_QUEUE.poll();
 		}
 		
-		DataObjSoftTracker soft = (DataObjSoftTracker) softRefDebugQueue.poll();
-		while (soft != null)
+		
+		DataObjSoftTracker softRef = (DataObjSoftTracker) SOFT_REF_DEBUG_QUEUE.poll();
+		while (softRef != null)
 		{
-			//LOGGER.info("Full Data at pos: "+soft.file.pos+" has been soft released.");
-			soft.close();
-			soft = (DataObjSoftTracker) softRefDebugQueue.poll();
+			if (LOG_DATA_SOURCE_LIVES)
+			{
+				LOGGER.info("Full Data at pos: " + softRef.file.pos + " has been soft released.");
+			}
+			
+			softRef.close();
+			softRef = (DataObjSoftTracker) SOFT_REF_DEBUG_QUEUE.poll();
 		}
 	}
 	
@@ -635,6 +617,48 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	{
 		ReentrantReadWriteLock appendLock = new ReentrantReadWriteLock();
 		ConcurrentLinkedQueue<ChunkSizedFullDataAccessor> queue = new ConcurrentLinkedQueue<>();
+		
+	}
+	
+	/** used to debug data source soft reference garbage collection */
+	private static class DataObjTracker extends PhantomReference<IFullDataSource> implements Closeable
+	{
+		public final DhSectionPos pos;
+		
+		
+		DataObjTracker(IFullDataSource data)
+		{
+			super(data, LIFE_CYCLE_DEBUG_QUEUE);
+			
+			if (LOG_DATA_SOURCE_LIVES)
+			{
+				LOGGER.info("Phantom created on {}! count: {}", data.getSectionPos(), LIFE_CYCLE_DEBUG_SET.size());
+			}
+			
+			LIFE_CYCLE_DEBUG_SET.add(this);
+			this.pos = data.getSectionPos();
+		}
+		
+		@Override
+		public void close() { LIFE_CYCLE_DEBUG_SET.remove(this); }
+		
+	}
+	
+	/** used to debug data source soft reference garbage collection */
+	private static class DataObjSoftTracker extends SoftReference<IFullDataSource> implements Closeable
+	{
+		public final FullDataMetaFile file;
+		
+		
+		DataObjSoftTracker(FullDataMetaFile file, IFullDataSource data)
+		{
+			super(data, SOFT_REF_DEBUG_QUEUE);
+			SOFT_REF_DEBUG_SET.add(this);
+			this.file = file;
+		}
+		
+		@Override
+		public void close() { SOFT_REF_DEBUG_SET.remove(this); }
 		
 	}
 	

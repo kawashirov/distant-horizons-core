@@ -52,6 +52,7 @@ import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+/** Represents a File that contains a {@link ColumnRenderSource}. */
 public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements IDebugRenderable
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
@@ -65,7 +66,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 	 * Can be cleared if the garbage collector determines there isn't enough space. <br><br>
 	 *
 	 * When clearing, don't set to null, instead create a SoftReference containing null.
-	 * This will make null checks simpler.
+	 * This makes null checks simpler.
 	 */
 	private SoftReference<ColumnRenderSource> cachedRenderDataSource = new SoftReference<>(null);
 	private final AtomicReference<CompletableFuture<ColumnRenderSource>> renderSourceLoadFutureRef = new AtomicReference<>(null);

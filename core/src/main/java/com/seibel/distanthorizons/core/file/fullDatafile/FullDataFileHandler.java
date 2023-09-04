@@ -525,7 +525,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	//=========//
 	
 	@Override
-	public void close() { FullDataMetaFile.debugPhantomLifeCycleCheck(); }
+	public void close() { FullDataMetaFile.checkAndLogPhantomDataSourceLifeCycles(); }
 	
 	
 	
