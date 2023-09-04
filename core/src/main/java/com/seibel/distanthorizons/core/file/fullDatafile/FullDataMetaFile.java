@@ -34,6 +34,8 @@ import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedF
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.distanthorizons.core.file.metaData.AbstractMetaDataContainerFile;
 import com.seibel.distanthorizons.core.file.metaData.BaseMetaData;
+import com.seibel.distanthorizons.core.file.renderfile.RenderMetaDataFile;
+import com.seibel.distanthorizons.core.level.IDhClientLevel;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhLodPos;
@@ -182,11 +184,11 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	//==============//
 	
 	/**
-	 * Creates a new file.
-	 *
-	 * @throws FileAlreadyExistsException if a file already exists.
+	 * NOTE: should only be used if there is NOT an existing file.
+	 * @throws IOException if a file already exists for this position
 	 */
-	public FullDataMetaFile(IFullDataSourceProvider fullDataSourceProvider, IDhLevel level, DhSectionPos pos) throws FileAlreadyExistsException
+	public static FullDataMetaFile createNewFileForPos(IFullDataSourceProvider fullDataSourceProvider, IDhLevel clientLevel, DhSectionPos pos) throws IOException { return new FullDataMetaFile(fullDataSourceProvider, clientLevel, pos); }
+	private FullDataMetaFile(IFullDataSourceProvider fullDataSourceProvider, IDhLevel level, DhSectionPos pos) throws IOException
 	{
 		super(fullDataSourceProvider.computeDataFilePath(pos), pos);
 		debugPhantomLifeCycleCheck();
@@ -198,13 +200,14 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 		DebugRenderer.register(this);
 	}
 	
+	
 	/**
-	 * Uses an existing file.
-	 *
+	 * NOTE: should only be used if there IS an existing file.
 	 * @throws IOException if the file was formatted incorrectly
 	 * @throws FileNotFoundException if no file exists for the given path
 	 */
-	public FullDataMetaFile(IFullDataSourceProvider fullDataSourceProvider, IDhLevel level, File file) throws IOException, FileNotFoundException
+	public static FullDataMetaFile createFromExistingFile(IFullDataSourceProvider fullDataSourceProvider, IDhLevel level, File file) throws IOException { return new FullDataMetaFile(fullDataSourceProvider, level, file); }
+	private FullDataMetaFile(IFullDataSourceProvider fullDataSourceProvider, IDhLevel level, File file) throws IOException, FileNotFoundException
 	{
 		super(file);
 		debugPhantomLifeCycleCheck();

@@ -84,7 +84,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	@Override
 	public void addScannedFiles(Collection<File> detectedFiles)
 	{
-		MetaFileScanUtil.CreateMetadataFunc createMetadataFunc = (file) -> new FullDataMetaFile(this, this.level, file);
+		MetaFileScanUtil.CreateMetadataFunc createMetadataFunc = (file) -> FullDataMetaFile.createFromExistingFile(this, this.level, file);
 		
 		MetaFileScanUtil.AddUnloadedFileFunc addUnloadedFileFunc = (pos, file) ->
 		{
@@ -173,7 +173,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 				
 				try
 				{
-					metaFile = new FullDataMetaFile(this, this.level, fileToLoad);
+					metaFile = FullDataMetaFile.createFromExistingFile(this, this.level, fileToLoad);
 					this.topDetailLevelRef.updateAndGet(oldDetailLevel -> Math.max(oldDetailLevel, pos.sectionDetailLevel));
 					this.metaFileBySectionPos.put(pos, metaFile);
 					return metaFile;
@@ -201,7 +201,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		// to avoid overhead of 'synchronized', and eat the mini-overhead of possibly creating duplicate objects.
 		try
 		{
-			metaFile = new FullDataMetaFile(this, this.level, pos);
+			metaFile = FullDataMetaFile.createNewFileForPos(this, this.level, pos);
 		}
 		catch (IOException e)
 		{
