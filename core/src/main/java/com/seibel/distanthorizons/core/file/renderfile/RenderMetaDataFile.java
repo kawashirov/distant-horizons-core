@@ -217,6 +217,8 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 		}
 		else
 		{
+			// load the existing Meta file and render source
+			
 			CompletableFuture.supplyAsync(() ->
 					{
 						if (this.baseMetaData == null)
@@ -342,7 +344,10 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 					{
 						try
 						{
-							renderSource.updateFromRenderSource(newRenderSource);
+							if (newRenderSource != null)
+							{
+								renderSource.updateFromRenderSource(newRenderSource);
+							}
 							
 							// update the meta data
 							this.baseMetaData.dataVersion.set(renderDataVersionRef.value);
@@ -355,7 +360,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 						}
 						catch (Throwable e)
 						{
-							LOGGER.error("Exception when writing render data to file: ", e);
+							LOGGER.error("Exception when writing render data to file: "+this.file, e);
 						}
 					}
 					else if (!LodUtil.isInterruptOrReject(ex))
@@ -496,6 +501,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 			
 			if (oldFuture != null)
 			{
+				// An update is already in progress, return its future.
 				return oldFuture;
 			}
 			else
