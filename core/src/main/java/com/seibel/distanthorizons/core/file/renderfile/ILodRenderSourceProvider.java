@@ -35,13 +35,12 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface ILodRenderSourceProvider extends AutoCloseable
 {
-	CompletableFuture<ColumnRenderSource> readAsync(DhSectionPos pos);
 	void addScannedFiles(Collection<File> detectedFiles);
+	
+	CompletableFuture<ColumnRenderSource> readAsync(DhSectionPos pos);
+	
 	void writeChunkDataToFile(DhSectionPos sectionPos, ChunkSizedFullDataAccessor chunkData);
 	CompletableFuture<Void> flushAndSaveAsync();
-	
-	/** Returns true if the data was refreshed, false otherwise */
-	//boolean refreshRenderSource(ColumnRenderSource source);
 	
 	/** Deletes any data stored in the render cache so it can be re-created */
 	void deleteRenderCache();

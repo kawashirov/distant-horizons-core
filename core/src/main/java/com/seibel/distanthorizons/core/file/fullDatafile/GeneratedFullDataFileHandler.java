@@ -57,18 +57,6 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	
 	
 	
-	//======//
-	// data //
-	//======//
-	
-	@Override
-	public CompletableFuture<IFullDataSource> readAsync(DhSectionPos pos)
-	{
-		return super.readAsync(pos);
-	}
-	
-	
-	
 	//==================//
 	// generation queue //
 	//==================//

@@ -56,6 +56,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
+	public static final String FILE_SUFFIX = ".rlod";
 	public static final boolean ALWAYS_INVALIDATE_CACHE = false;
 	public static final long RENDER_SOURCE_TYPE_ID = ColumnRenderSource.TYPE_ID;
 	

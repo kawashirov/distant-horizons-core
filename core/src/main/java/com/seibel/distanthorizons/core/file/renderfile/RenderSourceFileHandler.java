@@ -19,7 +19,6 @@
 
 package com.seibel.distanthorizons.core.file.renderfile;
 
-import com.google.common.collect.HashMultimap;
 import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.distanthorizons.core.file.structure.AbstractSaveStructure;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
@@ -29,20 +28,17 @@ import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.distanthorizons.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.distanthorizons.core.level.IDhClientLevel;
-import com.seibel.distanthorizons.core.util.FileScanUtil;
+import com.seibel.distanthorizons.core.util.MetaFileScanUtil;
 import com.seibel.distanthorizons.core.util.FileUtil;
 import com.seibel.distanthorizons.core.util.ThreadUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.seibel.distanthorizons.core.util.FileScanUtil.RENDER_FILE_POSTFIX;
 
 public class RenderSourceFileHandler implements ILodRenderSourceProvider
 {
@@ -60,7 +56,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	private final IDhClientLevel clientLevel;
 	private final File saveDir;
 	/** This is the lowest (highest numeric) detail level that this {@link RenderSourceFileHandler} is keeping track of. */
-	AtomicInteger topDetailLevel = new AtomicInteger(DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL);
+	AtomicInteger topDetailLevelRef = new AtomicInteger(DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL);
 	private final IFullDataSourceProvider fullDataSourceProvider;
 	
 	private final WeakHashMap<CompletableFuture<?>, ETaskType> taskTracker = new WeakHashMap<>();
@@ -85,136 +81,35 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		
 		this.threadPoolMsg = new F3Screen.NestedMessage(this::f3Log);
 		
-		FileScanUtil.scanRenderFiles(saveStructure, clientLevel.getLevelWrapper(), this);
+		MetaFileScanUtil.scanRenderFiles(saveStructure, clientLevel.getLevelWrapper(), this);
 	}
 	
 	/**
 	 * Caller must ensure that this method is called only once,
 	 * and that the given files are not used before this method is called. <br><br>
 	 * 
-	 * Used by {@link FileScanUtil#scanRenderFiles(AbstractSaveStructure, ILevelWrapper, ILodRenderSourceProvider)}
+	 * Used by {@link MetaFileScanUtil#scanRenderFiles(AbstractSaveStructure, ILevelWrapper, ILodRenderSourceProvider)}
 	 */
 	@Override
 	public void addScannedFiles(Collection<File> detectedFiles)
 	{
-		if (USE_LAZY_LOADING)
-		{
-			this.lazyAddScannedFile(detectedFiles);
-		}
-		else
-		{
-			this.immediateAddScannedFile(detectedFiles);
-		}
-	}
-	private void lazyAddScannedFile(Collection<File> detectedFiles)
-	{
-		for (File file : detectedFiles)
-		{
-			if (file == null || !file.exists())
-			{
-				// can rarely happen if the user rapidly travels between dimensions
-				LOGGER.warn("Null or non-existent render file: " + ((file != null) ? file.getPath() : "NULL"));
-				continue;
-			}
-			
-			
-			try
-			{
-				DhSectionPos pos = this.decodePositionFromFileName(file);
-				if (pos != null)
-				{
-					this.unloadedFileBySectionPos.put(pos, file);
-					this.topDetailLevel.updateAndGet(currentTopDetailLevel -> Math.max(currentTopDetailLevel, pos.sectionDetailLevel));
-				}
-			}
-			catch (Exception e)
-			{
-				LOGGER.error("Failed to read data meta file at " + file + ": ", e);
-				FileUtil.renameCorruptedFile(file);
-			}
-		}
-	}
-	private void immediateAddScannedFile(Collection<File> newRenderFiles)
-	{
-		HashMultimap<DhSectionPos, RenderMetaDataFile> filesByPos = HashMultimap.create();
+		MetaFileScanUtil.CreateMetadataFunc createMetadataFunc = (file) -> RenderMetaDataFile.createFromExistingFile(this.fullDataSourceProvider, this.clientLevel, file);
 		
-		// Sort files by pos.
-		for (File file : newRenderFiles)
+		MetaFileScanUtil.AddUnloadedFileFunc addUnloadedFileFunc = (pos, file) -> 
 		{
-			try
-			{
-				RenderMetaDataFile metaFile = RenderMetaDataFile.createFromExistingFile(this.fullDataSourceProvider, this.clientLevel, file);
-				filesByPos.put(metaFile.pos, metaFile);
-			}
-			catch (IOException e)
-			{
-				LOGGER.error("Failed to read render meta file at [" + file + "]. Error: ", e);
-				FileUtil.renameCorruptedFile(file);
-			}
-		}
+			this.unloadedFileBySectionPos.put(pos, file);
+			this.topDetailLevelRef.updateAndGet(oldDetailLevel -> Math.max(oldDetailLevel, pos.sectionDetailLevel));
+		};
+		MetaFileScanUtil.AddLoadedMetaFileFunc addLoadedMetaFileFunc = (pos, loadedMetaFile) -> 
+		{
+			this.topDetailLevelRef.updateAndGet(oldDetailLevel -> Math.max(oldDetailLevel, pos.sectionDetailLevel));
+			this.metaFileBySectionPos.put(pos, (RenderMetaDataFile) loadedMetaFile);
+		};
 		
-		// Warn for multiple files with the same pos, and then select the one with the latest timestamp.
-		for (DhSectionPos pos : filesByPos.keySet())
-		{
-			Collection<RenderMetaDataFile> metaFiles = filesByPos.get(pos);
-			RenderMetaDataFile fileToUse;
-			if (metaFiles.size() > 1)
-			{
-				//fileToUse = metaFiles.stream().findFirst().orElse(null); // use the first file in the list
-				
-				// use the file's last modified date
-				fileToUse = Collections.max(metaFiles, Comparator.comparingLong(renderMetaDataFile ->
-						renderMetaDataFile.file.lastModified()));
-
-//				fileToUse = Collections.max(metaFiles, Comparator.comparingLong(renderMetaDataFile -> 
-//						renderMetaDataFile.metaData.dataVersion.get()));
-				{
-					StringBuilder sb = new StringBuilder();
-					sb.append("Multiple files with the same pos: ");
-					sb.append(pos);
-					sb.append("\n");
-					for (RenderMetaDataFile metaFile : metaFiles)
-					{
-						sb.append("\t");
-						sb.append(metaFile.file);
-						sb.append("\n");
-					}
-					sb.append("\tUsing: ");
-					sb.append(fileToUse.file);
-					sb.append("\n");
-					sb.append("(Other files will be renamed by appending \".old\" to their name.)");
-					LOGGER.warn(sb.toString());
-					
-					// Rename all other files with the same pos to .old
-					for (RenderMetaDataFile metaFile : metaFiles)
-					{
-						if (metaFile == fileToUse)
-						{
-							continue;
-						}
-						
-						File oldFile = new File(metaFile.file + ".old");
-						try
-						{
-							if (!metaFile.file.renameTo(oldFile))
-								throw new RuntimeException("Renaming failed");
-						}
-						catch (Exception e)
-						{
-							LOGGER.error("Failed to rename file: [" + metaFile.file + "] to [" + oldFile + "]", e);
-						}
-					}
-				}
-			}
-			else
-			{
-				fileToUse = metaFiles.iterator().next();
-			}
-			// Add this file to the list of files.
-			this.metaFileBySectionPos.put(pos, fileToUse);
-			// increase the lowest detail level if a new lower detail file is found
-			this.topDetailLevel.updateAndGet(v -> Math.max(v, pos.sectionDetailLevel));
-		}
+		
+		MetaFileScanUtil.addScannedFiles(detectedFiles, USE_LAZY_LOADING, RenderMetaDataFile.FILE_SUFFIX,
+				createMetadataFunc, 
+				addUnloadedFileFunc, addLoadedMetaFileFunc);
 	}
 	
 	
@@ -300,7 +195,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 				try
 				{
 					metaFile = RenderMetaDataFile.createFromExistingFile(this.fullDataSourceProvider, this.clientLevel, fileToLoad);
-					this.topDetailLevel.updateAndGet(currentTopDetailLevel -> Math.max(currentTopDetailLevel, pos.sectionDetailLevel));
+					this.topDetailLevelRef.updateAndGet(currentTopDetailLevel -> Math.max(currentTopDetailLevel, pos.sectionDetailLevel));
 					this.metaFileBySectionPos.put(pos, metaFile);
 					return metaFile;
 				}
@@ -326,7 +221,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 			// due to a rare issue where the file may already exist but isn't in the file list
 			metaFile = RenderMetaDataFile.createFromExistingOrNewFile(this.clientLevel, this.fullDataSourceProvider, pos, this.computeRenderFilePath(pos));
 			
-			this.topDetailLevel.updateAndGet(newDetailLevel -> Math.max(newDetailLevel, pos.sectionDetailLevel));
+			this.topDetailLevelRef.updateAndGet(newDetailLevel -> Math.max(newDetailLevel, pos.sectionDetailLevel));
 			
 			// Compare And Swap to handle a concurrency issue where multiple threads created the same Meta File at the same time
 			RenderMetaDataFile metaFileCas = this.metaFileBySectionPos.putIfAbsent(pos, metaFile);
@@ -375,7 +270,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 			}
 		}
 		
-		if (sectionDetailLevel < this.topDetailLevel.get())
+		if (sectionDetailLevel < this.topDetailLevelRef.get())
 		{
 			this.writeChunkDataToFileRecursively(chunk, (byte) (sectionDetailLevel + 1));
 		}
@@ -483,16 +378,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	// helper methods //
 	//================//
 	
-	public File computeRenderFilePath(DhSectionPos pos) { return new File(this.saveDir, pos.serialize() + RENDER_FILE_POSTFIX); }
-	
-	@Nullable
-	public DhSectionPos decodePositionFromFileName(File file)
-	{
-		String fileName = file.getName();
-		if (!fileName.endsWith(RENDER_FILE_POSTFIX)) return null;
-		fileName = fileName.substring(0, fileName.length() - RENDER_FILE_POSTFIX.length());
-		return DhSectionPos.deserialize(fileName);
-	}
+	public File computeRenderFilePath(DhSectionPos pos) { return new File(this.saveDir, pos.serialize() + RenderMetaDataFile.FILE_SUFFIX); }
 	
 	
 	

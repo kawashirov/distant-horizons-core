@@ -33,14 +33,12 @@ import java.util.function.Function;
 
 public interface IFullDataSourceProvider extends AutoCloseable
 {
-	void addScannedFile(Collection<File> detectedFiles);
+	void addScannedFiles(Collection<File> detectedFiles);
 	
 	CompletableFuture<IFullDataSource> readAsync(DhSectionPos pos);
 	void writeChunkDataToFile(DhSectionPos sectionPos, ChunkSizedFullDataAccessor chunkData);
 	CompletableFuture<Void> flushAndSave();
 	CompletableFuture<Void> flushAndSave(DhSectionPos sectionPos);
-	
-	void addOnUpdatedListener(Consumer<IFullDataSource> listener);
 	
 	//long getCacheVersion(DhSectionPos sectionPos);
 	//boolean isCacheVersionValid(DhSectionPos sectionPos, long cacheVersion);

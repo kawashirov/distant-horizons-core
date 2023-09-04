@@ -51,7 +51,11 @@ import org.apache.logging.log4j.Logger;
  */
 public class FullDataMetaFile extends AbstractMetaDataContainerFile implements IDebugRenderable
 {
+	public static final String FILE_SUFFIX = ".lod";
+	
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger(FullDataMetaFile.class.getSimpleName());
+	
+	
 	
 	private final IDhLevel level;
 	private final IFullDataSourceProvider fullDataSourceProvider;
