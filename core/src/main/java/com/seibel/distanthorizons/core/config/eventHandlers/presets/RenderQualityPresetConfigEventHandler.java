@@ -85,7 +85,7 @@ public class RenderQualityPresetConfigEventHandler extends AbstractPresetConfigE
 				this.put(EQualityPreset.HIGH, true);
 				this.put(EQualityPreset.EXTREME, true);
 			}});
-	
+		
 	
 	
 	//==============//

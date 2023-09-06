@@ -98,6 +98,18 @@
     "SSAO",
   "distanthorizons.config.client.advanced.graphics.quality.ssao.@tooltip":
     "Screen Space Ambient Occlusion adds depth to the lighting of blocks.",
+  "distanthorizons.config.client.advanced.graphics.quality.ssaoSampleCount":
+    "SSAO Sample Count",
+  "distanthorizons.config.client.advanced.graphics.quality.ssaoRadius":
+    "SSAO Radius",
+  "distanthorizons.config.client.advanced.graphics.quality.ssaoStrength":
+    "SSAO Strength",
+  "distanthorizons.config.client.advanced.graphics.quality.ssaoMinLight":
+    "SSAO Min Light",
+  "distanthorizons.config.client.advanced.graphics.quality.ssaoBias":
+    "SSAO Bias",
+  "distanthorizons.config.client.advanced.graphics.quality.ssaoBlurRadius":
+    "SSAO Blur Radius",
   "distanthorizons.config.client.advanced.graphics.quality.horizontalQuality":
     "Horizontal Quality",
   "distanthorizons.config.client.advanced.graphics.quality.horizontalQuality.@tooltip":

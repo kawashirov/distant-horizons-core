@@ -86,6 +86,18 @@ public interface IDhApiGraphicsConfig extends IDhApiConfigGroup
 	
 	IDhApiConfigValue<Boolean> ambientOcclusion();
 	
+	IDhApiConfigValue<Integer> ambientOcclusion_SampleCount();
+	
+	IDhApiConfigValue<Double> ambientOcclusion_Radius();
+	
+	IDhApiConfigValue<Double> ambientOcclusion_Strength();
+	
+	IDhApiConfigValue<Double> ambientOcclusion_Bias();
+	
+	IDhApiConfigValue<Double> ambientOcclusion_MinLight();
+	
+	IDhApiConfigValue<Integer> ambientOcclusion_BlurRadius();
+	
 	IDhApiConfigValue<ETransparency> transparency();
 	
 	/** Defines what blocks won't be rendered as LODs. */
