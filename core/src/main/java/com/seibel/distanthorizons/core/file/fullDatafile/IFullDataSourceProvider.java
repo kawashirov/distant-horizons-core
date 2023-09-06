@@ -28,8 +28,6 @@ import java.io.File;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 public interface IFullDataSourceProvider extends AutoCloseable
 {
@@ -43,11 +41,34 @@ public interface IFullDataSourceProvider extends AutoCloseable
 	//long getCacheVersion(DhSectionPos sectionPos);
 	//boolean isCacheVersionValid(DhSectionPos sectionPos, long cacheVersion);
 	
-	CompletableFuture<IFullDataSource> onCreateDataFile(FullDataMetaFile file);
-	CompletableFuture<IFullDataSource> onDataFileUpdate(IFullDataSource source, FullDataMetaFile file, Consumer<IFullDataSource> onUpdated, Function<IFullDataSource, Boolean> updater);
+	CompletableFuture<IFullDataSource> onDataFileCreatedAsync(FullDataMetaFile file);
+	default CompletableFuture<DataFileUpdateResult> onDataFileUpdateAsync(IFullDataSource fullDataSource, FullDataMetaFile file, boolean dataChanged) { return CompletableFuture.completedFuture(new DataFileUpdateResult(fullDataSource, dataChanged)); }
 	File computeDataFilePath(DhSectionPos pos);
 	ExecutorService getIOExecutor();
 
 	@Nullable
     FullDataMetaFile getFileIfExist(DhSectionPos pos);
+	
+	
+	
+	//================//
+	// helper classes //
+	//================//
+	
+	/** 
+	 * After a {@link FullDataMetaFile} has been updated the {@link IFullDataSourceProvider} may also need to modify it. <br>
+	 * This specifically happens during world generation. 
+	 */
+	class DataFileUpdateResult
+	{
+		IFullDataSource fullDataSource;
+		boolean dataSourceChanged;
+		
+		public DataFileUpdateResult(IFullDataSource fullDataSource, boolean dataSourceChanged)
+		{
+			this.fullDataSource = fullDataSource;
+			this.dataSourceChanged = dataSourceChanged;
+		}
+	}
+	
 }

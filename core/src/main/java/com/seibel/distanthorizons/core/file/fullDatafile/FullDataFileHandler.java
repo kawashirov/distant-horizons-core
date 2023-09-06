@@ -410,7 +410,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	}
 	
 	@Override
-	public CompletableFuture<IFullDataSource> onCreateDataFile(FullDataMetaFile file)
+	public CompletableFuture<IFullDataSource> onDataFileCreatedAsync(FullDataMetaFile file)
 	{
 		DhSectionPos pos = file.pos;
 		IIncompleteFullDataSource source = this.makeEmptyDataSource(pos);
@@ -443,27 +443,6 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		this.metaFileBySectionPos.remove(pos);
 		// create a new FullDataMetaFile to write new data to
 		return this.getLoadOrMakeFile(pos, true);
-	}
-	
-	@Override
-	public CompletableFuture<IFullDataSource> onDataFileUpdate(
-			IFullDataSource source, FullDataMetaFile file,
-			Consumer<IFullDataSource> onUpdated, Function<IFullDataSource, Boolean> updater)
-	{
-		boolean changed = updater.apply(source);
-		
-		if (source instanceof IIncompleteFullDataSource)
-		{
-			IFullDataSource newSource = ((IIncompleteFullDataSource) source).tryPromotingToCompleteDataSource();
-			changed |= newSource != source;
-			source = newSource;
-		}
-		
-		if (changed)
-		{
-			onUpdated.accept(source);
-		}
-		return CompletableFuture.completedFuture(source);
 	}
 	
 	
