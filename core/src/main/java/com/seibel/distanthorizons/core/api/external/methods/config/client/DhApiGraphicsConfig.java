@@ -22,6 +22,7 @@ package com.seibel.distanthorizons.core.api.external.methods.config.client;
 import com.seibel.distanthorizons.api.enums.config.*;
 import com.seibel.distanthorizons.api.enums.rendering.ETransparency;
 import com.seibel.distanthorizons.api.interfaces.config.IDhApiConfigValue;
+import com.seibel.distanthorizons.api.interfaces.config.client.IDhApiAmbientOcclusionConfig;
 import com.seibel.distanthorizons.api.interfaces.config.client.IDhApiFogConfig;
 import com.seibel.distanthorizons.api.interfaces.config.client.IDhApiGraphicsConfig;
 import com.seibel.distanthorizons.api.interfaces.config.client.IDhApiNoiseTextureConfig;
@@ -42,6 +43,7 @@ public class DhApiGraphicsConfig implements IDhApiGraphicsConfig
 	//==============//
 	
 	public IDhApiFogConfig fog() { return DhApiFogConfig.INSTANCE; }
+	public IDhApiAmbientOcclusionConfig ambientOcclusion() { return DhApiAmbientOcclusionConfig.INSTANCE; }
 	public IDhApiNoiseTextureConfig noiseTexture() { return DhApiNoiseTextureConfig.INSTANCE; }
 	
 	
@@ -79,34 +81,6 @@ public class DhApiGraphicsConfig implements IDhApiGraphicsConfig
 	@Override
 	public IDhApiConfigValue<EHorizontalQuality> horizontalQuality()
 	{ return new DhApiConfigValue<EHorizontalQuality, EHorizontalQuality>(Config.Client.Advanced.Graphics.Quality.horizontalQuality); }
-	
-	@Override
-	public IDhApiConfigValue<Boolean> ambientOcclusion()
-	{ return new DhApiConfigValue<Boolean, Boolean>(Config.Client.Advanced.Graphics.Quality.ssao); }
-	
-	@Override
-	public IDhApiConfigValue<Integer> ambientOcclusion_SampleCount()
-	{ return new DhApiConfigValue<Integer, Integer>(Config.Client.Advanced.Graphics.Quality.ssaoSampleCount); }
-	
-	@Override
-	public IDhApiConfigValue<Double> ambientOcclusion_Radius()
-	{ return new DhApiConfigValue<Double, Double>(Config.Client.Advanced.Graphics.Quality.ssaoRadius); }
-	
-	@Override
-	public IDhApiConfigValue<Double> ambientOcclusion_Strength()
-	{ return new DhApiConfigValue<Double, Double>(Config.Client.Advanced.Graphics.Quality.ssaoStrength); }
-	
-	@Override
-	public IDhApiConfigValue<Double> ambientOcclusion_Bias()
-	{ return new DhApiConfigValue<Double, Double>(Config.Client.Advanced.Graphics.Quality.ssaoBias); }
-	
-	@Override
-	public IDhApiConfigValue<Double> ambientOcclusion_MinLight()
-	{ return new DhApiConfigValue<Double, Double>(Config.Client.Advanced.Graphics.Quality.ssaoMinLight); }
-	
-	@Override
-	public IDhApiConfigValue<Integer> ambientOcclusion_BlurRadius()
-	{ return new DhApiConfigValue<Integer, Integer>(Config.Client.Advanced.Graphics.Quality.ssaoBlurRadius); }
 	
 	@Override
 	public IDhApiConfigValue<ETransparency> transparency()

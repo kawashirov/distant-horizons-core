@@ -132,6 +132,7 @@ public class Config
 			{
 				public static ConfigCategory quality = new ConfigCategory.Builder().set(Quality.class).build();
 				public static ConfigCategory fog = new ConfigCategory.Builder().set(Fog.class).build();
+				public static ConfigCategory ssao = new ConfigCategory.Builder().set(Ssao.class).build();
 				public static ConfigCategory noiseTextureSettings = new ConfigCategory.Builder().set(NoiseTextureSettings.class).build();
 				public static ConfigCategory advancedGraphics = new ConfigCategory.Builder().set(AdvancedGraphics.class).build();
 				
@@ -172,41 +173,6 @@ public class Config
 									+ "Lowest Quality: " + EVerticalQuality.HEIGHT_MAP + "\n"
 									+ "Highest Quality: " + EVerticalQuality.EXTREME)
 							.setPerformance(EConfigEntryPerformance.VERY_HIGH)
-							.build();
-					
-					public static ConfigEntry<Boolean> ssao = new ConfigEntry.Builder<Boolean>()
-							.set(true)
-							.comment("Enable Screen Space Ambient Occlusion")
-							.build();
-					
-					public static ConfigEntry<Integer> ssaoSampleCount = new ConfigEntry.Builder<Integer>()
-							.set(6)
-							.comment("Number of samples to use for Screen Space Ambient Occlusion")
-							.build();
-					
-					public static ConfigEntry<Double> ssaoRadius = new ConfigEntry.Builder<Double>()
-							.set(4.0)
-							.comment("Radius of Screen Space Ambient Occlusion effect in blocks")
-							.build();
-					
-					public static ConfigEntry<Double> ssaoStrength = new ConfigEntry.Builder<Double>()
-							.set(0.2)
-							.comment("Strength of Screen Space Ambient Occlusion effect")
-							.build();
-					
-					public static ConfigEntry<Double> ssaoBias = new ConfigEntry.Builder<Double>()
-							.set(0.02)
-							.comment("Bias of Screen Space Ambient Occlusion effect")
-							.build();
-					
-					public static ConfigEntry<Double> ssaoMinLight = new ConfigEntry.Builder<Double>()
-							.set(0.25)
-							.comment("Minimum brightness of Screen Space Ambient Occlusion effect")
-							.build();
-					
-					public static ConfigEntry<Integer> ssaoBlurRadius = new ConfigEntry.Builder<Integer>()
-							.set(2)
-							.comment("Radius in pixels of Screen Space Ambient Occlusion blurring")
 							.build();
 					
 					public static ConfigEntry<EHorizontalQuality> horizontalQuality = new ConfigEntry.Builder<EHorizontalQuality>()
@@ -473,6 +439,68 @@ public class Config
 					
 				}
 				
+				public static class Ssao
+				{
+					public static ConfigEntry<Boolean> enabled = new ConfigEntry.Builder<Boolean>()
+							.set(true)
+							.comment("Enable Screen Space Ambient Occlusion")
+							.setPerformance(EConfigEntryPerformance.MEDIUM)
+							.build();
+					
+					public static ConfigEntry<Integer> sampleCount = new ConfigEntry.Builder<Integer>()
+							.set(6)
+							.comment("" +
+									"Determines how many points in space are sampled for the occlusion test. \n" +
+									"Higher numbers will improve quality and reduce banding, but will increase GPU load." +
+									"")
+							.setPerformance(EConfigEntryPerformance.MEDIUM)
+							.build();
+					
+					public static ConfigEntry<Double> radius = new ConfigEntry.Builder<Double>()
+							.set(4.0)
+							.comment("" +
+									"Determines the radius Screen Space Ambient Occlusion is applied, measured in blocks." +
+									"")
+							.setPerformance(EConfigEntryPerformance.NONE)
+							.build();
+					
+					public static ConfigEntry<Double> strength = new ConfigEntry.Builder<Double>()
+							.set(0.2)
+							.comment("" +
+									"Determines how dark the Screen Space Ambient Occlusion effect will be." +
+									"")
+							.setPerformance(EConfigEntryPerformance.NONE)
+							.build();
+					
+					public static ConfigEntry<Double> bias = new ConfigEntry.Builder<Double>()
+							.set(0.02)
+							.comment("" +
+									"Increasing the value can reduce banding at the cost of reducing the strength of the effect." +
+									"")
+							.setPerformance(EConfigEntryPerformance.NONE)
+							.build();
+					
+					public static ConfigEntry<Double> minLight = new ConfigEntry.Builder<Double>()
+							.set(0.25)
+							.comment("" +
+									"Determines how dark the occlusion shadows can be. \n" +
+									"0 = totally black at the corners \n" +
+									"1 = no shadow" +
+									"")
+							.setPerformance(EConfigEntryPerformance.NONE)
+							.build();
+					
+					public static ConfigEntry<Integer> blurRadius = new ConfigEntry.Builder<Integer>()
+							.set(2)
+							.comment("" +
+									"The radius, measured in pixels, that blurring is calculated for the SSAO. \n" +
+									"Higher numbers will reduce banding at the cost of GPU performance." +
+									"")
+							.setPerformance(EConfigEntryPerformance.HIGH)
+							.build();
+					
+				}
+				
 				public static class NoiseTextureSettings
 				{
 					public static ConfigEntry<Boolean> noiseEnabled = new ConfigEntry.Builder<Boolean>()
@@ -549,6 +577,7 @@ public class Config
 							.setPerformance(EConfigEntryPerformance.NONE)
 							.build();
 					
+					// move into "shader compatibility"
 					public static ConfigEntry<Double> brightnessMultiplier = new ConfigEntry.Builder<Double>() // TODO: Make this a float (the ClassicConfigGUI doesnt support floats)
 							.set(1.0)
 							.comment(""

@@ -212,12 +212,12 @@ public class SSAORenderer
 		Mat4f invertedPerspective = new Mat4f(perspective);
 		invertedPerspective.invert();
 		
-		int sampleCount = Config.Client.Advanced.Graphics.Quality.ssaoSampleCount.get();
-		int blurRadius = Config.Client.Advanced.Graphics.Quality.ssaoBlurRadius.get();
-		float radius = Config.Client.Advanced.Graphics.Quality.ssaoRadius.get().floatValue();
-		float strength = Config.Client.Advanced.Graphics.Quality.ssaoStrength.get().floatValue();
-		float minLight = Config.Client.Advanced.Graphics.Quality.ssaoMinLight.get().floatValue();
-		float bias = Config.Client.Advanced.Graphics.Quality.ssaoBias.get().floatValue();
+		int sampleCount = Config.Client.Advanced.Graphics.Ssao.sampleCount.get();
+		int blurRadius = Config.Client.Advanced.Graphics.Ssao.blurRadius.get();
+		float radius = Config.Client.Advanced.Graphics.Ssao.radius.get().floatValue();
+		float strength = Config.Client.Advanced.Graphics.Ssao.strength.get().floatValue();
+		float minLight = Config.Client.Advanced.Graphics.Ssao.minLight.get().floatValue();
+		float bias = Config.Client.Advanced.Graphics.Ssao.bias.get().floatValue();
 		
 		this.ssaoShader.bind();
 		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gProjUniform, perspective);

@@ -40,6 +40,7 @@ public interface IDhApiGraphicsConfig extends IDhApiConfigGroup
 	//===============//
 	
 	IDhApiFogConfig fog();
+	IDhApiAmbientOcclusionConfig ambientOcclusion();
 	IDhApiNoiseTextureConfig noiseTexture();
 	
 	
@@ -83,20 +84,6 @@ public interface IDhApiGraphicsConfig extends IDhApiConfigGroup
 	
 	/** Modifies the quadratic function fake chunks use for horizontal quality drop-off. */
 	IDhApiConfigValue<EHorizontalQuality> horizontalQuality();
-	
-	IDhApiConfigValue<Boolean> ambientOcclusion();
-	
-	IDhApiConfigValue<Integer> ambientOcclusion_SampleCount();
-	
-	IDhApiConfigValue<Double> ambientOcclusion_Radius();
-	
-	IDhApiConfigValue<Double> ambientOcclusion_Strength();
-	
-	IDhApiConfigValue<Double> ambientOcclusion_Bias();
-	
-	IDhApiConfigValue<Double> ambientOcclusion_MinLight();
-	
-	IDhApiConfigValue<Integer> ambientOcclusion_BlurRadius();
 	
 	IDhApiConfigValue<ETransparency> transparency();
 	

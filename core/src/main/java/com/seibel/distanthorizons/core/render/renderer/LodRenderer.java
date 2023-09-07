@@ -44,7 +44,6 @@ import com.seibel.distanthorizons.coreapi.util.math.Mat4f;
 import com.seibel.distanthorizons.coreapi.util.math.Vec3d;
 import com.seibel.distanthorizons.coreapi.util.math.Vec3f;
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL32;
 
 import java.awt.*;
@@ -283,7 +282,7 @@ public class LodRenderer
 			// TODO: Directional culling
 			this.bufferHandler.renderOpaque(this);
 			
-			if (Config.Client.Advanced.Graphics.Quality.ssao.get())
+			if (Config.Client.Advanced.Graphics.Ssao.enabled.get())
 			{
 				profiler.popPush("LOD SSAO");
 				SSAORenderer.INSTANCE.render(partialTicks);
