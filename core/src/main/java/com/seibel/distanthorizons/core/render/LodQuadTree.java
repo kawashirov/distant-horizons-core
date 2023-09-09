@@ -143,7 +143,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		{
 			// walk up the tree until we hit the root node
 			// this is done so any high detail changes flow up to the lower detail render sections as well
-			while (pos.sectionDetailLevel <= this.treeMaxDetailLevel)
+			while (pos.sectionDetailLevel <= this.treeMinDetailLevel)
 			{
 				try
 				{
@@ -368,7 +368,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 		// If not done corners may not be flush with the other LODs, which looks bad.
 		byte minSectionDetailLevel = this.getDetailLevelFromDistance(this.blockRenderDistanceRadius); // get the minimum allowed detail level
 		minSectionDetailLevel -= 1; // -1 so corners can't render lower than their adjacent neighbors. space
-		minSectionDetailLevel = (byte) Math.min(minSectionDetailLevel, this.treeMaxDetailLevel); // don't allow rendering lower detail sections than what the tree contains
+		minSectionDetailLevel = (byte) Math.min(minSectionDetailLevel, this.treeMinDetailLevel); // don't allow rendering lower detail sections than what the tree contains
 		this.minRenderDetailLevel = (byte) Math.max(minSectionDetailLevel, this.maxRenderDetailLevel); // respect the user's selected max resolution if it is lower detail (IE they want 2x2 block, but minSectionDetailLevel is specifically for 1x1 block render resolution)
 	}
 	
