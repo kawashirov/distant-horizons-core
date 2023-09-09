@@ -239,7 +239,6 @@ public class SSAORenderer
 		
 		this.applyShader.bind();
 		
-		//GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, MC_RENDER.getTargetFrameBuffer());
 		primaryState.RestoreFrameBuffer();
 		
 		GL32.glEnable(GL11.GL_BLEND);
