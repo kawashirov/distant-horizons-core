@@ -179,7 +179,7 @@ public class SSAORenderer
 	// render //
 	//========//
 	
-	public void render(GLState primaryState, float partialTicks)
+	public void render(GLState primaryState, Mat4f projection, float partialTicks)
 	{
 		GLState state = new GLState();
 		
@@ -204,12 +204,7 @@ public class SSAORenderer
 		float near = RenderUtil.getNearClipPlaneDistanceInBlocks(partialTicks);
 		float far = (float) ((RenderUtil.getFarClipPlaneDistanceInBlocks() + LodUtil.REGION_WIDTH) * Math.sqrt(2));
 		
-		Mat4f perspective = Mat4f.perspective(
-				(float) MC_RENDER.getFov(partialTicks),
-				width / (float) height,
-				near, far);
-		
-		Mat4f invertedPerspective = new Mat4f(perspective);
+		Mat4f invertedPerspective = new Mat4f(projection); // clone to prevent messing with the original matrix
 		invertedPerspective.invert();
 		
 		int sampleCount = Config.Client.Advanced.Graphics.Ssao.sampleCount.get();
@@ -220,7 +215,7 @@ public class SSAORenderer
 		float bias = Config.Client.Advanced.Graphics.Ssao.bias.get().floatValue();
 		
 		this.ssaoShader.bind();
-		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gProjUniform, perspective);
+		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gProjUniform, projection);
 		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gInvProjUniform, invertedPerspective);
 		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gSampleCountUniform, sampleCount);
 		this.ssaoShader.setUniform(this.ssaoShaderUniforms.gRadiusUniform, radius);
