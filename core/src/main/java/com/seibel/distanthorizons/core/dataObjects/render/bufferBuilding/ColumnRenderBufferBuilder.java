@@ -94,11 +94,16 @@ public class ColumnRenderBufferBuilder
 						// FIXME: Clamp also to the max world height.
 						skyLightCullingBelow = Math.max(skyLightCullingBelow, clientLevel.getMinY());
 						
-						LodQuadBuilder builder = new LodQuadBuilder(enableSkyLightCulling,
-								(short) (skyLightCullingBelow - clientLevel.getMinY()), enableTransparency);
 						
+						long builderStartTime = System.currentTimeMillis();
+						
+						LodQuadBuilder builder = new LodQuadBuilder(enableSkyLightCulling, (short) (skyLightCullingBelow - clientLevel.getMinY()), enableTransparency);
 						makeLodRenderData(builder, renderSource, adjData);
-						EVENT_LOGGER.trace("RenderRegion end QuadBuild @ " + renderSource.sectionPos);
+						
+						long builderEndTime = System.currentTimeMillis();
+						long buildMs = builderEndTime - builderStartTime;
+						LOGGER.debug("RenderRegion end QuadBuild @ " + renderSource.sectionPos + " took: " + buildMs);
+						
 						return builder;
 					}
 					catch (UncheckedInterruptedException e)
