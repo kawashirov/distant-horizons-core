@@ -76,10 +76,6 @@ public class ColumnRenderBufferBuilder
 			IDhClientLevel clientLevel, Reference<ColumnRenderBuffer> renderBufferRef,
 			ColumnRenderSource renderSource, ColumnRenderSource[] adjData)
 	{
-/*		if (isBusy())
-		{
-			return null;
-		}*/
 		//LOGGER.info("RenderRegion startBuild @ "+renderSource.sectionPos);
 		return CompletableFuture.supplyAsync(() ->
 				{
