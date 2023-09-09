@@ -99,7 +99,7 @@ public abstract class AbstractShaderRenderer
 		int width = MC_RENDER.getTargetFrameBufferViewportWidth();
 		int height = MC_RENDER.getTargetFrameBufferViewportHeight();
 		
-		GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, MC_RENDER.getTargetFrameBuffer());
+		//GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, MC_RENDER.getTargetFrameBuffer());
 		GL32.glViewport(0, 0, width, height);
 		GL32.glDisable(GL32.GL_DEPTH_TEST);
 		GL32.glDisable(GL32.GL_SCISSOR_TEST);
@@ -118,7 +118,7 @@ public abstract class AbstractShaderRenderer
 		GL32.glDrawArrays(GL32.GL_TRIANGLES, 0, 6);
 		
 		// explicitly unbinding the frame buffer is necessary to prevent GL_CLEAR calls from hitting the wrong buffer
-		GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, 0);
+		//GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, 0);
 		
 		state.restore();
 	}

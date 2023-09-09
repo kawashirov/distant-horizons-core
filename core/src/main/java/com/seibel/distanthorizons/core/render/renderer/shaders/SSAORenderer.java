@@ -179,7 +179,7 @@ public class SSAORenderer
 	// render //
 	//========//
 	
-	public void render(float partialTicks)
+	public void render(GLState primaryState, float partialTicks)
 	{
 		GLState state = new GLState();
 		
@@ -239,7 +239,8 @@ public class SSAORenderer
 		
 		this.applyShader.bind();
 		
-		GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, MC_RENDER.getTargetFrameBuffer());
+		//GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, MC_RENDER.getTargetFrameBuffer());
+		primaryState.RestoreFrameBuffer();
 		
 		GL32.glEnable(GL11.GL_BLEND);
 		GL32.glBlendEquation(GL32.GL_FUNC_ADD);
