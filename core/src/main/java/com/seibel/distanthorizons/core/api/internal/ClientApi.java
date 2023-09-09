@@ -215,7 +215,7 @@ public class ClientApi
 			if (levelWrapper.equals(level))
 			{
 				IChunkWrapper chunkWrapper = this.waitingChunkByClientLevelAndPos.get(levelChunkPair);
-				this.applyChunkUpdate(chunkWrapper, levelWrapper);
+				this.applyChunkUpdate(chunkWrapper, levelWrapper, false);
 				keysToRemove.add(levelChunkPair);
 			}
 		}
@@ -233,9 +233,13 @@ public class ClientApi
 	// chunk modified events //
 	//=======================//
 	
-	public void clientChunkLoadEvent(IChunkWrapper chunk, IClientLevelWrapper level) { this.applyChunkUpdate(chunk, level); }
-	public void clientChunkSaveEvent(IChunkWrapper chunk, IClientLevelWrapper level) { this.applyChunkUpdate(chunk, level); }
-	private void applyChunkUpdate(IChunkWrapper chunkWrapper, IClientLevelWrapper level)
+	/** handles both block place and break events */
+	public void clientChunkBlockChangedEvent(IChunkWrapper chunk, IClientLevelWrapper level) { this.applyChunkUpdate(chunk, level, true); }
+	
+	public void clientChunkLoadEvent(IChunkWrapper chunk, IClientLevelWrapper level) { this.applyChunkUpdate(chunk, level, false); }
+	public void clientChunkSaveEvent(IChunkWrapper chunk, IClientLevelWrapper level) { this.applyChunkUpdate(chunk, level, false); }
+	
+	private void applyChunkUpdate(IChunkWrapper chunkWrapper, IClientLevelWrapper level, boolean updateNeighborChunks)
 	{
 		// if the user is in a single player world the chunk updates are handled on the server side
 		if (SharedApi.getEnvironment() != EWorldEnvironment.Client_Only)
@@ -255,21 +259,35 @@ public class ClientApi
 		}
 		
 		
-		dhLevel.updateChunkAsync(chunkWrapper);
-		
-		//// also update any existing neighbour chunks so lighting changes are propagated correctly
-		//for (int xOffset = -1; xOffset <= 1; xOffset++)
-		//{
-		//	for (int zOffset = -1; zOffset <= 1; zOffset++)
-		//	{
-		//		DhChunkPos neighbourPos = new DhChunkPos(chunkWrapper.getChunkPos().x + xOffset, chunkWrapper.getChunkPos().z + zOffset);
-		//		IChunkWrapper neighbourChunk = dhLevel.getLevelWrapper().tryGetChunk(neighbourPos);
-		//		if (neighbourChunk != null)
-		//		{
-		//			dhLevel.updateChunkAsync(neighbourChunk);
-		//		}
-		//	}
-		//}
+		if (!updateNeighborChunks)
+		{
+			dhLevel.updateChunkAsync(chunkWrapper);
+		}
+		else 
+		{
+			// update any existing neighbour chunks so lighting changes are propagated correctly
+			for (int xOffset = -1; xOffset <= 1; xOffset++)
+			{
+				for (int zOffset = -1; zOffset <= 1; zOffset++)
+				{
+					if (xOffset == 0 && zOffset == 0)
+					{
+						// center chunk
+						dhLevel.updateChunkAsync(chunkWrapper);
+					}
+					else
+					{
+						// neighboring chunk
+						DhChunkPos neighbourPos = new DhChunkPos(chunkWrapper.getChunkPos().x + xOffset, chunkWrapper.getChunkPos().z + zOffset);
+						IChunkWrapper neighbourChunk = dhLevel.getLevelWrapper().tryGetChunk(neighbourPos);
+						if (neighbourChunk != null)
+						{
+							dhLevel.updateChunkAsync(neighbourChunk);
+						}
+					}
+				}
+			}
+		}
 	}
 	
 	
