@@ -80,11 +80,11 @@ public class FogShader extends AbstractShaderRenderer
 		this.nearFogLengthUniform = this.shader.tryGetUniformLocation("nearFogLength");
 	}
 	
-	@Override
-	void setVertexAttributes()
-	{
-		this.va.setVertexAttribute(0, 0, VertexAttribute.VertexPointer.addVec2Pointer(false));
-	}
+//	@Override
+//	void setVertexAttributes()
+//	{
+//		this.va.setVertexAttribute(0, 0, VertexAttribute.VertexPointer.addVec2Pointer(false));
+//	}
 	
 	@Override
 	void setShaderUniforms(float partialTicks)
