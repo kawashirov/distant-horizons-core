@@ -23,7 +23,6 @@ import org.lwjgl.opengl.GL32;
 
 public class GLState
 {
-	
 	public int prog;
 	public int vao;
 	public int vbo;
@@ -33,6 +32,7 @@ public class GLState
 	/** IE: GL_TEXTURE0, GL_TEXTURE1, etc. */
 	public int activeTextureNumber;
 	public int texture0;
+	public int texture1;
 	public boolean blend;
 	public int blendSrcColor;
 	public int blendSrcAlpha;
@@ -52,7 +52,10 @@ public class GLState
 	
 	
 	
-	public GLState() { this.saveState(); }
+	public GLState() {
+		this.saveState();
+	}
+	
 	public void saveState()
 	{
 		this.prog = GL32.glGetInteger(GL32.GL_CURRENT_PROGRAM);
@@ -60,11 +63,18 @@ public class GLState
 		this.vbo = GL32.glGetInteger(GL32.GL_ARRAY_BUFFER_BINDING);
 		this.ebo = GL32.glGetInteger(GL32.GL_ELEMENT_ARRAY_BUFFER_BINDING);
 		this.fbo = GL32.glGetInteger(GL32.GL_FRAMEBUFFER_BINDING);
+		
 		this.texture2D = GL32.glGetInteger(GL32.GL_TEXTURE_BINDING_2D);
 		this.activeTextureNumber = GL32.glGetInteger(GL32.GL_ACTIVE_TEXTURE);
+		
 		GL32.glActiveTexture(GL32.GL_TEXTURE0);
 		this.texture0 = GL32.glGetInteger(GL32.GL_TEXTURE_BINDING_2D);
+		
+		GL32.glActiveTexture(GL32.GL_TEXTURE1);
+		this.texture1 = GL32.glGetInteger(GL32.GL_TEXTURE_BINDING_2D);
+		
 		GL32.glActiveTexture(this.activeTextureNumber);
+		
 		this.blend = GL32.glIsEnabled(GL32.GL_BLEND);
 		this.blendSrcColor = GL32.glGetInteger(GL32.GL_BLEND_SRC_RGB);
 		this.blendSrcAlpha = GL32.glGetInteger(GL32.GL_BLEND_SRC_ALPHA);
@@ -114,9 +124,13 @@ public class GLState
 		
 		GL32.glActiveTexture(GL32.GL_TEXTURE0);
 		GL32.glBindTexture(GL32.GL_TEXTURE_2D, GL32.glIsTexture(this.texture0) ? this.texture0 : 0);
-		GL32.glActiveTexture(this.activeTextureNumber);
 		
+		GL32.glActiveTexture(GL32.GL_TEXTURE1);
+		GL32.glBindTexture(GL32.GL_TEXTURE_2D, GL32.glIsTexture(this.texture1) ? this.texture1 : 0);
+		
+		GL32.glActiveTexture(this.activeTextureNumber);
 		GL32.glBindTexture(GL32.GL_TEXTURE_2D, GL32.glIsTexture(this.texture2D) ? this.texture2D : 0);
+		
 		GL32.glBindVertexArray(GL32.glIsVertexArray(this.vao) ? this.vao : 0);
 		GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, GL32.glIsBuffer(this.vbo) ? this.vbo : 0);
 		GL32.glBindBuffer(GL32.GL_ELEMENT_ARRAY_BUFFER, GL32.glIsBuffer(this.ebo) ? this.ebo: 0);

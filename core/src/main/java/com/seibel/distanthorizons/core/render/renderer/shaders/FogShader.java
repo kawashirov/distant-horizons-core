@@ -99,9 +99,9 @@ public class FogShader extends AbstractShaderRenderer
 		// bind the depth buffer
 		if (this.gDepthMapUniform != -1)
 		{
-			GL32.glActiveTexture(GL32.GL_TEXTURE3);
+			GL32.glActiveTexture(GL32.GL_TEXTURE1);
 			GL32.glBindTexture(GL32.GL_TEXTURE_2D, MC_RENDER.getDepthTextureId());
-			GL32.glUniform1i(this.gDepthMapUniform, 3);
+			GL32.glUniform1i(this.gDepthMapUniform, 1);
 		}
 		
 		// Fog

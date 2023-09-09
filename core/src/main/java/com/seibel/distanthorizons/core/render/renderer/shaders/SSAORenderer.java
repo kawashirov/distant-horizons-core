@@ -128,10 +128,10 @@ public class SSAORenderer
 		// Apply uniform setup
 		this.applyShaderUniforms.gSSAOMapUniform = this.applyShader.getUniformLocation("gSSAOMap");
 		this.applyShaderUniforms.gDepthMapUniform = this.applyShader.getUniformLocation("gDepthMap");
-		this.applyShaderUniforms.gViewSizeUniform = tryGetUniformLocation(this.applyShader, "gViewSize");
-		this.applyShaderUniforms.gBlurRadiusUniform = tryGetUniformLocation(this.applyShader, "gBlurRadius");
-		this.applyShaderUniforms.gNearUniform = tryGetUniformLocation(this.applyShader, "gNear");
-		this.applyShaderUniforms.gFarUniform = tryGetUniformLocation(this.applyShader, "gFar");
+		this.applyShaderUniforms.gViewSizeUniform = this.applyShader.tryGetUniformLocation("gViewSize");
+		this.applyShaderUniforms.gBlurRadiusUniform = this.applyShader.tryGetUniformLocation("gBlurRadius");
+		this.applyShaderUniforms.gNearUniform = this.applyShader.tryGetUniformLocation("gNear");
+		this.applyShaderUniforms.gFarUniform = this.applyShader.tryGetUniformLocation("gFar");
 		
 		// Framebuffer
 		this.createBuffer();
@@ -246,11 +246,13 @@ public class SSAORenderer
 		GL32.glBlendFuncSeparate(GL32.GL_ZERO, GL32.GL_SRC_ALPHA, GL32.GL_ZERO, GL32.GL_ONE);
 		
 		GL32.glActiveTexture(GL32.GL_TEXTURE0);
-		GL32.glBindTexture(GL32.GL_TEXTURE_2D, this.ssaoTexture);
-		GL32.glUniform1i(this.applyShaderUniforms.gSSAOMapUniform, 0);
-		GL32.glActiveTexture(GL32.GL_TEXTURE1);
 		GL32.glBindTexture(GL32.GL_TEXTURE_2D, MC_RENDER.getDepthTextureId());
-		GL32.glUniform1i(this.applyShaderUniforms.gDepthMapUniform, 1);
+		GL32.glUniform1i(this.applyShaderUniforms.gDepthMapUniform, 0);
+		
+		GL32.glActiveTexture(GL32.GL_TEXTURE1);
+		GL32.glBindTexture(GL32.GL_TEXTURE_2D, this.ssaoTexture);
+		GL32.glUniform1i(this.applyShaderUniforms.gSSAOMapUniform, 1);
+		
 		GL32.glUniform1i(this.applyShaderUniforms.gBlurRadiusUniform, blurRadius);
 		
 		if (this.applyShaderUniforms.gViewSizeUniform >= 0)
@@ -265,16 +267,6 @@ public class SSAORenderer
 		GL32.glDrawArrays(GL32.GL_TRIANGLES, 0, 6);
 		
 		state.restore();
-	}
-	
-	private int tryGetUniformLocation(ShaderProgram shader, String uniformName)
-	{
-		try {
-			return shader.getUniformLocation(uniformName);
-		}
-		catch (RuntimeException error) {
-			return -1;
-		}
 	}
 	
 	public void free()
