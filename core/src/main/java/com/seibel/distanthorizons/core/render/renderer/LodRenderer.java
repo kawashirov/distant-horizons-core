@@ -283,7 +283,7 @@ public class LodRenderer
 			if (Config.Client.Advanced.Graphics.Ssao.enabled.get())
 			{
 				profiler.popPush("LOD SSAO");
-				SSAORenderer.INSTANCE.render(minecraftGlState, baseProjectionMatrix, partialTicks);
+				SSAORenderer.INSTANCE.render(minecraftGlState, partialTicks);
 			}
 			
 			
