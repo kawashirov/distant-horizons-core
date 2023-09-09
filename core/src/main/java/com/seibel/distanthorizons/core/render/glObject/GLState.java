@@ -120,6 +120,9 @@ public class GLState
 	
 	public void RestoreFrameBuffer()
 	{
+		// explicitly unbinding the frame buffer is necessary to prevent GL_CLEAR calls from hitting the wrong buffer
+		GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, 0);
+		
 		for (int i = 0; i < FBO_MAX; i++)
 		{
 			int buffer = this.fbo[i];
