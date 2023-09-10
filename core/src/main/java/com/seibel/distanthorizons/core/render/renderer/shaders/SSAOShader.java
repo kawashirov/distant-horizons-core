@@ -115,11 +115,7 @@ public class SSAOShader extends AbstractShaderRenderer
 	@Override
 	protected void onRender()
 	{
-		int width = MC_RENDER.getTargetFrameBufferViewportWidth();
-		int height = MC_RENDER.getTargetFrameBufferViewportHeight();
-		
 		GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, this.ssaoFramebuffer);
-		GL32.glViewport(0, 0, width, height);
 		GL32.glDisable(GL32.GL_SCISSOR_TEST);
 		GL32.glDisable(GL32.GL_DEPTH_TEST);
 		GL32.glDisable(GL32.GL_BLEND);

@@ -75,20 +75,20 @@ public class SSAOApplyShader extends AbstractShaderRenderer
 		GL32.glBindTexture(GL32.GL_TEXTURE_2D, this.ssaoTexture);
 		GL32.glUniform1i(this.applyShaderUniforms.gSSAOMapUniform, 1);
 		
-		int blurRadius = Config.Client.Advanced.Graphics.Ssao.blurRadius.get();
-		GL32.glUniform1i(this.applyShaderUniforms.gBlurRadiusUniform, blurRadius);
+		GL32.glUniform1i(this.applyShaderUniforms.gBlurRadiusUniform,
+				Config.Client.Advanced.Graphics.Ssao.blurRadius.get());
 		
 		if (this.applyShaderUniforms.gViewSizeUniform >= 0)
 		{
-			int width = MC_RENDER.getTargetFrameBufferViewportWidth();
-			int height = MC_RENDER.getTargetFrameBufferViewportHeight();
-			GL32.glUniform2f(this.applyShaderUniforms.gViewSizeUniform, width, height);
+			GL32.glUniform2f(this.applyShaderUniforms.gViewSizeUniform,
+					MC_RENDER.getTargetFrameBufferViewportWidth(),
+					MC_RENDER.getTargetFrameBufferViewportHeight());
 		}
 		
 		if (this.applyShaderUniforms.gNearUniform >= 0)
 		{
-			float near = RenderUtil.getNearClipPlaneDistanceInBlocks(partialTicks);
-			GL32.glUniform1f(this.applyShaderUniforms.gNearUniform, near);
+			GL32.glUniform1f(this.applyShaderUniforms.gNearUniform,
+					RenderUtil.getNearClipPlaneDistanceInBlocks(partialTicks));
 		}
 		
 		if (this.applyShaderUniforms.gFarUniform >= 0)

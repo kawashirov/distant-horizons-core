@@ -154,10 +154,6 @@ public class FogShader extends AbstractShaderRenderer
 	{
 		GLState state = new GLState();
 		
-		int width = MC_RENDER.getTargetFrameBufferViewportWidth();
-		int height = MC_RENDER.getTargetFrameBufferViewportHeight();
-		
-		GL32.glViewport(0, 0, width, height);
 		GL32.glDisable(GL32.GL_DEPTH_TEST);
 		GL32.glDisable(GL32.GL_SCISSOR_TEST);
 		GL32.glEnable(GL32.GL_BLEND);

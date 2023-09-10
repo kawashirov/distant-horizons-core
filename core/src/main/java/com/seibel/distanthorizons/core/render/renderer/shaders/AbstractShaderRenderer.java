@@ -22,6 +22,7 @@ package com.seibel.distanthorizons.core.render.renderer.shaders;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.render.glObject.shader.ShaderProgram;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
+import org.lwjgl.opengl.GL32;
 
 public abstract class AbstractShaderRenderer
 {
@@ -50,6 +51,10 @@ public abstract class AbstractShaderRenderer
 		this.shader.bind();
 		
 		this.onApplyUniforms(partialTicks);
+		
+		int width = MC_RENDER.getTargetFrameBufferViewportWidth();
+		int height = MC_RENDER.getTargetFrameBufferViewportHeight();
+		GL32.glViewport(0, 0, width, height);
 		
 		this.onRender();
 		
