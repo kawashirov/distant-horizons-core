@@ -25,7 +25,6 @@ import com.seibel.distanthorizons.core.render.renderer.ScreenQuad;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.coreapi.util.math.Mat4f;
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL32;
 
 public class SSAOShader extends AbstractShaderRenderer
@@ -52,6 +51,7 @@ public class SSAOShader extends AbstractShaderRenderer
 	@Override
 	public void init()
 	{
+		if (this.init) return;
 		super.init();
 				
 		this.shader = new ShaderProgram("shaders/normal.vert", "shaders/ssao/ao.frag",
@@ -128,7 +128,7 @@ public class SSAOShader extends AbstractShaderRenderer
 		GL32.glViewport(0, 0, width, height);
 		GL32.glDisable(GL32.GL_SCISSOR_TEST);
 		GL32.glDisable(GL32.GL_DEPTH_TEST);
-		GL32.glDisable(GL11.GL_BLEND);
+		GL32.glDisable(GL32.GL_BLEND);
 		
 		ScreenQuad.INSTANCE.render();
 		

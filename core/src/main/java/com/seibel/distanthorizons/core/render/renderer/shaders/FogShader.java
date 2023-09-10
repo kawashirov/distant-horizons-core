@@ -44,27 +44,37 @@ public class FogShader extends AbstractShaderRenderer
 	private static final IVersionConstants VERSION_CONSTANTS = SingletonInjector.INSTANCE.get(IVersionConstants.class);
 	
 	
-	public final int gInvertedModelViewProjectionUniform;
-	public final int gDepthMapUniform;
+	private final LodFogConfig fogConfig;
+	public int gInvertedModelViewProjectionUniform;
+	public int gDepthMapUniform;
 	
 	// Fog Uniforms
-	public final int fogColorUniform;
-	public final int fogScaleUniform;
-	public final int fogVerticalScaleUniform;
-	public final int nearFogStartUniform;
-	public final int nearFogLengthUniform;
-	public final int fullFogModeUniform;
+	public int fogColorUniform;
+	public int fogScaleUniform;
+	public int fogVerticalScaleUniform;
+	public int nearFogStartUniform;
+	public int nearFogLengthUniform;
+	public int fullFogModeUniform;
 	
 	
 	public FogShader(LodFogConfig fogConfig)
 	{
+		this.fogConfig = fogConfig;
+	}
+
+	@Override
+	public void init()
+	{
+		if (this.init) return;
+		super.init();
+		
 		this.shader = new ShaderProgram(
 				// TODO rename normal.vert to something like "postProcess.vert"
 				() -> Shader.loadFile("shaders/normal.vert", false, new StringBuilder()).toString(),
-				() -> fogConfig.loadAndProcessFragShader("shaders/fog/fog.frag", false).toString(),
+				() -> this.fogConfig.loadAndProcessFragShader("shaders/fog/fog.frag", false).toString(),
 				"fragColor", new String[]{"vPosition"}
 		);
-				
+		
 		// all uniforms should be tryGet...
 		// because disabling fog can cause the GLSL to optimize out most (if not all) uniforms
 		
@@ -131,6 +141,8 @@ public class FogShader extends AbstractShaderRenderer
 	
 	public void setModelViewProjectionMatrix(Mat4f combinedModelViewProjectionMatrix)
 	{
+		this.init();
+		
 		this.shader.bind();
 		
 		Mat4f inverseMvmProjMatrix = new Mat4f(combinedModelViewProjectionMatrix);
@@ -167,4 +179,5 @@ public class FogShader extends AbstractShaderRenderer
 		ScreenQuad.INSTANCE.render();
 		
 		state.restore();
-	}}
+	}
+}

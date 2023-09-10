@@ -32,6 +32,7 @@ public class DarkShader extends AbstractShaderRenderer
 	@Override
 	public void init()
 	{
+		if (this.init) return;
 		super.init();
 		
 		this.shader = new ShaderProgram(

@@ -30,15 +30,15 @@ public abstract class AbstractShaderRenderer
 	
 	protected ShaderProgram shader;
 
-	boolean init = false;
+	protected boolean init = false;
 	
 	
 	protected AbstractShaderRenderer() {}
 	
 	public void init()
 	{
-		if (init) return;
-		init = true;
+		//if (init) return false;
+		this.init = true;
 	}
 	
 	public void free()
