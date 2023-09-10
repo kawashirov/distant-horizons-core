@@ -19,7 +19,6 @@
 
 package com.seibel.distanthorizons.core.generation;
 
-import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.enums.EDhDirection;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhBlockPos;
@@ -42,6 +41,15 @@ public class DhLightingEngine
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	public static final DhLightingEngine INSTANCE = new DhLightingEngine();
 	
+	/** 
+	 * Minor garbage collection optimization. <br>
+	 * Since these objects are always mutated anyway, using a {@link ThreadLocal} will allow us to
+	 * only create as many of these {@link DhBlockPos} as necessary.
+	 */
+	private static final ThreadLocal<DhBlockPos> PRIMARY_BLOCK_POS_REF = ThreadLocal.withInitial(() -> new DhBlockPos());
+	private static final ThreadLocal<DhBlockPos> SECONDARY_BLOCK_POS_REF = ThreadLocal.withInitial(() -> new DhBlockPos());
+	
+	
 	
 	private DhLightingEngine() { }
 	
@@ -56,7 +64,7 @@ public class DhLightingEngine
 	 * @param nearbyChunkList should also contain centerChunk
 	 * @param maxSkyLight should be a value between 0 and 15
 	 */
-	public void lightChunk(IChunkWrapper centerChunk, List<IChunkWrapper> nearbyChunkList, int maxSkyLight)
+	public void lightChunk(IChunkWrapper centerChunk, ArrayList<IChunkWrapper> nearbyChunkList, int maxSkyLight)
 	{
 		DhChunkPos centerChunkPos = centerChunk.getChunkPos();
 		AdjacentChunkHolder adjacentChunkHolder = new AdjacentChunkHolder(centerChunk);
@@ -88,8 +96,10 @@ public class DhLightingEngine
 			// find all adjacent chunks
 			// and get any necessary info from them
 			boolean warningLogged = false;
-			for (IChunkWrapper chunk : nearbyChunkList)
+			for (int chunkIndex = 0; chunkIndex < nearbyChunkList.size(); chunkIndex++) // using iterators in high traffic areas can cause GC issues due to allocating a bunch of iterators, use an indexed for-loop instead
 			{
+				IChunkWrapper chunk = nearbyChunkList.get(chunkIndex);
+				
 				if (chunk != null && requestedAdjacentPositions.contains(chunk.getChunkPos()))
 				{
 					// remove the newly found position
@@ -101,17 +111,22 @@ public class DhLightingEngine
 					
 					
 					// get and set the adjacent chunk's initial block lights
-					List<DhBlockPos> blockLightPosList = chunk.getBlockLightPosList();
-					for (DhBlockPos blockLightPos : blockLightPosList)
+					final DhBlockPos relLightBlockPos = PRIMARY_BLOCK_POS_REF.get();
+					final DhBlockPos relBlockPos = SECONDARY_BLOCK_POS_REF.get();
+					
+					ArrayList<DhBlockPos> blockLightPosList = chunk.getBlockLightPosList();
+					for (int blockLightIndex = 0; blockLightIndex < blockLightPosList.size(); blockLightIndex++) // using iterators in high traffic areas can cause GC issues due to allocating a bunch of iterators, use an indexed for-loop instead
 					{
+						DhBlockPos blockLightPos = blockLightPosList.get(blockLightIndex);
+						blockLightPos.mutateToChunkRelativePos(relLightBlockPos);
+						
 						// get the light
-						DhBlockPos relLightBlockPos = blockLightPos.convertToChunkRelativePos();
 						IBlockStateWrapper blockState = chunk.getBlockState(relLightBlockPos);
 						int lightValue = blockState.getLightEmission();
 						blockLightPosQueue.push(blockLightPos.x, blockLightPos.y, blockLightPos.z, lightValue);
 						
 						// set the light
-						DhBlockPos relBlockPos = blockLightPos.convertToChunkRelativePos();
+						blockLightPos.mutateToChunkRelativePos(relBlockPos);
 						chunk.setDhBlockLight(relBlockPos.x, relBlockPos.y, relBlockPos.z, lightValue);
 					}
 					
@@ -142,7 +157,7 @@ public class DhLightingEngine
 								
 								
 								// set the light
-								DhBlockPos relBlockPos = skyLightPos.convertToChunkRelativePos();
+								skyLightPos.mutateToChunkRelativePos(relBlockPos);
 								chunk.setDhSkyLight(relBlockPos.x, relBlockPos.y, relBlockPos.z, maxSkyLight);
 							}
 						}
@@ -199,8 +214,8 @@ public class DhLightingEngine
 	{
 		// these objects are saved so they can be mutated throughout the method,
 		// this reduces the number of allocations necessary, reducing GC pressure
-		final DhBlockPos neighbourBlockPos = new DhBlockPos();
-		final DhBlockPos relNeighbourBlockPos = new DhBlockPos();
+		final DhBlockPos neighbourBlockPos = PRIMARY_BLOCK_POS_REF.get();
+		final DhBlockPos relNeighbourBlockPos = SECONDARY_BLOCK_POS_REF.get();
 		
 		
 		// update each light position
@@ -215,11 +230,10 @@ public class DhLightingEngine
 			
 			
 			// propagate the lighting in each cardinal direction, IE: -x, +x, -y, +y, -z, +z
-			for (EDhDirection direction : EDhDirection.CARDINAL_DIRECTIONS)
+			for (EDhDirection direction : EDhDirection.CARDINAL_DIRECTIONS) // since this is an array instead of an ArrayList this advanced for-loop shouldn't cause any GC issues
 			{
-				pos.offset(direction, neighbourBlockPos); // mutates neighbourBlockPos
-				// converting the block pos into a relative position is necessary for accessing the light values in the chunk
-				neighbourBlockPos.convertToChunkRelativePos(relNeighbourBlockPos); // mutates relNeighbourBlockPos
+				pos.mutateOffset(direction, neighbourBlockPos);
+				neighbourBlockPos.mutateToChunkRelativePos(relNeighbourBlockPos);
 				
 				
 				// only continue if the light position is inside one of our chunks
@@ -313,9 +327,11 @@ public class DhLightingEngine
 			int chunkZ = blockZ >> 4;
 			
 			// since there will only ever be 9 items in the array, this sequential search should be fast enough
-			for (IChunkWrapper chunk : this.chunkArray)
+			for (int i = 0; i < this.chunkArray.size(); i++) // using iterators in high traffic areas can cause GC issues due to allocating a bunch of iterators, use an indexed for-loop instead
 			{
-				if (chunk != null 
+				IChunkWrapper chunk = this.chunkArray.get(i);
+					
+					if (chunk != null 
 					&& chunk.getChunkPos().x == chunkX && chunk.getChunkPos().z == chunkZ)
 				{
 					return chunk;
