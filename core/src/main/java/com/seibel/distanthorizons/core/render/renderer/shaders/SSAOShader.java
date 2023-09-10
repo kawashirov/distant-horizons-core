@@ -31,6 +31,7 @@ public class SSAOShader extends AbstractShaderRenderer
 {
 	public static SSAOShader INSTANCE = new SSAOShader();
 	
+	public int ssaoFramebuffer;
 	
 	// uniforms
 	private final SsaoShaderUniforms ssaoShaderUniforms = new SsaoShaderUniforms();
@@ -46,14 +47,11 @@ public class SSAOShader extends AbstractShaderRenderer
 		public int gBiasUniform;
 		public int gDepthMapUniform;
 	}
-
+	
 	
 	@Override
-	public void init()
+	public void onInit()
 	{
-		if (this.init) return;
-		super.init();
-				
 		this.shader = new ShaderProgram("shaders/normal.vert", "shaders/ssao/ao.frag",
 				"fragColor", new String[]{"vPosition"});
 		
@@ -68,7 +66,8 @@ public class SSAOShader extends AbstractShaderRenderer
 		this.ssaoShaderUniforms.gDepthMapUniform = this.shader.getUniformLocation("gDepthMap");
 	}
 	
-	void setShaderUniforms(float partialTicks)
+	@Override
+	protected void onApplyUniforms(float partialTicks)
 	{
 		int width = MC_RENDER.getTargetFrameBufferViewportWidth();
 		int height = MC_RENDER.getTargetFrameBufferViewportHeight();
@@ -113,25 +112,18 @@ public class SSAOShader extends AbstractShaderRenderer
 	// render //
 	//========//
 	
-	public void render(float partialTicks, int ssaoFramebuffer)
+	@Override
+	protected void onRender()
 	{
-		this.init();
-
 		int width = MC_RENDER.getTargetFrameBufferViewportWidth();
 		int height = MC_RENDER.getTargetFrameBufferViewportHeight();
 		
-		this.shader.bind();
-		
-		setShaderUniforms(partialTicks);
-		
-		GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, ssaoFramebuffer);
+		GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, this.ssaoFramebuffer);
 		GL32.glViewport(0, 0, width, height);
 		GL32.glDisable(GL32.GL_SCISSOR_TEST);
 		GL32.glDisable(GL32.GL_DEPTH_TEST);
 		GL32.glDisable(GL32.GL_BLEND);
 		
 		ScreenQuad.INSTANCE.render();
-		
-		shader.unbind();
 	}
 }

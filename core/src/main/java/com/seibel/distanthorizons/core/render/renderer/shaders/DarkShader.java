@@ -30,11 +30,8 @@ public class DarkShader extends AbstractShaderRenderer
 
 	
 	@Override
-	public void init()
+	public void onInit()
 	{
-		if (this.init) return;
-		super.init();
-		
 		this.shader = new ShaderProgram(
 				"shaders/normal.vert",
 				"shaders/test/dark.frag",
@@ -42,17 +39,17 @@ public class DarkShader extends AbstractShaderRenderer
 				new String[]{"vPosition", "color"});
 	}
 	
-	void setShaderUniforms()
+	@Override
+	protected void onApplyUniforms(float partialTicks)
 	{
 		GL32.glActiveTexture(GL32.GL_TEXTURE0);
 		GL32.glBindTexture(GL32.GL_TEXTURE_2D, MC_RENDER.getDepthTextureId());
 	}
 	
-	public void render()
+	@Override
+	protected void onRender()
 	{
 		GLState state = new GLState();
-		
-		this.init();
 
 		int width = MC_RENDER.getTargetFrameBufferViewportWidth();
 		int height = MC_RENDER.getTargetFrameBufferViewportHeight();
@@ -60,15 +57,9 @@ public class DarkShader extends AbstractShaderRenderer
 		GL32.glViewport(0, 0, width, height);
 		GL32.glDisable(GL32.GL_DEPTH_TEST);
 		GL32.glDisable(GL32.GL_SCISSOR_TEST);
-
-		shader.bind();
-		
-		this.setShaderUniforms();
-
-		ScreenQuad.INSTANCE.bind();
-		
 		GL32.glEnable(GL32.GL_BLEND);
 		GL32.glBlendFunc(GL32.GL_SRC_ALPHA, GL32.GL_ONE_MINUS_SRC_ALPHA);
+		
 		ScreenQuad.INSTANCE.render();
 
 		state.restore();

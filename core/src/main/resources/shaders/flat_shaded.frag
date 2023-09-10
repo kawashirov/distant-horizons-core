@@ -28,10 +28,6 @@ vec3 quantize(vec3 val, int stepSize) {
     return floor(val * stepSize) / stepSize;
 }
 
-vec3 RgbToLinear(const in vec3 color) {
-    return pow(color, vec3(2.2));
-}
-
 
 /**
  * Fragment Shader
@@ -43,9 +39,6 @@ vec3 RgbToLinear(const in vec3 color) {
 void main()
 {
     fragColor = vertexColor;
-    
-    // WARN: DEBUG TEST!
-    //fragColor.rgb = RgbToLinear(fragColor.rgb) * 3.0;
     
     // TODO: Move into its own function instead of in an if statement
     if (noiseEnabled) {

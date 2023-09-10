@@ -30,6 +30,7 @@ public class SSAOApplyShader extends AbstractShaderRenderer
 {
 	public static SSAOApplyShader INSTANCE = new SSAOApplyShader();
 	
+	public int ssaoTexture;
 	
 	// apply uniforms
 	private final ApplyShaderUniforms applyShaderUniforms = new ApplyShaderUniforms();
@@ -46,11 +47,8 @@ public class SSAOApplyShader extends AbstractShaderRenderer
 	
 	
 	@Override
-	public void init()
+	public void onInit()
 	{
-		if (this.init) return;
-		super.init();
-		
 		this.shader = new ShaderProgram(
 				"shaders/normal.vert",
 				"shaders/ssao/apply.frag",
@@ -66,14 +64,15 @@ public class SSAOApplyShader extends AbstractShaderRenderer
 		this.applyShaderUniforms.gFarUniform = this.shader.tryGetUniformLocation("gFar");
 	}
 	
-	private void setShaderUniforms(float partialTicks, int ssaoTexture)
+	@Override
+	protected void onApplyUniforms(float partialTicks)
 	{
 		GL32.glActiveTexture(GL32.GL_TEXTURE0);
 		GL32.glBindTexture(GL32.GL_TEXTURE_2D, MC_RENDER.getDepthTextureId());
 		GL32.glUniform1i(this.applyShaderUniforms.gDepthMapUniform, 0);
 		
 		GL32.glActiveTexture(GL32.GL_TEXTURE1);
-		GL32.glBindTexture(GL32.GL_TEXTURE_2D, ssaoTexture);
+		GL32.glBindTexture(GL32.GL_TEXTURE_2D, this.ssaoTexture);
 		GL32.glUniform1i(this.applyShaderUniforms.gSSAOMapUniform, 1);
 		
 		int blurRadius = Config.Client.Advanced.Graphics.Ssao.blurRadius.get();
@@ -99,18 +98,14 @@ public class SSAOApplyShader extends AbstractShaderRenderer
 		}
 	}
 	
+	
 	//========//
 	// render //
 	//========//
 	
-	public void render(float partialTicks, int ssaoTexture)
+	@Override
+	protected void onRender()
 	{
-		this.init();
-		
-		this.shader.bind();
-		
-		setShaderUniforms(partialTicks, ssaoTexture);
-		
 		GL32.glEnable(GL32.GL_BLEND);
 		GL32.glBlendEquation(GL32.GL_FUNC_ADD);
 		GL32.glBlendFuncSeparate(GL32.GL_ZERO, GL32.GL_SRC_ALPHA, GL32.GL_ZERO, GL32.GL_ONE);

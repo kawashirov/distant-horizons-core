@@ -67,16 +67,13 @@ public class ScreenQuad
 		this.createBuffer();
 	}
 	
-	public void bind()
+	public void render()
 	{
 		this.init();
 		
 		this.va.bind();
 		this.va.bindBufferToAllBindingPoint(this.boxBuffer.getId());
-	}
-	
-	public void render()
-	{
+		
 		GL32.glDrawArrays(GL32.GL_TRIANGLES, 0, 6);
 	}
 	

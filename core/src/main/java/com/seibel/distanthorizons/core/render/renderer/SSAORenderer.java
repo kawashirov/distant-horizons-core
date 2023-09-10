@@ -106,13 +106,13 @@ public class SSAORenderer
 			this.createFramebuffer(width, height);
 		}
 		
-		ScreenQuad.INSTANCE.bind();
-		
-		SSAOShader.INSTANCE.render(partialTicks, ssaoFramebuffer);
+		SSAOShader.INSTANCE.ssaoFramebuffer = this.ssaoFramebuffer;
+		SSAOShader.INSTANCE.render(partialTicks);
 		
 		primaryState.RestoreFrameBuffer();
 		
-		SSAOApplyShader.INSTANCE.render(partialTicks, ssaoTexture);
+		SSAOApplyShader.INSTANCE.ssaoTexture = this.ssaoTexture;
+		SSAOApplyShader.INSTANCE.render(partialTicks);
 		
 		state.restore();
 	}

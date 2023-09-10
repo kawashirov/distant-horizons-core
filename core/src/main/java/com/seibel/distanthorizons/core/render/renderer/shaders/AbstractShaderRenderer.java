@@ -37,12 +37,33 @@ public abstract class AbstractShaderRenderer
 	
 	public void init()
 	{
-		//if (init) return false;
+		if (this.init) return;
 		this.init = true;
+		
+		this.onInit();
+	}
+	
+	public void render(float partialTicks)
+	{
+		this.init();
+		
+		this.shader.bind();
+		
+		this.onApplyUniforms(partialTicks);
+		
+		this.onRender();
+		
+		this.shader.unbind();
 	}
 	
 	public void free()
 	{
 		this.shader.free();
 	}
+	
+	protected void onInit() {}
+	
+	protected void onApplyUniforms(float partialTicks) {}
+	
+	protected void onRender() {}
 }
