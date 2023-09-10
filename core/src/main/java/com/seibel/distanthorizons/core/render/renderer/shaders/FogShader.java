@@ -45,6 +45,7 @@ public class FogShader extends AbstractShaderRenderer
 	
 	
 	private final LodFogConfig fogConfig;
+	private Mat4f inverseMvmProjMatrix;
 	public int gInvertedModelViewProjectionUniform;
 	public int gDepthMapUniform;
 	
@@ -92,7 +93,7 @@ public class FogShader extends AbstractShaderRenderer
 	@Override
 	protected void onApplyUniforms(float partialTicks)
 	{
-		this.shader.bind();
+		this.shader.setUniform(this.gInvertedModelViewProjectionUniform, this.inverseMvmProjMatrix);
 		
 		int lodDrawDistance = RenderUtil.getFarClipPlaneDistanceInBlocks();
 		int vanillaDrawDistance = MC_RENDER.getRenderDistance() * LodUtil.CHUNK_WIDTH;
@@ -138,15 +139,8 @@ public class FogShader extends AbstractShaderRenderer
 	
 	public void setModelViewProjectionMatrix(Mat4f combinedModelViewProjectionMatrix)
 	{
-		this.init();
-		
-		this.shader.bind();
-		
-		Mat4f inverseMvmProjMatrix = new Mat4f(combinedModelViewProjectionMatrix);
-		inverseMvmProjMatrix.invert();
-		this.shader.setUniform(this.gInvertedModelViewProjectionUniform, inverseMvmProjMatrix);
-		
-		this.shader.unbind();
+		this.inverseMvmProjMatrix = new Mat4f(combinedModelViewProjectionMatrix);
+		this.inverseMvmProjMatrix.invert();
 	}
 	
 	@Override

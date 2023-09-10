@@ -30,20 +30,15 @@ public class SSAOApplyShader extends AbstractShaderRenderer
 {
 	public static SSAOApplyShader INSTANCE = new SSAOApplyShader();
 	
-	public int ssaoTexture;
+	public int BufferTexture;
 	
-	// apply uniforms
-	private final ApplyShaderUniforms applyShaderUniforms = new ApplyShaderUniforms();
-	
-	private static class ApplyShaderUniforms
-	{
-		public int gSSAOMapUniform;
-		public int gDepthMapUniform;
-		public int gViewSizeUniform;
-		public int gBlurRadiusUniform;
-		public int gNearUniform;
-		public int gFarUniform;
-	}
+	// uniforms
+	public int gSSAOMapUniform;
+	public int gDepthMapUniform;
+	public int gViewSizeUniform;
+	public int gBlurRadiusUniform;
+	public int gNearUniform;
+	public int gFarUniform;
 	
 	
 	@Override
@@ -56,12 +51,12 @@ public class SSAOApplyShader extends AbstractShaderRenderer
 				new String[]{"vPosition"});
 		
 		// uniform setup
-		this.applyShaderUniforms.gSSAOMapUniform = this.shader.getUniformLocation("gSSAOMap");
-		this.applyShaderUniforms.gDepthMapUniform = this.shader.getUniformLocation("gDepthMap");
-		this.applyShaderUniforms.gViewSizeUniform = this.shader.tryGetUniformLocation("gViewSize");
-		this.applyShaderUniforms.gBlurRadiusUniform = this.shader.tryGetUniformLocation("gBlurRadius");
-		this.applyShaderUniforms.gNearUniform = this.shader.tryGetUniformLocation("gNear");
-		this.applyShaderUniforms.gFarUniform = this.shader.tryGetUniformLocation("gFar");
+		this.gSSAOMapUniform = this.shader.getUniformLocation("gSSAOMap");
+		this.gDepthMapUniform = this.shader.getUniformLocation("gDepthMap");
+		this.gViewSizeUniform = this.shader.tryGetUniformLocation("gViewSize");
+		this.gBlurRadiusUniform = this.shader.tryGetUniformLocation("gBlurRadius");
+		this.gNearUniform = this.shader.tryGetUniformLocation("gNear");
+		this.gFarUniform = this.shader.tryGetUniformLocation("gFar");
 	}
 	
 	@Override
@@ -69,32 +64,32 @@ public class SSAOApplyShader extends AbstractShaderRenderer
 	{
 		GL32.glActiveTexture(GL32.GL_TEXTURE0);
 		GL32.glBindTexture(GL32.GL_TEXTURE_2D, MC_RENDER.getDepthTextureId());
-		GL32.glUniform1i(this.applyShaderUniforms.gDepthMapUniform, 0);
+		GL32.glUniform1i(this.gDepthMapUniform, 0);
 		
 		GL32.glActiveTexture(GL32.GL_TEXTURE1);
-		GL32.glBindTexture(GL32.GL_TEXTURE_2D, this.ssaoTexture);
-		GL32.glUniform1i(this.applyShaderUniforms.gSSAOMapUniform, 1);
+		GL32.glBindTexture(GL32.GL_TEXTURE_2D, this.BufferTexture);
+		GL32.glUniform1i(this.gSSAOMapUniform, 1);
 		
-		GL32.glUniform1i(this.applyShaderUniforms.gBlurRadiusUniform,
+		GL32.glUniform1i(this.gBlurRadiusUniform,
 				Config.Client.Advanced.Graphics.Ssao.blurRadius.get());
 		
-		if (this.applyShaderUniforms.gViewSizeUniform >= 0)
+		if (this.gViewSizeUniform >= 0)
 		{
-			GL32.glUniform2f(this.applyShaderUniforms.gViewSizeUniform,
+			GL32.glUniform2f(this.gViewSizeUniform,
 					MC_RENDER.getTargetFrameBufferViewportWidth(),
 					MC_RENDER.getTargetFrameBufferViewportHeight());
 		}
 		
-		if (this.applyShaderUniforms.gNearUniform >= 0)
+		if (this.gNearUniform >= 0)
 		{
-			GL32.glUniform1f(this.applyShaderUniforms.gNearUniform,
+			GL32.glUniform1f(this.gNearUniform,
 					RenderUtil.getNearClipPlaneDistanceInBlocks(partialTicks));
 		}
 		
-		if (this.applyShaderUniforms.gFarUniform >= 0)
+		if (this.gFarUniform >= 0)
 		{
 			float far = (float) ((RenderUtil.getFarClipPlaneDistanceInBlocks() + LodUtil.REGION_WIDTH) * Math.sqrt(2));
-			GL32.glUniform1f(this.applyShaderUniforms.gFarUniform, far);
+			GL32.glUniform1f(this.gFarUniform, far);
 		}
 	}
 	
