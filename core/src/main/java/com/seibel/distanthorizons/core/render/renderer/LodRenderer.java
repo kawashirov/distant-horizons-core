@@ -243,16 +243,23 @@ public class LodRenderer
 				{
 					this.shaderProgram.free();
 					this.shaderProgram = new LodRenderProgram(newFogConfig);
+					
 					FogShader.INSTANCE.free();
 					FogShader.INSTANCE = new FogShader(newFogConfig);
 				}
 				this.shaderProgram.bind();
 			}
+			
 			GL32.glActiveTexture(GL32.GL_TEXTURE0);
 			
 			/*---------Get required data--------*/
 			int vanillaBlockRenderedDistance = MC_RENDER.getRenderDistance() * LodUtil.CHUNK_WIDTH;
-			Mat4f modelViewProjectionMatrix = RenderUtil.createCombinedModelViewProjectionMatrix(baseProjectionMatrix, baseModelViewMatrix, partialTicks);
+			//Mat4f modelViewProjectionMatrix = RenderUtil.createCombinedModelViewProjectionMatrix(baseProjectionMatrix, baseModelViewMatrix, partialTicks);
+			
+			Mat4f projectionMatrix = RenderUtil.createLodProjectionMatrix(baseProjectionMatrix, partialTicks);
+			
+			Mat4f modelViewProjectionMatrix = new Mat4f(projectionMatrix);
+			modelViewProjectionMatrix.multiply(RenderUtil.createLodModelViewMatrix(baseModelViewMatrix));
 			
 			/*---------Fill uniform data--------*/
 			this.shaderProgram.fillUniformData(modelViewProjectionMatrix, /*Light map = GL_TEXTURE0*/ 0,
@@ -283,12 +290,12 @@ public class LodRenderer
 			if (Config.Client.Advanced.Graphics.Ssao.enabled.get())
 			{
 				profiler.popPush("LOD SSAO");
+				SSAOShader.INSTANCE.setProjectionMatrix(projectionMatrix);
 				SSAORenderer.INSTANCE.render(minecraftGlState, partialTicks);
 			}
 			
 			
 			profiler.popPush("LOD Fog");
-			// TODO add the model view/projection matrices to the render() function
 			FogShader.INSTANCE.setModelViewProjectionMatrix(modelViewProjectionMatrix);
 			FogShader.INSTANCE.render(partialTicks);
 			
