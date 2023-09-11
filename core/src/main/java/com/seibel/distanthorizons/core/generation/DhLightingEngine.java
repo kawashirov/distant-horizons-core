@@ -31,6 +31,8 @@ import org.apache.logging.log4j.Logger;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+
 /**
  * This logic was roughly based on
  * <a href="https://github.com/PaperMC/Starlight/blob/acc8ed9634bbe27ec68e8842e420948bfa9707e7/TECHNICAL_DETAILS.md">Starlight's technical documentation</a>
@@ -171,16 +173,7 @@ public class DhLightingEngine
 					break;
 				}
 			}
-			
-			// validate that at least 1 chunk was found
-			if (adjacentChunkHolder.size() == 0)
-			{
-				LOGGER.warn("Attempted to generate lighting for position [" + centerChunkPos + "], but neither that chunk nor any adjacent chunks were found. No chunk lighting was performed.");
-				return;
-			}
-			
-			
-			
+
 			// block light
 			this.propagateLightPosList(blockLightPosQueue, adjacentChunkHolder,
 					(neighbourChunk, relBlockPos) -> neighbourChunk.getDhBlockLight(relBlockPos.x, relBlockPos.y, relBlockPos.z),
@@ -214,6 +207,7 @@ public class DhLightingEngine
 	{
 		// these objects are saved so they can be mutated throughout the method,
 		// this reduces the number of allocations necessary, reducing GC pressure
+		final LightPos lightPos = new LightPos(0, 0, 0, 0);
 		final DhBlockPos neighbourBlockPos = PRIMARY_BLOCK_POS_REF.get();
 		final DhBlockPos relNeighbourBlockPos = SECONDARY_BLOCK_POS_REF.get();
 		
@@ -223,16 +217,15 @@ public class DhLightingEngine
 		{
 			// since we don't care about the order the positions are processed,
 			// we can grab the last position instead of the first for a slight performance increase (this way the array doesn't need to be shifted over every loop)
-			LightPos lightPos = lightPosQueue.pop();
+			lightPosQueue.pop(lightPos);
 			
-			DhBlockPos pos = lightPos.pos;
 			int lightValue = lightPos.lightValue;
 			
 			
 			// propagate the lighting in each cardinal direction, IE: -x, +x, -y, +y, -z, +z
 			for (EDhDirection direction : EDhDirection.CARDINAL_DIRECTIONS) // since this is an array instead of an ArrayList this advanced for-loop shouldn't cause any GC issues
 			{
-				pos.mutateOffset(direction, neighbourBlockPos);
+				lightPos.mutateOffset(direction, neighbourBlockPos);
 				neighbourBlockPos.mutateToChunkRelativePos(relNeighbourBlockPos);
 				
 				
@@ -291,14 +284,13 @@ public class DhLightingEngine
 	@FunctionalInterface
 	interface ISetLightFunc { void setLight(IChunkWrapper chunk, DhBlockPos pos, int lightValue); }
 	
-	private static class LightPos
+	private static class LightPos extends DhBlockPos
 	{
-		public final DhBlockPos pos;
 		public int lightValue;
 		
-		public LightPos(DhBlockPos pos, int lightValue)
+		public LightPos(int x, int y, int z, int lightValue)
 		{
-			this.pos = pos;
+			super(x, y, z);
 			this.lightValue = lightValue;
 		}
 		
@@ -354,10 +346,12 @@ public class DhLightingEngine
 		
 		/** the index of the last item in the array, -1 if empty */
 		private int index = -1;
+
+		public static final int INTS_PER_LIGHT_POS = 4; //x, y, z, and lightValue.
 		
 		// when tested with a normal 1.20 world James saw a maximum of 36,709 block and 2,355 sky lights,
 		// so this should give us a good base that should be able to contain most lighting tasks
-		private final ArrayList<LightPos> arrayList = new ArrayList<>(40_000);
+		private final IntArrayList lightPositions = new IntArrayList(40_000 * INTS_PER_LIGHT_POS);
 		
 		
 		
@@ -410,31 +404,36 @@ public class DhLightingEngine
 		public void push(int blockX, int blockY, int blockZ, int lightValue)
 		{
 			this.index++;
-			if (this.index < this.arrayList.size())
+			int start = this.index * INTS_PER_LIGHT_POS;
+			if (start < this.lightPositions.size())
 			{
-				// modify the existing pos in the array
-				LightPos lightPos = this.arrayList.get(this.index);
-				lightPos.pos.x = blockX;
-				lightPos.pos.y = blockY;
-				lightPos.pos.z = blockZ;
-				lightPos.lightValue = lightValue;
+				this.lightPositions.set(start, blockX);
+				this.lightPositions.set(start + 1, blockY);
+				this.lightPositions.set(start + 2, blockZ);
+				this.lightPositions.set(start + 3, lightValue);
 			}
 			else
 			{
 				// add a new pos
-				this.arrayList.add(new LightPos(new DhBlockPos(blockX, blockY, blockZ), lightValue));
+				this.lightPositions.add(blockX);
+				this.lightPositions.add(blockY);
+				this.lightPositions.add(blockZ);
+				this.lightPositions.add(lightValue);
 			}
 		}
 		
-		public LightPos pop()
+		public void pop(LightPos pos)
 		{
-			LightPos pos = this.arrayList.get(this.index);
+			int start = this.index * INTS_PER_LIGHT_POS;
+			pos.x = this.lightPositions.getInt(start);
+			pos.y = this.lightPositions.getInt(start + 1);
+			pos.z = this.lightPositions.getInt(start + 2);
+			pos.lightValue = this.lightPositions.getInt(start + 3);
 			this.index--;
-			return pos;
 		}
 		
 		@Override
-		public String toString() { return this.index + "/" + this.arrayList.size(); }
+		public String toString() { return this.index + "/" + (this.arrayList.size() / INTS_PER_LIGHT_POS); }
 		
 	}
 	
