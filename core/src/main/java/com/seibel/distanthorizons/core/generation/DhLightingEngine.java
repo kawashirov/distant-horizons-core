@@ -244,7 +244,7 @@ public class DhLightingEngine
 					continue;
 				}
 				
-				if (relNeighbourBlockPos.y < neighbourChunk.getMinBuildHeight() || relNeighbourBlockPos.y > neighbourChunk.getMaxBuildHeight())
+				if (relNeighbourBlockPos.y < neighbourChunk.getMinFilledHeight() || relNeighbourBlockPos.y > neighbourChunk.getMaxBuildHeight())
 				{
 					// the light pos is outside the chunk's min/max height,
 					// this can happen if given a chunk that hasn't finished generating

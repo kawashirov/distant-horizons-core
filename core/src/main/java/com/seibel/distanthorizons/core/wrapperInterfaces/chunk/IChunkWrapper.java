@@ -39,6 +39,12 @@ public interface IChunkWrapper extends IBindable
 	int getMinBuildHeight();
 	int getMaxBuildHeight();
 	
+	/**
+	 * returns the Y level for the first non-empty section in this chunk,
+	 * or {@link Integer#MAX_VALUE} if this chunk is completely empty.
+	 */
+	int getMinFilledHeight();
+	
 	/** @return The highest y position of a solid block at the given relative chunk position. */
 	int getSolidHeightMapValue(int xRel, int zRel);
 	/**
