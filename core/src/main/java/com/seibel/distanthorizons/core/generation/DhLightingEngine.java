@@ -307,37 +307,37 @@ public class DhLightingEngine
 	/** holds the adjacent chunks without having to create new Pos objects */
 	private static class AdjacentChunkHolder
 	{
-		ArrayList<IChunkWrapper> chunkArray = new ArrayList<>(9);
-		
+		final IChunkWrapper[] chunkArray = new IChunkWrapper[9];		
 		
 		public AdjacentChunkHolder(IChunkWrapper centerWrapper)
 		{
 			this.chunkArray.add(centerWrapper);
 		}
 		
-		
-		public int size() { return this.chunkArray.size(); }
-		
-		public void add(IChunkWrapper centerWrapper) { this.chunkArray.add(centerWrapper); }
-		
+		public void add(IChunkWrapper centerWrapper) {
+			DhChunkPos centerPos = this.chunkArray[4].getChunkPos();
+			DhChunkPos offsetPos = centerWrapper.getChunkPos();
+			int offsetX = offsetPos.x - centerPos.x;
+			if (offsetX < -1 || offsetX > 1) return;
+			int offsetZ = offsetPos.z - centerPos.z;
+			if (offsetZ < -1 || offsetZ > 1) return;
+			//equivalent to 4 + offsetX + (offsetZ * 3).
+			this.chunkArray[4 + offsetX + offsetZ + (offsetZ << 1)] = centerWrapper;
+		}
+
 		public IChunkWrapper getByBlockPos(int blockX, int blockZ)
 		{
-			// >> 4 is equivalent to dividing by 16
 			int chunkX = blockX >> 4;
 			int chunkZ = blockZ >> 4;
-			
-			// since there will only ever be 9 items in the array, this sequential search should be fast enough
-			for (int i = 0; i < this.chunkArray.size(); i++) // using iterators in high traffic areas can cause GC issues due to allocating a bunch of iterators, use an indexed for-loop instead
-			{
-				IChunkWrapper chunk = this.chunkArray.get(i);
-					
-					if (chunk != null 
-					&& chunk.getChunkPos().x == chunkX && chunk.getChunkPos().z == chunkZ)
-				{
-					return chunk;
-				}
-			}
-			return null;
+			IChunkWrapper centerChunk = this.chunkArray[4];
+			DhChunkPos centerPos = centerChunk.getChunkPos();
+			if (centerPos.x == chunkX && centerPos.z == chunkZ) return centerChunk;
+			int offsetX = chunkX - centerPos.x;
+			if (offsetX < -1 || offsetX > 1) return null;
+			int offsetZ = chunkZ - centerPos.z;
+			if (offsetZ < -1 || offsetZ > 1) return null;
+			//equivalent to 4 + offsetX + (offsetZ * 3).
+			return this.chunkArray[4 + offsetX + offsetZ + (offsetZ << 1)];
 		}
 	}
 	
