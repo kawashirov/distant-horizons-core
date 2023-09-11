@@ -20,6 +20,7 @@
 package com.seibel.distanthorizons.core.render.renderer;
 
 import com.seibel.distanthorizons.core.config.Config;
+import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.ConfigBasedLogger;
 import com.seibel.distanthorizons.core.logging.ConfigBasedSpamLogger;
@@ -40,6 +41,8 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.misc.ILightMapWrapper;
 import com.seibel.distanthorizons.api.enums.rendering.EDebugRendering;
 import com.seibel.distanthorizons.api.enums.rendering.EFogColorMode;
 import com.seibel.distanthorizons.core.render.fog.LodFogConfig;
+import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
+import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IOptifineAccessor;
 import com.seibel.distanthorizons.coreapi.util.math.Mat4f;
 import com.seibel.distanthorizons.coreapi.util.math.Vec3d;
 import com.seibel.distanthorizons.coreapi.util.math.Vec3f;
@@ -61,6 +64,8 @@ public class LodRenderer
 			() -> Config.Client.Advanced.Logging.logRendererBufferEvent.get());
 	public static ConfigBasedSpamLogger tickLogger = new ConfigBasedSpamLogger(LogManager.getLogger(LodRenderer.class),
 			() -> Config.Client.Advanced.Logging.logRendererBufferEvent.get(), 1);
+	
+	private static final IIrisAccessor IRIS_ACCESSOR = ModAccessorInjector.INSTANCE.get(IIrisAccessor.class);
 	
 	public static final boolean ENABLE_DRAW_LAG_SPIKE_LOGGING = false;
 	public static final boolean ENABLE_DUMP_GL_STATE = true;
@@ -181,6 +186,17 @@ public class LodRenderer
 			// never lock the render thread, if the lock isn't available don't wait for it
 			return;
 		}
+		
+		if (IRIS_ACCESSOR != null && IRIS_ACCESSOR.isRenderingShadowPass())
+		{
+			// We do not have a wy to properly render shader shadow pass, since they can
+			// and often do change the projection entirely, as well as the output usage.
+			
+			//EVENT_LOGGER.debug("Skipping shadow pass render.");
+			return;
+		}
+		
+		
 		
 		try
 		{
