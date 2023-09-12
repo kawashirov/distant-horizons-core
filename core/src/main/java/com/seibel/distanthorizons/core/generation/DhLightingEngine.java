@@ -26,6 +26,7 @@ import com.seibel.distanthorizons.core.pos.DhChunkPos;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
+import com.seibel.distanthorizons.coreapi.util.BitShiftUtil;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
@@ -217,7 +218,7 @@ public class DhLightingEngine
 		{
 			// since we don't care about the order the positions are processed,
 			// we can grab the last position instead of the first for a slight performance increase (this way the array doesn't need to be shifted over every loop)
-			lightPosQueue.pop(lightPos);
+			lightPosQueue.popMutate(lightPos);
 			
 			int lightValue = lightPos.lightValue;
 			
@@ -301,34 +302,55 @@ public class DhLightingEngine
 	{
 		final IChunkWrapper[] chunkArray = new IChunkWrapper[9];		
 		
-		public AdjacentChunkHolder(IChunkWrapper centerWrapper)
-		{
-			this.chunkArray[4] = centerWrapper;
-		}
 		
-		public void add(IChunkWrapper centerWrapper) {
+		public AdjacentChunkHolder(IChunkWrapper centerWrapper) { this.chunkArray[4] = centerWrapper; }
+		
+		
+		public void add(IChunkWrapper centerWrapper) 
+		{
 			DhChunkPos centerPos = this.chunkArray[4].getChunkPos();
 			DhChunkPos offsetPos = centerWrapper.getChunkPos();
+			
 			int offsetX = offsetPos.x - centerPos.x;
-			if (offsetX < -1 || offsetX > 1) return;
+			if (offsetX < -1 || offsetX > 1)
+			{
+				return;
+			}
+			
 			int offsetZ = offsetPos.z - centerPos.z;
-			if (offsetZ < -1 || offsetZ > 1) return;
-			//equivalent to 4 + offsetX + (offsetZ * 3).
+			if (offsetZ < -1 || offsetZ > 1)
+			{
+				return;
+			}
+			
+			// equivalent to 4 + offsetX + (offsetZ * 3).
 			this.chunkArray[4 + offsetX + offsetZ + (offsetZ << 1)] = centerWrapper;
 		}
 
 		public IChunkWrapper getByBlockPos(int blockX, int blockZ)
 		{
-			int chunkX = blockX >> 4;
-			int chunkZ = blockZ >> 4;
+			int chunkX = BitShiftUtil.divideByPowerOfTwo(blockX, 4);
+			int chunkZ = BitShiftUtil.divideByPowerOfTwo(blockZ, 4);
 			IChunkWrapper centerChunk = this.chunkArray[4];
 			DhChunkPos centerPos = centerChunk.getChunkPos();
-			if (centerPos.x == chunkX && centerPos.z == chunkZ) return centerChunk;
+			if (centerPos.x == chunkX && centerPos.z == chunkZ)
+			{
+				return centerChunk;
+			}
+			
 			int offsetX = chunkX - centerPos.x;
-			if (offsetX < -1 || offsetX > 1) return null;
+			if (offsetX < -1 || offsetX > 1)
+			{
+				return null;
+			}
+			
 			int offsetZ = chunkZ - centerPos.z;
-			if (offsetZ < -1 || offsetZ > 1) return null;
-			//equivalent to 4 + offsetX + (offsetZ * 3).
+			if (offsetZ < -1 || offsetZ > 1)
+			{
+				return null;
+			}
+			
+			// equivalent to 4 + offsetX + (offsetZ * 3).
 			return this.chunkArray[4 + offsetX + offsetZ + (offsetZ << 1)];
 		}
 	}
@@ -347,10 +369,13 @@ public class DhLightingEngine
 		/** the index of the last item in the array, -1 if empty */
 		private int index = -1;
 
-		public static final int INTS_PER_LIGHT_POS = 4; //x, y, z, and lightValue.
+		/** x, y, z, and lightValue. */
+		public static final int INTS_PER_LIGHT_POS = 4;
 		
-		// when tested with a normal 1.20 world James saw a maximum of 36,709 block and 2,355 sky lights,
-		// so this should give us a good base that should be able to contain most lighting tasks
+		/**
+		 * When tested with a normal 1.20 world James saw a maximum of 36,709 block and 2,355 sky lights,
+		 * so 40,000 should be a good starting point that can contain most lighting tasks.
+		 */
 		private final IntArrayList lightPositions = new IntArrayList(40_000 * INTS_PER_LIGHT_POS);
 		
 		
@@ -404,13 +429,13 @@ public class DhLightingEngine
 		public void push(int blockX, int blockY, int blockZ, int lightValue)
 		{
 			this.index++;
-			int start = this.index * INTS_PER_LIGHT_POS;
-			if (start < this.lightPositions.size())
+			int subIndex = this.index * INTS_PER_LIGHT_POS;
+			if (subIndex < this.lightPositions.size())
 			{
-				this.lightPositions.set(start, blockX);
-				this.lightPositions.set(start + 1, blockY);
-				this.lightPositions.set(start + 2, blockZ);
-				this.lightPositions.set(start + 3, lightValue);
+				this.lightPositions.set(subIndex, blockX);
+				this.lightPositions.set(subIndex + 1, blockY);
+				this.lightPositions.set(subIndex + 2, blockZ);
+				this.lightPositions.set(subIndex + 3, lightValue);
 			}
 			else
 			{
@@ -422,18 +447,21 @@ public class DhLightingEngine
 			}
 		}
 		
-		public void pop(LightPos pos)
+		/** mutates the given {@link LightPos} to match the next {@link LightPos} in the queue. */
+		public void popMutate(LightPos pos)
 		{
-			int start = this.index * INTS_PER_LIGHT_POS;
-			pos.x = this.lightPositions.getInt(start);
-			pos.y = this.lightPositions.getInt(start + 1);
-			pos.z = this.lightPositions.getInt(start + 2);
-			pos.lightValue = this.lightPositions.getInt(start + 3);
+			int subIndex = this.index * INTS_PER_LIGHT_POS;
+			
+			pos.x = this.lightPositions.getInt(subIndex);
+			pos.y = this.lightPositions.getInt(subIndex + 1);
+			pos.z = this.lightPositions.getInt(subIndex + 2);
+			pos.lightValue = this.lightPositions.getInt(subIndex + 3);
+			
 			this.index--;
 		}
 		
 		@Override
-		public String toString() { return this.index + "/" + (this.arrayList.size() / INTS_PER_LIGHT_POS); }
+		public String toString() { return this.index + "/" + (this.lightPositions.size() / INTS_PER_LIGHT_POS); }
 		
 	}
 	
