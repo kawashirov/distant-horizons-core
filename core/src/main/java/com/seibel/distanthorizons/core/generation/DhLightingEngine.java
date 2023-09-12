@@ -303,7 +303,7 @@ public class DhLightingEngine
 		
 		public AdjacentChunkHolder(IChunkWrapper centerWrapper)
 		{
-			this.chunkArray.add(centerWrapper);
+			this.chunkArray[4] = centerWrapper;
 		}
 		
 		public void add(IChunkWrapper centerWrapper) {
