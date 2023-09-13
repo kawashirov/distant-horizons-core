@@ -23,7 +23,7 @@ import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.I
 import com.seibel.distanthorizons.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.distanthorizons.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.distanthorizons.core.file.metaData.AbstractMetaDataContainerFile;
-import com.seibel.distanthorizons.core.file.renderfile.RenderMetaDataFile;
+import com.seibel.distanthorizons.core.file.renderfile.RenderDataMetaFile;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.util.ThreadUtil;
 import org.apache.logging.log4j.Logger;
@@ -31,15 +31,13 @@ import org.apache.logging.log4j.Logger;
 import java.io.Closeable;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
 
 /** 
- * Keeps track of {@link FullDataMetaFile} and {@link RenderMetaDataFile}'s
+ * Keeps track of {@link FullDataMetaFile} and {@link RenderDataMetaFile}'s
  * and handles freeing their underlying data sources if they go unused for a certain amount of time. 
  */
 public class DataSourceReferenceTracker
@@ -178,9 +176,9 @@ public class DataSourceReferenceTracker
 		@Override
 		public void close() { FULL_DATA_SOFT_REFS.remove(this); }
 	}
-	public static class RenderDataSourceSoftRef extends AbstractDataSourceSoftTracker<RenderMetaDataFile, ColumnRenderSource>
+	public static class RenderDataSourceSoftRef extends AbstractDataSourceSoftTracker<RenderDataMetaFile, ColumnRenderSource>
 	{
-		public RenderDataSourceSoftRef(RenderMetaDataFile metaFile, ColumnRenderSource data)
+		public RenderDataSourceSoftRef(RenderDataMetaFile metaFile, ColumnRenderSource data)
 		{
 			super(metaFile, data, RENDER_DATA_GARBAGE_COLLECTED_QUEUE);
 			RENDER_DATA_SOFT_REFS.add(this);

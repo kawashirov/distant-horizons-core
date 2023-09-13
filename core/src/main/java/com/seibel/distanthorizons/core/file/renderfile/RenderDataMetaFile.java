@@ -28,7 +28,6 @@ import com.seibel.distanthorizons.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.distanthorizons.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.distanthorizons.core.file.metaData.AbstractMetaDataContainerFile;
 import com.seibel.distanthorizons.core.file.metaData.BaseMetaData;
-import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.render.renderer.DebugRenderer;
 import com.seibel.distanthorizons.core.pos.DhLodPos;
@@ -48,13 +47,12 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.ref.SoftReference;
 import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /** Represents a File that contains a {@link ColumnRenderSource}. */
-public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements IDebugRenderable
+public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements IDebugRenderable
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
@@ -83,10 +81,10 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 	//=============//
 	
 	/** 
-	 * Can be used instead of {@link RenderMetaDataFile#createFromExistingFile} or {@link RenderMetaDataFile#createNewFileForPos}, 
+	 * Can be used instead of {@link RenderDataMetaFile#createFromExistingFile} or {@link RenderDataMetaFile#createNewFileForPos}, 
 	 * if we are uncertain whether a file exists or not.
 	 */
-	public static RenderMetaDataFile createFromExistingOrNewFile(IDhClientLevel clientLevel, IFullDataSourceProvider fullDataSourceProvider, DhSectionPos pos, File file) throws IOException
+	public static RenderDataMetaFile createFromExistingOrNewFile(IDhClientLevel clientLevel, IFullDataSourceProvider fullDataSourceProvider, DhSectionPos pos, File file) throws IOException
 	{
 		if (file.exists())
 		{
@@ -103,8 +101,8 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 	 * NOTE: should only be used if there is NOT an existing file.
 	 * @throws IOException if a file already exists for this position
 	 */
-	public static RenderMetaDataFile createNewFileForPos(IFullDataSourceProvider fullDataSourceProvider, IDhClientLevel clientLevel, DhSectionPos pos, File file) throws IOException { return new RenderMetaDataFile(fullDataSourceProvider, clientLevel, pos, file); }
-	private RenderMetaDataFile(IFullDataSourceProvider fullDataSourceProvider, IDhClientLevel clientLevel, DhSectionPos pos, File file) throws IOException
+	public static RenderDataMetaFile createNewFileForPos(IFullDataSourceProvider fullDataSourceProvider, IDhClientLevel clientLevel, DhSectionPos pos, File file) throws IOException { return new RenderDataMetaFile(fullDataSourceProvider, clientLevel, pos, file); }
+	private RenderDataMetaFile(IFullDataSourceProvider fullDataSourceProvider, IDhClientLevel clientLevel, DhSectionPos pos, File file) throws IOException
 	{
 		super(file, pos);
 		this.fullDataSourceProvider = fullDataSourceProvider;
@@ -119,8 +117,8 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 	 * NOTE: should only be used if there IS an existing file.
 	 * @throws IOException if no file exists for this position
 	 */
-	public static RenderMetaDataFile createFromExistingFile(IFullDataSourceProvider fullDataSourceProvider, IDhClientLevel clientLevel, File file) throws IOException { return new RenderMetaDataFile(fullDataSourceProvider, clientLevel, file); }
-	private RenderMetaDataFile(IFullDataSourceProvider fullDataSourceProvider, IDhClientLevel clientLevel, File file) throws IOException
+	public static RenderDataMetaFile createFromExistingFile(IFullDataSourceProvider fullDataSourceProvider, IDhClientLevel clientLevel, File file) throws IOException { return new RenderDataMetaFile(fullDataSourceProvider, clientLevel, file); }
+	private RenderDataMetaFile(IFullDataSourceProvider fullDataSourceProvider, IDhClientLevel clientLevel, File file) throws IOException
 	{
 		super(file);
 		this.fullDataSourceProvider = fullDataSourceProvider;
@@ -466,7 +464,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 	// helper methods //
 	//================//
 	
-	/** @return returns null if {@link RenderMetaDataFile#renderSourceLoadFutureRef} is empty and no cached {@link ColumnRenderSource} exists. */
+	/** @return returns null if {@link RenderDataMetaFile#renderSourceLoadFutureRef} is empty and no cached {@link ColumnRenderSource} exists. */
 	@Nullable
 	private CompletableFuture<ColumnRenderSource> getCachedDataSourceAsync(boolean updateRenderSourceCache)
 	{
