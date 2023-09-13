@@ -23,6 +23,7 @@ import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.distanthorizons.core.dataObjects.transformers.FullDataToRenderDataTransformer;
+import com.seibel.distanthorizons.core.file.DataSourceReferenceTracker;
 import com.seibel.distanthorizons.core.file.fullDatafile.FullDataMetaFile;
 import com.seibel.distanthorizons.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.distanthorizons.core.file.metaData.AbstractMetaDataContainerFile;
@@ -68,7 +69,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 	 * When clearing, don't set to null, instead create a SoftReference containing null.
 	 * This makes null checks simpler.
 	 */
-	private SoftReference<ColumnRenderSource> cachedRenderDataSource = new SoftReference<>(null);
+	private DataSourceReferenceTracker.RenderDataSourceSoftRef cachedRenderDataSource = new DataSourceReferenceTracker.RenderDataSourceSoftRef(this, null);
 	private final AtomicReference<CompletableFuture<ColumnRenderSource>> renderSourceLoadFutureRef = new AtomicReference<>(null);
 	
 	private final IDhClientLevel clientLevel;
@@ -210,7 +211,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 			
 			this.updateRenderCacheAsync(newColumnRenderSource).whenComplete((voidObj, ex) ->
 				{
-					this.cachedRenderDataSource = new SoftReference<>(newColumnRenderSource);
+					this.cachedRenderDataSource = new DataSourceReferenceTracker.RenderDataSourceSoftRef(this, newColumnRenderSource);
 
 					this.renderSourceLoadFutureRef.set(null);
 					getSourceFuture.complete(newColumnRenderSource);
@@ -258,7 +259,7 @@ public class RenderMetaDataFile extends AbstractMetaDataContainerFile implements
 						
 						this.renderSourceLoadFutureRef.set(null);
 						
-						this.cachedRenderDataSource = new SoftReference<>(renderSource);
+						this.cachedRenderDataSource = new DataSourceReferenceTracker.RenderDataSourceSoftRef(this, renderSource);
 						getSourceFuture.complete(renderSource);
 					});
 		}

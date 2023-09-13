@@ -33,6 +33,7 @@ import com.seibel.distanthorizons.core.dataObjects.fullData.sources.CompleteFull
 import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IIncompleteFullDataSource;
+import com.seibel.distanthorizons.core.file.DataSourceReferenceTracker;
 import com.seibel.distanthorizons.core.file.metaData.AbstractMetaDataContainerFile;
 import com.seibel.distanthorizons.core.file.metaData.BaseMetaData;
 import com.seibel.distanthorizons.core.level.IDhLevel;
@@ -84,7 +85,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	 * When clearing, don't set to null, instead create a SoftReference containing null.
 	 * This makes null checks simpler.
 	 */
-	private SoftReference<IFullDataSource> cachedFullDataSourceRef = new SoftReference<>(null);
+	private DataSourceReferenceTracker.FullDataSourceSoftRef cachedFullDataSourceRef = new DataSourceReferenceTracker.FullDataSourceSoftRef(this,null);
 	private final AtomicReference<CompletableFuture<IFullDataSource>> dataSourceLoadFutureRef = new AtomicReference<>(null);
 	
 	// === Concurrent Write tracking ===
@@ -401,7 +402,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	public static void checkAndLogPhantomDataSourceLifeCycles()
 	{
 		DataObjTracker phantomRef = (DataObjTracker) LIFE_CYCLE_DEBUG_QUEUE.poll();
-		// wait for the tracker to be garbage collected(?)
+		// wait for the tracker to be garbage collected
 		while (phantomRef != null)
 		{
 			if (LOG_DATA_SOURCE_LIVES)
@@ -563,7 +564,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 					
 					
 					// save the updated data source
-					this.cachedFullDataSourceRef = new SoftReference<>(fullDataSource);
+					this.cachedFullDataSourceRef = new DataSourceReferenceTracker.FullDataSourceSoftRef(this, fullDataSource);
 					
 					// the task is complete
 					completionFuture.complete(fullDataSource);
@@ -685,7 +686,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 			
 			if (LOG_DATA_SOURCE_LIVES)
 			{
-				LOGGER.info("Phantom created on {}! count: {}", data.getSectionPos(), LIFE_CYCLE_DEBUG_SET.size());
+				//LOGGER.info("Phantom created on "+data.getSectionPos()+"! count: "+LIFE_CYCLE_DEBUG_SET.size());
 			}
 			
 			LIFE_CYCLE_DEBUG_SET.add(this);
