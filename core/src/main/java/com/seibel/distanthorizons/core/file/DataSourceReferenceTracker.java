@@ -48,9 +48,9 @@ public class DataSourceReferenceTracker
 	private static final boolean LOG_GARBAGE_COLLECTIONS = false;
 	
 	/** How often the garbage collector thread will run */
-	private static final long MS_BETWEEN_GARBAGE_CHECKS = TimeUnit.SECONDS.toMillis(30);
+	private static final long MS_BETWEEN_GARBAGE_CHECKS = TimeUnit.SECONDS.toMillis(60);
 	/** How long a data source has to go unused before it can be freed */
-	private static final long MS_TO_EXPIRE_DATA_SOURCE = TimeUnit.SECONDS.toMillis(15);
+	private static final long MS_TO_EXPIRE_DATA_SOURCE = TimeUnit.SECONDS.toMillis(60);
 	
 	
 	// these queues are populated by the JVM's garbage collector after the assigned soft reference is freed
@@ -70,7 +70,7 @@ public class DataSourceReferenceTracker
 	//=================//
 	
 	/** Warning: this should not be called more than once. */
-	public static void startGarbageCollectorBackgroundThread() { GARBAGE_COLLECTOR_THREAD.execute(() -> garbageCollectorLoop()); }
+	public static void startGarbageCollectorBackgroundThread() { /*GARBAGE_COLLECTOR_THREAD.execute(() -> garbageCollectorLoop());*/ }
 	private static void garbageCollectorLoop()
 	{
 		while(true)
