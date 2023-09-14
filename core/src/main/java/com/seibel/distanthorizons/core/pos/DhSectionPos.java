@@ -105,7 +105,32 @@ public class DhSectionPos
 	}
 	
 	
-	/** Returns the center for the highest detail level (0) */
+	
+	//============//
+	// converters //
+	//============//
+	
+	/**
+	 * uses the absolute detail level aka detail levels like {@link LodUtil#CHUNK_DETAIL_LEVEL} instead of the dhSectionPos detailLevels
+	 *
+	 * @return the new position closest to negative infinity with the new detail level
+	 */
+	public DhSectionPos convertToDetailLevel(byte newSectionDetailLevel)
+	{
+		DhLodPos lodPos = new DhLodPos(this.sectionDetailLevel, this.sectionX, this.sectionZ);
+		lodPos = lodPos.convertToDetailLevel(newSectionDetailLevel);
+		
+		DhSectionPos newPos = new DhSectionPos(newSectionDetailLevel, lodPos);
+		return newPos;
+	}
+	
+	
+	
+	//=========//
+	// getters //
+	//=========//
+	
+	/** Returns the center for detail level 0 */
 	public DhLodPos getCenter() { return this.getCenter((byte) 0); } // TODO why does this use detail level 0 instead of this object's detail level?
 	public DhLodPos getCenter(byte returnDetailLevel)
 	{
@@ -136,6 +161,7 @@ public class DhSectionPos
 	public DhLodPos getCorner(byte returnDetailLevel)
 	{
 		LodUtil.assertTrue(returnDetailLevel <= this.sectionDetailLevel, "returnDetailLevel must be less than sectionDetail");
+		
 		byte offset = (byte) (this.sectionDetailLevel - returnDetailLevel);
 		return new DhLodPos(returnDetailLevel,
 				this.sectionX * BitShiftUtil.powerOfTwo(offset),
@@ -150,19 +176,11 @@ public class DhSectionPos
 		return new DhLodUnit(this.sectionDetailLevel, BitShiftUtil.powerOfTwo(offset));
 	}
 	
-	/**
-	 * uses the absolute detail level aka detail levels like {@link LodUtil#CHUNK_DETAIL_LEVEL} instead of the dhSectionPos detailLevels
-	 *
-	 * @return the new position closest to negative infinity with the new detail level
-	 */
-	public DhSectionPos convertToDetailLevel(byte newSectionDetailLevel)
-	{
-		DhLodPos lodPos = new DhLodPos(this.sectionDetailLevel, this.sectionX, this.sectionZ);
-		lodPos = lodPos.convertToDetailLevel(newSectionDetailLevel);
-		
-		DhSectionPos newPos = new DhSectionPos(newSectionDetailLevel, lodPos);
-		return newPos;
-	}
+	
+	
+	//==================//
+	// parent child pos //
+	//==================//
 	
 	/**
 	 * Returns the DhLodPos 1 detail level lower <br><br>
@@ -178,9 +196,13 @@ public class DhSectionPos
 	public DhSectionPos getChildByIndex(int child0to3) throws IllegalArgumentException, IllegalStateException
 	{
 		if (child0to3 < 0 || child0to3 > 3)
+		{
 			throw new IllegalArgumentException("child0to3 must be between 0 and 3");
+		}
 		if (this.sectionDetailLevel <= 0)
+		{
 			throw new IllegalStateException("section detail must be greater than 0");
+		}
 		
 		return new DhSectionPos((byte) (this.sectionDetailLevel - 1),
 				this.sectionX * 2 + (child0to3 & 1),
@@ -188,6 +210,48 @@ public class DhSectionPos
 	}
 	/** Returns this position's child index in its parent */
 	public int getChildIndexOfParent() { return (this.sectionX & 1) + BitShiftUtil.square(this.sectionZ & 1); }
+	
+	public DhSectionPos getParentPos() { return new DhSectionPos((byte) (this.sectionDetailLevel + 1), BitShiftUtil.half(this.sectionX), BitShiftUtil.half(this.sectionZ)); }
+	
+	
+	
+	
+	public DhSectionPos getAdjacentPos(EDhDirection dir)
+	{
+		return new DhSectionPos(this.sectionDetailLevel,
+				this.sectionX + dir.getNormal().x,
+				this.sectionZ + dir.getNormal().z);
+	}
+	
+	public DhLodPos getSectionBBoxPos() { return new DhLodPos(this.sectionDetailLevel, this.sectionX, this.sectionZ); }
+	
+	
+	
+	//=============//
+	// comparisons //
+	//=============//
+	
+	/** NOTE: This does not consider yOffset! */
+	public boolean overlaps(DhSectionPos other) { return this.getSectionBBoxPos().overlapsExactly(other.getSectionBBoxPos()); }
+	
+	/** NOTE: This does not consider yOffset! */
+	public boolean contains(DhSectionPos otherPos)
+	{
+		DhBlockPos2D thisMinBlockPos = this.getCorner(LodUtil.BLOCK_DETAIL_LEVEL).getCornerBlockPos();
+		DhBlockPos2D otherCornerBlockPos = otherPos.getCorner(LodUtil.BLOCK_DETAIL_LEVEL).getCornerBlockPos();
+		
+		int thisBlockWidth = this.getWidth().toBlockWidth() - 1; // minus 1 to account for zero based positional indexing
+		DhBlockPos2D thisMaxBlockPos = new DhBlockPos2D(thisMinBlockPos.x + thisBlockWidth, thisMinBlockPos.z + thisBlockWidth);
+		
+		return thisMinBlockPos.x <= otherCornerBlockPos.x && otherCornerBlockPos.x <= thisMaxBlockPos.x &&
+				thisMinBlockPos.z <= otherCornerBlockPos.z && otherCornerBlockPos.z <= thisMaxBlockPos.z;
+	}
+	
+	
+	
+	//===========//
+	// iterators //
+	//===========//
 	
 	/** Applies the given consumer to all 4 of this position's children. */
 	public void forEachChild(Consumer<DhSectionPos> callback)
@@ -206,38 +270,18 @@ public class DhSectionPos
 			callback.accept(this);
 			return;
 		}
+		
 		for (int i = 0; i < 4; i++)
 		{
 			this.getChildByIndex(i).forEachChildAtLevel(sectionDetailLevel, callback);
 		}
 	}
 	
-	public DhSectionPos getParentPos() { return new DhSectionPos((byte) (this.sectionDetailLevel + 1), BitShiftUtil.half(this.sectionX), BitShiftUtil.half(this.sectionZ)); }
 	
-	public DhSectionPos getAdjacentPos(EDhDirection dir)
-	{
-		return new DhSectionPos(this.sectionDetailLevel,
-				this.sectionX + dir.getNormal().x,
-				this.sectionZ + dir.getNormal().z);
-	}
 	
-	public DhLodPos getSectionBBoxPos() { return new DhLodPos(this.sectionDetailLevel, this.sectionX, this.sectionZ); }
-	
-	/** NOTE: This does not consider yOffset! */
-	public boolean overlaps(DhSectionPos other) { return this.getSectionBBoxPos().overlapsExactly(other.getSectionBBoxPos()); }
-	
-	/** NOTE: This does not consider yOffset! */
-	public boolean contains(DhSectionPos otherPos)
-	{
-		DhBlockPos2D thisMinBlockPos = this.getCorner(LodUtil.BLOCK_DETAIL_LEVEL).getCornerBlockPos();
-		DhBlockPos2D otherCornerBlockPos = otherPos.getCorner(LodUtil.BLOCK_DETAIL_LEVEL).getCornerBlockPos();
-		
-		int thisBlockWidth = this.getWidth().toBlockWidth() - 1; // minus 1 to account for zero based positional indexing
-		DhBlockPos2D thisMaxBlockPos = new DhBlockPos2D(thisMinBlockPos.x + thisBlockWidth, thisMinBlockPos.z + thisBlockWidth);
-		
-		return thisMinBlockPos.x <= otherCornerBlockPos.x && otherCornerBlockPos.x <= thisMaxBlockPos.x &&
-				thisMinBlockPos.z <= otherCornerBlockPos.z && otherCornerBlockPos.z <= thisMaxBlockPos.z;
-	}
+	//===============//
+	// serialization //
+	//===============//
 	
 	/** Serialize() is different from toString() as it must NEVER be changed, and should be in a short format */
 	public String serialize() { return "[" + this.sectionDetailLevel + ',' + this.sectionX + ',' + this.sectionZ + ']'; }
@@ -252,6 +296,12 @@ public class DhSectionPos
 		
 	}
 	
+	
+	
+	//===========//
+	// overrides //
+	//===========//
+	
 	@Override
 	public String toString() { return "{" + this.sectionDetailLevel + "*" + this.sectionX + "," + this.sectionZ + "}"; }
 	
@@ -259,9 +309,13 @@ public class DhSectionPos
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
-		if (obj == null || this.getClass() != obj.getClass())
+		}
+		if (obj == null || obj.getClass() != DhSectionPos.class)
+		{
 			return false;
+		}
 		
 		DhSectionPos that = (DhSectionPos) obj;
 		return this.sectionDetailLevel == that.sectionDetailLevel &&
