@@ -121,7 +121,7 @@ public class QuadTree<T>
 	{
 		if (!runBoundaryChecks || this.isSectionPosInBounds(pos))
 		{
-			DhSectionPos rootPos = pos.convertToDetailLevel(this.treeMinDetailLevel);
+			DhSectionPos rootPos = pos.convertNewToDetailLevel(this.treeMinDetailLevel);
 			int ringListPosX = rootPos.sectionX;
 			int ringListPosZ = rootPos.sectionZ;
 			
@@ -156,7 +156,7 @@ public class QuadTree<T>
 			int radius = this.diameterInBlocks() / 2;
 			DhBlockPos2D minPos = this.getCenterBlockPos().add(new DhBlockPos2D(-radius, -radius));
 			DhBlockPos2D maxPos = this.getCenterBlockPos().add(new DhBlockPos2D(radius, radius));
-			throw new IndexOutOfBoundsException("QuadTree GetOrSet failed. Position out of bounds, min pos: " + minPos + ", max pos: " + maxPos + ", min detail level: " + this.treeMaxDetailLevel + ", max detail level: " + this.treeMinDetailLevel + ". Given Position: " + pos + " = block pos: " + pos.convertToDetailLevel(LodUtil.BLOCK_DETAIL_LEVEL));
+			throw new IndexOutOfBoundsException("QuadTree GetOrSet failed. Position out of bounds, min pos: " + minPos + ", max pos: " + maxPos + ", min detail level: " + this.treeMaxDetailLevel + ", max detail level: " + this.treeMinDetailLevel + ". Given Position: " + pos + " = block pos: " + pos.convertNewToDetailLevel(LodUtil.BLOCK_DETAIL_LEVEL));
 		}
 	}
 	
@@ -174,7 +174,7 @@ public class QuadTree<T>
 		DhBlockPos2D treeBlockCorner = this.centerBlockPos.add(new DhBlockPos2D(-this.widthInBlocks / 2, -this.widthInBlocks / 2));
 		DhLodPos treeCornerPos = new DhLodPos((byte) 0, treeBlockCorner.x, treeBlockCorner.z);
 		
-		DhSectionPos inputSectionCorner = testPos.convertToDetailLevel((byte) 0);
+		DhSectionPos inputSectionCorner = testPos.convertNewToDetailLevel((byte) 0);
 		DhLodPos inputCornerPos = new DhLodPos((byte) 0, inputSectionCorner.sectionX, inputSectionCorner.sectionZ);
 		int inputBlockWidth = BitShiftUtil.powerOfTwo(testPos.sectionDetailLevel);
 		

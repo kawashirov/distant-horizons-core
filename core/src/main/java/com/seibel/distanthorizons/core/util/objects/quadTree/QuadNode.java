@@ -180,7 +180,7 @@ public class QuadNode<T>
 		if (!this.sectionPos.contains(inputSectionPos))
 		{
 			LOGGER.error((replaceValue ? "set " : "get ") + inputSectionPos + " center block: " + inputSectionPos.getCenter().getCornerBlockPos() + ", this pos: " + this.sectionPos + " this center block: " + this.sectionPos.getCenter().getCornerBlockPos());
-			throw new IllegalArgumentException("Input section pos " + inputSectionPos + " outside of this quadNode's pos: " + this.sectionPos + ", this node's blockPos: " + this.sectionPos.convertToDetailLevel(LodUtil.BLOCK_DETAIL_LEVEL) + " block width: " + this.sectionPos.getWidth().toBlockWidth() + " input detail level: " + inputSectionPos.convertToDetailLevel(LodUtil.BLOCK_DETAIL_LEVEL) + " width: " + inputSectionPos.getWidth().toBlockWidth());
+			throw new IllegalArgumentException("Input section pos " + inputSectionPos + " outside of this quadNode's pos: " + this.sectionPos + ", this node's blockPos: " + this.sectionPos.convertNewToDetailLevel(LodUtil.BLOCK_DETAIL_LEVEL) + " block width: " + this.sectionPos.getWidth().toBlockWidth() + " input detail level: " + inputSectionPos.convertNewToDetailLevel(LodUtil.BLOCK_DETAIL_LEVEL) + " width: " + inputSectionPos.getWidth().toBlockWidth());
 		}
 		
 		if (inputSectionPos.sectionDetailLevel > this.sectionPos.sectionDetailLevel)

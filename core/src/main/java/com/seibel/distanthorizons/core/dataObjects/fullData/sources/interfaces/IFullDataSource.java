@@ -144,7 +144,7 @@ public interface IFullDataSource
 			int widthInSecPos = BitShiftUtil.powerOfTwo(quadrantDetailLevelDiff);
 			int relWidthForSecPos = sourceRelWidth / widthInSecPos;
 			
-			DhSectionPos minSecPos = this.getSectionPos().convertToDetailLevel(childDetailLevel);
+			DhSectionPos minSecPos = this.getSectionPos().convertNewToDetailLevel(childDetailLevel);
 			DhSectionPos inputPos = quadrantPos;
 			
 			
@@ -195,7 +195,7 @@ public interface IFullDataSource
 				int widthInSecPos = BitShiftUtil.powerOfTwo(quadrantDetailLevelDiff);
 				int relWidthForSecPos = sourceRelWidth / widthInSecPos;
 				
-				DhSectionPos minSecPos = this.getSectionPos().convertToDetailLevel(childDetailLevel);
+				DhSectionPos minSecPos = this.getSectionPos().convertNewToDetailLevel(childDetailLevel);
 				DhSectionPos inputPos = quadrantPos.getChildByIndex(i);
 				
 				

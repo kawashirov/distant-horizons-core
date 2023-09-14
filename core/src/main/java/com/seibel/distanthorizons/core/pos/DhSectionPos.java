@@ -56,12 +56,12 @@ public class DhSectionPos
 	public final static byte SECTION_REGION_DETAIL_LEVEL = SECTION_MINIMUM_DETAIL_LEVEL + LodUtil.REGION_DETAIL_LEVEL;
 	
 	
-	public final byte sectionDetailLevel;
+	public byte sectionDetailLevel;
 	
 	/** in a sectionDetailLevel grid */
-	public final int sectionX;
+	public int sectionX;
 	/** in a sectionDetailLevel grid */
-	public final int sectionZ;
+	public int sectionZ;
 	
 	
 	
@@ -76,25 +76,21 @@ public class DhSectionPos
 		this.sectionZ = sectionZ;
 	}
 	
-	public DhSectionPos(DhBlockPos blockPos) { this(new DhBlockPos2D(blockPos)); }
+	public DhSectionPos(DhBlockPos blockPos)
+	{
+		this(LodUtil.BLOCK_DETAIL_LEVEL, blockPos.x, blockPos.z);
+		this.convertSelfToDetailLevel(DhSectionPos.SECTION_BLOCK_DETAIL_LEVEL);
+	}
 	public DhSectionPos(DhBlockPos2D blockPos)
 	{
-		DhLodPos lodPos = new DhLodPos(LodUtil.BLOCK_DETAIL_LEVEL, blockPos.x, blockPos.z);
-		lodPos = lodPos.convertToDetailLevel(SECTION_BLOCK_DETAIL_LEVEL);
-		
-		this.sectionDetailLevel = SECTION_BLOCK_DETAIL_LEVEL;
-		this.sectionX = lodPos.x;
-		this.sectionZ = lodPos.z;
+		this(LodUtil.BLOCK_DETAIL_LEVEL, blockPos.x, blockPos.z);
+		this.convertSelfToDetailLevel(DhSectionPos.SECTION_BLOCK_DETAIL_LEVEL);
 	}
 	
 	public DhSectionPos(DhChunkPos chunkPos)
 	{
-		DhLodPos lodPos = new DhLodPos(LodUtil.CHUNK_DETAIL_LEVEL, chunkPos.x, chunkPos.z);
-		lodPos = lodPos.convertToDetailLevel(SECTION_CHUNK_DETAIL_LEVEL);
-		
-		this.sectionDetailLevel = SECTION_CHUNK_DETAIL_LEVEL;
-		this.sectionX = lodPos.x;
-		this.sectionZ = lodPos.z;
+		this(LodUtil.CHUNK_DETAIL_LEVEL, chunkPos.x, chunkPos.z);
+		this.convertSelfToDetailLevel(DhSectionPos.SECTION_CHUNK_DETAIL_LEVEL);
 	}
 	
 	public DhSectionPos(byte detailLevel, DhLodPos dhLodPos)
@@ -110,17 +106,34 @@ public class DhSectionPos
 	// converters //
 	//============//
 	
+	/** uses the absolute detail level aka detail levels like {@link LodUtil#CHUNK_DETAIL_LEVEL} instead of the dhSectionPos detailLevels. */
+	public void convertSelfToDetailLevel(byte newDetailLevel)
+	{
+		// logic originally taken from DhLodPos
+		if (newDetailLevel >= this.sectionDetailLevel)
+		{
+			this.sectionX = Math.floorDiv(this.sectionX, BitShiftUtil.powerOfTwo(newDetailLevel - this.sectionDetailLevel)); 
+			this.sectionZ = Math.floorDiv(this.sectionZ, BitShiftUtil.powerOfTwo(newDetailLevel - this.sectionDetailLevel));
+		}
+		else
+		{
+			this.sectionX = this.sectionX * BitShiftUtil.powerOfTwo(this.sectionDetailLevel - newDetailLevel);
+			this.sectionZ = this.sectionZ * BitShiftUtil.powerOfTwo(this.sectionDetailLevel - newDetailLevel);
+		}
+		
+		this.sectionDetailLevel = newDetailLevel;
+	}
+	
 	/**
-	 * uses the absolute detail level aka detail levels like {@link LodUtil#CHUNK_DETAIL_LEVEL} instead of the dhSectionPos detailLevels
+	 * uses the absolute detail level aka detail levels like {@link LodUtil#CHUNK_DETAIL_LEVEL} instead of the dhSectionPos detailLevels.
 	 *
 	 * @return the new position closest to negative infinity with the new detail level
 	 */
-	public DhSectionPos convertToDetailLevel(byte newSectionDetailLevel)
+	public DhSectionPos convertNewToDetailLevel(byte newSectionDetailLevel)
 	{
-		DhLodPos lodPos = new DhLodPos(this.sectionDetailLevel, this.sectionX, this.sectionZ);
-		lodPos = lodPos.convertToDetailLevel(newSectionDetailLevel);
+		DhSectionPos newPos = new DhSectionPos(this.sectionDetailLevel, this.sectionX, this.sectionZ);
+		newPos.convertSelfToDetailLevel(newSectionDetailLevel);
 		
-		DhSectionPos newPos = new DhSectionPos(newSectionDetailLevel, lodPos);
 		return newPos;
 	}
 	
@@ -168,7 +181,7 @@ public class DhSectionPos
 				this.sectionZ * BitShiftUtil.powerOfTwo(offset));
 	}
 	
-	public DhLodUnit getWidth() { return this.getWidth(this.sectionDetailLevel); }
+	public DhLodUnit getWidth() { return this.getWidth(this.sectionDetailLevel); } // this always returns 1...
 	public DhLodUnit getWidth(byte returnDetailLevel)
 	{
 		LodUtil.assertTrue(returnDetailLevel <= this.sectionDetailLevel, "returnDetailLevel must be less than sectionDetail");
