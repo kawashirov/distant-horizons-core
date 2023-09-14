@@ -264,19 +264,30 @@ public class DhSectionPosTest
 		
 		// widths should be the same regardless of position in the world
 		originSectionPos = originSectionPos.convertNewToDetailLevel((byte) 1);
-		Assert.assertEquals(1, originSectionPos.getWidth().numberOfLodSectionsWide);
+		Assert.assertEquals(1, originSectionPos.getNumberOfLodSectionsWide());
+		Assert.assertEquals(originSectionPos.getWidth().numberOfLodSectionsWide, originSectionPos.getNumberOfLodSectionsWide());
+		
 		sectionPos = sectionPos.convertNewToDetailLevel((byte) 1);
-		Assert.assertEquals(1, sectionPos.getWidth().numberOfLodSectionsWide);
+		Assert.assertEquals(1, sectionPos.getNumberOfLodSectionsWide());
+		Assert.assertEquals(sectionPos.getWidth().numberOfLodSectionsWide, sectionPos.getNumberOfLodSectionsWide());
+		
 		
 		originSectionPos = originSectionPos.convertNewToDetailLevel(DhSectionPos.SECTION_BLOCK_DETAIL_LEVEL);
-		Assert.assertEquals(1, originSectionPos.getWidth().numberOfLodSectionsWide);
+		Assert.assertEquals(1, originSectionPos.getNumberOfLodSectionsWide());
+		Assert.assertEquals(originSectionPos.getWidth().numberOfLodSectionsWide, originSectionPos.getNumberOfLodSectionsWide());
+		
 		sectionPos = sectionPos.convertNewToDetailLevel(DhSectionPos.SECTION_BLOCK_DETAIL_LEVEL);
-		Assert.assertEquals(1, sectionPos.getWidth().numberOfLodSectionsWide);
+		Assert.assertEquals(1, sectionPos.getNumberOfLodSectionsWide());
+		Assert.assertEquals(sectionPos.getWidth().numberOfLodSectionsWide, sectionPos.getNumberOfLodSectionsWide());
+		
 		
 		originSectionPos = originSectionPos.convertNewToDetailLevel(DhSectionPos.SECTION_REGION_DETAIL_LEVEL);
-		Assert.assertEquals(1, originSectionPos.getWidth().numberOfLodSectionsWide);
+		Assert.assertEquals(1, originSectionPos.getNumberOfLodSectionsWide());
+		Assert.assertEquals(originSectionPos.getWidth().numberOfLodSectionsWide, originSectionPos.getNumberOfLodSectionsWide());
+		
 		sectionPos = sectionPos.convertNewToDetailLevel(DhSectionPos.SECTION_REGION_DETAIL_LEVEL);
-		Assert.assertEquals(1, sectionPos.getWidth().numberOfLodSectionsWide);
+		Assert.assertEquals(1, sectionPos.getNumberOfLodSectionsWide());
+		Assert.assertEquals(sectionPos.getWidth().numberOfLodSectionsWide, sectionPos.getNumberOfLodSectionsWide());
 		
 	}
 	@Test
@@ -285,20 +296,32 @@ public class DhSectionPosTest
 		DhSectionPos originSectionPos = new DhSectionPos((byte) 0,0,0);
 		DhSectionPos sectionPos = new DhSectionPos((byte) 0,-10000,5000);
 		
+		
 		originSectionPos = originSectionPos.convertNewToDetailLevel((byte) 1);
-		Assert.assertEquals(2, originSectionPos.getWidth((byte) 0).numberOfLodSectionsWide);
+		Assert.assertEquals(2, originSectionPos.getNumberOfLodSectionsWide((byte) 0));
+		Assert.assertEquals(originSectionPos.getWidth((byte) 0).numberOfLodSectionsWide, originSectionPos.getNumberOfLodSectionsWide((byte) 0));
+		
 		sectionPos = sectionPos.convertNewToDetailLevel((byte) 1);
-		Assert.assertEquals(2, sectionPos.getWidth((byte) 0).numberOfLodSectionsWide);
+		Assert.assertEquals(2, sectionPos.getNumberOfLodSectionsWide((byte) 0));
+		Assert.assertEquals(sectionPos.getWidth((byte) 0).numberOfLodSectionsWide, sectionPos.getNumberOfLodSectionsWide((byte) 0));
+		
 		
 		originSectionPos = originSectionPos.convertNewToDetailLevel(DhSectionPos.SECTION_BLOCK_DETAIL_LEVEL);
-		Assert.assertEquals(64, originSectionPos.getWidth((byte) 0).numberOfLodSectionsWide);
+		Assert.assertEquals(64, originSectionPos.getNumberOfLodSectionsWide((byte) 0));
+		Assert.assertEquals(originSectionPos.getWidth((byte) 0).numberOfLodSectionsWide, originSectionPos.getNumberOfLodSectionsWide((byte) 0));
+		
 		sectionPos = sectionPos.convertNewToDetailLevel(DhSectionPos.SECTION_BLOCK_DETAIL_LEVEL);
-		Assert.assertEquals(64, sectionPos.getWidth((byte) 0).numberOfLodSectionsWide);
+		Assert.assertEquals(64, sectionPos.getNumberOfLodSectionsWide((byte) 0));
+		Assert.assertEquals(sectionPos.getWidth((byte) 0).numberOfLodSectionsWide, sectionPos.getNumberOfLodSectionsWide((byte) 0));
+		
 		
 		originSectionPos = originSectionPos.convertNewToDetailLevel(DhSectionPos.SECTION_REGION_DETAIL_LEVEL);
-		Assert.assertEquals(4096, originSectionPos.getWidth((byte) 3).numberOfLodSectionsWide);
+		Assert.assertEquals(4096, originSectionPos.getNumberOfLodSectionsWide((byte) 3));
+		Assert.assertEquals(originSectionPos.getWidth((byte) 3).numberOfLodSectionsWide, originSectionPos.getNumberOfLodSectionsWide((byte) 3));
+		
 		sectionPos = sectionPos.convertNewToDetailLevel(DhSectionPos.SECTION_REGION_DETAIL_LEVEL);
-		Assert.assertEquals(4096, sectionPos.getWidth((byte) 3).numberOfLodSectionsWide);
+		Assert.assertEquals(4096, sectionPos.getNumberOfLodSectionsWide((byte) 3));
+		Assert.assertEquals(sectionPos.getWidth((byte) 3).numberOfLodSectionsWide, sectionPos.getNumberOfLodSectionsWide((byte) 3));
 		
 	}
 	

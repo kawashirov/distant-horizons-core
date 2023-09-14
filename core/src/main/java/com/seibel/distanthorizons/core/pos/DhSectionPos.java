@@ -189,6 +189,14 @@ public class DhSectionPos
 		return new DhLodUnit(this.sectionDetailLevel, BitShiftUtil.powerOfTwo(offset));
 	}
 	
+	public int getNumberOfLodSectionsWide() { return this.getNumberOfLodSectionsWide(this.sectionDetailLevel); } // TODO this always returns 1...
+	public int getNumberOfLodSectionsWide(byte returnDetailLevel)
+	{
+		LodUtil.assertTrue(returnDetailLevel <= this.sectionDetailLevel, "returnDetailLevel must be less than sectionDetail"); // TODO add something to the method name stating this
+		byte offset = (byte) (this.sectionDetailLevel - returnDetailLevel);
+		return BitShiftUtil.powerOfTwo(offset);
+	}
+	
 	
 	
 	//==================//
