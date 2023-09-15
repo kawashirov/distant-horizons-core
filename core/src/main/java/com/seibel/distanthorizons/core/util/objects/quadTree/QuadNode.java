@@ -179,7 +179,7 @@ public class QuadNode<T>
 		
 		if (!this.sectionPos.contains(inputSectionPos))
 		{
-			LOGGER.error((replaceValue ? "set " : "get ") + inputSectionPos + " center block: " + inputSectionPos.getCenter().getCornerBlockPos() + ", this pos: " + this.sectionPos + " this center block: " + this.sectionPos.getCenter().getCornerBlockPos());
+			LOGGER.error((replaceValue ? "set " : "get ") + inputSectionPos + " center block: " + inputSectionPos.getCenterBlockPos() + ", this pos: " + this.sectionPos + " this center block: " + this.sectionPos.getCenterBlockPos());
 			throw new IllegalArgumentException("Input section pos " + inputSectionPos + " outside of this quadNode's pos: " + this.sectionPos + ", this node's blockPos: " + this.sectionPos.convertNewToDetailLevel(LodUtil.BLOCK_DETAIL_LEVEL) + " block width: " + this.sectionPos.getBlockWidth() + " input detail level: " + inputSectionPos.convertNewToDetailLevel(LodUtil.BLOCK_DETAIL_LEVEL) + " width: " + inputSectionPos.getBlockWidth());
 		}
 		

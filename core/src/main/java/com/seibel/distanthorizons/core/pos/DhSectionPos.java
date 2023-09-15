@@ -143,31 +143,6 @@ public class DhSectionPos
 	// getters //
 	//=========//
 	
-	/** Returns the center for detail level 0 */
-	public DhLodPos getCenter() { return this.getCenter((byte) 0); } // TODO why does this use detail level 0 instead of this object's detail level?
-	public DhLodPos getCenter(byte returnDetailLevel)
-	{
-		LodUtil.assertTrue(returnDetailLevel <= this.sectionDetailLevel, "returnDetailLevel must be less than sectionDetail");
-		
-		if (returnDetailLevel == this.sectionDetailLevel)
-		{
-			return new DhLodPos(this.sectionDetailLevel, this.sectionX, this.sectionZ);
-		}
-		
-		byte detailLevelOffset = (byte) (this.sectionDetailLevel - returnDetailLevel);
-		
-		// we can't get the center of the position at block level, only attempt to get the position offset for detail levels above 0 // TODO should this also apply to detail level 1 or is it fine?
-		int positionOffset = 0;
-		if (this.sectionDetailLevel != 1 || returnDetailLevel != 0)
-		{
-			positionOffset = BitShiftUtil.powerOfTwo(detailLevelOffset - 1);
-		}
-		
-		return new DhLodPos(returnDetailLevel,
-				(this.sectionX * BitShiftUtil.powerOfTwo(detailLevelOffset)) + positionOffset,
-				(this.sectionZ * BitShiftUtil.powerOfTwo(detailLevelOffset)) + positionOffset);
-	}
-	
 	/** @return the corner with the smallest X and Z coordinate */
 	public DhLodPos getCorner() { return this.getCorner((byte) (this.sectionDetailLevel - 1)); }
 	/** @return the corner with the smallest X and Z coordinate */
@@ -200,6 +175,32 @@ public class DhSectionPos
 	
 	/** @return how wide this section is in blocks */
 	public int getBlockWidth() { return BitShiftUtil.powerOfTwo(this.sectionDetailLevel); }
+	
+	
+	public DhBlockPos2D getCenterBlockPos() { return new DhBlockPos2D(this.getCenterBlockPosX(), this.getCenterBlockPosZ()); }
+	
+	public int getCenterBlockPosX() { return this.getCenterBlockPos(true); }
+	public int getCenterBlockPosZ() { return this.getCenterBlockPos(false); }
+	private int getCenterBlockPos(boolean returnX)
+	{
+		int centerBlockPos = returnX ? this.sectionX : this.sectionZ;
+		
+		if (this.sectionDetailLevel == 0)
+		{
+			// already at block detail level, no conversion necessary
+			return centerBlockPos;
+		}
+		
+		// we can't get the center of the position at block level, only attempt to get the position offset for detail levels above 0
+		int positionOffset = 0;
+		if (this.sectionDetailLevel != 1)
+		{
+			positionOffset = BitShiftUtil.powerOfTwo(this.sectionDetailLevel - 1);
+		}
+		
+		return (centerBlockPos * BitShiftUtil.powerOfTwo(this.sectionDetailLevel)) + positionOffset;
+	}
+	
 	
 	
 	//==================//

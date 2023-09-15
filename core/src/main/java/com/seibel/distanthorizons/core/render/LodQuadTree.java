@@ -320,7 +320,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	 * @param sectionPos section position
 	 * @return detail level of this section pos
 	 */
-	public byte calculateExpectedDetailLevel(DhBlockPos2D playerPos, DhSectionPos sectionPos) { return this.getDetailLevelFromDistance(playerPos.dist(sectionPos.getCenter().getCenterBlockPos())); }
+	public byte calculateExpectedDetailLevel(DhBlockPos2D playerPos, DhSectionPos sectionPos) { return this.getDetailLevelFromDistance(playerPos.dist(sectionPos.getCenterBlockPosX(), sectionPos.getCenterBlockPosZ())); }
 	private byte getDetailLevelFromDistance(double distance)
 	{
 		// special case, never drop the quality

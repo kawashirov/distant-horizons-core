@@ -67,9 +67,11 @@ public class DhBlockPos2D
 	// calculations //
 	//==============//
 	
-	public double dist(DhBlockPos2D other) { return Math.sqrt(Math.pow(this.x - other.x, 2) + Math.pow(this.z - other.z, 2)); }
+	public double dist(DhBlockPos2D other) { return this.dist(other.x, other.z); }
+	public double dist(int x, int z) { return Math.sqrt(Math.pow(this.x - x, 2) + Math.pow(this.z - z, 2)); }
 	
-	public long distSquared(DhBlockPos2D other) { return MathUtil.pow2((long) this.x - other.x) + MathUtil.pow2((long) this.z - other.z); }
+	public long distSquared(DhBlockPos2D other) { return this.distSquared(other.x, other.z); }
+	public long distSquared(int x, int z) { return MathUtil.pow2((long) this.x - x) + MathUtil.pow2((long) this.z - z); }
 	
 	
 	

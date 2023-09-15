@@ -130,17 +130,17 @@ public class DhSectionPosTest
 	public void GetCenterTest()
 	{
 		DhSectionPos node = new DhSectionPos((byte) 1, 2303, 0);
-		DhLodPos centerNode = node.getCenter();
-		DhLodPos expectedCenterNode = new DhLodPos((byte) 0, 4606, 0);
-		Assert.assertEquals("", expectedCenterNode, centerNode);
+		DhBlockPos2D centerBlockPos = node.getCenterBlockPos();
+		DhBlockPos2D expectedCenterNode = new DhBlockPos2D(4606, 0);
+		Assert.assertEquals("", expectedCenterNode, centerBlockPos);
 		
 		
 		
 		node = new DhSectionPos((byte) 10, 0, 0); // 1024 blocks wide
-		centerNode = node.getCenter();
-		expectedCenterNode = new DhLodPos((byte) 0, 1024 / 2, 1024 / 2);
-		Assert.assertEquals("", expectedCenterNode, centerNode);
-		
+		centerBlockPos = node.getCenterBlockPos();
+		expectedCenterNode = new DhBlockPos2D(1024 / 2, 1024 / 2);
+		Assert.assertEquals("", expectedCenterNode, centerBlockPos);
+
 	}
 	
 	@Test
@@ -150,11 +150,11 @@ public class DhSectionPosTest
 		DhSectionPos inputPos = new DhSectionPos((byte) 0, 4606, 0); // width 1 block
 		Assert.assertTrue(parentNode.contains(inputPos));
 		
-		DhLodPos parentCenter = parentNode.getCenter();
-		DhLodPos inputCenter = inputPos.getCenter();
+		DhBlockPos2D parentCenter = parentNode.getCenterBlockPos();
+		DhBlockPos2D inputCenter = inputPos.getCenterBlockPos();
 		
-		Assert.assertEquals(new DhLodPos((byte) 0, 4606, 2), parentCenter);
-		Assert.assertEquals(new DhLodPos((byte) 0, 4606, 0), inputCenter);
+		Assert.assertEquals(new DhBlockPos2D(4606, 2), parentCenter);
+		Assert.assertEquals(new DhBlockPos2D(4606, 0), inputCenter);
 		
 	}
 	
@@ -273,7 +273,6 @@ public class DhSectionPosTest
 		Assert.assertEquals(2, sectionPos.getWidthCountForLowerDetailedSection(returnDetailLevel));
 		
 		
-		
 		// 2 -> 1
 		returnDetailLevel = 1;
 		originSectionPos = originSectionPos.convertNewToDetailLevel((byte) 2);
@@ -281,7 +280,6 @@ public class DhSectionPosTest
 		
 		sectionPos = sectionPos.convertNewToDetailLevel((byte) 2);
 		Assert.assertEquals(2, sectionPos.getWidthCountForLowerDetailedSection(returnDetailLevel));
-		
 		
 		
 		// Block -> 0
@@ -329,4 +327,36 @@ public class DhSectionPosTest
 		Assert.assertEquals(32768, sectionPos.getBlockWidth());
 		
 	}
+	
+	@Test
+	public void GetCenterBlockPos()
+	{
+		DhSectionPos originSectionPos = new DhSectionPos((byte) 0,0,0);
+		DhSectionPos sectionPos = new DhSectionPos((byte) 0,-10000,5000);
+		
+		
+		Assert.assertEquals(new DhBlockPos2D(0, 0), originSectionPos.getCenterBlockPos());
+		Assert.assertEquals(new DhBlockPos2D(-10000, 5000), sectionPos.getCenterBlockPos());
+		
+		
+		originSectionPos = originSectionPos.convertNewToDetailLevel((byte) 1);
+		Assert.assertEquals(new DhBlockPos2D(0, 0), originSectionPos.getCenterBlockPos());
+		sectionPos = sectionPos.convertNewToDetailLevel((byte) 1);
+		Assert.assertEquals(new DhBlockPos2D(-10000, 5000), sectionPos.getCenterBlockPos());
+		
+		
+		originSectionPos = originSectionPos.convertNewToDetailLevel(DhSectionPos.SECTION_BLOCK_DETAIL_LEVEL);
+		Assert.assertEquals(new DhBlockPos2D(32, 32), originSectionPos.getCenterBlockPos());
+		sectionPos = sectionPos.convertNewToDetailLevel(DhSectionPos.SECTION_BLOCK_DETAIL_LEVEL);
+		Assert.assertEquals(new DhBlockPos2D(-10016, 5024), sectionPos.getCenterBlockPos());
+		
+		
+		originSectionPos = originSectionPos.convertNewToDetailLevel(DhSectionPos.SECTION_REGION_DETAIL_LEVEL);
+		Assert.assertEquals(new DhBlockPos2D(16384, 16384), originSectionPos.getCenterBlockPos());
+		sectionPos = sectionPos.convertNewToDetailLevel(DhSectionPos.SECTION_REGION_DETAIL_LEVEL);
+		Assert.assertEquals(new DhBlockPos2D(-16384, 16384), sectionPos.getCenterBlockPos());
+		
+	}
+	
+	
 }
