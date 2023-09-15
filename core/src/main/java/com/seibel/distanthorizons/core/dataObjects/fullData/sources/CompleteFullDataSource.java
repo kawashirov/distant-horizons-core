@@ -277,10 +277,10 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 	@Override
 	public void update(ChunkSizedFullDataAccessor chunkDataView)
 	{
-		LodUtil.assertTrue(this.sectionPos.getSectionBBoxPos().overlapsExactly(chunkDataView.getLodPos()));
+		LodUtil.assertTrue(this.sectionPos.overlapsExactly(chunkDataView.getSectionPos()));
 		if (this.getDataDetailLevel() == LodUtil.BLOCK_DETAIL_LEVEL)
 		{
-			DhBlockPos2D chunkBlockPos = new DhBlockPos2D(chunkDataView.pos.x * LodUtil.CHUNK_WIDTH, chunkDataView.pos.z * LodUtil.CHUNK_WIDTH);
+			DhBlockPos2D chunkBlockPos = new DhBlockPos2D(chunkDataView.chunkPos.x * LodUtil.CHUNK_WIDTH, chunkDataView.chunkPos.z * LodUtil.CHUNK_WIDTH);
 			DhBlockPos2D blockOffset = chunkBlockPos.subtract(this.sectionPos.getMinCornerLodPos().getCornerBlockPos());
 			LodUtil.assertTrue(blockOffset.x >= 0 && blockOffset.x < WIDTH && blockOffset.z >= 0 && blockOffset.z < WIDTH);
 			this.isEmpty = false;
@@ -303,7 +303,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 		{
 			int dataPerFull = 1 << this.getDataDetailLevel();
 			int fullSize = LodUtil.CHUNK_WIDTH / dataPerFull;
-			DhLodPos dataOffset = chunkDataView.getLodPos().getCornerLodPos(this.getDataDetailLevel());
+			DhLodPos dataOffset = chunkDataView.getSectionPos().getMinCornerLodPos(this.getDataDetailLevel());
 			DhLodPos baseOffset = this.sectionPos.getMinCornerLodPos(this.getDataDetailLevel());
 			
 			int offsetX = dataOffset.x - baseOffset.x;
@@ -324,16 +324,16 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 		{
 			//FIXME: TEMPORARY
 			int chunkPerFull = 1 << (this.getDataDetailLevel() - LodUtil.CHUNK_DETAIL_LEVEL);
-			if (chunkDataView.pos.x % chunkPerFull != 0 || chunkDataView.pos.z % chunkPerFull != 0)
+			if (chunkDataView.chunkPos.x % chunkPerFull != 0 || chunkDataView.chunkPos.z % chunkPerFull != 0)
 			{
 				return;
 			}
 			
 			DhLodPos baseOffset = this.sectionPos.getMinCornerLodPos(this.getDataDetailLevel());
-			DhLodPos dataOffset = chunkDataView.getLodPos().convertToDetailLevel(this.getDataDetailLevel());
+			DhSectionPos dataOffset = chunkDataView.getSectionPos().convertNewToDetailLevel(this.getDataDetailLevel());
 			
-			int offsetX = dataOffset.x - baseOffset.x;
-			int offsetZ = dataOffset.z - baseOffset.z;
+			int offsetX = dataOffset.sectionX - baseOffset.x;
+			int offsetZ = dataOffset.sectionZ - baseOffset.z;
 			LodUtil.assertTrue(offsetX >= 0 && offsetX < WIDTH && offsetZ >= 0 && offsetZ < WIDTH);
 			
 			this.isEmpty = false;
@@ -356,7 +356,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 	/** Returns whether data at the given posToWrite can effect the target region file at posToTest. */
 	public static boolean firstDataPosCanAffectSecond(DhSectionPos posToWrite, DhSectionPos posToTest)
 	{
-		if (!posToWrite.overlaps(posToTest))
+		if (!posToWrite.overlapsExactly(posToTest))
 		{
 			// the testPosition is outside the writePosition
 			return false;
@@ -418,7 +418,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 	
 	public void updateFromLowerCompleteSource(CompleteFullDataSource subData)
 	{
-		LodUtil.assertTrue(this.sectionPos.overlaps(subData.sectionPos));
+		LodUtil.assertTrue(this.sectionPos.overlapsExactly(subData.sectionPos));
 		LodUtil.assertTrue(subData.sectionPos.sectionDetailLevel < this.sectionPos.sectionDetailLevel);
 		if (!firstDataPosCanAffectSecond(this.sectionPos, subData.sectionPos))
 		{

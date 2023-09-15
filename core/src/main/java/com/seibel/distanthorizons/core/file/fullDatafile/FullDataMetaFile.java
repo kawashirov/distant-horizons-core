@@ -344,7 +344,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	{
 		checkAndLogPhantomDataSourceLifeCycles();
 		
-		DhLodPos chunkLodPos = new DhLodPos(LodUtil.CHUNK_DETAIL_LEVEL, chunkAccessor.pos.x, chunkAccessor.pos.z);
+		DhLodPos chunkLodPos = new DhLodPos(LodUtil.CHUNK_DETAIL_LEVEL, chunkAccessor.chunkPos.x, chunkAccessor.chunkPos.z);
 		
 		LodUtil.assertTrue(this.pos.getSectionBBoxPos().overlapsExactly(chunkLodPos), "Chunk pos " + chunkLodPos + " doesn't exactly overlap with section " + this.pos);
 		//LOGGER.info("Write Chunk {} to file {}", chunkPos, pos);

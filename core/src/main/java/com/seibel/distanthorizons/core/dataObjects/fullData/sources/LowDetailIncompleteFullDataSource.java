@@ -318,21 +318,21 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 	@Override
 	public void update(ChunkSizedFullDataAccessor data)
 	{
-		LodUtil.assertTrue(this.sectionPos.getSectionBBoxPos().overlapsExactly(data.getLodPos()));
+		LodUtil.assertTrue(this.sectionPos.overlapsExactly(data.getSectionPos()));
 		
 		if (this.getDataDetailLevel() >= 4)
 		{
 			//FIXME: TEMPORARY
 			int chunkPerFull = 1 << (this.getDataDetailLevel() - 4);
-			if (data.pos.x % chunkPerFull != 0 || data.pos.z % chunkPerFull != 0)
+			if (data.chunkPos.x % chunkPerFull != 0 || data.chunkPos.z % chunkPerFull != 0)
 			{
 				return;
 			}
 			
 			DhLodPos baseOffset = this.sectionPos.getMinCornerLodPos(this.getDataDetailLevel());
-			DhLodPos dataOffset = data.getLodPos().convertToDetailLevel(this.getDataDetailLevel());
-			int offsetX = dataOffset.x - baseOffset.x;
-			int offsetZ = dataOffset.z - baseOffset.z;
+			DhSectionPos dataOffset = data.getSectionPos().convertNewToDetailLevel(this.getDataDetailLevel());
+			int offsetX = dataOffset.sectionX - baseOffset.x;
+			int offsetZ = dataOffset.sectionZ - baseOffset.z;
 			LodUtil.assertTrue(offsetX >= 0 && offsetX < WIDTH && offsetZ >= 0 && offsetZ < WIDTH);
 			this.isEmpty = false;
 			
@@ -354,7 +354,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 	{
 		DhSectionPos pos = fullDataSource.getSectionPos();
 		LodUtil.assertTrue(pos.sectionDetailLevel < this.sectionPos.sectionDetailLevel);
-		LodUtil.assertTrue(pos.overlaps(this.sectionPos));
+		LodUtil.assertTrue(pos.overlapsExactly(this.sectionPos));
 		
 		if (fullDataSource.isEmpty())
 		{
@@ -572,7 +572,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 	
 	public static boolean neededForPosition(DhSectionPos posToWrite, DhSectionPos posToTest)
 	{
-		if (!posToWrite.overlaps(posToTest))
+		if (!posToWrite.overlapsExactly(posToTest))
 			return false;
 		if (posToTest.sectionDetailLevel > posToWrite.sectionDetailLevel)
 			return false;

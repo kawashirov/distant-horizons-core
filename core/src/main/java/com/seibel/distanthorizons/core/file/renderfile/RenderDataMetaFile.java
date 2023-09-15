@@ -30,7 +30,6 @@ import com.seibel.distanthorizons.core.file.metaData.AbstractMetaDataContainerFi
 import com.seibel.distanthorizons.core.file.metaData.BaseMetaData;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.render.renderer.DebugRenderer;
-import com.seibel.distanthorizons.core.pos.DhLodPos;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.core.dataObjects.render.ColumnRenderLoader;
 import com.seibel.distanthorizons.core.dataObjects.render.ColumnRenderSource;
@@ -136,8 +135,8 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 	
 	public void updateChunkIfSourceExistsAsync(ChunkSizedFullDataAccessor chunkDataView)
 	{
-		DhLodPos chunkPos = chunkDataView.getLodPos();
-		LodUtil.assertTrue(this.pos.getSectionBBoxPos().overlapsExactly(chunkPos), "Chunk pos " + chunkPos + " doesn't overlap with section " + this.pos);
+		DhSectionPos chunkSectionPos = chunkDataView.getSectionPos();
+		LodUtil.assertTrue(this.pos.overlapsExactly(chunkSectionPos), "Chunk pos " + chunkSectionPos + " doesn't overlap with section " + this.pos);
 		
 		// update the render source if one exists
 		CompletableFuture<ColumnRenderSource> renderSourceLoadFuture = this.getCachedDataSourceAsync(false);
@@ -156,7 +155,7 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 			Color debugColor = dataUpdated ? Color.blue : Color.red;
 			DebugRenderer.makeParticle(
 					new DebugRenderer.BoxParticle(
-							new DebugRenderer.Box(chunkDataView.getLodPos(), 32f, 64f + offset, 0.07f, debugColor),
+							new DebugRenderer.Box(chunkDataView.getSectionPos(), 32f, 64f + offset, 0.07f, debugColor),
 							2.0, 16f
 					)
 			);

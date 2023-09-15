@@ -20,7 +20,6 @@
 package com.seibel.distanthorizons.core.dataObjects.fullData.accessor;
 
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
-import com.seibel.distanthorizons.core.pos.DhLodPos;
 import com.seibel.distanthorizons.core.dataObjects.fullData.FullDataPointIdMap;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.core.util.FullDataPointUtil;
@@ -34,19 +33,22 @@ import com.seibel.distanthorizons.core.util.LodUtil;
  */
 public class ChunkSizedFullDataAccessor extends FullDataArrayAccessor
 {
-	public final DhChunkPos pos;
+	public final DhChunkPos chunkPos;
+	public final DhSectionPos sectionPos;
+	
 	// TODO replace this var with LodUtil.BLOCK_DETAIL_LEVEL 
 	public final byte detailLevel = LodUtil.BLOCK_DETAIL_LEVEL;
 	
 	
 	
-	public ChunkSizedFullDataAccessor(DhChunkPos pos)
+	public ChunkSizedFullDataAccessor(DhChunkPos chunkPos)
 	{
-		super(new FullDataPointIdMap(new DhSectionPos(pos)),
+		super(new FullDataPointIdMap(new DhSectionPos(chunkPos)),
 				new long[LodUtil.CHUNK_WIDTH * LodUtil.CHUNK_WIDTH][0],
 				LodUtil.CHUNK_WIDTH);
 		
-		this.pos = pos;
+		this.chunkPos = chunkPos;
+		this.sectionPos = new DhSectionPos(LodUtil.CHUNK_DETAIL_LEVEL, this.chunkPos.x, this.chunkPos.z);
 	}
 	
 	
@@ -68,9 +70,9 @@ public class ChunkSizedFullDataAccessor extends FullDataArrayAccessor
 	
 	public long emptyCount() { return (LodUtil.CHUNK_WIDTH * LodUtil.CHUNK_WIDTH) - this.nonEmptyCount(); }
 	
-	public DhLodPos getLodPos() { return new DhLodPos(LodUtil.CHUNK_DETAIL_LEVEL, this.pos.x, this.pos.z); }
+	public DhSectionPos getSectionPos() { return this.sectionPos; }
 	
 	@Override
-	public String toString() { return this.pos + " " + this.nonEmptyCount(); }
+	public String toString() { return this.chunkPos + " " + this.nonEmptyCount(); }
 	
 }

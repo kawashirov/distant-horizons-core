@@ -228,6 +228,8 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		byte sectionDetail = posAreaToGet.sectionDetailLevel;
 		boolean allEmpty = true;
 		
+		final DhSectionPos subPos = new DhSectionPos((byte)0, 0, 0);
+		
 		// get all existing files for this position
 		outerLoop:
 		while (--sectionDetail >= this.minDetailLevel)
@@ -239,8 +241,8 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 			{
 				for (int zOffset = 0; zOffset < count; zOffset++)
 				{
-					DhSectionPos subPos = new DhSectionPos(sectionDetail, xOffset + minPos.x, zOffset + minPos.z);
-					LodUtil.assertTrue(posAreaToGet.overlaps(effectivePos) && subPos.overlaps(posAreaToGet));
+					subPos.mutate(sectionDetail, xOffset + minPos.x, zOffset + minPos.z);
+					LodUtil.assertTrue(posAreaToGet.overlapsExactly(effectivePos) && subPos.overlapsExactly(posAreaToGet));
 					
 					//TODO: The following check is temporary as we only sample corner points, which means
 					// on a very different level, we may not need the entire section at all.
@@ -317,11 +319,11 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	@Override
 	public void writeChunkDataToFile(DhSectionPos sectionPos, ChunkSizedFullDataAccessor chunkDataView)
 	{
-		DhLodPos chunkPos = chunkDataView.getLodPos();
-		LodUtil.assertTrue(chunkPos.overlapsExactly(sectionPos.getSectionBBoxPos()), "Chunk " + chunkPos + " does not overlap section " + sectionPos);
+		DhSectionPos chunkSectionPos = chunkDataView.getSectionPos();
+		LodUtil.assertTrue(chunkSectionPos.overlapsExactly(sectionPos), "Chunk " + chunkSectionPos + " does not overlap section " + sectionPos);
 		
-		chunkPos = chunkPos.convertToDetailLevel((byte) this.minDetailLevel);
-		this.writeChunkDataToMetaFile(new DhSectionPos(chunkPos.detailLevel, chunkPos.x, chunkPos.z), chunkDataView);
+		chunkSectionPos = chunkSectionPos.convertNewToDetailLevel((byte) this.minDetailLevel);
+		this.writeChunkDataToMetaFile(chunkSectionPos, chunkDataView);
 	}
 	private void writeChunkDataToMetaFile(DhSectionPos sectionPos, ChunkSizedFullDataAccessor chunkData)
 	{

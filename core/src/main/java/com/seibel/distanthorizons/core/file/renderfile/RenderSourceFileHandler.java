@@ -253,16 +253,18 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	}
 	private void writeChunkDataToFileRecursively(ChunkSizedFullDataAccessor chunk, byte sectionDetailLevel)
 	{
-		DhLodPos boundingPos = chunk.getLodPos();
-		DhLodPos minSectionPos = boundingPos.convertToDetailLevel(sectionDetailLevel);
+		DhSectionPos boundingPos = chunk.getSectionPos();
+		DhSectionPos minSectionPos = boundingPos.convertNewToDetailLevel(sectionDetailLevel);
 		
-		int width = (sectionDetailLevel > boundingPos.detailLevel) ? 1 : boundingPos.getWidthAtDetail(sectionDetailLevel);
+		DhSectionPos fileSectionPos = new DhSectionPos((byte)0, 0, 0);
+		
+		int width = (sectionDetailLevel > boundingPos.sectionDetailLevel) ? 1 : boundingPos.getWidthCountForLowerDetailedSection(sectionDetailLevel);
 		for (int xOffset = 0; xOffset < width; xOffset++)
 		{
 			for (int zOffset = 0; zOffset < width; zOffset++)
 			{
-				DhSectionPos sectionPos = new DhSectionPos(sectionDetailLevel, minSectionPos.x + xOffset, minSectionPos.z + zOffset);
-				RenderDataMetaFile metaFile = this.metaFileBySectionPos.get(sectionPos); // bypass the getLoadOrMakeFile() since we only want cached files.
+				fileSectionPos.mutate(sectionDetailLevel, minSectionPos.sectionX + xOffset, minSectionPos.sectionZ + zOffset);
+				RenderDataMetaFile metaFile = this.metaFileBySectionPos.get(fileSectionPos); // bypass the getLoadOrMakeFile() since we only want cached files.
 				if (metaFile != null)
 				{
 					metaFile.updateChunkIfSourceExistsAsync(chunk);

@@ -404,6 +404,7 @@ public class QuadTree<T>
 			{
 				if (node != null || includeNullNodes)
 				{
+					// TODO can these DhSectionPos be pooled?
 					DhSectionPos rootPos = new DhSectionPos(QuadTree.this.treeMinDetailLevel, pos2D.x, pos2D.y);
 					if (QuadTree.this.isSectionPosInBounds(rootPos))
 					{

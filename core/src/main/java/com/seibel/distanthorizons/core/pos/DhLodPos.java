@@ -192,11 +192,14 @@ public class DhLodPos implements Comparable<DhLodPos>
 	public boolean overlapsExactly(DhLodPos other)
 	{
 		if (this.equals(other))
+		{
 			return true;
-		if (this.detailLevel == other.detailLevel)
+		}
+		else if (this.detailLevel == other.detailLevel)
+		{
 			return false;
-		
-		if (this.detailLevel > other.detailLevel)
+		}
+		else if (this.detailLevel > other.detailLevel)
 		{
 			return this.equals(other.convertToDetailLevel(this.detailLevel));
 		}

@@ -456,7 +456,7 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 	@Override
 	public void update(ChunkSizedFullDataAccessor chunkDataView)
 	{
-		int arrayOffset = this.calculateOffset(chunkDataView.pos.x, chunkDataView.pos.z);
+		int arrayOffset = this.calculateOffset(chunkDataView.chunkPos.x, chunkDataView.chunkPos.z);
 		FullDataArrayAccessor newArray = new FullDataArrayAccessor(this.mapping, new long[this.dataPointsPerSection * this.dataPointsPerSection][], this.dataPointsPerSection);
 		if (this.getDataDetailLevel() == chunkDataView.detailLevel)
 		{
@@ -489,7 +489,7 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 	{
 		DhSectionPos pos = fullDataSource.getSectionPos();
 		LodUtil.assertTrue(pos.sectionDetailLevel < this.sectionPos.sectionDetailLevel);
-		LodUtil.assertTrue(pos.overlaps(this.sectionPos));
+		LodUtil.assertTrue(pos.overlapsExactly(this.sectionPos));
 		if (fullDataSource.isEmpty())
 		{
 			return;

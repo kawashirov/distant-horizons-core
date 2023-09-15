@@ -106,6 +106,18 @@ public class DhSectionPos
 	// converters //
 	//============//
 	
+	/** 
+	 * Overwrites this section pos with the given input. <br>
+	 * Can be useful to prevent duplicate allocations in high traffic loops but should 
+	 * be used sparingly as it could accidentally cause bugs due to unexpected modifications.
+	 */
+	public void mutate(byte sectionDetailLevel, int sectionX, int sectionZ)
+	{
+		this.sectionDetailLevel = sectionDetailLevel;
+		this.sectionX = sectionX;
+		this.sectionZ = sectionZ;
+	}
+	
 	/** uses the absolute detail level aka detail levels like {@link LodUtil#CHUNK_DETAIL_LEVEL} instead of the dhSectionPos detailLevels. */
 	public void convertSelfToDetailLevel(byte newDetailLevel)
 	{
@@ -256,7 +268,26 @@ public class DhSectionPos
 	// comparisons //
 	//=============//
 	
-	public boolean overlaps(DhSectionPos other) { return this.getSectionBBoxPos().overlapsExactly(other.getSectionBBoxPos()); }
+	public boolean overlapsExactly(DhSectionPos other)
+	{
+		// original logic from DhLodPos
+		if (this.equals(other))
+		{
+			return true;
+		}
+		else if (this.sectionDetailLevel == other.sectionDetailLevel)
+		{
+			return false;
+		}
+		else if (this.sectionDetailLevel > other.sectionDetailLevel)
+		{
+			return this.equals(other.convertNewToDetailLevel(this.sectionDetailLevel));
+		}
+		else
+		{
+			return other.equals(this.convertNewToDetailLevel(other.sectionDetailLevel));
+		}
+	}
 	
 	public boolean contains(DhSectionPos otherPos)
 	{
