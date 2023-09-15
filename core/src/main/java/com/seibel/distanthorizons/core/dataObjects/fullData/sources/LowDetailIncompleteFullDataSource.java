@@ -398,7 +398,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 			LodUtil.assertTrue(offsetX >= 0 && offsetX < WIDTH && offsetZ >= 0 && offsetZ < WIDTH);
 			
 			int chunksPerData = 1 << (this.getDataDetailLevel() - HighDetailIncompleteFullDataSource.SPARSE_UNIT_DETAIL);
-			int dataSpan = this.sectionPos.getWidth(this.getDataDetailLevel()).numberOfLodSectionsWide;
+			int dataSpan = this.sectionPos.getWidthCountForLowerDetailedSection(this.getDataDetailLevel());
 			
 			for (int xOffset = 0; xOffset < dataSpan; xOffset++)
 			{
@@ -419,7 +419,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 		else
 		{
 			DhLodPos dataLodPos = pos.getSectionBBoxPos();
-			int lowerSectionsPerData = this.sectionPos.getWidth(dataLodPos.detailLevel).numberOfLodSectionsWide;
+			int lowerSectionsPerData = this.sectionPos.getWidthCountForLowerDetailedSection(dataLodPos.detailLevel);
 			if (dataLodPos.x % lowerSectionsPerData != 0 || dataLodPos.z % lowerSectionsPerData != 0)
 			{
 				return;
@@ -452,7 +452,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 			
 			int offsetX = dataLodPos.x - thisLodPos.x;
 			int offsetZ = dataLodPos.z - thisLodPos.z;
-			int dataWidth = this.sectionPos.getWidth(this.getDataDetailLevel()).numberOfLodSectionsWide;
+			int dataWidth = this.sectionPos.getWidthCountForLowerDetailedSection(this.getDataDetailLevel());
 			
 			for (int xOffset = 0; xOffset < dataWidth; xOffset++)
 			{
@@ -465,7 +465,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 		else
 		{
 			DhLodPos dataPos = pos.getSectionBBoxPos();
-			int lowerSectionsPerData = this.sectionPos.getWidth(dataPos.detailLevel).numberOfLodSectionsWide;
+			int lowerSectionsPerData = this.sectionPos.getWidthCountForLowerDetailedSection(dataPos.detailLevel);
 			if (dataPos.x % lowerSectionsPerData != 0 || dataPos.z % lowerSectionsPerData != 0)
 			{
 				return;
@@ -495,7 +495,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 			
 			int offsetX = dataLodPos.x - thisLodPos.x;
 			int offsetZ = dataLodPos.z - thisLodPos.z;
-			int dataWidth = this.sectionPos.getWidth(this.getDataDetailLevel()).numberOfLodSectionsWide;
+			int dataWidth = this.sectionPos.getWidthCountForLowerDetailedSection(this.getDataDetailLevel());
 			
 			for (int xOffset = 0; xOffset < dataWidth; xOffset++)
 			{
@@ -508,7 +508,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 		else
 		{
 			DhLodPos dataPos = pos.getSectionBBoxPos();
-			int lowerSectionsPerData = this.sectionPos.getWidth(dataPos.detailLevel).numberOfLodSectionsWide;
+			int lowerSectionsPerData = this.sectionPos.getWidthCountForLowerDetailedSection(dataPos.detailLevel);
 			if (dataPos.x % lowerSectionsPerData != 0 || dataPos.z % lowerSectionsPerData != 0)
 			{
 				return;

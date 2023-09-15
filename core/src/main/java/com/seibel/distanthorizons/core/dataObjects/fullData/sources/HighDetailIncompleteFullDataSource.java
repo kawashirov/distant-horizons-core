@@ -523,7 +523,7 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 		DhLodPos basePos = this.sectionPos.getCorner(SPARSE_UNIT_DETAIL);
 		DhLodPos dataPos = pos.getCorner(SPARSE_UNIT_DETAIL);
 		
-		int coveredChunks = pos.getWidth(SPARSE_UNIT_DETAIL).numberOfLodSectionsWide;
+		int coveredChunks = pos.getWidthCountForLowerDetailedSection(SPARSE_UNIT_DETAIL);
 		int sourceDataPerChunk = SPARSE_UNIT_SIZE >>> completeDataSource.getDataDetailLevel();
 		LodUtil.assertTrue((coveredChunks * sourceDataPerChunk) == CompleteFullDataSource.WIDTH);
 		

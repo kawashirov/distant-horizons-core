@@ -135,9 +135,9 @@ public class FullDataToRenderDataTransformer
 			int baseX = pos.getCorner().getCornerBlockPos().x;
 			int baseZ = pos.getCorner().getCornerBlockPos().z;
 			
-			for (int x = 0; x < pos.getWidth(dataDetail).numberOfLodSectionsWide; x++)
+			for (int x = 0; x < pos.getWidthCountForLowerDetailedSection(dataDetail); x++)
 			{
-				for (int z = 0; z < pos.getWidth(dataDetail).numberOfLodSectionsWide; z++)
+				for (int z = 0; z < pos.getWidthCountForLowerDetailedSection(dataDetail); z++)
 				{
 					throwIfThreadInterrupted();
 					
@@ -184,9 +184,9 @@ public class FullDataToRenderDataTransformer
 		{
 			int baseX = pos.getCorner().getCornerBlockPos().x;
 			int baseZ = pos.getCorner().getCornerBlockPos().z;
-			for (int x = 0; x < pos.getWidth(dataDetail).numberOfLodSectionsWide; x++)
+			for (int x = 0; x < pos.getWidthCountForLowerDetailedSection(dataDetail); x++)
 			{
-				for (int z = 0; z < pos.getWidth(dataDetail).numberOfLodSectionsWide; z++)
+				for (int z = 0; z < pos.getWidthCountForLowerDetailedSection(dataDetail); z++)
 				{
 					throwIfThreadInterrupted();
 					

@@ -181,22 +181,25 @@ public class DhSectionPos
 				this.sectionZ * BitShiftUtil.powerOfTwo(offset));
 	}
 	
-	public DhLodUnit getWidth() { return this.getWidth(this.sectionDetailLevel); } // this always returns 1...
-	public DhLodUnit getWidth(byte returnDetailLevel)
+	/** 
+	 * A detail level of X lower than this section's detail level will return: <br>
+	 * 0 -> 1 <br>
+	 * 1 -> 2 <br>
+	 * 2 -> 4 <br>
+	 * 3 -> 8 <br>
+	 * etc.
+	 * 
+	 * @return how many {@link DhSectionPos}'s at the given detail level it would take to span the width of this section.
+	 */
+	public int getWidthCountForLowerDetailedSection(byte returnDetailLevel)
 	{
 		LodUtil.assertTrue(returnDetailLevel <= this.sectionDetailLevel, "returnDetailLevel must be less than sectionDetail");
-		byte offset = (byte) (this.sectionDetailLevel - returnDetailLevel);
-		return new DhLodUnit(this.sectionDetailLevel, BitShiftUtil.powerOfTwo(offset));
-	}
-	
-	public int getNumberOfLodSectionsWide() { return this.getNumberOfLodSectionsWide(this.sectionDetailLevel); } // TODO this always returns 1...
-	public int getNumberOfLodSectionsWide(byte returnDetailLevel)
-	{
-		LodUtil.assertTrue(returnDetailLevel <= this.sectionDetailLevel, "returnDetailLevel must be less than sectionDetail"); // TODO add something to the method name stating this
 		byte offset = (byte) (this.sectionDetailLevel - returnDetailLevel);
 		return BitShiftUtil.powerOfTwo(offset);
 	}
 	
+	/** @return how wide this section is in blocks */
+	public int getBlockWidth() { return BitShiftUtil.powerOfTwo(this.sectionDetailLevel); }
 	
 	
 	//==================//
@@ -261,7 +264,7 @@ public class DhSectionPos
 		DhBlockPos2D thisMinBlockPos = this.getCorner(LodUtil.BLOCK_DETAIL_LEVEL).getCornerBlockPos();
 		DhBlockPos2D otherCornerBlockPos = otherPos.getCorner(LodUtil.BLOCK_DETAIL_LEVEL).getCornerBlockPos();
 		
-		int thisBlockWidth = this.getWidth().toBlockWidth() - 1; // minus 1 to account for zero based positional indexing
+		int thisBlockWidth = this.getBlockWidth() - 1; // minus 1 to account for zero based positional indexing
 		DhBlockPos2D thisMaxBlockPos = new DhBlockPos2D(thisMinBlockPos.x + thisBlockWidth, thisMinBlockPos.z + thisBlockWidth);
 		
 		return thisMinBlockPos.x <= otherCornerBlockPos.x && otherCornerBlockPos.x <= thisMaxBlockPos.x &&

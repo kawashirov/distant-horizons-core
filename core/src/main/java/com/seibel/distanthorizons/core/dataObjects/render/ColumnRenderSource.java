@@ -526,7 +526,7 @@ public class ColumnRenderSource
 		stringBuilder.append(this.sectionPos);
 		stringBuilder.append(LINE_DELIMITER);
 		
-		int size = this.sectionPos.getWidth().numberOfLodSectionsWide;
+		int size = 1;
 		for (int z = 0; z < size; z++)
 		{
 			for (int x = 0; x < size; x++)
