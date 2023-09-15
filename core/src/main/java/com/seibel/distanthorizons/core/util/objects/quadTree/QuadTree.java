@@ -119,45 +119,45 @@ public class QuadTree<T>
 	/** @param runBoundaryChecks should only ever be set to true internally for removing out of bound nodes */
 	protected final QuadNode<T> getOrSetNode(DhSectionPos pos, boolean setNewValue, T newValue, boolean runBoundaryChecks) throws IndexOutOfBoundsException
 	{
-		if (!runBoundaryChecks || this.isSectionPosInBounds(pos))
-		{
-			DhSectionPos rootPos = pos.convertNewToDetailLevel(this.treeMinDetailLevel);
-			int ringListPosX = rootPos.sectionX;
-			int ringListPosZ = rootPos.sectionZ;
-			
-			QuadNode<T> topQuadNode = this.topRingList.get(ringListPosX, ringListPosZ);
-			if (topQuadNode == null)
-			{
-				if (!setNewValue)
-				{
-					return null;
-				}
-				
-				topQuadNode = new QuadNode<T>(rootPos, this.treeMaxDetailLevel);
-				boolean successfullyAdded = this.topRingList.set(ringListPosX, ringListPosZ, topQuadNode);
-				LodUtil.assertTrue(successfullyAdded, "Failed to add top quadTree node at position: " + rootPos);
-			}
-			
-			if (!topQuadNode.sectionPos.contains(pos))
-			{
-				LodUtil.assertNotReach("failed to get a root node that contains the input position: " + pos + " root node pos: " + topQuadNode.sectionPos);
-			}
-			
-			
-			QuadNode<T> returnNode = topQuadNode.getNode(pos);
-			if (setNewValue)
-			{
-				topQuadNode.setValue(pos, newValue);
-			}
-			return returnNode;
-		}
-		else
+		if (runBoundaryChecks && !this.isSectionPosInBounds(pos))
 		{
 			int radius = this.diameterInBlocks() / 2;
 			DhBlockPos2D minPos = this.getCenterBlockPos().add(new DhBlockPos2D(-radius, -radius));
 			DhBlockPos2D maxPos = this.getCenterBlockPos().add(new DhBlockPos2D(radius, radius));
 			throw new IndexOutOfBoundsException("QuadTree GetOrSet failed. Position out of bounds, min pos: " + minPos + ", max pos: " + maxPos + ", min detail level: " + this.treeMaxDetailLevel + ", max detail level: " + this.treeMinDetailLevel + ". Given Position: " + pos + " = block pos: " + pos.convertNewToDetailLevel(LodUtil.BLOCK_DETAIL_LEVEL));
 		}
+		
+		
+		
+		DhSectionPos rootPos = pos.convertNewToDetailLevel(this.treeMinDetailLevel);
+		int ringListPosX = rootPos.sectionX;
+		int ringListPosZ = rootPos.sectionZ;
+		
+		QuadNode<T> topQuadNode = this.topRingList.get(ringListPosX, ringListPosZ);
+		if (topQuadNode == null)
+		{
+			if (!setNewValue)
+			{
+				return null;
+			}
+			
+			topQuadNode = new QuadNode<T>(rootPos, this.treeMaxDetailLevel);
+			boolean successfullyAdded = this.topRingList.set(ringListPosX, ringListPosZ, topQuadNode);
+			LodUtil.assertTrue(successfullyAdded, "Failed to add top quadTree node at position: " + rootPos);
+		}
+		
+		if (!topQuadNode.sectionPos.contains(pos))
+		{
+			LodUtil.assertNotReach("failed to get a root node that contains the input position: " + pos + " root node pos: " + topQuadNode.sectionPos);
+		}
+		
+		
+		QuadNode<T> returnNode = topQuadNode.getNode(pos);
+		if (setNewValue)
+		{
+			topQuadNode.setValue(pos, newValue);
+		}
+		return returnNode;
 	}
 	
 	public boolean isSectionPosInBounds(DhSectionPos testPos)
