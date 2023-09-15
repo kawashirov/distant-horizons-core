@@ -41,7 +41,6 @@ import java.util.function.Consumer;
  * With those thoughts in mind we decided on a smallest section size of 32 data points square (IE 2x2 chunks).
  *
  * @author Leetom
- * @version 2022-11-6
  */
 public class DhSectionPos
 {
@@ -56,12 +55,12 @@ public class DhSectionPos
 	public final static byte SECTION_REGION_DETAIL_LEVEL = SECTION_MINIMUM_DETAIL_LEVEL + LodUtil.REGION_DETAIL_LEVEL;
 	
 	
-	public byte sectionDetailLevel;
+	protected byte detailLevel;
 	
 	/** in a sectionDetailLevel grid */
-	public int sectionX;
+	protected int x;
 	/** in a sectionDetailLevel grid */
-	public int sectionZ;
+	protected int z;
 	
 	
 	
@@ -69,11 +68,11 @@ public class DhSectionPos
 	// constructors //
 	//==============//
 	
-	public DhSectionPos(byte sectionDetailLevel, int sectionX, int sectionZ)
+	public DhSectionPos(byte detailLevel, int x, int z)
 	{
-		this.sectionDetailLevel = sectionDetailLevel;
-		this.sectionX = sectionX;
-		this.sectionZ = sectionZ;
+		this.detailLevel = detailLevel;
+		this.x = x;
+		this.z = z;
 	}
 	
 	public DhSectionPos(DhBlockPos blockPos)
@@ -95,9 +94,9 @@ public class DhSectionPos
 	
 	public DhSectionPos(byte detailLevel, DhLodPos dhLodPos)
 	{
-		this.sectionDetailLevel = detailLevel;
-		this.sectionX = dhLodPos.x;
-		this.sectionZ = dhLodPos.z;
+		this.detailLevel = detailLevel;
+		this.x = dhLodPos.x;
+		this.z = dhLodPos.z;
 	}
 	
 	
@@ -106,36 +105,6 @@ public class DhSectionPos
 	// converters //
 	//============//
 	
-	/** 
-	 * Overwrites this section pos with the given input. <br>
-	 * Can be useful to prevent duplicate allocations in high traffic loops but should 
-	 * be used sparingly as it could accidentally cause bugs due to unexpected modifications.
-	 */
-	public void mutate(byte sectionDetailLevel, int sectionX, int sectionZ)
-	{
-		this.sectionDetailLevel = sectionDetailLevel;
-		this.sectionX = sectionX;
-		this.sectionZ = sectionZ;
-	}
-	
-	/** uses the absolute detail level aka detail levels like {@link LodUtil#CHUNK_DETAIL_LEVEL} instead of the dhSectionPos detailLevels. */
-	public void convertSelfToDetailLevel(byte newDetailLevel)
-	{
-		// logic originally taken from DhLodPos
-		if (newDetailLevel >= this.sectionDetailLevel)
-		{
-			this.sectionX = Math.floorDiv(this.sectionX, BitShiftUtil.powerOfTwo(newDetailLevel - this.sectionDetailLevel)); 
-			this.sectionZ = Math.floorDiv(this.sectionZ, BitShiftUtil.powerOfTwo(newDetailLevel - this.sectionDetailLevel));
-		}
-		else
-		{
-			this.sectionX = this.sectionX * BitShiftUtil.powerOfTwo(this.sectionDetailLevel - newDetailLevel);
-			this.sectionZ = this.sectionZ * BitShiftUtil.powerOfTwo(this.sectionDetailLevel - newDetailLevel);
-		}
-		
-		this.sectionDetailLevel = newDetailLevel;
-	}
-	
 	/**
 	 * uses the absolute detail level aka detail levels like {@link LodUtil#CHUNK_DETAIL_LEVEL} instead of the dhSectionPos detailLevels.
 	 *
@@ -143,11 +112,40 @@ public class DhSectionPos
 	 */
 	public DhSectionPos convertNewToDetailLevel(byte newSectionDetailLevel)
 	{
-		DhSectionPos newPos = new DhSectionPos(this.sectionDetailLevel, this.sectionX, this.sectionZ);
+		DhSectionPos newPos = new DhSectionPos(this.detailLevel, this.x, this.z);
 		newPos.convertSelfToDetailLevel(newSectionDetailLevel);
 		
 		return newPos;
 	}
+	
+	/** uses the absolute detail level aka detail levels like {@link LodUtil#CHUNK_DETAIL_LEVEL} instead of the dhSectionPos detailLevels. */
+	protected void convertSelfToDetailLevel(byte newDetailLevel)
+	{
+		// logic originally taken from DhLodPos
+		if (newDetailLevel >= this.detailLevel)
+		{
+			this.x = Math.floorDiv(this.x, BitShiftUtil.powerOfTwo(newDetailLevel - this.detailLevel));
+			this.z = Math.floorDiv(this.z, BitShiftUtil.powerOfTwo(newDetailLevel - this.detailLevel));
+		}
+		else
+		{
+			this.x = this.x * BitShiftUtil.powerOfTwo(this.detailLevel - newDetailLevel);
+			this.z = this.z * BitShiftUtil.powerOfTwo(this.detailLevel - newDetailLevel);
+		}
+		
+		this.detailLevel = newDetailLevel;
+	}
+	
+	
+	
+	//==================//
+	// property getters //
+	//==================//
+	
+	public byte getDetailLevel() { return this.detailLevel; }
+	
+	public int getX() { return this.x; }
+	public int getZ() { return this.z; }
 	
 	
 	
@@ -156,16 +154,16 @@ public class DhSectionPos
 	//=========//
 	
 	/** @return the corner with the smallest X and Z coordinate */
-	public DhLodPos getMinCornerLodPos() { return this.getMinCornerLodPos((byte) (this.sectionDetailLevel - 1)); }
+	public DhLodPos getMinCornerLodPos() { return this.getMinCornerLodPos((byte) (this.detailLevel - 1)); }
 	/** @return the corner with the smallest X and Z coordinate */
 	public DhLodPos getMinCornerLodPos(byte returnDetailLevel)
 	{
-		LodUtil.assertTrue(returnDetailLevel <= this.sectionDetailLevel, "returnDetailLevel must be less than sectionDetail");
+		LodUtil.assertTrue(returnDetailLevel <= this.detailLevel, "returnDetailLevel must be less than sectionDetail");
 		
-		byte offset = (byte) (this.sectionDetailLevel - returnDetailLevel);
+		byte offset = (byte) (this.detailLevel - returnDetailLevel);
 		return new DhLodPos(returnDetailLevel,
-				this.sectionX * BitShiftUtil.powerOfTwo(offset),
-				this.sectionZ * BitShiftUtil.powerOfTwo(offset));
+				this.x * BitShiftUtil.powerOfTwo(offset),
+				this.z * BitShiftUtil.powerOfTwo(offset));
 	}
 	
 	/** 
@@ -180,13 +178,13 @@ public class DhSectionPos
 	 */
 	public int getWidthCountForLowerDetailedSection(byte returnDetailLevel)
 	{
-		LodUtil.assertTrue(returnDetailLevel <= this.sectionDetailLevel, "returnDetailLevel must be less than sectionDetail");
-		byte offset = (byte) (this.sectionDetailLevel - returnDetailLevel);
+		LodUtil.assertTrue(returnDetailLevel <= this.detailLevel, "returnDetailLevel must be less than sectionDetail");
+		byte offset = (byte) (this.detailLevel - returnDetailLevel);
 		return BitShiftUtil.powerOfTwo(offset);
 	}
 	
 	/** @return how wide this section is in blocks */
-	public int getBlockWidth() { return BitShiftUtil.powerOfTwo(this.sectionDetailLevel); }
+	public int getBlockWidth() { return BitShiftUtil.powerOfTwo(this.detailLevel); }
 	
 	
 	public DhBlockPos2D getCenterBlockPos() { return new DhBlockPos2D(this.getCenterBlockPosX(), this.getCenterBlockPosZ()); }
@@ -195,9 +193,9 @@ public class DhSectionPos
 	public int getCenterBlockPosZ() { return this.getCenterBlockPos(false); }
 	private int getCenterBlockPos(boolean returnX)
 	{
-		int centerBlockPos = returnX ? this.sectionX : this.sectionZ;
+		int centerBlockPos = returnX ? this.x : this.z;
 		
-		if (this.sectionDetailLevel == 0)
+		if (this.detailLevel == 0)
 		{
 			// already at block detail level, no conversion necessary
 			return centerBlockPos;
@@ -205,12 +203,12 @@ public class DhSectionPos
 		
 		// we can't get the center of the position at block level, only attempt to get the position offset for detail levels above 0
 		int positionOffset = 0;
-		if (this.sectionDetailLevel != 1)
+		if (this.detailLevel != 1)
 		{
-			positionOffset = BitShiftUtil.powerOfTwo(this.sectionDetailLevel - 1);
+			positionOffset = BitShiftUtil.powerOfTwo(this.detailLevel - 1);
 		}
 		
-		return (centerBlockPos * BitShiftUtil.powerOfTwo(this.sectionDetailLevel)) + positionOffset;
+		return (centerBlockPos * BitShiftUtil.powerOfTwo(this.detailLevel)) + positionOffset;
 	}
 	
 	
@@ -236,31 +234,31 @@ public class DhSectionPos
 		{
 			throw new IllegalArgumentException("child0to3 must be between 0 and 3");
 		}
-		if (this.sectionDetailLevel <= 0)
+		if (this.detailLevel <= 0)
 		{
 			throw new IllegalStateException("section detail must be greater than 0");
 		}
 		
-		return new DhSectionPos((byte) (this.sectionDetailLevel - 1),
-				this.sectionX * 2 + (child0to3 & 1),
-				this.sectionZ * 2 + BitShiftUtil.half(child0to3 & 2));
+		return new DhSectionPos((byte) (this.detailLevel - 1),
+				this.x * 2 + (child0to3 & 1),
+				this.z * 2 + BitShiftUtil.half(child0to3 & 2));
 	}
 	/** Returns this position's child index in its parent */
-	public int getChildIndexOfParent() { return (this.sectionX & 1) + BitShiftUtil.square(this.sectionZ & 1); }
+	public int getChildIndexOfParent() { return (this.x & 1) + BitShiftUtil.square(this.z & 1); }
 	
-	public DhSectionPos getParentPos() { return new DhSectionPos((byte) (this.sectionDetailLevel + 1), BitShiftUtil.half(this.sectionX), BitShiftUtil.half(this.sectionZ)); }
+	public DhSectionPos getParentPos() { return new DhSectionPos((byte) (this.detailLevel + 1), BitShiftUtil.half(this.x), BitShiftUtil.half(this.z)); }
 	
 	
 	
 	
 	public DhSectionPos getAdjacentPos(EDhDirection dir)
 	{
-		return new DhSectionPos(this.sectionDetailLevel,
-				this.sectionX + dir.getNormal().x,
-				this.sectionZ + dir.getNormal().z);
+		return new DhSectionPos(this.detailLevel,
+				this.x + dir.getNormal().x,
+				this.z + dir.getNormal().z);
 	}
 	
-	public DhLodPos getSectionBBoxPos() { return new DhLodPos(this.sectionDetailLevel, this.sectionX, this.sectionZ); }
+	public DhLodPos getSectionBBoxPos() { return new DhLodPos(this.detailLevel, this.x, this.z); }
 	
 	
 	
@@ -275,17 +273,17 @@ public class DhSectionPos
 		{
 			return true;
 		}
-		else if (this.sectionDetailLevel == other.sectionDetailLevel)
+		else if (this.detailLevel == other.detailLevel)
 		{
 			return false;
 		}
-		else if (this.sectionDetailLevel > other.sectionDetailLevel)
+		else if (this.detailLevel > other.detailLevel)
 		{
-			return this.equals(other.convertNewToDetailLevel(this.sectionDetailLevel));
+			return this.equals(other.convertNewToDetailLevel(this.detailLevel));
 		}
 		else
 		{
-			return other.equals(this.convertNewToDetailLevel(other.sectionDetailLevel));
+			return other.equals(this.convertNewToDetailLevel(other.detailLevel));
 		}
 	}
 	
@@ -319,7 +317,7 @@ public class DhSectionPos
 	/** Applies the given consumer to all children of the position at the given section detail level. */
 	public void forEachChildAtLevel(byte sectionDetailLevel, Consumer<DhSectionPos> callback)
 	{
-		if (sectionDetailLevel == this.sectionDetailLevel)
+		if (sectionDetailLevel == this.detailLevel)
 		{
 			callback.accept(this);
 			return;
@@ -338,7 +336,7 @@ public class DhSectionPos
 	//===============//
 	
 	/** Serialize() is different from toString() as it must NEVER be changed, and should be in a short format */
-	public String serialize() { return "[" + this.sectionDetailLevel + ',' + this.sectionX + ',' + this.sectionZ + ']'; }
+	public String serialize() { return "[" + this.detailLevel + ',' + this.x + ',' + this.z + ']'; }
 	
 	@Nullable
 	public static DhSectionPos deserialize(String value)
@@ -357,7 +355,7 @@ public class DhSectionPos
 	//===========//
 	
 	@Override
-	public String toString() { return "{" + this.sectionDetailLevel + "*" + this.sectionX + "," + this.sectionZ + "}"; }
+	public String toString() { return "{" + this.detailLevel + "*" + this.x + "," + this.z + "}"; }
 	
 	@Override
 	public boolean equals(Object obj)
@@ -372,17 +370,77 @@ public class DhSectionPos
 		}
 		
 		DhSectionPos that = (DhSectionPos) obj;
-		return this.sectionDetailLevel == that.sectionDetailLevel &&
-				this.sectionX == that.sectionX &&
-				this.sectionZ == that.sectionZ;
+		return this.detailLevel == that.detailLevel &&
+				this.x == that.x &&
+				this.z == that.z;
 	}
 	
 	@Override
 	public int hashCode()
 	{
-		return Integer.hashCode(this.sectionDetailLevel) ^ // XOR
-				Integer.hashCode(this.sectionX) ^ // XOR
-				Integer.hashCode(this.sectionZ);
+		return Integer.hashCode(this.detailLevel) ^ // XOR
+				Integer.hashCode(this.x) ^ // XOR
+				Integer.hashCode(this.z);
+	}
+	
+	
+	
+	//=============//
+	// sub classes //
+	//=============//
+	
+	/**
+	 * Identical to {@link DhSectionPos} except it is mutable.
+	 * See {@link DhSectionPos} for full documentation.
+	 * 
+	 * @see DhSectionPos
+	 */
+	public static class DhMutableSectionPos extends DhSectionPos
+	{
+		
+		//==============//
+		// constructors //
+		//==============//
+		
+		public DhMutableSectionPos(byte sectionDetailLevel, int sectionX, int sectionZ) { super(sectionDetailLevel, sectionX, sectionZ); }
+		public DhMutableSectionPos(DhBlockPos blockPos) { super(blockPos); }
+		public DhMutableSectionPos(DhBlockPos2D blockPos) { super(blockPos); }
+		public DhMutableSectionPos(DhChunkPos chunkPos) { super(chunkPos); }
+		public DhMutableSectionPos(byte detailLevel, DhLodPos dhLodPos) { super(detailLevel, dhLodPos); }
+		
+		
+		
+		//============//
+		// converters //
+		//============//
+		
+		/**
+		 * Overwrites this section pos with the given input. <br>
+		 * Can be useful to prevent duplicate allocations in high traffic loops but should 
+		 * be used sparingly as it could accidentally cause bugs due to unexpected modifications.
+		 */
+		public void mutate(byte sectionDetailLevel, int sectionX, int sectionZ)
+		{
+			this.detailLevel = sectionDetailLevel;
+			this.x = sectionX;
+			this.z = sectionZ;
+		}
+		
+		@Override
+		public void convertSelfToDetailLevel(byte newDetailLevel) { super.convertSelfToDetailLevel(newDetailLevel); }
+		
+		
+		
+		//==================//
+		// property getters //
+		//==================//
+		
+		public void setDetailLevel(byte sectionDetailLevel) { this.detailLevel = sectionDetailLevel; }
+		
+		public void setX(int sectionX) { this.x = sectionX; }
+		
+		public void setZ(int sectionZ) { this.z = sectionZ; }
+		
 	}
 	
 }

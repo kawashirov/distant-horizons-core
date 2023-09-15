@@ -161,7 +161,7 @@ public class RenderBufferHandler
 				return abPosDifference;
 			}
 			
-			return loadedBufferA.pos.sectionDetailLevel - loadedBufferB.pos.sectionDetailLevel; // If all else fails, sort by detail
+			return loadedBufferA.pos.getDetailLevel() - loadedBufferB.pos.getDetailLevel(); // If all else fails, sort by detail
 		};
 		
 		// Build the sorted list

@@ -332,8 +332,8 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 			DhLodPos baseOffset = this.sectionPos.getMinCornerLodPos(this.getDataDetailLevel());
 			DhSectionPos dataOffset = chunkDataView.getSectionPos().convertNewToDetailLevel(this.getDataDetailLevel());
 			
-			int offsetX = dataOffset.sectionX - baseOffset.x;
-			int offsetZ = dataOffset.sectionZ - baseOffset.z;
+			int offsetX = dataOffset.getX() - baseOffset.x;
+			int offsetZ = dataOffset.getZ() - baseOffset.z;
 			LodUtil.assertTrue(offsetX >= 0 && offsetX < WIDTH && offsetZ >= 0 && offsetZ < WIDTH);
 			
 			this.isEmpty = false;
@@ -361,13 +361,13 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 			// the testPosition is outside the writePosition
 			return false;
 		}
-		else if (posToTest.sectionDetailLevel > posToWrite.sectionDetailLevel)
+		else if (posToTest.getDetailLevel() > posToWrite.getDetailLevel())
 		{
 			// the testPosition is larger (aka is less detailed) than the writePosition,
 			// more detailed sections shouldn't be updated by lower detail sections
 			return false;
 		}
-		else if (posToWrite.sectionDetailLevel - posToTest.sectionDetailLevel <= SECTION_SIZE_OFFSET)
+		else if (posToWrite.getDetailLevel() - posToTest.getDetailLevel() <= SECTION_SIZE_OFFSET)
 		{
 			// if the difference in detail levels is very large, the posToWrite
 			// may be skipped, due to how we sample large detail levels by only
@@ -380,9 +380,9 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 		{
 			// the difference in detail levels is very large,
 			// check if the posToWrite is in a corner of posToTest
-			byte sectPerData = (byte) BitShiftUtil.powerOfTwo(posToWrite.sectionDetailLevel - posToTest.sectionDetailLevel - SECTION_SIZE_OFFSET);
+			byte sectPerData = (byte) BitShiftUtil.powerOfTwo(posToWrite.getDetailLevel() - posToTest.getDetailLevel() - SECTION_SIZE_OFFSET);
 			LodUtil.assertTrue(sectPerData != 0);
-			return posToTest.sectionX % sectPerData == 0 && posToTest.sectionZ % sectPerData == 0;
+			return posToTest.getX() % sectPerData == 0 && posToTest.getZ() % sectPerData == 0;
 		}
 	}
 	
@@ -395,7 +395,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 	@Override
 	public DhSectionPos getSectionPos() { return this.sectionPos; }
 	@Override
-	public byte getDataDetailLevel() { return (byte) (this.sectionPos.sectionDetailLevel - SECTION_SIZE_OFFSET); }
+	public byte getDataDetailLevel() { return (byte) (this.sectionPos.getDetailLevel() - SECTION_SIZE_OFFSET); }
 	
 	@Override
 	public byte getBinaryDataFormatVersion() { return DATA_FORMAT_VERSION; }
@@ -419,14 +419,14 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 	public void updateFromLowerCompleteSource(CompleteFullDataSource subData)
 	{
 		LodUtil.assertTrue(this.sectionPos.overlapsExactly(subData.sectionPos));
-		LodUtil.assertTrue(subData.sectionPos.sectionDetailLevel < this.sectionPos.sectionDetailLevel);
+		LodUtil.assertTrue(subData.sectionPos.getDetailLevel() < this.sectionPos.getDetailLevel());
 		if (!firstDataPosCanAffectSecond(this.sectionPos, subData.sectionPos))
 		{
 			return;
 		}
 		
 		DhSectionPos lowerSectPos = subData.sectionPos;
-		byte detailDiff = (byte) (this.sectionPos.sectionDetailLevel - subData.sectionPos.sectionDetailLevel);
+		byte detailDiff = (byte) (this.sectionPos.getDetailLevel() - subData.sectionPos.getDetailLevel());
 		byte targetDataDetail = this.getDataDetailLevel();
 		DhLodPos minDataPos = this.sectionPos.getMinCornerLodPos(targetDataDetail);
 		if (detailDiff <= SECTION_SIZE_OFFSET)

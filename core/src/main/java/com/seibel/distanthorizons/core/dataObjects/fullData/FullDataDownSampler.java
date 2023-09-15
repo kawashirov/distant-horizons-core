@@ -113,7 +113,7 @@ public class FullDataDownSampler
 			// The source occupies only 1 datapoint in the target
 			// FIXME: TEMP method for down-sampling: take only the corner column
 			int sourceSectionPerTargetData = 1 << (detailDiff - CompleteFullDataSource.SECTION_SIZE_OFFSET);
-			if (srcPos.sectionX % sourceSectionPerTargetData != 0 || srcPos.sectionZ % sourceSectionPerTargetData != 0)
+			if (srcPos.getX() % sourceSectionPerTargetData != 0 || srcPos.getZ() % sourceSectionPerTargetData != 0)
 			{
 				return;
 			}

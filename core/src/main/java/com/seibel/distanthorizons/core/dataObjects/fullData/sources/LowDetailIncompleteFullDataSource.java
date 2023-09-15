@@ -84,7 +84,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 	private LowDetailIncompleteFullDataSource(DhSectionPos sectionPos)
 	{
 		super(new FullDataPointIdMap(sectionPos), new long[WIDTH * WIDTH][0], WIDTH);
-		LodUtil.assertTrue(sectionPos.sectionDetailLevel > HighDetailIncompleteFullDataSource.MAX_SECTION_DETAIL);
+		LodUtil.assertTrue(sectionPos.getDetailLevel() > HighDetailIncompleteFullDataSource.MAX_SECTION_DETAIL);
 		
 		this.sectionPos = sectionPos;
 		this.isColumnNotEmpty = new BitSet(WIDTH * WIDTH);
@@ -295,7 +295,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 	@Override
 	public DhSectionPos getSectionPos() { return this.sectionPos; }
 	@Override
-	public byte getDataDetailLevel() { return (byte) (this.sectionPos.sectionDetailLevel - SECTION_SIZE_OFFSET); }
+	public byte getDataDetailLevel() { return (byte) (this.sectionPos.getDetailLevel() - SECTION_SIZE_OFFSET); }
 	@Override
 	public byte getBinaryDataFormatVersion() { return DATA_FORMAT_VERSION; }
 	
@@ -331,8 +331,8 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 			
 			DhLodPos baseOffset = this.sectionPos.getMinCornerLodPos(this.getDataDetailLevel());
 			DhSectionPos dataOffset = data.getSectionPos().convertNewToDetailLevel(this.getDataDetailLevel());
-			int offsetX = dataOffset.sectionX - baseOffset.x;
-			int offsetZ = dataOffset.sectionZ - baseOffset.z;
+			int offsetX = dataOffset.getX() - baseOffset.x;
+			int offsetZ = dataOffset.getZ() - baseOffset.z;
 			LodUtil.assertTrue(offsetX >= 0 && offsetX < WIDTH && offsetZ >= 0 && offsetZ < WIDTH);
 			this.isEmpty = false;
 			
@@ -353,7 +353,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 	public void sampleFrom(IFullDataSource fullDataSource)
 	{
 		DhSectionPos pos = fullDataSource.getSectionPos();
-		LodUtil.assertTrue(pos.sectionDetailLevel < this.sectionPos.sectionDetailLevel);
+		LodUtil.assertTrue(pos.getDetailLevel() < this.sectionPos.getDetailLevel());
 		LodUtil.assertTrue(pos.overlapsExactly(this.sectionPos));
 		
 		if (fullDataSource.isEmpty())
@@ -389,7 +389,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 		
 		this.isEmpty = false;
 		
-		if (this.getDataDetailLevel() > this.sectionPos.sectionDetailLevel)
+		if (this.getDataDetailLevel() > this.sectionPos.getDetailLevel())
 		{
 			DhLodPos dataLodPos = pos.getMinCornerLodPos(this.getDataDetailLevel());
 			
@@ -445,7 +445,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 		this.isEmpty = false;
 		this.downsampleFrom(completeSource);
 		
-		if (this.getDataDetailLevel() > this.sectionPos.sectionDetailLevel) // TODO what does this mean?
+		if (this.getDataDetailLevel() > this.sectionPos.getDetailLevel()) // TODO what does this mean?
 		{
 			DhLodPos thisLodPos = this.sectionPos.getMinCornerLodPos(this.getDataDetailLevel());
 			DhLodPos dataLodPos = pos.getMinCornerLodPos(this.getDataDetailLevel());
@@ -488,7 +488,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 		this.downsampleFrom(spottySource);
 		
 		
-		if (this.getDataDetailLevel() > this.sectionPos.sectionDetailLevel)
+		if (this.getDataDetailLevel() > this.sectionPos.getDetailLevel())
 		{
 			DhLodPos thisLodPos = this.sectionPos.getMinCornerLodPos(this.getDataDetailLevel());
 			DhLodPos dataLodPos = pos.getMinCornerLodPos(this.getDataDetailLevel());
@@ -574,12 +574,12 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 	{
 		if (!posToWrite.overlapsExactly(posToTest))
 			return false;
-		if (posToTest.sectionDetailLevel > posToWrite.sectionDetailLevel)
+		if (posToTest.getDetailLevel() > posToWrite.getDetailLevel())
 			return false;
-		if (posToWrite.sectionDetailLevel - posToTest.sectionDetailLevel <= SECTION_SIZE_OFFSET)
+		if (posToWrite.getDetailLevel() - posToTest.getDetailLevel() <= SECTION_SIZE_OFFSET)
 			return true;
-		byte sectPerData = (byte) (1 << (posToWrite.sectionDetailLevel - posToTest.sectionDetailLevel - SECTION_SIZE_OFFSET));
-		return posToTest.sectionX % sectPerData == 0 && posToTest.sectionZ % sectPerData == 0;
+		byte sectPerData = (byte) (1 << (posToWrite.getDetailLevel() - posToTest.getDetailLevel() - SECTION_SIZE_OFFSET));
+		return posToTest.getX() % sectPerData == 0 && posToTest.getZ() % sectPerData == 0;
 	}
 	
 	

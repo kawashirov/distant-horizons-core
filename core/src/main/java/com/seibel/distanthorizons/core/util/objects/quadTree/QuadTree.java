@@ -130,8 +130,8 @@ public class QuadTree<T>
 		
 		
 		DhSectionPos rootPos = pos.convertNewToDetailLevel(this.treeMinDetailLevel);
-		int ringListPosX = rootPos.sectionX;
-		int ringListPosZ = rootPos.sectionZ;
+		int ringListPosX = rootPos.getX();
+		int ringListPosZ = rootPos.getZ();
 		
 		QuadNode<T> topQuadNode = this.topRingList.get(ringListPosX, ringListPosZ);
 		if (topQuadNode == null)
@@ -163,7 +163,7 @@ public class QuadTree<T>
 	public boolean isSectionPosInBounds(DhSectionPos testPos)
 	{
 		// check if the testPos is within the detail level limits of the tree
-		boolean detailLevelWithinBounds = this.treeMaxDetailLevel <= testPos.sectionDetailLevel && testPos.sectionDetailLevel <= this.treeMinDetailLevel;
+		boolean detailLevelWithinBounds = this.treeMaxDetailLevel <= testPos.getDetailLevel() && testPos.getDetailLevel() <= this.treeMinDetailLevel;
 		if (!detailLevelWithinBounds)
 		{
 			return false;
@@ -175,8 +175,8 @@ public class QuadTree<T>
 		DhLodPos treeCornerPos = new DhLodPos((byte) 0, treeBlockCorner.x, treeBlockCorner.z);
 		
 		DhSectionPos inputSectionCorner = testPos.convertNewToDetailLevel((byte) 0);
-		DhLodPos inputCornerPos = new DhLodPos((byte) 0, inputSectionCorner.sectionX, inputSectionCorner.sectionZ);
-		int inputBlockWidth = BitShiftUtil.powerOfTwo(testPos.sectionDetailLevel);
+		DhLodPos inputCornerPos = new DhLodPos((byte) 0, inputSectionCorner.getX(), inputSectionCorner.getZ());
+		int inputBlockWidth = BitShiftUtil.powerOfTwo(testPos.getDetailLevel());
 		
 		return DoSquaresOverlap(treeCornerPos, this.widthInBlocks, inputCornerPos, inputBlockWidth);
 	}

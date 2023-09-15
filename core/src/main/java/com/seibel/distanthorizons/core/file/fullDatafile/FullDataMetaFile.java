@@ -431,7 +431,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	@Override
 	public void debugRender(DebugRenderer debugRenderer)
 	{
-		if (this.pos.sectionDetailLevel > DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
+		if (this.pos.getDetailLevel() > DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
 		{
 			return;
 		}
@@ -555,7 +555,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 						new DataObjSoftTracker(this, fullDataSource);
 					}
 					
-					if (this.pos.sectionDetailLevel == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
+					if (this.pos.getDetailLevel() == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
 					{
 						DebugRenderer.makeParticle(new DebugRenderer.BoxParticle(
 										new DebugRenderer.Box(this.pos, 64f, 72f, 0.03f, Color.green.darker()),

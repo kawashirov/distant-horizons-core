@@ -197,7 +197,7 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 			
 			
 			// create an empty render source
-			byte dataDetailLevel = (byte) (this.pos.sectionDetailLevel - ColumnRenderSource.SECTION_SIZE_OFFSET);
+			byte dataDetailLevel = (byte) (this.pos.getDetailLevel() - ColumnRenderSource.SECTION_SIZE_OFFSET);
 			int verticalSize = Config.Client.Advanced.Graphics.Quality.verticalQuality.get().calculateMaxVerticalData(dataDetailLevel);
 			ColumnRenderSource newColumnRenderSource = new ColumnRenderSource(this.pos, verticalSize, this.clientLevel.getMinY());
 			

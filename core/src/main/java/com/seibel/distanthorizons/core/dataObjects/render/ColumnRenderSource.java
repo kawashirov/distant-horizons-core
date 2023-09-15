@@ -109,7 +109,7 @@ public class ColumnRenderSource
 	 */
 	public ColumnRenderSource(DhSectionPos sectionPos, ColumnRenderLoader.ParsedColumnData parsedColumnData, IDhLevel level) throws IOException
 	{
-		if (sectionPos.sectionDetailLevel - SECTION_SIZE_OFFSET != parsedColumnData.detailLevel)
+		if (sectionPos.getDetailLevel() - SECTION_SIZE_OFFSET != parsedColumnData.detailLevel)
 		{
 			throw new IOException("Invalid data: detail level does not match");
 		}
@@ -360,7 +360,7 @@ public class ColumnRenderSource
 			}
 			this.fillDebugFlag(blockOffsetX, blockOffsetZ, LodUtil.CHUNK_WIDTH, LodUtil.CHUNK_WIDTH, ColumnRenderSource.DebugSourceFlag.DIRECT);
 		}
-		else if (chunkDataView.detailLevel < this.getDataDetail() && this.getDataDetail() <= chunkDataView.getSectionPos().sectionDetailLevel)
+		else if (chunkDataView.detailLevel < this.getDataDetail() && this.getDataDetail() <= chunkDataView.getSectionPos().getDetailLevel())
 		{
 			this.markNotEmpty();
 			// multiple chunk data points converting to 1 column data point
@@ -390,14 +390,14 @@ public class ColumnRenderSource
 			}
 			this.fillDebugFlag(relStartX, relStartZ, columnsInChunk, columnsInChunk, ColumnRenderSource.DebugSourceFlag.DIRECT);
 		}
-		else if (chunkDataView.getSectionPos().sectionDetailLevel < this.getDataDetail())
+		else if (chunkDataView.getSectionPos().getDetailLevel() < this.getDataDetail())
 		{
 			// The entire chunk is being converted to a single column data point, possibly.
 			DhLodPos dataCornerPos = chunkDataView.getSectionPos().getMinCornerLodPos(chunkDataView.detailLevel);
 			DhLodPos sourceCornerPos = renderSourcePos.getMinCornerLodPos(this.getDataDetail());
 			DhLodPos sourceStartingChangePos = dataCornerPos.convertToDetailLevel(this.getDataDetail());
-			int chunksPerColumn = sourceStartingChangePos.getWidthAtDetail(chunkDataView.getSectionPos().sectionDetailLevel);
-			if (chunkDataView.getSectionPos().sectionX % chunksPerColumn != 0 || chunkDataView.getSectionPos().sectionZ % chunksPerColumn != 0)
+			int chunksPerColumn = sourceStartingChangePos.getWidthAtDetail(chunkDataView.getSectionPos().getDetailLevel());
+			if (chunkDataView.getSectionPos().getX() % chunksPerColumn != 0 || chunkDataView.getSectionPos().getZ() % chunksPerColumn != 0)
 			{
 				return false; // not a multiple of the column size, so no change
 			}
@@ -443,7 +443,7 @@ public class ColumnRenderSource
 	
 	public DhSectionPos getSectionPos() { return this.sectionPos; }
 	
-	public byte getDataDetail() { return (byte) (this.sectionPos.sectionDetailLevel - SECTION_SIZE_OFFSET); }
+	public byte getDataDetail() { return (byte) (this.sectionPos.getDetailLevel() - SECTION_SIZE_OFFSET); }
 	
 	/** @return how many data points wide this {@link ColumnRenderSource} is. */
 	public int getWidthInDataPoints() { return BitShiftUtil.powerOfTwo(this.getDetailOffset()); }
