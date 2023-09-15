@@ -144,9 +144,9 @@ public class DhSectionPos
 	//=========//
 	
 	/** @return the corner with the smallest X and Z coordinate */
-	public DhLodPos getCorner() { return this.getCorner((byte) (this.sectionDetailLevel - 1)); }
+	public DhLodPos getMinCornerLodPos() { return this.getMinCornerLodPos((byte) (this.sectionDetailLevel - 1)); }
 	/** @return the corner with the smallest X and Z coordinate */
-	public DhLodPos getCorner(byte returnDetailLevel)
+	public DhLodPos getMinCornerLodPos(byte returnDetailLevel)
 	{
 		LodUtil.assertTrue(returnDetailLevel <= this.sectionDetailLevel, "returnDetailLevel must be less than sectionDetail");
 		
@@ -256,14 +256,12 @@ public class DhSectionPos
 	// comparisons //
 	//=============//
 	
-	/** NOTE: This does not consider yOffset! */
 	public boolean overlaps(DhSectionPos other) { return this.getSectionBBoxPos().overlapsExactly(other.getSectionBBoxPos()); }
 	
-	/** NOTE: This does not consider yOffset! */
 	public boolean contains(DhSectionPos otherPos)
 	{
-		DhBlockPos2D thisMinBlockPos = this.getCorner(LodUtil.BLOCK_DETAIL_LEVEL).getCornerBlockPos();
-		DhBlockPos2D otherCornerBlockPos = otherPos.getCorner(LodUtil.BLOCK_DETAIL_LEVEL).getCornerBlockPos();
+		DhBlockPos2D thisMinBlockPos = this.getMinCornerLodPos(LodUtil.BLOCK_DETAIL_LEVEL).getCornerBlockPos();
+		DhBlockPos2D otherCornerBlockPos = otherPos.getMinCornerLodPos(LodUtil.BLOCK_DETAIL_LEVEL).getCornerBlockPos();
 		
 		int thisBlockWidth = this.getBlockWidth() - 1; // minus 1 to account for zero based positional indexing
 		DhBlockPos2D thisMaxBlockPos = new DhBlockPos2D(thisMinBlockPos.x + thisBlockWidth, thisMinBlockPos.z + thisBlockWidth);

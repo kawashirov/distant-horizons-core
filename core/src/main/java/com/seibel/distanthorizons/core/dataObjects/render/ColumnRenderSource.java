@@ -312,8 +312,8 @@ public class ColumnRenderSource
 		
 		final DhSectionPos renderSourcePos = this.getSectionPos();
 		
-		final int sourceBlockX = renderSourcePos.getCorner().getCornerBlockPos().x;
-		final int sourceBlockZ = renderSourcePos.getCorner().getCornerBlockPos().z;
+		final int sourceBlockX = renderSourcePos.getMinCornerLodPos().getCornerBlockPos().x;
+		final int sourceBlockZ = renderSourcePos.getMinCornerLodPos().getCornerBlockPos().z;
 		
 		// offset between the incoming chunk data and this render source
 		final int blockOffsetX = (chunkDataView.pos.x * LodUtil.CHUNK_WIDTH) - sourceBlockX;
@@ -365,7 +365,7 @@ public class ColumnRenderSource
 			this.markNotEmpty();
 			// multiple chunk data points converting to 1 column data point
 			DhLodPos dataCornerPos = chunkDataView.getLodPos().getCornerLodPos(chunkDataView.detailLevel);
-			DhLodPos sourceCornerPos = renderSourcePos.getCorner(this.getDataDetail());
+			DhLodPos sourceCornerPos = renderSourcePos.getMinCornerLodPos(this.getDataDetail());
 			DhLodPos sourceStartingChangePos = dataCornerPos.convertToDetailLevel(this.getDataDetail());
 			int relStartX = Math.floorMod(sourceStartingChangePos.x, this.getWidthInDataPoints());
 			int relStartZ = Math.floorMod(sourceStartingChangePos.z, this.getWidthInDataPoints());
@@ -394,7 +394,7 @@ public class ColumnRenderSource
 		{
 			// The entire chunk is being converted to a single column data point, possibly.
 			DhLodPos dataCornerPos = chunkDataView.getLodPos().getCornerLodPos(chunkDataView.detailLevel);
-			DhLodPos sourceCornerPos = renderSourcePos.getCorner(this.getDataDetail());
+			DhLodPos sourceCornerPos = renderSourcePos.getMinCornerLodPos(this.getDataDetail());
 			DhLodPos sourceStartingChangePos = dataCornerPos.convertToDetailLevel(this.getDataDetail());
 			int chunksPerColumn = sourceStartingChangePos.getWidthAtDetail(chunkDataView.getLodPos().detailLevel);
 			if (chunkDataView.getLodPos().x % chunksPerColumn != 0 || chunkDataView.getLodPos().z % chunksPerColumn != 0)

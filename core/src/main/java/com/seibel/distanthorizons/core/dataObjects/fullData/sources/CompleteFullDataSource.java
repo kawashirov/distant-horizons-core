@@ -281,7 +281,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 		if (this.getDataDetailLevel() == LodUtil.BLOCK_DETAIL_LEVEL)
 		{
 			DhBlockPos2D chunkBlockPos = new DhBlockPos2D(chunkDataView.pos.x * LodUtil.CHUNK_WIDTH, chunkDataView.pos.z * LodUtil.CHUNK_WIDTH);
-			DhBlockPos2D blockOffset = chunkBlockPos.subtract(this.sectionPos.getCorner().getCornerBlockPos());
+			DhBlockPos2D blockOffset = chunkBlockPos.subtract(this.sectionPos.getMinCornerLodPos().getCornerBlockPos());
 			LodUtil.assertTrue(blockOffset.x >= 0 && blockOffset.x < WIDTH && blockOffset.z >= 0 && blockOffset.z < WIDTH);
 			this.isEmpty = false;
 			
@@ -304,7 +304,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 			int dataPerFull = 1 << this.getDataDetailLevel();
 			int fullSize = LodUtil.CHUNK_WIDTH / dataPerFull;
 			DhLodPos dataOffset = chunkDataView.getLodPos().getCornerLodPos(this.getDataDetailLevel());
-			DhLodPos baseOffset = this.sectionPos.getCorner(this.getDataDetailLevel());
+			DhLodPos baseOffset = this.sectionPos.getMinCornerLodPos(this.getDataDetailLevel());
 			
 			int offsetX = dataOffset.x - baseOffset.x;
 			int offsetZ = dataOffset.z - baseOffset.z;
@@ -329,7 +329,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 				return;
 			}
 			
-			DhLodPos baseOffset = this.sectionPos.getCorner(this.getDataDetailLevel());
+			DhLodPos baseOffset = this.sectionPos.getMinCornerLodPos(this.getDataDetailLevel());
 			DhLodPos dataOffset = chunkDataView.getLodPos().convertToDetailLevel(this.getDataDetailLevel());
 			
 			int offsetX = dataOffset.x - baseOffset.x;
@@ -428,7 +428,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 		DhSectionPos lowerSectPos = subData.sectionPos;
 		byte detailDiff = (byte) (this.sectionPos.sectionDetailLevel - subData.sectionPos.sectionDetailLevel);
 		byte targetDataDetail = this.getDataDetailLevel();
-		DhLodPos minDataPos = this.sectionPos.getCorner(targetDataDetail);
+		DhLodPos minDataPos = this.sectionPos.getMinCornerLodPos(targetDataDetail);
 		if (detailDiff <= SECTION_SIZE_OFFSET)
 		{
 			int count = 1 << detailDiff;

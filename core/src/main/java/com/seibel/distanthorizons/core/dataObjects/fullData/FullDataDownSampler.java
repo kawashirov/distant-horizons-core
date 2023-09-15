@@ -115,7 +115,7 @@ public class FullDataDownSampler
 			{
 				return;
 			}
-			DhLodPos trgOffset = trgPos.getCorner(target.getDataDetailLevel());
+			DhLodPos trgOffset = trgPos.getMinCornerLodPos(target.getDataDetailLevel());
 			DhLodPos srcOffset = srcPos.getSectionBBoxPos().convertToDetailLevel(target.getDataDetailLevel());
 			int offsetX = trgOffset.x - srcOffset.x;
 			int offsetZ = trgOffset.z - srcOffset.z;
@@ -131,7 +131,7 @@ public class FullDataDownSampler
 			int srcDataPerTrgData = 1 << detailDiff;
 			int overlappedTrgDataSize = CompleteFullDataSource.WIDTH / srcDataPerTrgData;
 			
-			DhLodPos trgOffset = trgPos.getCorner(target.getDataDetailLevel());
+			DhLodPos trgOffset = trgPos.getMinCornerLodPos(target.getDataDetailLevel());
 			DhLodPos srcOffset = srcPos.getSectionBBoxPos().getCornerLodPos(target.getDataDetailLevel());
 			int offsetX = trgOffset.x - srcOffset.x;
 			int offsetZ = trgOffset.z - srcOffset.z;

@@ -51,7 +51,6 @@ public class DhLodPos implements Comparable<DhLodPos>
 	
 	
 	
-	
 	//=========//
 	// getters //
 	//=========//

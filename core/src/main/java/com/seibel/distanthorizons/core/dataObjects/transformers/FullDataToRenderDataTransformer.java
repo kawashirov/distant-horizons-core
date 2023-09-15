@@ -132,8 +132,8 @@ public class FullDataToRenderDataTransformer
 		
 		if (dataDetail == columnSource.getDataDetail())
 		{
-			int baseX = pos.getCorner().getCornerBlockPos().x;
-			int baseZ = pos.getCorner().getCornerBlockPos().z;
+			int baseX = pos.getMinCornerLodPos().getCornerBlockPos().x;
+			int baseZ = pos.getMinCornerLodPos().getCornerBlockPos().z;
 			
 			for (int x = 0; x < pos.getWidthCountForLowerDetailedSection(dataDetail); x++)
 			{
@@ -182,8 +182,8 @@ public class FullDataToRenderDataTransformer
 		
 		if (dataDetail == columnSource.getDataDetail())
 		{
-			int baseX = pos.getCorner().getCornerBlockPos().x;
-			int baseZ = pos.getCorner().getCornerBlockPos().z;
+			int baseX = pos.getMinCornerLodPos().getCornerBlockPos().x;
+			int baseZ = pos.getMinCornerLodPos().getCornerBlockPos().z;
 			for (int x = 0; x < pos.getWidthCountForLowerDetailedSection(dataDetail); x++)
 			{
 				for (int z = 0; z < pos.getWidthCountForLowerDetailedSection(dataDetail); z++)

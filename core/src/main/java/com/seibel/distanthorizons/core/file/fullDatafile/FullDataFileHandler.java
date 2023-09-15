@@ -232,7 +232,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		outerLoop:
 		while (--sectionDetail >= this.minDetailLevel)
 		{
-			DhLodPos minPos = posAreaToGet.getCorner().getCornerLodPos(sectionDetail);
+			DhLodPos minPos = posAreaToGet.getMinCornerLodPos().getCornerLodPos(sectionDetail);
 			int count = posAreaToGet.getSectionBBoxPos().getWidthAtDetail(sectionDetail);
 			
 			for (int xOffset = 0; xOffset < count; xOffset++)

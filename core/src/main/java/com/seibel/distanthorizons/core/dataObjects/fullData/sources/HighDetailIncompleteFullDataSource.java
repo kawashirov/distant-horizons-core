@@ -104,7 +104,7 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 		this.dataPointsPerSection = SECTION_SIZE / this.sectionCount;
 		
 		this.sparseData = new FullDataArrayAccessor[this.sectionCount * this.sectionCount];
-		this.chunkPos = sectionPos.getCorner(SPARSE_UNIT_DETAIL);
+		this.chunkPos = sectionPos.getMinCornerLodPos(SPARSE_UNIT_DETAIL);
 		this.mapping = new FullDataPointIdMap(sectionPos);
 	}
 	
@@ -119,7 +119,7 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 		
 		LodUtil.assertTrue(this.sectionCount * this.sectionCount == data.length);
 		this.sparseData = data;
-		this.chunkPos = sectionPos.getCorner(SPARSE_UNIT_DETAIL);
+		this.chunkPos = sectionPos.getMinCornerLodPos(SPARSE_UNIT_DETAIL);
 		this.isEmpty = false;
 		this.mapping = mapping;
 	}
@@ -520,8 +520,8 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 		DhSectionPos pos = completeDataSource.getSectionPos();
 		this.isEmpty = false;
 		
-		DhLodPos basePos = this.sectionPos.getCorner(SPARSE_UNIT_DETAIL);
-		DhLodPos dataPos = pos.getCorner(SPARSE_UNIT_DETAIL);
+		DhLodPos basePos = this.sectionPos.getMinCornerLodPos(SPARSE_UNIT_DETAIL);
+		DhLodPos dataPos = pos.getMinCornerLodPos(SPARSE_UNIT_DETAIL);
 		
 		int coveredChunks = pos.getWidthCountForLowerDetailedSection(SPARSE_UNIT_DETAIL);
 		int sourceDataPerChunk = SPARSE_UNIT_SIZE >>> completeDataSource.getDataDetailLevel();
@@ -547,8 +547,8 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 		DhSectionPos pos = sparseDataSource.getSectionPos();
 		this.isEmpty = false;
 		
-		DhLodPos basePos = this.sectionPos.getCorner(SPARSE_UNIT_DETAIL);
-		DhLodPos dataPos = pos.getCorner(SPARSE_UNIT_DETAIL);
+		DhLodPos basePos = this.sectionPos.getMinCornerLodPos(SPARSE_UNIT_DETAIL);
+		DhLodPos dataPos = pos.getMinCornerLodPos(SPARSE_UNIT_DETAIL);
 		
 		int offsetX = dataPos.x - basePos.x;
 		int offsetZ = dataPos.z - basePos.z;
