@@ -172,15 +172,11 @@ public class DebugRenderer
 			this.yChange = yChange;
 		}
 		
-		public BoxParticle(Box box, long ns, float yChange)
-		{
-			this(box, System.nanoTime(), ns, yChange);
-		}
+		public BoxParticle(Box box, long nanoSecondDuratoin, float yChange) { this(box, System.nanoTime(), nanoSecondDuratoin, yChange); }
 		
-		public BoxParticle(Box box, double s, float yChange)
-		{
-			this(box, System.nanoTime(), (long) (s * 1000000000), yChange);
-		}
+		public BoxParticle(Box box, double secondDuration, float yChange) { this(box, System.nanoTime(), (long) (secondDuration * 1000000000), yChange); }
+		
+		
 		
 		@Override
 		public int compareTo(@NotNull DebugRenderer.BoxParticle o)
