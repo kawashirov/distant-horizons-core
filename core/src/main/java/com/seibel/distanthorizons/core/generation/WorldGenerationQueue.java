@@ -720,16 +720,17 @@ public class WorldGenerationQueue implements IWorldGenerationQueue, IDebugRender
 	//=======//
 	
 	@Override
-	public void debugRender(DebugRenderer r)
+	public void debugRender(DebugRenderer renderer)
 	{
-		//if (true) return;
-		waitingTasks.keySet().forEach((pos) -> {
-			//DhLodPos pos = t.pos;
-			r.renderBox(new DebugRenderer.Box(pos, -32f, 64f, 0.05f, Color.blue));
-		});
-		this.inProgressGenTasksByLodPos.forEach((pos, t) -> {
-			r.renderBox(new DebugRenderer.Box(pos, -32f, 64f, 0.05f, Color.red));
-		});
+		boolean showWorldGenQueue = Config.Client.Advanced.Debugging.DebugWireframe.showWorldGenQueue.get();
+		if (!showWorldGenQueue)
+		{
+			return;
+		}
+		
+		
+		this.waitingTasks.keySet().forEach((pos) -> { renderer.renderBox(new DebugRenderer.Box(pos, -32f, 64f, 0.05f, Color.blue)); });
+		this.inProgressGenTasksByLodPos.forEach((pos, t) -> { renderer.renderBox(new DebugRenderer.Box(pos, -32f, 64f, 0.05f, Color.red)); });
 	}
 	
 }

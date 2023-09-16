@@ -76,14 +76,16 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer implements IDebugRe
 		DebugRenderer.register(this);
 	}
 	
-	public void debugRender(DebugRenderer r)
+	@Override
+	public void debugRender(DebugRenderer renderer)
 	{
-		if (closed || vbos == null)
+		if (this.closed || this.vbos == null)
 		{
 			return;
 		}
+		
 		Color c = Color.green;
-		//r.renderBox(debugPos, 128, 128, 0.05f, c);
+		//renderer.renderBox(debugPos, 128, 128, 0.05f, c);
 	}
 	
 	

@@ -254,7 +254,7 @@ public class DebugRenderer
 	public static void makeParticle(BoxParticle particle)
 	{
 		if (INSTANCE == null) return;
-		if (!Config.Client.Advanced.Debugging.debugWireframeRendering.get()) return;
+		if (!Config.Client.Advanced.Debugging.DebugWireframe.enableRendering.get()) return;
 		INSTANCE.particles.add(particle);
 	}
 	
@@ -317,7 +317,7 @@ public class DebugRenderer
 	
 	public void addRenderer(IDebugRenderable r)
 	{
-		if (!Config.Client.Advanced.Debugging.debugWireframeRendering.get()) return;
+		if (!Config.Client.Advanced.Debugging.DebugWireframe.enableRendering.get()) return;
 		synchronized (renderers)
 		{
 			renderers.add(new WeakReference<>(r));

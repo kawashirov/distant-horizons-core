@@ -19,6 +19,7 @@
 
 package com.seibel.distanthorizons.core.render;
 
+import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.ColumnRenderBufferBuilder;
 import com.seibel.distanthorizons.core.enums.EDhDirection;
@@ -97,20 +98,40 @@ public class LodRenderSection implements IDebugRenderable
 		DebugRenderer.register(this);
 	}
 	
+	@Override
 	public void debugRender(DebugRenderer debugRenderer)
 	{
+		boolean showRenderSectionStatus = Config.Client.Advanced.Debugging.DebugWireframe.showRenderSectionStatus.get();
+		if (!showRenderSectionStatus)
+		{
+			return;
+		}
+		
+		
 		Color color = Color.red;
-		
-		if (this.renderSourceProvider == null) color = Color.black;
-		
-		if (this.renderSourceLoadFuture != null) color = Color.yellow;
-		
-		if (renderSource != null)
+		if (this.renderSourceProvider == null)
+		{
+			color = Color.black;
+		}
+		else if (this.renderSourceLoadFuture != null)
+		{
+			color = Color.yellow;
+		}
+		else if (this.renderSource != null)
 		{
 			color = Color.blue;
-			if (buildRenderBufferFuture != null) color = Color.magenta;
-			if (canRenderNow()) color = Color.cyan;
-			if (canRenderNow() && isRenderingEnabled) color = Color.green;
+			if (this.buildRenderBufferFuture != null)
+			{
+				color = Color.magenta;
+			}
+			else if (this.canRenderNow())
+			{
+				color = Color.cyan;
+			}
+			else if (this.canRenderNow() && this.isRenderingEnabled)
+			{
+				color = Color.green;
+			}
 		}
 		
 		debugRenderer.renderBox(new DebugRenderer.Box(this.pos, 400, 8f, Objects.hashCode(this), 0.1f, color));
@@ -160,7 +181,8 @@ public class LodRenderSection implements IDebugRenderable
 	public void reload(ILodRenderSourceProvider renderDataProvider)
 	{
 		// debug rendering
-		if (this.pos.getDetailLevel() == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
+		boolean showRenderSectionStatus = Config.Client.Advanced.Debugging.DebugWireframe.showRenderSectionStatus.get();
+		if (showRenderSectionStatus && this.pos.getDetailLevel() == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
 		{
 			DebugRenderer.makeParticle(
 					new DebugRenderer.BoxParticle(
@@ -324,7 +346,8 @@ public class LodRenderSection implements IDebugRenderable
 		if (this.canBuildBuffer())
 		{
 			// debug
-			if (this.pos.getDetailLevel() == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
+			boolean showRenderSectionStatus = Config.Client.Advanced.Debugging.DebugWireframe.showRenderSectionStatus.get();
+			if (showRenderSectionStatus && this.pos.getDetailLevel() == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
 			{
 				DebugRenderer.makeParticle(
 						new DebugRenderer.BoxParticle(

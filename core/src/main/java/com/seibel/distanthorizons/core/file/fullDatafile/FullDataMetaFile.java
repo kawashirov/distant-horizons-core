@@ -431,21 +431,32 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	@Override
 	public void debugRender(DebugRenderer debugRenderer)
 	{
-		if (this.pos.getDetailLevel() > DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
+		boolean showFullDataFileStatus = Config.Client.Advanced.Debugging.DebugWireframe.showFullDataFileStatus.get();
+		if (!showFullDataFileStatus)
+		{
+			return;
+		}
+		else if (this.pos.getDetailLevel() > DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
 		{
 			return;
 		}
 		
-		IFullDataSource cached = this.cachedFullDataSourceRef.get();
+		
+		
 		if (this.needsUpdate)
 		{
 			debugRenderer.renderBox(new DebugRenderer.Box(this.pos, 80f, 96f, 0.05f, Color.red));
 		}
 		
+		
+		IFullDataSource cachedDataSource = this.cachedFullDataSourceRef.get();
+		boolean needsUpdate = !this.writeQueueRef.get().queue.isEmpty() || this.needsUpdate;
+		
+		// determine the color
 		Color color = Color.black;
-		if (cached != null)
+		if (cachedDataSource != null)
 		{
-			if (cached instanceof CompleteFullDataSource)
+			if (cachedDataSource instanceof CompleteFullDataSource)
 			{
 				color = Color.GREEN;
 			}
@@ -453,7 +464,6 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 			{
 				color = Color.YELLOW;
 			}
-			
 		}
 		else if (this.dataSourceLoadFutureRef.get() != null)
 		{
@@ -463,9 +473,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 		{
 			color = Color.RED;
 		}
-		
-		boolean needsUpdate = !this.writeQueueRef.get().queue.isEmpty() || this.needsUpdate;
-		if (needsUpdate)
+		else if (needsUpdate)
 		{
 			color = color.darker().darker();
 		}
@@ -555,11 +563,24 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 						new DataObjSoftTracker(this, fullDataSource);
 					}
 					
-					if (this.pos.getDetailLevel() == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
+					
+					boolean showFullDataFileStatus = Config.Client.Advanced.Debugging.DebugWireframe.showFullDataFileStatus.get();
+					boolean showFullDataFileSampling = Config.Client.Advanced.Debugging.DebugWireframe.showFullDataFileSampling.get();
+					if (showFullDataFileStatus || showFullDataFileSampling)
 					{
+						Color color;
+						if (this.pos.getDetailLevel() == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
+						{
+							color = Color.GREEN;
+						}
+						else
+						{
+							color = Color.GREEN.darker().darker();
+						}
+						
 						DebugRenderer.makeParticle(new DebugRenderer.BoxParticle(
-										new DebugRenderer.Box(this.pos, 64f, 72f, 0.03f, Color.green.darker()),
-										0.2, 32f));
+								new DebugRenderer.Box(this.pos, 64f, 72f, 0.03f, color),
+								0.2, 32f));
 					}
 					
 					

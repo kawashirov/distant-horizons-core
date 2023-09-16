@@ -32,12 +32,14 @@ import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhLodPos;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.CompleteFullDataSource;
+import com.seibel.distanthorizons.core.render.renderer.DebugRenderer;
 import com.seibel.distanthorizons.core.util.MetaFileScanUtil;
 import com.seibel.distanthorizons.core.util.FileUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.ThreadUtil;
 import org.apache.logging.log4j.Logger;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -377,6 +379,14 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	/** populates the given data source using the given array of files */
 	protected CompletableFuture<IIncompleteFullDataSource> sampleFromFileArray(IIncompleteFullDataSource recipientFullDataSource, ArrayList<FullDataMetaFile> existingFiles)
 	{
+		boolean showFullDataFileSampling = Config.Client.Advanced.Debugging.DebugWireframe.showFullDataFileSampling.get();
+		if (showFullDataFileSampling)
+		{
+			DebugRenderer.makeParticle(new DebugRenderer.BoxParticle(
+					new DebugRenderer.Box(recipientFullDataSource.getSectionPos(), 64f, 72f, 0.03f, Color.MAGENTA),
+					0.2, 32f));
+		}
+		
 		// read in the existing data
 		final ArrayList<CompletableFuture<Void>> loadDataFutures = new ArrayList<>(existingFiles.size());
 		for (FullDataMetaFile existingFile : existingFiles)
@@ -388,6 +398,13 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 						if (existingFullDataSource == null)
 						{
 							return;
+						}
+						
+						if (showFullDataFileSampling)
+						{
+							DebugRenderer.makeParticle(new DebugRenderer.BoxParticle(
+									new DebugRenderer.Box(recipientFullDataSource.getSectionPos(), 64f, 72f, 0.03f, Color.MAGENTA.darker()),
+									0.2, 32f));
 						}
 						
 						//LOGGER.info("Merging data from {} into {}", data.getSectionPos(), pos);

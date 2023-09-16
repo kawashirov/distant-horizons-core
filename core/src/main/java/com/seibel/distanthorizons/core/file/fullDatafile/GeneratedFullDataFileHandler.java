@@ -186,7 +186,8 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		{
 			// There are other data source files to sample from.
 			this.makeFiles(missingPositions, existingFiles);
-			return this.sampleFromFileArray(data, existingFiles).thenApply(this::tryPromoteDataSource)
+			return this.sampleFromFileArray(data, existingFiles)
+					.thenApply(this::tryPromoteDataSource)
 					.exceptionally((e) ->
 					{
 						this.removeCorruptedFile(pos, file, e);
