@@ -389,15 +389,18 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		
 		// read in the existing data
 		final ArrayList<CompletableFuture<Void>> loadDataFutures = new ArrayList<>(existingFiles.size());
-		for (FullDataMetaFile existingFile : existingFiles)
+		for (int i = 0; i < existingFiles.size(); i++)
 		{
-			loadDataFutures.add(existingFile.getOrLoadCachedDataSourceAsync()
-					.exceptionally((ex) -> /*Ignore file read errors*/null)
-					.thenAccept((existingFullDataSource) ->
+			FullDataMetaFile existingFile = existingFiles.get(i);
+			
+			CompletableFuture<Void> loadFileFuture = existingFile.getOrLoadCachedDataSourceAsync()
+					.handle((existingFullDataSource, ex) ->
 					{
-						if (existingFullDataSource == null)
+						if (existingFullDataSource == null || ex != null)
 						{
-							return;
+							// Ignore file read errors
+							//LOGGER.warn(recipientFullDataSource.getSectionPos()+" sample from, file read error for file "+existingFile.pos+": "+ex.getMessage(), ex);
+							return null;
 						}
 						
 						if (showFullDataFileSampling)
@@ -407,12 +410,18 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 									0.2, 32f));
 						}
 						
-						//LOGGER.info("Merging data from {} into {}", data.getSectionPos(), pos);
 						recipientFullDataSource.sampleFrom(existingFullDataSource);
-					})
-			);
+						
+						// hopefully clearing the cached data source immediately after we are done with it will help the garbage collector a bit
+						existingFile.clearCachedDataSource();
+						
+						return null; // TODO remove the need to un-necessarily return null
+					});
+			
+			loadDataFutures.add(loadFileFuture);
 		}
-		return CompletableFuture.allOf(loadDataFutures.toArray(new CompletableFuture[0])).thenApply(voidObj -> recipientFullDataSource);
+		return CompletableFuture.allOf(loadDataFutures.toArray(new CompletableFuture[0]))
+				.thenApply(voidObj -> recipientFullDataSource);
 	}
 	
 	protected void makeFiles(ArrayList<DhSectionPos> posList, ArrayList<FullDataMetaFile> output)
