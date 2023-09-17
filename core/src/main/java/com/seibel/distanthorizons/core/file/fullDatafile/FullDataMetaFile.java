@@ -42,6 +42,7 @@ import com.seibel.distanthorizons.core.pos.DhLodPos;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.core.dataObjects.fullData.loader.AbstractFullDataSourceLoader;
 import com.seibel.distanthorizons.core.util.AtomicsUtil;
+import com.seibel.distanthorizons.core.util.FileUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.objects.dataStreams.DhDataInputStream;
 import com.seibel.distanthorizons.core.render.renderer.DebugRenderer;
@@ -185,7 +186,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 		
 		
 		
-		CompletableFuture<IFullDataSource> dataSourceLoadFuture = potentialLoadFuture;
+		final CompletableFuture<IFullDataSource> dataSourceLoadFuture = potentialLoadFuture;
 		if (!this.doesFileExist)
 		{
 			// create a new Meta file and data source
@@ -235,6 +236,10 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 							}
 							catch (Exception ex)
 							{
+								// TODO temporary fix
+								dataSourceLoadFuture.completeExceptionally(ex);
+								this.dataSourceLoadFutureRef.set(null);
+								
 								// can happen if there is a missing file or the file was incorrectly formatted, or terminated early
 								throw new CompletionException(ex);
 							}
