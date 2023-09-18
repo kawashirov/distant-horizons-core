@@ -439,46 +439,32 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 		}
 	}
 	
-	private void sampleFrom(CompleteFullDataSource completeSource)
+	private void sampleFrom(CompleteFullDataSource inputSource)
 	{
-		DhSectionPos pos = completeSource.getSectionPos();
+		DhSectionPos inputPos = inputSource.getSectionPos();
 		this.isEmpty = false;
-		this.downsampleFrom(completeSource);
 		
-		if (this.getDataDetailLevel() > this.sectionPos.getDetailLevel()) // TODO what does this mean?
+		
+		DhLodPos baseOffset = this.sectionPos.getMinCornerLodPos(this.getDataDetailLevel());
+		DhSectionPos inputOffset = inputPos.convertNewToDetailLevel(this.getDataDetailLevel());
+		int offsetX = inputOffset.getX() - baseOffset.x;
+		int offsetZ = inputOffset.getZ() - baseOffset.z;
+		
+		
+		int numberOfDataPointsToUpdate = WIDTH / this.sectionPos.getWidthCountForLowerDetailedSection(inputSource.getSectionPos().getDetailLevel());
+		int inputFractionWidth = inputSource.width() / numberOfDataPointsToUpdate;
+		for (int x = 0; x < numberOfDataPointsToUpdate; x++)
 		{
-			DhLodPos thisLodPos = this.sectionPos.getMinCornerLodPos(this.getDataDetailLevel());
-			DhLodPos dataLodPos = pos.getMinCornerLodPos(this.getDataDetailLevel());
-			
-			int offsetX = dataLodPos.x - thisLodPos.x;
-			int offsetZ = dataLodPos.z - thisLodPos.z;
-			int dataWidth = this.sectionPos.getWidthCountForLowerDetailedSection(this.getDataDetailLevel());
-			
-			for (int xOffset = 0; xOffset < dataWidth; xOffset++)
+			for (int z = 0; z < numberOfDataPointsToUpdate; z++)
 			{
-				for (int zOffset = 0; zOffset < dataWidth; zOffset++)
-				{
-					this.isColumnNotEmpty.set((offsetX + xOffset) * WIDTH + offsetZ + zOffset, true);
-				}
+				SingleColumnFullDataAccessor thisDataColumn = this.get(offsetX + x, offsetZ + z);
+				SingleColumnFullDataAccessor inputDataColumn = inputSource.get(inputFractionWidth * x, inputFractionWidth * z);
+				inputDataColumn.deepCopyTo(thisDataColumn);
+				
+				int notEmptyIndex = (offsetX + x) * WIDTH + (offsetZ + z);
+				this.isColumnNotEmpty.set(notEmptyIndex, true);
 			}
 		}
-		else
-		{
-			DhLodPos dataPos = pos.getSectionBBoxPos();
-			int lowerSectionsPerData = this.sectionPos.getWidthCountForLowerDetailedSection(dataPos.detailLevel);
-			if (dataPos.x % lowerSectionsPerData != 0 || dataPos.z % lowerSectionsPerData != 0)
-			{
-				return;
-			}
-			
-			
-			DhLodPos basePos = this.sectionPos.getMinCornerLodPos(this.getDataDetailLevel());
-			dataPos = dataPos.convertToDetailLevel(this.getDataDetailLevel());
-			int offsetX = dataPos.x - basePos.x;
-			int offsetZ = dataPos.z - basePos.z;
-			this.isColumnNotEmpty.set(offsetX * WIDTH + offsetZ, true);
-		}
-		
 	}
 	
 	private void sampleFrom(LowDetailIncompleteFullDataSource spottySource)
