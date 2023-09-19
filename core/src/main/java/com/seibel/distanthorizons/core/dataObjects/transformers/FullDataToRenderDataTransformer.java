@@ -69,8 +69,7 @@ public class FullDataToRenderDataTransformer
 	// public transformer interface //
 	//==============================//
 	
-	public static CompletableFuture<ColumnRenderSource> transformFullDataToRenderSourceAsync(IFullDataSource fullDataSource, IDhClientLevel level) { return CompletableFuture.supplyAsync(() -> transformFullDataToRenderSource(fullDataSource, level), transformerThreadPool); }
-	public static CompletableFuture<ColumnRenderSource> transformFullDataToRenderSourceAsync(CompletableFuture<IFullDataSource> fullDataSourceFuture, IDhClientLevel level) { return fullDataSourceFuture.thenApplyAsync((fullDataSource) -> transformFullDataToRenderSource(fullDataSource, level), transformerThreadPool); }
+	public static CompletableFuture<ColumnRenderSource> transformFullDataToRenderSourceUsingExecutorAsync(IFullDataSource fullDataSource, IDhClientLevel level) { return CompletableFuture.supplyAsync(() -> transformFullDataToRenderSource(fullDataSource, level), transformerThreadPool); }
 	private static ColumnRenderSource transformFullDataToRenderSource(IFullDataSource fullDataSource, IDhClientLevel level)
 	{
 		if (fullDataSource == null)

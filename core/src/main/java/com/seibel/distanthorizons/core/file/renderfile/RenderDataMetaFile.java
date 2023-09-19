@@ -342,26 +342,36 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 		
 		
 		// convert the full data source into a render source
-		CompletableFuture<ColumnRenderSource> transformFuture = FullDataToRenderDataTransformer.transformFullDataToRenderSourceAsync(fullDataSourceFuture, this.clientLevel)
-				.handle((newRenderSource, ex) ->
+		CompletableFuture<ColumnRenderSource> transformFuture = fullDataSourceFuture 
+				.handle((fullDataSource, ex) ->
 				{
 					if (ex == null)
 					{
+						ColumnRenderSource newRenderSource = null;
+						try
+						{
+							newRenderSource = FullDataToRenderDataTransformer.transformFullDataToRenderSourceUsingExecutorAsync(fullDataSource, this.clientLevel).join();
+						}
+						catch (Exception e)
+						{
+							LOGGER.error("Unable to transform full data to render data for file: "+this.file, e);
+						}
+						
 						try
 						{
 							if (newRenderSource != null)
 							{
 								renderSource.updateFromRenderSource(newRenderSource);
+								
+								// update the meta data
+								this.baseMetaData.dataVersion.set(renderDataVersionRef.value);
+								this.baseMetaData.dataLevel = renderSource.getDataDetail();
+								this.baseMetaData.dataTypeId = RENDER_SOURCE_TYPE_ID;
+								this.baseMetaData.binaryDataFormatVersion = renderSource.getRenderDataFormatVersion();
+								
+								// save to file
+								this.save(renderSource);
 							}
-							
-							// update the meta data
-							this.baseMetaData.dataVersion.set(renderDataVersionRef.value);
-							this.baseMetaData.dataLevel = renderSource.getDataDetail();
-							this.baseMetaData.dataTypeId = RENDER_SOURCE_TYPE_ID;
-							this.baseMetaData.binaryDataFormatVersion = renderSource.getRenderDataFormatVersion();
-							
-							// save to file
-							this.save(renderSource);
 						}
 						catch (Throwable e)
 						{
