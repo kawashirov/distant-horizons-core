@@ -410,7 +410,15 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 									0.2, 32f));
 						}
 						
-						recipientFullDataSource.sampleFrom(existingFullDataSource);
+						try
+						{
+							recipientFullDataSource.sampleFrom(existingFullDataSource);	
+						}
+						catch (Exception e)
+						{
+							LOGGER.warn("Unable to sample "+existingFullDataSource.getSectionPos()+" into "+recipientFullDataSource.getSectionPos());
+							//throw e;
+						}
 						
 						// hopefully clearing the cached data source immediately after we are done with it will help the garbage collector a bit
 						existingFile.clearCachedDataSource();
