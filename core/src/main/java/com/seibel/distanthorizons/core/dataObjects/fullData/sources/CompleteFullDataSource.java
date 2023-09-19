@@ -41,6 +41,7 @@ import com.seibel.distanthorizons.coreapi.util.BitShiftUtil;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
+import java.util.Arrays;
 
 /**
  * This data source contains every datapoint over its given {@link DhSectionPos}.
@@ -92,7 +93,6 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 	//=================//
 	// stream handling //
 	//=================//
-	
 	
 	@Override
 	public void writeSourceSummaryInfo(IDhLevel level, DhDataOutputStream outputStream) throws IOException
@@ -202,12 +202,33 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 		
 		
 		
-		long[][] dataPointArray = new long[width * width][];
+		long[][] dataPointArrays;
+		if (this.width == width) // attempt to use the existing dataArrays if possible
+		{
+			dataPointArrays = this.dataArrays;
+		}
+		else
+		{
+			dataPointArrays = new long[width * width][]; 
+		}
+		
 		for (int x = 0; x < width; x++)
 		{
 			for (int z = 0; z < width; z++)
 			{
-				dataPointArray[x * width + z] = new long[dataInputStream.readInt()];
+				int requestedArrayLength = dataInputStream.readInt();
+				int arrayIndex = x * width + z;
+				
+				// attempt to use the existing dataArrays if possible
+				if (dataPointArrays[arrayIndex] == null || dataPointArrays[arrayIndex].length != requestedArrayLength)
+				{
+					dataPointArrays[arrayIndex] = new long[requestedArrayLength];
+				}
+				else
+				{
+					// clear the existing array to prevent any data leakage
+					Arrays.fill(dataPointArrays[arrayIndex], 0);
+				}
 			}
 		}
 		
@@ -220,20 +241,20 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 			throw new IOException("invalid data length end guard");
 		}
 		
-		for (int xz = 0; xz < dataPointArray.length; xz++) // x and z are combined
+		for (int xz = 0; xz < dataPointArrays.length; xz++) // x and z are combined
 		{
-			if (dataPointArray[xz].length != 0)
+			if (dataPointArrays[xz].length != 0)
 			{
-				for (int y = 0; y < dataPointArray[xz].length; y++)
+				for (int y = 0; y < dataPointArrays[xz].length; y++)
 				{
-					dataPointArray[xz][y] = dataInputStream.readLong();
+					dataPointArrays[xz][y] = dataInputStream.readLong();
 				}
 			}
 		}
 		
 		
 		
-		return dataPointArray;
+		return dataPointArrays;
 	}
 	@Override
 	public void setDataPoints(long[][] dataPoints)
