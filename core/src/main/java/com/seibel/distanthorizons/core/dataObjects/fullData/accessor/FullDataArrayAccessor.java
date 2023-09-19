@@ -36,10 +36,7 @@ public class FullDataArrayAccessor implements IFullDataAccessor
 {
 	protected final FullDataPointIdMap mapping;
 	
-	/**
-	 * A flattened 2D array (for the X and Z directions) containing an array for the Y direction.
-	 * TODO the flattened array is probably to reduce garbage collection overhead, but is doing it this way worth while? Having a 3D array would be much easier to understand
-	 */
+	/** A flattened 2D array (for the X and Z directions) containing an array for the Y direction. */
 	protected final long[][] dataArrays;
 	
 	/** measured in data points */
