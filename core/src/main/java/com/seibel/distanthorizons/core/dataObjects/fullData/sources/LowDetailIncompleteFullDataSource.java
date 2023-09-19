@@ -451,7 +451,11 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 		int offsetZ = inputOffset.getZ() - baseOffset.z;
 		
 		
-		int numberOfDataPointsToUpdate = WIDTH / this.sectionPos.getWidthCountForLowerDetailedSection(inputSource.getSectionPos().getDetailLevel());
+		int numberOfDataPointsToUpdate = WIDTH / this.sectionPos.getWidthCountForLowerDetailedSection(inputSource.getSectionPos().getDetailLevel()); // can be 0 if the input source is significantly smaller than this data source
+		// should be 1 at minimum, to prevent divide by zero errors (and because trying to get 0 data points doesn't make any sense)
+		numberOfDataPointsToUpdate = Math.max(1, numberOfDataPointsToUpdate);
+		
+		
 		int inputFractionWidth = inputSource.width() / numberOfDataPointsToUpdate;
 		for (int x = 0; x < numberOfDataPointsToUpdate; x++)
 		{
