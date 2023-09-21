@@ -62,7 +62,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 	/** written to the binary file to mark what {@link IFullDataSource} the binary file corresponds to */
 	public static final long TYPE_ID = "CompleteFullDataSource".hashCode();
 	
-	private final DhSectionPos sectionPos;
+	private DhSectionPos sectionPos;
 	private boolean isEmpty = true;
 	public EDhApiWorldGenerationStep worldGenStep = EDhApiWorldGenerationStep.EMPTY;
 	
@@ -415,6 +415,14 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 	
 	@Override
 	public DhSectionPos getSectionPos() { return this.sectionPos; }
+	
+	@Override
+	public void resizeDataStructuresForRepopulation(DhSectionPos pos)
+	{
+		// no data structures need to be changed, only the source's position 
+		this.sectionPos = pos;
+	}
+	
 	@Override
 	public byte getDataDetailLevel() { return (byte) (this.sectionPos.getDetailLevel() - SECTION_SIZE_OFFSET); }
 	

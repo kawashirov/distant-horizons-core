@@ -22,6 +22,7 @@ package com.seibel.distanthorizons.core.file.fullDatafile;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.config.listeners.ConfigChangeListener;
 import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
+import com.seibel.distanthorizons.core.dataObjects.fullData.loader.AbstractFullDataSourceLoader;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.HighDetailIncompleteFullDataSource;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.LowDetailIncompleteFullDataSource;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
@@ -377,7 +378,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	}
 	
 	/** populates the given data source using the given array of files */
-	protected CompletableFuture<IIncompleteFullDataSource> sampleFromFileArray(IIncompleteFullDataSource recipientFullDataSource, ArrayList<FullDataMetaFile> existingFiles)
+	protected CompletableFuture<IIncompleteFullDataSource> sampleFromFileArray(IIncompleteFullDataSource recipientFullDataSource, ArrayList<FullDataMetaFile> existingFiles, boolean cacheLoadedDataSources)
 	{
 		boolean showFullDataFileSampling = Config.Client.Advanced.Debugging.DebugWireframe.showFullDataFileSampling.get();
 		if (showFullDataFileSampling)
@@ -388,47 +389,64 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		}
 		
 		// read in the existing data
-		final ArrayList<CompletableFuture<Void>> loadDataFutures = new ArrayList<>(existingFiles.size());
+		final ArrayList<CompletableFuture<IFullDataSource>> sampleDataFutures = new ArrayList<>(existingFiles.size());
 		for (int i = 0; i < existingFiles.size(); i++)
 		{
 			FullDataMetaFile existingFile = existingFiles.get(i);
 			
-			CompletableFuture<Void> loadFileFuture = existingFile.getOrLoadCachedDataSourceAsync()
-					.handle((existingFullDataSource, ex) ->
-					{
-						if (existingFullDataSource == null || ex != null)
-						{
-							// Ignore file read errors
-							//LOGGER.warn(recipientFullDataSource.getSectionPos()+" sample from, file read error for file "+existingFile.pos+": "+ex.getMessage(), ex);
-							return null;
-						}
-						
-						if (showFullDataFileSampling)
-						{
-							DebugRenderer.makeParticle(new DebugRenderer.BoxParticle(
-									new DebugRenderer.Box(recipientFullDataSource.getSectionPos(), 64f, 72f, 0.03f, Color.MAGENTA.darker()),
-									0.2, 32f));
-						}
-						
-						try
-						{
-							recipientFullDataSource.sampleFrom(existingFullDataSource);	
-						}
-						catch (Exception e)
-						{
-							LOGGER.warn("Unable to sample "+existingFullDataSource.getSectionPos()+" into "+recipientFullDataSource.getSectionPos());
-							//throw e;
-						}
-						
-						// hopefully clearing the cached data source immediately after we are done with it will help the garbage collector a bit
-						existingFile.clearCachedDataSource();
-						
-						return null; // TODO remove the need to un-necessarily return null
-					});
 			
-			loadDataFutures.add(loadFileFuture);
+			CompletableFuture<IFullDataSource> loadFileFuture = cacheLoadedDataSources ? existingFile.getOrLoadCachedDataSourceAsync() : existingFile.getDataSourceWithoutCachingAsync();
+			
+			CompletableFuture<IFullDataSource> sampleSourceFuture = loadFileFuture.whenComplete((existingFullDataSource, ex) ->
+			{
+				if (existingFullDataSource == null || ex != null)
+				{
+					// Ignore file read errors
+					//LOGGER.warn(recipientFullDataSource.getSectionPos()+" sample from, file read error for file "+existingFile.pos+": "+ex.getMessage(), ex);
+					return;
+				}
+				
+				if (showFullDataFileSampling)
+				{
+					DebugRenderer.makeParticle(new DebugRenderer.BoxParticle(
+							new DebugRenderer.Box(recipientFullDataSource.getSectionPos(), 64f, 72f, 0.03f, Color.MAGENTA.darker()),
+							0.2, 32f));
+				}
+				
+				try
+				{
+					recipientFullDataSource.sampleFrom(existingFullDataSource);
+				}
+				catch (Exception e)
+				{
+					LOGGER.warn("Unable to sample "+existingFullDataSource.getSectionPos()+" into "+recipientFullDataSource.getSectionPos(), e);
+					//throw e;
+				}
+				
+				// pooling temporary data sources massively reduces garbage collector overhead when just sampling (going from ~8 GB/sec to ~90 MB/sec)
+				if (!cacheLoadedDataSources && !existingFile.cacheLoadingDataSource)
+				{
+					existingFile.clearCachedDataSource();
+					
+					// get the data loader
+					AbstractFullDataSourceLoader dataSourceLoader;
+					if (existingFile.fullDataSourceLoader != null)
+					{
+						dataSourceLoader = existingFile.fullDataSourceLoader;
+					}
+					else
+					{
+						// shouldn't normally happen, but sometimes does
+						dataSourceLoader = AbstractFullDataSourceLoader.getLoader(existingFile.baseMetaData.dataTypeId, existingFile.baseMetaData.binaryDataFormatVersion);
+					}
+					
+					dataSourceLoader.returnPooledDataSource(existingFullDataSource);
+				}
+			});
+			
+			sampleDataFutures.add(sampleSourceFuture);
 		}
-		return CompletableFuture.allOf(loadDataFutures.toArray(new CompletableFuture[0]))
+		return CompletableFuture.allOf(sampleDataFutures.toArray(new CompletableFuture[0]))
 				.thenApply(voidObj -> recipientFullDataSource);
 	}
 	
@@ -461,7 +479,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		else
 		{
 			this.makeFiles(missing, existFiles);
-			return this.sampleFromFileArray(source, existFiles).thenApply(IIncompleteFullDataSource::tryPromotingToCompleteDataSource)
+			return this.sampleFromFileArray(source, existFiles, false).thenApply(IIncompleteFullDataSource::tryPromotingToCompleteDataSource)
 					.exceptionally((e) ->
 					{
 						FullDataMetaFile newMetaFile = this.removeCorruptedFile(pos, file, e);

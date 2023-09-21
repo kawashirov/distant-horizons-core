@@ -42,7 +42,6 @@ import com.seibel.distanthorizons.core.pos.DhLodPos;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.core.dataObjects.fullData.loader.AbstractFullDataSourceLoader;
 import com.seibel.distanthorizons.core.util.AtomicsUtil;
-import com.seibel.distanthorizons.core.util.FileUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.objects.dataStreams.DhDataInputStream;
 import com.seibel.distanthorizons.core.render.renderer.DebugRenderer;
@@ -88,6 +87,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	 */
 	private DataSourceReferenceTracker.FullDataSourceSoftRef cachedFullDataSourceRef = new DataSourceReferenceTracker.FullDataSourceSoftRef(this,null);
 	private final AtomicReference<CompletableFuture<IFullDataSource>> dataSourceLoadFutureRef = new AtomicReference<>(null);
+	public volatile Boolean cacheLoadingDataSource = null;
 	
 	// === Concurrent Write tracking ===
 	private final AtomicReference<GuardedMultiAppendQueue> writeQueueRef = new AtomicReference<>(new GuardedMultiAppendQueue());
@@ -168,7 +168,8 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 		if (dataExists)
 		{
 			this.cachedFullDataSourceRef.close();
-			this.cachedFullDataSourceRef.clear();	
+			this.cachedFullDataSourceRef.clear();
+			this.cacheLoadingDataSource = null;
 		}
 		
 		return dataExists;
@@ -176,13 +177,20 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	
 	
 	
-	public CompletableFuture<IFullDataSource> getOrLoadCachedDataSourceAsync()
+	public CompletableFuture<IFullDataSource> getDataSourceWithoutCachingAsync() { return this.getOrLoadCachedDataSourceAsync(false); }
+	public CompletableFuture<IFullDataSource> getOrLoadCachedDataSourceAsync() { return this.getOrLoadCachedDataSourceAsync(true); } // TODO broken when accessed by multiple threads
+	private CompletableFuture<IFullDataSource> getOrLoadCachedDataSourceAsync(boolean cacheLoadingSource)
 	{
 		checkAndLogPhantomDataSourceLifeCycles();
 		
 		CompletableFuture<IFullDataSource> potentialLoadFuture = this.getCachedDataSourceAsync();
 		if (potentialLoadFuture != null)
 		{
+			if (cacheLoadingSource)
+			{
+				this.cacheLoadingDataSource = true;
+			}
+			
 			// return the in-process future
 			return potentialLoadFuture;
 		}
@@ -196,6 +204,8 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 				// two threads attempted to start this job at the same time, only use the first future
 				potentialLoadFuture = this.dataSourceLoadFutureRef.get();
 			}
+			
+			this.cacheLoadingDataSource = cacheLoadingSource;
 		}
 		
 		
@@ -246,11 +256,18 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 							try (FileInputStream fileInputStream = this.getFileInputStream();
 									DhDataInputStream compressedStream = new DhDataInputStream(fileInputStream))
 							{
-								fullDataSource = this.fullDataSourceLoader.loadData(this, compressedStream, this.level);
+								if (cacheLoadingSource)
+								{
+									fullDataSource = this.fullDataSourceLoader.loadDataSource(this, compressedStream, this.level);
+								}
+								else
+								{
+									fullDataSource = this.fullDataSourceLoader.loadTemporaryDataSource(this, compressedStream, this.level);
+								}
 							}
 							catch (Exception ex)
 							{
-								// TODO temporary fix
+								/// TODO temporary fix
 								dataSourceLoadFuture.completeExceptionally(ex);
 								this.dataSourceLoadFutureRef.set(null);
 								
@@ -392,11 +409,11 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	public CompletableFuture<Void> flushAndSaveAsync()
 	{
 		checkAndLogPhantomDataSourceLifeCycles();
-		boolean isEmpty = this.writeQueueRef.get().queue.isEmpty() && !needsUpdate;
+		boolean isEmpty = this.writeQueueRef.get().queue.isEmpty() && !this.needsUpdate;
 		if (!isEmpty)
 		{
 			// This will flush the data to disk.
-			return this.getOrLoadCachedDataSourceAsync().thenApply((fullDataSource) -> null /* ignore the result, just wait for the load to finish*/ );
+			return this.getDataSourceWithoutCachingAsync().thenApply((fullDataSource) -> null /* ignore the result, just wait for the load to finish*/ );
 		}
 		else
 		{
@@ -603,8 +620,11 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 					}
 					
 					
-					// save the updated data source
-					this.cachedFullDataSourceRef = new DataSourceReferenceTracker.FullDataSourceSoftRef(this, fullDataSource);
+					if (this.cacheLoadingDataSource)
+					{
+						// save the updated data source
+						this.cachedFullDataSourceRef = new DataSourceReferenceTracker.FullDataSourceSoftRef(this, fullDataSource);
+					}
 					
 					// the task is complete
 					completionFuture.complete(fullDataSource);
@@ -613,7 +633,14 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 					if (this.needsUpdate)
 					{
 						// another update was requested while this update was being processed
-						this.getOrLoadCachedDataSourceAsync();
+						if (this.cacheLoadingDataSource)
+						{
+							this.getOrLoadCachedDataSourceAsync();
+						}
+						else
+						{
+							this.getDataSourceWithoutCachingAsync();
+						}
 					}
 				});
 		

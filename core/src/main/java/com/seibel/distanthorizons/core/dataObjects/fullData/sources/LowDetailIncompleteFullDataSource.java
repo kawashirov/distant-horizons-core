@@ -67,7 +67,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 	public static final long TYPE_ID = "LowDetailIncompleteFullDataSource".hashCode();
 	
 	
-	private final DhSectionPos sectionPos;
+	private DhSectionPos sectionPos;
 	private final BitSet isColumnNotEmpty;
 	
 	private boolean isEmpty = true;
@@ -294,6 +294,14 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 	
 	@Override
 	public DhSectionPos getSectionPos() { return this.sectionPos; }
+	
+	@Override
+	public void resizeDataStructuresForRepopulation(DhSectionPos pos) 
+	{ 
+		// no data structures need to be changed, only the source's position 
+		this.sectionPos = pos;
+	}
+	
 	@Override
 	public byte getDataDetailLevel() { return (byte) (this.sectionPos.getDetailLevel() - SECTION_SIZE_OFFSET); }
 	@Override

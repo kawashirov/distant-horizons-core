@@ -77,12 +77,12 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 	
 	
 	protected final FullDataPointIdMap mapping;
-	private final DhSectionPos sectionPos;
-	private final FullDataArrayAccessor[] sparseData;
-	private final DhLodPos chunkPos;
+	private DhSectionPos sectionPos;
+	private FullDataArrayAccessor[] sparseData;
+	private DhLodPos chunkPos;
 	
-	public final int sectionCount;
-	public final int dataPointsPerSection;
+	public int sectionCount;
+	public int dataPointsPerSection;
 	public boolean isEmpty = true;
 	public EDhApiWorldGenerationStep worldGenStep = EDhApiWorldGenerationStep.EMPTY;
 	private boolean isPromoted = false;
@@ -362,7 +362,18 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 			{
 				for (int dataPointColIndex = 0; dataPointColIndex < dataPoints[arrayAccessorIndex].length; dataPointColIndex++)
 				{
-					System.arraycopy(dataPoints[arrayAccessorIndex][dataPointColIndex], 0, this.sparseData[arrayAccessorIndex].get(dataPointColIndex).getRaw(), 0, dataPoints[dataPointColIndex].length);
+					long[] incomingColumn = dataPoints[arrayAccessorIndex][dataPointColIndex];
+					long[] destinationColumn = this.sparseData[arrayAccessorIndex].get(dataPointColIndex).getRaw();
+					
+					// use the existing arrays if possible
+					if (incomingColumn.length == destinationColumn.length)
+					{
+						System.arraycopy(incomingColumn, 0, destinationColumn, 0, incomingColumn.length);
+					}
+					else
+					{
+						this.sparseData[arrayAccessorIndex].get(dataPointColIndex).setNew(incomingColumn);
+					}
 				}
 			}
 		}
@@ -420,6 +431,27 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 	
 	@Override
 	public DhSectionPos getSectionPos() { return this.sectionPos; }
+	
+	@Override
+	public void resizeDataStructuresForRepopulation(DhSectionPos pos) 
+	{
+		// update the position
+		this.sectionPos = pos;
+		this.sectionCount = BitShiftUtil.powerOfTwo(this.sectionPos.getDetailLevel() - SPARSE_UNIT_DETAIL);
+		this.dataPointsPerSection = SECTION_SIZE / this.sectionCount;
+		
+		this.chunkPos = this.sectionPos.getMinCornerLodPos(SPARSE_UNIT_DETAIL);
+		
+		
+		// update the data container
+		int dataPointCount = this.sectionCount * this.sectionCount;
+		if (this.sparseData.length != dataPointCount)
+		{
+			this.sparseData = new FullDataArrayAccessor[this.sectionCount * this.sectionCount];
+		}
+		 
+	}
+	
 	@Override
 	public byte getDataDetailLevel() { return (byte) (this.sectionPos.getDetailLevel() - SECTION_SIZE_OFFSET); }
 	

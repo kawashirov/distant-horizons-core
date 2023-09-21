@@ -134,11 +134,11 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 			{
 				ArrayList<FullDataMetaFile> existingFiles = new ArrayList<>();
 				byte sectDetailLevel = (byte) (DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL + maxSectDataDetailLevel);
-				pos.forEachChildAtLevel(sectDetailLevel, p -> existingFiles.add(getLoadOrMakeFile(p, true)));
-				return sampleFromFileArray(dataSource, existingFiles).thenApply(this::tryPromoteDataSource)
-						.exceptionally((e) ->
+				pos.forEachChildAtLevel(sectDetailLevel, childPos -> existingFiles.add(this.getLoadOrMakeFile(childPos, true)));
+				return this.sampleFromFileArray(dataSource, existingFiles, true).thenApply(this::tryPromoteDataSource)
+						.exceptionally((ex) ->
 						{
-							FullDataMetaFile newMetaFile = removeCorruptedFile(pos, file, e);
+							FullDataMetaFile newMetaFile = this.removeCorruptedFile(pos, file, ex);
 							return null;
 						});
 			}
@@ -186,7 +186,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		{
 			// There are other data source files to sample from.
 			this.makeFiles(missingPositions, existingFiles);
-			return this.sampleFromFileArray(data, existingFiles)
+			return this.sampleFromFileArray(data, existingFiles, true)
 					.thenApply(this::tryPromoteDataSource)
 					.exceptionally((e) ->
 					{
