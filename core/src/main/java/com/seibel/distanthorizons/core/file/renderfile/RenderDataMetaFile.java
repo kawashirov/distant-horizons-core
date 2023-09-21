@@ -148,23 +148,22 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 		
 		renderSourceLoadFuture.thenAccept((renderSource) ->
 		{
-			boolean showRenderDataFileStatus = Config.Client.Advanced.Debugging.DebugWireframe.showRenderDataFileStatus.get();
-			if (!showRenderDataFileStatus)
-			{
-				return;
-			}
+			boolean dataUpdated = renderSource.updateWithChunkData(chunkDataView, this.clientLevel);
 			
 			
 			// add a debug renderer
-			boolean dataUpdated = renderSource.updateWithChunkData(chunkDataView, this.clientLevel);
-			float offset = new Random(System.nanoTime() ^ Thread.currentThread().getId()).nextFloat() * 16f;
-			Color debugColor = dataUpdated ? Color.blue : Color.red;
-			DebugRenderer.makeParticle(
-					new DebugRenderer.BoxParticle(
-							new DebugRenderer.Box(chunkDataView.getSectionPos(), 32f, 64f + offset, 0.07f, debugColor),
-							2.0, 16f
-					)
-			);
+			boolean showRenderDataFileStatus = Config.Client.Advanced.Debugging.DebugWireframe.showRenderDataFileStatus.get();
+			if (showRenderDataFileStatus)
+			{
+				float offset = new Random(System.nanoTime() ^ Thread.currentThread().getId()).nextFloat() * 16f;
+				Color debugColor = dataUpdated ? Color.blue : Color.red;
+				DebugRenderer.makeParticle(
+						new DebugRenderer.BoxParticle(
+								new DebugRenderer.Box(chunkDataView.getSectionPos(), 32f, 64f + offset, 0.07f, debugColor),
+								2.0, 16f
+						)
+				);
+			}
 		});
 	}
 	
