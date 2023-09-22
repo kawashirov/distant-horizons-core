@@ -139,7 +139,7 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 		LodUtil.assertTrue(this.pos.overlapsExactly(chunkSectionPos), "Chunk pos " + chunkSectionPos + " doesn't overlap with section " + this.pos);
 		
 		// update the render source if one exists
-		CompletableFuture<ColumnRenderSource> renderSourceLoadFuture = this.getCachedDataSourceAsync(false);
+		CompletableFuture<ColumnRenderSource> renderSourceLoadFuture = this.getCachedDataSourceAsync(true);
 		if (renderSourceLoadFuture == null)
 		{
 			return;
