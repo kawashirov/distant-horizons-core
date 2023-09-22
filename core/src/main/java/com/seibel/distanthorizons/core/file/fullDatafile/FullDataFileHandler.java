@@ -377,8 +377,12 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 				LowDetailIncompleteFullDataSource.createEmpty(pos);
 	}
 	
-	/** populates the given data source using the given array of files */
-	protected CompletableFuture<IIncompleteFullDataSource> sampleFromFileArray(IIncompleteFullDataSource recipientFullDataSource, ArrayList<FullDataMetaFile> existingFiles, boolean cacheLoadedDataSources)
+	/** 
+	 * Populates the given data source using the given array of files
+	 * @param usePooledDataSources if enabled the data sources necessary for this sampling will not be stored beyond what is necessary for the sampling.
+	 *                              This helps reduce garbage collector pressure if the data sources will never be used again.
+	 */
+	protected CompletableFuture<IIncompleteFullDataSource> sampleFromFileArray(IIncompleteFullDataSource recipientFullDataSource, ArrayList<FullDataMetaFile> existingFiles, boolean usePooledDataSources)
 	{
 		boolean showFullDataFileSampling = Config.Client.Advanced.Debugging.DebugWireframe.showFullDataFileSampling.get();
 		if (showFullDataFileSampling)
@@ -395,7 +399,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 			FullDataMetaFile existingFile = existingFiles.get(i);
 			
 			
-			CompletableFuture<IFullDataSource> loadFileFuture = cacheLoadedDataSources ? existingFile.getOrLoadCachedDataSourceAsync() : existingFile.getDataSourceWithoutCachingAsync();
+			CompletableFuture<IFullDataSource> loadFileFuture = usePooledDataSources ? existingFile.getOrLoadCachedDataSourceAsync() : existingFile.getDataSourceWithoutCachingAsync();
 			
 			CompletableFuture<IFullDataSource> sampleSourceFuture = loadFileFuture.whenComplete((existingFullDataSource, ex) ->
 			{
@@ -424,7 +428,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 				}
 				
 				// pooling temporary data sources massively reduces garbage collector overhead when just sampling (going from ~8 GB/sec to ~90 MB/sec)
-				if (!cacheLoadedDataSources && !existingFile.cacheLoadingDataSource)
+				if (!usePooledDataSources && !existingFile.cacheLoadingDataSource)
 				{
 					existingFile.clearCachedDataSource();
 					
@@ -479,7 +483,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		else
 		{
 			this.makeFiles(missing, existFiles);
-			return this.sampleFromFileArray(source, existFiles, false).thenApply(IIncompleteFullDataSource::tryPromotingToCompleteDataSource)
+			return this.sampleFromFileArray(source, existFiles, true).thenApply(IIncompleteFullDataSource::tryPromotingToCompleteDataSource)
 					.exceptionally((e) ->
 					{
 						FullDataMetaFile newMetaFile = this.removeCorruptedFile(pos, file, e);

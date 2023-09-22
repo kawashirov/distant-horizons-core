@@ -170,7 +170,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	
 	// Try update the gen queue on this data source. If null, then nothing was done.
 	@Nullable
-	private CompletableFuture<IFullDataSource> updateFromExistingDataSourcesAsync(FullDataMetaFile file, IIncompleteFullDataSource data)
+	private CompletableFuture<IFullDataSource> updateFromExistingDataSourcesAsync(FullDataMetaFile file, IIncompleteFullDataSource data, boolean usePooledDataSources)
 	{
 		DhSectionPos pos = file.pos;
 		ArrayList<FullDataMetaFile> existingFiles = new ArrayList<>();
@@ -186,7 +186,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		{
 			// There are other data source files to sample from.
 			this.makeFiles(missingPositions, existingFiles);
-			return this.sampleFromFileArray(data, existingFiles, true)
+			return this.sampleFromFileArray(data, existingFiles, usePooledDataSources)
 					.thenApply(this::tryPromoteDataSource)
 					.exceptionally((e) ->
 					{
@@ -201,7 +201,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	{
 		DhSectionPos pos = file.pos;
 		IIncompleteFullDataSource data = this.makeEmptyDataSource(pos);
-		CompletableFuture<IFullDataSource> future = this.updateFromExistingDataSourcesAsync(file, data);
+		CompletableFuture<IFullDataSource> future = this.updateFromExistingDataSourcesAsync(file, data, true);
 		// Cant start gen task, so return the data
 		return future == null ? CompletableFuture.completedFuture(data) : future;
 	}
@@ -224,7 +224,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 			IWorldGenerationQueue worldGenQueue = this.worldGenQueueRef.get();
 			if (worldGenQueue != null)
 			{
-				CompletableFuture<IFullDataSource> future = this.updateFromExistingDataSourcesAsync(file, (IIncompleteFullDataSource) fullDataSource);
+				CompletableFuture<IFullDataSource> future = this.updateFromExistingDataSourcesAsync(file, (IIncompleteFullDataSource) fullDataSource, false);
 				if (future != null)
 				{
 					final boolean finalDataChanged = dataChanged;
