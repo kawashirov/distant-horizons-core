@@ -114,7 +114,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 		this.level = level;
 		LodUtil.assertTrue(this.baseMetaData == null);
 		this.doesFileExist = false;
-		DebugRenderer.register(this);
+		DebugRenderer.register(this, Config.Client.Advanced.Debugging.DebugWireframe.showFullDataFileStatus);
 	}
 	
 	
@@ -142,7 +142,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 		}
 		
 		this.fullDataSourceClass = this.fullDataSourceLoader.fullDataSourceClass;
-		DebugRenderer.register(this);
+		DebugRenderer.register(this, Config.Client.Advanced.Debugging.DebugWireframe.showFullDataFileStatus);
 	}
 	
 	
@@ -467,12 +467,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	@Override
 	public void debugRender(DebugRenderer debugRenderer)
 	{
-		boolean showFullDataFileStatus = Config.Client.Advanced.Debugging.DebugWireframe.showFullDataFileStatus.get();
-		if (!showFullDataFileStatus)
-		{
-			return;
-		}
-		else if (this.pos.getDetailLevel() > DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
+		if (this.pos.getDetailLevel() > DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
 		{
 			return;
 		}

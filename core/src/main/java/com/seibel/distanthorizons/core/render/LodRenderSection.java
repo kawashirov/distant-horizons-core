@@ -95,46 +95,7 @@ public class LodRenderSection implements IDebugRenderable
 		this.pos = pos;
 		this.parentQuadTree = parentQuadTree;
 		
-		DebugRenderer.register(this);
-	}
-	
-	@Override
-	public void debugRender(DebugRenderer debugRenderer)
-	{
-		boolean showRenderSectionStatus = Config.Client.Advanced.Debugging.DebugWireframe.showRenderSectionStatus.get();
-		if (!showRenderSectionStatus)
-		{
-			return;
-		}
-		
-		
-		Color color = Color.red;
-		if (this.renderSourceProvider == null)
-		{
-			color = Color.black;
-		}
-		else if (this.renderSourceLoadFuture != null)
-		{
-			color = Color.yellow;
-		}
-		else if (this.renderSource != null)
-		{
-			color = Color.blue;
-			if (this.buildRenderBufferFuture != null)
-			{
-				color = Color.magenta;
-			}
-			else if (this.canRenderNow())
-			{
-				color = Color.cyan;
-			}
-			else if (this.canRenderNow() && this.isRenderingEnabled)
-			{
-				color = Color.green;
-			}
-		}
-		
-		debugRenderer.renderBox(new DebugRenderer.Box(this.pos, 400, 8f, Objects.hashCode(this), 0.1f, color));
+		DebugRenderer.register(this, Config.Client.Advanced.Debugging.DebugWireframe.showRenderSectionStatus);
 	}
 	
 	
@@ -269,18 +230,13 @@ public class LodRenderSection implements IDebugRenderable
 				);
 	}
 	
-	//================//
-	// Render Methods //
-	//================//
-	private void cancelBuildBuffer()
-	{
-		if (this.buildRenderBufferFuture != null)
-		{
-			//LOGGER.info("Cancelling build of render buffer for {}", sectionPos);
-			this.buildRenderBufferFuture.cancel(true);
-			this.buildRenderBufferFuture = null;
-		}
-	}
+	public void markBufferDirty() { this.lastSwapLocalVersion = -1; }
+	
+	
+	
+	//=================//
+	// buffer building //
+	//=================//
 	
 	private LodRenderSection[] getNeighbors()
 	{
@@ -322,6 +278,34 @@ public class LodRenderSection implements IDebugRenderable
 	/** @return true if this section is loaded and set to render */
 	public boolean canSwapBuffer() { return this.buildRenderBufferFuture != null && this.buildRenderBufferFuture.isDone(); }
 	
+	
+	private void cancelBuildBuffer()
+	{
+		if (this.buildRenderBufferFuture != null)
+		{
+			//LOGGER.info("Cancelling build of render buffer for {}", sectionPos);
+			this.buildRenderBufferFuture.cancel(true);
+			this.buildRenderBufferFuture = null;
+		}
+	}
+	
+	
+	public synchronized void disposeRenderData() // synchronized is a band-aid solution to prevent a rare bug where the future isn't canceled in the right order
+	{
+		this.disposeRenderBuffer();
+		this.renderSource = null;
+		if (this.renderSourceLoadFuture != null)
+		{
+			this.renderSourceLoadFuture.cancel(true);
+			this.renderSourceLoadFuture = null;
+		}
+	}
+	
+	public void disposeRenderBuffer()
+	{
+		this.cancelBuildBuffer();
+		this.disposeActiveBuffer = true;
+	}
 	
 	
 	/**
@@ -446,30 +430,43 @@ public class LodRenderSection implements IDebugRenderable
 	public void dispose()
 	{
 		this.disposeRenderData();
-		DebugRenderer.unregister(this);
+		DebugRenderer.unregister(this, Config.Client.Advanced.Debugging.DebugWireframe.showRenderSectionStatus);
 		if (this.disposeActiveBuffer && this.activeRenderBufferRef.get() != null)
 		{
 			this.activeRenderBufferRef.get().close();
 		}
 	}
 	
-	public synchronized void disposeRenderData() // synchronized is a band-aid solution to prevent a rare bug where the future isn't canceled in the right order
+	@Override
+	public void debugRender(DebugRenderer debugRenderer)
 	{
-		this.disposeRenderBuffer();
-		this.renderSource = null;
-		if (this.renderSourceLoadFuture != null)
+		Color color = Color.red;
+		if (this.renderSourceProvider == null)
 		{
-			this.renderSourceLoadFuture.cancel(true);
-			this.renderSourceLoadFuture = null;
+			color = Color.black;
 		}
+		else if (this.renderSourceLoadFuture != null)
+		{
+			color = Color.yellow;
+		}
+		else if (this.renderSource != null)
+		{
+			color = Color.blue;
+			if (this.buildRenderBufferFuture != null)
+			{
+				color = Color.magenta;
+			}
+			else if (this.canRenderNow())
+			{
+				color = Color.cyan;
+			}
+			else if (this.canRenderNow() && this.isRenderingEnabled)
+			{
+				color = Color.green;
+			}
+		}
+		
+		debugRenderer.renderBox(new DebugRenderer.Box(this.pos, 400, 8f, Objects.hashCode(this), 0.1f, color));
 	}
-	
-	public void disposeRenderBuffer()
-	{
-		this.cancelBuildBuffer();
-		this.disposeActiveBuffer = true;
-	}
-	
-	public void markBufferDirty() { this.lastSwapLocalVersion = -1; }
 	
 }

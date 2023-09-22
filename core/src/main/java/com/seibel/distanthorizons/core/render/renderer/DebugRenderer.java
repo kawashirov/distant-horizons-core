@@ -22,6 +22,7 @@ package com.seibel.distanthorizons.core.render.renderer;
 import com.seibel.distanthorizons.api.enums.config.EGpuUploadMethod;
 import com.seibel.distanthorizons.api.enums.config.ELoggerMode;
 import com.seibel.distanthorizons.core.config.Config;
+import com.seibel.distanthorizons.core.config.types.ConfigEntry;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.ConfigBasedLogger;
 import com.seibel.distanthorizons.core.logging.ConfigBasedSpamLogger;
@@ -39,6 +40,7 @@ import com.seibel.distanthorizons.coreapi.util.math.Vec3d;
 import com.seibel.distanthorizons.coreapi.util.math.Vec3f;
 import org.apache.logging.log4j.LogManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL32;
 
 import java.awt.*;
@@ -72,9 +74,7 @@ public class DebugRenderer
 	private Vec3f camPosFloatThisFrame;
 	
 	
-	// render lists
-	private final LinkedList<WeakReference<IDebugRenderable>> renderers = new LinkedList<>();
-	
+	private final RendererLists rendererLists = new RendererLists();
 	private final PriorityBlockingQueue<BoxParticle> particles = new PriorityBlockingQueue<>();
 	
 	
@@ -123,45 +123,29 @@ public class DebugRenderer
 	// registration //
 	//==============//
 	
-	public static void unregister(IDebugRenderable renderable)
-	{
-		if (INSTANCE != null)
-		{
-			INSTANCE.removeRenderer(renderable);
-		}
-	}
-	
 	public static void makeParticle(BoxParticle particle)
 	{
-		if (INSTANCE != null && !Config.Client.Advanced.Debugging.DebugWireframe.enableRendering.get())
+		if (INSTANCE != null && Config.Client.Advanced.Debugging.DebugWireframe.enableRendering.get())
 		{
 			INSTANCE.particles.add(particle);
 		}
 	}
 	
-	private void removeRenderer(IDebugRenderable renderable)
-	{
-		synchronized (this.renderers)
-		{
-			Iterator<WeakReference<IDebugRenderable>> iterator = this.renderers.iterator();
-			while (iterator.hasNext())
-			{
-				WeakReference<IDebugRenderable> renderableRef = iterator.next();
-				if (renderableRef.get() == null)
-				{
-					iterator.remove();
-					continue;
-				}
-				if (renderableRef.get() == renderable)
-				{
-					iterator.remove();
-					return;
-				}
-			}
-		}
-	}
+	public static void register(IDebugRenderable renderable, ConfigEntry<Boolean> config) { if (INSTANCE != null) { INSTANCE.addRenderer(renderable, config); } }
+	public void addRenderer(IDebugRenderable renderable, ConfigEntry<Boolean> config) { this.rendererLists.addRenderable(renderable, config); }
 	
-	public static void clearRenderables() { INSTANCE.renderers.clear(); }
+	public static void unregister(IDebugRenderable renderable, ConfigEntry<Boolean> config) { if (INSTANCE != null) { INSTANCE.removeRenderer(renderable, config); } }
+	private void removeRenderer(IDebugRenderable renderable, ConfigEntry<Boolean> config) { this.rendererLists.removeRenderable(renderable, config); }
+	
+	public static void clearRenderables() { INSTANCE.rendererLists.clearRenderables(); }
+	
+	
+	
+	
+	
+	//===========//
+	// rendering //
+	//===========//
 	
 	public void init()
 	{
@@ -202,29 +186,6 @@ public class DebugRenderer
 		this.boxOutlineBuffer.uploadBuffer(buffer, EGpuUploadMethod.DATA, box_outline_indices.length * Integer.BYTES, GL32.GL_STATIC_DRAW);
 	}
 	
-	public void addRenderer(IDebugRenderable r)
-	{
-		if (!Config.Client.Advanced.Debugging.DebugWireframe.enableRendering.get()) return;
-		synchronized (this.renderers)
-		{
-			this.renderers.add(new WeakReference<>(r));
-		}
-	}
-	
-	public static void register(IDebugRenderable r)
-	{
-		if (INSTANCE != null)
-		{
-			INSTANCE.addRenderer(r);
-		}
-	}
-	
-	
-	
-	//===========//
-	// rendering //
-	//===========//
-	
 	public void render(Mat4f transform)
 	{
 		this.transformThiFrame = transform;
@@ -249,22 +210,7 @@ public class DebugRenderer
 		
 		this.boxOutlineBuffer.bind();
 		
-		synchronized (this.renderers)
-		{
-			Iterator<WeakReference<IDebugRenderable>> it = this.renderers.iterator();
-			while (it.hasNext())
-			{
-				// TODO split this up to improve frame times when only some items are needed
-				WeakReference<IDebugRenderable> ref = it.next();
-				IDebugRenderable r = ref.get();
-				if (r == null)
-				{
-					it.remove();
-					continue;
-				}
-				r.debugRender(this);
-			}
-		}
+		this.rendererLists.render(this);
 		
 		
 		BoxParticle head = null;
@@ -410,7 +356,7 @@ public class DebugRenderer
 		{
 			this.box = box;
 			this.particaleOnClose = new BoxParticle(new Box(box.a, box.b, deathColor), -1, ns, yChange);
-			register(this);
+			register(this, null);
 		}
 		
 		
@@ -431,10 +377,130 @@ public class DebugRenderer
 		public void close()
 		{
 			makeParticle(new BoxParticle(this.particaleOnClose.getBox(), System.nanoTime(), this.particaleOnClose.duration, this.particaleOnClose.yChange));
-			unregister(this);
+			unregister(this, null);
 		}
 		
 	}
 	
+	
+	
+	private static class RendererLists
+	{
+		public final LinkedList<WeakReference<IDebugRenderable>> generalRenderableList = new LinkedList<>();
+		
+		private final HashMap<ConfigEntry<Boolean>, LinkedList<WeakReference<IDebugRenderable>>> renderableListByConfig = new HashMap<>();
+		
+		
+		
+		// registration //
+		
+		public void addRenderable(IDebugRenderable renderable, @Nullable ConfigEntry<Boolean> config)
+		{
+			synchronized (this)
+			{
+				if (config != null)
+				{
+					if (!this.renderableListByConfig.containsKey(config))
+					{
+						this.renderableListByConfig.put(config, new LinkedList<>());
+					}
+					
+					LinkedList<WeakReference<IDebugRenderable>> renderableList = this.renderableListByConfig.get(config);
+					renderableList.add(new WeakReference<>(renderable));
+				}
+				else
+				{
+					this.generalRenderableList.add(new WeakReference<>(renderable));
+				}
+			}
+		}
+		
+		public void removeRenderable(IDebugRenderable renderable, @Nullable ConfigEntry<Boolean> config)
+		{
+			synchronized (this)
+			{
+				if (config != null)
+				{
+					if (this.renderableListByConfig.containsKey(config))
+					{
+						LinkedList<WeakReference<IDebugRenderable>> renderableList = this.renderableListByConfig.get(config);
+						this.removeRenderableFromInternalList(renderableList, renderable);	
+					}
+				}
+				else
+				{
+					this.removeRenderableFromInternalList(this.generalRenderableList, renderable);
+				}
+			}
+		}
+		private void removeRenderableFromInternalList(LinkedList<WeakReference<IDebugRenderable>> rendererList, IDebugRenderable renderable)
+		{
+			Iterator<WeakReference<IDebugRenderable>> iterator = rendererList.iterator();
+			while (iterator.hasNext())
+			{
+				WeakReference<IDebugRenderable> renderableRef = iterator.next();
+				if (renderableRef.get() == null)
+				{
+					iterator.remove();
+					continue;
+				}
+				
+				if (renderableRef.get() == renderable)
+				{
+					iterator.remove();
+					return;
+				}
+			}
+		}
+		
+		public void clearRenderables()
+		{
+			for (ConfigEntry<Boolean> config : this.renderableListByConfig.keySet())
+			{
+				LinkedList<WeakReference<IDebugRenderable>> renderableList = this.renderableListByConfig.get(config);
+				if (config.get() && renderableList != null)
+				{
+					renderableList.clear();
+				}
+			}
+		}
+		
+		
+		
+		// rendering //
+		
+		public void render(DebugRenderer debugRenderer)
+		{
+			this.renderList(debugRenderer, this.generalRenderableList);
+			
+			for (ConfigEntry<Boolean> config : this.renderableListByConfig.keySet())
+			{
+				LinkedList<WeakReference<IDebugRenderable>> renderableList = this.renderableListByConfig.get(config);
+				if (config.get() && renderableList != null && renderableList.size() != 0)
+				{
+					this.renderList(debugRenderer, renderableList);
+				}
+			}
+		}
+		private void renderList(DebugRenderer debugRenderer, LinkedList<WeakReference<IDebugRenderable>> rendererList)
+		{
+			synchronized (this)
+			{
+				Iterator<WeakReference<IDebugRenderable>> iterator = rendererList.iterator();
+				while (iterator.hasNext())
+				{
+					WeakReference<IDebugRenderable> ref = iterator.next();
+					IDebugRenderable renderable = ref.get();
+					if (renderable == null)
+					{
+						iterator.remove();
+						continue;
+					}
+					
+					renderable.debugRender(debugRenderer);
+				}
+			}
+		}
+	}
 	
 }

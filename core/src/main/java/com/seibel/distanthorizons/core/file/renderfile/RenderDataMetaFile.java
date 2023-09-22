@@ -108,7 +108,7 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 		this.clientLevel = clientLevel;
 		LodUtil.assertTrue(this.baseMetaData == null);
 		this.doesFileExist = this.file.exists();
-		DebugRenderer.register(this);
+		DebugRenderer.register(this, Config.Client.Advanced.Debugging.DebugWireframe.showRenderDataFileStatus);
 	}
 	
 	
@@ -124,7 +124,7 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 		this.clientLevel = clientLevel;
 		LodUtil.assertTrue(this.baseMetaData != null);
 		this.doesFileExist = this.file.exists();
-		DebugRenderer.register(this);
+		DebugRenderer.register(this, Config.Client.Advanced.Debugging.DebugWireframe.showRenderDataFileStatus);
 	}
 	
 	
@@ -151,7 +151,7 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 			boolean dataUpdated = renderSource.updateWithChunkData(chunkDataView, this.clientLevel);
 			
 			
-			// add a debug renderer
+			// add a debug particle
 			boolean showRenderDataFileStatus = Config.Client.Advanced.Debugging.DebugWireframe.showRenderDataFileStatus.get();
 			if (showRenderDataFileStatus)
 			{
@@ -453,14 +453,6 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 	@Override
 	public void debugRender(DebugRenderer debugRenderer)
 	{
-		boolean showRenderDataFileStatus = Config.Client.Advanced.Debugging.DebugWireframe.showRenderDataFileStatus.get();
-		if (!showRenderDataFileStatus)
-		{
-			return;
-		}
-		
-		
-		
 		if (this.cachedRenderDataSourceRef.get() != null)
 		{
 			return;

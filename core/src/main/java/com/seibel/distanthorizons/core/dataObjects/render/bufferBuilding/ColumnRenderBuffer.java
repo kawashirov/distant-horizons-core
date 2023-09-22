@@ -45,7 +45,7 @@ import java.util.concurrent.*;
  *
  * @see ColumnRenderBufferBuilder
  */
-public class ColumnRenderBuffer extends AbstractRenderBuffer implements IDebugRenderable
+public class ColumnRenderBuffer extends AbstractRenderBuffer
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
@@ -71,21 +71,8 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer implements IDebugRe
 	{
 		this.pos = pos;
 		this.debugPos = debugPos;
-		vbos = new GLVertexBuffer[0];
-		vbosTransparent = new GLVertexBuffer[0];
-		DebugRenderer.register(this);
-	}
-	
-	@Override
-	public void debugRender(DebugRenderer renderer)
-	{
-		if (this.closed || this.vbos == null)
-		{
-			return;
-		}
-		
-		Color c = Color.green;
-		//renderer.renderBox(debugPos, 128, 128, 0.05f, c);
+		this.vbos = new GLVertexBuffer[0];
+		this.vbosTransparent = new GLVertexBuffer[0];
 	}
 	
 	
