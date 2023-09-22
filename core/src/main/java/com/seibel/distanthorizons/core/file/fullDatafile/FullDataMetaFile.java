@@ -599,16 +599,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 					boolean showFullDataFileSampling = Config.Client.Advanced.Debugging.DebugWireframe.showFullDataFileSampling.get();
 					if (showFullDataFileStatus || showFullDataFileSampling)
 					{
-						Color color;
-						if (this.pos.getDetailLevel() == DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL)
-						{
-							color = Color.GREEN;
-						}
-						else
-						{
-							color = Color.GREEN.darker().darker();
-						}
-						
+						Color color = dataSourceChanged ? Color.GREEN : Color.GREEN.darker().darker();
 						DebugRenderer.makeParticle(new DebugRenderer.BoxParticle(
 								new DebugRenderer.Box(this.pos, 64f, 72f, 0.03f, color),
 								0.2, 32f));
