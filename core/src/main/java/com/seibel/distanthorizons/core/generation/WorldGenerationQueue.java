@@ -82,7 +82,7 @@ public class WorldGenerationQueue implements IWorldGenerationQueue, IDebugRender
 	//  1. allow the generator to deal with larger sections (let the generator threads split up larger tasks into smaller one
 	//  2. batch requests better. instead of sending 4 individual tasks of detail level N, send 1 task of detail level n+1
 	private final ExecutorService queueingThread = ThreadUtil.makeSingleThreadPool("World Gen Queue");
-	private boolean generationQueueStarted = false;
+	private boolean generationQueueRunning = false;
 	private DhBlockPos2D generationTargetPos = DhBlockPos2D.ZERO;
 	/** can be used for debugging how many tasks are currently in the queue */
 	private int numberOfTasksQueued = 0;
@@ -179,39 +179,26 @@ public class WorldGenerationQueue implements IWorldGenerationQueue, IDebugRender
 		// TODO Should we cancel generation of chunks that were loaded by the player?
 	}
 	
+	
+	
 	//===============//
 	// running tasks //
 	//===============//
 	
-	public void runCurrentGenTasksUntilBusy(DhBlockPos2D targetPos)
+	public void startGenerationQueueAndSetTargetPos(DhBlockPos2D targetPos)
 	{
-		generator.preGeneratorTaskStart();
-		try
+		// update the target pos
+		this.generationTargetPos = targetPos;
+		
+		// ensure the queuing thread is running
+		if (!this.generationQueueRunning)
 		{
-			// the generator is shutting down, don't attempt to generate anything
-			if (this.generatorClosingFuture != null)
-			{
-				return;
-			}
-			
-			
-			// update the target pos
-			this.generationTargetPos = targetPos;
-			
-			// only start the queuing thread once
-			if (!this.generationQueueStarted)
-			{
-				this.startWorldGenQueuingThread();
-			}
-		}
-		catch (Exception e)
-		{
-			LOGGER.error(e.getMessage(), e);
+			this.startWorldGenQueuingThread();
 		}
 	}
 	private void startWorldGenQueuingThread()
 	{
-		this.generationQueueStarted = true;
+		this.generationQueueRunning = true;
 		
 		// queue world generation tasks on its own thread since this process is very slow and would lag the server thread
 		this.queueingThread.execute(() ->
@@ -221,6 +208,7 @@ public class WorldGenerationQueue implements IWorldGenerationQueue, IDebugRender
 				// loop until the generator is shutdown
 				while (!Thread.interrupted())
 				{
+					this.generator.preGeneratorTaskStart();
 					
 					// queue generation tasks until the generator is full, or there are no more tasks to generate
 					boolean taskStarted = true;
@@ -244,7 +232,7 @@ public class WorldGenerationQueue implements IWorldGenerationQueue, IDebugRender
 			catch (Exception e)
 			{
 				LOGGER.error("queueing exception: " + e.getMessage(), e);
-				this.generationQueueStarted = false;
+				this.generationQueueRunning = false;
 			}
 		});
 	}
