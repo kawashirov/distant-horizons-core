@@ -965,11 +965,21 @@ public class Config
 								+ "How long should a buffer wait per Megabyte of data uploaded? \n"
 								+ "Helpful resource for frame times: https://fpstoms.com \n"
 								+ "\n"
-								+ "Longer times may reduce stuttering but will make fake chunks \n"
+								+ "Longer times may reduce stuttering but will make LODs \n"
 								+ "transition and load slower. Change this to [0] for no timeout. \n"
 								+ "\n"
 								+ "NOTE:\n"
 								+ "Before changing this config, try changing the \"GPU Upload method\" first. \n"
+								+ "")
+						.build();
+				
+				public static ConfigEntry<Boolean> gpuUploadAsync = new ConfigEntry.Builder<Boolean>()
+						.set(true)
+						.comment(""
+								+ "If true geometry data will be uploaded on a DH controlled thread, reducing FPS stuttering. \n"
+								+ "If false uploading will be done on Minecraft's main rendering thread. \n"
+								+ "\n"
+								+ "Setting this to false may reduce crashes or corrupted geometry on systems with an AMD GPU when Sodium is installed.\n"
 								+ "")
 						.build();
 				

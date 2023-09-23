@@ -441,6 +441,10 @@
     "GPU upload speed (milliseconds)",
   "distanthorizons.config.client.advanced.buffers.gpuUploadPerMegabyteInMilliseconds.@tooltip":
     "How long should a buffer wait per Megabyte of data uploaded?\nMay be increased if there is frame stuttering.",
+  "distanthorizons.config.client.advanced.buffers.gpuUploadAsync":
+    "GPU upload Async",
+  "distanthorizons.config.client.advanced.buffers.gpuUploadAsync.@tooltip":
+    "If true geometry data will be uploaded on a DH controlled thread, reducing FPS stuttering. \nIf false uploading will be done on Minecraft's main rendering thread. \n\nSetting this to false may reduce crashes or corrupted geometry on systems with an AMD GPU when Sodium is installed.",
   
   
   
