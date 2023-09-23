@@ -61,7 +61,6 @@ import java.util.concurrent.TimeUnit;
  * https://stackoverflow.com/questions/63509735/massive-performance-loss-with-glmapbuffer <br><br>
  *
  * @author James Seibel
- * @version 2022-10-1
  */
 public class GLProxy
 {
@@ -102,6 +101,10 @@ public class GLProxy
 	
 	
 	
+	//=============//
+	// constructor //
+	//=============//
+	
 	private GLProxy() throws IllegalStateException
 	{
 		// this must be created on minecraft's render context to work correctly
@@ -123,13 +126,13 @@ public class GLProxy
 		//============================//
 		
 		// get Minecraft's context
-		minecraftGlContext = GLFW.glfwGetCurrentContext();
-		minecraftGlCapabilities = GL.getCapabilities();
+		this.minecraftGlContext = GLFW.glfwGetCurrentContext();
+		this.minecraftGlCapabilities = GL.getCapabilities();
 		
 		// crash the game if the GPU doesn't support OpenGL 3.2
-		if (!minecraftGlCapabilities.OpenGL32)
+		if (!this.minecraftGlCapabilities.OpenGL32)
 		{
-			String supportedVersionInfo = getFailedVersionInfo(minecraftGlCapabilities);
+			String supportedVersionInfo = this.getFailedVersionInfo(this.minecraftGlCapabilities);
 			
 			// See full requirement at above.
 			String errorMessage = ModInfo.READABLE_NAME + " was initializing " + GLProxy.class.getSimpleName()
@@ -137,11 +140,11 @@ public class GLProxy
 					"Additional info:\n" + supportedVersionInfo;
 			MC.crashMinecraft(errorMessage, new UnsupportedOperationException("Distant Horizon OpenGL requirements not met"));
 		}
-		GL_LOGGER.info("minecraftGlCapabilities:\n" + getVersionInfo(minecraftGlCapabilities));
+	 	GL_LOGGER.info("minecraftGlCapabilities:\n" + this.getVersionInfo(this.minecraftGlCapabilities));
 		
 		if (Config.Client.Advanced.Debugging.overrideVanillaGLLogger.get())
 		{
-			GLUtil.setupDebugMessageCallback(new PrintStream(new GLMessageOutputStream(GLProxy::logMessage, vanillaDebugMessageBuilder), true));
+			GLUtil.setupDebugMessageCallback(new PrintStream(new GLMessageOutputStream(GLProxy::logMessage, this.vanillaDebugMessageBuilder), true));
 		}
 		
 		
@@ -183,20 +186,20 @@ public class GLProxy
 		}
 		
 		// create the Lod Builder context
-		lodBuilderGlContext = GLFW.glfwCreateWindow(64, 48, "LOD Builder Window", 0L, minecraftGlContext);
-		if (lodBuilderGlContext == 0)
+		this.lodBuilderGlContext = GLFW.glfwCreateWindow(64, 48, "LOD Builder Window", 0L, this.minecraftGlContext);
+		if (this.lodBuilderGlContext == 0)
 		{
 			GL_LOGGER.error("ERROR: Failed to create GLFW context for OpenGL 3.2 with"
 					+ " Forward Compat Core Profile! Your OS may have not been able to support it!");
 			throw new UnsupportedOperationException("Forward Compat Core Profile 3.2 creation failure");
 		}
 		// create the window
-		GLFW.glfwMakeContextCurrent(lodBuilderGlContext);
+		GLFW.glfwMakeContextCurrent(this.lodBuilderGlContext);
 		// set and log the capabilities
-		lodBuilderGlCapabilities = GL.createCapabilities();
-		GL_LOGGER.info("lodBuilderGlCapabilities:\n" + getVersionInfo(lodBuilderGlCapabilities));
+		this.lodBuilderGlCapabilities = GL.createCapabilities();
+		GL_LOGGER.info("lodBuilderGlCapabilities:\n" + this.getVersionInfo(this.lodBuilderGlCapabilities));
 		// override the GL logger
-		GLUtil.setupDebugMessageCallback(new PrintStream(new GLMessageOutputStream(GLProxy::logMessage, lodBuilderDebugMessageBuilder), true));
+		GLUtil.setupDebugMessageCallback(new PrintStream(new GLMessageOutputStream(GLProxy::logMessage, this.lodBuilderDebugMessageBuilder), true));
 		// clear the context for the next stage
 		GLFW.glfwMakeContextCurrent(0L);
 		
@@ -207,20 +210,20 @@ public class GLProxy
 		//=================================//
 		
 		// create the proxyWorker's context
-		proxyWorkerGlContext = GLFW.glfwCreateWindow(64, 48, "LOD proxy worker Window", 0L, minecraftGlContext);
-		if (proxyWorkerGlContext == 0)
+		this.proxyWorkerGlContext = GLFW.glfwCreateWindow(64, 48, "LOD proxy worker Window", 0L, this.minecraftGlContext);
+		if (this.proxyWorkerGlContext == 0)
 		{
 			GL_LOGGER.error("ERROR: Failed to create GLFW context for OpenGL 3.2 with"
 					+ " Forward Compat Core Profile! Your OS may have not been able to support it!");
 			throw new UnsupportedOperationException("Forward Compat Core Profile 3.2 creation failure");
 		}
 		// create the window
-		GLFW.glfwMakeContextCurrent(proxyWorkerGlContext);
+		GLFW.glfwMakeContextCurrent(this.proxyWorkerGlContext);
 		// set and log the capabilities
-		proxyWorkerGlCapabilities = GL.createCapabilities();
-		GL_LOGGER.info("proxyWorkerGlCapabilities:\n" + getVersionInfo(lodBuilderGlCapabilities));
+		this.proxyWorkerGlCapabilities = GL.createCapabilities();
+		GL_LOGGER.info("proxyWorkerGlCapabilities:\n" + this.getVersionInfo(this.lodBuilderGlCapabilities));
 		// override the GL logger
-		GLUtil.setupDebugMessageCallback(new PrintStream(new GLMessageOutputStream(GLProxy::logMessage, proxyWorkerDebugMessageBuilder), true));
+		GLUtil.setupDebugMessageCallback(new PrintStream(new GLMessageOutputStream(GLProxy::logMessage, this.proxyWorkerDebugMessageBuilder), true));
 		// clear the context for the next stage
 		GLFW.glfwMakeContextCurrent(0L);
 		
@@ -231,19 +234,19 @@ public class GLProxy
 		//======================//
 		
 		// get capabilities from a context we use
-		setGlContext(EGLProxyContext.LOD_BUILDER);
+		this.setGlContext(EGLProxyContext.LOD_BUILDER);
 		
 		// Check if we can use the make-over version of Vertex Attribute, which is available in GL4.3 or after
-		VertexAttributeBufferBindingSupported = minecraftGlCapabilities.glBindVertexBuffer != 0L; // Nullptr
+		this.VertexAttributeBufferBindingSupported = this.minecraftGlCapabilities.glBindVertexBuffer != 0L; // Nullptr
 		
 		// UNUSED currently
 		// Check if we can use the named version of all calls, which is available in GL4.5 or after
-		namedObjectSupported = minecraftGlCapabilities.glNamedBufferData != 0L; //Nullptr
+		this.namedObjectSupported = this.minecraftGlCapabilities.glNamedBufferData != 0L; //Nullptr
 		
 		// get specific capabilities
 		// Check if we can use the Buffer Storage, which is available in GL4.4 or after
-		bufferStorageSupported = minecraftGlCapabilities.glBufferStorage != 0L && lodBuilderGlCapabilities.glBufferStorage != 0L; // Nullptr
-		if (!bufferStorageSupported)
+		this.bufferStorageSupported = this.minecraftGlCapabilities.glBufferStorage != 0L && this.lodBuilderGlCapabilities.glBufferStorage != 0L; // Nullptr
+		if (!this.bufferStorageSupported)
 		{
 			GL_LOGGER.warn("This GPU doesn't support Buffer Storage (OpenGL 4.4), falling back to using other methods.");
 		}
@@ -253,14 +256,14 @@ public class GLProxy
 		if (vendor.contains("NVIDIA") || vendor.contains("GEFORCE"))
 		{
 			// NVIDIA card
-			preferredUploadMethod = bufferStorageSupported ? EGpuUploadMethod.BUFFER_STORAGE : EGpuUploadMethod.SUB_DATA;
+			this.preferredUploadMethod = this.bufferStorageSupported ? EGpuUploadMethod.BUFFER_STORAGE : EGpuUploadMethod.SUB_DATA;
 		}
 		else
 		{
 			// AMD or Intel card
-			preferredUploadMethod = bufferStorageSupported ? EGpuUploadMethod.BUFFER_STORAGE : EGpuUploadMethod.DATA;
+			this.preferredUploadMethod = this.bufferStorageSupported ? EGpuUploadMethod.BUFFER_STORAGE : EGpuUploadMethod.DATA;
 		}
-		GL_LOGGER.info("GPU Vendor [" + vendor + "], Preferred upload method is [" + preferredUploadMethod + "].");
+		GL_LOGGER.info("GPU Vendor [" + vendor + "], Preferred upload method is [" + this.preferredUploadMethod + "].");
 		
 		
 		
@@ -269,7 +272,7 @@ public class GLProxy
 		//==========//
 		
 		// Since this is created on the render thread, make sure the Minecraft context is used in the end
-		setGlContext(EGLProxyContext.MINECRAFT);
+		this.setGlContext(EGLProxyContext.MINECRAFT);
 		
 		// GLProxy creation success
 		GL_LOGGER.info(GLProxy.class.getSimpleName() + " creation successful. OpenGL smiles upon you this day.");
@@ -281,7 +284,7 @@ public class GLProxy
 	 */
 	public void setGlContext(EGLProxyContext newContext)
 	{
-		EGLProxyContext currentContext = getGlContext();
+		EGLProxyContext currentContext = this.getGlContext();
 		
 		// we don't have to change the context, we are already there.
 		if (currentContext == newContext)
@@ -294,18 +297,18 @@ public class GLProxy
 		switch (newContext)
 		{
 			case LOD_BUILDER:
-				contextPointer = lodBuilderGlContext;
-				newGlCapabilities = lodBuilderGlCapabilities;
+				contextPointer = this.lodBuilderGlContext;
+				newGlCapabilities = this.lodBuilderGlCapabilities;
 				break;
 			
 			case MINECRAFT:
-				contextPointer = minecraftGlContext;
-				newGlCapabilities = minecraftGlCapabilities;
+				contextPointer = this.minecraftGlContext;
+				newGlCapabilities = this.minecraftGlCapabilities;
 				break;
 			
 			case PROXY_WORKER:
-				contextPointer = proxyWorkerGlContext;
-				newGlCapabilities = proxyWorkerGlCapabilities;
+				contextPointer = this.proxyWorkerGlContext;
+				newGlCapabilities = this.proxyWorkerGlCapabilities;
 				break;
 			
 			default: // default should never happen, it is just here to make the compiler happy
@@ -325,15 +328,15 @@ public class GLProxy
 		long currentContext = GLFW.glfwGetCurrentContext();
 		
 		
-		if (currentContext == lodBuilderGlContext)
+		if (currentContext == this.lodBuilderGlContext)
 		{
 			return EGLProxyContext.LOD_BUILDER;
 		}
-		else if (currentContext == minecraftGlContext)
+		else if (currentContext == this.minecraftGlContext)
 		{
 			return EGLProxyContext.MINECRAFT;
 		}
-		else if (currentContext == proxyWorkerGlContext)
+		else if (currentContext == this.proxyWorkerGlContext)
 		{
 			return EGLProxyContext.PROXY_WORKER;
 		}
@@ -346,9 +349,9 @@ public class GLProxy
 			// hopefully this shouldn't happen
 			throw new IllegalStateException(Thread.currentThread().getName() +
 					" has a unknown OpenGl context: [" + currentContext + "]. "
-					+ "Minecraft context [" + minecraftGlContext + "], "
-					+ "LodBuilder context [" + lodBuilderGlContext + "], "
-					+ "ProxyWorker context [" + proxyWorkerGlContext + "], "
+					+ "Minecraft context [" + this.minecraftGlContext + "], "
+					+ "LodBuilder context [" + this.lodBuilderGlContext + "], "
+					+ "ProxyWorker context [" + this.proxyWorkerGlContext + "], "
 					+ "no context [0].");
 		}
 	}
@@ -368,13 +371,13 @@ public class GLProxy
 	public EGpuUploadMethod getGpuUploadMethod()
 	{
 		EGpuUploadMethod method = Config.Client.Advanced.GpuBuffers.gpuUploadMethod.get();
-		if (!bufferStorageSupported && method == EGpuUploadMethod.BUFFER_STORAGE)
+		if (!this.bufferStorageSupported && method == EGpuUploadMethod.BUFFER_STORAGE)
 		{
 			// if buffer storage isn't supported
 			// default to DATA since that is the most compatible
 			method = EGpuUploadMethod.DATA;
 		}
-		return method == EGpuUploadMethod.AUTO ? preferredUploadMethod : method;
+		return method == EGpuUploadMethod.AUTO ? this.preferredUploadMethod : method;
 	}
 	
 	/**
@@ -386,14 +389,14 @@ public class GLProxy
 	public void recordOpenGlCall(Runnable renderCall)
 	{
 		StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-		workerThread.execute(() -> runnableContainer(renderCall, stackTrace));
+		this.workerThread.execute(() -> this.runnableContainer(renderCall, stackTrace));
 	}
 	private void runnableContainer(Runnable renderCall, StackTraceElement[] stackTrace)
 	{
 		try
 		{
 			// set up the context...
-			setGlContext(EGLProxyContext.PROXY_WORKER);
+			this.setGlContext(EGLProxyContext.PROXY_WORKER);
 			// ...run the actual code...
 			renderCall.run();
 		}
@@ -406,7 +409,7 @@ public class GLProxy
 		finally
 		{
 			// ...and make sure the context is released when the thread finishes
-			setGlContext(EGLProxyContext.NONE);
+			this.setGlContext(EGLProxyContext.NONE);
 		}
 	}
 	
@@ -460,9 +463,9 @@ public class GLProxy
 			return false;
 		}
 		
-		namedObjectSupported = c.glNamedBufferStorage != 0;
-		bufferStorageSupported = c.glBufferStorage != 0;
-		VertexAttributeBufferBindingSupported = c.glVertexAttribBinding != 0;
+		this.namedObjectSupported = c.glNamedBufferStorage != 0;
+		this.bufferStorageSupported = c.glBufferStorage != 0;
+		this.VertexAttributeBufferBindingSupported = c.glVertexAttribBinding != 0;
 		return true;
 	}
 	
