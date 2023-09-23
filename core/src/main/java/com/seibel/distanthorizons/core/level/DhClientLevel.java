@@ -121,12 +121,6 @@ public class DhClientLevel extends DhLevel implements IDhClientLevel
 	//=======================//
 	
 	@Override
-	public void dumpRamUsage()
-	{
-		//TODO
-	}
-	
-	@Override
 	public IFullDataSourceProvider getFileHandler()
 	{
 		return dataFileHandler;
