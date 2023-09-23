@@ -27,6 +27,7 @@ import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.enums.EGLProxyContext;
 import com.seibel.distanthorizons.core.logging.ConfigBasedLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.util.ReflectionUtil;
 import com.seibel.distanthorizons.core.util.objects.GLMessage;
 import com.seibel.distanthorizons.core.util.objects.GLMessageOutputStream;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
@@ -167,14 +168,13 @@ public class GLProxy
 		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GLFW.GLFW_TRUE);
 		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);
 		
-		LOGGER.info(this.minecraftGlCapabilities.toString());
-		
 		// create the Lod Builder context
 		this.lodBuilderGlContext = GLFW.glfwCreateWindow(64, 48, "LOD Builder Window", 0L, this.minecraftGlContext);
 		if (this.lodBuilderGlContext == 0)
 		{
-			GL_LOGGER.error("ERROR: Failed to create GLFW context for OpenGL 3.2 with"
-					+ " Forward Compat Core Profile! Your OS may have not been able to support it!");
+			GL_LOGGER.error("ERROR: Failed to create LodBuilder GLFW context for OpenGL 3.2 with Forward compatible Core Profile! Your OS may have not been able to support it.");
+			GL_LOGGER.error("Minecraft GL Capabilities:\n [\n"+ReflectionUtil.getAllFieldValuesAsString(this.minecraftGlCapabilities)+"\n]\n");
+			
 			throw new UnsupportedOperationException("Forward Compat Core Profile 3.2 creation failure");
 		}
 		// create the window
@@ -197,8 +197,9 @@ public class GLProxy
 		this.proxyWorkerGlContext = GLFW.glfwCreateWindow(64, 48, "LOD proxy worker Window", 0L, this.minecraftGlContext);
 		if (this.proxyWorkerGlContext == 0)
 		{
-			GL_LOGGER.error("ERROR: Failed to create GLFW context for OpenGL 3.2 with"
-					+ " Forward Compat Core Profile! Your OS may have not been able to support it!");
+			GL_LOGGER.error("ERROR: Failed to create GLProxy Worker GLFW context for OpenGL 3.2 with Forward compatible Core Profile! Your OS may have not been able to support it.");
+			GL_LOGGER.error("Minecraft GL Capabilities:\n [\n"+ReflectionUtil.getAllFieldValuesAsString(this.minecraftGlCapabilities)+"\n]\n");
+			
 			throw new UnsupportedOperationException("Forward Compat Core Profile 3.2 creation failure");
 		}
 		// create the window
