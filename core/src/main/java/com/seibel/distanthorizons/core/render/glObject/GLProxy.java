@@ -21,7 +21,6 @@ package com.seibel.distanthorizons.core.render.glObject;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.seibel.distanthorizons.api.enums.config.EGLErrorHandlingMode;
-import com.seibel.distanthorizons.api.enums.config.EGlProfileMode;
 import com.seibel.distanthorizons.api.enums.config.EGpuUploadMethod;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
@@ -165,25 +164,10 @@ public class GLProxy
 		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
 		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 2);
 		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_DEBUG_CONTEXT, GLFW.GLFW_TRUE);
+		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GLFW.GLFW_TRUE);
+		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);
 		
-		// TODO remove me
-		boolean useForwardCompatibility = Config.Client.Advanced.Debugging.glForwardCompatibilityMode.get();
-		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, useForwardCompatibility ? GLFW.GLFW_TRUE : GLFW.GLFW_FALSE);
-		
-		// TODO remove me
-		EGlProfileMode profileMode = Config.Client.Advanced.Debugging.glProfileMode.get();
-		if (profileMode == EGlProfileMode.CORE)
-		{
-			GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);
-		}
-		else if (profileMode == EGlProfileMode.ANY)
-		{
-			GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_ANY_PROFILE);
-		}
-		else
-		{
-			GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_COMPAT_PROFILE);
-		}
+		LOGGER.info(this.minecraftGlCapabilities.toString());
 		
 		// create the Lod Builder context
 		this.lodBuilderGlContext = GLFW.glfwCreateWindow(64, 48, "LOD Builder Window", 0L, this.minecraftGlContext);

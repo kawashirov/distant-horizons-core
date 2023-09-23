@@ -1173,16 +1173,6 @@ public class Config
 						.comment("")
 						.build();
 				
-				// TODO temporary test, remove me
-				public static ConfigEntry<EGlProfileMode> glProfileMode = new ConfigEntry.Builder<EGlProfileMode>()
-						.set(EGlProfileMode.CORE)
-						.comment("")
-						.build();
-				// TODO temporary test, remove me
-				public static ConfigEntry<Boolean> glForwardCompatibilityMode = new ConfigEntry.Builder<Boolean>()
-						.set(true)
-						.comment("")
-						.build();
 				
 				
 				
