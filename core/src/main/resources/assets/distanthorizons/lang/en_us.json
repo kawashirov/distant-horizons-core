@@ -3,7 +3,15 @@
 	"Distant Horizons",
 
 
-
+    
+  "distanthorizons.general.true":
+    "True",
+  "distanthorizons.general.false":
+    "False",
+  "distanthorizons.general.yes":
+    "Yes",
+  "distanthorizons.general.no":
+    "No",
   "distanthorizons.general.back":
     "Back",
   "distanthorizons.general.next":
@@ -12,10 +20,8 @@
     "Done",
   "distanthorizons.general.cancel":
     "Cancel",
-  "distanthorizons.general.yes":
-    "Yes",
-  "distanthorizons.general.no":
-    "No",
+  "distanthorizons.general.reset":
+    "Reset",
 
 
 
