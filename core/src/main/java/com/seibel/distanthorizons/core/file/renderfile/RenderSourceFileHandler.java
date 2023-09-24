@@ -44,7 +44,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	private final ThreadPoolExecutor fileHandlerThreadPool;
 	private final F3Screen.NestedMessage threadPoolMsg;
 	
-	protected final ConcurrentHashMap<DhSectionPos, RenderDataMetaFile> metaFileBySectionPos = new ConcurrentHashMap<>(); //loadedMetaFileBySectionPos
+	protected final ConcurrentHashMap<DhSectionPos, RenderDataMetaFile> loadedMetaFileBySectionPos = new ConcurrentHashMap<>();
 	
 	private final IDhClientLevel clientLevel;
 	private final File saveDir;
@@ -120,7 +120,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	/** @return null if there was an issue */
 	private RenderDataMetaFile getLoadOrMakeFile(DhSectionPos pos)
 	{
-		RenderDataMetaFile metaFile = this.metaFileBySectionPos.get(pos);
+		RenderDataMetaFile metaFile = this.loadedMetaFileBySectionPos.get(pos);
 		if (metaFile != null)
 		{
 			return metaFile;
@@ -137,7 +137,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 				// Double check locking for loading file, as loading file means also loading the metadata, which
 				// while not... Very expensive, is still better to avoid multiple threads doing it, and dumping the
 				// duplicated work to the trash. Therefore, eating the overhead of 'synchronized' is worth it.
-				metaFile = this.metaFileBySectionPos.get(pos);
+				metaFile = this.loadedMetaFileBySectionPos.get(pos);
 				if (metaFile != null)
 				{
 					return metaFile; // someone else loaded it already.
@@ -147,7 +147,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 				{
 					metaFile = RenderDataMetaFile.createFromExistingFile(this.fullDataSourceProvider, this.clientLevel, fileToLoad);
 					this.topDetailLevelRef.updateAndGet(currentTopDetailLevel -> Math.max(currentTopDetailLevel, pos.getDetailLevel()));
-					this.metaFileBySectionPos.put(pos, metaFile);
+					this.loadedMetaFileBySectionPos.put(pos, metaFile);
 					return metaFile;
 				}
 				catch (IOException e)
@@ -175,7 +175,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		this.topDetailLevelRef.updateAndGet(oldDetailLevel -> Math.max(oldDetailLevel, pos.getDetailLevel()));
 		
 		// This is a Compare And Swap with expected null value.
-		RenderDataMetaFile metaFileCas = this.metaFileBySectionPos.putIfAbsent(pos, metaFile);
+		RenderDataMetaFile metaFileCas = this.loadedMetaFileBySectionPos.putIfAbsent(pos, metaFile);
 		return (metaFileCas == null) ? metaFile : metaFileCas;
 	}
 	
@@ -210,7 +210,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 			for (int zOffset = 0; zOffset < width; zOffset++)
 			{
 				fileSectionPos.mutate(sectionDetailLevel, minSectionPos.getX() + xOffset, minSectionPos.getZ() + zOffset);
-				RenderDataMetaFile metaFile = this.metaFileBySectionPos.get(fileSectionPos); // bypass the getLoadOrMakeFile() since we only want cached files.
+				RenderDataMetaFile metaFile = this.loadedMetaFileBySectionPos.get(fileSectionPos); // bypass the getLoadOrMakeFile() since we only want cached files.
 				if (metaFile != null)
 				{
 					metaFile.updateChunkIfSourceExistsAsync(chunk);
@@ -230,7 +230,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	public CompletableFuture<Void> flushAndSaveAsync()
 	{
 		ArrayList<CompletableFuture<Void>> futures = new ArrayList<>();
-		for (RenderDataMetaFile metaFile : this.metaFileBySectionPos.values())
+		for (RenderDataMetaFile metaFile : this.loadedMetaFileBySectionPos.values())
 		{
 			futures.add(metaFile.flushAndSaveAsync());
 		}
@@ -249,7 +249,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	{
 		ArrayList<String> lines = new ArrayList<>();
 		lines.add("Render Source File Handler [" + this.clientLevel.getClientLevelWrapper().getDimensionType().getDimensionName() + "]");
-		lines.add("  Loaded files: " + this.metaFileBySectionPos.size());
+		lines.add("  Loaded files: " + this.loadedMetaFileBySectionPos.size());
 		lines.add("  Thread pool tasks: " + this.fileHandlerThreadPool.getQueue().size() + " (completed: " + this.fileHandlerThreadPool.getCompletedTaskCount() + ")");
 		
 		int totalFutures = this.taskTracker.size();
@@ -293,7 +293,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 	@Override
 	public void close()
 	{
-		LOGGER.info("Closing " + this.getClass().getSimpleName() + " with [" + this.metaFileBySectionPos.size() + "] files...");
+		LOGGER.info("Closing " + this.getClass().getSimpleName() + " with [" + this.loadedMetaFileBySectionPos.size() + "] files...");
 		this.fileHandlerThreadPool.shutdown();
 		this.threadPoolMsg.close();
 	}
@@ -314,7 +314,7 @@ public class RenderSourceFileHandler implements ILodRenderSourceProvider
 		}
 		
 		// clear the cached files
-		this.metaFileBySectionPos.clear();
+		this.loadedMetaFileBySectionPos.clear();
 	}
 	
 	

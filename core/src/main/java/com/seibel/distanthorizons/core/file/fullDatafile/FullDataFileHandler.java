@@ -55,7 +55,6 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	protected static ConfigChangeListener<Integer> configListener;
 	
 	private final ConcurrentHashMap<DhSectionPos, FullDataMetaFile> loadedMetaFileBySectionPos = new ConcurrentHashMap<>();
-	private final Set<DhSectionPos> missingSectionPos = Collections.newSetFromMap(new ConcurrentHashMap<>());
 	
 	protected final IDhLevel level;
 	protected final File saveDir;
@@ -131,14 +130,12 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		}
 		
 		
-		// File does exist, but not loaded yet.
+		// check if the file exists, but hasn't been loaded
 		File fileToLoad = this.computeDataFilePath(pos);
 		if (fileToLoad.exists())
 		{
 			synchronized (this)
 			{
-				// A file exists, but isn't loaded yet.
-				
 				// Double check locking for loading file, as loading file means also loading the metadata, which
 				// while not... Very expensive, is still better to avoid multiple threads doing it, and dumping the
 				// duplicated work to the trash. Therefore, eating the overhead of 'synchronized' is worth it.
@@ -160,17 +157,12 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 					LOGGER.error("Failed to read meta data file at " + fileToLoad + ": ", e);
 					FileUtil.renameCorruptedFile(fileToLoad);
 				}
-				finally
-				{
-					this.missingSectionPos.remove(pos);
-				}
 			}
 		}
 		
 		
 		if (!allowCreateFile)
 		{
-			this.missingSectionPos.add(pos);
 			return null;
 		}
 		
@@ -191,7 +183,6 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		
 		// This is a Compare And Swap with expected null value.
 		FullDataMetaFile metaFileCas = this.loadedMetaFileBySectionPos.putIfAbsent(pos, metaFile);
-		this.missingSectionPos.remove(pos);
 		return metaFileCas == null ? metaFile : metaFileCas;
 	}
 	
@@ -262,9 +253,9 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		if (CompleteFullDataSource.firstDataPosCanAffectSecond(basePos, childPos))
 		{
 			// get or load the file if necessary
-			if (!this.loadedMetaFileBySectionPos.containsKey(childPos) && this.computeDataFilePath(childPos).exists())
+			if (!this.loadedMetaFileBySectionPos.containsKey(childPos))
 			{
-				this.getLoadOrMakeFile(childPos, true);
+				this.getLoadOrMakeFile(childPos, false);
 			}
 			
 			
