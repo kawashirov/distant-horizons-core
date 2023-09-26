@@ -261,6 +261,7 @@ public class ClientApi
 		
 		if (!updateNeighborChunks)
 		{
+			// TODO add light baking like what's done in ServerApi			
 			dhLevel.updateChunkAsync(chunkWrapper);
 		}
 		else 
