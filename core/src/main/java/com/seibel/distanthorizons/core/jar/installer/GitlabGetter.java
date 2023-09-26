@@ -31,12 +31,15 @@ import java.util.*;
  */
 public class GitlabGetter
 {
+	/** DH's instance of the Gitlab getter */
+	public static GitlabGetter INSTANCE = new GitlabGetter();
+	
 	public static final String GitlabApi = "https://gitlab.com/api/v4/projects/";
 	/** Gitlab project ID (can by gotten by typing `document.getElementById('project_id').value` on your main project's console) */
 	public final String projectID;
 	/** Combines the {@link GitlabGetter#GitlabApi} and {@link GitlabGetter#projectID} into one var (Followed by a "/" at the end) */
 	public final String GitProjID;
-    public ArrayList<Config> projectPipelines;
+	public ArrayList<Config> projectPipelines;
 	
 	/** Commit sha; Commit info */
 	private static final Map<String, Config> commitInfo = new HashMap<>();
