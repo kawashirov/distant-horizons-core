@@ -162,6 +162,7 @@ public class SelfUpdater
 			try
 			{
 				Files.move(newFileLocation.toPath(), JarUtils.jarFile.getParentFile().toPath().resolve(newFileLocation.getName()));
+				Files.deleteIfExists(newFileLocation.getParentFile().toPath().resolve("merged.jar"));
 				Files.delete(newFileLocation.getParentFile().toPath());
 			}
 			catch (Exception e)
