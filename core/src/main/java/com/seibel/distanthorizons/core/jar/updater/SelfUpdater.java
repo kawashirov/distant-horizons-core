@@ -162,7 +162,6 @@ public class SelfUpdater
 			try
 			{
 				Files.move(newFileLocation.toPath(), JarUtils.jarFile.getParentFile().toPath().resolve(newFileLocation.getName()));
-				Files.deleteIfExists(newFileLocation.getParentFile().toPath().resolve("merged.jar"));
 				Files.delete(newFileLocation.getParentFile().toPath());
 			}
 			catch (Exception e)
@@ -276,11 +275,17 @@ public class SelfUpdater
 						System.setProperty("java.awt.headless", "false"); // Required to make it work
 						JOptionPane.showMessageDialog(null, ModInfo.READABLE_NAME + " updated, this will be applied on game restart.", ModInfo.READABLE_NAME, JOptionPane.INFORMATION_MESSAGE);
 					}).start();
+					
+					zis.close();
+					Files.deleteIfExists(newFileLocation.getParentFile().toPath().resolve("merged.zip"));
+					
 					return true;
 				}
 				
 				zipEntry = zis.getNextEntry();
 			}
+			zis.close();
+			
 			return false;
 		}
 		catch (Exception e)
