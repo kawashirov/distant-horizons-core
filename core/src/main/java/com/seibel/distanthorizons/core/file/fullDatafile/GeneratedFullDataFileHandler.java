@@ -105,6 +105,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	 * Assigns the queue for handling world gen and does first time setup as well. <br> 
 	 * Assumes there isn't a pre-existing queue. 
 	 */ 
+	public void setWorldGenerationQueue(IWorldGenerationQueue newWorldGenQueue)
 	{
 		boolean oldQueueExists = this.worldGenQueueRef.compareAndSet(null, newWorldGenQueue);
 		LodUtil.assertTrue(oldQueueExists, "previous world gen queue is still here!");
