@@ -54,7 +54,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	protected static ExecutorService fileHandlerThreadPool;
 	protected static ConfigChangeListener<Integer> configListener;
 	
-	private final ConcurrentHashMap<DhSectionPos, FullDataMetaFile> loadedMetaFileBySectionPos = new ConcurrentHashMap<>();
+	protected final ConcurrentHashMap<DhSectionPos, FullDataMetaFile> loadedMetaFileBySectionPos = new ConcurrentHashMap<>();
 	
 	protected final IDhLevel level;
 	protected final File saveDir;

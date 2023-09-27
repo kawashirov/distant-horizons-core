@@ -70,8 +70,12 @@ public class WorldGenerationQueue implements IWorldGenerationQueue, IDebugRender
 	public final byte largestDataDetail;
 	@Override
 	public byte largestDataDetail() { return this.largestDataDetail; }
+	
 	/** lowest numerical detail level allowed */
 	public final byte smallestDataDetail;
+	@Override
+	public byte smallestDataDetail() { return this.smallestDataDetail; }
+	
 	
 	/** If not null this generator is in the process of shutting down */
 	private volatile CompletableFuture<Void> generatorClosingFuture = null;
@@ -302,7 +306,7 @@ public class WorldGenerationQueue implements IWorldGenerationQueue, IDebugRender
 				// 		   the newly selected task, we cannot use it,
 				//         as some chunks may have already been written into.
 				
-				LOGGER.warn("A task already exists for this position, todo: {}", closestTask.pos);
+				LOGGER.trace("A task already exists for this position, todo: "+closestTask.pos);
 			}
 			
 			// a task has been started
@@ -348,9 +352,7 @@ public class WorldGenerationQueue implements IWorldGenerationQueue, IDebugRender
 		if (this.alreadyGeneratedPosHashSet.containsKey(inProgressTaskGroup.group.pos))
 		{
 			// temporary solution to prevent generating the same section multiple times
-			LOGGER.warn("Duplicate generation section " + taskPos + " with granularity [" + granularity + "] at " + chunkPosMin + ". Skipping...");
-			
-			//StackTraceElement[] stackTrace = this.alreadyGeneratedPosHashSet.get(inProgressTaskGroup.group.pos);
+			LOGGER.trace("Duplicate generation section " + taskPos + " with granularity [" + granularity + "] at " + chunkPosMin + ". Skipping...");
 			
 			// sending a success result is necessary to make sure the render sections are reloaded correctly 
 			inProgressTaskGroup.group.worldGenTasks.forEach(worldGenTask -> worldGenTask.future.complete(WorldGenResult.CreateSuccess(new DhSectionPos(granularity, taskPos.getX(), taskPos.getZ()))));

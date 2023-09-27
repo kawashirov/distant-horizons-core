@@ -31,6 +31,8 @@ public interface IWorldGenerationQueue extends Closeable
 {
 	/** the largest numerical detail level */
 	byte largestDataDetail();
+	/** the smallest numerical detail level */
+	byte smallestDataDetail();
 	
 	CompletableFuture<WorldGenResult> submitGenTask(DhSectionPos pos, byte requiredDataDetail, IWorldGenTaskTracker tracker);
 	void cancelGenTasks(Iterable<DhSectionPos> positions);
