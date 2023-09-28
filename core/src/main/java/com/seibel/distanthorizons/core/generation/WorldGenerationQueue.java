@@ -57,7 +57,6 @@ public class WorldGenerationQueue implements IWorldGenerationQueue, IDebugRender
 	private final IDhApiWorldGenerator generator;
 	
 	/** contains the positions that need to be generated */
-	//private final QuadTree<WorldGenTask> waitingTaskQuadTree;
 	private final ConcurrentHashMap<DhSectionPos, WorldGenTask> waitingTasks = new ConcurrentHashMap<>();
 	
 	private final ConcurrentHashMap<DhSectionPos, InProgressWorldGenTaskGroup> inProgressGenTasksByLodPos = new ConcurrentHashMap<>();
@@ -115,11 +114,6 @@ public class WorldGenerationQueue implements IWorldGenerationQueue, IDebugRender
 		this.largestDataDetail = generator.getLargestDataDetailLevel();
 		this.smallestDataDetail = generator.getSmallestDataDetailLevel();
 		
-		//FIXME: Currently resizing view dist doesn't update this, causing some gen task to fail.
-		int treeWidth = Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH * 2; // TODO the *2 is to allow for generation edge cases, and should probably be removed at some point
-		byte treeMinDetailLevel = LodUtil.CHUNK_DETAIL_LEVEL; // The min level should be at least fill in 1 ChunkSizedFullDataAccessor.
-		//this.waitingTaskQuadTree = new QuadTree<>(treeWidth, DhBlockPos2D.ZERO /*the quad tree will be re-centered later*/, treeMinDetailLevel);
-		
 		
 		if (this.minGranularity < LodUtil.CHUNK_DETAIL_LEVEL)
 		{
@@ -164,17 +158,9 @@ public class WorldGenerationQueue implements IWorldGenerationQueue, IDebugRender
 		LodUtil.assertTrue(pos.getDetailLevel() > requiredDataDetail + LodUtil.CHUNK_DETAIL_LEVEL);
 		
 		
-		//if (this.waitingTaskQuadTree.isSectionPosInBounds(requestPos))
-		{
-			CompletableFuture<WorldGenResult> future = new CompletableFuture<>();
-			//this.waitingTaskQuadTree.setValue(requestPos, new WorldGenTask(pos, requiredDataDetail, tracker, future));
-			waitingTasks.put(pos, new WorldGenTask(pos, requiredDataDetail, tracker, future));
-			return future;
-		}
-		//else
-		//{
-		//return CompletableFuture.completedFuture(WorldGenResult.CreateFail());
-		//}
+		CompletableFuture<WorldGenResult> future = new CompletableFuture<>();
+		this.waitingTasks.put(pos, new WorldGenTask(pos, requiredDataDetail, tracker, future));
+		return future;
 	}
 	
 	@Override
