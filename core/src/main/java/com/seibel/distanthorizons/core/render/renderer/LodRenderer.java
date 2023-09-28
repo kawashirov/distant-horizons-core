@@ -231,8 +231,6 @@ public class LodRenderer
 				return;
 			}
 			
-			
-			
 			// Save Minecraft's GL state so it can be restored at the end of LOD rendering
 			LagSpikeCatcher drawSaveGLState = new LagSpikeCatcher();
 			GLState minecraftGlState = new GLState();
@@ -241,6 +239,7 @@ public class LodRenderer
 				tickLogger.debug("Saving GL state: " + minecraftGlState);
 			}
 			drawSaveGLState.end("drawSaveGLState");
+			
 			
 			
 			//===================//
@@ -270,13 +269,12 @@ public class LodRenderer
 			GL32.glDepthFunc(GL32.GL_LESS);
 			
 			
-			
 			transparencyEnabled = Config.Client.Advanced.Graphics.Quality.transparency.get().transparencyEnabled;
 			fakeOceanFloor = Config.Client.Advanced.Graphics.Quality.transparency.get().fakeTransparencyEnabled;
 			
 			GL32.glDisable(GL32.GL_BLEND); // We render opaque first, then transparent
 			GL32.glDepthMask(true);
-			//GL32.glClear(GL32.GL_DEPTH_BUFFER_BIT);
+			
 			
 			/*---------Bind required objects--------*/
 			// Setup LodRenderProgram and the LightmapTexture if it has not yet been done
@@ -346,7 +344,7 @@ public class LodRenderer
 			FogShader.INSTANCE.setModelViewProjectionMatrix(modelViewProjectionMatrix);
 			//FogShader.INSTANCE.render(partialTicks);
 			
-			//	DarkShader.INSTANCE.render(partialTicks); // A test shader to make the world darker
+			//DarkShader.INSTANCE.render(partialTicks); // A test shader to make the world darker
 			
 			
 			if (Config.Client.Advanced.Graphics.Quality.transparency.get().transparencyEnabled)
@@ -363,6 +361,14 @@ public class LodRenderer
 			
 			drawLagSpikeCatcher.end("LodDraw");
 			
+			
+			// Blit the LOD framebuffer onto Minecraft's framebuffer
+			GL32.glBindFramebuffer(GL32.GL_READ_FRAMEBUFFER, framebufferId);
+			GL32.glBindFramebuffer(GL32.GL_DRAW_FRAMEBUFFER, MC_RENDER.getTargetFrameBuffer());
+			GL32.glBlitFramebuffer(0, 0, MC_RENDER.getScreenWidth(), MC_RENDER.getScreenHeight(),
+					0,  0, MC_RENDER.getScreenWidth(), MC_RENDER.getScreenHeight(),
+					GL32.GL_COLOR_BUFFER_BIT,
+					GL32.GL_NEAREST);
 			
 			
 			//================//
@@ -387,13 +393,7 @@ public class LodRenderer
 				profiler.popPush("LOD cleanup");
 			}
 			
-			//GL32.glClear(GL32.GL_DEPTH_BUFFER_BIT);
-			
-			//GL32.glBindTexture(GL32.GL_TEXTURE_2D, 0);
-			//GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, 0);
-			//GL32.glViewport(0,0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight());
-			
-			minecraftGlState.restore(MC_RENDER.getTargetFrameBuffer());
+			//minecraftGlState.restore(MC_RENDER.getTargetFrameBuffer());
 			drawCleanup.end("LodDrawCleanup");
 			
 			// end of internal LOD profiling
