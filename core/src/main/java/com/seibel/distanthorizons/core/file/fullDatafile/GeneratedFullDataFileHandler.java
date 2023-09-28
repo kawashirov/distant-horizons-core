@@ -344,7 +344,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		}
 		metaFile.genQueueChecked = true;
 		
-		byte minGeneratorSectionDetailLevel = (byte) (worldGenQueue.smallestDataDetail() + DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL);
+		byte minGeneratorSectionDetailLevel = (byte) (worldGenQueue.highestDataDetail() + DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL);
 		ArrayList<DhSectionPos> genPosList = MissingWorldGenPositionFinder.getUngeneratedPosList(dataSource, minGeneratorSectionDetailLevel, true);
 		
 		for (DhSectionPos genPos : genPosList)

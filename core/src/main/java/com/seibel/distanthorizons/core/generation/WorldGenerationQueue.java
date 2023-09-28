@@ -66,14 +66,14 @@ public class WorldGenerationQueue implements IWorldGenerationQueue, IDebugRender
 	public final byte minGranularity;
 	
 	/** largest numerical detail level allowed */
-	public final byte largestDataDetail;
+	public final byte lowestDataDetail;
 	@Override
-	public byte largestDataDetail() { return this.largestDataDetail; }
+	public byte lowestDataDetail() { return this.lowestDataDetail; }
 	
-	/** lowest numerical detail level allowed */
-	public final byte smallestDataDetail;
+	/** smallest numerical detail level allowed */
+	public final byte highestDataDetail;
 	@Override
-	public byte smallestDataDetail() { return this.smallestDataDetail; }
+	public byte highestDataDetail() { return this.highestDataDetail; }
 	
 	
 	/** If not null this generator is in the process of shutting down */
@@ -111,8 +111,8 @@ public class WorldGenerationQueue implements IWorldGenerationQueue, IDebugRender
 		this.generator = generator;
 		this.maxGranularity = generator.getMaxGenerationGranularity();
 		this.minGranularity = generator.getMinGenerationGranularity();
-		this.largestDataDetail = generator.getLargestDataDetailLevel();
-		this.smallestDataDetail = generator.getSmallestDataDetailLevel();
+		this.lowestDataDetail = generator.getLargestDataDetailLevel();
+		this.highestDataDetail = generator.getSmallestDataDetailLevel();
 		
 		
 		if (this.minGranularity < LodUtil.CHUNK_DETAIL_LEVEL)
@@ -145,13 +145,13 @@ public class WorldGenerationQueue implements IWorldGenerationQueue, IDebugRender
 		
 		
 		// make sure the generator can provide the requested position
-		if (requiredDataDetail < this.smallestDataDetail)
+		if (requiredDataDetail < this.highestDataDetail)
 		{
 			throw new UnsupportedOperationException("Current generator does not meet requiredDataDetail level");
 		}
-		if (requiredDataDetail > this.largestDataDetail)
+		if (requiredDataDetail > this.lowestDataDetail)
 		{
-			requiredDataDetail = this.largestDataDetail;
+			requiredDataDetail = this.lowestDataDetail;
 		}
 		
 		// Assert that the data at least can fill in 1 single ChunkSizedFullDataAccessor
@@ -330,7 +330,7 @@ public class WorldGenerationQueue implements IWorldGenerationQueue, IDebugRender
 		DhSectionPos taskPos = inProgressTaskGroup.group.pos;
 		byte granularity = (byte) (taskPos.getDetailLevel() - taskDetailLevel);
 		LodUtil.assertTrue(granularity >= this.minGranularity && granularity <= this.maxGranularity);
-		LodUtil.assertTrue(taskDetailLevel >= this.smallestDataDetail && taskDetailLevel <= this.largestDataDetail);
+		LodUtil.assertTrue(taskDetailLevel >= this.highestDataDetail && taskDetailLevel <= this.lowestDataDetail);
 		
 		DhChunkPos chunkPosMin = new DhChunkPos(taskPos.getSectionBBoxPos().getCornerBlockPos());
 		
