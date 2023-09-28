@@ -50,6 +50,7 @@ import org.apache.logging.log4j.LogManager;
 import org.lwjgl.opengl.GL32;
 
 import java.awt.*;
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -89,7 +90,7 @@ public class LodRenderer
 		
 		if (!GL32.glIsProgram(this.shaderProgram.id))
 		{
-			throw new IllegalStateException("No GL program exists with the ID: ["+this.shaderProgram.id+"]. This either means a shader program was freed while it was still in use or was never created.");
+			throw new IllegalStateException("No GL program exists with the ID: [" + this.shaderProgram.id + "]. This either means a shader program was freed while it was still in use or was never created.");
 		}
 		
 		this.shaderProgram.bind();
@@ -142,7 +143,39 @@ public class LodRenderer
 	public QuadElementBuffer quadIBO = null;
 	public boolean isSetupComplete = false;
 	
-	public LodRenderer(RenderBufferHandler bufferHandler) { this.bufferHandler = bufferHandler; }
+	private final int framebufferId;
+	private final int colorTextureId;
+	
+	public LodRenderer(RenderBufferHandler bufferHandler)
+	{
+		this.bufferHandler = bufferHandler;
+		
+		this.framebufferId = GL32.glGenFramebuffers();
+		this.colorTextureId = GL32.glGenTextures();
+		int renderBufferId = GL32.glGenRenderbuffers();
+		
+		GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, this.framebufferId);
+		
+		GL32.glBindTexture(GL32.GL_TEXTURE_2D, this.colorTextureId);
+		GL32.glTexImage2D(GL32.GL_TEXTURE_2D,
+				0,
+				GL32.GL_RGBA,
+				MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(),
+				0,
+				GL32.GL_RGBA,
+				GL32.GL_UNSIGNED_BYTE,
+				(ByteBuffer) null);
+		
+		GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MIN_FILTER, GL32.GL_LINEAR);
+		GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MAG_FILTER, GL32.GL_LINEAR);
+		GL32.glFramebufferTexture2D(GL32.GL_DRAW_FRAMEBUFFER, GL32.GL_COLOR_ATTACHMENT0, GL32.GL_TEXTURE_2D, this.colorTextureId, 0);
+		
+		GL32.glBindRenderbuffer(GL32.GL_RENDERBUFFER, renderBufferId);
+		GL32.glRenderbufferStorage(GL32.GL_RENDERBUFFER, GL32.GL_DEPTH_COMPONENT32, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight());
+		GL32.glFramebufferRenderbuffer(GL32.GL_DRAW_FRAMEBUFFER, GL32.GL_DEPTH_ATTACHMENT, GL32.GL_RENDERBUFFER, renderBufferId);
+		
+		//GL32.glBindTexture(GL32.GL_TEXTURE_2D, 0);
+	}
 	
 	private boolean rendererClosed = false;
 	public void close()
@@ -200,18 +233,14 @@ public class LodRenderer
 			
 			
 			
-			// get MC's shader program and save MC's render state so we can restore it later
+			// Get DH's GL state
 			LagSpikeCatcher drawSaveGLState = new LagSpikeCatcher();
-			GLState minecraftGlState = new GLState();
+			//GLState minecraftGlState = new GLState();
 			if (ENABLE_DUMP_GL_STATE)
 			{
-				tickLogger.debug("Saving GL state: " + minecraftGlState);
+				//tickLogger.debug("Saving GL state: " + minecraftGlState);
 			}
 			drawSaveGLState.end("drawSaveGLState");
-			
-			// make sure everything has been initialized
-			GLProxy glProxy = GLProxy.getInstance();
-			
 			
 			
 			//===================//
@@ -220,8 +249,12 @@ public class LodRenderer
 			
 			profiler.push("LOD draw setup");
 			/*---------Set GL State--------*/
-			GL32.glViewport(0, 0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight());
-			GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, 0);
+			GL32.glBindTexture(GL32.GL_TEXTURE_2D, this.colorTextureId);
+			GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, this.framebufferId);
+			
+			GL32.glViewport(0,0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight());
+			
+			
 			boolean renderWireframe = Config.Client.Advanced.Debugging.renderWireframe.get();
 			if (renderWireframe)
 			{
@@ -243,7 +276,7 @@ public class LodRenderer
 			
 			GL32.glDisable(GL32.GL_BLEND); // We render opaque first, then transparent
 			GL32.glDepthMask(true);
-			GL32.glClear(GL32.GL_DEPTH_BUFFER_BIT);
+			//GL32.glClear(GL32.GL_DEPTH_BUFFER_BIT);
 			
 			/*---------Bind required objects--------*/
 			// Setup LodRenderProgram and the LightmapTexture if it has not yet been done
@@ -307,13 +340,13 @@ public class LodRenderer
 			{
 				profiler.popPush("LOD SSAO");
 				SSAOShader.INSTANCE.setProjectionMatrix(projectionMatrix);
-				SSAORenderer.INSTANCE.render(minecraftGlState, partialTicks);
+				//SSAORenderer.INSTANCE.render(minecraftGlState, partialTicks);
 			}
 			
 			
 			profiler.popPush("LOD Fog");
 			FogShader.INSTANCE.setModelViewProjectionMatrix(modelViewProjectionMatrix);
-			FogShader.INSTANCE.render(partialTicks);
+			//FogShader.INSTANCE.render(partialTicks);
 			
 			//	DarkShader.INSTANCE.render(partialTicks); // A test shader to make the world darker
 			
@@ -327,7 +360,7 @@ public class LodRenderer
 				this.bufferHandler.renderTransparent(this);
 				GL32.glDepthMask(true); // Apparently the depth mask state is stored in the FBO, so glState fails to restore it...
 				
-				FogShader.INSTANCE.render(partialTicks);
+				//FogShader.INSTANCE.render(partialTicks);
 			}
 			
 			drawLagSpikeCatcher.end("LodDraw");
@@ -346,7 +379,8 @@ public class LodRenderer
 				this.quadIBO.unbind();
 			}
 			
-			GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, 0);
+			GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, 0);
+			GL32.glViewport(0,0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight());
 			
 			this.shaderProgram.unbind();
 			
@@ -358,9 +392,9 @@ public class LodRenderer
 				profiler.popPush("LOD cleanup");
 			}
 			
-			GL32.glClear(GL32.GL_DEPTH_BUFFER_BIT);
+			//GL32.glClear(GL32.GL_DEPTH_BUFFER_BIT);
 			
-			minecraftGlState.restore();
+			//minecraftGlState.restore();
 			drawCleanup.end("LodDrawCleanup");
 			
 			// end of internal LOD profiling
@@ -447,7 +481,7 @@ public class LodRenderer
 		
 		this.isSetupComplete = false;
 		
-		GLProxy.getInstance().recordOpenGlCall(() -> 
+		GLProxy.getInstance().recordOpenGlCall(() ->
 		{
 			EVENT_LOGGER.info("Renderer Cleanup Started");
 			

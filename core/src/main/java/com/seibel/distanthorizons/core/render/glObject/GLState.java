@@ -30,6 +30,7 @@ public class GLState
 	public int vbo;
 	public int ebo;
 	public int[] fbo;
+	public int depthBuffer;
 	public int texture2D;
 	/** IE: GL_TEXTURE0, GL_TEXTURE1, etc. */
 	public int activeTextureNumber;
@@ -55,8 +56,18 @@ public class GLState
 	public int polyMode;
 	
 	
-	public GLState() {
+	public GLState()
+	{
 		this.fbo = new int[FBO_MAX];
+		
+		for (int i = 0; i < FBO_MAX; i++)
+		{
+			this.fbo[i] = GL32.glGenFramebuffers();
+		}
+		
+		GL32.glEnable(GL32.GL_DEPTH_TEST);
+		GL32.glDepthFunc(GL32.GL_LESS);
+		GL32.glDepthMask(true);
 		
 		this.saveState();
 	}
@@ -69,18 +80,11 @@ public class GLState
 		this.ebo = GL32.glGetInteger(GL32.GL_ELEMENT_ARRAY_BUFFER_BINDING);
 		
 		GL32.glGetIntegerv(GL32.GL_FRAMEBUFFER_BINDING, this.fbo);
-		
+
 		this.texture2D = GL32.glGetInteger(GL32.GL_TEXTURE_BINDING_2D);
-		this.activeTextureNumber = GL32.glGetInteger(GL32.GL_ACTIVE_TEXTURE);
-		
-		GL32.glActiveTexture(GL32.GL_TEXTURE0);
-		this.texture0 = GL32.glGetInteger(GL32.GL_TEXTURE_BINDING_2D);
-		
-		GL32.glActiveTexture(GL32.GL_TEXTURE1);
-		this.texture1 = GL32.glGetInteger(GL32.GL_TEXTURE_BINDING_2D);
-		
-		GL32.glActiveTexture(this.activeTextureNumber);
-		
+		this.texture0 = GL32.glGenTextures();
+		this.texture1 = GL32.glGenTextures();
+
 		this.blend = GL32.glIsEnabled(GL32.GL_BLEND);
 		this.blendEqRGB = GL32.glGetInteger(GL32.GL_BLEND_EQUATION_RGB);
 		this.blendEqAlpha = GL32.glGetInteger(GL32.GL_BLEND_EQUATION_ALPHA);
@@ -106,7 +110,7 @@ public class GLState
 	public String toString()
 	{
 		return "GLState{" +
-				"program=" + this.program + ", vao=" + this.vao + ", vbo=" + this.vbo + ", ebo=" + this.ebo + ", fbo=" + this.fbo[0] +
+				"program=" + this.program + ", vao=" + this.vao + ", vbo=" + this.vbo + ", ebo=" + this.ebo + ", fbo=" + this.fbo +
 				", text=" + GLEnums.getString(this.texture2D) + "@" + this.activeTextureNumber + ", text0=" + GLEnums.getString(this.texture0) +
 				", blend=" + this.blend + ", blendMode=" + GLEnums.getString(this.blendSrcColor) + "," + GLEnums.getString(this.blendDstColor) +
 				", depth=" + this.depth +
@@ -118,23 +122,32 @@ public class GLState
 				'}';
 	}
 	
-	public void RestoreFrameBuffer()
+	public void restoreFrameBuffer()
 	{
 		// explicitly unbinding the frame buffer is necessary to prevent GL_CLEAR calls from hitting the wrong buffer
-		GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, 0);
+		//GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, 0);
 		
-		for (int i = 0; i < FBO_MAX; i++)
-		{
-			int buffer = this.fbo[i];
-			if (i > 0 && buffer == 0) break;
-			
-			GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, GL32.glIsFramebuffer(buffer) ? buffer : 0);
-		}
+		// Depth buffer
+		this.depthBuffer = GL32.glGenRenderbuffers();
+		GL32.glBindRenderbuffer(GL32.GL_RENDERBUFFER, this.depthBuffer);
+		GL32.glRenderbufferStorage(GL32.GL_RENDERBUFFER, GL32.GL_DEPTH_COMPONENT, 1920, 1080);
+		
+		// Framebuffer
+		GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, this.fbo[0]);
+		//GL32.glFramebufferTexture(GL32.GL_FRAMEBUFFER, GL32.GL_COLOR_ATTACHMENT0, this.texture0, 0);
+		
+		//for (int i = 0; i < FBO_MAX; i++)
+		//{
+		//	int buffer = this.fbo[i];
+		//	if (i > 0 && buffer == 0) break;
+		//	
+		//	GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, GL32.glIsFramebuffer(buffer) ? buffer : 0);
+		//}
 	}
 	
 	public void restore()
 	{
-		this.RestoreFrameBuffer();
+		this.restoreFrameBuffer();
 		
 		if (this.blend)
 		{
@@ -156,23 +169,13 @@ public class GLState
 		
 		GL32.glBindVertexArray(GL32.glIsVertexArray(this.vao) ? this.vao : 0);
 		GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, GL32.glIsBuffer(this.vbo) ? this.vbo : 0);
-		GL32.glBindBuffer(GL32.GL_ELEMENT_ARRAY_BUFFER, GL32.glIsBuffer(this.ebo) ? this.ebo: 0);
+		GL32.glBindBuffer(GL32.GL_ELEMENT_ARRAY_BUFFER, GL32.glIsBuffer(this.ebo) ? this.ebo : 0);
 		GL32.glUseProgram(GL32.glIsProgram(this.program) ? this.program : 0);
 		
-		GL32.glDepthMask(this.writeToDepthBuffer);
+		//GL32.glDepthMask(this.writeToDepthBuffer);
 		//GL32.glBlendFunc(this.blendSrcColor, this.blendDstColor);
 		GL32.glBlendEquationSeparate(this.blendEqRGB, this.blendEqAlpha);
 		GL32.glBlendFuncSeparate(this.blendSrcColor, this.blendDstColor, this.blendSrcAlpha, this.blendDstAlpha);
-		
-		if (this.depth)
-		{
-			GL32.glEnable(GL32.GL_DEPTH_TEST);
-		}
-		else
-		{
-			GL32.glDisable(GL32.GL_DEPTH_TEST);
-		}
-		GL32.glDepthFunc(this.depthFunc);
 		
 		if (this.stencil)
 		{
@@ -196,4 +199,5 @@ public class GLState
 		GL32.glCullFace(this.cullMode);
 		GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, this.polyMode);
 	}
+	
 }
