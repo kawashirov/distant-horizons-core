@@ -24,6 +24,7 @@ import com.seibel.distanthorizons.core.dataObjects.fullData.sources.CompleteFull
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IIncompleteFullDataSource;
 import com.seibel.distanthorizons.core.file.structure.AbstractSaveStructure;
+import com.seibel.distanthorizons.core.generation.MissingWorldGenPositionFinder;
 import com.seibel.distanthorizons.core.generation.IWorldGenerationQueue;
 import com.seibel.distanthorizons.core.generation.tasks.IWorldGenTaskTracker;
 import com.seibel.distanthorizons.core.generation.tasks.WorldGenResult;
@@ -344,7 +345,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		metaFile.genQueueChecked = true;
 		
 		byte minGeneratorSectionDetailLevel = (byte) (worldGenQueue.smallestDataDetail() + DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL);
-		ArrayList<DhSectionPos> genPosList = dataSource.getUngeneratedPosList(minGeneratorSectionDetailLevel, true);
+		ArrayList<DhSectionPos> genPosList = MissingWorldGenPositionFinder.getUngeneratedPosList(dataSource, minGeneratorSectionDetailLevel, true);
 		
 		for (DhSectionPos genPos : genPosList)
 		{
