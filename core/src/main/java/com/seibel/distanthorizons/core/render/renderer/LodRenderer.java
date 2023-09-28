@@ -233,12 +233,12 @@ public class LodRenderer
 			
 			
 			
-			// Get DH's GL state
+			// Save Minecraft's GL state so it can be restored at the end of LOD rendering
 			LagSpikeCatcher drawSaveGLState = new LagSpikeCatcher();
-			//GLState minecraftGlState = new GLState();
+			GLState minecraftGlState = new GLState();
 			if (ENABLE_DUMP_GL_STATE)
 			{
-				//tickLogger.debug("Saving GL state: " + minecraftGlState);
+				tickLogger.debug("Saving GL state: " + minecraftGlState);
 			}
 			drawSaveGLState.end("drawSaveGLState");
 			
@@ -298,8 +298,6 @@ public class LodRenderer
 				}
 				this.shaderProgram.bind();
 			}
-			
-			GL32.glActiveTexture(GL32.GL_TEXTURE0);
 			
 			/*---------Get required data--------*/
 			int vanillaBlockRenderedDistance = MC_RENDER.getRenderDistance() * LodUtil.CHUNK_WIDTH;
@@ -379,9 +377,6 @@ public class LodRenderer
 				this.quadIBO.unbind();
 			}
 			
-			GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, 0);
-			GL32.glViewport(0,0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight());
-			
 			this.shaderProgram.unbind();
 			
 			if (Config.Client.Advanced.Debugging.DebugWireframe.enableRendering.get())
@@ -394,7 +389,11 @@ public class LodRenderer
 			
 			//GL32.glClear(GL32.GL_DEPTH_BUFFER_BIT);
 			
-			//minecraftGlState.restore();
+			//GL32.glBindTexture(GL32.GL_TEXTURE_2D, 0);
+			//GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, 0);
+			//GL32.glViewport(0,0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight());
+			
+			minecraftGlState.restore(MC_RENDER.getTargetFrameBuffer());
 			drawCleanup.end("LodDrawCleanup");
 			
 			// end of internal LOD profiling

@@ -114,7 +114,7 @@ public class SSAORenderer
 		SSAOApplyShader.INSTANCE.BufferTexture = this.ssaoTexture;
 		SSAOApplyShader.INSTANCE.render(partialTicks);
 		
-		state.restore();
+		state.restore(MC_RENDER.getTargetFrameBuffer());
 	}
 	
 	public void free()

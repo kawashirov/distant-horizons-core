@@ -124,28 +124,11 @@ public class GLState
 	
 	public void restoreFrameBuffer()
 	{
-		// explicitly unbinding the frame buffer is necessary to prevent GL_CLEAR calls from hitting the wrong buffer
-		//GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, 0);
-		
-		// Depth buffer
-		this.depthBuffer = GL32.glGenRenderbuffers();
-		GL32.glBindRenderbuffer(GL32.GL_RENDERBUFFER, this.depthBuffer);
-		GL32.glRenderbufferStorage(GL32.GL_RENDERBUFFER, GL32.GL_DEPTH_COMPONENT, 1920, 1080);
-		
-		// Framebuffer
-		GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, this.fbo[0]);
-		//GL32.glFramebufferTexture(GL32.GL_FRAMEBUFFER, GL32.GL_COLOR_ATTACHMENT0, this.texture0, 0);
-		
-		//for (int i = 0; i < FBO_MAX; i++)
-		//{
-		//	int buffer = this.fbo[i];
-		//	if (i > 0 && buffer == 0) break;
-		//	
-		//	GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, GL32.glIsFramebuffer(buffer) ? buffer : 0);
-		//}
+		GL32.glBindTexture(GL32.GL_TEXTURE_2D, 0);
+		GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, 0);
 	}
 	
-	public void restore()
+	public void restore(int minecraftFramebufferId)
 	{
 		this.restoreFrameBuffer();
 		
@@ -158,19 +141,20 @@ public class GLState
 			GL32.glDisable(GL32.GL_BLEND);
 		}
 		
-		GL32.glActiveTexture(GL32.GL_TEXTURE0);
-		GL32.glBindTexture(GL32.GL_TEXTURE_2D, GL32.glIsTexture(this.texture0) ? this.texture0 : 0);
-		
-		GL32.glActiveTexture(GL32.GL_TEXTURE1);
-		GL32.glBindTexture(GL32.GL_TEXTURE_2D, GL32.glIsTexture(this.texture1) ? this.texture1 : 0);
-		
-		GL32.glActiveTexture(this.activeTextureNumber);
+		//GL32.glActiveTexture(GL32.GL_TEXTURE0);
+		//GL32.glBindTexture(GL32.GL_TEXTURE_2D, GL32.glIsTexture(this.texture0) ? this.texture0 : 0);
+		//
+		//GL32.glActiveTexture(GL32.GL_TEXTURE1);
+		//GL32.glBindTexture(GL32.GL_TEXTURE_2D, GL32.glIsTexture(this.texture1) ? this.texture1 : 0);
+
+		//GL32.glActiveTexture(this.activeTextureNumber);
 		GL32.glBindTexture(GL32.GL_TEXTURE_2D, GL32.glIsTexture(this.texture2D) ? this.texture2D : 0);
-		
-		GL32.glBindVertexArray(GL32.glIsVertexArray(this.vao) ? this.vao : 0);
-		GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, GL32.glIsBuffer(this.vbo) ? this.vbo : 0);
-		GL32.glBindBuffer(GL32.GL_ELEMENT_ARRAY_BUFFER, GL32.glIsBuffer(this.ebo) ? this.ebo : 0);
-		GL32.glUseProgram(GL32.glIsProgram(this.program) ? this.program : 0);
+
+		GL32.glBindVertexArray(0);
+		GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, minecraftFramebufferId);
+		//GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, GL32.glIsBuffer(this.vbo) ? this.vbo : 0);
+		//GL32.glBindBuffer(GL32.GL_ELEMENT_ARRAY_BUFFER, GL32.glIsBuffer(this.ebo) ? this.ebo : 0);
+		//GL32.glUseProgram(GL32.glIsProgram(this.program) ? this.program : 0);
 		
 		//GL32.glDepthMask(this.writeToDepthBuffer);
 		//GL32.glBlendFunc(this.blendSrcColor, this.blendDstColor);
