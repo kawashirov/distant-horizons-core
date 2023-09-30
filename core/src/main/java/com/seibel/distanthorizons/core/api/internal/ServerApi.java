@@ -194,7 +194,6 @@ public class ServerApi
 				{
 					// If MC's lighting engine isn't thread safe this may cause the server thread to lag
 					chunkWrapper.bakeDhLightingUsingMcLightingEngine();
-					chunkWrapper.setUseDhLighting(true);
 				}
 				catch (IllegalStateException e)
 				{
@@ -208,7 +207,6 @@ public class ServerApi
 				ArrayList<IChunkWrapper> nearbyChunkList = new ArrayList<>(1);
 				nearbyChunkList.add(chunkWrapper);
 				DhLightingEngine.INSTANCE.lightChunk(chunkWrapper, nearbyChunkList, level.hasSkyLight() ? 15 : 0);
-				chunkWrapper.setUseDhLighting(true);
 			}
 			
 			dhLevel.updateChunkAsync(chunkWrapper);
