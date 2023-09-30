@@ -143,8 +143,9 @@ public class LodRenderer
 	public QuadElementBuffer quadIBO = null;
 	public boolean isSetupComplete = false;
 	
-	private final int framebufferId;
-	private final int colorTextureId;
+	private int framebufferId;
+	private int colorTextureId;
+	private int depthTextureId;
 	
 	public LodRenderer(RenderBufferHandler bufferHandler)
 	{
@@ -152,7 +153,6 @@ public class LodRenderer
 		
 		this.framebufferId = GL32.glGenFramebuffers();
 		this.colorTextureId = GL32.glGenTextures();
-		int renderBufferId = GL32.glGenRenderbuffers();
 		
 		GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, this.framebufferId);
 		
@@ -170,11 +170,7 @@ public class LodRenderer
 		GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MAG_FILTER, GL32.GL_LINEAR);
 		GL32.glFramebufferTexture2D(GL32.GL_DRAW_FRAMEBUFFER, GL32.GL_COLOR_ATTACHMENT0, GL32.GL_TEXTURE_2D, this.colorTextureId, 0);
 		
-		GL32.glBindRenderbuffer(GL32.GL_RENDERBUFFER, renderBufferId);
-		GL32.glRenderbufferStorage(GL32.GL_RENDERBUFFER, GL32.GL_DEPTH_COMPONENT32, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight());
-		GL32.glFramebufferRenderbuffer(GL32.GL_DRAW_FRAMEBUFFER, GL32.GL_DEPTH_ATTACHMENT, GL32.GL_RENDERBUFFER, renderBufferId);
-		
-		//GL32.glBindTexture(GL32.GL_TEXTURE_2D, 0);
+		GL32.glBindTexture(GL32.GL_TEXTURE_2D, 0);
 	}
 	
 	private boolean rendererClosed = false;
@@ -248,10 +244,23 @@ public class LodRenderer
 			
 			profiler.push("LOD draw setup");
 			/*---------Set GL State--------*/
-			GL32.glBindTexture(GL32.GL_TEXTURE_2D, this.colorTextureId);
+			this.framebufferId = GL32.glGenFramebuffers();
+			this.colorTextureId = GL32.glGenTextures();
 			GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, this.framebufferId);
 			
-			GL32.glViewport(0,0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight());
+			GL32.glBindTexture(GL32.GL_TEXTURE_2D, this.colorTextureId);
+			GL32.glTexImage2D(GL32.GL_TEXTURE_2D,
+					0,
+					GL32.GL_RGBA,
+					MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(),
+					0,
+					GL32.GL_RGBA,
+					GL32.GL_UNSIGNED_BYTE,
+					(ByteBuffer) null);
+			
+			GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MIN_FILTER, GL32.GL_LINEAR);
+			GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MAG_FILTER, GL32.GL_LINEAR);
+			GL32.glFramebufferTexture2D(GL32.GL_DRAW_FRAMEBUFFER, GL32.GL_COLOR_ATTACHMENT0, GL32.GL_TEXTURE_2D, this.colorTextureId, 0);
 			
 			
 			boolean renderWireframe = Config.Client.Advanced.Debugging.renderWireframe.get();
@@ -369,6 +378,9 @@ public class LodRenderer
 					0,  0, MC_RENDER.getScreenWidth(), MC_RENDER.getScreenHeight(),
 					GL32.GL_COLOR_BUFFER_BIT,
 					GL32.GL_NEAREST);
+			
+			GL32.glDeleteFramebuffers(this.framebufferId);
+			GL32.glDeleteTextures(this.colorTextureId);
 			
 			
 			//================//
