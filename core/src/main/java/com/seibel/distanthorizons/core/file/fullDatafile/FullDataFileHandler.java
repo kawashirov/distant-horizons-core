@@ -38,6 +38,7 @@ import com.seibel.distanthorizons.core.util.FileUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.ThreadUtil;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
@@ -67,10 +68,11 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	// constructor //
 	//=============//
 	
-	public FullDataFileHandler(IDhLevel level, AbstractSaveStructure saveStructure)
+	public FullDataFileHandler(IDhLevel level, AbstractSaveStructure saveStructure) { this(level, saveStructure, null); }
+	public FullDataFileHandler(IDhLevel level, AbstractSaveStructure saveStructure, @Nullable File saveDirOverride)
 	{
 		this.level = level;
-		this.saveDir = saveStructure.getFullDataFolder(level.getLevelWrapper());
+		this.saveDir = (saveDirOverride == null) ? saveStructure.getFullDataFolder(level.getLevelWrapper()) : saveDirOverride;
 		if (!this.saveDir.exists() && !this.saveDir.mkdirs())
 		{
 			LOGGER.warn("Unable to create full data folder, file saving may fail.");

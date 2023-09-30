@@ -20,6 +20,7 @@
 package com.seibel.distanthorizons.core.level;
 
 import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
+import com.seibel.distanthorizons.core.file.fullDatafile.FullDataFileHandler;
 import com.seibel.distanthorizons.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.distanthorizons.core.file.fullDatafile.RemoteFullDataFileHandler;
 import com.seibel.distanthorizons.core.file.structure.AbstractSaveStructure;
@@ -32,7 +33,9 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapp
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.distanthorizons.coreapi.util.math.Mat4f;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.concurrent.CompletableFuture;
 
 /** The level used when connected to a server */
@@ -51,14 +54,19 @@ public class DhClientLevel extends DhLevel implements IDhClientLevel
 	// constructor //
 	//=============//
 	
-	public DhClientLevel(AbstractSaveStructure saveStructure, IClientLevelWrapper clientLevelWrapper)
+	public DhClientLevel(AbstractSaveStructure saveStructure, IClientLevelWrapper clientLevelWrapper) { this(saveStructure, clientLevelWrapper, null, true); }
+	public DhClientLevel(AbstractSaveStructure saveStructure, IClientLevelWrapper clientLevelWrapper, @Nullable File fullDataSaveDirOverride, boolean enableRendering)
 	{
 		this.levelWrapper = clientLevelWrapper;
 		this.saveStructure = saveStructure;
-		dataFileHandler = new RemoteFullDataFileHandler(this, saveStructure);
-		clientside = new ClientLevelModule(this);
-		clientside.startRenderer();
-		LOGGER.info("Started DHLevel for " + this.levelWrapper + " with saves at " + this.saveStructure);
+		this.dataFileHandler = new RemoteFullDataFileHandler(this, saveStructure, fullDataSaveDirOverride);
+		this.clientside = new ClientLevelModule(this);
+		
+		if (enableRendering)
+		{
+			this.clientside.startRenderer();
+			LOGGER.info("Started DHLevel for " + this.levelWrapper + " with saves at " + this.saveStructure);
+		}
 	}
 	
 	
