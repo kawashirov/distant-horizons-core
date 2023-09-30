@@ -32,8 +32,8 @@ import java.io.File;
  */
 public abstract class AbstractSaveStructure implements AutoCloseable
 {
-	public static final String RENDER_CACHE_FOLDER = "renderCache";
-	public static final String DATA_FOLDER = "data";
+	public static final String RENDER_CACHE_FOLDER_NAME = "renderCache";
+	public static final String DATA_FOLDER_NAME = "data";
 	
 	protected static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	

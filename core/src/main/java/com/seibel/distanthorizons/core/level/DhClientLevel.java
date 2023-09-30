@@ -45,6 +45,8 @@ public class DhClientLevel extends DhLevel implements IDhClientLevel
 	public final AbstractSaveStructure saveStructure;
 	public final RemoteFullDataFileHandler dataFileHandler;
 	
+	
+	
 	//=============//
 	// constructor //
 	//=============//
@@ -59,6 +61,8 @@ public class DhClientLevel extends DhLevel implements IDhClientLevel
 		LOGGER.info("Started DHLevel for " + this.levelWrapper + " with saves at " + this.saveStructure);
 	}
 	
+	
+	
 	//==============//
 	// tick methods //
 	//==============//
@@ -66,8 +70,8 @@ public class DhClientLevel extends DhLevel implements IDhClientLevel
 	@Override
 	public void clientTick()
 	{
-		chunkToLodBuilder.tick();
-		clientside.clientTick();
+		this.chunkToLodBuilder.tick();
+		this.clientside.clientTick();
 	}
 	
 	@Override
@@ -75,6 +79,8 @@ public class DhClientLevel extends DhLevel implements IDhClientLevel
 	{
 		clientside.render(mcModelViewMatrix, mcProjectionMatrix, partialTicks, profiler);
 	}
+	
+	
 	
 	//================//
 	// level handling //
