@@ -130,7 +130,7 @@ public class SelfUpdater
 		
 		if (!pipeline.get("ref").equals(ModGitInfo.Git_Main_Branch))
 		{
-			LOGGER.warn("Latest pipeline was found for branch ["+ pipeline.get("ref") +"], but we are on branch ["+ ModGitInfo.Git_Main_Branch +"].");
+			//LOGGER.warn("Latest pipeline was found for branch ["+ pipeline.get("ref") +"], but we are on branch ["+ ModGitInfo.Git_Main_Branch +"].");
 			return false;
 		}
 		
