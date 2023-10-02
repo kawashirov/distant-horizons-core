@@ -19,24 +19,27 @@
 
 package com.seibel.distanthorizons.core.sql;
 
+import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.util.ResourceUtil;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
-import java.io.*;
-import java.net.URL;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.Scanner;
-import java.util.stream.Collectors;
+import java.util.*;
 
 /**
+ * Handles interfacing with SQL databases.
  * 
  * @param <TDTO> DTO stands for "Data Table Object" 
  */
 public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 {
 	public static final int TIMEOUT_SECONDS = 30;
+	
+	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
 	private final Connection connection;
 	
@@ -47,7 +50,9 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	
 	
 	
+	//=============//
 	// constructor //
+	//=============//
 	
 	public AbstractDhRepo(String databaseType, String databaseLocation, Class<? extends TDTO> dtoClass) throws SQLException
 	{
@@ -61,46 +66,30 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	}
 	private void runFirstTimeSetup()
 	{
-		// get all sql scripts
-		ArrayList<String> sqlScriptNames = new ArrayList<>(); 
+		// get the resource scripts
+		ArrayList<ResourceUtil.ResourceFile> sqlScripts;
 		try
 		{
-			Enumeration<URL> resources = Thread.currentThread().getContextClassLoader().getResources("sqlScripts"); // package/name/with/slashes/instead/dots
-			while (resources.hasMoreElements())
-			{
-				URL url = resources.nextElement();
-				
-				String fileName = new Scanner((InputStream) url.getContent()).useDelimiter("\\A").next();
-				fileName = fileName.trim();
-				
-				if (fileName.endsWith(".sql"))
-				{
-					sqlScriptNames.add(fileName);
-				}
-			}
+			sqlScripts = ResourceUtil.getFilesInFolder("sqlScripts", ".sql");
 		}
-		catch (IOException e)
+		catch (URISyntaxException | IOException e)
 		{
-			
+			throw new RuntimeException(e);
 		}
 		
 		// attempt to run them
-		for (String scriptName : sqlScriptNames)
+		for (ResourceUtil.ResourceFile file : sqlScripts)
 		{
-			InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream("sqlScripts/"+scriptName);
-			if (inputStream != null)
-			{
-				String script = new BufferedReader(new InputStreamReader(inputStream)).lines().collect(Collectors.joining("\n"));
-				System.out.println("Running script: "+scriptName);
-				
-				this.queryNoResult(script);
-			}
+			LOGGER.info("Running automatic SQL script: ["+file.name +"]");
+			this.queryNoResult(file.content);
 		}
 	}
 	
 	
 	
+	//===============//
 	// high level DB //
+	//===============//
 	
 	public TDTO get(TDTO dto) { return this.getByPrimaryKey(dto.getPrimaryKeyString()); }
 	public TDTO getByPrimaryKey(String primaryKey)
@@ -137,8 +126,9 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	public void delete(TDTO dto) { this.queryNoResult(this.createDeleteSql(dto)); }
 	
 	
-	
+	//==============//
 	// low level DB //
+	//==============//
 	
 	public void queryNoResult(String sql) { this.query(sql, false); }
 	public ResultSet query(String sql) { return this.query(sql, true); }
@@ -199,7 +189,9 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	
 	
 	
-	// abstract //
+	//==================//
+	// abstract methods //
+	//==================//
 	
 	public abstract String getTableName();
 	
