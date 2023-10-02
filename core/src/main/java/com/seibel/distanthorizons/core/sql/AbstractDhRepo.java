@@ -102,6 +102,7 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	
 	// high level DB //
 	
+	public TDTO get(TDTO dto) { return this.getByPrimaryKey(dto.getPrimaryKeyString()); }
 	public TDTO getByPrimaryKey(String primaryKey)
 	{
 		TDTO dto = null;
@@ -132,6 +133,8 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	}
 	private void insert(TDTO dto) { this.queryNoResult(this.createInsertSql(dto)); }
 	private void update(TDTO dto) { this.queryNoResult(this.createUpdateSql(dto)); }
+	
+	public void delete(TDTO dto) { this.queryNoResult(this.createDeleteSql(dto)); }
 	
 	
 	
@@ -207,5 +210,7 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	
 	public abstract String createInsertSql(TDTO dto);
 	public abstract String createUpdateSql(TDTO dto);
+	
+	public abstract String createDeleteSql(TDTO dto);
 	
 }

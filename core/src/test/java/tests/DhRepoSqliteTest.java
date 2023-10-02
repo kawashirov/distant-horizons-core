@@ -19,11 +19,6 @@
 
 package tests;
 
-import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiWorldGenerationStep;
-import com.seibel.distanthorizons.core.file.fullDatafile.FullDataMetaFile;
-import com.seibel.distanthorizons.core.file.metaData.BaseMetaData;
-import com.seibel.distanthorizons.core.pos.DhSectionPos;
-import com.seibel.distanthorizons.core.sql.FullMetaDataRepo;
 import org.junit.Assert;
 import org.junit.Test;
 import testItems.sql.TestDataRepo;
@@ -82,6 +77,14 @@ public class DhRepoSqliteTest
 			Assert.assertNotNull("get failed, null returned", getDto);
 			Assert.assertEquals("get/insert failed, not equal", updateMetaFile.id, getDto.id);
 			Assert.assertEquals("get/insert failed, not equal", updateMetaFile.value, getDto.value);
+			
+			
+			// delete
+			testDataRepo.delete(updateMetaFile);
+			
+			// get
+			getDto = testDataRepo.getByPrimaryKey("0");
+			Assert.assertNull("delete failed, not null returned", getDto);
 			
 		}
 		catch (SQLException e)
