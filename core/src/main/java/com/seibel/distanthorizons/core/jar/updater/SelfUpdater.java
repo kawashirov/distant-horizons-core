@@ -128,9 +128,21 @@ public class SelfUpdater
 			return false;
 		com.electronwill.nightconfig.core.Config pipeline = GitlabGetter.INSTANCE.projectPipelines.get(0);
 		
+		if (pipeline.get("ref") != ModGitInfo.Git_Main_Branch)
+		{
+			LOGGER.warn("Latest pipeline was found for branch ["+ pipeline.get("ref") +"], but we are on branch ["+ ModGitInfo.Git_Main_Branch +"].");
+			return false;
+		}
+		
+		if (pipeline.get("status") != "success")
+		{
+			LOGGER.warn("Pipeline for branch ["+ ModGitInfo.Git_Main_Branch +"], commit ["+ pipeline.get("id") +"], has either failed to build, or still building.");
+			return false;
+		}
+		
 		if (!GitlabGetter.INSTANCE.getDownloads(pipeline.get("id")).containsKey(mcVersion))
 		{
-			LOGGER.warn("Minecraft version ["+ mcVersion +"] is not findable on Gitlab, findable versions are ["+ GitlabGetter.INSTANCE.getDownloads(pipeline.get("id")).keySet().toArray().toString() +"]");
+			LOGGER.warn("Minecraft version ["+ mcVersion +"] is not findable on Gitlab, findable versions are ["+ GitlabGetter.INSTANCE.getDownloads(pipeline.get("id")).keySet().toArray().toString() +"].");
 			return false;
 		}
 		
