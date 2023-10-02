@@ -128,13 +128,13 @@ public class SelfUpdater
 			return false;
 		com.electronwill.nightconfig.core.Config pipeline = GitlabGetter.INSTANCE.projectPipelines.get(0);
 		
-		if (pipeline.get("ref") != ModGitInfo.Git_Main_Branch)
+		if (!pipeline.get("ref").equals(ModGitInfo.Git_Main_Branch))
 		{
 			LOGGER.warn("Latest pipeline was found for branch ["+ pipeline.get("ref") +"], but we are on branch ["+ ModGitInfo.Git_Main_Branch +"].");
 			return false;
 		}
 		
-		if (pipeline.get("status") != "success")
+		if (!pipeline.get("status").equals("success"))
 		{
 			LOGGER.warn("Pipeline for branch ["+ ModGitInfo.Git_Main_Branch +"], commit ["+ pipeline.get("id") +"], has either failed to build, or still building.");
 			return false;
