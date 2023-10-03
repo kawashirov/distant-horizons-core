@@ -38,11 +38,9 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftCli
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.ILightMapWrapper;
-import com.seibel.distanthorizons.api.enums.rendering.EDebugRendering;
 import com.seibel.distanthorizons.api.enums.rendering.EFogColorMode;
 import com.seibel.distanthorizons.core.render.fog.LodFogConfig;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
-import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IOptifineAccessor;
 import com.seibel.distanthorizons.coreapi.util.math.Mat4f;
 import com.seibel.distanthorizons.coreapi.util.math.Vec3d;
 import com.seibel.distanthorizons.coreapi.util.math.Vec3f;
@@ -135,7 +133,6 @@ public class LodRenderer
 	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	
-	public EDebugRendering previousDebugMode = null;
 	public final RenderBufferHandler bufferHandler;
 	
 	// The shader program
@@ -145,32 +142,11 @@ public class LodRenderer
 	
 	private int framebufferId;
 	private int colorTextureId;
-	private int depthTextureId;
+	private int depthRenderbufferId;
 	
 	public LodRenderer(RenderBufferHandler bufferHandler)
 	{
 		this.bufferHandler = bufferHandler;
-		
-		this.framebufferId = GL32.glGenFramebuffers();
-		this.colorTextureId = GL32.glGenTextures();
-		
-		GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, this.framebufferId);
-		
-		GL32.glBindTexture(GL32.GL_TEXTURE_2D, this.colorTextureId);
-		GL32.glTexImage2D(GL32.GL_TEXTURE_2D,
-				0,
-				GL32.GL_RGBA,
-				MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(),
-				0,
-				GL32.GL_RGBA,
-				GL32.GL_UNSIGNED_BYTE,
-				(ByteBuffer) null);
-		
-		GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MIN_FILTER, GL32.GL_LINEAR);
-		GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MAG_FILTER, GL32.GL_LINEAR);
-		GL32.glFramebufferTexture2D(GL32.GL_DRAW_FRAMEBUFFER, GL32.GL_COLOR_ATTACHMENT0, GL32.GL_TEXTURE_2D, this.colorTextureId, 0);
-		
-		GL32.glBindTexture(GL32.GL_TEXTURE_2D, 0);
 	}
 	
 	private boolean rendererClosed = false;
@@ -243,26 +219,34 @@ public class LodRenderer
 			//===================//
 			
 			profiler.push("LOD draw setup");
-			/*---------Set GL State--------*/
-			this.framebufferId = GL32.glGenFramebuffers();
-			this.colorTextureId = GL32.glGenTextures();
-			GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, this.framebufferId);
 			
+			
+			// Generate and bind framebuffer, color texture, and depth render buffer as depth attachment
+			this.framebufferId = GL32.glGenFramebuffers();
+			GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
+			GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, this.framebufferId);
+			GL32.glViewport(0, 0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight());
+			
+			this.colorTextureId = GL32.glGenTextures();
 			GL32.glBindTexture(GL32.GL_TEXTURE_2D, this.colorTextureId);
 			GL32.glTexImage2D(GL32.GL_TEXTURE_2D,
 					0,
-					GL32.GL_RGBA,
+					GL32.GL_RGB,
 					MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(),
 					0,
-					GL32.GL_RGBA,
+					GL32.GL_RGB,
 					GL32.GL_UNSIGNED_BYTE,
 					(ByteBuffer) null);
-			
 			GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MIN_FILTER, GL32.GL_LINEAR);
 			GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MAG_FILTER, GL32.GL_LINEAR);
 			GL32.glFramebufferTexture2D(GL32.GL_DRAW_FRAMEBUFFER, GL32.GL_COLOR_ATTACHMENT0, GL32.GL_TEXTURE_2D, this.colorTextureId, 0);
 			
+			this.depthRenderbufferId = GL32.glGenRenderbuffers();
+			GL32.glBindRenderbuffer(GL32.GL_RENDERBUFFER, this.depthRenderbufferId);
+			GL32.glRenderbufferStorage(GL32.GL_RENDERBUFFER, GL32.GL_DEPTH_COMPONENT32, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight());
+			GL32.glFramebufferRenderbuffer(GL32.GL_FRAMEBUFFER, GL32.GL_DEPTH_ATTACHMENT, GL32.GL_RENDERBUFFER, this.depthRenderbufferId);
 			
+			// Set OpenGL polygon mode
 			boolean renderWireframe = Config.Client.Advanced.Debugging.renderWireframe.get();
 			if (renderWireframe)
 			{
@@ -274,16 +258,17 @@ public class LodRenderer
 				GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_FILL);
 				GL32.glEnable(GL32.GL_CULL_FACE);
 			}
+			
+			GL32.glDisable(GL32.GL_DEPTH_TEST);
+			
+			// Enable depth test
 			GL32.glEnable(GL32.GL_DEPTH_TEST);
-			GL32.glDepthFunc(GL32.GL_LESS);
+			// TODO: Fix depth test always failing
+			GL32.glDepthFunc(GL32.GL_ALWAYS);
 			
-			
-			transparencyEnabled = Config.Client.Advanced.Graphics.Quality.transparency.get().transparencyEnabled;
-			fakeOceanFloor = Config.Client.Advanced.Graphics.Quality.transparency.get().fakeTransparencyEnabled;
-			
+			// Disable blending and enable depth mask
 			GL32.glDisable(GL32.GL_BLEND); // We render opaque first, then transparent
-			GL32.glDepthMask(true);
-			
+			GL32.glDepthMask(false);
 			
 			/*---------Bind required objects--------*/
 			// Setup LodRenderProgram and the LightmapTexture if it has not yet been done
@@ -348,13 +333,15 @@ public class LodRenderer
 				//SSAORenderer.INSTANCE.render(minecraftGlState, partialTicks);
 			}
 			
-			
 			profiler.popPush("LOD Fog");
 			FogShader.INSTANCE.setModelViewProjectionMatrix(modelViewProjectionMatrix);
 			//FogShader.INSTANCE.render(partialTicks);
 			
 			//DarkShader.INSTANCE.render(partialTicks); // A test shader to make the world darker
 			
+			// Render transparent LOD sections (such as water)
+			transparencyEnabled = Config.Client.Advanced.Graphics.Quality.transparency.get().transparencyEnabled;
+			fakeOceanFloor = Config.Client.Advanced.Graphics.Quality.transparency.get().fakeTransparencyEnabled;
 			
 			if (Config.Client.Advanced.Graphics.Quality.transparency.get().transparencyEnabled)
 			{
@@ -379,8 +366,11 @@ public class LodRenderer
 					GL32.GL_COLOR_BUFFER_BIT,
 					GL32.GL_NEAREST);
 			
+			// Delete framebuffer, color texture, and depth texture
+			//GL32.glBindRenderbuffer(GL32.GL_RENDERBUFFER, 0);
 			GL32.glDeleteFramebuffers(this.framebufferId);
 			GL32.glDeleteTextures(this.colorTextureId);
+			GL32.glDeleteRenderbuffers(this.depthRenderbufferId);
 			
 			
 			//================//
