@@ -37,7 +37,10 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	public static final int TIMEOUT_SECONDS = 30;
 	
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	private static final HashMap<String, Connection> CONNECTIONS_BY_CONNECTION_STRING = new HashMap<>();
+	private static final HashMap<AbstractDhRepo<?>, String> ACTIVE_CONNECTION_STRINGS_BY_REPO = new HashMap<>();
 	
+	private final String connectionString;
 	private final Connection connection;
 	
 	public final String databaseType;
@@ -51,13 +54,24 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	// constructor //
 	//=============//
 	
+	/** @throws SQLException if the repo is unable to access the database or has trouble updating said database. */
 	public AbstractDhRepo(String databaseType, String databaseLocation, Class<? extends TDTO> dtoClass) throws SQLException
 	{
 		this.databaseType = databaseType;
 		this.databaseLocation = databaseLocation;
 		this.dtoClass = dtoClass;
 		
-		this.connection = DriverManager.getConnection(this.databaseType+":"+this.databaseLocation);
+		// get or create the connection,
+		// reusing existing connections reduces the chance of locking the database during trivial queries
+		this.connectionString = this.databaseType+":"+this.databaseLocation;
+		if (!CONNECTIONS_BY_CONNECTION_STRING.containsKey(this.connectionString))
+		{
+			Connection connection = DriverManager.getConnection(this.connectionString);
+			CONNECTIONS_BY_CONNECTION_STRING.put(this.connectionString, connection); 
+		}
+		this.connection = CONNECTIONS_BY_CONNECTION_STRING.get(this.connectionString);
+		
+		ACTIVE_CONNECTION_STRINGS_BY_REPO.put(this, this.connectionString);
 		
 		DatabaseUpdater.runAutoUpdateScripts(this);
 	}
@@ -180,9 +194,17 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	{
 		try
 		{
-			if(this.connection != null)
+			// mark this repo as deactivated
+			ACTIVE_CONNECTION_STRINGS_BY_REPO.remove(this);
+			
+			// check if any other repos are using this connection
+			if (!ACTIVE_CONNECTION_STRINGS_BY_REPO.containsValue(this.connectionString)) // not a fast operation, but we shouldn't have more than 10 repos active at a time, so it shouldn't be a problem
 			{
-				this.connection.close();
+				if(this.connection != null)
+				{
+					this.connection.close();
+				}
+				ACTIVE_CONNECTION_STRINGS_BY_REPO.remove(this.connectionString);
 			}
 		}
 		catch(SQLException e)

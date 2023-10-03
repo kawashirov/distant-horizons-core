@@ -36,6 +36,7 @@ public class DatabaseUpdater
 	public static final String SCHEMA_TABLE_NAME = "Schema";
 	
 	
+	// TODO add a specific comment string that can be used to separate out commands in a file so multiple commands can be used in a file
 	
 	/** Handles both initial setup and  */
 	public static <TDTO extends IBaseDTO> void runAutoUpdateScripts(AbstractDhRepo<TDTO> repo) throws SQLException

@@ -35,6 +35,7 @@ import com.seibel.distanthorizons.core.dataObjects.render.ColumnRenderLoader;
 import com.seibel.distanthorizons.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.distanthorizons.core.level.IDhClientLevel;
 import com.seibel.distanthorizons.core.render.renderer.IDebugRenderable;
+import com.seibel.distanthorizons.core.sql.MetaDataDto;
 import com.seibel.distanthorizons.core.util.AtomicsUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.objects.Reference;
@@ -43,9 +44,7 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -71,7 +70,8 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 	
 	private final IDhClientLevel clientLevel;
 	private final IFullDataSourceProvider fullDataSourceProvider;
-	private boolean doesFileExist;
+	private final ILodRenderSourceProvider renderDataSourceProvider;
+	private boolean doesDtoExist;
 	
 	
 	
@@ -79,35 +79,19 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 	// constructor //
 	//=============//
 	
-	/** 
-	 * Can be used instead of {@link RenderDataMetaFile#createFromExistingFile} or {@link RenderDataMetaFile#createNewFileForPos}, 
-	 * if we are uncertain whether a file exists or not.
-	 */
-	public static RenderDataMetaFile createFromExistingOrNewFile(IDhClientLevel clientLevel, IFullDataSourceProvider fullDataSourceProvider, DhSectionPos pos, File file) throws IOException
-	{
-		if (file.exists())
-		{
-			return createFromExistingFile(fullDataSourceProvider, clientLevel, file);
-		}
-		else
-		{
-			return createNewFileForPos(fullDataSourceProvider, clientLevel, pos, file);
-		}
-	}
-	
-	
 	/**
 	 * NOTE: should only be used if there is NOT an existing file.
 	 * @throws IOException if a file already exists for this position
 	 */
-	public static RenderDataMetaFile createNewFileForPos(IFullDataSourceProvider fullDataSourceProvider, IDhClientLevel clientLevel, DhSectionPos pos, File file) throws IOException { return new RenderDataMetaFile(fullDataSourceProvider, clientLevel, pos, file); }
-	private RenderDataMetaFile(IFullDataSourceProvider fullDataSourceProvider, IDhClientLevel clientLevel, DhSectionPos pos, File file) throws IOException
+	public static RenderDataMetaFile createNewFileForPos(IFullDataSourceProvider fullDataSourceProvider, ILodRenderSourceProvider renderDataSourceProvider, IDhClientLevel clientLevel, DhSectionPos pos) throws IOException { return new RenderDataMetaFile(fullDataSourceProvider, renderDataSourceProvider, clientLevel, pos); }
+	private RenderDataMetaFile(IFullDataSourceProvider fullDataSourceProvider, ILodRenderSourceProvider renderDataSourceProvider, IDhClientLevel clientLevel, DhSectionPos pos) throws IOException
 	{
-		super(file, pos);
+		super(pos);
 		this.fullDataSourceProvider = fullDataSourceProvider;
+		this.renderDataSourceProvider = renderDataSourceProvider;
 		this.clientLevel = clientLevel;
 		LodUtil.assertTrue(this.baseMetaData == null);
-		this.doesFileExist = this.file.exists();
+		this.doesDtoExist = false;
 		DebugRenderer.register(this, Config.Client.Advanced.Debugging.DebugWireframe.showRenderDataFileStatus);
 	}
 	
@@ -116,14 +100,15 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 	 * NOTE: should only be used if there IS an existing file.
 	 * @throws IOException if no file exists for this position
 	 */
-	public static RenderDataMetaFile createFromExistingFile(IFullDataSourceProvider fullDataSourceProvider, IDhClientLevel clientLevel, File file) throws IOException { return new RenderDataMetaFile(fullDataSourceProvider, clientLevel, file); }
-	private RenderDataMetaFile(IFullDataSourceProvider fullDataSourceProvider, IDhClientLevel clientLevel, File file) throws IOException
+	public static RenderDataMetaFile createFromExistingFile(IFullDataSourceProvider fullDataSourceProvider, ILodRenderSourceProvider renderDataSourceProvider, IDhClientLevel clientLevel, MetaDataDto metaDataDto) throws IOException { return new RenderDataMetaFile(fullDataSourceProvider, renderDataSourceProvider, clientLevel, metaDataDto); }
+	private RenderDataMetaFile(IFullDataSourceProvider fullDataSourceProvider, ILodRenderSourceProvider renderDataSourceProvider, IDhClientLevel clientLevel, MetaDataDto metaDataDto) throws IOException
 	{
-		super(file);
+		super(metaDataDto.dataArray);
 		this.fullDataSourceProvider = fullDataSourceProvider;
+		this.renderDataSourceProvider = renderDataSourceProvider;
 		this.clientLevel = clientLevel;
 		LodUtil.assertTrue(this.baseMetaData != null);
-		this.doesFileExist = this.file.exists();
+		this.doesDtoExist = true;
 		DebugRenderer.register(this, Config.Client.Advanced.Debugging.DebugWireframe.showRenderDataFileStatus);
 		
 		// handles world gen queuing for missing columns
@@ -199,7 +184,7 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 		
 		
 		final CompletableFuture<ColumnRenderSource> getSourceFuture = renderSourceLoadFuture;
-		if (!this.doesFileExist)
+		if (!this.doesDtoExist)
 		{
 			// create a new Meta file and render source
 			
@@ -235,8 +220,8 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 						
 						// Load the render source file.
 						ColumnRenderSource renderSource;
-						try (FileInputStream fileInputStream = this.getFileInputStream(); // throws IoException
-								DhDataInputStream compressedInputStream = new DhDataInputStream(fileInputStream))
+						try (InputStream inputStream = this.getInputStream(); // throws IoException
+								DhDataInputStream compressedInputStream = new DhDataInputStream(inputStream))
 						{
 							renderSource = ColumnRenderLoader.INSTANCE.loadRenderSource(this, compressedInputStream, this.clientLevel);
 						}
@@ -255,7 +240,7 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 						{
 							if (!LodUtil.isInterruptOrReject(ex))
 							{
-								LOGGER.error("Error loading file "+this.file+": ", ex);
+								LOGGER.error("Error loading pos: "+this.pos+": ", ex);
 							}
 							
 							// set the render source to null to prevent instances where a corrupt or incomplete render source is returned
@@ -271,28 +256,29 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 		
 		return getSourceFuture;
 	}
-	private FileInputStream getFileInputStream() throws IOException
+	// TODO merge with FullDataMetaFile
+	private InputStream getInputStream() throws IOException
 	{
-		FileInputStream inputStream = new FileInputStream(this.file);
-		int toSkip = METADATA_SIZE_IN_BYTES;
-		while (toSkip > 0)
+		MetaDataDto dto = this.renderDataSourceProvider.getRepo().getByPrimaryKey(this.pos.serialize());
+		ByteArrayInputStream inputStream = new ByteArrayInputStream(dto.dataArray);
+		
+		// skip the meta-data bytes
+		int bytesToSkip = AbstractMetaDataContainerFile.METADATA_SIZE_IN_BYTES;
+		while (bytesToSkip > 0)
 		{
-			long skipped = inputStream.skip(toSkip);
-			if (skipped == 0)
+			long skippedByteCount = inputStream.skip(bytesToSkip);
+			if (skippedByteCount == 0)
 			{
 				throw new IOException("Invalid file: Failed to skip metadata.");
 			}
-			toSkip -= skipped;
+			bytesToSkip -= skippedByteCount;
 		}
 		
-		if (toSkip != 0)
+		if (bytesToSkip != 0)
 		{
 			throw new IOException("File IO Error: Failed to skip metadata.");
 		}
-		else
-		{
-			return inputStream;
-		}
+		return inputStream;
 	}
 	
 	
@@ -355,7 +341,7 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 						}
 						catch (Exception e)
 						{
-							LOGGER.error("Unable to transform full data to render data for file: "+this.file, e);
+							LOGGER.error("Unable to transform full data to render data for pos: "+this.pos, e);
 						}
 						
 						try
@@ -376,7 +362,7 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 						}
 						catch (Throwable e)
 						{
-							LOGGER.error("Exception when writing render data to file: "+this.file, e);
+							LOGGER.error("Exception when writing render data for pos: "+this.pos, e);
 						}
 					}
 					else if (!LodUtil.isInterruptOrReject(ex))
@@ -398,7 +384,7 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 	
 	public CompletableFuture<Void> flushAndSaveAsync()
 	{
-		if (!this.file.exists())
+		if (!this.renderDataSourceProvider.getRepo().existsWithPrimaryKey(this.pos.serialize()))
 		{
 			return CompletableFuture.completedFuture(null); // No need to save if the file doesn't exist.
 		}
@@ -420,28 +406,26 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 	{
 		if (renderSource.isEmpty())
 		{
-			if (this.file.exists())
-			{
-				// attempt to remove the empty render source
-				if (!this.file.delete())
-				{
-					LOGGER.warn("Failed to delete render file at " + this.file);
-				}
-			}
-			
-			this.doesFileExist = false;
+			// delete the empty data source
+			this.fullDataSourceProvider.getRepo().deleteByPrimaryKey(this.pos.serialize());
+			this.doesDtoExist = false;
 		}
 		else
 		{
 			//LOGGER.info("Saving updated render file v[{}] at sect {}", this.metaData.dataVersion.get(), this.pos);
 			try
 			{
-				super.writeData((dhDataOutputStream) -> renderSource.writeData(dhDataOutputStream));
-				this.doesFileExist = true;
+				ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+				
+				super.writeData((dhDataOutputStream) -> renderSource.writeData(dhDataOutputStream), byteArrayOutputStream);
+				this.doesDtoExist = true;
+				
+				MetaDataDto dto = new MetaDataDto(this.pos, byteArrayOutputStream.toByteArray());
+				this.renderDataSourceProvider.getRepo().save(dto);
 			}
 			catch (IOException e)
 			{
-				LOGGER.error("Failed to save updated render file at {} for sect {}", this.file, this.pos, e);
+				LOGGER.error("Failed to save updated render data for pos "+this.pos, e);
 			}
 		}
 	}
@@ -467,7 +451,7 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 		{
 			color = Color.BLUE;
 		}
-		else if (this.doesFileExist)
+		else if (this.doesDtoExist)
 		{
 			color = Color.RED;
 		}

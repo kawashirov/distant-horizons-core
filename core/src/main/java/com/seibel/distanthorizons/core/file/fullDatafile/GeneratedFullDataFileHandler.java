@@ -198,7 +198,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 					.thenApply(this::tryPromoteDataSource)
 					.exceptionally((e) ->
 					{
-						this.removeCorruptedFile(pos, file, e);
+						this.removeCorruptedFile(pos, e);
 						return null;
 					});
 		}
@@ -228,7 +228,7 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	@Override
 	public CompletableFuture<DataFileUpdateResult> onDataFileUpdateAsync(IFullDataSource fullDataSource, FullDataMetaFile file, boolean dataChanged)
 	{
-		LodUtil.assertTrue(file.doesFileExist || dataChanged);
+		LodUtil.assertTrue(this.fullDataRepo.existsWithPrimaryKey(file.pos.serialize()) || dataChanged);
 		
 		
 		if (fullDataSource instanceof CompleteFullDataSource)
