@@ -39,15 +39,7 @@ public class JarUtils
 	static {
 		try {
 			jarFile = new File(JarUtils.class.getProtectionDomain().getCodeSource().getLocation().toURI()); // Always safe
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-	}
-	
-	public static void main(String[] args) {
-		System.out.println(jarFile);
+		} catch (Exception e) { e.printStackTrace(); }
 	}
 	
 	
@@ -109,7 +101,7 @@ public class JarUtils
 	/**
 	 * Checks the checksum of a file given an algorithm
 	 *
-	 * @param digest What algorithem to use <br>
+	 * @param digest What algorithm to use <br>
 	 * Eg. <br>
 	 * MessageDigest.getInstance("MD5") <br>
 	 * MessageDigest.getInstance("SHA-256") <br>
