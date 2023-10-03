@@ -91,6 +91,10 @@ public class DhRepoSqliteTest
 			Assert.assertEquals("get/insert failed, not equal", insertDto.id, getDto.id);
 			Assert.assertEquals("get/insert failed, not equal", insertDto.value, getDto.value);
 			
+			// exists - DTO present
+			Assert.assertTrue("DTO exists failed", testDataRepo.exists(insertDto));
+			Assert.assertTrue("DTO exists failed", testDataRepo.existsWithPrimaryKey(insertDto.getPrimaryKeyString()));
+			
 			
 			// update
 			TestDto updateMetaFile = new TestDto(0, "b");
@@ -109,6 +113,10 @@ public class DhRepoSqliteTest
 			// get
 			getDto = testDataRepo.getByPrimaryKey("0");
 			Assert.assertNull("delete failed, not null returned", getDto);
+			
+			// exists - DTO absent
+			Assert.assertFalse("DTO exists failed", testDataRepo.exists(insertDto));
+			Assert.assertFalse("DTO exists failed", testDataRepo.existsWithPrimaryKey(insertDto.getPrimaryKeyString()));
 			
 		}
 		catch (SQLException e)

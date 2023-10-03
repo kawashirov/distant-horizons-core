@@ -98,6 +98,13 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	
 	public void delete(TDTO dto) { this.queryDictionaryFirst(this.createDeleteSql(dto)); }
 	
+	public boolean exists(TDTO dto) { return this.existsWithPrimaryKey(dto.getPrimaryKeyString()); }
+	public boolean existsWithPrimaryKey(String primaryKey) 
+	{
+		String whereEqualStatement = this.createWherePrimaryKeyStatement(primaryKey);
+		Map<String, Object> result = this.queryDictionaryFirst("SELECT EXISTS(SELECT 1 FROM "+this.getTableName()+" WHERE "+whereEqualStatement+") as 'existingCount';"); 
+		return result != null && (int)result.get("existingCount") != 0;
+	}
 	
 	
 	//==============//
@@ -186,8 +193,10 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	// helper methods //
 	//================//
 	
+	/** Example: <code> Id = '0' </code> */
 	public String createWherePrimaryKeyStatement(TDTO dto) { return this.createWherePrimaryKeyStatement(dto.getPrimaryKeyString()); }
-	public String createWherePrimaryKeyStatement(String primaryKeyValue) { return "WHERE "+this.getPrimaryKeyName()+" = '"+primaryKeyValue+"'"; }
+	/** Example: <code> Id = '0' </code> */
+	public String createWherePrimaryKeyStatement(String primaryKeyValue) { return this.getPrimaryKeyName()+" = '"+primaryKeyValue+"'"; }
 	
 	public static List<Map<String, Object>> convertResultSetToDictionaryList(ResultSet resultSet) throws SQLException
 	{
