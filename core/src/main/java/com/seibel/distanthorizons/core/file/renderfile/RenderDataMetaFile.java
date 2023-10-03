@@ -70,7 +70,7 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 	
 	private final IDhClientLevel clientLevel;
 	private final IFullDataSourceProvider fullDataSourceProvider;
-	private final ILodRenderSourceProvider renderDataSourceProvider;
+	private final IRenderSourceProvider renderDataSourceProvider;
 	private boolean doesDtoExist;
 	
 	
@@ -83,8 +83,8 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 	 * NOTE: should only be used if there is NOT an existing file.
 	 * @throws IOException if a file already exists for this position
 	 */
-	public static RenderDataMetaFile createNewFileForPos(IFullDataSourceProvider fullDataSourceProvider, ILodRenderSourceProvider renderDataSourceProvider, IDhClientLevel clientLevel, DhSectionPos pos) throws IOException { return new RenderDataMetaFile(fullDataSourceProvider, renderDataSourceProvider, clientLevel, pos); }
-	private RenderDataMetaFile(IFullDataSourceProvider fullDataSourceProvider, ILodRenderSourceProvider renderDataSourceProvider, IDhClientLevel clientLevel, DhSectionPos pos) throws IOException
+	public static RenderDataMetaFile createNewFileForPos(IFullDataSourceProvider fullDataSourceProvider, IRenderSourceProvider renderDataSourceProvider, IDhClientLevel clientLevel, DhSectionPos pos) throws IOException { return new RenderDataMetaFile(fullDataSourceProvider, renderDataSourceProvider, clientLevel, pos); }
+	private RenderDataMetaFile(IFullDataSourceProvider fullDataSourceProvider, IRenderSourceProvider renderDataSourceProvider, IDhClientLevel clientLevel, DhSectionPos pos) throws IOException
 	{
 		super(pos);
 		this.fullDataSourceProvider = fullDataSourceProvider;
@@ -100,8 +100,8 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 	 * NOTE: should only be used if there IS an existing file.
 	 * @throws IOException if no file exists for this position
 	 */
-	public static RenderDataMetaFile createFromExistingFile(IFullDataSourceProvider fullDataSourceProvider, ILodRenderSourceProvider renderDataSourceProvider, IDhClientLevel clientLevel, MetaDataDto metaDataDto) throws IOException { return new RenderDataMetaFile(fullDataSourceProvider, renderDataSourceProvider, clientLevel, metaDataDto); }
-	private RenderDataMetaFile(IFullDataSourceProvider fullDataSourceProvider, ILodRenderSourceProvider renderDataSourceProvider, IDhClientLevel clientLevel, MetaDataDto metaDataDto) throws IOException
+	public static RenderDataMetaFile createFromExistingFile(IFullDataSourceProvider fullDataSourceProvider, IRenderSourceProvider renderDataSourceProvider, IDhClientLevel clientLevel, MetaDataDto metaDataDto) throws IOException { return new RenderDataMetaFile(fullDataSourceProvider, renderDataSourceProvider, clientLevel, metaDataDto); }
+	private RenderDataMetaFile(IFullDataSourceProvider fullDataSourceProvider, IRenderSourceProvider renderDataSourceProvider, IDhClientLevel clientLevel, MetaDataDto metaDataDto) throws IOException
 	{
 		super(metaDataDto.dataArray);
 		this.fullDataSourceProvider = fullDataSourceProvider;

@@ -32,7 +32,7 @@ import java.util.concurrent.CompletableFuture;
  *
  * This is used to create {@link ColumnRenderSource}'s
  */
-public interface ILodRenderSourceProvider extends AutoCloseable
+public interface IRenderSourceProvider extends AutoCloseable
 {
 	CompletableFuture<ColumnRenderSource> readAsync(DhSectionPos pos);
 	

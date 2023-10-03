@@ -23,7 +23,7 @@ import com.seibel.distanthorizons.api.enums.config.EHorizontalQuality;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.config.listeners.ConfigChangeListener;
 import com.seibel.distanthorizons.core.dataObjects.render.ColumnRenderSource;
-import com.seibel.distanthorizons.core.file.renderfile.ILodRenderSourceProvider;
+import com.seibel.distanthorizons.core.file.renderfile.IRenderSourceProvider;
 import com.seibel.distanthorizons.core.level.IDhClientLevel;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhBlockPos2D;
@@ -49,7 +49,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
 	public final int blockRenderDistanceRadius;
-	private final ILodRenderSourceProvider renderSourceProvider;
+	private final IRenderSourceProvider renderSourceProvider;
 	
 	/**
 	 * This holds every {@link DhSectionPos} that should be reloaded next tick. <br>
@@ -79,7 +79,7 @@ public class LodQuadTree extends QuadTree<LodRenderSection> implements AutoClose
 	public LodQuadTree(
 			IDhClientLevel level, int viewDistanceInBlocks,
 			int initialPlayerBlockX, int initialPlayerBlockZ,
-			ILodRenderSourceProvider provider)
+			IRenderSourceProvider provider)
 	{
 		super(viewDistanceInBlocks, new DhBlockPos2D(initialPlayerBlockX, initialPlayerBlockZ), TREE_LOWEST_DETAIL_LEVEL);
 		

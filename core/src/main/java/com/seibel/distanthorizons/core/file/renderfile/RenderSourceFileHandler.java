@@ -27,10 +27,8 @@ import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.core.dataObjects.render.ColumnRenderSource;
 import com.seibel.distanthorizons.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.distanthorizons.core.level.IDhClientLevel;
-import com.seibel.distanthorizons.core.sql.FullDataRepo;
 import com.seibel.distanthorizons.core.sql.MetaDataDto;
 import com.seibel.distanthorizons.core.sql.RenderDataRepo;
-import com.seibel.distanthorizons.core.util.FileUtil;
 import com.seibel.distanthorizons.core.util.ThreadUtil;
 import org.apache.logging.log4j.Logger;
 
@@ -41,7 +39,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class RenderSourceFileHandler implements ILodRenderSourceProvider
+public class RenderSourceFileHandler implements IRenderSourceProvider
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
