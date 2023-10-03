@@ -96,7 +96,12 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	private void insert(TDTO dto) { this.queryDictionaryFirst(this.createInsertSql(dto)); }
 	private void update(TDTO dto) { this.queryDictionaryFirst(this.createUpdateSql(dto)); }
 	
-	public void delete(TDTO dto) { this.queryDictionaryFirst(this.createDeleteSql(dto)); }
+	public void delete(TDTO dto) { this.deleteByPrimaryKey(dto.getPrimaryKeyString()); }
+	public void deleteByPrimaryKey(String primaryKey) 
+	{
+		String whereEqualStatement = this.createWherePrimaryKeyStatement(primaryKey);
+		this.queryDictionaryFirst("DELETE FROM "+this.getTableName()+" WHERE "+whereEqualStatement); 
+	}
 	
 	public boolean exists(TDTO dto) { return this.existsWithPrimaryKey(dto.getPrimaryKeyString()); }
 	public boolean existsWithPrimaryKey(String primaryKey) 
