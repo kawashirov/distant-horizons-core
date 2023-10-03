@@ -34,7 +34,21 @@ import java.util.Objects;
  */
 public class JarUtils
 {
-	public static final File jarFile = new File(JarUtils.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+	public static File jarFile = null;
+	
+	static {
+		try {
+			jarFile = new File(JarUtils.class.getProtectionDomain().getCodeSource().getLocation().toURI()); // Always safe
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public static void main(String[] args) {
+		System.out.println(jarFile);
+	}
 	
 	
 	/**
