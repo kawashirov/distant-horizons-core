@@ -25,9 +25,9 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Map;
 
 public class DatabaseUpdater
 {
@@ -48,40 +48,48 @@ public class DatabaseUpdater
 		}
 		catch (URISyntaxException | IOException e)
 		{
-			// shouldn't normally happen, but just incase
+			// shouldn't normally happen, but just in case
 			throw new RuntimeException(e);
 		}
 		
 		
 		// create the base update table if necessary
-		ResultSet schemaTableExistsResult = repo.query("SELECT COUNT(name) FROM sqlite_master WHERE type='table' AND name='Schema';");
-		if (schemaTableExistsResult.next())
+		Map<String, Object> schemaTableExistsResult = repo.queryDictionaryFirst("SELECT COUNT(name) as 'tableCount' FROM sqlite_master WHERE type='table' AND name='"+SCHEMA_TABLE_NAME+"';");
+		if (schemaTableExistsResult == null || (int) schemaTableExistsResult.get("tableCount") == 0)
 		{
-			boolean schemaTableMissing = schemaTableExistsResult.getInt(1) == 0;
-			if (schemaTableMissing)
-			{
-				// Note: if this table ever needs to be modified, that should be done via an auto update script to prevent issues with updating old databases
-				String createBaseSchemaTable =
-						"CREATE TABLE "+SCHEMA_TABLE_NAME+"( \n" +
-						"    FileName TEXT NOT NULL PRIMARY KEY \n" +
-						"   ,AppliedDateTime DATETIME NOT NULL default CURRENT_TIMESTAMP --in UTC 0 timezone \n" +
-						");";
-				repo.queryNoResult(createBaseSchemaTable);
-			}
+			// Note: if this table ever needs to be modified, that should be done via an auto update script to prevent issues with updating old databases
+			String createBaseSchemaTable =
+					"CREATE TABLE "+SCHEMA_TABLE_NAME+"( \n" +
+					"    FileName TEXT NOT NULL PRIMARY KEY \n" +
+					"   ,AppliedDateTime DATETIME NOT NULL default CURRENT_TIMESTAMP --in UTC 0 timezone \n" +
+					");";
+			repo.queryDictionaryFirst(createBaseSchemaTable);
 		}
 		
 		
 		// attempt to run any un-run update scripts
-		for (ResourceUtil.ResourceFile file : sqlScripts)
+		for (ResourceUtil.ResourceFile resource : sqlScripts)
 		{
-			ResultSet scriptAlreadyRunResult = repo.query("SELECT EXISTS(SELECT 1 FROM Schema WHERE FileName='"+file.name+"');");
-			if (!scriptAlreadyRunResult.next() || !scriptAlreadyRunResult.getBoolean(1))
+			Map<String, Object> scriptAlreadyRunResult = repo.queryDictionaryFirst("SELECT EXISTS(SELECT 1 FROM "+SCHEMA_TABLE_NAME+" WHERE FileName='"+resource.name+"') as 'existingCount';");
+			if (scriptAlreadyRunResult != null && (int) scriptAlreadyRunResult.get("existingCount") == 0)
 			{
-				LOGGER.info("Running SQL update script: ["+file.name+"], for repo: ["+repo.databaseLocation+"]");
-				repo.queryNoResult(file.content);
+				LOGGER.info("Running SQL update script: ["+resource.name+"], for repo: ["+repo.databaseLocation+"]");
+				try
+				{
+					repo.queryDictionaryFirst(resource.content);	
+				}
+				catch (RuntimeException e)
+				{
+					// updating needs to stop to prevent any further data corruption
+					LOGGER.error("Unexpected error running database update script ["+resource.name+"] on database ["+repo.databaseLocation+"], stopping database update, data saving may fail. \n" +
+							"Error: ["+e.getMessage()+"]. \n" +
+							"Sql Script:["+resource.content+"]", e);
+					break;
+				}
+				
 				
 				// record the successfully run script
-				repo.queryNoResult("INSERT INTO Schema (FileName) VALUES('"+file.name+"');");
+				repo.queryDictionaryFirst("INSERT INTO "+SCHEMA_TABLE_NAME+" (FileName) VALUES('"+resource.name+"');");
 			}
 		}
 	}

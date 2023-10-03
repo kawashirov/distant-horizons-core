@@ -26,8 +26,8 @@ import testItems.sql.TestDataRepo;
 import testItems.sql.TestDto;
 
 import java.io.File;
-import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
 
 /**
  * Validates {@link com.seibel.distanthorizons.core.sql.AbstractDhRepo} is set up correctly.
@@ -64,11 +64,16 @@ public class DhRepoSqliteTest
 			// Auto update script tests //
 			//==========================//
 			
-			ResultSet autoUpdateTablePresentResult = testDataRepo.query("SELECT name FROM sqlite_master WHERE type='table' AND name='"+DatabaseUpdater.SCHEMA_TABLE_NAME+"';");
-			if (!autoUpdateTablePresentResult.next() || autoUpdateTablePresentResult.getString(1) == null)
+			// check that the schema table is created
+			Map<String, Object> autoUpdateTablePresentResult = testDataRepo.queryDictionaryFirst("SELECT name FROM sqlite_master WHERE type='table' AND name='"+DatabaseUpdater.SCHEMA_TABLE_NAME+"';");
+			if (autoUpdateTablePresentResult == null || autoUpdateTablePresentResult.get("name") == null)
 			{
 				Assert.fail("Auto DB update table missing.");
 			}
+			
+			// check that the update scripts aren't run multiple times
+			TestDataRepo altDataRepoOne = new TestDataRepo(DATABASE_TYPE, dbFileName);
+			TestDataRepo altDataRepoTwo = new TestDataRepo(DATABASE_TYPE, dbFileName);
 			
 			
 			

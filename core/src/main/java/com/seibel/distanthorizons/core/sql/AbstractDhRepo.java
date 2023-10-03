@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.sql.*;
+import java.util.*;
 
 /**
  * Handles interfacing with SQL databases.
@@ -70,19 +71,15 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	public TDTO get(TDTO dto) { return this.getByPrimaryKey(dto.getPrimaryKeyString()); }
 	public TDTO getByPrimaryKey(String primaryKey)
 	{
-		TDTO dto = null;
-		try
+		Map<String, Object> objectMap = this.queryDictionaryFirst(this.createSelectPrimaryKeySql(primaryKey));
+		if (objectMap != null && !objectMap.isEmpty())
 		{
-			ResultSet resultSet = this.query(this.createSelectPrimaryKeySql(primaryKey));
-			dto = this.convertResultSetToDto(resultSet);
-			resultSet.close();
+			return this.convertDictionaryToDto(objectMap);
 		}
-		catch (SQLException e)
+		else
 		{
-			System.err.println(e.getMessage());
+			return null;
 		}
-		
-		return dto;
 	}
 	
 	public void save(TDTO dto)
@@ -96,53 +93,56 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 			this.insert(dto);
 		}
 	}
-	private void insert(TDTO dto) { this.queryNoResult(this.createInsertSql(dto)); }
-	private void update(TDTO dto) { this.queryNoResult(this.createUpdateSql(dto)); }
+	private void insert(TDTO dto) { this.queryDictionaryFirst(this.createInsertSql(dto)); }
+	private void update(TDTO dto) { this.queryDictionaryFirst(this.createUpdateSql(dto)); }
 	
-	public void delete(TDTO dto) { this.queryNoResult(this.createDeleteSql(dto)); }
+	public void delete(TDTO dto) { this.queryDictionaryFirst(this.createDeleteSql(dto)); }
+	
 	
 	
 	//==============//
 	// low level DB //
 	//==============//
 	
-	public void queryNoResult(String sql) { this.query(sql, false); }
-	public ResultSet query(String sql) { return this.query(sql, true); }
+	public List<Map<String, Object>> queryDictionary(String sql) { return this.query(sql); }
+	@Nullable
+	public Map<String, Object> queryDictionaryFirst(String sql) 
+	{
+		List<Map<String, Object>> objectList = this.query(sql);
+		return (objectList != null && !objectList.isEmpty()) ? objectList.get(0) : null;
+	}
 	
 	/** note: this can only handle 1 command at a time */
-	@Nullable
-	private ResultSet query(String sql, boolean returnResultSet) throws RuntimeException
+	private List<Map<String, Object>> query(String sql) throws RuntimeException
 	{
-		try
+		try (Statement statement = this.connection.createStatement())
 		{
-			Statement statement = this.connection.createStatement();
 			statement.setQueryTimeout(TIMEOUT_SECONDS);
 			
 			// Note: this can only handle 1 command at a time
 			boolean resultSetPresent = statement.execute(sql);
+			ResultSet resultSet = statement.getResultSet();
 			if (resultSetPresent)
 			{
-				ResultSet resultSet = statement.getResultSet();
-				if (returnResultSet)
-				{
-					return resultSet;
-				}
-				else
-				{
-					resultSet.close();
-					return null;
-				}
+				List<Map<String, Object>> resultList = convertResultSetToDictionaryList(resultSet);
+				resultSet.close();
+				return resultList;
 			}
 			else
 			{
-				return null;
+				if (resultSet != null)
+				{
+					resultSet.close();
+				}
+				
+				return new ArrayList<>();
 			}
 		}
 		catch(SQLException e)
 		{
 			// SQL exceptions generally only happen when something is wrong with 
 			// the database or the query and should cause the system to blow up to notify the developer
-			throw new RuntimeException(e);
+			throw new RuntimeException("Unexpected Query error: ["+e.getMessage()+"], for script: ["+sql+"].", e);
 		}
 	}
 	
@@ -189,6 +189,35 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	public String createWherePrimaryKeyStatement(TDTO dto) { return this.createWherePrimaryKeyStatement(dto.getPrimaryKeyString()); }
 	public String createWherePrimaryKeyStatement(String primaryKeyValue) { return "WHERE "+this.getPrimaryKeyName()+" = '"+primaryKeyValue+"'"; }
 	
+	public static List<Map<String, Object>> convertResultSetToDictionaryList(ResultSet resultSet) throws SQLException
+	{
+		List<Map<String, Object>> list = new ArrayList<>();
+		
+		ResultSetMetaData resultMetaData = resultSet.getMetaData();
+		int resultColumnCount = resultMetaData.getColumnCount();
+		
+		while (resultSet.next())
+		{
+			HashMap<String, Object> object = new HashMap<>();
+			for (int columnIndex = 1; columnIndex <= resultColumnCount; columnIndex++) // column indices start at 1
+			{
+				String columnName = resultMetaData.getColumnName(columnIndex);
+				if (columnName == null || columnName.equals(""))
+				{
+					throw new RuntimeException("SQL result set is missing a column name for column ["+resultMetaData.getTableName(columnIndex)+"."+columnIndex+"].");
+				}
+				
+				Object columnValue = resultSet.getObject(columnIndex);
+				
+				object.put(columnName, columnValue);
+			}
+			
+			list.add(object);
+		}
+		
+		return list;
+	}
+	
 	
 	
 	//==================//
@@ -199,7 +228,7 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	public abstract String getPrimaryKeyName();
 	
 	@Nullable
-	public abstract TDTO convertResultSetToDto(ResultSet resultSet) throws SQLException;
+	public abstract TDTO convertDictionaryToDto(Map<String, Object> objectMap) throws ClassCastException;
 	
 	public abstract String createSelectPrimaryKeySql(String primaryKey);
 	

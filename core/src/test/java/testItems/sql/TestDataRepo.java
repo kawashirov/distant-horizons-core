@@ -19,14 +19,10 @@
 
 package testItems.sql;
 
-import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiWorldGenerationStep;
-import com.seibel.distanthorizons.core.file.fullDatafile.FullDataMetaFile;
-import com.seibel.distanthorizons.core.file.metaData.BaseMetaData;
-import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.core.sql.AbstractDhRepo;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
 
 public class TestDataRepo extends AbstractDhRepo<TestDto>
 {
@@ -38,12 +34,12 @@ public class TestDataRepo extends AbstractDhRepo<TestDto>
 		// note: this should only ever be done with the test repo.
 		// All long term tables should be created using a sql Script.
 		String createTableSql = 
-				"CREATE TABLE "+this.getTableName()+"(\n" +
+				"CREATE TABLE IF NOT EXISTS "+this.getTableName()+"(\n" +
 				"Id INT NOT NULL PRIMARY KEY\n" +
 				"\n" +
 				",Value TEXT NULL\n" +
 				");";
-		this.queryNoResult(createTableSql);
+		this.queryDictionaryFirst(createTableSql);
 	}
 	
 	
@@ -55,18 +51,10 @@ public class TestDataRepo extends AbstractDhRepo<TestDto>
 	
 	
 	@Override 
-	public TestDto convertResultSetToDto(ResultSet resultSet) throws SQLException
+	public TestDto convertDictionaryToDto(Map<String, Object> objectMap) throws ClassCastException
 	{
-		if (!resultSet.next())
-		{
-			return null;
-		}
-		
-		
-		String idString = resultSet.getString("Id");
-		int id = Integer.parseInt(idString);
-		
-		String value = resultSet.getString("Value");
+		int id = (int) objectMap.get("Id");
+		String value = (String) objectMap.get("Value");
 		
 		return new TestDto(id, value);
 	}
