@@ -20,15 +20,11 @@
 package com.seibel.distanthorizons.core.sql;
 
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.util.ResourceUtil;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.sql.*;
-import java.util.*;
 
 /**
  * Handles interfacing with SQL databases.
@@ -62,27 +58,7 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 		
 		this.connection = DriverManager.getConnection(this.databaseType+":"+this.databaseLocation);
 		
-		this.runFirstTimeSetup();
-	}
-	private void runFirstTimeSetup()
-	{
-		// get the resource scripts
-		ArrayList<ResourceUtil.ResourceFile> sqlScripts;
-		try
-		{
-			sqlScripts = ResourceUtil.getFilesInFolder("sqlScripts", ".sql");
-		}
-		catch (URISyntaxException | IOException e)
-		{
-			throw new RuntimeException(e);
-		}
-		
-		// attempt to run them
-		for (ResourceUtil.ResourceFile file : sqlScripts)
-		{
-			LOGGER.info("Running automatic SQL script: ["+file.name +"]");
-			this.queryNoResult(file.content);
-		}
+		DatabaseUpdater.runAutoUpdateScripts(this);
 	}
 	
 	
@@ -133,14 +109,16 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	public void queryNoResult(String sql) { this.query(sql, false); }
 	public ResultSet query(String sql) { return this.query(sql, true); }
 	
+	/** note: this can only handle 1 command at a time */
 	@Nullable
-	private ResultSet query(String sql, boolean returnResultSet)
+	private ResultSet query(String sql, boolean returnResultSet) throws RuntimeException
 	{
 		try
 		{
-			Statement statement = this.connection .createStatement();
+			Statement statement = this.connection.createStatement();
 			statement.setQueryTimeout(TIMEOUT_SECONDS);
 			
+			// Note: this can only handle 1 command at a time
 			boolean resultSetPresent = statement.execute(sql);
 			if (resultSetPresent)
 			{
@@ -162,13 +140,28 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 		}
 		catch(SQLException e)
 		{
-			// if the error message is "out of memory",
-			// it probably means no database file is found
-			Assert.fail("Unexpected error for query ["+sql+"]: " + e.getMessage());
+			// SQL exceptions generally only happen when something is wrong with 
+			// the database or the query and should cause the system to blow up to notify the developer
+			throw new RuntimeException(e);
 		}
-		
-		return null;
 	}
+	
+	public PreparedStatement createPreparedStatement(String sql)
+	{
+		try
+		{
+			PreparedStatement statement = this.connection.prepareStatement(sql);
+			statement.setQueryTimeout(TIMEOUT_SECONDS);
+			return statement;
+		}
+		catch(SQLException e)
+		{
+			// SQL exceptions generally only happen when something is wrong with 
+			// the database or the query and should cause the system to blow up to notify the developer
+			throw new RuntimeException(e);
+		}
+	}
+	
 	
 	
 	public void close()
@@ -189,11 +182,21 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	
 	
 	
+	//================//
+	// helper methods //
+	//================//
+	
+	public String createWherePrimaryKeyStatement(TDTO dto) { return this.createWherePrimaryKeyStatement(dto.getPrimaryKeyString()); }
+	public String createWherePrimaryKeyStatement(String primaryKeyValue) { return "WHERE "+this.getPrimaryKeyName()+" = '"+primaryKeyValue+"'"; }
+	
+	
+	
 	//==================//
 	// abstract methods //
 	//==================//
 	
 	public abstract String getTableName();
+	public abstract String getPrimaryKeyName();
 	
 	@Nullable
 	public abstract TDTO convertResultSetToDto(ResultSet resultSet) throws SQLException;

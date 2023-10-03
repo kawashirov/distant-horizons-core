@@ -50,6 +50,9 @@ public class TestDataRepo extends AbstractDhRepo<TestDto>
 	
 	@Override
 	public String getTableName() { return "Test"; }
+	@Override
+	public String getPrimaryKeyName() { return "Id"; }
+	
 	
 	@Override 
 	public TestDto convertResultSetToDto(ResultSet resultSet) throws SQLException

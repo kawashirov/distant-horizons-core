@@ -19,12 +19,14 @@
 
 package tests;
 
+import com.seibel.distanthorizons.core.sql.DatabaseUpdater;
 import org.junit.Assert;
 import org.junit.Test;
 import testItems.sql.TestDataRepo;
 import testItems.sql.TestDto;
 
 import java.io.File;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
@@ -56,6 +58,23 @@ public class DhRepoSqliteTest
 			dbFile = new File(dbFileName);
 			Assert.assertTrue("dbFile not created", dbFile.exists());
 			
+			
+			
+			//==========================//
+			// Auto update script tests //
+			//==========================//
+			
+			ResultSet autoUpdateTablePresentResult = testDataRepo.query("SELECT name FROM sqlite_master WHERE type='table' AND name='"+DatabaseUpdater.SCHEMA_TABLE_NAME+"';");
+			if (!autoUpdateTablePresentResult.next() || autoUpdateTablePresentResult.getString(1) == null)
+			{
+				Assert.fail("Auto DB update table missing.");
+			}
+			
+			
+			
+			//===========//
+			// DTO tests //
+			//===========//
 			
 			// insert
 			TestDto insertDto = new TestDto(0, "a");
@@ -96,12 +115,6 @@ public class DhRepoSqliteTest
 			if (testDataRepo != null)
 			{
 				testDataRepo.close();
-			}
-			
-			dbFile = new File(dbFileName);
-			if (dbFile.exists())
-			{
-				Assert.assertTrue("unable to delete test DB File.", dbFile.delete());
 			}
 		}
 	}
