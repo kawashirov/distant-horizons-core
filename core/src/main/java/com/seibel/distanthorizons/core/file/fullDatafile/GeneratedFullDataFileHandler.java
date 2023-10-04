@@ -342,16 +342,48 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 			// world gen has already been checked for this file
 			return;
 		}
-		metaFile.genQueueChecked = true;
+		
+		
+		if (dataSource instanceof IIncompleteFullDataSource)
+		{
+			this.incompleteDataSources.put(metaFile.pos, (IIncompleteFullDataSource)dataSource);
+		}
+		
 		
 		byte minGeneratorSectionDetailLevel = (byte) (worldGenQueue.highestDataDetail() + DhSectionPos.SECTION_MINIMUM_DETAIL_LEVEL);
 		ArrayList<DhSectionPos> genPosList = MissingWorldGenPositionFinder.getUngeneratedPosList(dataSource, minGeneratorSectionDetailLevel, true);
 		
+		ArrayList<CompletableFuture<WorldGenResult>>  taskFutureList = new ArrayList<>();
 		for (DhSectionPos genPos : genPosList)
 		{
+			this.getLoadOrMakeFile(genPos, true);
+			this.getLoadOrMakeFile(metaFile.pos, true);
+			
+			
 			GenTask genTask = new GenTask(dataSource.getSectionPos(), new WeakReference<>(dataSource));
-			worldGenQueue.submitGenTask(genPos, dataSource.getSectionPos().getDetailLevel(), genTask);
+			CompletableFuture<WorldGenResult> worldGenFuture = worldGenQueue.submitGenTask(genPos, dataSource.getDataDetailLevel(), genTask);
+			worldGenFuture.whenComplete((genTaskResult, ex) ->
+			{
+				this.onWorldGenTaskComplete(genTaskResult, ex, genTask, genPos);
+				this.onWorldGenTaskComplete(genTaskResult, ex, genTask, metaFile.pos);
+			});
+			
+			taskFutureList.add(worldGenFuture);
 		}
+		
+		
+		if (taskFutureList.size() != 0)
+		{
+			metaFile.genQueueChecked = true;
+		}
+		
+		
+		CompletableFuture.allOf(taskFutureList.toArray(new CompletableFuture[0]))
+				.whenComplete((voidObj, ex) ->
+				{
+					metaFile.flushAndSaveAsync();
+					this.incompleteDataSources.remove(metaFile.pos);
+				});
 	}
 	
 	
