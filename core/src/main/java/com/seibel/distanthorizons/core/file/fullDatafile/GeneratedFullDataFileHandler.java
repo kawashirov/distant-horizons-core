@@ -269,13 +269,13 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 		{
 			// generation completed, update the files and listener(s)
 			this.flushAndSave(pos);
-			//this.fireOnGenPosSuccessListeners(pos);
+			this.fireOnGenPosSuccessListeners(pos);
 			return;
 		}
 		else
 		{
 			// generation didn't complete
-			LOGGER.error("Gen Task Failed at " + pos + ": " + genTaskResult);
+			LOGGER.debug("Gen Task Failed at " + pos);
 		}
 		
 		
@@ -290,36 +290,11 @@ public class GeneratedFullDataFileHandler extends FullDataFileHandler
 	
 	private void fireOnGenPosSuccessListeners(DhSectionPos pos)
 	{
-		if (true) return;
-		//LOGGER.info("gen task completed for pos: ["+pos+"].");
-		
-/*		// save the full data source
-		FullDataMetaFile file = this.fileBySectionPos.get(pos);
-		if (file != null)
-		{
-			// timeout is for the rare case where saving gets stuck
-			int timeoutInSeconds = 10;
-			try
-			{
-				file.flushAndSaveAsync().get(timeoutInSeconds, TimeUnit.SECONDS);
-			}
-			catch (TimeoutException | InterruptedException | ExecutionException e)
-			{
-				LOGGER.warn("fireOnGenPosSuccessListeners timed out after waiting ["+timeoutInSeconds+"] seconds for pos: ["+pos+"].");
-			}
-		}
-		else
-		{
-			// doesn't appear to cause issues, but probably isn't desired either
-			//LOGGER.warn("fireOnGenPosSuccessListeners file null for pos: ["+pos+"].");
-		}
-		*/
 		// fire the event listeners 
 		for (IOnWorldGenCompleteListener listener : this.onWorldGenTaskCompleteListeners)
 		{
 			listener.onWorldGenTaskComplete(pos);
 		}
-		
 	}
 	
 	
