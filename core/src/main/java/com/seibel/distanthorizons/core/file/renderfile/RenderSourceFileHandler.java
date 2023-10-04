@@ -82,7 +82,7 @@ public class RenderSourceFileHandler implements IRenderSourceProvider
 		
 		try
 		{
-			this.renderDataRepo = new RenderDataRepo("jdbc:sqlite", this.saveDir.getPath() + "/dhData.sqlite");
+			this.renderDataRepo = new RenderDataRepo("jdbc:sqlite", this.saveDir.getPath() + "/" + AbstractSaveStructure.DATABASE_NAME);
 		}
 		catch (SQLException e)
 		{

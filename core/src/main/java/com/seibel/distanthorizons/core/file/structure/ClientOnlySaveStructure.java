@@ -177,7 +177,7 @@ public class ClientOnlySaveStructure extends AbstractSaveStructure
 			return null;
 		}
 		
-		return new File(levelFolder, RENDER_CACHE_FOLDER_NAME);
+		return levelFolder;
 	}
 	
 	@Override
@@ -189,7 +189,7 @@ public class ClientOnlySaveStructure extends AbstractSaveStructure
 			return null;
 		}
 		
-		return new File(levelFolder, DATA_FOLDER_NAME);
+		return levelFolder;
 	}
 	
 	
@@ -225,9 +225,8 @@ public class ClientOnlySaveStructure extends AbstractSaveStructure
 						boolean isValidDhLevelFolder = false;
 						for (File dataFolder : dataFolders)
 						{
-							// a valid level folder needs to have DH specific folders in it
-							if (dataFolder.getName().equalsIgnoreCase(RENDER_CACHE_FOLDER_NAME)
-								|| dataFolder.getName().equalsIgnoreCase(DATA_FOLDER_NAME))
+							// look for the DH database file
+							if (dataFolder.getName().equalsIgnoreCase(AbstractSaveStructure.DATABASE_NAME))
 							{
 								isValidDhLevelFolder = true;
 								break;

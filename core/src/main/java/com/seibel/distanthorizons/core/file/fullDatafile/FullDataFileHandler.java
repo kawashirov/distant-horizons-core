@@ -88,7 +88,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 		
 		try
 		{
-			this.fullDataRepo = new FullDataRepo("jdbc:sqlite", this.saveDir.getPath() + "/dhData.sqlite");
+			this.fullDataRepo = new FullDataRepo("jdbc:sqlite", this.saveDir.getPath() + "/" + AbstractSaveStructure.DATABASE_NAME);
 		}
 		catch (SQLException e)
 		{

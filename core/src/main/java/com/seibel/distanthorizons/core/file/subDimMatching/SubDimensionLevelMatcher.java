@@ -218,15 +218,8 @@ public class SubDimensionLevelMatcher implements AutoCloseable
 			LOGGER.info("Testing level folder: [" + LodUtil.shortenString(testLevelFolder.getName(), 8) + "]");
 			try
 			{
-				// get the sub dim level folder
-				File fullDataFolder = new File(testLevelFolder, AbstractSaveStructure.DATA_FOLDER_NAME);
-				if (!fullDataFolder.exists())
-				{
-					continue;
-				}
-				
 				// get the data source to compare against
-				IDhLevel tempLevel = new DhClientLevel(new ClientOnlySaveStructure(), this.currentClientLevel, fullDataFolder, false);
+				IDhLevel tempLevel = new DhClientLevel(new ClientOnlySaveStructure(), this.currentClientLevel, testLevelFolder, false);
 				IFullDataSource testFullDataSource = tempLevel.getFileHandler().readAsync(new DhSectionPos(this.playerData.playerBlockPos)).join();
 				if (testFullDataSource == null)
 				{
