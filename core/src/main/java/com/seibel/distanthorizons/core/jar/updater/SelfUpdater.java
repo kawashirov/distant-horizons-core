@@ -37,9 +37,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
+import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -148,8 +150,8 @@ public class SelfUpdater
 		
 		String latestCommit = pipeline.get("sha");
 		
-		if (ModGitInfo.Git_Main_Commit.equals(latestCommit)) // If we are already on the latest commit, then dont update
-			return false;
+		//if (ModGitInfo.Git_Main_Commit.equals(latestCommit)) // If we are already on the latest commit, then dont update
+		//	return false;
 		
 		
 		LOGGER.info("New version (" + latestCommit + ") of " + ModInfo.READABLE_NAME + " is available");
@@ -162,6 +164,7 @@ public class SelfUpdater
 		}
 		return true;
 	}
+	
 	
 	/**
 	 * Should be called when the game is closed.
@@ -183,7 +186,13 @@ public class SelfUpdater
 			}
 			try
 			{
-				Files.delete(JarUtils.jarFile.toPath());
+				//URLClassLoader loader = (URLClassLoader) SelfUpdater.class.getClassLoader();
+				//((JarFile) loader.getClass().getField("jar").get(loader)).close();
+				//
+				//Files.delete(JarUtils.jarFile.toPath());
+				
+				// TODO: If the fix below doesnt work, do the thing above
+				JarUtils.jarFile.deleteOnExit();
 			}
 			catch (Exception e)
 			{
