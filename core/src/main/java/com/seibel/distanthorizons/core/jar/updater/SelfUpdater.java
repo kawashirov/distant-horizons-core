@@ -150,8 +150,8 @@ public class SelfUpdater
 		
 		String latestCommit = pipeline.get("sha");
 		
-		//if (ModGitInfo.Git_Main_Commit.equals(latestCommit)) // If we are already on the latest commit, then dont update
-		//	return false;
+		if (ModGitInfo.Git_Main_Commit.equals(latestCommit)) // If we are already on the latest commit, then dont update
+			return false;
 		
 		
 		LOGGER.info("New version (" + latestCommit + ") of " + ModInfo.READABLE_NAME + " is available");
