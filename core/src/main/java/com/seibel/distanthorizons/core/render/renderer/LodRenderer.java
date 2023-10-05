@@ -220,14 +220,15 @@ public class LodRenderer
 			
 			profiler.push("LOD draw setup");
 			
+			if (!this.isSetupComplete)
+			{
+				this.setup();
+			}
 			
-			// Generate and bind framebuffer, color texture, and depth render buffer as depth attachment
-			this.framebufferId = GL32.glGenFramebuffers();
-			GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
+			// Bind LOD color buffer
 			GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, this.framebufferId);
-			GL32.glViewport(0, 0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight());
 			
-			this.colorTextureId = GL32.glGenTextures();
+			// Bind LOD color texture
 			GL32.glBindTexture(GL32.GL_TEXTURE_2D, this.colorTextureId);
 			GL32.glTexImage2D(GL32.GL_TEXTURE_2D,
 					0,
@@ -241,10 +242,16 @@ public class LodRenderer
 			GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MAG_FILTER, GL32.GL_LINEAR);
 			GL32.glFramebufferTexture2D(GL32.GL_DRAW_FRAMEBUFFER, GL32.GL_COLOR_ATTACHMENT0, GL32.GL_TEXTURE_2D, this.colorTextureId, 0);
 			
-			this.depthRenderbufferId = GL32.glGenRenderbuffers();
+			// Bind LOD depth buffer
 			GL32.glBindRenderbuffer(GL32.GL_RENDERBUFFER, this.depthRenderbufferId);
-			GL32.glRenderbufferStorage(GL32.GL_RENDERBUFFER, GL32.GL_DEPTH_COMPONENT32, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight());
+			GL32.glRenderbufferStorage(GL32.GL_RENDERBUFFER, GL32.GL_DEPTH_COMPONENT24, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight());
 			GL32.glFramebufferRenderbuffer(GL32.GL_FRAMEBUFFER, GL32.GL_DEPTH_ATTACHMENT, GL32.GL_RENDERBUFFER, this.depthRenderbufferId);
+			
+			// Clear LOD framebuffer and depth buffer
+			GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
+			
+			GL32.glEnable(GL32.GL_DEPTH_TEST);
+			GL32.glDepthFunc(GL32.GL_LESS);
 			
 			// Set OpenGL polygon mode
 			boolean renderWireframe = Config.Client.Advanced.Debugging.renderWireframe.get();
@@ -259,16 +266,14 @@ public class LodRenderer
 				GL32.glEnable(GL32.GL_CULL_FACE);
 			}
 			
-			GL32.glDisable(GL32.GL_DEPTH_TEST);
-			
-			// Enable depth test
+			// Enable depth test and depth mask
 			GL32.glEnable(GL32.GL_DEPTH_TEST);
-			// TODO: Fix depth test always failing
-			GL32.glDepthFunc(GL32.GL_ALWAYS);
+			GL32.glDepthFunc(GL32.GL_LESS);
+			GL32.glDepthMask(true);
 			
-			// Disable blending and enable depth mask
-			GL32.glDisable(GL32.GL_BLEND); // We render opaque first, then transparent
-			GL32.glDepthMask(false);
+			// Disable blending
+			// We render opaque first, then transparent
+			GL32.glDisable(GL32.GL_BLEND);
 			
 			/*---------Bind required objects--------*/
 			// Setup LodRenderProgram and the LightmapTexture if it has not yet been done
@@ -358,19 +363,16 @@ public class LodRenderer
 			drawLagSpikeCatcher.end("LodDraw");
 			
 			
+			profiler.popPush("LOD Blit");
+			
 			// Blit the LOD framebuffer onto Minecraft's framebuffer
-			GL32.glBindFramebuffer(GL32.GL_READ_FRAMEBUFFER, framebufferId);
+			GL32.glBindFramebuffer(GL32.GL_READ_FRAMEBUFFER, this.framebufferId);
 			GL32.glBindFramebuffer(GL32.GL_DRAW_FRAMEBUFFER, MC_RENDER.getTargetFrameBuffer());
-			GL32.glBlitFramebuffer(0, 0, MC_RENDER.getScreenWidth(), MC_RENDER.getScreenHeight(),
-					0,  0, MC_RENDER.getScreenWidth(), MC_RENDER.getScreenHeight(),
+			GL32.glBlitFramebuffer(0, 0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(),
+					0, 0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(),
 					GL32.GL_COLOR_BUFFER_BIT,
 					GL32.GL_NEAREST);
 			
-			// Delete framebuffer, color texture, and depth texture
-			//GL32.glBindRenderbuffer(GL32.GL_RENDERBUFFER, 0);
-			GL32.glDeleteFramebuffers(this.framebufferId);
-			GL32.glDeleteTextures(this.colorTextureId);
-			GL32.glDeleteRenderbuffers(this.depthRenderbufferId);
 			
 			
 			//================//
@@ -395,7 +397,7 @@ public class LodRenderer
 				profiler.popPush("LOD cleanup");
 			}
 			
-			//minecraftGlState.restore(MC_RENDER.getTargetFrameBuffer());
+			minecraftGlState.restore();
 			drawCleanup.end("LodDrawCleanup");
 			
 			// end of internal LOD profiling
@@ -437,6 +439,12 @@ public class LodRenderer
 			this.quadIBO = new QuadElementBuffer();
 			this.quadIBO.reserve(AbstractRenderBuffer.MAX_QUADS_PER_BUFFER);
 		}
+		
+		// Generate framebuffer, color texture, and depth render buffer
+		this.framebufferId = GL32.glGenFramebuffers();
+		this.colorTextureId = GL32.glGenTextures();
+		this.depthRenderbufferId = GL32.glGenRenderbuffers();
+		
 		EVENT_LOGGER.info("Renderer setup complete");
 	}
 	
@@ -492,6 +500,12 @@ public class LodRenderer
 			{
 				this.quadIBO.destroy(false);
 			}
+			
+			// Delete framebuffer, color texture, and depth texture
+			//GL32.glBindRenderbuffer(GL32.GL_RENDERBUFFER, 0);
+			GL32.glDeleteFramebuffers(this.framebufferId);
+			GL32.glDeleteTextures(this.colorTextureId);
+			GL32.glDeleteRenderbuffers(this.depthRenderbufferId);
 			
 			EVENT_LOGGER.info("Renderer Cleanup Complete");
 		});

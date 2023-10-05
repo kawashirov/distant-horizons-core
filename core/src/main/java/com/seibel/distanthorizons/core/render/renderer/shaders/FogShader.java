@@ -158,6 +158,6 @@ public class FogShader extends AbstractShaderRenderer
 		
 		ScreenQuad.INSTANCE.render();
 		
-		state.restore(MC_RENDER.getTargetFrameBuffer());
+		state.restore();
 	}
 }

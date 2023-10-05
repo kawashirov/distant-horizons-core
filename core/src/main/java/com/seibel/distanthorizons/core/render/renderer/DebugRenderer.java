@@ -228,7 +228,7 @@ public class DebugRenderer
 		}
 		
 		
-		glState.restore(MC_RENDER.getTargetFrameBuffer());
+		glState.restore();
 	}
 	
 	public void renderBox(Box box)

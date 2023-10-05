@@ -58,6 +58,6 @@ public class DarkShader extends AbstractShaderRenderer
 		
 		ScreenQuad.INSTANCE.render();
 
-		state.restore(MC_RENDER.getTargetFrameBuffer());
+		state.restore();
 	}
 }

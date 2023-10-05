@@ -120,7 +120,7 @@ public class OpenGLConfigScreen extends AbstractScreen
 		GL32.glDrawArrays(GL32.GL_TRIANGLE_FAN, 0, 4);
 		GL32.glClear(GL32.GL_DEPTH_BUFFER_BIT);
 		
-		state.restore(SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class).getTargetFrameBuffer());
+		state.restore();
 	}
 	
 	@Override

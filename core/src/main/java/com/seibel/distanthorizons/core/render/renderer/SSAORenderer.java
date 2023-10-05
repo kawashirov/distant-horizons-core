@@ -109,12 +109,12 @@ public class SSAORenderer
 		SSAOShader.INSTANCE.FrameBuffer = this.ssaoFramebuffer;
 		SSAOShader.INSTANCE.render(partialTicks);
 		
-		primaryState.restoreFrameBuffer();
+		primaryState.restore();
 		
 		SSAOApplyShader.INSTANCE.BufferTexture = this.ssaoTexture;
 		SSAOApplyShader.INSTANCE.render(partialTicks);
 		
-		state.restore(MC_RENDER.getTargetFrameBuffer());
+		state.restore();
 	}
 	
 	public void free()
