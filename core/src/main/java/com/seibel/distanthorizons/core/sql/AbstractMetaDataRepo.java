@@ -20,8 +20,8 @@
 package com.seibel.distanthorizons.core.sql;
 
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
+import com.seibel.distanthorizons.coreapi.util.StringUtil;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 
@@ -44,16 +44,7 @@ public abstract class AbstractMetaDataRepo extends AbstractDhRepo<MetaDataDto>
 		String posString = (String) objectMap.get("DhSectionPos");
 		DhSectionPos pos = DhSectionPos.deserialize(posString);
 		
-		String dataString = (String) objectMap.get("Data");
-		int byteLength = dataString.length() - dataString.replace(",", "").length();
-		byte[] dataByteArray = new byte[byteLength];
-		
-		String[] byteStrings = dataString.split(",");
-		for (int i = 0; i < byteLength; i++)
-		{
-			dataByteArray[i] = Byte.parseByte(byteStrings[i]);
-		}
-		
+		byte[] dataByteArray = (byte[]) objectMap.get("Data");
 		
 		MetaDataDto metaFile = new MetaDataDto(pos, dataByteArray);
 		return metaFile;
@@ -66,14 +57,7 @@ public abstract class AbstractMetaDataRepo extends AbstractDhRepo<MetaDataDto>
 	public String createInsertSql(MetaDataDto dto)
 	{
 		String pos = dto.pos.serialize();
-		
-		StringBuilder dataStringBuilder = new StringBuilder();
-		for (byte b : dto.dataArray)
-		{
-			dataStringBuilder.append(b).append(',');
-		}
-		String dataString = (dataStringBuilder.length() != 0) ? ("'"+dataStringBuilder.toString()+"'") : "NULL";
-		
+		String dataString = createDataHexString(dto);
 		return 
 			"INSERT INTO "+this.getTableName()+" (DhSectionPos, Data) " +
 			"VALUES('"+pos+"',"+dataString+");";
@@ -83,19 +67,15 @@ public abstract class AbstractMetaDataRepo extends AbstractDhRepo<MetaDataDto>
 	public String createUpdateSql(MetaDataDto dto)
 	{
 		String pos = dto.pos.serialize();
-		
-		StringBuilder dataStringBuilder = new StringBuilder();
-		for (byte b : dto.dataArray)
-		{
-			dataStringBuilder.append(b).append(',');
-		}
-		String dataString = (dataStringBuilder.length() != 0) ? ("'"+dataStringBuilder.toString()+"'") : "NULL";
-		
+		String dataString = createDataHexString(dto);
 		return
 			"UPDATE "+this.getTableName()+" " +
 			"SET Data = "+dataString +
 			"WHERE DhSectionPos = '"+pos+"'";
 	}
 	
+	
+	/** This creates a string that Sqlite interprets as binary data. */
+	private static String createDataHexString(MetaDataDto dto) { return "X'" + StringUtil.byteArrayToHexString(dto.dataArray) + "'"; }
 	
 }
