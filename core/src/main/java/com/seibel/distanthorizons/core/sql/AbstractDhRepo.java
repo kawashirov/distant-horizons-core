@@ -135,7 +135,7 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	public Map<String, Object> queryDictionaryFirst(String sql) 
 	{
 		List<Map<String, Object>> objectList = this.query(sql);
-		return (objectList != null && !objectList.isEmpty()) ? objectList.get(0) : null;
+		return !objectList.isEmpty() ? objectList.get(0) : null;
 	}
 	
 	/** note: this can only handle 1 command at a time */
@@ -207,7 +207,7 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 				{
 					this.connection.close();
 				}
-				ACTIVE_CONNECTION_STRINGS_BY_REPO.remove(this.connectionString);
+				ACTIVE_CONNECTION_STRINGS_BY_REPO.remove(this);
 			}
 		}
 		catch(SQLException e)
