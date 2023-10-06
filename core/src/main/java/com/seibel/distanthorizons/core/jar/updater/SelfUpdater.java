@@ -167,45 +167,7 @@ public class SelfUpdater
 	}
 	
 	
-	/**
-	 * Should be called when the game is closed.
-	 * This is ued to delete the previous file if it is required at the end.
-	 */
-	public static void onClose()
-	{
-		if (deleteOldOnClose)
-		{
-			try
-			{
-				Files.move(newFileLocation.toPath(), JarUtils.jarFile.getParentFile().toPath().resolve(newFileLocation.getName()));
-				Files.delete(newFileLocation.getParentFile().toPath());
-			}
-			catch (Exception e)
-			{
-				LOGGER.warn("Failed to move updated fire from [" + newFileLocation.getAbsolutePath() + "] to [" + JarUtils.jarFile.getParentFile().getAbsolutePath() + "], please move it manually");
-				e.printStackTrace();
-			}
-			try
-			{
-				if (Platform.get() != Platform.WINDOWS)
-				{
-					Files.delete(JarUtils.jarFile.toPath());
-				}
-				else
-				{
-					System.setProperty("java.awt.headless", "false"); // Required to make it work
-					JOptionPane.showMessageDialog(null, "As you are on Windows, DH can not update fully by itself\nPlease delete ["+ JarUtils.jarFile.getAbsolutePath() +"] manually\nClick OK once ready.", ModInfo.READABLE_NAME, JOptionPane.INFORMATION_MESSAGE);
-					
-					Runtime.getRuntime().exec("explorer.exe /select," + JarUtils.jarFile.getAbsolutePath());
-				}
-			}
-			catch (Exception e)
-			{
-				LOGGER.warn("Failed to delete previous " + ModInfo.READABLE_NAME + " file, please delete it manually at [" + JarUtils.jarFile + "]");
-				e.printStackTrace();
-			}
-		}
-	}
+	
 	
 	public static boolean updateMod()
 	{
@@ -319,6 +281,55 @@ public class SelfUpdater
 			LOGGER.warn("Failed to update " + ModInfo.READABLE_NAME + " to version " + GitlabGetter.INSTANCE.projectPipelines.get(0).get("sha"));
 			e.printStackTrace();
 			return false;
+		}
+	}
+	
+	
+	
+	
+	
+	/**
+	 * Should be called when the game is closed.
+	 * This is ued to delete the previous file if it is required at the end.
+	 */
+	public static void onClose()
+	{
+		if (deleteOldOnClose)
+		{
+			try
+			{
+				Files.move(newFileLocation.toPath(), JarUtils.jarFile.getParentFile().toPath().resolve(newFileLocation.getName()));
+				Files.delete(newFileLocation.getParentFile().toPath());
+			}
+			catch (Exception e)
+			{
+				LOGGER.warn("Failed to move updated fire from [" + newFileLocation.getAbsolutePath() + "] to [" + JarUtils.jarFile.getParentFile().getAbsolutePath() + "], please move it manually");
+				e.printStackTrace();
+			}
+			try
+			{
+				if (Platform.get() != Platform.WINDOWS)
+				{
+					Files.delete(JarUtils.jarFile.toPath());
+				}
+				else
+				{
+					/* // If we want the user to delete it manually
+					System.setProperty("java.awt.headless", "false"); // Required to make it work
+					JOptionPane.showMessageDialog(null, "As you are on Windows, DH can not update fully by itself\nPlease delete ["+ JarUtils.jarFile.getAbsolutePath() +"] manually\nClick OK once ready.", ModInfo.READABLE_NAME, JOptionPane.INFORMATION_MESSAGE);
+					
+					Runtime.getRuntime().exec("explorer.exe /select," + JarUtils.jarFile.getAbsolutePath());
+					 */
+					
+					// Execute the new jar, to delete the old jar once it detects the lock has been lifted
+					Runtime.getRuntime().exec("java -cp "+ newFileLocation.getAbsolutePath() +" com.seibel.distanthorizons.coreapi.util.jar.UpdateJarRun "+ JarUtils.jarFile.getAbsolutePath());
+				}
+			}
+			catch (Exception e)
+			{
+				LOGGER.warn("Failed to delete previous " + ModInfo.READABLE_NAME + " file, please delete it manually at [" + JarUtils.jarFile + "]");
+				e.printStackTrace();
+			}
 		}
 	}
 }
