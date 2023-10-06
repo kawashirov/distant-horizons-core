@@ -22,7 +22,7 @@ public class DeleteOnUnlock
 		{
 			for (int i = 0; i < 600; i++) // As it rests for around 0.1 second each loop, this should last a minute
 			{
-				if (file.canWrite())
+				if (file.renameTo(file)) // If it is able to be renamed, then it is unlocked and can be deleted
 				{
 					Files.delete(file.toPath());
 					break;
