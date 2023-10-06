@@ -22,6 +22,7 @@ package com.seibel.distanthorizons.core.jar.updater;
 import com.seibel.distanthorizons.api.enums.config.EUpdateBranch;
 import com.seibel.distanthorizons.core.jar.JarUtils;
 import com.seibel.distanthorizons.core.jar.ModGitInfo;
+import com.seibel.distanthorizons.core.jar.Platform;
 import com.seibel.distanthorizons.core.jar.installer.GitlabGetter;
 import com.seibel.distanthorizons.coreapi.ModInfo;
 import com.seibel.distanthorizons.core.config.Config;
@@ -186,13 +187,17 @@ public class SelfUpdater
 			}
 			try
 			{
-				//URLClassLoader loader = (URLClassLoader) SelfUpdater.class.getClassLoader();
-				//((JarFile) loader.getClass().getField("jar").get(loader)).close();
-				//
-				//Files.delete(JarUtils.jarFile.toPath());
-				
-				// TODO: If the fix below doesnt work, do the thing above
-				JarUtils.jarFile.deleteOnExit();
+				if (Platform.get() != Platform.WINDOWS)
+				{
+					Files.delete(JarUtils.jarFile.toPath());
+				}
+				else
+				{
+					System.setProperty("java.awt.headless", "false"); // Required to make it work
+					JOptionPane.showMessageDialog(null, "As you are on Windows, DH can not update fully by itself\nPlease delete ["+ JarUtils.jarFile.getAbsolutePath() +"] manually\nClick OK once ready.", ModInfo.READABLE_NAME, JOptionPane.INFORMATION_MESSAGE);
+					
+					Runtime.getRuntime().exec("explorer.exe /select," + JarUtils.jarFile.getAbsolutePath());
+				}
 			}
 			catch (Exception e)
 			{
