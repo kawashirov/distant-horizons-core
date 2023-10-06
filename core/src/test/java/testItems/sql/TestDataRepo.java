@@ -85,10 +85,4 @@ public class TestDataRepo extends AbstractDhRepo<TestDto>
 			"WHERE Id = "+id;
 	}
 	
-	@Override 
-	public String createDeleteSql(TestDto dto)
-	{
-		return "DELETE FROM "+this.getTableName()+" WHERE Id = '"+dto.id+"'";
-	}
-	
 }

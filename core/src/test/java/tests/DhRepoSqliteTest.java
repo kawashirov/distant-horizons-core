@@ -40,7 +40,7 @@ public class DhRepoSqliteTest
 	@Test
 	public void testFileSqlite()
 	{
-		String dbFileName = "test_fullData.sqlite";
+		String dbFileName = "test.sqlite";
 		
 		
 		File dbFile = new File(dbFileName);

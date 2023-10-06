@@ -113,14 +113,14 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	public void delete(TDTO dto) { this.deleteByPrimaryKey(dto.getPrimaryKeyString()); }
 	public void deleteByPrimaryKey(String primaryKey) 
 	{
-		String whereEqualStatement = this.createWherePrimaryKeyStatement(primaryKey);
+		String whereEqualStatement = this.createWherePrimaryKeySql(primaryKey);
 		this.queryDictionaryFirst("DELETE FROM "+this.getTableName()+" WHERE "+whereEqualStatement); 
 	}
 	
 	public boolean exists(TDTO dto) { return this.existsWithPrimaryKey(dto.getPrimaryKeyString()); }
 	public boolean existsWithPrimaryKey(String primaryKey) 
 	{
-		String whereEqualStatement = this.createWherePrimaryKeyStatement(primaryKey);
+		String whereEqualStatement = this.createWherePrimaryKeySql(primaryKey);
 		Map<String, Object> result = this.queryDictionaryFirst("SELECT EXISTS(SELECT 1 FROM "+this.getTableName()+" WHERE "+whereEqualStatement+") as 'existingCount';"); 
 		return result != null && (int)result.get("existingCount") != 0;
 	}
@@ -221,9 +221,9 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	//================//
 	
 	/** Example: <code> Id = '0' </code> */
-	public String createWherePrimaryKeyStatement(TDTO dto) { return this.createWherePrimaryKeyStatement(dto.getPrimaryKeyString()); }
+	public String createWherePrimaryKeySql(TDTO dto) { return this.createWherePrimaryKeySql(dto.getPrimaryKeyString()); }
 	/** Example: <code> Id = '0' </code> */
-	public String createWherePrimaryKeyStatement(String primaryKeyValue) { return this.getPrimaryKeyName()+" = '"+primaryKeyValue+"'"; }
+	public String createWherePrimaryKeySql(String primaryKeyValue) { return this.getPrimaryKeyName()+" = '"+primaryKeyValue+"'"; }
 	
 	public static List<Map<String, Object>> convertResultSetToDictionaryList(ResultSet resultSet) throws SQLException
 	{
@@ -270,7 +270,5 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	
 	public abstract String createInsertSql(TDTO dto);
 	public abstract String createUpdateSql(TDTO dto);
-	
-	public abstract String createDeleteSql(TDTO dto);
 	
 }

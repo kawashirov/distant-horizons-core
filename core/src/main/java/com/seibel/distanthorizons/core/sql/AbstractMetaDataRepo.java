@@ -97,11 +97,5 @@ public abstract class AbstractMetaDataRepo extends AbstractDhRepo<MetaDataDto>
 			"WHERE DhSectionPos = '"+pos+"'";
 	}
 	
-	@Override
-	public String createDeleteSql(MetaDataDto dto)
-	{
-		String pos = dto.pos.serialize();
-		return "DELETE FROM "+this.getTableName()+" WHERE DhSectionPos = '"+pos+"'";
-	}
 	
 }
