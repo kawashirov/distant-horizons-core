@@ -188,6 +188,9 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 		}
 	}
 	
+	public Connection getConnection() { return this.connection; }
+	
+	
 	
 	
 	public void close()
