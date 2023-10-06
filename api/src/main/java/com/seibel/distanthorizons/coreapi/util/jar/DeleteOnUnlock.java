@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
  * 
  * @author coolgi 
  */
-public class UpdateJarRun
+public class DeleteOnUnlock
 {
 	/**
 	 * @param args Takes whatever the first argument is, treats it as a file, and deletes it once a process lock is lifted from it

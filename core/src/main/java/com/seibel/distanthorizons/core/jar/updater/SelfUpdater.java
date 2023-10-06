@@ -322,7 +322,7 @@ public class SelfUpdater
 					 */
 					
 					// Execute the new jar, to delete the old jar once it detects the lock has been lifted
-					Runtime.getRuntime().exec("java -cp "+ newFileLocation.getAbsolutePath() +" com.seibel.distanthorizons.coreapi.util.jar.UpdateJarRun "+ JarUtils.jarFile.getAbsolutePath());
+					Runtime.getRuntime().exec("java -cp "+ newFileLocation.getAbsolutePath() +" com.seibel.distanthorizons.coreapi.util.jar.DeleteOnUnlock "+ JarUtils.jarFile.getAbsolutePath());
 				}
 			}
 			catch (Exception e)
