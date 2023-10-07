@@ -19,6 +19,10 @@
 
 package com.seibel.distanthorizons.core.sql;
 
+/**
+ * DTO = DataTable Object <br>
+ * Any object that's stored in the database should extend this object.
+ */
 public interface IBaseDTO
 {
 	String getPrimaryKeyString();

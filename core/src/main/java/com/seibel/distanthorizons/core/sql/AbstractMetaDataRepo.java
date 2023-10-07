@@ -19,6 +19,8 @@
 
 package com.seibel.distanthorizons.core.sql;
 
+import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiWorldGenerationStep;
+import com.seibel.distanthorizons.core.file.metaData.BaseMetaData;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.coreapi.util.StringUtil;
 
@@ -44,9 +46,24 @@ public abstract class AbstractMetaDataRepo extends AbstractDhRepo<MetaDataDto>
 		String posString = (String) objectMap.get("DhSectionPos");
 		DhSectionPos pos = DhSectionPos.deserialize(posString);
 		
+		// meta data
+		int checksum = (Integer) objectMap.get("Checksum");
+		long dataVersion = (Long) objectMap.get("DataVersion");
+		byte dataDetailLevel = (Byte) objectMap.get("DataDetailLevel");
+		String worldGenStepString = (String) objectMap.get("WorldGenStep");
+		EDhApiWorldGenerationStep worldGenStep = EDhApiWorldGenerationStep.fromName(worldGenStepString);
+		
+		String dataType = (String) objectMap.get("DataType");
+		byte binaryDataFormatVersion = (Byte) objectMap.get("BinaryDataFormatVersion");
+		
+		BaseMetaData baseMetaData = new BaseMetaData(pos, 
+				checksum, dataDetailLevel, worldGenStep,
+				dataType, binaryDataFormatVersion, dataVersion);
+		
+		// binary data
 		byte[] dataByteArray = (byte[]) objectMap.get("Data");
 		
-		MetaDataDto metaFile = new MetaDataDto(pos, dataByteArray);
+		MetaDataDto metaFile = new MetaDataDto(baseMetaData, dataByteArray);
 		return metaFile;
 	}
 	
@@ -56,22 +73,48 @@ public abstract class AbstractMetaDataRepo extends AbstractDhRepo<MetaDataDto>
 	@Override 
 	public String createInsertSql(MetaDataDto dto)
 	{
-		String pos = dto.pos.serialize();
-		String dataString = createDataHexString(dto);
+		String posString = dto.baseMetaData.pos.serialize();
+		String dataHexString = createDataHexString(dto);
 		return 
-			"INSERT INTO "+this.getTableName()+" (DhSectionPos, Data) " +
-			"VALUES('"+pos+"',"+dataString+");";
+			"INSERT INTO "+this.getTableName() + "\n" +
+			"  (DhSectionPos, \n" +
+				"Checksum, DataVersion, DataDetailLevel, WorldGenStep, DataType, BinaryDataFormatVersion, \n" +
+				"Data) \n" +
+			"   VALUES( \n" +
+			"    '"+posString+"' \n" +
+					
+			"   ,"+dto.baseMetaData.checksum + "\n" +
+			"   ,"+dto.baseMetaData.dataVersion + "\n" +
+			"   ,"+dto.baseMetaData.dataDetailLevel + "\n" +
+			"   ,'"+dto.baseMetaData.worldGenStep.name + "' \n" +
+			"   ,'"+dto.baseMetaData.dataType + "' \n" +
+			"   ,"+dto.baseMetaData.binaryDataFormatVersion + "\n" +
+					
+			"   ,"+dataHexString + "\n" +
+			// created/lastModified are automatically set by Sqlite
+			");";
 	}
 	
 	@Override 
 	public String createUpdateSql(MetaDataDto dto)
 	{
-		String pos = dto.pos.serialize();
-		String dataString = createDataHexString(dto);
+		String posString = dto.baseMetaData.pos.serialize();
+		String dataHexString = createDataHexString(dto);
 		return
-			"UPDATE "+this.getTableName()+" " +
-			"SET Data = "+dataString +
-			"WHERE DhSectionPos = '"+pos+"'";
+			"UPDATE "+this.getTableName()+" \n" +
+			"SET \n" +
+					
+			"    Checksum = "+dto.baseMetaData.checksum + "\n" +
+			"   ,DataVersion = "+dto.baseMetaData.dataVersion + "\n" +
+			"   ,DataDetailLevel = "+dto.baseMetaData.dataDetailLevel + "\n" +
+			"   ,WorldGenStep = '"+dto.baseMetaData.worldGenStep.name + "' \n" +
+			"   ,DataType = '"+dto.baseMetaData.dataType + "' \n" +
+			"   ,BinaryDataFormatVersion = "+dto.baseMetaData.binaryDataFormatVersion + "\n" +
+					
+			"   ,Data = "+dataHexString + "\n" +
+					
+			"   ,LastModifiedDateTime = CURRENT_TIMESTAMP \n" +
+			"WHERE DhSectionPos = '"+posString+"'";
 	}
 	
 	

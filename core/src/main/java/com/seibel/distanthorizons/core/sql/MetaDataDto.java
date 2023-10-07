@@ -19,22 +19,25 @@
 
 package com.seibel.distanthorizons.core.sql;
 
-import com.seibel.distanthorizons.core.pos.DhSectionPos;
+import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
+import com.seibel.distanthorizons.core.dataObjects.render.ColumnRenderSource;
+import com.seibel.distanthorizons.core.file.metaData.BaseMetaData;
 
+/** handles storing both {@link IFullDataSource}'s and {@link ColumnRenderSource}'s in the database. */
 public class MetaDataDto implements IBaseDTO
 {
-	public DhSectionPos pos;
-	public byte[] dataArray;
+	public final BaseMetaData baseMetaData;
+	public final byte[] dataArray;
 	
 	
-	public MetaDataDto(DhSectionPos pos, byte[] dataArray)
+	public MetaDataDto(BaseMetaData baseMetaData, byte[] dataArray)
 	{
-		this.pos = pos;
+		this.baseMetaData = baseMetaData;
 		this.dataArray = dataArray;
 	}
 	
 	
 	@Override
-	public String getPrimaryKeyString() { return this.pos.serialize(); }
+	public String getPrimaryKeyString() { return this.baseMetaData.pos.serialize(); }
 	
 }

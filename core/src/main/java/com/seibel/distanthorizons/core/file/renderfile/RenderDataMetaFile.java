@@ -259,25 +259,7 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 	private InputStream getInputStream() throws IOException
 	{
 		MetaDataDto dto = this.renderDataSourceProvider.getRepo().getByPrimaryKey(this.pos.serialize());
-		ByteArrayInputStream inputStream = new ByteArrayInputStream(dto.dataArray);
-		
-		// skip the meta-data bytes
-		int bytesToSkip = AbstractMetaDataContainerFile.METADATA_SIZE_IN_BYTES;
-		while (bytesToSkip > 0)
-		{
-			long skippedByteCount = inputStream.skip(bytesToSkip);
-			if (skippedByteCount == 0)
-			{
-				throw new IOException("Invalid file: Failed to skip metadata.");
-			}
-			bytesToSkip -= skippedByteCount;
-		}
-		
-		if (bytesToSkip != 0)
-		{
-			throw new IOException("File IO Error: Failed to skip metadata.");
-		}
-		return inputStream;
+		return new ByteArrayInputStream(dto.dataArray);
 	}
 	
 	
@@ -419,7 +401,7 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 				super.writeData((dhDataOutputStream) -> renderSource.writeData(dhDataOutputStream), byteArrayOutputStream);
 				this.doesDtoExist = true;
 				
-				MetaDataDto dto = new MetaDataDto(this.pos, byteArrayOutputStream.toByteArray());
+				MetaDataDto dto = new MetaDataDto(this.baseMetaData, byteArrayOutputStream.toByteArray());
 				this.renderDataSourceProvider.getRepo().save(dto);
 			}
 			catch (IOException e)
