@@ -6,6 +6,12 @@ https://dbup.readthedocs.io/en/latest/philosophy-behind-dbup/
 
 <br>
 
+### Adding New Scripts:
+New scripts must be added to the "scriptList.txt" file, otherwise they will not be run. <br>
+(If anyone has a good way to automatically pull all resource files ending in `.sql` instead, please let us know.)
+ 
+<br>
+
 ### File Naming:
 - The first 3 numbers are major scripts.
 - The 4th number is for minor/related scripts or if a bug fix needs to be applied between scripts.
@@ -31,3 +37,6 @@ CREATE TABLE TableTwo(
     ,Data BLOB NULL
 );
 ```
+
+
+

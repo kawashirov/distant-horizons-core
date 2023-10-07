@@ -20,19 +20,17 @@
 package com.seibel.distanthorizons.core.sql;
 
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.util.ResourceUtil;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.sql.BatchUpdateException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.Stack;
+import java.util.Scanner;
 
+/** Handles both initial setup and updating of the sql databases. */
 public class DatabaseUpdater
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
@@ -41,22 +39,24 @@ public class DatabaseUpdater
 	/** Since java can only run one sql query at a time this string is used to split up our scripts into individual queries. */
 	public static final String UPDATE_SCRIPT_BATCH_SEPARATOR = "--batch--";
 	
+	private static final String SQL_SCRIPT_RESOURCE_FOLDER = "sqlScripts/";
+	/** 
+	 * Unfortunately dynamically pulling in resource files is very unstable in Java so we need a file that lists all the scripts to expect. <br>
+	 * (If anyone has a good way to automatically pull all resource files ending in `.sql` instead, please replace the existing code.)
+	 */
+	private static final String SQL_SCRIPT_LIST_FILE = SQL_SCRIPT_RESOURCE_FOLDER+"scriptList.txt";
 	
 	
-	/** Handles both initial setup and  */
+	
+	//================//
+	// script running //
+	//================//
+	
 	public static <TDTO extends IBaseDTO> void runAutoUpdateScripts(AbstractDhRepo<TDTO> repo) throws SQLException
 	{
 		// get the resource scripts
-		ArrayList<ResourceUtil.ResourceFile> sqlScripts;
-		try
-		{
-			sqlScripts = ResourceUtil.getFilesInFolder("sqlScripts", ".sql");
-		}
-		catch (URISyntaxException | IOException e)
-		{
-			// shouldn't normally happen, but just in case
-			throw new RuntimeException(e);
-		}
+		ArrayList<SqlScript> scriptList = getAutoUpdateScripts();
+		
 		
 		
 		// create the base update table if necessary
@@ -75,7 +75,7 @@ public class DatabaseUpdater
 		
 		
 		// attempt to run any new update scripts
-		for (ResourceUtil.ResourceFile resource : sqlScripts)
+		for (SqlScript resource : scriptList)
 		{
 			Map<String, Object> scriptAlreadyRunResult = repo.queryDictionaryFirst("SELECT EXISTS(SELECT 1 FROM "+SCHEMA_TABLE_NAME+" WHERE ScriptName='"+resource.name+"') as 'existingCount';");
 			if (scriptAlreadyRunResult != null && (int) scriptAlreadyRunResult.get("existingCount") == 0)
@@ -87,7 +87,7 @@ public class DatabaseUpdater
 				try
 				{
 					// split up each individual statement so Java can handle the script as a whole
-					String[] fileUpdateSqlArray = resource.content.split(UPDATE_SCRIPT_BATCH_SEPARATOR);
+					String[] fileUpdateSqlArray = resource.queryString.split(UPDATE_SCRIPT_BATCH_SEPARATOR);
 					
 					Connection connection = repo.getConnection();
 					try (Statement statement = connection.createStatement())
@@ -137,7 +137,7 @@ public class DatabaseUpdater
 					// updating needs to stop to prevent data corruption
 					LOGGER.error("Unexpected error running database update script ["+resource.name+"] on database ["+repo.databaseLocation+"], stopping database update. Database reading/writing may fail if you continue. \n" +
 							"Error: ["+e.getMessage()+"]. \n" +
-							"Sql Script:["+resource.content+"]", e);
+							"Sql Script:["+resource.queryString+"]", e);
 					throw e;
 				}
 				
@@ -145,6 +145,75 @@ public class DatabaseUpdater
 				// record the successfully run script
 				repo.queryDictionaryFirst("INSERT INTO "+SCHEMA_TABLE_NAME+" (ScriptName) VALUES('"+resource.name+"');");
 			}
+		}
+	}
+	
+	
+	
+	//===============//
+	// file handling //
+	//===============//
+	
+	/** @throws NullPointerException if any of the script files failed to be read. */
+	private static ArrayList<SqlScript> getAutoUpdateScripts() throws NullPointerException
+	{
+		final ClassLoader loader = Thread.currentThread().getContextClassLoader();
+		
+		
+		// get the script list
+		InputStream scriptListInputStream = loader.getResourceAsStream(SQL_SCRIPT_LIST_FILE);
+		if (scriptListInputStream == null)
+		{
+			throw new NullPointerException("Failed to find the SQL Script list file ["+SQL_SCRIPT_LIST_FILE+"], no auto update scripts can be run.");
+		}
+		Scanner scanner = new Scanner(scriptListInputStream).useDelimiter("\\A");
+		String result = scanner.hasNext() ? scanner.next() : "";
+		
+		
+		
+		// get each script
+		ArrayList<SqlScript> scriptList = new ArrayList<>();
+		String[] sqlScriptNames = result.split("\n");
+		for (String scriptName : sqlScriptNames)
+		{
+			scriptName = scriptName.trim();
+			if (scriptName.isEmpty())
+			{
+				// ignore any empty lines
+				continue;
+			}
+			scriptName = SQL_SCRIPT_RESOURCE_FOLDER + scriptName.trim();
+			
+			// get the script's content
+			InputStream scriptInputStream = loader.getResourceAsStream(scriptName);
+			if (scriptInputStream == null)
+			{
+				throw new NullPointerException("Failed to find the SQL Script file ["+scriptName+"], no auto update scripts can be run.");
+			}
+			scanner = new Scanner(scriptInputStream).useDelimiter("\\A");
+			result = scanner.hasNext() ? scanner.next() : "";
+			
+			scriptList.add(new SqlScript(scriptName, result));
+		}
+		
+		return scriptList;
+	}
+	
+	
+	
+	//================//
+	// helper classes //
+	//================//
+	
+	private static class SqlScript
+	{
+		public String name;
+		public String queryString;
+		
+		public SqlScript(String name, String queryString)
+		{
+			this.name = name;
+			this.queryString = queryString;
 		}
 	}
 	
