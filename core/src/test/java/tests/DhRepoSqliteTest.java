@@ -82,14 +82,13 @@ public class DhRepoSqliteTest
 			//===========//
 			
 			// insert
-			TestDto insertDto = new TestDto(0, "a");
+			TestDto insertDto = new TestDto(0, "a", 0L, (byte) 0);
 			testDataRepo.save(insertDto);
 			
 			// get
 			TestDto getDto = testDataRepo.getByPrimaryKey("0");
 			Assert.assertNotNull("get failed, null returned", getDto);
-			Assert.assertEquals("get/insert failed, not equal", insertDto.id, getDto.id);
-			Assert.assertEquals("get/insert failed, not equal", insertDto.value, getDto.value);
+			Assert.assertEquals("get/insert failed, not equal", insertDto, getDto);
 			
 			// exists - DTO present
 			Assert.assertTrue("DTO exists failed", testDataRepo.exists(insertDto));
@@ -97,14 +96,13 @@ public class DhRepoSqliteTest
 			
 			
 			// update
-			TestDto updateMetaFile = new TestDto(0, "b");
+			TestDto updateMetaFile = new TestDto(0, "b", Long.MAX_VALUE, Byte.MAX_VALUE);
 			testDataRepo.save(updateMetaFile);
 			
 			// get
 			getDto = testDataRepo.getByPrimaryKey("0");
 			Assert.assertNotNull("get failed, null returned", getDto);
-			Assert.assertEquals("get/insert failed, not equal", updateMetaFile.id, getDto.id);
-			Assert.assertEquals("get/insert failed, not equal", updateMetaFile.value, getDto.value);
+			Assert.assertEquals("get/insert failed, not equal", updateMetaFile, getDto);
 			
 			
 			// delete

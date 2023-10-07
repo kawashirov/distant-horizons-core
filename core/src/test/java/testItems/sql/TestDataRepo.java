@@ -38,6 +38,8 @@ public class TestDataRepo extends AbstractDhRepo<TestDto>
 				"Id INT NOT NULL PRIMARY KEY\n" +
 				"\n" +
 				",Value TEXT NULL\n" +
+				",LongValue BIGINT NULL\n" +
+				",ByteValue TINYINT NULL\n" +
 				");";
 		this.queryDictionaryFirst(createTableSql);
 	}
@@ -55,8 +57,10 @@ public class TestDataRepo extends AbstractDhRepo<TestDto>
 	{
 		int id = (int) objectMap.get("Id");
 		String value = (String) objectMap.get("Value");
+		long longValue = (Long) objectMap.get("LongValue");
+		byte byteValue = (Byte) objectMap.get("ByteValue");
 		
-		return new TestDto(id, value);
+		return new TestDto(id, value, longValue, byteValue);
 	}
 	
 	@Override 
@@ -69,8 +73,8 @@ public class TestDataRepo extends AbstractDhRepo<TestDto>
 		String value = (dto.value != null) ? dto.value+"" : "NULL";
 		
 		return 
-			"INSERT INTO "+this.getTableName()+" (Id, Value) " +
-			"VALUES("+id+",'"+value+"');";
+			"INSERT INTO "+this.getTableName()+" (Id, Value, LongValue, ByteValue) " +
+			"VALUES("+id+",'"+value+"',"+dto.longValue+","+dto.byteValue+");";
 	}
 	
 	@Override 
@@ -81,7 +85,10 @@ public class TestDataRepo extends AbstractDhRepo<TestDto>
 		
 		return
 			"UPDATE "+this.getTableName()+" " +
-			"SET Value = '"+value+"' " +
+			"SET " +
+			"   Value = '"+value+"' \n" +
+			"   ,LongValue = "+dto.longValue + " \n" +
+			"   ,ByteValue = "+dto.byteValue + " \n" +
 			"WHERE Id = "+id;
 	}
 	

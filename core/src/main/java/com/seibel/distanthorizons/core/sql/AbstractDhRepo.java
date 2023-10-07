@@ -258,7 +258,27 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 					throw new RuntimeException("SQL result set is missing a column name for column ["+resultMetaData.getTableName(columnIndex)+"."+columnIndex+"].");
 				}
 				
-				Object columnValue = resultSet.getObject(columnIndex);
+				
+				// some values need explicit conversion
+				// Example: Long values that are within the bounds of an int would automatically be incorrectly returned as "Integer" objects
+				String columnType = resultMetaData.getColumnTypeName(columnIndex).toUpperCase();
+				Object columnValue;
+				switch (columnType)
+				{
+					case "BIGINT":
+						columnValue = resultSet.getLong(columnIndex);
+						break;
+					case "SMALLINT":
+						columnValue = resultSet.getShort(columnIndex);
+						break;
+					case "TINYINT":
+						columnValue = resultSet.getByte(columnIndex);
+						break;
+					default:
+						columnValue = resultSet.getObject(columnIndex);
+						break;
+				}
+				
 				
 				object.put(columnName, columnValue);
 			}
