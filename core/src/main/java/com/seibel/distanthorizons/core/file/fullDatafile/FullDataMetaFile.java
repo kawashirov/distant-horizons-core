@@ -267,7 +267,8 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 							}
 							catch (Exception ex)
 							{
-								/// TODO temporary fix
+								LOGGER.error("Full Data Load error: "+ ex.getMessage(), ex);
+								
 								dataSourceLoadFuture.completeExceptionally(ex);
 								this.dataSourceLoadFutureRef.set(null);
 								
