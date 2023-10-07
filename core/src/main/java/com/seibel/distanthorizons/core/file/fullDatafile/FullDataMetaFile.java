@@ -691,13 +691,8 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 				this.baseMetaData.binaryDataFormatVersion = fullDataSource.getBinaryDataFormatVersion();
 				
 				
-				// save the data to the database
-				
-				ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-				super.writeData((bufferedOutputStream) -> fullDataSource.writeToStream((bufferedOutputStream), this.level), byteArrayOutputStream);
-				
-				MetaDataDto dto = new MetaDataDto(this.baseMetaData, byteArrayOutputStream.toByteArray());
-				this.fullDataSourceProvider.getRepo().save(dto);
+				// save the data to the database //
+				super.writeToDatabase((bufferedOutputStream) -> fullDataSource.writeToStream((bufferedOutputStream), this.level), this.fullDataSourceProvider.getRepo());
 				this.doesDtoExist = true;
 			}
 			catch (ClosedByInterruptException e) // thrown by buffers that are interrupted

@@ -396,13 +396,8 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 			//LOGGER.info("Saving updated render file v[{}] at sect {}", this.metaData.dataVersion.get(), this.pos);
 			try
 			{
-				ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-				
-				super.writeData((dhDataOutputStream) -> renderSource.writeData(dhDataOutputStream), byteArrayOutputStream);
+				super.writeToDatabase((dhDataOutputStream) -> renderSource.writeData(dhDataOutputStream), this.renderDataSourceProvider.getRepo());
 				this.doesDtoExist = true;
-				
-				MetaDataDto dto = new MetaDataDto(this.baseMetaData, byteArrayOutputStream.toByteArray());
-				this.renderDataSourceProvider.getRepo().save(dto);
 			}
 			catch (IOException e)
 			{

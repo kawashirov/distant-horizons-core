@@ -20,15 +20,15 @@
 package com.seibel.distanthorizons.core.file.metaData;
 
 import java.io.*;
-import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.file.*;
 import java.util.zip.Adler32;
 import java.util.zip.CheckedOutputStream;
 
-import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
+import com.seibel.distanthorizons.core.sql.AbstractDhRepo;
+import com.seibel.distanthorizons.core.sql.MetaDataDto;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.objects.dataStreams.DhDataOutputStream;
 import org.apache.logging.log4j.Logger;
@@ -104,25 +104,30 @@ public abstract class AbstractMetaDataContainerFile
 	// file writing //
 	//==============//
 	
-	public void writeData(IMetaDataWriterFunc<DhDataOutputStream> dataWriterFunc, OutputStream outputStream) throws IOException
+	public void writeToDatabase(IMetaDataWriterFunc<DhDataOutputStream> dataWriterFunc, AbstractDhRepo<MetaDataDto> repo) throws IOException
 	{
 		LodUtil.assertTrue(this.baseMetaData != null);
 		
 		try
 		{
+			ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+			
 			// the order of these streams is important, otherwise the checksum won't be calculated
-			CheckedOutputStream checkedOut = new CheckedOutputStream(outputStream, new Adler32());
+			CheckedOutputStream checkedOut = new CheckedOutputStream(byteArrayOutputStream, new Adler32());
 			// normally a DhStream should be the topmost stream to prevent closing the stream accidentally, but since this stream will be closed immediately after writing anyway, it won't be an issue
 			DhDataOutputStream compressedOut = new DhDataOutputStream(checkedOut);
 			
-			
 			// write the contained data
-			dataWriterFunc.writeBufferToFile(compressedOut);
+			dataWriterFunc.writeBinaryDataToStream(compressedOut);
 			compressedOut.flush();
 			this.baseMetaData.checksum = (int) checkedOut.getChecksum().getValue();
 			
 			
-			outputStream.close();
+			byteArrayOutputStream.close();
+			
+			
+			MetaDataDto dto = new MetaDataDto(this.baseMetaData, byteArrayOutputStream.toByteArray());
+			repo.save(dto);
 		}
 		catch (ClosedChannelException e) // includes ClosedByInterruptException
 		{
@@ -138,6 +143,6 @@ public abstract class AbstractMetaDataContainerFile
 	//================//
 	
 	@FunctionalInterface
-	public interface IMetaDataWriterFunc<T> { void writeBufferToFile(T t) throws IOException; }
+	public interface IMetaDataWriterFunc<T> { void writeBinaryDataToStream(T t) throws IOException; }
 	
 }
