@@ -21,10 +21,7 @@ package com.seibel.distanthorizons.core.file.metaData;
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.nio.channels.ByteChannel;
-import java.nio.channels.Channels;
 import java.nio.channels.ClosedChannelException;
-import java.nio.channels.FileChannel;
 import java.nio.file.*;
 import java.util.zip.Adler32;
 import java.util.zip.CheckedOutputStream;
@@ -32,7 +29,6 @@ import java.util.zip.CheckedOutputStream;
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
-import com.seibel.distanthorizons.core.util.FileUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.objects.dataStreams.DhDataOutputStream;
 import org.apache.logging.log4j.Logger;
@@ -174,7 +170,7 @@ public abstract class AbstractMetaDataContainerFile
 			buffer.putInt(this.pos.getZ());
 			buffer.putInt(0); //FIXME this.baseMetaData.checksum);
 			buffer.put(this.pos.getDetailLevel());
-			buffer.put(this.baseMetaData.dataLevel);
+			buffer.put(this.baseMetaData.dataDetailLevel);
 			buffer.put(this.baseMetaData.binaryDataFormatVersion);
 			buffer.put(this.baseMetaData.worldGenStep != null ? this.baseMetaData.worldGenStep.value : EDhApiWorldGenerationStep.EMPTY.value); // TODO this null check shouldn't be necessary
 			buffer.putLong(this.baseMetaData.dataTypeId);

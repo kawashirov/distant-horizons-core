@@ -195,7 +195,7 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 			ColumnRenderSource newColumnRenderSource = new ColumnRenderSource(this.pos, verticalSize, this.clientLevel.getMinY());
 			
 			this.baseMetaData = new BaseMetaData(
-					newColumnRenderSource.getSectionPos(), -1, newColumnRenderSource.getDataDetail(), 
+					newColumnRenderSource.getSectionPos(), -1, newColumnRenderSource.getDataDetailLevel(), 
 					newColumnRenderSource.worldGenStep, RENDER_SOURCE_TYPE_ID, 
 					newColumnRenderSource.getRenderDataFormatVersion(), Long.MAX_VALUE);
 			
@@ -352,7 +352,7 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 								
 								// update the meta data
 								this.baseMetaData.dataVersion.set(renderDataVersionRef.value);
-								this.baseMetaData.dataLevel = renderSource.getDataDetail();
+								this.baseMetaData.dataDetailLevel = renderSource.getDataDetailLevel();
 								this.baseMetaData.dataTypeId = RENDER_SOURCE_TYPE_ID;
 								this.baseMetaData.binaryDataFormatVersion = renderSource.getRenderDataFormatVersion();
 								

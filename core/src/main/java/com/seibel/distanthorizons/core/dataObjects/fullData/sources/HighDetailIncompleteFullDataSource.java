@@ -147,10 +147,10 @@ public class HighDetailIncompleteFullDataSource implements IIncompleteFullDataSo
 		LodUtil.assertTrue(dataFile.pos.getDetailLevel() > SPARSE_UNIT_DETAIL);
 		LodUtil.assertTrue(dataFile.pos.getDetailLevel() <= MAX_SECTION_DETAIL);
 		
-		int dataDetail = inputStream.readShort();
-		if (dataDetail != dataFile.baseMetaData.dataLevel)
+		int dataDetailLevel = inputStream.readShort();
+		if (dataDetailLevel != dataFile.baseMetaData.dataDetailLevel)
 		{
-			throw new IOException(LodUtil.formatLog("Data level mismatch: {} != {}", dataDetail, dataFile.baseMetaData.dataLevel));
+			throw new IOException(LodUtil.formatLog("Data level mismatch: {} != {}", dataDetailLevel, dataFile.baseMetaData.dataDetailLevel));
 		}
 		
 		// confirm that the detail level is correct

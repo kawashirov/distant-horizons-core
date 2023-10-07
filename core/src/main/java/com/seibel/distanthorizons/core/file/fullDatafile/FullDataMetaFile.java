@@ -700,7 +700,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 				
 				// set the meta data properties //
 				
-				this.baseMetaData.dataLevel = fullDataSource.getDataDetailLevel();
+				this.baseMetaData.dataDetailLevel = fullDataSource.getDataDetailLevel();
 				this.fullDataSourceLoader = AbstractFullDataSourceLoader.getLoader(fullDataSource.getClass(), fullDataSource.getBinaryDataFormatVersion());
 				LodUtil.assertTrue(this.fullDataSourceLoader != null, "No loader for " + fullDataSource.getClass() + " (v" + fullDataSource.getBinaryDataFormatVersion() + ")");
 				

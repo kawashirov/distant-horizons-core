@@ -129,7 +129,7 @@ public class FullDataToRenderDataTransformer
 		
 		columnSource.markNotEmpty();
 		
-		if (dataDetail == columnSource.getDataDetail())
+		if (dataDetail == columnSource.getDataDetailLevel())
 		{
 			int baseX = pos.getMinCornerLodPos().getCornerBlockPos().x;
 			int baseZ = pos.getMinCornerLodPos().getCornerBlockPos().z;
@@ -179,7 +179,7 @@ public class FullDataToRenderDataTransformer
 		
 		columnSource.markNotEmpty();
 		
-		if (dataDetail == columnSource.getDataDetail())
+		if (dataDetail == columnSource.getDataDetailLevel())
 		{
 			int baseX = pos.getMinCornerLodPos().getCornerBlockPos().x;
 			int baseZ = pos.getMinCornerLodPos().getCornerBlockPos().z;

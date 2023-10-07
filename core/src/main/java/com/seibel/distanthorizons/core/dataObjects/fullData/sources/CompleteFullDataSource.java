@@ -107,9 +107,9 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 	public FullDataSourceSummaryData readSourceSummaryInfo(FullDataMetaFile dataFile, DhDataInputStream inputStream, IDhLevel level) throws IOException
 	{
 		int dataDetail = inputStream.readInt();
-		if (dataDetail != dataFile.baseMetaData.dataLevel)
+		if (dataDetail != dataFile.baseMetaData.dataDetailLevel)
 		{
-			throw new IOException(LodUtil.formatLog("Data level mismatch: " + dataDetail + " != " + dataFile.baseMetaData.dataLevel));
+			throw new IOException(LodUtil.formatLog("Data level mismatch: " + dataDetail + " != " + dataFile.baseMetaData.dataDetailLevel));
 		}
 		
 		int width = inputStream.readInt();
