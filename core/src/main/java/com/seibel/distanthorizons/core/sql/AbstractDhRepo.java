@@ -180,7 +180,10 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 		{
 			// SQL exceptions generally only happen when something is wrong with 
 			// the database or the query and should cause the system to blow up to notify the developer
-			throw new RuntimeException("Unexpected Query error: ["+e.getMessage()+"], for script: ["+sql+"].", e);
+			
+			String message = "Unexpected Query error: ["+e.getMessage()+"], for script: ["+sql+"].";
+			LOGGER.error(message);
+			throw new RuntimeException(message, e);
 		}
 	}
 	
