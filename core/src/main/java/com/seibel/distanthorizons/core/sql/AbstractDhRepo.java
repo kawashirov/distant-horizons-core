@@ -61,6 +61,18 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 		this.databaseLocation = databaseLocation;
 		this.dtoClass = dtoClass;
 		
+		
+		try
+		{
+			// needed by Forge to load the Java database connection
+			Class.forName("org.sqlite.JDBC");	
+		}
+		catch (ClassNotFoundException e)
+		{
+			throw new RuntimeException(e);
+		}
+		
+		
 		// get or create the connection,
 		// reusing existing connections reduces the chance of locking the database during trivial queries
 		this.connectionString = this.databaseType+":"+this.databaseLocation;
