@@ -22,6 +22,7 @@ package com.seibel.distanthorizons.core.jar.updater;
 import com.seibel.distanthorizons.api.enums.config.EUpdateBranch;
 import com.seibel.distanthorizons.core.jar.JarUtils;
 import com.seibel.distanthorizons.core.jar.ModGitInfo;
+import com.seibel.distanthorizons.core.jar.Platform;
 import com.seibel.distanthorizons.core.jar.installer.GitlabGetter;
 import com.seibel.distanthorizons.coreapi.ModInfo;
 import com.seibel.distanthorizons.core.config.Config;
@@ -37,9 +38,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
+import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -128,9 +131,21 @@ public class SelfUpdater
 			return false;
 		com.electronwill.nightconfig.core.Config pipeline = GitlabGetter.INSTANCE.projectPipelines.get(0);
 		
+		if (!pipeline.get("ref").equals(ModGitInfo.Git_Main_Branch))
+		{
+			//LOGGER.warn("Latest pipeline was found for branch ["+ pipeline.get("ref") +"], but we are on branch ["+ ModGitInfo.Git_Main_Branch +"].");
+			return false;
+		}
+		
+		if (!pipeline.get("status").equals("success"))
+		{
+			LOGGER.warn("Pipeline for branch ["+ ModGitInfo.Git_Main_Branch +"], commit ["+ pipeline.get("id") +"], has either failed to build, or still building.");
+			return false;
+		}
+		
 		if (!GitlabGetter.INSTANCE.getDownloads(pipeline.get("id")).containsKey(mcVersion))
 		{
-			LOGGER.warn("Minecraft version ["+ mcVersion +"] is not findable on Gitlab, findable versions are ["+ GitlabGetter.INSTANCE.getDownloads(pipeline.get("id")).keySet().toArray().toString() +"]");
+			LOGGER.warn("Minecraft version ["+ mcVersion +"] is not findable on Gitlab, findable versions are ["+ GitlabGetter.INSTANCE.getDownloads(pipeline.get("id")).keySet().toArray().toString() +"].");
 			return false;
 		}
 		
@@ -151,35 +166,8 @@ public class SelfUpdater
 		return true;
 	}
 	
-	/**
-	 * Should be called when the game is closed.
-	 * This is ued to delete the previous file if it is required at the end.
-	 */
-	public static void onClose()
-	{
-		if (deleteOldOnClose)
-		{
-			try
-			{
-				Files.move(newFileLocation.toPath(), JarUtils.jarFile.getParentFile().toPath().resolve(newFileLocation.getName()));
-				Files.delete(newFileLocation.getParentFile().toPath());
-			}
-			catch (Exception e)
-			{
-				LOGGER.warn("Failed to move updated fire from [" + newFileLocation.getAbsolutePath() + "] to [" + JarUtils.jarFile.getParentFile().getAbsolutePath() + "], please move it manually");
-				e.printStackTrace();
-			}
-			try
-			{
-				Files.delete(JarUtils.jarFile.toPath());
-			}
-			catch (Exception e)
-			{
-				LOGGER.warn("Failed to delete previous " + ModInfo.READABLE_NAME + " file, please delete it manually at [" + JarUtils.jarFile + "]");
-				e.printStackTrace();
-			}
-		}
-	}
+	
+	
 	
 	public static boolean updateMod()
 	{
@@ -293,6 +281,55 @@ public class SelfUpdater
 			LOGGER.warn("Failed to update " + ModInfo.READABLE_NAME + " to version " + GitlabGetter.INSTANCE.projectPipelines.get(0).get("sha"));
 			e.printStackTrace();
 			return false;
+		}
+	}
+	
+	
+	
+	
+	
+	/**
+	 * Should be called when the game is closed.
+	 * This is ued to delete the previous file if it is required at the end.
+	 */
+	public static void onClose()
+	{
+		if (deleteOldOnClose)
+		{
+			try
+			{
+				Files.move(newFileLocation.toPath(), JarUtils.jarFile.getParentFile().toPath().resolve(newFileLocation.getName()));
+				Files.delete(newFileLocation.getParentFile().toPath());
+			}
+			catch (Exception e)
+			{
+				LOGGER.warn("Failed to move updated fire from [" + newFileLocation.getAbsolutePath() + "] to [" + JarUtils.jarFile.getParentFile().getAbsolutePath() + "], please move it manually");
+				e.printStackTrace();
+			}
+			try
+			{
+				if (Platform.get() != Platform.WINDOWS)
+				{
+					Files.delete(JarUtils.jarFile.toPath());
+				}
+				else
+				{
+					/* // If we want the user to delete it manually
+					System.setProperty("java.awt.headless", "false"); // Required to make it work
+					JOptionPane.showMessageDialog(null, "As you are on Windows, DH can not update fully by itself\nPlease delete ["+ JarUtils.jarFile.getAbsolutePath() +"] manually\nClick OK once ready.", ModInfo.READABLE_NAME, JOptionPane.INFORMATION_MESSAGE);
+					
+					Runtime.getRuntime().exec("explorer.exe /select," + JarUtils.jarFile.getAbsolutePath());
+					 */
+					
+					// Execute the new jar, to delete the old jar once it detects the lock has been lifted
+					Runtime.getRuntime().exec("java -cp "+ newFileLocation.getAbsolutePath() +" com.seibel.distanthorizons.coreapi.util.jar.DeleteOnUnlock "+ JarUtils.jarFile.getAbsolutePath());
+				}
+			}
+			catch (Exception e)
+			{
+				LOGGER.warn("Failed to delete previous " + ModInfo.READABLE_NAME + " file, please delete it manually at [" + JarUtils.jarFile + "]");
+				e.printStackTrace();
+			}
 		}
 	}
 }
