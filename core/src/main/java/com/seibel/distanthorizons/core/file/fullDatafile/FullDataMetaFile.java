@@ -127,7 +127,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	public static FullDataMetaFile createFromExistingDto(IFullDataSourceProvider fullDataSourceProvider, IDhLevel level, MetaDataDto metaDataDto) throws IOException { return new FullDataMetaFile(fullDataSourceProvider, level, metaDataDto); }
 	private FullDataMetaFile(IFullDataSourceProvider fullDataSourceProvider, IDhLevel level, MetaDataDto metaDataDto) throws IOException
 	{
-		super(metaDataDto.dataArray);
+		super(metaDataDto.baseMetaData);
 		checkAndLogPhantomDataSourceLifeCycles();
 		
 		this.fullDataSourceProvider = fullDataSourceProvider;
@@ -135,11 +135,10 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 		LodUtil.assertTrue(this.baseMetaData != null);
 		this.doesDtoExist = true;
 		
-		this.fullDataSourceLoader = AbstractFullDataSourceLoader.getLoader(this.baseMetaData.dataTypeId, this.baseMetaData.binaryDataFormatVersion);
+		this.fullDataSourceLoader = AbstractFullDataSourceLoader.getLoader(this.baseMetaData.dataType, this.baseMetaData.binaryDataFormatVersion);
 		if (this.fullDataSourceLoader == null)
 		{
-			// TODO add a hard coded dictionary of known ID name combos so we can easily see in the log if the ID is valid or if the data was corrupted/old
-			throw new IOException("Invalid file: Data type loader not found: " + this.baseMetaData.dataTypeId + "(v" + this.baseMetaData.binaryDataFormatVersion + ")");
+			throw new IOException("Invalid file: Data type loader not found: " + this.baseMetaData.dataType + "(v" + this.baseMetaData.binaryDataFormatVersion + ")");
 		}
 		
 		this.fullDataSourceClass = this.fullDataSourceLoader.fullDataSourceClass;
@@ -224,7 +223,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 						this.baseMetaData = new BaseMetaData(
 								fullDataSource.getSectionPos(), -1,
 								fullDataSource.getDataDetailLevel(), fullDataSource.getWorldGenStep(),
-								(dataSourceLoader == null ? 0 : dataSourceLoader.datatypeId), fullDataSource.getBinaryDataFormatVersion(), Long.MAX_VALUE);
+								(dataSourceLoader == null ? null : dataSourceLoader.datatype), fullDataSource.getBinaryDataFormatVersion(), Long.MAX_VALUE);
 						
 						return fullDataSource;
 					})
@@ -524,25 +523,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	private InputStream getInputStream() throws IOException
 	{
 		MetaDataDto dto = this.fullDataSourceProvider.getRepo().getByPrimaryKey(this.pos.serialize());
-		ByteArrayInputStream inputStream = new ByteArrayInputStream(dto.dataArray);
-		
-		// skip the meta-data bytes
-		int bytesToSkip = AbstractMetaDataContainerFile.METADATA_SIZE_IN_BYTES;
-		while (bytesToSkip > 0)
-		{
-			long skippedByteCount = inputStream.skip(bytesToSkip);
-			if (skippedByteCount == 0)
-			{
-				throw new IOException("Invalid file: Failed to skip metadata.");
-			}
-			bytesToSkip -= skippedByteCount;
-		}
-		
-		if (bytesToSkip != 0)
-		{
-			throw new IOException("File IO Error: Failed to skip metadata.");
-		}
-		return inputStream;
+		return new ByteArrayInputStream(dto.dataArray);
 	}
 	
 	/** 
@@ -705,7 +686,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 				LodUtil.assertTrue(this.fullDataSourceLoader != null, "No loader for " + fullDataSource.getClass() + " (v" + fullDataSource.getBinaryDataFormatVersion() + ")");
 				
 				this.fullDataSourceClass = fullDataSource.getClass();
-				this.baseMetaData.dataTypeId = (this.fullDataSourceLoader == null) ? 0 : this.fullDataSourceLoader.datatypeId;
+				this.baseMetaData.dataType = (this.fullDataSourceLoader == null) ? null : this.fullDataSourceLoader.datatype;
 				this.baseMetaData.binaryDataFormatVersion = fullDataSource.getBinaryDataFormatVersion();
 				
 				
@@ -714,7 +695,7 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 				ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 				super.writeData((bufferedOutputStream) -> fullDataSource.writeToStream((bufferedOutputStream), this.level), byteArrayOutputStream);
 				
-				MetaDataDto dto = new MetaDataDto(this.pos, byteArrayOutputStream.toByteArray());
+				MetaDataDto dto = new MetaDataDto(this.baseMetaData, byteArrayOutputStream.toByteArray());
 				this.fullDataSourceProvider.getRepo().save(dto);
 				this.doesDtoExist = true;
 			}

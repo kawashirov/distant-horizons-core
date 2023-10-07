@@ -63,8 +63,7 @@ public class LowDetailIncompleteFullDataSource extends FullDataArrayAccessor imp
 	public static final int WIDTH = BitShiftUtil.powerOfTwo(SECTION_SIZE_OFFSET);
 	
 	public static final byte DATA_FORMAT_VERSION = 3;
-	/** written to the binary file to mark what {@link IFullDataSource} the binary file corresponds to */
-	public static final long TYPE_ID = "LowDetailIncompleteFullDataSource".hashCode();
+	public static final String DATA_SOURCE_TYPE = "LowDetailIncompleteFullDataSource";
 	
 	
 	private DhSectionPos sectionPos;

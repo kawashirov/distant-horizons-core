@@ -59,8 +59,7 @@ public class CompleteFullDataSource extends FullDataArrayAccessor implements IFu
 	public static final int WIDTH = BitShiftUtil.powerOfTwo(SECTION_SIZE_OFFSET);
 	
 	public static final byte DATA_FORMAT_VERSION = 3;
-	/** written to the binary file to mark what {@link IFullDataSource} the binary file corresponds to */
-	public static final long TYPE_ID = "CompleteFullDataSource".hashCode();
+	public static final String DATA_SOURCE_TYPE = "CompleteFullDataSource";
 	
 	private DhSectionPos sectionPos;
 	private boolean isEmpty = true;

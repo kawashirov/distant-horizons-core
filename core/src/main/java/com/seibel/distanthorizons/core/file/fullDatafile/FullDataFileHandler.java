@@ -430,7 +430,7 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 					else
 					{
 						// shouldn't normally happen, but sometimes does
-						dataSourceLoader = AbstractFullDataSourceLoader.getLoader(existingFile.baseMetaData.dataTypeId, existingFile.baseMetaData.binaryDataFormatVersion);
+						dataSourceLoader = AbstractFullDataSourceLoader.getLoader(existingFile.baseMetaData.dataType, existingFile.baseMetaData.binaryDataFormatVersion);
 					}
 					
 					dataSourceLoader.returnPooledDataSource(existingFullDataSource);

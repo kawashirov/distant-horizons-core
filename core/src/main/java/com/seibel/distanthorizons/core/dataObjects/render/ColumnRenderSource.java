@@ -56,7 +56,7 @@ public class ColumnRenderSource
 	public static final int SECTION_SIZE = BitShiftUtil.powerOfTwo(SECTION_SIZE_OFFSET);
 	
 	public static final byte DATA_FORMAT_VERSION = 1;
-	public static final long TYPE_ID = "ColumnRenderSource".hashCode();
+	public static final String DATA_NAME = "ColumnRenderSource";
 	
 	/**
 	 * This is the byte put between different sections in the binary save file.

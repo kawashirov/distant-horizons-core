@@ -64,12 +64,6 @@ public abstract class AbstractMetaDataContainerFile
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
-	public static final int METADATA_SIZE_IN_BYTES = 64;
-	//    public static final int BUFFER_SIZE = 8192;
-	public static final int METADATA_RESERVED_SIZE = 24;
-	/** equivalent to "DHv0" */
-	public static final int METADATA_IDENTITY_BYTES = 0x44_48_76_30;
-	
 	
 	/**
 	 * Will be null if no file exists for this object. <br>
@@ -99,42 +93,11 @@ public abstract class AbstractMetaDataContainerFile
 	 * @throws IOException if the file was formatted incorrectly
 	 * @throws FileNotFoundException if no file exists for the given path
 	 */
-	protected AbstractMetaDataContainerFile(byte[] byteArray) throws IOException
+	protected AbstractMetaDataContainerFile(BaseMetaData baseMetaData) throws IOException
 	{
-		this.baseMetaData = readMetaDataFromByteArray(byteArray);
+		this.baseMetaData = baseMetaData;
 		this.pos = this.baseMetaData.pos;
 	}
-	/**
-	 * Attempts to create a new {@link AbstractMetaDataContainerFile} from the given file.
-	 *
-	 * @throws IOException if the file was formatted incorrectly
-	 */
-	private static BaseMetaData readMetaDataFromByteArray(byte[] byteArray) throws IOException
-	{
-		ByteBuffer byteBuffer = ByteBuffer.wrap(byteArray);
-		
-		int idBytes = byteBuffer.getInt();
-		if (idBytes != METADATA_IDENTITY_BYTES)
-		{
-			throw new IOException("Invalid file format: Metadata Identity byte check failed. Expected: [" + METADATA_IDENTITY_BYTES + "], Actual: [" + idBytes + "].");
-		}
-		
-		int x = byteBuffer.getInt();
-		int y = byteBuffer.getInt(); // Unused
-		int z = byteBuffer.getInt();
-		int checksum = byteBuffer.getInt();
-		byte detailLevel = byteBuffer.get();
-		byte dataLevel = byteBuffer.get();
-		byte loaderVersion = byteBuffer.get();
-		EDhApiWorldGenerationStep worldGenStep = EDhApiWorldGenerationStep.fromValue(byteBuffer.get());
-		long dataTypeId = byteBuffer.getLong();
-		long dataVersion = byteBuffer.getLong(); // data versioning
-		//LodUtil.assertTrue(byteBuffer.remaining() == METADATA_RESERVED_SIZE);
-		DhSectionPos dataPos = new DhSectionPos(detailLevel, x, z);
-		
-		return new BaseMetaData(dataPos, checksum, dataLevel, worldGenStep, dataTypeId, loaderVersion, dataVersion);
-	}
-	
 	
 	
 	//==============//
@@ -147,11 +110,8 @@ public abstract class AbstractMetaDataContainerFile
 		
 		try
 		{
-			// the staging stream is so we can process the compressed data before the metadata, while still writing it after the meta data
-			ByteArrayOutputStream compressedDataStagingOutputStream = new ByteArrayOutputStream();
-			
 			// the order of these streams is important, otherwise the checksum won't be calculated
-			CheckedOutputStream checkedOut = new CheckedOutputStream(compressedDataStagingOutputStream, new Adler32());
+			CheckedOutputStream checkedOut = new CheckedOutputStream(outputStream, new Adler32());
 			// normally a DhStream should be the topmost stream to prevent closing the stream accidentally, but since this stream will be closed immediately after writing anyway, it won't be an issue
 			DhDataOutputStream compressedOut = new DhDataOutputStream(checkedOut);
 			
@@ -162,32 +122,7 @@ public abstract class AbstractMetaDataContainerFile
 			this.baseMetaData.checksum = (int) checkedOut.getChecksum().getValue();
 			
 			
-			// generate the meta data
-			ByteBuffer buffer = ByteBuffer.allocate(METADATA_SIZE_IN_BYTES);
-			buffer.putInt(METADATA_IDENTITY_BYTES);
-			buffer.putInt(this.pos.getX());
-			buffer.putInt(Integer.MIN_VALUE); // Unused - y pos
-			buffer.putInt(this.pos.getZ());
-			buffer.putInt(0); //FIXME this.baseMetaData.checksum);
-			buffer.put(this.pos.getDetailLevel());
-			buffer.put(this.baseMetaData.dataDetailLevel);
-			buffer.put(this.baseMetaData.binaryDataFormatVersion);
-			buffer.put(this.baseMetaData.worldGenStep != null ? this.baseMetaData.worldGenStep.value : EDhApiWorldGenerationStep.EMPTY.value); // TODO this null check shouldn't be necessary
-			buffer.putLong(this.baseMetaData.dataTypeId);
-			buffer.putLong(this.baseMetaData.dataVersion.get()); // for types that doesn't need data versioning, this will be Long.MAX_VALUE
-			
-			// confirm we haven't gone outside the metadata reserved space
-			LodUtil.assertTrue(buffer.remaining() == METADATA_RESERVED_SIZE);
-			
-			
-			// write all data to the output
-			outputStream.write(buffer.array());
-			outputStream.write(compressedDataStagingOutputStream.toByteArray());
 			outputStream.close();
-		}
-		catch (NoSuchFileException e)
-		{
-			// can be thrown by the "Files.move" method if the system tries writing to an unloaded level
 		}
 		catch (ClosedChannelException e) // includes ClosedByInterruptException
 		{

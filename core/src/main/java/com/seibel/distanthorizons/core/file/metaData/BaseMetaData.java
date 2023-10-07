@@ -40,13 +40,13 @@ public class BaseMetaData
 	public EDhApiWorldGenerationStep worldGenStep;
 	
 	// Loader stuff //
-	/** indicates what data is held in this file, this is generally a hash of the data's name */
-	public long dataTypeId;
+	/** indicates what data is held in this file, this is generally the data's name */
+	public String dataType;
 	public byte binaryDataFormatVersion;
 	
 	
 	
-	public BaseMetaData(DhSectionPos pos, int checksum, byte dataDetailLevel, EDhApiWorldGenerationStep worldGenStep, long dataTypeId, byte binaryDataFormatVersion, long dataVersion)
+	public BaseMetaData(DhSectionPos pos, int checksum, byte dataDetailLevel, EDhApiWorldGenerationStep worldGenStep, String dataType, byte binaryDataFormatVersion, long dataVersion)
 	{
 		this.pos = pos;
 		this.checksum = checksum;
@@ -54,7 +54,7 @@ public class BaseMetaData
 		this.dataDetailLevel = dataDetailLevel;
 		this.worldGenStep = worldGenStep;
 		
-		this.dataTypeId = dataTypeId;
+		this.dataType = dataType;
 		this.binaryDataFormatVersion = binaryDataFormatVersion;
 	}
 	

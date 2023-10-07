@@ -54,9 +54,8 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 {
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
-	public static final String FILE_SUFFIX = ".rlod";
 	public static final boolean ALWAYS_INVALIDATE_CACHE = false;
-	public static final long RENDER_SOURCE_TYPE_ID = ColumnRenderSource.TYPE_ID;
+	public static final String RENDER_SOURCE_TYPE = ColumnRenderSource.DATA_NAME;
 	
 	
 	/**
@@ -103,7 +102,7 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 	public static RenderDataMetaFile createFromExistingFile(IFullDataSourceProvider fullDataSourceProvider, IRenderSourceProvider renderDataSourceProvider, IDhClientLevel clientLevel, MetaDataDto metaDataDto) throws IOException { return new RenderDataMetaFile(fullDataSourceProvider, renderDataSourceProvider, clientLevel, metaDataDto); }
 	private RenderDataMetaFile(IFullDataSourceProvider fullDataSourceProvider, IRenderSourceProvider renderDataSourceProvider, IDhClientLevel clientLevel, MetaDataDto metaDataDto) throws IOException
 	{
-		super(metaDataDto.dataArray);
+		super(metaDataDto.baseMetaData);
 		this.fullDataSourceProvider = fullDataSourceProvider;
 		this.renderDataSourceProvider = renderDataSourceProvider;
 		this.clientLevel = clientLevel;
@@ -196,7 +195,7 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 			
 			this.baseMetaData = new BaseMetaData(
 					newColumnRenderSource.getSectionPos(), -1, newColumnRenderSource.getDataDetailLevel(), 
-					newColumnRenderSource.worldGenStep, RENDER_SOURCE_TYPE_ID, 
+					newColumnRenderSource.worldGenStep, RENDER_SOURCE_TYPE, 
 					newColumnRenderSource.getRenderDataFormatVersion(), Long.MAX_VALUE);
 			
 			this.updateRenderCacheAsync(newColumnRenderSource).whenComplete((voidObj, ex) ->
@@ -353,7 +352,7 @@ public class RenderDataMetaFile extends AbstractMetaDataContainerFile implements
 								// update the meta data
 								this.baseMetaData.dataVersion.set(renderDataVersionRef.value);
 								this.baseMetaData.dataDetailLevel = renderSource.getDataDetailLevel();
-								this.baseMetaData.dataTypeId = RENDER_SOURCE_TYPE_ID;
+								this.baseMetaData.dataType = RENDER_SOURCE_TYPE;
 								this.baseMetaData.binaryDataFormatVersion = renderSource.getRenderDataFormatVersion();
 								
 								// save to file
