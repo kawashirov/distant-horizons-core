@@ -241,6 +241,8 @@ public class ClientApi
 	
 	private void applyChunkUpdate(IChunkWrapper chunkWrapper, IClientLevelWrapper level, boolean updateNeighborChunks)
 	{
+		// TODO rate limit this event per chunkPos to prevent spam
+		
 		// if the user is in a single player world the chunk updates are handled on the server side
 		if (SharedApi.getEnvironment() != EWorldEnvironment.Client_Only)
 		{
