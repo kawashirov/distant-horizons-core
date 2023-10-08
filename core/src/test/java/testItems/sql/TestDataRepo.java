@@ -21,6 +21,7 @@ package testItems.sql;
 
 import com.seibel.distanthorizons.core.sql.AbstractDhRepo;
 
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Map;
 
@@ -66,30 +67,45 @@ public class TestDataRepo extends AbstractDhRepo<TestDto>
 	@Override 
 	public String createSelectPrimaryKeySql(String primaryKey) { return "SELECT * FROM "+this.getTableName()+" WHERE Id = '"+primaryKey+"'"; }
 	
-	@Override 
-	public String createInsertSql(TestDto dto)
+	@Override
+	public PreparedStatement createInsertStatement(TestDto dto) throws SQLException
 	{
-		String id = dto.id+"";
-		String value = (dto.value != null) ? dto.value+"" : "NULL";
+		String sql = 
+			"INSERT INTO "+this.getTableName()+" \n" +
+				"(Id, Value, LongValue, ByteValue) \n" +
+			"VALUES(?,?,?,?);";
+		PreparedStatement statement = this.createPreparedStatement(sql);
 		
-		return 
-			"INSERT INTO "+this.getTableName()+" (Id, Value, LongValue, ByteValue) " +
-			"VALUES("+id+",'"+value+"',"+dto.longValue+","+dto.byteValue+");";
+		int i = 1; // post-increment for the win!
+		statement.setObject(i++, dto.id);
+		
+		statement.setObject(i++, dto.value);
+		statement.setObject(i++, dto.longValue);
+		statement.setObject(i++, dto.byteValue);
+		
+		return statement;
 	}
 	
-	@Override 
-	public String createUpdateSql(TestDto dto)
+	@Override
+	public PreparedStatement createUpdateStatement(TestDto dto) throws SQLException
 	{
-		String id = dto.id+"";
-		String value = (dto.value != null) ? dto.value+"" : "NULL";
+		String sql =
+			"UPDATE "+this.getTableName()+" \n" +
+			"SET \n" +
+			"   Value = ? \n" +
+			"   ,LongValue = ? \n" +
+			"   ,ByteValue = ? \n" +
+			"WHERE Id = ?";
+		PreparedStatement statement = this.createPreparedStatement(sql);
 		
-		return
-			"UPDATE "+this.getTableName()+" " +
-			"SET " +
-			"   Value = '"+value+"' \n" +
-			"   ,LongValue = "+dto.longValue + " \n" +
-			"   ,ByteValue = "+dto.byteValue + " \n" +
-			"WHERE Id = "+id;
+		int i = 1;
+		statement.setObject(i++, dto.value);
+		statement.setObject(i++, dto.longValue);
+		statement.setObject(i++, dto.byteValue);
+		
+		statement.setObject(i++, dto.id);
+		
+		return statement;
 	}
 	
 }

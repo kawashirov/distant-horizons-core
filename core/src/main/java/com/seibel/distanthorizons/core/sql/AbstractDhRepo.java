@@ -108,6 +108,7 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 		}
 	}
 	
+	
 	public void save(TDTO dto)
 	{
 		if (this.getByPrimaryKey(dto.getPrimaryKeyString()) != null)
@@ -119,8 +120,33 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 			this.insert(dto);
 		}
 	}
-	private void insert(TDTO dto) { this.queryDictionaryFirst(this.createInsertSql(dto)); }
-	private void update(TDTO dto) { this.queryDictionaryFirst(this.createUpdateSql(dto)); }
+	private void insert(TDTO dto) 
+	{
+		try
+		{
+			this.query(this.createInsertStatement(dto));
+		}
+		catch (SQLException e)
+		{
+			String message = "Unexpected insert statement error: ["+e.getMessage()+"].";
+			LOGGER.error(message);
+			throw new RuntimeException(message, e);
+		}
+	}
+	private void update(TDTO dto)
+	{
+		try
+		{
+			this.query(this.createUpdateStatement(dto));
+		}
+		catch (SQLException e)
+		{
+			String message = "Unexpected update statement error: ["+e.getMessage()+"].";
+			LOGGER.error(message);
+			throw new RuntimeException(message, e);
+		}
+	}
+	
 	
 	public void delete(TDTO dto) { this.deleteByPrimaryKey(dto.getPrimaryKeyString()); }
 	public void deleteByPrimaryKey(String primaryKey) 
@@ -128,6 +154,7 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 		String whereEqualStatement = this.createWherePrimaryKeySql(primaryKey);
 		this.queryDictionaryFirst("DELETE FROM "+this.getTableName()+" WHERE "+whereEqualStatement); 
 	}
+	
 	
 	public boolean exists(TDTO dto) { return this.existsWithPrimaryKey(dto.getPrimaryKeyString()); }
 	public boolean existsWithPrimaryKey(String primaryKey) 
@@ -150,6 +177,29 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 		return !objectList.isEmpty() ? objectList.get(0) : null;
 	}
 	
+	
+	/** note: this can only handle 1 command at a time */
+	private List<Map<String, Object>> query(PreparedStatement statement) throws RuntimeException
+	{
+		try
+		{
+			statement.setQueryTimeout(TIMEOUT_SECONDS);
+			
+			// Note: this can only handle 1 command at a time
+			boolean resultSetPresent = statement.execute();
+			ResultSet resultSet = statement.getResultSet();
+			return this.parseQueryResult(resultSet, resultSetPresent);
+		}
+		catch(SQLException e)
+		{
+			// SQL exceptions generally only happen when something is wrong with 
+			// the database or the query and should cause the system to blow up to notify the developer
+			
+			String message = "Unexpected Query error: ["+e.getMessage()+"], for prepared statement: ["+statement+"].";
+			LOGGER.error(message);
+			throw new RuntimeException(message, e);
+		}
+	}
 	/** note: this can only handle 1 command at a time */
 	private List<Map<String, Object>> query(String sql) throws RuntimeException
 	{
@@ -160,21 +210,7 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 			// Note: this can only handle 1 command at a time
 			boolean resultSetPresent = statement.execute(sql);
 			ResultSet resultSet = statement.getResultSet();
-			if (resultSetPresent)
-			{
-				List<Map<String, Object>> resultList = convertResultSetToDictionaryList(resultSet);
-				resultSet.close();
-				return resultList;
-			}
-			else
-			{
-				if (resultSet != null)
-				{
-					resultSet.close();
-				}
-				
-				return new ArrayList<>();
-			}
+			return this.parseQueryResult(resultSet, resultSetPresent);
 		}
 		catch(SQLException e)
 		{
@@ -186,6 +222,25 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 			throw new RuntimeException(message, e);
 		}
 	}
+	private List<Map<String, Object>> parseQueryResult(ResultSet resultSet, boolean resultSetPresent) throws SQLException
+	{
+		if (resultSetPresent)
+		{
+			List<Map<String, Object>> resultList = convertResultSetToDictionaryList(resultSet);
+			resultSet.close();
+			return resultList;
+		}
+		else
+		{
+			if (resultSet != null)
+			{
+				resultSet.close();
+			}
+			
+			return new ArrayList<>();
+		}
+	}
+	
 	
 	public PreparedStatement createPreparedStatement(String sql)
 	{
@@ -306,7 +361,8 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 	
 	public abstract String createSelectPrimaryKeySql(String primaryKey);
 	
-	public abstract String createInsertSql(TDTO dto);
-	public abstract String createUpdateSql(TDTO dto);
+	public abstract PreparedStatement createInsertStatement(TDTO dto) throws SQLException;
+	public abstract PreparedStatement createUpdateStatement(TDTO dto) throws SQLException;
+	
 	
 }

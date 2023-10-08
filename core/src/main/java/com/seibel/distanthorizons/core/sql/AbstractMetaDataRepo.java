@@ -24,6 +24,7 @@ import com.seibel.distanthorizons.core.file.metaData.BaseMetaData;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.coreapi.util.StringUtil;
 
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Map;
 
@@ -70,55 +71,70 @@ public abstract class AbstractMetaDataRepo extends AbstractDhRepo<MetaDataDto>
 	@Override 
 	public String createSelectPrimaryKeySql(String primaryKey) { return "SELECT * FROM "+this.getTableName()+" WHERE DhSectionPos = '"+primaryKey+"'"; }
 	
-	@Override 
-	public String createInsertSql(MetaDataDto dto)
+	@Override
+	public PreparedStatement createInsertStatement(MetaDataDto dto) throws SQLException
 	{
-		String posString = dto.baseMetaData.pos.serialize();
-		String dataHexString = createDataHexString(dto);
-		return 
+		String sql =
 			"INSERT INTO "+this.getTableName() + "\n" +
 			"  (DhSectionPos, \n" +
-				"Checksum, DataVersion, DataDetailLevel, WorldGenStep, DataType, BinaryDataFormatVersion, \n" +
-				"Data) \n" +
+			"Checksum, DataVersion, DataDetailLevel, WorldGenStep, DataType, BinaryDataFormatVersion, \n" +
+			"Data) \n" +
 			"   VALUES( \n" +
-			"    '"+posString+"' \n" +
-					
-			"   ,"+dto.baseMetaData.checksum + "\n" +
-			"   ,"+dto.baseMetaData.dataVersion + "\n" +
-			"   ,"+dto.baseMetaData.dataDetailLevel + "\n" +
-			"   ,'"+dto.baseMetaData.worldGenStep.name + "' \n" +
-			"   ,'"+dto.baseMetaData.dataType + "' \n" +
-			"   ,"+dto.baseMetaData.binaryDataFormatVersion + "\n" +
-					
-			"   ,"+dataHexString + "\n" +
+			"    ? \n" +
+			"   ,? ,? ,? ,? ,? ,? \n" +
+			"   ,? \n" +
 			// created/lastModified are automatically set by Sqlite
 			");";
+		PreparedStatement statement = this.createPreparedStatement(sql);
+		
+		int i = 1;
+		statement.setObject(i++, dto.getPrimaryKeyString());
+		
+		statement.setObject(i++, dto.baseMetaData.checksum);
+		statement.setObject(i++, dto.baseMetaData.dataVersion);
+		statement.setObject(i++, dto.baseMetaData.dataDetailLevel);
+		statement.setObject(i++, dto.baseMetaData.worldGenStep);
+		statement.setObject(i++, dto.baseMetaData.dataType);
+		statement.setObject(i++, dto.baseMetaData.binaryDataFormatVersion);
+		
+		statement.setObject(i++, dto.dataArray);
+		
+		return statement;
 	}
 	
-	@Override 
-	public String createUpdateSql(MetaDataDto dto)
+	@Override
+	public PreparedStatement createUpdateStatement(MetaDataDto dto) throws SQLException
 	{
-		String posString = dto.baseMetaData.pos.serialize();
-		String dataHexString = createDataHexString(dto);
-		return
+		String sql =
 			"UPDATE "+this.getTableName()+" \n" +
 			"SET \n" +
+			"    Checksum = ? \n" +
+			"   ,DataVersion = ? \n" +
+			"   ,DataDetailLevel = ? \n" +
+			"   ,WorldGenStep = ? \n" +
+			"   ,DataType = ? \n" +
+			"   ,BinaryDataFormatVersion = ? \n" +
 					
-			"    Checksum = "+dto.baseMetaData.checksum + "\n" +
-			"   ,DataVersion = "+dto.baseMetaData.dataVersion + "\n" +
-			"   ,DataDetailLevel = "+dto.baseMetaData.dataDetailLevel + "\n" +
-			"   ,WorldGenStep = '"+dto.baseMetaData.worldGenStep.name + "' \n" +
-			"   ,DataType = '"+dto.baseMetaData.dataType + "' \n" +
-			"   ,BinaryDataFormatVersion = "+dto.baseMetaData.binaryDataFormatVersion + "\n" +
-					
-			"   ,Data = "+dataHexString + "\n" +
-					
+			"   ,Data = ? \n" +
+			
 			"   ,LastModifiedDateTime = CURRENT_TIMESTAMP \n" +
-			"WHERE DhSectionPos = '"+posString+"'";
+			"WHERE DhSectionPos = ?";
+		PreparedStatement statement = this.createPreparedStatement(sql);
+		
+		int i = 1;
+		statement.setObject(i++, dto.baseMetaData.checksum);
+		statement.setObject(i++, dto.baseMetaData.dataVersion);
+		statement.setObject(i++, dto.baseMetaData.dataDetailLevel);
+		statement.setObject(i++, dto.baseMetaData.worldGenStep);
+		statement.setObject(i++, dto.baseMetaData.dataType);
+		statement.setObject(i++, dto.baseMetaData.binaryDataFormatVersion);
+		
+		statement.setObject(i++, dto.dataArray);
+		
+		statement.setObject(i++, dto.getPrimaryKeyString());
+		
+		return statement;
 	}
 	
-	
-	/** This creates a string that Sqlite interprets as binary data. */
-	private static String createDataHexString(MetaDataDto dto) { return "X'" + StringUtil.byteArrayToHexString(dto.dataArray) + "'"; }
 	
 }
