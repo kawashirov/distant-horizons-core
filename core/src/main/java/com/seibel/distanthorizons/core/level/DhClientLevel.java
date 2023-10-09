@@ -146,4 +146,8 @@ public class DhClientLevel extends DhLevel implements IDhClientLevel
 		return saveStructure;
 	}
 	
+	@Override
+	public boolean hasSkyLight() { return this.levelWrapper.hasSkyLight(); }
+	
+	
 }
