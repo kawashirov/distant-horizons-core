@@ -155,6 +155,9 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 		this.queryDictionaryFirst("DELETE FROM "+this.getTableName()+" WHERE "+whereEqualStatement); 
 	}
 	
+	/** With great power comes great responsibility... */
+	public void deleteAll() { this.queryDictionaryFirst("DELETE FROM "+this.getTableName()); }
+	
 	
 	public boolean exists(TDTO dto) { return this.existsWithPrimaryKey(dto.getPrimaryKeyString()); }
 	public boolean existsWithPrimaryKey(String primaryKey) 

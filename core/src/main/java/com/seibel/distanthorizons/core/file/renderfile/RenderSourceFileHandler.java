@@ -317,21 +317,11 @@ public class RenderSourceFileHandler implements IRenderSourceProvider
 	
 	public void deleteRenderCache()
 	{
-		// delete each file in the cache directory
-		File[] renderFiles = this.saveDir.listFiles();
-		if (renderFiles != null)
-		{
-			for (File renderFile : renderFiles)
-			{
-				if (!renderFile.delete())
-				{
-					LOGGER.warn("Unable to delete render file: " + renderFile.getPath());
-				}
-			}
-		}
-		
 		// clear the cached files
 		this.loadedMetaFileBySectionPos.clear();
+		
+		// delete the render cache
+		this.renderDataRepo.deleteAll();
 	}
 	
 	
