@@ -31,6 +31,7 @@ import com.seibel.distanthorizons.core.jar.installer.ModrinthGetter;
 import com.seibel.distanthorizons.core.jar.installer.WebDownloader;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IVersionConstants;
+import com.seibel.distanthorizons.coreapi.util.jar.DeleteOnUnlock;
 import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
@@ -322,7 +323,7 @@ public class SelfUpdater
 					 */
 					
 					// Execute the new jar, to delete the old jar once it detects the lock has been lifted
-					Runtime.getRuntime().exec("java -cp "+ newFileLocation.getAbsolutePath() +" com.seibel.distanthorizons.coreapi.util.jar.DeleteOnUnlock "+ JarUtils.jarFile.getAbsolutePath());
+					Runtime.getRuntime().exec("java -cp "+ newFileLocation.getAbsolutePath() +" "+ DeleteOnUnlock.class.getCanonicalName() +" "+ JarUtils.jarFile.getAbsolutePath());
 				}
 			}
 			catch (Exception e)
