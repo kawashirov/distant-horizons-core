@@ -38,11 +38,9 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftCli
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.ILightMapWrapper;
-import com.seibel.distanthorizons.api.enums.rendering.EDebugRendering;
 import com.seibel.distanthorizons.api.enums.rendering.EFogColorMode;
 import com.seibel.distanthorizons.core.render.fog.LodFogConfig;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
-import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IOptifineAccessor;
 import com.seibel.distanthorizons.coreapi.util.math.Mat4f;
 import com.seibel.distanthorizons.coreapi.util.math.Vec3d;
 import com.seibel.distanthorizons.coreapi.util.math.Vec3f;
@@ -50,6 +48,7 @@ import org.apache.logging.log4j.LogManager;
 import org.lwjgl.opengl.GL32;
 
 import java.awt.*;
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -89,7 +88,7 @@ public class LodRenderer
 		
 		if (!GL32.glIsProgram(this.shaderProgram.id))
 		{
-			throw new IllegalStateException("No GL program exists with the ID: ["+this.shaderProgram.id+"]. This either means a shader program was freed while it was still in use or was never created.");
+			throw new IllegalStateException("No GL program exists with the ID: [" + this.shaderProgram.id + "]. This either means a shader program was freed while it was still in use or was never created.");
 		}
 		
 		this.shaderProgram.bind();
@@ -134,7 +133,6 @@ public class LodRenderer
 	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	
-	public EDebugRendering previousDebugMode = null;
 	public final RenderBufferHandler bufferHandler;
 	
 	// The shader program
@@ -142,7 +140,14 @@ public class LodRenderer
 	public QuadElementBuffer quadIBO = null;
 	public boolean isSetupComplete = false;
 	
-	public LodRenderer(RenderBufferHandler bufferHandler) { this.bufferHandler = bufferHandler; }
+	private int framebufferId;
+	private int colorTextureId;
+	private int depthRenderbufferId;
+	
+	public LodRenderer(RenderBufferHandler bufferHandler)
+	{
+		this.bufferHandler = bufferHandler;
+	}
 	
 	private boolean rendererClosed = false;
 	public void close()
@@ -198,9 +203,7 @@ public class LodRenderer
 				return;
 			}
 			
-			
-			
-			// get MC's shader program and save MC's render state so we can restore it later
+			// Save Minecraft's GL state so it can be restored at the end of LOD rendering
 			LagSpikeCatcher drawSaveGLState = new LagSpikeCatcher();
 			GLState minecraftGlState = new GLState();
 			if (ENABLE_DUMP_GL_STATE)
@@ -209,9 +212,6 @@ public class LodRenderer
 			}
 			drawSaveGLState.end("drawSaveGLState");
 			
-			// make sure everything has been initialized
-			GLProxy glProxy = GLProxy.getInstance();
-			
 			
 			
 			//===================//
@@ -219,9 +219,41 @@ public class LodRenderer
 			//===================//
 			
 			profiler.push("LOD draw setup");
-			/*---------Set GL State--------*/
-			GL32.glViewport(0, 0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight());
-			GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, 0);
+			
+			if (!this.isSetupComplete)
+			{
+				this.setup();
+			}
+			
+			// Bind LOD color buffer
+			GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, this.framebufferId);
+			
+			// Bind LOD color texture
+			GL32.glBindTexture(GL32.GL_TEXTURE_2D, this.colorTextureId);
+			GL32.glTexImage2D(GL32.GL_TEXTURE_2D,
+					0,
+					GL32.GL_RGB,
+					MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(),
+					0,
+					GL32.GL_RGB,
+					GL32.GL_UNSIGNED_BYTE,
+					(ByteBuffer) null);
+			GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MIN_FILTER, GL32.GL_LINEAR);
+			GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MAG_FILTER, GL32.GL_LINEAR);
+			GL32.glFramebufferTexture2D(GL32.GL_DRAW_FRAMEBUFFER, GL32.GL_COLOR_ATTACHMENT0, GL32.GL_TEXTURE_2D, this.colorTextureId, 0);
+			
+			// Bind LOD depth buffer
+			GL32.glBindRenderbuffer(GL32.GL_RENDERBUFFER, this.depthRenderbufferId);
+			GL32.glRenderbufferStorage(GL32.GL_RENDERBUFFER, GL32.GL_DEPTH_COMPONENT24, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight());
+			GL32.glFramebufferRenderbuffer(GL32.GL_FRAMEBUFFER, GL32.GL_DEPTH_ATTACHMENT, GL32.GL_RENDERBUFFER, this.depthRenderbufferId);
+			
+			// Clear LOD framebuffer and depth buffer
+			GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
+			
+			GL32.glEnable(GL32.GL_DEPTH_TEST);
+			GL32.glDepthFunc(GL32.GL_LESS);
+			
+			// Set OpenGL polygon mode
 			boolean renderWireframe = Config.Client.Advanced.Debugging.renderWireframe.get();
 			if (renderWireframe)
 			{
@@ -233,17 +265,15 @@ public class LodRenderer
 				GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_FILL);
 				GL32.glEnable(GL32.GL_CULL_FACE);
 			}
+			
+			// Enable depth test and depth mask
 			GL32.glEnable(GL32.GL_DEPTH_TEST);
 			GL32.glDepthFunc(GL32.GL_LESS);
-			
-			
-			
-			transparencyEnabled = Config.Client.Advanced.Graphics.Quality.transparency.get().transparencyEnabled;
-			fakeOceanFloor = Config.Client.Advanced.Graphics.Quality.transparency.get().fakeTransparencyEnabled;
-			
-			GL32.glDisable(GL32.GL_BLEND); // We render opaque first, then transparent
 			GL32.glDepthMask(true);
-			GL32.glClear(GL32.GL_DEPTH_BUFFER_BIT);
+			
+			// Disable blending
+			// We render opaque first, then transparent
+			GL32.glDisable(GL32.GL_BLEND);
 			
 			/*---------Bind required objects--------*/
 			// Setup LodRenderProgram and the LightmapTexture if it has not yet been done
@@ -265,8 +295,6 @@ public class LodRenderer
 				}
 				this.shaderProgram.bind();
 			}
-			
-			GL32.glActiveTexture(GL32.GL_TEXTURE0);
 			
 			/*---------Get required data--------*/
 			int vanillaBlockRenderedDistance = MC_RENDER.getRenderDistance() * LodUtil.CHUNK_WIDTH;
@@ -307,16 +335,18 @@ public class LodRenderer
 			{
 				profiler.popPush("LOD SSAO");
 				SSAOShader.INSTANCE.setProjectionMatrix(projectionMatrix);
-				SSAORenderer.INSTANCE.render(minecraftGlState, partialTicks);
+				//SSAORenderer.INSTANCE.render(minecraftGlState, partialTicks);
 			}
-			
 			
 			profiler.popPush("LOD Fog");
 			FogShader.INSTANCE.setModelViewProjectionMatrix(modelViewProjectionMatrix);
-			FogShader.INSTANCE.render(partialTicks);
+			//FogShader.INSTANCE.render(partialTicks);
 			
-			//	DarkShader.INSTANCE.render(partialTicks); // A test shader to make the world darker
+			//DarkShader.INSTANCE.render(partialTicks); // A test shader to make the world darker
 			
+			// Render transparent LOD sections (such as water)
+			transparencyEnabled = Config.Client.Advanced.Graphics.Quality.transparency.get().transparencyEnabled;
+			fakeOceanFloor = Config.Client.Advanced.Graphics.Quality.transparency.get().fakeTransparencyEnabled;
 			
 			if (Config.Client.Advanced.Graphics.Quality.transparency.get().transparencyEnabled)
 			{
@@ -327,10 +357,21 @@ public class LodRenderer
 				this.bufferHandler.renderTransparent(this);
 				GL32.glDepthMask(true); // Apparently the depth mask state is stored in the FBO, so glState fails to restore it...
 				
-				FogShader.INSTANCE.render(partialTicks);
+				//FogShader.INSTANCE.render(partialTicks);
 			}
 			
 			drawLagSpikeCatcher.end("LodDraw");
+			
+			
+			profiler.popPush("LOD Blit");
+			
+			// Blit the LOD framebuffer onto Minecraft's framebuffer
+			GL32.glBindFramebuffer(GL32.GL_READ_FRAMEBUFFER, this.framebufferId);
+			GL32.glBindFramebuffer(GL32.GL_DRAW_FRAMEBUFFER, MC_RENDER.getTargetFrameBuffer());
+			GL32.glBlitFramebuffer(0, 0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(),
+					0, 0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(),
+					GL32.GL_COLOR_BUFFER_BIT,
+					GL32.GL_NEAREST);
 			
 			
 			
@@ -346,8 +387,6 @@ public class LodRenderer
 				this.quadIBO.unbind();
 			}
 			
-			GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, 0);
-			
 			this.shaderProgram.unbind();
 			
 			if (Config.Client.Advanced.Debugging.DebugWireframe.enableRendering.get())
@@ -357,8 +396,6 @@ public class LodRenderer
 				DebugRenderer.INSTANCE.render(modelViewProjectionMatrix);
 				profiler.popPush("LOD cleanup");
 			}
-			
-			GL32.glClear(GL32.GL_DEPTH_BUFFER_BIT);
 			
 			minecraftGlState.restore();
 			drawCleanup.end("LodDrawCleanup");
@@ -402,6 +439,12 @@ public class LodRenderer
 			this.quadIBO = new QuadElementBuffer();
 			this.quadIBO.reserve(AbstractRenderBuffer.MAX_QUADS_PER_BUFFER);
 		}
+		
+		// Generate framebuffer, color texture, and depth render buffer
+		this.framebufferId = GL32.glGenFramebuffers();
+		this.colorTextureId = GL32.glGenTextures();
+		this.depthRenderbufferId = GL32.glGenRenderbuffers();
+		
 		EVENT_LOGGER.info("Renderer setup complete");
 	}
 	
@@ -447,7 +490,7 @@ public class LodRenderer
 		
 		this.isSetupComplete = false;
 		
-		GLProxy.getInstance().recordOpenGlCall(() -> 
+		GLProxy.getInstance().recordOpenGlCall(() ->
 		{
 			EVENT_LOGGER.info("Renderer Cleanup Started");
 			
@@ -457,6 +500,12 @@ public class LodRenderer
 			{
 				this.quadIBO.destroy(false);
 			}
+			
+			// Delete framebuffer, color texture, and depth texture
+			//GL32.glBindRenderbuffer(GL32.GL_RENDERBUFFER, 0);
+			GL32.glDeleteFramebuffers(this.framebufferId);
+			GL32.glDeleteTextures(this.colorTextureId);
+			GL32.glDeleteRenderbuffers(this.depthRenderbufferId);
 			
 			EVENT_LOGGER.info("Renderer Cleanup Complete");
 		});

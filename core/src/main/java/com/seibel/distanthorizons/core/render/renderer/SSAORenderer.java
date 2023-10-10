@@ -109,7 +109,7 @@ public class SSAORenderer
 		SSAOShader.INSTANCE.FrameBuffer = this.ssaoFramebuffer;
 		SSAOShader.INSTANCE.render(partialTicks);
 		
-		primaryState.RestoreFrameBuffer();
+		primaryState.restore();
 		
 		SSAOApplyShader.INSTANCE.BufferTexture = this.ssaoTexture;
 		SSAOApplyShader.INSTANCE.render(partialTicks);
