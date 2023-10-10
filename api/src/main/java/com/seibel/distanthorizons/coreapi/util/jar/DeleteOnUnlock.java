@@ -12,6 +12,12 @@ import java.util.concurrent.TimeUnit;
  */
 public class DeleteOnUnlock
 {
+	/** How long to wait after attempting once (milliseconds) */
+	private static final int attemptSpeed = 100;
+	/** How many minutes of attempting before it stops */
+	private static final int timeout = 60; // Will continue attempting for an hour, if it doesnt unlock by then, then the computer must be way to slow
+	
+	
 	/**
 	 * @param args Takes whatever the first argument is, treats it as a file, and deletes it once a process lock is lifted from it
 	 */
@@ -20,14 +26,14 @@ public class DeleteOnUnlock
 		File file = new File(args[0]);
 		try
 		{
-			for (int i = 0; i < 600; i++) // As it rests for around 0.1 second each loop, this should last a minute
+			for (int i = 0; i < (60 / ((float) attemptSpeed/1000) ) * timeout; i++)
 			{
 				if (file.renameTo(file)) // If it is able to be renamed, then it is unlocked and can be deleted
 				{
 					Files.delete(file.toPath());
 					break;
 				}
-				TimeUnit.MILLISECONDS.sleep(100);
+				TimeUnit.MILLISECONDS.sleep(attemptSpeed);
 			}
 		}
 		catch (Exception e)
@@ -39,6 +45,6 @@ public class DeleteOnUnlock
 
 		// If it isn't deleted by the end, crash
 		if (Files.exists(file.toPath()))
-			throw new RuntimeException("File was not able to be deleted");
+			throw new RuntimeException("File still exist. So it was not able to be deleted");
 	}
 }
