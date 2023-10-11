@@ -76,7 +76,7 @@ public class FullDataToRenderDataTransformer
 		{
 			return null;
 		}
-		else if (MC.getWrappedClientWorld() == null)
+		else if (MC.getWrappedClientLevel() == null)
 		{
 			// if the client is no longer loaded in the world, render sources cannot be created 
 			return null;

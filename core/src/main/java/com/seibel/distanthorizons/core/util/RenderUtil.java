@@ -272,7 +272,7 @@ public class RenderUtil
 			return false;
 		}
 		
-		if (MC_RENDER.getLightmapWrapper() == null)
+		if (MC_RENDER.getLightmapWrapper(levelWrapper) == null)
 		{
 			return false;
 		}

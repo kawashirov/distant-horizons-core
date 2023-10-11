@@ -26,7 +26,6 @@ import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.SingleColum
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.CompleteFullDataSource;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.interfaces.IFullDataSource;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
-import com.seibel.distanthorizons.core.file.structure.AbstractSaveStructure;
 import com.seibel.distanthorizons.core.file.structure.ClientOnlySaveStructure;
 import com.seibel.distanthorizons.core.generation.DhLightingEngine;
 import com.seibel.distanthorizons.core.level.DhClientLevel;
@@ -178,12 +177,12 @@ public class SubDimensionLevelMatcher implements AutoCloseable
 		//================================//
 		
 		// attempt to get a chunk at the player's pos
-		IChunkWrapper newlyLoadedChunk = MC_CLIENT.getWrappedClientWorld().tryGetChunk(new DhChunkPos(this.playerData.playerBlockPos));
+		IChunkWrapper newlyLoadedChunk = MC_CLIENT.getWrappedClientLevel().tryGetChunk(new DhChunkPos(this.playerData.playerBlockPos));
 		if (newlyLoadedChunk == null)
 		{
 			return null;
 		}
-		DhLightingEngine.INSTANCE.lightChunk(newlyLoadedChunk, new ArrayList<>(), MC_CLIENT.getWrappedClientWorld().hasSkyLight() ? 15 : 0);
+		DhLightingEngine.INSTANCE.lightChunk(newlyLoadedChunk, new ArrayList<>(), MC_CLIENT.getWrappedClientLevel().hasSkyLight() ? 15 : 0);
 		
 		// build the chunk LOD
 		if (!LodDataBuilder.canGenerateLodFromChunk(newlyLoadedChunk))
@@ -208,7 +207,7 @@ public class SubDimensionLevelMatcher implements AutoCloseable
 		//================================//
 		
 		// log the start of this attempt
-		LOGGER.info("Attempting to determine sub-dimension for [" + MC_CLIENT.getWrappedClientWorld().getDimensionType().getDimensionName() + "]");
+		LOGGER.info("Attempting to determine sub-dimension for [" + MC_CLIENT.getWrappedClientLevel().getDimensionType().getDimensionName() + "]");
 		LOGGER.info("Player block pos in dimension: [" + this.playerData.playerBlockPos.x + "," + this.playerData.playerBlockPos.y + "," + this.playerData.playerBlockPos.z + "]");
 		LOGGER.info("Potential Sub Dimension folders: [" + this.potentialLevelFolders.size() + "]");
 		

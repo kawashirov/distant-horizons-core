@@ -41,6 +41,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.misc.ILightMapWrapper;
 import com.seibel.distanthorizons.api.enums.rendering.EFogColorMode;
 import com.seibel.distanthorizons.core.render.fog.LodFogConfig;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
+import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.distanthorizons.coreapi.util.math.Mat4f;
 import com.seibel.distanthorizons.coreapi.util.math.Vec3d;
 import com.seibel.distanthorizons.coreapi.util.math.Vec3f;
@@ -178,7 +179,7 @@ public class LodRenderer
 		}
 	}
 	
-	public void drawLODs(Mat4f baseModelViewMatrix, Mat4f baseProjectionMatrix, float partialTicks, IProfilerWrapper profiler)
+	public void drawLODs(IClientLevelWrapper clientLevelWrapper, Mat4f baseModelViewMatrix, Mat4f baseProjectionMatrix, float partialTicks, IProfilerWrapper profiler)
 	{
 		if (this.rendererClosed)
 		{
@@ -200,6 +201,14 @@ public class LodRenderer
 				// and often do change the projection entirely, as well as the output usage.
 				
 				//EVENT_LOGGER.debug("Skipping shadow pass render.");
+				return;
+			}
+			
+			// Note: Since lightmapTexture is changing every frame, it's faster to recreate it than to reuse the old one.
+			ILightMapWrapper lightmap = MC_RENDER.getLightmapWrapper(clientLevelWrapper);
+			if (lightmap == null)
+			{
+				// this shouldn't normally happen, but just in case
 				return;
 			}
 			
@@ -307,10 +316,8 @@ public class LodRenderer
 			
 			/*---------Fill uniform data--------*/
 			this.shaderProgram.fillUniformData(modelViewProjectionMatrix, /*Light map = GL_TEXTURE0*/ 0,
-					MC.getWrappedClientWorld().getMinHeight(), vanillaBlockRenderedDistance);
+					MC.getWrappedClientLevel().getMinHeight(), vanillaBlockRenderedDistance);
 			
-			// Note: Since lightmapTexture is changing every frame, it's faster to recreate it than to reuse the old one.
-			ILightMapWrapper lightmap = MC_RENDER.getLightmapWrapper();
 			lightmap.bind();
 			if (ENABLE_IBO)
 			{
