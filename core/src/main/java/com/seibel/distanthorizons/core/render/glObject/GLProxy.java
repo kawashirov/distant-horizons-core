@@ -21,6 +21,7 @@ package com.seibel.distanthorizons.core.render.glObject;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.seibel.distanthorizons.api.enums.config.EGLErrorHandlingMode;
+import com.seibel.distanthorizons.api.enums.config.EGlProfileMode;
 import com.seibel.distanthorizons.api.enums.config.EGpuUploadMethod;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
@@ -142,7 +143,7 @@ public class GLProxy
 		}
 	 	GL_LOGGER.info("minecraftGlCapabilities:\n" + this.getVersionInfo(this.minecraftGlCapabilities));
 		
-		if (Config.Client.Advanced.Debugging.overrideVanillaGLLogger.get())
+		if (Config.Client.Advanced.Debugging.OpenGl.overrideVanillaGLLogger.get())
 		{
 			GLUtil.setupDebugMessageCallback(new PrintStream(new GLMessageOutputStream(GLProxy::logMessage, this.vanillaDebugMessageBuilder), true));
 		}
@@ -160,19 +161,47 @@ public class GLProxy
 		// make the context window invisible
 		GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
 		
-		// set the GL version
-		// DO NOT comment out the following 2 lines: they are needed for mac and creating forward compatible contexts
-		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
-		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 2);
-		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_DEBUG_CONTEXT, GLFW.GLFW_TRUE);
-		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GLFW.GLFW_TRUE);
-		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);
+		int glMajorVersion = Config.Client.Advanced.Debugging.OpenGl.glContextMajorVersion.get();
+		int glMinorVersion = Config.Client.Advanced.Debugging.OpenGl.glContextMinorVersion.get();
+		boolean debugContextEnabled = Config.Client.Advanced.Debugging.OpenGl.enableGlDebugContext.get();
+		boolean forwardCompatEnabled = Config.Client.Advanced.Debugging.OpenGl.enableGlForwardCompatibilityMode.get();
+		
+		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, glMajorVersion);
+		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, glMinorVersion);
+		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_DEBUG_CONTEXT, debugContextEnabled ? GLFW.GLFW_TRUE : GLFW.GLFW_FALSE);
+		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, forwardCompatEnabled ? GLFW.GLFW_TRUE : GLFW.GLFW_FALSE);
+		
+		int profileModeInt;
+		EGlProfileMode profileModeEnum = Config.Client.Advanced.Debugging.OpenGl.glProfileMode.get();
+		switch (profileModeEnum)
+		{
+			case CORE:
+				profileModeInt = GLFW.GLFW_OPENGL_CORE_PROFILE;
+				break;
+			case COMPAT:
+				profileModeInt = GLFW.GLFW_OPENGL_COMPAT_PROFILE;
+				break;
+			default:
+			case ANY:
+				profileModeInt = GLFW.GLFW_OPENGL_ANY_PROFILE;
+				break;
+		}
+		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, profileModeInt);
+		
+		String failErrorMessage = 
+				"ERROR: Failed to create LodBuilder OpenGL GLFW context for " +
+				"OpenGL Version: ["+glMajorVersion+"."+glMinorVersion+"] " +
+				"with Debugging: ["+(debugContextEnabled ? "Enabled" : "Disabled")+"], " +
+				"Forward Compatibility: ["+(forwardCompatEnabled ? "Enabled" : "Disabled")+"], " +
+				"and Profile: ["+profileModeEnum.name()+"]. \n" +
+				"Your OS and GPU Driver may have not support this combination.";
+		
 		
 		// create the Lod Builder context
 		this.lodBuilderGlContext = GLFW.glfwCreateWindow(64, 48, "LOD Builder Window", 0L, this.minecraftGlContext);
 		if (this.lodBuilderGlContext == 0)
 		{
-			GL_LOGGER.error("ERROR: Failed to create LodBuilder GLFW context for OpenGL 3.2 with Forward compatible Core Profile! Your OS may have not been able to support it.");
+			GL_LOGGER.error(failErrorMessage);
 			GL_LOGGER.error("Minecraft GL Capabilities:\n [\n"+ReflectionUtil.getAllFieldValuesAsString(this.minecraftGlCapabilities)+"\n]\n");
 			
 			throw new UnsupportedOperationException("Forward Compat Core Profile 3.2 creation failure");
@@ -197,7 +226,7 @@ public class GLProxy
 		this.proxyWorkerGlContext = GLFW.glfwCreateWindow(64, 48, "LOD proxy worker Window", 0L, this.minecraftGlContext);
 		if (this.proxyWorkerGlContext == 0)
 		{
-			GL_LOGGER.error("ERROR: Failed to create GLProxy Worker GLFW context for OpenGL 3.2 with Forward compatible Core Profile! Your OS may have not been able to support it.");
+			GL_LOGGER.error(failErrorMessage);
 			GL_LOGGER.error("Minecraft GL Capabilities:\n [\n"+ReflectionUtil.getAllFieldValuesAsString(this.minecraftGlCapabilities)+"\n]\n");
 			
 			throw new UnsupportedOperationException("Forward Compat Core Profile 3.2 creation failure");
@@ -464,7 +493,7 @@ public class GLProxy
 	
 	private static void logMessage(GLMessage msg)
 	{
-		EGLErrorHandlingMode errorHandlingMode = Config.Client.Advanced.Debugging.glErrorHandlingMode.get();
+		EGLErrorHandlingMode errorHandlingMode = Config.Client.Advanced.Debugging.OpenGl.glErrorHandlingMode.get();
 		if (errorHandlingMode == EGLErrorHandlingMode.IGNORE)
 		{
 			return;

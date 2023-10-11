@@ -534,11 +534,6 @@ public class FullDataMetaFile extends AbstractMetaDataContainerFile implements I
 	@SuppressWarnings("resource") // due to DataObjTracker and DataObjSoftTracker being created outside a try-catch block
 	private CompletableFuture<IFullDataSource> applyWriteQueueAndSaveAsync(IFullDataSource fullDataSourceToUpdate)
 	{
-		if (Config.Client.Advanced.Debugging.skipFullDataUpdateQueue.get())
-		{
-			return CompletableFuture.completedFuture(fullDataSourceToUpdate);
-		}
-		
 		CompletableFuture<IFullDataSource> completionFuture = new CompletableFuture<>();
 		
 		

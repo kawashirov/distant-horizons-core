@@ -1148,46 +1148,6 @@ public class Config
 						.addListener(UnsafeValuesConfigListener.INSTANCE)
 						.build();
 				
-				public static ConfigEntry<Boolean> overrideVanillaGLLogger = new ConfigEntry.Builder<Boolean>()
-						.set(ModInfo.IS_DEV_BUILD)
-						.comment(""
-								+ "Requires a reboot to change. \n"
-								+ "")
-						.build();
-				
-				public static ConfigEntry<EGLErrorHandlingMode> glErrorHandlingMode = new ConfigEntry.Builder<EGLErrorHandlingMode>()
-						.set(ModInfo.IS_DEV_BUILD ? EGLErrorHandlingMode.LOG : EGLErrorHandlingMode.IGNORE)
-						.comment(""
-								+ "Defines how OpenGL errors are handled. \n"
-								+ "May incorrectly catch OpenGL errors thrown by other mods. \n"
-								+ "\n"
-								+ EGLErrorHandlingMode.IGNORE + ": Do nothing. \n"
-								+ EGLErrorHandlingMode.LOG + ": write an error to the log. \n"
-								+ EGLErrorHandlingMode.LOG_THROW + ": write to the log and throw an exception. \n"
-								+ "           Warning: this should only be enabled when debugging the LOD renderer \n" 
-								+ "           as it may break Minecraft's renderer when an exception is thrown. \n"
-								+ "")
-						.build();
-				
-				// TODO temporary test, remove me
-				public static ConfigEntry<Boolean> skipChunkLoadUpdates = new ConfigEntry.Builder<Boolean>()
-						.set(false)
-						.comment("")
-						.build();
-				
-				// TODO temporary test, remove me
-				public static ConfigEntry<Boolean> skipChunkUnloadUpdates = new ConfigEntry.Builder<Boolean>()
-						.set(false)
-						.comment("")
-						.build();
-				
-				// TODO temporary test, remove me
-				public static ConfigEntry<Boolean> skipFullDataUpdateQueue = new ConfigEntry.Builder<Boolean>()
-						.set(false)
-						.comment("")
-						.build();
-				
-				
 				
 				
 				
@@ -1231,6 +1191,90 @@ public class Config
 					public static ConfigEntry<Boolean> showRenderDataFileStatus = new ConfigEntry.Builder<Boolean>()
 							.set(false)
 							.comment("Render render data file status?")
+							.build();
+					
+				}
+				
+				
+				
+				public static ConfigCategory openGl = new ConfigCategory.Builder()
+						.set(OpenGl.class)
+						.build();
+				
+				public static class OpenGl
+				{
+					public static ConfigEntry<Boolean> overrideVanillaGLLogger = new ConfigEntry.Builder<Boolean>()
+							.set(ModInfo.IS_DEV_BUILD)
+							.comment(""
+									+ "Requires a reboot to change. \n"
+									+ "")
+							.build();
+					
+					public static ConfigEntry<EGLErrorHandlingMode> glErrorHandlingMode = new ConfigEntry.Builder<EGLErrorHandlingMode>()
+							.set(ModInfo.IS_DEV_BUILD ? EGLErrorHandlingMode.LOG : EGLErrorHandlingMode.IGNORE)
+							.comment(""
+									+ "Defines how OpenGL errors are handled. \n"
+									+ "May incorrectly catch OpenGL errors thrown by other mods. \n"
+									+ "\n"
+									+ EGLErrorHandlingMode.IGNORE + ": Do nothing. \n"
+									+ EGLErrorHandlingMode.LOG + ": write an error to the log. \n"
+									+ EGLErrorHandlingMode.LOG_THROW + ": write to the log and throw an exception. \n"
+									+ "           Warning: this should only be enabled when debugging the LOD renderer \n"
+									+ "           as it may break Minecraft's renderer when an exception is thrown. \n"
+									+ "")
+							.build();
+					
+					public static ConfigEntry<Integer> glContextMajorVersion = new ConfigEntry.Builder<Integer>()
+							.setMinDefaultMax(3, 3, 4)
+							.comment("" +
+									"Can be changed if you experience crashing when loading into a world.\n" +
+									"Note: setting to an invalid version may also cause the game to crash.\n" +
+									"\n" +
+									"Defines the requested OpenGL context major version Distant Horizons will create. \n" +
+									"Possible values (DH requires 3.2 or higher at minimum): \n" +
+									"4.6, 4.5, 4.4, 4.3, 4.2, 4.1, 4.0 \n" +
+									"3.3, 3.2 \n" +
+									"")
+							.build();
+					public static ConfigEntry<Integer> glContextMinorVersion = new ConfigEntry.Builder<Integer>()
+							.setMinDefaultMax(0, 2, 6)
+							.comment("" +
+									"Can be changed if you experience crashing when loading into a world.\n" +
+									"Note: setting to an invalid version may also cause the game to crash.\n" +
+									"\n" +
+									"Defines the requested OpenGL context major version Distant Horizons will create. \n" +
+									"Possible values (DH requires 3.2 or higher at minimum): \n" +
+									"4.6, 4.5, 4.4, 4.3, 4.2, 4.1, 4.0 \n" +
+									"3.3, 3.2 \n" +
+									"")
+							.build();
+					
+					public static ConfigEntry<EGlProfileMode> glProfileMode = new ConfigEntry.Builder<EGlProfileMode>()
+							.set(EGlProfileMode.CORE)
+							.comment("" +
+									"Can be changed if you experience crashing when loading into a world.\n" +
+									"\n" +
+									"Defines the OpenGL context type Distant Horizon's will create. \n" +
+									"Generally this should be left as ["+EGlProfileMode.CORE+"] unless there is an issue with your GPU driver. \n" +
+									"")
+							.build();
+					public static ConfigEntry<Boolean> enableGlForwardCompatibilityMode = new ConfigEntry.Builder<Boolean>()
+							.set(true)
+							.comment("" +
+									"Can be changed if you experience crashing when loading into a world.\n" +
+									"\n" +
+									"If true Distant Horizon's OpenGL contexts will be created with legacy OpenGL methods disabled. \n" +
+									"Distant Horizons doesn't use any legacy OpenGL methods so normally this should be disabled. \n" +
+									"")
+							.build();
+					public static ConfigEntry<Boolean> enableGlDebugContext = new ConfigEntry.Builder<Boolean>()
+							.set(ModInfo.IS_DEV_BUILD)
+							.comment("" +
+									"Can be changed if you experience crashing when loading into a world.\n" +
+									"\n" +
+									"If true Distant Horizon's OpenGL contexts will be created with debugging enabled. \n" +
+									"This allows for enhanced debugging but may throw warnings for other mods or active overlay software. \n" +
+									"")
 							.build();
 					
 				}

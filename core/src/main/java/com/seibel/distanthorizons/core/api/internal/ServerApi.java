@@ -152,24 +152,8 @@ public class ServerApi
 	// chunk modified events //
 	//=======================//
 	
-	public void serverChunkLoadEvent(IChunkWrapper chunkWrapper, ILevelWrapper level)
-	{
-		if (Config.Client.Advanced.Debugging.skipChunkLoadUpdates.get())
-		{
-			return;
-		}
-		
-		SharedApi.INSTANCE.applyChunkUpdate(chunkWrapper, level, false);
-	}
-	public void serverChunkSaveEvent(IChunkWrapper chunkWrapper, ILevelWrapper level)
-	{
-		if (Config.Client.Advanced.Debugging.skipChunkUnloadUpdates.get())
-		{
-			return;
-		}
-		
-		SharedApi.INSTANCE.applyChunkUpdate(chunkWrapper, level, false);
-	}
+	public void serverChunkLoadEvent(IChunkWrapper chunkWrapper, ILevelWrapper level) { SharedApi.INSTANCE.applyChunkUpdate(chunkWrapper, level, false); }
+	public void serverChunkSaveEvent(IChunkWrapper chunkWrapper, ILevelWrapper level) { SharedApi.INSTANCE.applyChunkUpdate(chunkWrapper, level, false); }
 	
 	
 	
