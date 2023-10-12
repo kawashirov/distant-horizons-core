@@ -311,9 +311,13 @@ public class SelfUpdater
 				}
 				else
 				{
+					// Gets the Java binary
+					String javaHome = System.getProperty("java.home");
+					String javaBin = javaHome + File.separator + "bin" + File.separator + "java";
+					
 					// Execute the new jar, to delete the old jar once it detects the lock has been lifted
 					Runtime.getRuntime().exec(
-							"java -cp "+ 
+							javaBin +" -cp "+ 
 									newFileLocation.getAbsolutePath()
 									+" "+ 
 									DeleteOnUnlock.class.getCanonicalName() 
