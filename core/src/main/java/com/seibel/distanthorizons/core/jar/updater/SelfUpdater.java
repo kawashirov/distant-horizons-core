@@ -19,18 +19,17 @@
 
 package com.seibel.distanthorizons.core.jar.updater;
 
-import com.seibel.distanthorizons.api.enums.config.EUpdateBranch;
+import com.seibel.distanthorizons.core.config.Config;
+import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.jar.JarUtils;
 import com.seibel.distanthorizons.core.jar.ModGitInfo;
 import com.seibel.distanthorizons.core.jar.Platform;
 import com.seibel.distanthorizons.core.jar.installer.GitlabGetter;
-import com.seibel.distanthorizons.coreapi.ModInfo;
-import com.seibel.distanthorizons.core.config.Config;
-import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.jar.installer.ModrinthGetter;
 import com.seibel.distanthorizons.core.jar.installer.WebDownloader;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IVersionConstants;
+import com.seibel.distanthorizons.coreapi.ModInfo;
 import com.seibel.distanthorizons.coreapi.util.jar.DeleteOnUnlock;
 import org.apache.logging.log4j.Logger;
 
@@ -38,12 +37,9 @@ import javax.swing.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.net.URL;
-import java.net.URLClassLoader;
+import java.net.URLEncoder;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.MessageDigest;
-import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -315,15 +311,15 @@ public class SelfUpdater
 				}
 				else
 				{
-					/* // If we want the user to delete it manually
-					System.setProperty("java.awt.headless", "false"); // Required to make it work
-					JOptionPane.showMessageDialog(null, "As you are on Windows, DH can not update fully by itself\nPlease delete ["+ JarUtils.jarFile.getAbsolutePath() +"] manually\nClick OK once ready.", ModInfo.READABLE_NAME, JOptionPane.INFORMATION_MESSAGE);
-					
-					Runtime.getRuntime().exec("explorer.exe /select," + JarUtils.jarFile.getAbsolutePath());
-					 */
-					
 					// Execute the new jar, to delete the old jar once it detects the lock has been lifted
-					Runtime.getRuntime().exec("java -cp "+ newFileLocation.getAbsolutePath() +" "+ DeleteOnUnlock.class.getCanonicalName() +" "+ JarUtils.jarFile.getAbsolutePath());
+					Runtime.getRuntime().exec(
+							"java -cp "+ 
+									newFileLocation.getAbsolutePath()
+									+" "+ 
+									DeleteOnUnlock.class.getCanonicalName() 
+									+" "+
+									URLEncoder.encode(JarUtils.jarFile.getAbsolutePath(), "UTF-8") // Encode the file location so that it doesnt have any spaces
+					);
 				}
 			}
 			catch (Exception e)
