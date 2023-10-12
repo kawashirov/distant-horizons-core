@@ -317,7 +317,7 @@ public class SelfUpdater
 					
 					// Execute the new jar, to delete the old jar once it detects the lock has been lifted
 					Runtime.getRuntime().exec(
-							javaBin +" -cp "+ 
+							"\""+ javaBin +"\" -cp "+ 
 									newFileLocation.getAbsolutePath()
 									+" "+ 
 									DeleteOnUnlock.class.getCanonicalName() 
