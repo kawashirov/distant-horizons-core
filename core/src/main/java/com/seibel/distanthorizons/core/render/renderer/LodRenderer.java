@@ -80,6 +80,11 @@ public class LodRenderer
 	/** used to prevent cleaning up render resources while they are being used */
 	private static final ReentrantLock renderLock = new ReentrantLock();
 	
+	// these ID's either what any render is currently using (since only one renderer can be active at a time), or just used previously
+	private static int activeFramebufferId = -1;
+	private static int activeColorTextureId = -1;
+	private static int activeDepthTextureId = -1;
+	
 	
 	
 	public void setupOffset(DhBlockPos pos) throws IllegalStateException
@@ -141,9 +146,16 @@ public class LodRenderer
 	public QuadElementBuffer quadIBO = null;
 	public boolean isSetupComplete = false;
 	
+	// frameBuffer and texture ID's for this renderer
 	private int framebufferId;
 	private int colorTextureId;
-	private int depthRenderbufferId;
+	private int depthTextureId;
+	
+	
+	
+	//=============//
+	// constructor //
+	//=============//
 	
 	public LodRenderer(RenderBufferHandler bufferHandler)
 	{
@@ -178,6 +190,12 @@ public class LodRenderer
 			renderLock.unlock();
 		}
 	}
+	
+	
+	
+	//===============//
+	// main renderer //
+	//===============//
 	
 	public void drawLODs(IClientLevelWrapper clientLevelWrapper, Mat4f baseModelViewMatrix, Mat4f baseProjectionMatrix, float partialTicks, IProfilerWrapper profiler)
 	{
@@ -234,8 +252,12 @@ public class LodRenderer
 				this.setup();
 			}
 			
-			// Bind LOD color buffer
+			
+			// Bind LOD frame buffer
 			GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, this.framebufferId);
+			
+			this.setActiveFramebufferId(this.framebufferId);
+			
 			
 			// Bind LOD color texture
 			GL32.glBindTexture(GL32.GL_TEXTURE_2D, this.colorTextureId);
@@ -251,16 +273,39 @@ public class LodRenderer
 			GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MAG_FILTER, GL32.GL_LINEAR);
 			GL32.glFramebufferTexture2D(GL32.GL_DRAW_FRAMEBUFFER, GL32.GL_COLOR_ATTACHMENT0, GL32.GL_TEXTURE_2D, this.colorTextureId, 0);
 			
-			// Bind LOD depth buffer
-			GL32.glBindRenderbuffer(GL32.GL_RENDERBUFFER, this.depthRenderbufferId);
-			GL32.glRenderbufferStorage(GL32.GL_RENDERBUFFER, GL32.GL_DEPTH_COMPONENT24, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight());
-			GL32.glFramebufferRenderbuffer(GL32.GL_FRAMEBUFFER, GL32.GL_DEPTH_ATTACHMENT, GL32.GL_RENDERBUFFER, this.depthRenderbufferId);
+			this.setActiveColorTextureId(this.colorTextureId);
 			
-			// Clear LOD framebuffer and depth buffer
+			
+			// bind LOD depth texture 
+			GL32.glBindTexture(GL32.GL_TEXTURE_2D, this.depthTextureId);
+			GL32.glTexImage2D(GL32.GL_TEXTURE_2D,
+					0,
+					GL32.GL_DEPTH_COMPONENT32,
+					MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(),
+					0,
+					GL32.GL_DEPTH_COMPONENT,
+					GL32.GL_UNSIGNED_BYTE,
+					(ByteBuffer) null);
+			GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MIN_FILTER, GL32.GL_LINEAR);
+			GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MAG_FILTER, GL32.GL_LINEAR);
+			GL32.glFramebufferTexture2D(GL32.GL_DRAW_FRAMEBUFFER, GL32.GL_DEPTH_ATTACHMENT, GL32.GL_TEXTURE_2D, this.depthTextureId, 0);
+			
+			this.setActiveDepthTextureId(this.depthTextureId);
+			
+			
+			// Clear LOD framebuffer and depth buffers
 			GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
 			
 			GL32.glEnable(GL32.GL_DEPTH_TEST);
 			GL32.glDepthFunc(GL32.GL_LESS);
+			
+			
+			if(GL32.glCheckFramebufferStatus(GL32.GL_FRAMEBUFFER) != GL32.GL_FRAMEBUFFER_COMPLETE)
+			{
+				// This generally means something wasn't bound, IE missing either the color or depth texture
+				tickLogger.warn("FrameBuffer ["+this.framebufferId+"] isn't complete.");
+			}
+			
 			
 			// Set OpenGL polygon mode
 			boolean renderWireframe = Config.Client.Advanced.Debugging.renderWireframe.get();
@@ -342,7 +387,7 @@ public class LodRenderer
 			{
 				profiler.popPush("LOD SSAO");
 				SSAOShader.INSTANCE.setProjectionMatrix(projectionMatrix);
-				//SSAORenderer.INSTANCE.render(minecraftGlState, partialTicks);
+				SSAORenderer.INSTANCE.render(minecraftGlState, partialTicks);
 			}
 			
 			profiler.popPush("LOD Fog");
@@ -372,6 +417,7 @@ public class LodRenderer
 			
 			profiler.popPush("LOD Blit");
 			
+			// TODO replace with something like SSAOApplyShader to fix overwriting MC's sky
 			// Blit the LOD framebuffer onto Minecraft's framebuffer
 			GL32.glBindFramebuffer(GL32.GL_READ_FRAMEBUFFER, this.framebufferId);
 			GL32.glBindFramebuffer(GL32.GL_DRAW_FRAMEBUFFER, MC_RENDER.getTargetFrameBuffer());
@@ -450,7 +496,7 @@ public class LodRenderer
 		// Generate framebuffer, color texture, and depth render buffer
 		this.framebufferId = GL32.glGenFramebuffers();
 		this.colorTextureId = GL32.glGenTextures();
-		this.depthRenderbufferId = GL32.glGenRenderbuffers();
+		this.depthTextureId = GL32.glGenTextures();
 		
 		EVENT_LOGGER.info("Renderer setup complete");
 	}
@@ -471,6 +517,24 @@ public class LodRenderer
 		return fogColor;
 	}
 	private Color getSpecialFogColor(float partialTicks) { return MC_RENDER.getSpecialFogColor(partialTicks); }
+	
+	
+	
+	//===============//
+	// API functions //
+	//===============//
+	
+	private void setActiveFramebufferId(int frameBufferId) { activeFramebufferId = frameBufferId; }
+	/** Returns -1 if no frame buffer has been bound yet */
+	public static int getActiveFramebufferId() { return activeFramebufferId; }
+	
+	private void setActiveColorTextureId(int colorTextureId) { activeColorTextureId = colorTextureId; }
+	/** Returns -1 if no texture has been bound yet */
+	public static int getActiveColorTextureId() { return activeColorTextureId; }
+	
+	private void setActiveDepthTextureId(int depthTextureId) { activeDepthTextureId = depthTextureId; }
+	/** Returns -1 if no texture has been bound yet */
+	public static int getActiveDepthTextureId() { return activeDepthTextureId; }
 	
 	
 	
@@ -512,7 +576,7 @@ public class LodRenderer
 			//GL32.glBindRenderbuffer(GL32.GL_RENDERBUFFER, 0);
 			GL32.glDeleteFramebuffers(this.framebufferId);
 			GL32.glDeleteTextures(this.colorTextureId);
-			GL32.glDeleteRenderbuffers(this.depthRenderbufferId);
+			GL32.glDeleteTextures(this.depthTextureId);
 			
 			EVENT_LOGGER.info("Renderer Cleanup Complete");
 		});

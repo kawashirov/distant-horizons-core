@@ -21,6 +21,7 @@ package com.seibel.distanthorizons.core.render.renderer.shaders;
 
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.render.glObject.shader.ShaderProgram;
+import com.seibel.distanthorizons.core.render.renderer.LodRenderer;
 import com.seibel.distanthorizons.core.render.renderer.ScreenQuad;
 import com.seibel.distanthorizons.coreapi.util.math.Mat4f;
 import org.lwjgl.opengl.GL32;
@@ -93,7 +94,7 @@ public class SSAOShader extends AbstractShaderRenderer
 				Config.Client.Advanced.Graphics.Ssao.bias.get().floatValue());
 		
 		GL32.glActiveTexture(GL32.GL_TEXTURE0);
-		GL32.glBindTexture(GL32.GL_TEXTURE_2D, MC_RENDER.getDepthTextureId());
+		GL32.glBindTexture(GL32.GL_TEXTURE_2D, LodRenderer.getActiveDepthTextureId());
 		
 		GL32.glUniform1i(this.gDepthMapUniform, 0);
 	}
