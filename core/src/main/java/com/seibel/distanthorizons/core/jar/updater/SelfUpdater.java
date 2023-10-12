@@ -317,9 +317,9 @@ public class SelfUpdater
 					
 					// Execute the new jar, to delete the old jar once it detects the lock has been lifted
 					Runtime.getRuntime().exec(
-							"\""+ javaBin +"\" -cp "+ 
+							"\""+ javaBin +"\" -cp \""+ 
 									newFileLocation.getAbsolutePath()
-									+" "+ 
+									+"\" "+ 
 									DeleteOnUnlock.class.getCanonicalName() 
 									+" "+
 									URLEncoder.encode(JarUtils.jarFile.getAbsolutePath(), "UTF-8") // Encode the file location so that it doesnt have any spaces
