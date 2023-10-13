@@ -62,6 +62,7 @@ public interface IMinecraftRenderWrapper extends IBindable
 	
 	default Color getSpecialFogColor(float partialTicks) { return getFogColor(partialTicks); }
 	
+	/** Unless you really need to know if the player is blind, use {@link IMinecraftRenderWrapper#isFogStateSpecial()} instead */
 	boolean isFogStateSpecial();
 	
 	Color getSkyColor();
