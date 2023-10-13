@@ -386,8 +386,7 @@ public class LodRenderer
 			if (Config.Client.Advanced.Graphics.Ssao.enabled.get())
 			{
 				profiler.popPush("LOD SSAO");
-				SSAOShader.INSTANCE.setProjectionMatrix(projectionMatrix);
-				SSAORenderer.INSTANCE.render(minecraftGlState, partialTicks);
+				SSAORenderer.INSTANCE.render(minecraftGlState, projectionMatrix, partialTicks);
 			}
 			
 			profiler.popPush("LOD Fog");

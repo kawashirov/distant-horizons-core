@@ -22,11 +22,19 @@ package com.seibel.distanthorizons.core.render.renderer.shaders;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.render.glObject.shader.ShaderProgram;
 import com.seibel.distanthorizons.core.render.renderer.LodRenderer;
+import com.seibel.distanthorizons.core.render.renderer.SSAORenderer;
 import com.seibel.distanthorizons.core.render.renderer.ScreenQuad;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import org.lwjgl.opengl.GL32;
 
+/**
+ * Draws the SSAO texture onto DH's FrameBuffer. <br><br>
+ * 
+ * See Also: <br>
+ * {@link SSAORenderer} - Parent to this shader. <br>
+ * {@link SSAOShader} - draws the SSAO texture. <br>
+ */
 public class SSAOApplyShader extends AbstractShaderRenderer
 {
 	public static SSAOApplyShader INSTANCE = new SSAOApplyShader();
