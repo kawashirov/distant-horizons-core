@@ -414,16 +414,10 @@ public class LodRenderer
 			drawLagSpikeCatcher.end("LodDraw");
 			
 			
-			profiler.popPush("LOD Blit");
+			profiler.popPush("LOD Apply");
 			
-			// TODO replace with something like SSAOApplyShader to fix overwriting MC's sky
-			// Blit the LOD framebuffer onto Minecraft's framebuffer
-			GL32.glBindFramebuffer(GL32.GL_READ_FRAMEBUFFER, this.framebufferId);
-			GL32.glBindFramebuffer(GL32.GL_DRAW_FRAMEBUFFER, MC_RENDER.getTargetFrameBuffer());
-			GL32.glBlitFramebuffer(0, 0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(),
-					0, 0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(),
-					GL32.GL_COLOR_BUFFER_BIT,
-					GL32.GL_NEAREST);
+			// Copy the LOD framebuffer to Minecraft's framebuffer
+			DhApplyShader.INSTANCE.render(partialTicks);
 			
 			
 			
