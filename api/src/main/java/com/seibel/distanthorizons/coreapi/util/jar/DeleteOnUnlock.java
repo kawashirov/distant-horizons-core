@@ -1,6 +1,7 @@
 package com.seibel.distanthorizons.coreapi.util.jar;
 
 import java.io.File;
+import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.util.concurrent.TimeUnit;
 
@@ -19,13 +20,18 @@ public class DeleteOnUnlock
 	
 	
 	/**
-	 * @param args Takes whatever the first argument is, treats it as a file, and deletes it once a process lock is lifted from it
+	 * @param args Takes whatever the first argument is, treats it as a file, and deletes it once a process lock is lifted from it <br>
+	 *  Note: This argument should also be encoded in UTF-8
 	 */
 	public static void main(String[] args)
 	{
-		File file = new File(args[0]);
 		try
 		{
+			File file = new File(
+					URLDecoder.decode(args[0], "UTF-8")
+			);
+			
+			
 			for (int i = 0; i < (60 / ((float) attemptSpeed/1000) ) * timeout; i++)
 			{
 				if (file.renameTo(file)) // If it is able to be renamed, then it is unlocked and can be deleted
@@ -41,10 +47,5 @@ public class DeleteOnUnlock
 			e.printStackTrace();
 			throw new RuntimeException("Deletion failed");
 		}
-
-
-		// If it isn't deleted by the end, crash
-		if (Files.exists(file.toPath()))
-			throw new RuntimeException("File still exist. So it was not able to be deleted");
 	}
 }
