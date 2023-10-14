@@ -391,7 +391,7 @@ public class LodRenderer
 			
 			profiler.popPush("LOD Fog");
 			FogShader.INSTANCE.setModelViewProjectionMatrix(modelViewProjectionMatrix);
-			//FogShader.INSTANCE.render(partialTicks);
+			FogShader.INSTANCE.render(partialTicks);
 			
 			//DarkShader.INSTANCE.render(partialTicks); // A test shader to make the world darker
 			
@@ -408,7 +408,7 @@ public class LodRenderer
 				this.bufferHandler.renderTransparent(this);
 				GL32.glDepthMask(true); // Apparently the depth mask state is stored in the FBO, so glState fails to restore it...
 				
-				//FogShader.INSTANCE.render(partialTicks);
+				FogShader.INSTANCE.render(partialTicks);
 			}
 			
 			drawLagSpikeCatcher.end("LodDraw");
