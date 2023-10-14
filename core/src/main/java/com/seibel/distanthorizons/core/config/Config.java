@@ -30,8 +30,10 @@ import com.seibel.distanthorizons.core.config.types.*;
 import com.seibel.distanthorizons.core.config.types.enums.*;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.util.EnumUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
 import com.seibel.distanthorizons.coreapi.ModInfo;
+import com.seibel.distanthorizons.coreapi.util.StringUtil;
 import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
@@ -1224,30 +1226,30 @@ public class Config
 									+ "")
 							.build();
 					
-					public static ConfigEntry<Integer> glContextMajorVersion = new ConfigEntry.Builder<Integer>()
-							.setMinDefaultMax(3, 3, 4)
-							.comment("" +
-									"Can be changed if you experience crashing when loading into a world.\n" +
-									"Note: setting to an invalid version may also cause the game to crash.\n" +
-									"\n" +
-									"Defines the requested OpenGL context major version Distant Horizons will create. \n" +
-									"Possible values (DH requires 3.2 or higher at minimum): \n" +
-									"4.6, 4.5, 4.4, 4.3, 4.2, 4.1, 4.0 \n" +
-									"3.3, 3.2 \n" +
-									"")
-							.build();
-					public static ConfigEntry<Integer> glContextMinorVersion = new ConfigEntry.Builder<Integer>()
-							.setMinDefaultMax(0, 2, 6)
-							.comment("" +
-									"Can be changed if you experience crashing when loading into a world.\n" +
-									"Note: setting to an invalid version may also cause the game to crash.\n" +
-									"\n" +
-									"Defines the requested OpenGL context major version Distant Horizons will create. \n" +
-									"Possible values (DH requires 3.2 or higher at minimum): \n" +
-									"4.6, 4.5, 4.4, 4.3, 4.2, 4.1, 4.0 \n" +
-									"3.3, 3.2 \n" +
-									"")
-							.build();
+					//public static ConfigEntry<Integer> glContextMajorVersion = new ConfigEntry.Builder<Integer>()
+					//		.setMinDefaultMax(3, 3, 4)
+					//		.comment("" +
+					//				"Can be changed if you experience crashing when loading into a world.\n" +
+					//				"Note: setting to an invalid version may also cause the game to crash.\n" +
+					//				"\n" +
+					//				"Defines the requested OpenGL context major version Distant Horizons will create. \n" +
+					//				"Possible values (DH requires 3.2 or higher at minimum): \n" +
+					//				"4.6, 4.5, 4.4, 4.3, 4.2, 4.1, 4.0 \n" +
+					//				"3.3, 3.2 \n" +
+					//				"")
+					//		.build();
+					//public static ConfigEntry<Integer> glContextMinorVersion = new ConfigEntry.Builder<Integer>()
+					//		.setMinDefaultMax(0, 2, 6)
+					//		.comment("" +
+					//				"Can be changed if you experience crashing when loading into a world.\n" +
+					//				"Note: setting to an invalid version may also cause the game to crash.\n" +
+					//				"\n" +
+					//				"Defines the requested OpenGL context major version Distant Horizons will create. \n" +
+					//				"Possible values (DH requires 3.2 or higher at minimum): \n" +
+					//				"4.6, 4.5, 4.4, 4.3, 4.2, 4.1, 4.0 \n" +
+					//				"3.3, 3.2 \n" +
+					//				"")
+					//		.build();
 					
 					public static ConfigEntry<EGlProfileMode> glProfileMode = new ConfigEntry.Builder<EGlProfileMode>()
 							.set(EGlProfileMode.CORE)
@@ -1256,6 +1258,7 @@ public class Config
 									"\n" +
 									"Defines the OpenGL context type Distant Horizon's will create. \n" +
 									"Generally this should be left as ["+EGlProfileMode.CORE+"] unless there is an issue with your GPU driver. \n" +
+									"Possible values: ["+ StringUtil.join("],[", EGlProfileMode.values())+"] \n" +
 									"")
 							.build();
 					public static ConfigEntry<Boolean> enableGlForwardCompatibilityMode = new ConfigEntry.Builder<Boolean>()

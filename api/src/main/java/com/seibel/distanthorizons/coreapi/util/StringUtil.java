@@ -19,6 +19,9 @@
 
 package com.seibel.distanthorizons.coreapi.util;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 /**
  * Miscellaneous string helper functions.
  *
@@ -42,6 +45,8 @@ public class StringUtil
 		return pos;
 	}
 	
+	/** @see StringUtil#join(String, Iterable)  */
+	public static <T> String join(String delimiter, T[] list) { return join(delimiter, Arrays.asList(list)); }
 	/** Combines each item in the given list together separated by the given delimiter. */
 	public static <T> String join(String delimiter, Iterable<T> list)
 	{
