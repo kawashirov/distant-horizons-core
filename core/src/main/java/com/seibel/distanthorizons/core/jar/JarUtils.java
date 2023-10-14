@@ -143,15 +143,15 @@ public class JarUtils
 	}
 	
 	
-	/** Please use the Platform enum instead */
+	/** Please use the EPlatform enum instead */
 	@Deprecated
 	public enum OperatingSystem
 	{WINDOWS, MACOS, LINUX, NONE} // Easy to use enum for the 3 main os's
-	/** Please use the Platform enum instead */
+	/** Please use the EPlatform enum instead */
 	@Deprecated
 	public static OperatingSystem getOperatingSystem()
 	{ // Get the os and turn it into that enum
-		switch (Platform.get())
+		switch (EPlatform.get())
 		{
 			case WINDOWS:
 				return OperatingSystem.WINDOWS;

@@ -21,9 +21,9 @@ package com.seibel.distanthorizons.core.jar.updater;
 
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
+import com.seibel.distanthorizons.core.jar.EPlatform;
 import com.seibel.distanthorizons.core.jar.JarUtils;
 import com.seibel.distanthorizons.core.jar.ModGitInfo;
-import com.seibel.distanthorizons.core.jar.Platform;
 import com.seibel.distanthorizons.core.jar.installer.GitlabGetter;
 import com.seibel.distanthorizons.core.jar.installer.ModrinthGetter;
 import com.seibel.distanthorizons.core.jar.installer.WebDownloader;
@@ -305,7 +305,7 @@ public class SelfUpdater
 			}
 			try
 			{
-				if (Platform.get() != Platform.WINDOWS)
+				if (EPlatform.get() != EPlatform.WINDOWS)
 				{
 					Files.delete(JarUtils.jarFile.toPath());
 				}
