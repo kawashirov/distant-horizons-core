@@ -75,6 +75,7 @@ public class GLProxy
 	
 	private static GLProxy instance = null;
 	
+	
 	/** Minecraft's GLFW window */
 	public final long minecraftGlContext;
 	/** Minecraft's GL capabilities */
@@ -141,7 +142,7 @@ public class GLProxy
 					"Additional info:\n" + supportedVersionInfo;
 			MC.crashMinecraft(errorMessage, new UnsupportedOperationException("Distant Horizon OpenGL requirements not met"));
 		}
-	 	GL_LOGGER.info("minecraftGlCapabilities:\n" + this.getVersionInfo(this.minecraftGlCapabilities));
+	 	GL_LOGGER.info("minecraftGlCapabilities:\n" + this.versionInfoToString(this.minecraftGlCapabilities));
 		
 		if (Config.Client.Advanced.Debugging.OpenGl.overrideVanillaGLLogger.get())
 		{
@@ -210,7 +211,7 @@ public class GLProxy
 		GLFW.glfwMakeContextCurrent(this.lodBuilderGlContext);
 		// set and log the capabilities
 		this.lodBuilderGlCapabilities = GL.createCapabilities();
-		GL_LOGGER.info("lodBuilderGlCapabilities:\n" + this.getVersionInfo(this.lodBuilderGlCapabilities));
+		GL_LOGGER.info("lodBuilderGlCapabilities:\n" + this.versionInfoToString(this.lodBuilderGlCapabilities));
 		// override the GL logger
 		GLUtil.setupDebugMessageCallback(new PrintStream(new GLMessageOutputStream(GLProxy::logMessage, this.lodBuilderDebugMessageBuilder), true));
 		// clear the context for the next stage
@@ -235,7 +236,7 @@ public class GLProxy
 		GLFW.glfwMakeContextCurrent(this.proxyWorkerGlContext);
 		// set and log the capabilities
 		this.proxyWorkerGlCapabilities = GL.createCapabilities();
-		GL_LOGGER.info("proxyWorkerGlCapabilities:\n" + this.getVersionInfo(this.lodBuilderGlCapabilities));
+		GL_LOGGER.info("proxyWorkerGlCapabilities:\n" + this.versionInfoToString(this.lodBuilderGlCapabilities));
 		// override the GL logger
 		GLUtil.setupDebugMessageCallback(new PrintStream(new GLMessageOutputStream(GLProxy::logMessage, this.proxyWorkerDebugMessageBuilder), true));
 		// clear the context for the next stage
@@ -291,6 +292,12 @@ public class GLProxy
 		// GLProxy creation success
 		GL_LOGGER.info(GLProxy.class.getSimpleName() + " creation successful. OpenGL smiles upon you this day.");
 	}
+	
+	
+	
+	//==================//
+	// context handling //
+	//==================//
 	
 	/**
 	 * A wrapper function to make switching contexts easier. <br>
@@ -370,8 +377,13 @@ public class GLProxy
 		}
 	}
 	
-	public static boolean hasInstance() { return instance != null; }
 	
+	
+	//=========//
+	// getters //
+	//=========//
+	
+	public static boolean hasInstance() { return instance != null; }
 	public static GLProxy getInstance()
 	{
 		if (instance == null)
@@ -393,6 +405,13 @@ public class GLProxy
 		}
 		return method == EGpuUploadMethod.AUTO ? this.preferredUploadMethod : method;
 	}
+	
+	
+	
+	
+	//============================//
+	// MC render thread runnables //
+	//============================//
 	
 	/**
 	 * Asynchronously calls the given runnable on proxy's OpenGL context.
@@ -459,37 +478,9 @@ public class GLProxy
 	
 	
 	
-	private String getFailedVersionInfo(GLCapabilities c)
-	{
-		return "Your OpenGL support:\n" +
-				"openGL version 3.2+: " + c.OpenGL32 + " <- REQUIRED\n" +
-				"Vertex Attribute Buffer Binding: " + (c.glVertexAttribBinding != 0) + " <- optional improvement\n" +
-				"Buffer Storage: " + (c.glBufferStorage != 0) + " <- optional improvement\n" +
-				"If you noticed that your computer supports higher OpenGL versions"
-				+ " but not the required version, try running the game in compatibility mode."
-				+ " (How you turn that on, I have no clue~)";
-	}
-	
-	private boolean checkCapabilities(GLCapabilities c)
-	{
-		if (!c.OpenGL32)
-		{
-			return false;
-		}
-		
-		this.namedObjectSupported = c.glNamedBufferStorage != 0;
-		this.bufferStorageSupported = c.glBufferStorage != 0;
-		this.VertexAttributeBufferBindingSupported = c.glVertexAttribBinding != 0;
-		return true;
-	}
-	
-	private String getVersionInfo(GLCapabilities c)
-	{
-		return "Your OpenGL support:\n" +
-				"openGL version 3.2+: " + c.OpenGL32 + " <- REQUIRED\n" +
-				"Vertex Attribute Buffer Binding: " + (c.glVertexAttribBinding != 0) + " <- optional improvement\n" +
-				"Buffer Storage: " + (c.glBufferStorage != 0) + " <- optional improvement\n";
-	}
+	//=========//
+	// logging //
+	//=========//
 	
 	private static void logMessage(GLMessage msg)
 	{
@@ -543,6 +534,32 @@ public class GLProxy
 			}
 		}
 	}
+	
+	
+	
+	//================//
+	// helper methods //
+	//================//
+	
+	private String getFailedVersionInfo(GLCapabilities c)
+	{
+		return "Your OpenGL support:\n" +
+				"openGL version 3.2+: [" + c.OpenGL32 + "] <- REQUIRED\n" +
+				"Vertex Attribute Buffer Binding: [" + (c.glVertexAttribBinding != 0) + "] <- optional improvement\n" +
+				"Buffer Storage: [" + (c.glBufferStorage != 0) + "] <- optional improvement\n" +
+				"If you noticed that your computer supports higher OpenGL versions"
+				+ " but not the required version, try running the game in compatibility mode."
+				+ " (How you turn that on, I have no clue~)";
+	}
+	
+	private String versionInfoToString(GLCapabilities c)
+	{
+		return "Your OpenGL support:\n" +
+				"openGL version 3.2+: [" + c.OpenGL32 + "] <- REQUIRED\n" +
+				"Vertex Attribute Buffer Binding: [" + (c.glVertexAttribBinding != 0) + "] <- optional improvement\n" +
+				"Buffer Storage: [" + (c.glBufferStorage != 0) + "] <- optional improvement\n";
+	}
+	
 	
 	
 }
