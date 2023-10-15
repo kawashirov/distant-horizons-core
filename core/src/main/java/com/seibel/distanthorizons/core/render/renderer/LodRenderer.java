@@ -46,6 +46,7 @@ import com.seibel.distanthorizons.coreapi.util.math.Mat4f;
 import com.seibel.distanthorizons.coreapi.util.math.Vec3d;
 import com.seibel.distanthorizons.coreapi.util.math.Vec3f;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL32;
 
 import java.awt.*;
@@ -418,6 +419,17 @@ public class LodRenderer
 			
 			// Copy the LOD framebuffer to Minecraft's framebuffer
 			DhApplyShader.INSTANCE.render(partialTicks);
+			GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, LodRenderer.getActiveFramebufferId());
+			
+			//GL32.glBindFramebuffer(GL32.GL_READ_FRAMEBUFFER, LodRenderer.getActiveFramebufferId());
+			//GL32.glBindFramebuffer(GL32.GL_DRAW_FRAMEBUFFER, MC_RENDER.getTargetFrameBuffer());
+			//GL32.glBlitFramebuffer(0, 0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(),
+			//		0, 0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(),
+			//		GL32.GL_COLOR_BUFFER_BIT,
+			//		GL32.GL_NEAREST);
+			//
+			//GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, this.framebufferId);
+			
 			
 			
 			
@@ -457,6 +469,7 @@ public class LodRenderer
 		}
 	}
 	
+	private static final Logger LOGGER = LogManager.getLogger();
 	
 	
 	//=================//
