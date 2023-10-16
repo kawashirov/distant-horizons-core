@@ -115,7 +115,7 @@ public class DhApplyShader extends AbstractShaderRenderer
 		//{
 		//	GL32.glTexImage2D(GL32.GL_TEXTURE_2D,
 		//			0,
-		//			GL32.GL_RGB, //RGBA
+		//			GL32.GL_RGBA8,
 		//			MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(),
 		//			0,
 		//			GL32.GL_RGB,

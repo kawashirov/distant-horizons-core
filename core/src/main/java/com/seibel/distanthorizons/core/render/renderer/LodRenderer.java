@@ -264,10 +264,10 @@ public class LodRenderer
 			GL32.glBindTexture(GL32.GL_TEXTURE_2D, this.colorTextureId);
 			GL32.glTexImage2D(GL32.GL_TEXTURE_2D,
 					0,
-					GL32.GL_RGB,
+					GL32.GL_RGBA8,
 					MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(),
 					0,
-					GL32.GL_RGB,
+					GL32.GL_RGBA,
 					GL32.GL_UNSIGNED_BYTE,
 					(ByteBuffer) null);
 			GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MIN_FILTER, GL32.GL_LINEAR);
