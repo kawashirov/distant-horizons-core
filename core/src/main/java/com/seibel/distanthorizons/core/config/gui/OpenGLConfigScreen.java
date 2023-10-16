@@ -20,13 +20,11 @@
 package com.seibel.distanthorizons.core.config.gui;
 
 import com.seibel.distanthorizons.api.enums.config.EGpuUploadMethod;
-import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.render.glObject.GLProxy;
 import com.seibel.distanthorizons.core.render.glObject.GLState;
 import com.seibel.distanthorizons.core.render.glObject.buffer.GLVertexBuffer;
 import com.seibel.distanthorizons.core.render.glObject.shader.ShaderProgram;
 import com.seibel.distanthorizons.core.render.glObject.vertexAttribute.VertexAttribute;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import org.lwjgl.opengl.GL32;
 
 import java.nio.ByteBuffer;
@@ -109,12 +107,12 @@ public class OpenGLConfigScreen extends AbstractScreen
 		if (System.currentTimeMillis() % 2000 < 1000)
 		{
 			sameContextBuffer.bind();
-			va.bindBufferToAllBindingPoint(sameContextBuffer.getId());
+			va.bindBufferToAllBindingPoints(sameContextBuffer.getId());
 		}
 		else
 		{
 			sameContextBuffer.bind();
-			va.bindBufferToAllBindingPoint(sharedContextBuffer.getId());
+			va.bindBufferToAllBindingPoints(sharedContextBuffer.getId());
 		}
 		// Render the square
 		GL32.glDrawArrays(GL32.GL_TRIANGLE_FAN, 0, 4);

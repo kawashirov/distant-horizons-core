@@ -143,7 +143,7 @@ public abstract class VertexAttribute
 	}
 	
 	// Requires VertexAttribute binded, VertexBuffer binded
-	public abstract void bindBufferToAllBindingPoint(int buffer);
+	public abstract void bindBufferToAllBindingPoints(int buffer);
 	// Requires VertexAttribute binded, VertexBuffer binded
 	public abstract void bindBufferToBindingPoint(int buffer, int bindingPoint);
 	// Requires VertexAttribute binded

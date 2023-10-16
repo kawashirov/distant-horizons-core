@@ -159,7 +159,7 @@ public class LodRenderProgram extends ShaderProgram
 	
 	public void bindVertexBuffer(int vbo)
 	{
-		vao.bindBufferToAllBindingPoint(vbo);
+		vao.bindBufferToAllBindingPoints(vbo);
 	}
 	
 	public void unbindVertexBuffer()

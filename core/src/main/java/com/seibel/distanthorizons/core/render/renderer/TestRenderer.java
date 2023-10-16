@@ -123,13 +123,13 @@ public class TestRenderer
 		if (System.currentTimeMillis() % 2000 < 1000)
 		{
 			sameContextBuffer.bind();
-			va.bindBufferToAllBindingPoint(sameContextBuffer.getId());
+			va.bindBufferToAllBindingPoints(sameContextBuffer.getId());
 			spamLogger.debug("same context buffer");
 		}
 		else
 		{
 			sameContextBuffer.bind();
-			va.bindBufferToAllBindingPoint(sharedContextBuffer.getId());
+			va.bindBufferToAllBindingPoints(sharedContextBuffer.getId());
 			spamLogger.debug("shared context buffer");
 		}
 		// Render the square

@@ -206,7 +206,7 @@ public class DebugRenderer
 		
 		this.basicShader.bind();
 		this.va.bind();
-		this.va.bindBufferToAllBindingPoint(this.boxBuffer.getId());
+		this.va.bindBufferToAllBindingPoints(this.boxBuffer.getId());
 		
 		this.boxOutlineBuffer.bind();
 		
