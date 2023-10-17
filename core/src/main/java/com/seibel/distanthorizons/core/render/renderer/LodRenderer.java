@@ -405,7 +405,8 @@ public class LodRenderer
 				profiler.popPush("LOD Transparent");
 				
 				GL32.glEnable(GL32.GL_BLEND);
-				GL32.glBlendFunc(GL32.GL_SRC_ALPHA, GL32.GL_ONE_MINUS_SRC_ALPHA);
+				GL32.glBlendEquation(GL32.GL_FUNC_ADD);
+				GL32.glBlendFunc(GL32.GL_ONE, GL32.GL_ONE_MINUS_SRC_ALPHA);
 				this.bufferHandler.renderTransparent(this);
 				GL32.glDepthMask(true); // Apparently the depth mask state is stored in the FBO, so glState fails to restore it...
 				
@@ -420,15 +421,6 @@ public class LodRenderer
 			// Copy the LOD framebuffer to Minecraft's framebuffer
 			DhApplyShader.INSTANCE.render(partialTicks);
 			GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, LodRenderer.getActiveFramebufferId());
-			
-			//GL32.glBindFramebuffer(GL32.GL_READ_FRAMEBUFFER, LodRenderer.getActiveFramebufferId());
-			//GL32.glBindFramebuffer(GL32.GL_DRAW_FRAMEBUFFER, MC_RENDER.getTargetFrameBuffer());
-			//GL32.glBlitFramebuffer(0, 0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(),
-			//		0, 0, MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(),
-			//		GL32.GL_COLOR_BUFFER_BIT,
-			//		GL32.GL_NEAREST);
-			//
-			//GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, this.framebufferId);
 			
 			
 			
