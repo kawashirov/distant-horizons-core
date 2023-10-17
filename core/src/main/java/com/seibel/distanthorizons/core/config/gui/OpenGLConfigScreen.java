@@ -24,7 +24,8 @@ import com.seibel.distanthorizons.core.render.glObject.GLProxy;
 import com.seibel.distanthorizons.core.render.glObject.GLState;
 import com.seibel.distanthorizons.core.render.glObject.buffer.GLVertexBuffer;
 import com.seibel.distanthorizons.core.render.glObject.shader.ShaderProgram;
-import com.seibel.distanthorizons.core.render.glObject.vertexAttribute.VertexAttribute;
+import com.seibel.distanthorizons.core.render.glObject.vertexAttribute.AbstractVertexAttribute;
+import com.seibel.distanthorizons.core.render.glObject.vertexAttribute.VertexPointer;
 import org.lwjgl.opengl.GL32;
 
 import java.nio.ByteBuffer;
@@ -38,19 +39,19 @@ public class OpenGLConfigScreen extends AbstractScreen
 	ShaderProgram basicShader;
 	GLVertexBuffer sameContextBuffer;
 	GLVertexBuffer sharedContextBuffer;
-	VertexAttribute va;
+	AbstractVertexAttribute va;
 	
 	@Override
 	public void init()
 	{
 		System.out.println("init");
 		
-		va = VertexAttribute.create();
+		va = AbstractVertexAttribute.create();
 		va.bind();
 		// Pos
-		va.setVertexAttribute(0, 0, VertexAttribute.VertexPointer.addVec2Pointer(false));
+		va.setVertexAttribute(0, 0, VertexPointer.addVec2Pointer(false));
 		// Color
-		va.setVertexAttribute(0, 1, VertexAttribute.VertexPointer.addVec4Pointer(false));
+		va.setVertexAttribute(0, 1, VertexPointer.addVec4Pointer(false));
 		va.completeAndCheck(Float.BYTES * 6);
 		basicShader = new ShaderProgram("shaders/test/vert.vert", "shaders/test/frag.frag",
 				"fragColor", new String[]{"vPosition", "color"});

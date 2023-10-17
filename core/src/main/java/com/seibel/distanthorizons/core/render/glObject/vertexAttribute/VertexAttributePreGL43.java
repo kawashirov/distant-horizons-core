@@ -28,10 +28,10 @@ import com.seibel.distanthorizons.core.render.glObject.GLProxy;
 import org.lwjgl.opengl.GL32;
 
 
-public final class VertexAttributePreGL43 extends VertexAttribute
+public final class VertexAttributePreGL43 extends AbstractVertexAttribute
 {
 	// I tried to use raw arrays as much as possible since those lookups
-	// happens every frame, and the speed directly affects fps
+	// happen every frame, and the speed directly affects fps
 	int strideSize = 0;
 	int[][] bindingPointsToIndex;
 	VertexPointer[] pointers;
@@ -46,10 +46,10 @@ public final class VertexAttributePreGL43 extends VertexAttribute
 	// constructor //
 	//=============//
 	
-	/** This will bind the {@link VertexAttribute} */
+	/** This will bind the {@link AbstractVertexAttribute} */
 	public VertexAttributePreGL43()
 	{
-		super(); // also bind VertexAttribute
+		super(); // also bind AbstractVertexAttribute
 		this.bindingPointsToIndexBuilder = new TreeMap<>();
 		this.pointersBuilder = new ArrayList<>();
 	}
@@ -60,7 +60,7 @@ public final class VertexAttributePreGL43 extends VertexAttribute
 	// binding //
 	//=========//
 	
-	/** Requires both VertexAttribute and VertexBuffer to be bound */
+	/** Requires both AbstractVertexAttribute and VertexBuffer to be bound */
 	@Override
 	public void bindBufferToAllBindingPoints(int buffer)
 	{
@@ -90,7 +90,7 @@ public final class VertexAttributePreGL43 extends VertexAttribute
 		}
 	}
 	
-	/** Requires both VertexAttribute and VertexBuffer to be bound */
+	/** Requires both AbstractVertexAttribute and VertexBuffer to be bound */
 	@Override
 	public void bindBufferToBindingPoint(int buffer, int bindingPoint)
 	{
@@ -129,7 +129,7 @@ public final class VertexAttributePreGL43 extends VertexAttribute
 	// unbinding //
 	//===========//
 	
-	/** Requires VertexAttribute to be bound */
+	/** Requires AbstractVertexAttribute to be bound */
 	@Override
 	public void unbindBuffersFromAllBindingPoint()
 	{
@@ -139,7 +139,7 @@ public final class VertexAttributePreGL43 extends VertexAttribute
 		}
 	}
 	
-	/** Requires VertexAttribute to be bound */
+	/** Requires AbstractVertexAttribute to be bound */
 	@Override
 	public void unbindBuffersFromBindingPoint(int bindingPoint)
 	{
@@ -156,7 +156,7 @@ public final class VertexAttributePreGL43 extends VertexAttribute
 	// manual attribute setting //
 	//==========================//
 	
-	/** Requires VertexAttribute to be bound */
+	/** Requires AbstractVertexAttribute to be bound */
 	@Override
 	public void setVertexAttribute(int bindingPoint, int attributeIndex, VertexPointer attribute)
 	{
@@ -178,7 +178,7 @@ public final class VertexAttributePreGL43 extends VertexAttribute
 	// validation //
 	//============//
 	
-	/** Requires VertexAttribute to be bound */
+	/** Requires AbstractVertexAttribute to be bound */
 	@Override
 	public void completeAndCheck(int expectedStrideSize)
 	{

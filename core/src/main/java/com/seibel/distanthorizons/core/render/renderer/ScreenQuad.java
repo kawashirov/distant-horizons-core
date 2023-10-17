@@ -21,7 +21,8 @@ package com.seibel.distanthorizons.core.render.renderer;
 
 import com.seibel.distanthorizons.api.enums.config.EGpuUploadMethod;
 import com.seibel.distanthorizons.core.render.glObject.buffer.GLVertexBuffer;
-import com.seibel.distanthorizons.core.render.glObject.vertexAttribute.VertexAttribute;
+import com.seibel.distanthorizons.core.render.glObject.vertexAttribute.AbstractVertexAttribute;
+import com.seibel.distanthorizons.core.render.glObject.vertexAttribute.VertexPointer;
 import org.lwjgl.opengl.GL32;
 
 import java.nio.ByteBuffer;
@@ -45,7 +46,7 @@ public class ScreenQuad
 	};
 	
 	private GLVertexBuffer boxBuffer;
-	private VertexAttribute va;
+	private AbstractVertexAttribute va;
 	private boolean init = false;
 
 	
@@ -60,11 +61,11 @@ public class ScreenQuad
 		if (this.init) return;
 		this.init = true;
 		
-		this.va = VertexAttribute.create();
+		this.va = AbstractVertexAttribute.create();
 		this.va.bind();
 		
 		// Pos
-		this.va.setVertexAttribute(0, 0, VertexAttribute.VertexPointer.addVec2Pointer(false));
+		this.va.setVertexAttribute(0, 0, VertexPointer.addVec2Pointer(false));
 		this.va.completeAndCheck(Float.BYTES * 2);
 		
 		// Framebuffer

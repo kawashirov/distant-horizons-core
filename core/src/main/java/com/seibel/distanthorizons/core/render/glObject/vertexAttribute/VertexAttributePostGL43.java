@@ -25,13 +25,13 @@ import org.lwjgl.opengl.GL43;
 /**
  * In OpenGL 4.3 and later, Vertex Attribute got a make-over.
  * Now it provides support for buffer binding points natively.
- * This means that setting up the VAO just use ONE native call when
+ * This means that setting up the VAO is just use ONE native call when
  * binding to a buffer. <br><br>
  * 
- * Since I no longer needs to implement binding points, I also no
+ * Since I no longer need to implement binding points, I also no
  * longer needs to keep track of Pointers.
  */
-public final class VertexAttributePostGL43 extends VertexAttribute
+public final class VertexAttributePostGL43 extends AbstractVertexAttribute
 {
 	int numberOfBindingPoints = 0;
 	int strideSize = 0;
@@ -42,10 +42,10 @@ public final class VertexAttributePostGL43 extends VertexAttribute
 	// constructor //
 	//=============//
 	
-	/** This will bind the {@link VertexAttribute} */
+	/** This will bind the {@link AbstractVertexAttribute} */
 	public VertexAttributePostGL43()
 	{
-		super(); // also bind VertexAttribute
+		super(); // also bind AbstractVertexAttribute
 	}
 	
 	
@@ -54,7 +54,7 @@ public final class VertexAttributePostGL43 extends VertexAttribute
 	// binding //
 	//=========//
 	
-	/** Requires both VertexAttribute and VertexBuffer to be bound */
+	/** Requires both AbstractVertexAttribute and VertexBuffer to be bound */
 	@Override
 	public void bindBufferToAllBindingPoints(int buffer)
 	{
@@ -64,7 +64,7 @@ public final class VertexAttributePostGL43 extends VertexAttribute
 		}
 	}
 	
-	/** Requires both VertexAttribute and VertexBuffer to be bound */
+	/** Requires both AbstractVertexAttribute and VertexBuffer to be bound */
 	@Override
 	public void bindBufferToBindingPoint(int buffer, int bindingPoint)
 	{
@@ -77,7 +77,7 @@ public final class VertexAttributePostGL43 extends VertexAttribute
 	// unbinding //
 	//===========//
 	
-	/** Requires VertexAttribute to be bound */
+	/** Requires AbstractVertexAttribute to be bound */
 	@Override
 	public void unbindBuffersFromAllBindingPoint()
 	{
@@ -87,7 +87,7 @@ public final class VertexAttributePostGL43 extends VertexAttribute
 		}
 	}
 	
-	/** Requires VertexAttribute to be bound */
+	/** Requires AbstractVertexAttribute to be bound */
 	@Override
 	public void unbindBuffersFromBindingPoint(int bindingPoint)
 	{
@@ -100,7 +100,7 @@ public final class VertexAttributePostGL43 extends VertexAttribute
 	// manual attribute setting //
 	//==========================//
 	
-	/** Requires VertexAttribute to be bound */
+	/** Requires AbstractVertexAttribute to be bound */
 	@Override
 	public void setVertexAttribute(int bindingPoint, int attributeIndex, VertexPointer attribute)
 	{
@@ -129,7 +129,7 @@ public final class VertexAttributePostGL43 extends VertexAttribute
 	// validation //
 	//============//
 	
-	/** Requires VertexAttribute to be bound */
+	/** Requires AbstractVertexAttribute to be bound */
 	@Override
 	public void completeAndCheck(int expectedStrideSize)
 	{
