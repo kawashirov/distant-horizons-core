@@ -71,6 +71,8 @@ public class ScreenQuad
 	{
 		this.init();
 		
+		this.boxBuffer.bind();
+		
 		this.va.bind();
 		this.va.bindBufferToAllBindingPoints(this.boxBuffer.getId());
 		
@@ -88,4 +90,5 @@ public class ScreenQuad
 		this.boxBuffer.bind();
 		this.boxBuffer.uploadBuffer(buffer, box_vertices.length, EGpuUploadMethod.DATA, box_vertices.length * Float.BYTES);
 	}
+	
 }
