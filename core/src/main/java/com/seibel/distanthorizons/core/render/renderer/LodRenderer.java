@@ -416,11 +416,19 @@ public class LodRenderer
 			drawLagSpikeCatcher.end("LodDraw");
 			
 			
+			
+			//=============================//
+			// Apply to the MC FrameBuffer //
+			//=============================//
+			
 			profiler.popPush("LOD Apply");
+			
+			GLState dhApplyGlState = new GLState();
 			
 			// Copy the LOD framebuffer to Minecraft's framebuffer
 			DhApplyShader.INSTANCE.render(partialTicks);
-			GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, LodRenderer.getActiveFramebufferId());
+			
+			dhApplyGlState.restore();
 			
 			
 			
