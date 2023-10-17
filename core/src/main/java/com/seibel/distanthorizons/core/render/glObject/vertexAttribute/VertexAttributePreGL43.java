@@ -232,10 +232,12 @@ public final class VertexAttributePreGL43 extends VertexAttribute
 			if (pointer == null)
 			{
 				GLProxy.GL_LOGGER.debug(i + ": Null!!!!");
-				continue;
 			}
-			GLProxy.GL_LOGGER.debug(i + ": " + pointer.elementCount + ", " +
-					pointer.glType + ", " + pointer.normalized + ", " + this.strideSize + ", " + this.pointersOffset[i]);
+			else
+			{
+				GLProxy.GL_LOGGER.debug(i + ": " + pointer.elementCount + ", " +
+						pointer.glType + ", " + pointer.normalized + ", " + this.strideSize + ", " + this.pointersOffset[i]);
+			}
 		}
 		
 	}

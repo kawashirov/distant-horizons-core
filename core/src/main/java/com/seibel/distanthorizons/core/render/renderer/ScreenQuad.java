@@ -27,6 +27,10 @@ import org.lwjgl.opengl.GL32;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+/**
+ * Renders a full-screen textured quad to the screen. 
+ * Used in composite / deferred rendering (IE fog).
+ */
 public class ScreenQuad
 {
 	public static ScreenQuad INSTANCE = new ScreenQuad();
