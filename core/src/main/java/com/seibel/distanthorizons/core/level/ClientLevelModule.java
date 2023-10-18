@@ -79,7 +79,7 @@ public class ClientLevelModule implements Closeable
 		}
 		// TODO this should probably be handled via a config change listener
 		// recreate the RenderState if the render distance changes
-		if (clientRenderState.quadtree.blockRenderDistanceRadius != Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH)
+		if (clientRenderState.quadtree.blockRenderDistanceDiameter != Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistanceRadius.get() * LodUtil.CHUNK_WIDTH * 2)
 		{
 			if (!this.ClientRenderStateRef.compareAndSet(clientRenderState, null))
 			{
@@ -286,7 +286,7 @@ public class ClientLevelModule implements Closeable
 			this.clientLevelWrapper = dhClientLevel.getClientLevelWrapper();
 			this.renderSourceFileHandler = new RenderSourceFileHandler(fullDataSourceProvider, dhClientLevel, saveStructure);
 			
-			this.quadtree = new LodQuadTree(dhClientLevel, Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH,
+			this.quadtree = new LodQuadTree(dhClientLevel, Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistanceRadius.get() * LodUtil.CHUNK_WIDTH * 2,
 					// initial position is (0,0) just in case the player hasn't loaded in yet, the tree will be moved once the level starts ticking
 					0, 0,
 					this.renderSourceFileHandler);

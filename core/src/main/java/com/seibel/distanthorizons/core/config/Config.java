@@ -31,7 +31,6 @@ import com.seibel.distanthorizons.core.config.types.enums.*;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.jar.EPlatform;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.util.EnumUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
 import com.seibel.distanthorizons.coreapi.ModInfo;
 import com.seibel.distanthorizons.coreapi.util.StringUtil;
@@ -71,7 +70,7 @@ public class Config
 				.setAppearance(EConfigEntryAppearance.ONLY_IN_GUI)
 				.build();
 		
-		public static ConfigLinkedEntry quickLodChunkRenderDistance = new ConfigLinkedEntry(Advanced.Graphics.Quality.lodChunkRenderDistance);
+		public static ConfigLinkedEntry quickLodChunkRenderDistance = new ConfigLinkedEntry(Advanced.Graphics.Quality.lodChunkRenderDistanceRadius);
 		
 		public static ConfigEntry<EQualityPreset> qualityPresetSetting = new ConfigEntry.Builder<EQualityPreset>()
 				.set(EQualityPreset.MEDIUM) // the default value is set via the listener when accessed
@@ -155,7 +154,7 @@ public class Config
 							.setPerformance(EConfigEntryPerformance.MEDIUM)
 							.build();
 					
-					public static ConfigEntry<Integer> lodChunkRenderDistance = new ConfigEntry.Builder<Integer>()
+					public static ConfigEntry<Integer> lodChunkRenderDistanceRadius = new ConfigEntry.Builder<Integer>()
 							.setMinDefaultMax(32, 128, 4096)
 							.comment("The radius of the mod's render distance. (measured in chunks)")
 							.setPerformance(EConfigEntryPerformance.HIGH)
