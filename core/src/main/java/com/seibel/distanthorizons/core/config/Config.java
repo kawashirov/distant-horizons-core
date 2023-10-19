@@ -997,8 +997,7 @@ public class Config
 				public static ConfigEntry<Boolean> enableAutoUpdater = new ConfigEntry.Builder<Boolean>()
 						.set(
 								!SingletonInjector.INSTANCE.get(IMinecraftSharedWrapper.class).getInstallationDirectory().getName().equals("run") // Guesses that a dev would use the directory called "run" as their running directory, and clients wont
-								&& !EPlatform.get().equals(EPlatform.WINDOWS) // FIXME: Updater on Windows is broken atm (and I have no idea on how to fix it)
-						) // disable the update notification in dev clients
+						) // disable the updater in dev clients
 						.comment(""
 								+ "Automatically check for updates on game launch?")
 						.build();
