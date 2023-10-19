@@ -64,7 +64,7 @@ public class DhClientLevel extends DhLevel implements IDhClientLevel
 		
 		if (enableRendering)
 		{
-			this.clientside.startRenderer();
+			this.clientside.startRenderer(clientLevelWrapper);
 			LOGGER.info("Started DHLevel for " + this.levelWrapper + " with saves at " + this.saveStructure);
 		}
 	}

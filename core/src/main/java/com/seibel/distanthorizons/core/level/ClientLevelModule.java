@@ -86,8 +86,14 @@ public class ClientLevelModule implements Closeable
 				return;
 			}
 			
+			IClientLevelWrapper clientLevelWrapper = this.parentClientLevel.getClientLevelWrapper();
+			if (clientLevelWrapper == null)
+			{
+				return;
+			}
+			
 			clientRenderState.close();
-			clientRenderState = new ClientRenderState(parentClientLevel, parentClientLevel.getFileHandler(), parentClientLevel.getSaveStructure());
+			clientRenderState = new ClientRenderState(this.parentClientLevel, clientLevelWrapper, this.parentClientLevel.getFileHandler(), this.parentClientLevel.getSaveStructure());
 			if (!this.ClientRenderStateRef.compareAndSet(null, clientRenderState))
 			{
 				//FIXME: How to handle this?
@@ -117,9 +123,9 @@ public class ClientLevelModule implements Closeable
 	//========//
 	
 	/** @return if the {@link ClientRenderState} was successfully swapped */
-	public boolean startRenderer()
+	public boolean startRenderer(IClientLevelWrapper clientLevelWrapper)
 	{
-		ClientRenderState ClientRenderState = new ClientRenderState(parentClientLevel, parentClientLevel.getFileHandler(), parentClientLevel.getSaveStructure());
+		ClientRenderState ClientRenderState = new ClientRenderState(parentClientLevel, clientLevelWrapper, parentClientLevel.getFileHandler(), parentClientLevel.getSaveStructure());
 		if (!this.ClientRenderStateRef.compareAndSet(null, ClientRenderState))
 		{
 			LOGGER.warn("Failed to start renderer due to concurrency");
@@ -280,10 +286,10 @@ public class ClientLevelModule implements Closeable
 		public final LodRenderer renderer;
 		
 		public ClientRenderState(
-				IDhClientLevel dhClientLevel, IFullDataSourceProvider fullDataSourceProvider,
+				IDhClientLevel dhClientLevel, IClientLevelWrapper clientLevelWrapper, IFullDataSourceProvider fullDataSourceProvider,
 				AbstractSaveStructure saveStructure)
 		{
-			this.clientLevelWrapper = dhClientLevel.getClientLevelWrapper();
+			this.clientLevelWrapper = clientLevelWrapper;
 			this.renderSourceFileHandler = new RenderSourceFileHandler(fullDataSourceProvider, dhClientLevel, saveStructure);
 			
 			this.quadtree = new LodQuadTree(dhClientLevel, Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistanceRadius.get() * LodUtil.CHUNK_WIDTH * 2,
