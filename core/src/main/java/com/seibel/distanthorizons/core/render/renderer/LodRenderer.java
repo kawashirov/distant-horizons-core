@@ -251,6 +251,12 @@ public class LodRenderer
 			if (!this.isSetupComplete)
 			{
 				this.setup();
+				
+				// shouldn't normally happen, but just in case
+				if (!this.isSetupComplete)
+				{
+					return;
+				}
 			}
 			
 			
@@ -484,8 +490,9 @@ public class LodRenderer
 			EVENT_LOGGER.warn("Renderer setup called but it has already completed setup!");
 			return;
 		}
-		if (!GLProxy.hasInstance())
+		if (GLProxy.getInstance() == null)
 		{
+			// shouldn't normally happen, but just in case
 			EVENT_LOGGER.warn("Renderer setup called but GLProxy has not yet been setup!");
 			return;
 		}
