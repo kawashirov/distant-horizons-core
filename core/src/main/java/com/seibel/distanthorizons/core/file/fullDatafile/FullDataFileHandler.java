@@ -550,6 +550,9 @@ public class FullDataFileHandler implements IFullDataSourceProvider
 	//=========//
 	
 	@Override
-	public void close() { FullDataMetaFile.checkAndLogPhantomDataSourceLifeCycles(); }
+	public void close() {
+		FullDataMetaFile.checkAndLogPhantomDataSourceLifeCycles();
+		this.fullDataRepo.close();
+	}
 	
 }

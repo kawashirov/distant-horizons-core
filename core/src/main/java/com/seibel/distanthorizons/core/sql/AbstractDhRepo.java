@@ -278,6 +278,7 @@ public abstract class AbstractDhRepo<TDTO extends IBaseDTO>
 			{
 				if(this.connection != null)
 				{
+					CONNECTIONS_BY_CONNECTION_STRING.remove(this.connectionString);
 					this.connection.close();
 				}
 				ACTIVE_CONNECTION_STRINGS_BY_REPO.remove(this);
