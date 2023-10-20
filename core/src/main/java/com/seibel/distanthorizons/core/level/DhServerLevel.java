@@ -24,7 +24,6 @@ import com.seibel.distanthorizons.core.dataObjects.fullData.sources.CompleteFull
 import com.seibel.distanthorizons.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.distanthorizons.core.file.structure.AbstractSaveStructure;
 import com.seibel.distanthorizons.core.pos.DhBlockPos2D;
-import com.seibel.distanthorizons.core.pos.DhLodPos;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
@@ -75,7 +74,7 @@ public class DhServerLevel extends DhLevel implements IDhServerLevel
 	}
 	
 	@Override
-	public CompletableFuture<Void> saveAsync() { return getFileHandler().flushAndSave(); }
+	public CompletableFuture<Void> saveAsync() { return getFileHandler().flushAndSaveAsync(); }
 	
 	@Override
 	public void doWorldGen()

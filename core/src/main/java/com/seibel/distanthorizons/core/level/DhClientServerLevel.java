@@ -183,7 +183,7 @@ public class DhClientServerLevel extends DhLevel implements IDhClientLevel, IDhS
 	@Override
 	public CompletableFuture<Void> saveAsync()
 	{
-		return CompletableFuture.allOf(clientside.saveAsync(), getFileHandler().flushAndSave());
+		return CompletableFuture.allOf(clientside.saveAsync(), getFileHandler().flushAndSaveAsync());
 	}
 	
 	//===============//

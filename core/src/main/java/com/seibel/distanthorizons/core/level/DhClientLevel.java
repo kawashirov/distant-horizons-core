@@ -20,7 +20,6 @@
 package com.seibel.distanthorizons.core.level;
 
 import com.seibel.distanthorizons.core.dataObjects.fullData.accessor.ChunkSizedFullDataAccessor;
-import com.seibel.distanthorizons.core.file.fullDatafile.FullDataFileHandler;
 import com.seibel.distanthorizons.core.file.fullDatafile.IFullDataSourceProvider;
 import com.seibel.distanthorizons.core.file.fullDatafile.RemoteFullDataFileHandler;
 import com.seibel.distanthorizons.core.file.structure.AbstractSaveStructure;
@@ -112,7 +111,7 @@ public class DhClientLevel extends DhLevel implements IDhClientLevel
 	@Override
 	public CompletableFuture<Void> saveAsync()
 	{
-		return CompletableFuture.allOf(clientside.saveAsync(), dataFileHandler.flushAndSave());
+		return CompletableFuture.allOf(clientside.saveAsync(), dataFileHandler.flushAndSaveAsync());
 	}
 	
 	@Override
