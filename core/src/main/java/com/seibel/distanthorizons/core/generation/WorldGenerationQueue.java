@@ -436,7 +436,9 @@ public class WorldGenerationQueue implements IWorldGenerationQueue, IDebugRender
 			try
 			{
 				IChunkWrapper chunk = SingletonInjector.INSTANCE.get(IWrapperFactory.class).createChunkWrapper(generatedObjectArray);
-				chunkDataConsumer.accept(LodDataBuilder.createChunkData(chunk));
+				ChunkSizedFullDataAccessor chunkDataAccessor = LodDataBuilder.createChunkData(chunk);
+				LodUtil.assertTrue(chunkDataAccessor != null);
+				chunkDataConsumer.accept(chunkDataAccessor);
 			}
 			catch (ClassCastException e)
 			{
