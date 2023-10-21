@@ -583,7 +583,6 @@ public class LodRenderer
 		try
 		{
 			this.setupLock.lock();
-			this.isSetupComplete = false;
 			
 			GLProxy.getInstance().recordOpenGlCall(() ->
 			{
