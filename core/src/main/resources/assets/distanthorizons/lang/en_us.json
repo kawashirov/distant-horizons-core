@@ -356,7 +356,7 @@
   "distanthorizons.config.client.advanced.multiThreading.numberOfWorldGenerationThreads":
     "NO. of world generation threads",
   "distanthorizons.config.client.advanced.multiThreading.numberOfWorldGenerationThreads.@tooltip":
-    "How many threads should be used when generating LODs \n outside the normal render distance? \n\nIf it this is less than 1, it will be treated as a percentage \nof time a single thread can run before going idle. \n\nIf you experience stuttering when generating distant LODs, \ndecrease  this number. If you want to increase LOD \ngeneration speed, increase this number. \n\nThis and the number of buffer builder threads are independent, \nif they add up to more threads than your CPU has cores \nthat is ok.",
+    "How many threads should be used when generating LODs \n outside the normal render distance?\n\nIf you experience stuttering when generating distant LODs, \ndecrease  this number. If you want to increase LOD \ngeneration speed, increase this number.",
   "distanthorizons.config.client.advanced.multiThreading.runTimeRatioForWorldGenerationThreads":
     "Runtime % for world generation threads",
   
