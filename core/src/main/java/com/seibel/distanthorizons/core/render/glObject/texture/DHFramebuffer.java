@@ -21,6 +21,16 @@ public class DHFramebuffer {
 		this.hasDepthAttachment = false;
 	}
 
+	// For internal use in Iris. Do not use in DH.
+	public DHFramebuffer(int id) {
+		this.id = id;
+		
+		this.attachments = new Int2IntArrayMap();
+		this.maxDrawBuffers = GL43C.glGetInteger(GL30C.GL_MAX_DRAW_BUFFERS);
+		this.maxColorAttachments = GL43C.glGetInteger(GL30C.GL_MAX_COLOR_ATTACHMENTS);
+		this.hasDepthAttachment = false;
+	}
+
 	public void addDepthAttachment(int texture, DHDepthBufferFormat depthBufferFormat) {
 		bind();
 		
