@@ -93,7 +93,13 @@ public class GLBuffer implements AutoCloseable
 	//private StackTraceElement[] firstCloseCallStack = null;
 	protected void destroy(boolean async)
 	{
-		LodUtil.assertTrue(this.id != 0, "Buffer double close!");
+		if (this.id == 0)
+		{
+			// the buffer has already been closed
+			return;
+		}
+		
+		
 		if (async && GLProxy.getInstance().getGlContext() != EGLProxyContext.PROXY_WORKER)
 		{
 			GLProxy.getInstance().recordOpenGlCall(() -> destroy((false)));
