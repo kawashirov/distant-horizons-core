@@ -388,11 +388,11 @@
   "distanthorizons.config.client.advanced.multiThreading.runTimeRatioForChunkLodConverterThreads":
     "Runtime % for chunk LOD converter threads",
   
-  "distanthorizons.config.client.advanced.multiThreading.numberOfLightBakingThreads":
+  "distanthorizons.config.client.advanced.multiThreading.numberOfChunkLightBakingThreads":
     "NO. of chunk light baking threads",
-  "distanthorizons.config.client.advanced.multiThreading.numberOfLightBakingThreads.@tooltip":
+  "distanthorizons.config.client.advanced.multiThreading.numberOfChunkLightBakingThreads.@tooltip":
     "How many threads should be used to either pull existing  or generating new lighting for chunks\n that were recently loading/unloaded?\n\n These threads run when traveling around the world\n and when moving between dimensions.",
-  "distanthorizons.config.client.advanced.multiThreading.runTimeRatioForLightBakingThreads":
+  "distanthorizons.config.client.advanced.multiThreading.runTimeRatioForChunkLightBakingThreads":
     "Runtime % for chunk light baking threads",
   
   
