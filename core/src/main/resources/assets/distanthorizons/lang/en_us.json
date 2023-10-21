@@ -251,7 +251,7 @@
   "distanthorizons.config.client.advanced.graphics.noiseTextureSettings.noiseSteps":
     "Noise Steps",
   "distanthorizons.config.client.advanced.graphics.noiseTextureSettings.noiseSteps.@tooltip":
-    "distanthorizons.config.client.advanced.graphics.noiseTextureSettings.noiseSteps.@tooltip",
+    "Determines how many steps of noise should be applied to the LODs.",
   "distanthorizons.config.client.advanced.graphics.noiseTextureSettings.noiseIntensity":
     "Noise Intensity",
   "distanthorizons.config.client.advanced.graphics.noiseTextureSettings.noiseIntensity.@tooltip":
