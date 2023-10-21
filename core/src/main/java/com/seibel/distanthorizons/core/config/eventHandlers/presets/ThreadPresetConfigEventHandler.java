@@ -151,6 +151,28 @@ public class ThreadPresetConfigEventHandler extends AbstractPresetConfigEventHan
 			}});
 	
 	
+	public static int getLightBakingDefaultThreadCount() { return getThreadCountByPercent(0.1); }
+	private final ConfigEntryWithPresetOptions<EThreadPreset, Integer> lightBakingThreadCount = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.MultiThreading.numberOfChunkLightBakingThreads,
+			new HashMap<EThreadPreset, Integer>()
+			{{
+				this.put(EThreadPreset.MINIMAL_IMPACT, 1);
+				this.put(EThreadPreset.LOW_IMPACT, getChunkLodConverterDefaultThreadCount());
+				this.put(EThreadPreset.BALANCED, getThreadCountByPercent(0.2));
+				this.put(EThreadPreset.AGGRESSIVE, getThreadCountByPercent(0.4));
+				//this.put(EThreadPreset.I_PAID_FOR_THE_WHOLE_CPU, getThreadCountByPercent(1.0));
+			}});
+	public static double getLightBakingDefaultRunTimeRatio() { return LOW_THREAD_COUNT_CPU ? 0.25 : 0.4; }
+	private final ConfigEntryWithPresetOptions<EThreadPreset, Double> lightBakingRunTime = new ConfigEntryWithPresetOptions<>(Config.Client.Advanced.MultiThreading.runTimeRatioForChunkLightBakingThreads,
+			new HashMap<EThreadPreset, Double>()
+			{{
+				this.put(EThreadPreset.MINIMAL_IMPACT, 0.1);
+				this.put(EThreadPreset.LOW_IMPACT, getChunkLodConverterDefaultRunTimeRatio());
+				this.put(EThreadPreset.BALANCED, LOW_THREAD_COUNT_CPU ? 0.5 : 0.65);
+				this.put(EThreadPreset.AGGRESSIVE, LOW_THREAD_COUNT_CPU ? 0.75 : 1.0);
+				//this.put(EThreadPreset.I_PAID_FOR_THE_WHOLE_CPU, 1.0);
+			}});
+	
+	
 	
 	//==============//
 	// constructors //
@@ -174,6 +196,9 @@ public class ThreadPresetConfigEventHandler extends AbstractPresetConfigEventHan
 		
 		this.configList.add(this.chunkLodConverterThreadCount);
 		this.configList.add(this.chunkLodConverterRunTime);
+		
+		this.configList.add(this.lightBakingThreadCount);
+		this.configList.add(this.lightBakingRunTime);
 		
 		
 		for (ConfigEntryWithPresetOptions<EThreadPreset, ?> config : this.configList)

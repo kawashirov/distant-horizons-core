@@ -29,7 +29,6 @@ import com.seibel.distanthorizons.core.config.eventHandlers.presets.*;
 import com.seibel.distanthorizons.core.config.types.*;
 import com.seibel.distanthorizons.core.config.types.enums.*;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
-import com.seibel.distanthorizons.core.jar.EPlatform;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
 import com.seibel.distanthorizons.coreapi.ModInfo;
@@ -921,6 +920,24 @@ public class Config
 						.build();
 				public static final ConfigEntry<Double> runTimeRatioForChunkLodConverterThreads = new ConfigEntry.Builder<Double>()
 						.setMinDefaultMax(0.01, ThreadPresetConfigEventHandler.getChunkLodConverterDefaultRunTimeRatio(), 1.0)
+						.comment(THREAD_RUN_TIME_RATIO_NOTE)
+						.build();
+				
+				public static final ConfigEntry<Integer> numberOfChunkLightBakingThreads = new ConfigEntry.Builder<Integer>()
+						.setMinDefaultMax(1,
+								ThreadPresetConfigEventHandler.getLightBakingDefaultThreadCount(),
+								Runtime.getRuntime().availableProcessors())
+						.comment(""
+								+ "How many threads should be used to either pull existing  or generating new lighting for chunks \n"
+								+ "that were recently loading/unloaded? \n"
+								+ "\n"
+								+ "These threads run when traveling around the world\n"
+								+ "and when moving between dimensions. \n"
+								+ "\n"
+								+ THREAD_NOTE)
+						.build();
+				public static final ConfigEntry<Double> runTimeRatioForChunkLightBakingThreads = new ConfigEntry.Builder<Double>()
+						.setMinDefaultMax(0.01, ThreadPresetConfigEventHandler.getLightBakingDefaultRunTimeRatio(), 1.0)
 						.comment(THREAD_RUN_TIME_RATIO_NOTE)
 						.build();
 				

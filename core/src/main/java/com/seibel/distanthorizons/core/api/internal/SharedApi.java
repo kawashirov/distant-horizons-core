@@ -20,6 +20,8 @@
 package com.seibel.distanthorizons.core.api.internal;
 
 import com.seibel.distanthorizons.core.Initializer;
+import com.seibel.distanthorizons.core.config.Config;
+import com.seibel.distanthorizons.core.config.listeners.ConfigChangeListener;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.ColumnRenderBufferBuilder;
 import com.seibel.distanthorizons.core.dataObjects.transformers.ChunkToLodBuilder;
 import com.seibel.distanthorizons.core.dataObjects.transformers.FullDataToRenderDataTransformer;
@@ -47,21 +49,20 @@ import java.util.concurrent.ThreadPoolExecutor;
 /** Contains code and variables used by both {@link ClientApi} and {@link ServerApi} */
 public class SharedApi
 {
+	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	public static final SharedApi INSTANCE = new SharedApi();
+	
+	private static final Set<DhChunkPos> UPDATING_CHUNK_SET = ConcurrentHashMap.newKeySet();
+	
 	
 	private static AbstractDhWorld currentWorld;
 	private static int lastWorldGenTickDelta = 0;
 	
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	// TODO make an interface or object for handling thread pools like this, this same code is in ~8 places
+	private static ThreadPoolExecutor lightPopulatorThreadPool;
+	private static ConfigChangeListener<Integer> threadConfigListener;
 	
-	private static final ThreadPoolExecutor LIGHT_POPULATOR_THREAD_POOL = ThreadUtil.makeRateLimitedThreadPool(
-			// thread count doesn't need to be very high since the player can only move so fast, 1 should be plenty
-			(Runtime.getRuntime().availableProcessors() <= 12) ? 1 : 2,
-			"Server Light Populator",
-			(Runtime.getRuntime().availableProcessors() <= 12) ? 0.5 : 0.9,
-			ThreadUtil.MINIMUM_RELATIVE_PRIORITY);
 	
-	private static final Set<DhChunkPos> UPDATING_CHUNK_SET = ConcurrentHashMap.newKeySet(); 
 	
 	
 	
@@ -95,6 +96,7 @@ public class SharedApi
 			ColumnRenderBufferBuilder.setupExecutorService();
 			WorldGenerationQueue.setupWorldGenThreadPool();
 			ChunkToLodBuilder.setupExecutorService();
+			SharedApi.setupExecutorService();
 		}
 		else
 		{
@@ -104,6 +106,7 @@ public class SharedApi
 			ColumnRenderBufferBuilder.shutdownExecutorService();
 			WorldGenerationQueue.shutdownWorldGenThreadPool();
 			ChunkToLodBuilder.shutdownExecutorService();
+			SharedApi.shutdownExecutorService();
 			
 			DebugRenderer.clearRenderables();
 			
@@ -235,7 +238,7 @@ public class SharedApi
 	private static void bakeChunkLightingAndSendToLevelAsync(IChunkWrapper chunkWrapper, @Nullable ArrayList<IChunkWrapper> neighbourChunkList, IDhLevel dhLevel)
 	{
 		// lighting the chunk needs to be done on a separate thread to prevent lagging any of the event threads
-		LIGHT_POPULATOR_THREAD_POOL.execute(() ->
+		lightPopulatorThreadPool.execute(() ->
 		{
 			try
 			{
@@ -282,6 +285,54 @@ public class SharedApi
 				UPDATING_CHUNK_SET.remove(chunkWrapper.getChunkPos());	
 			}
 		});
+	}
+	
+	
+	
+	//==========================//
+	// executor handler methods //
+	//==========================//
+	
+	/**
+	 * Creates a new executor. <br>
+	 * Does nothing if an executor already exists.
+	 */
+	public static void setupExecutorService()
+	{
+		// static setup
+		if (threadConfigListener == null)
+		{
+			threadConfigListener = new ConfigChangeListener<>(Config.Client.Advanced.MultiThreading.numberOfChunkLightBakingThreads, (threadCount) -> { setThreadPoolSize(threadCount); });
+		}
+		
+		
+		if (lightPopulatorThreadPool == null || lightPopulatorThreadPool.isTerminated())
+		{
+			LOGGER.info("Starting " + ChunkToLodBuilder.class.getSimpleName());
+			setThreadPoolSize(Config.Client.Advanced.MultiThreading.numberOfChunkLightBakingThreads.get());
+		}
+	}
+	public static void setThreadPoolSize(int threadPoolSize)
+	{
+		if (lightPopulatorThreadPool != null && !lightPopulatorThreadPool.isTerminated())
+		{
+			lightPopulatorThreadPool.shutdownNow();
+		}
+		
+		lightPopulatorThreadPool = ThreadUtil.makeRateLimitedThreadPool(threadPoolSize, SharedApi.class.getSimpleName()+" - Light Populator", Config.Client.Advanced.MultiThreading.runTimeRatioForChunkLightBakingThreads);
+	}
+	
+	/**
+	 * Stops any executing tasks and destroys the executor. <br>
+	 * Does nothing if the executor isn't running.
+	 */
+	public static void shutdownExecutorService()
+	{
+		if (lightPopulatorThreadPool != null)
+		{
+			LOGGER.info("Stopping " + ChunkToLodBuilder.class.getSimpleName());
+			lightPopulatorThreadPool.shutdownNow();
+		}
 	}
 	
 	
