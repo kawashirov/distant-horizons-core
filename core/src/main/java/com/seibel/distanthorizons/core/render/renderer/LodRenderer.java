@@ -140,6 +140,8 @@ public class LodRenderer
 	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	
+	private final ReentrantLock setupLock = new ReentrantLock();
+	
 	public final RenderBufferHandler bufferHandler;
 	
 	// The shader program
@@ -148,9 +150,9 @@ public class LodRenderer
 	public boolean isSetupComplete = false;
 	
 	// frameBuffer and texture ID's for this renderer
-	private int framebufferId;
-	private int colorTextureId;
-	private int depthTextureId;
+	private int framebufferId = -1;
+	private int colorTextureId = -1;
+	private int depthTextureId = -1;
 	
 	
 	
@@ -497,21 +499,31 @@ public class LodRenderer
 			return;
 		}
 		
-		EVENT_LOGGER.info("Setting up renderer");
-		this.isSetupComplete = true;
-		this.shaderProgram = new LodRenderProgram(LodFogConfig.generateFogConfig()); // TODO this doesn't actually use the fog config
-		if (ENABLE_IBO)
+		try
 		{
-			this.quadIBO = new QuadElementBuffer();
-			this.quadIBO.reserve(AbstractRenderBuffer.MAX_QUADS_PER_BUFFER);
+			this.setupLock.lock();
+			
+			
+			EVENT_LOGGER.info("Setting up renderer");
+			this.isSetupComplete = true;
+			this.shaderProgram = new LodRenderProgram(LodFogConfig.generateFogConfig()); // TODO this doesn't actually use the fog config
+			if (ENABLE_IBO)
+			{
+				this.quadIBO = new QuadElementBuffer();
+				this.quadIBO.reserve(AbstractRenderBuffer.MAX_QUADS_PER_BUFFER);
+			}
+			
+			// Generate framebuffer, color texture, and depth render buffer
+			this.framebufferId = GL32.glGenFramebuffers();
+			this.colorTextureId = GL32.glGenTextures();
+			this.depthTextureId = GL32.glGenTextures();
+			
+			EVENT_LOGGER.info("Renderer setup complete");
 		}
-		
-		// Generate framebuffer, color texture, and depth render buffer
-		this.framebufferId = GL32.glGenFramebuffers();
-		this.colorTextureId = GL32.glGenTextures();
-		this.depthTextureId = GL32.glGenTextures();
-		
-		EVENT_LOGGER.info("Renderer setup complete");
+		finally
+		{
+			this.setupLock.unlock();
+		}
 	}
 	
 	private Color getFogColor(float partialTicks)
@@ -561,38 +573,48 @@ public class LodRenderer
 	 */
 	private void cleanup()
 	{
-		if (!this.isSetupComplete)
+		if (GLProxy.getInstance() == null)
 		{
-			EVENT_LOGGER.warn("Renderer cleanup called but Renderer has not completed setup!");
-			return;
-		}
-		if (!GLProxy.hasInstance())
-		{
+			// shouldn't normally happen, but just in case
 			EVENT_LOGGER.warn("Renderer Cleanup called but the GLProxy has never been initalized!");
 			return;
 		}
 		
-		this.isSetupComplete = false;
-		
-		GLProxy.getInstance().recordOpenGlCall(() ->
+		try
 		{
-			EVENT_LOGGER.info("Renderer Cleanup Started");
+			this.setupLock.lock();
+			this.isSetupComplete = false;
 			
-			this.shaderProgram.free();
-			this.shaderProgram = null;
-			if (this.quadIBO != null)
+			GLProxy.getInstance().recordOpenGlCall(() ->
 			{
-				this.quadIBO.destroy(false);
-			}
-			
-			// Delete framebuffer, color texture, and depth texture
-			//GL32.glBindRenderbuffer(GL32.GL_RENDERBUFFER, 0);
-			GL32.glDeleteFramebuffers(this.framebufferId);
-			GL32.glDeleteTextures(this.colorTextureId);
-			GL32.glDeleteTextures(this.depthTextureId);
-			
-			EVENT_LOGGER.info("Renderer Cleanup Complete");
-		});
+				EVENT_LOGGER.info("Renderer Cleanup Started");
+				
+				if (this.shaderProgram != null)
+				{
+					this.shaderProgram.free();
+					this.shaderProgram = null;
+				}
+				
+				if (this.quadIBO != null)
+				{
+					this.quadIBO.destroy(false);
+				}
+				
+				// Delete framebuffer, color texture, and depth texture
+				if (this.framebufferId != -1)
+					GL32.glDeleteFramebuffers(this.framebufferId);
+				if (this.colorTextureId != -1)
+					GL32.glDeleteTextures(this.colorTextureId);
+				if (this.depthTextureId != -1)
+					GL32.glDeleteTextures(this.depthTextureId);
+				
+				EVENT_LOGGER.info("Renderer Cleanup Complete");
+			});
+		}
+		catch (Exception e)
+		{
+			this.setupLock.unlock();
+		}
 	}
 	
 }
