@@ -31,6 +31,7 @@ import com.seibel.distanthorizons.core.render.glObject.GLProxy;
 import com.seibel.distanthorizons.core.render.glObject.GLState;
 import com.seibel.distanthorizons.core.render.glObject.buffer.GLVertexBuffer;
 import com.seibel.distanthorizons.core.render.glObject.buffer.QuadElementBuffer;
+import com.seibel.distanthorizons.core.render.glObject.texture.*;
 import com.seibel.distanthorizons.core.render.renderer.shaders.*;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.RenderUtil;
@@ -50,7 +51,6 @@ import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL32;
 
 import java.awt.*;
-import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -85,6 +85,8 @@ public class LodRenderer
 	private static int activeFramebufferId = -1;
 	private static int activeColorTextureId = -1;
 	private static int activeDepthTextureId = -1;
+	private int cachedWidth;
+	private int cachedHeight;
 	
 	
 	
@@ -150,9 +152,9 @@ public class LodRenderer
 	public boolean isSetupComplete = false;
 	
 	// frameBuffer and texture ID's for this renderer
-	private int framebufferId = -1;
-	private int colorTextureId = -1;
-	private int depthTextureId = -1;
+	private DHFramebuffer framebuffer;
+	private DHColorTexture colorTexture;
+	private DHDepthTexture depthTexture;
 	
 	
 	
@@ -194,6 +196,11 @@ public class LodRenderer
 		}
 	}
 	
+	public void resize(int width, int height) {
+		colorTexture.resize(width, height);
+		depthTexture.resize(width, height, DHDepthBufferFormat.DEPTH32F);
+	}
+	
 	
 	
 	//===============//
@@ -218,11 +225,13 @@ public class LodRenderer
 		{
 			if (IRIS_ACCESSOR != null && IRIS_ACCESSOR.isRenderingShadowPass())
 			{
+				// Do not do this while Iris compat is being worked on.
+				
 				// We do not have a wy to properly render shader shadow pass, since they can
 				// and often do change the projection entirely, as well as the output usage.
 				
 				//EVENT_LOGGER.debug("Skipping shadow pass render.");
-				return;
+				//return;
 			}
 			
 			// Note: Since lightmapTexture is changing every frame, it's faster to recreate it than to reuse the old one.
@@ -261,60 +270,23 @@ public class LodRenderer
 				}
 			}
 			
+			if (MC_RENDER.getTargetFrameBufferViewportWidth() != cachedWidth || MC_RENDER.getTargetFrameBufferViewportHeight() != cachedHeight) {
+				this.cachedWidth = MC_RENDER.getTargetFrameBufferViewportWidth();
+				this.cachedHeight = MC_RENDER.getTargetFrameBufferViewportHeight();
+				resize(cachedWidth, cachedHeight);
+			}
 			
+			this.setActiveFramebufferId(framebuffer.getId());
+			this.setActiveDepthTextureId(depthTexture.getTextureId());
+			this.setActiveColorTextureId(colorTexture.getTexture());
 			// Bind LOD frame buffer
-			GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, this.framebufferId);
-			
-			this.setActiveFramebufferId(this.framebufferId);
-			
-			
-			// Bind LOD color texture
-			GL32.glBindTexture(GL32.GL_TEXTURE_2D, this.colorTextureId);
-			GL32.glTexImage2D(GL32.GL_TEXTURE_2D,
-					0,
-					GL32.GL_RGBA8,
-					MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(),
-					0,
-					GL32.GL_RGBA,
-					GL32.GL_UNSIGNED_BYTE,
-					(ByteBuffer) null);
-			GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MIN_FILTER, GL32.GL_LINEAR);
-			GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MAG_FILTER, GL32.GL_LINEAR);
-			GL32.glFramebufferTexture2D(GL32.GL_DRAW_FRAMEBUFFER, GL32.GL_COLOR_ATTACHMENT0, GL32.GL_TEXTURE_2D, this.colorTextureId, 0);
-			
-			this.setActiveColorTextureId(this.colorTextureId);
-			
-			
-			// bind LOD depth texture 
-			GL32.glBindTexture(GL32.GL_TEXTURE_2D, this.depthTextureId);
-			GL32.glTexImage2D(GL32.GL_TEXTURE_2D,
-					0,
-					GL32.GL_DEPTH_COMPONENT32,
-					MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(),
-					0,
-					GL32.GL_DEPTH_COMPONENT,
-					GL32.GL_UNSIGNED_BYTE,
-					(ByteBuffer) null);
-			GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MIN_FILTER, GL32.GL_LINEAR);
-			GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MAG_FILTER, GL32.GL_LINEAR);
-			GL32.glFramebufferTexture2D(GL32.GL_DRAW_FRAMEBUFFER, GL32.GL_DEPTH_ATTACHMENT, GL32.GL_TEXTURE_2D, this.depthTextureId, 0);
-			
-			this.setActiveDepthTextureId(this.depthTextureId);
-			
+			this.framebuffer.bind();
 			
 			// Clear LOD framebuffer and depth buffers
 			GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
 			
 			GL32.glEnable(GL32.GL_DEPTH_TEST);
 			GL32.glDepthFunc(GL32.GL_LESS);
-			
-			
-			if(GL32.glCheckFramebufferStatus(GL32.GL_FRAMEBUFFER) != GL32.GL_FRAMEBUFFER_COMPLETE)
-			{
-				// This generally means something wasn't bound, IE missing either the color or depth texture
-				tickLogger.warn("FrameBuffer ["+this.framebufferId+"] isn't complete.");
-			}
-			
 			
 			// Set OpenGL polygon mode
 			boolean renderWireframe = Config.Client.Advanced.Debugging.renderWireframe.get();
@@ -514,9 +486,26 @@ public class LodRenderer
 			}
 			
 			// Generate framebuffer, color texture, and depth render buffer
-			this.framebufferId = GL32.glGenFramebuffers();
-			this.colorTextureId = GL32.glGenTextures();
-			this.depthTextureId = GL32.glGenTextures();
+			this.framebuffer = new DHFramebuffer();
+			this.colorTexture = DHColorTexture.builder().setDimensions(MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight())
+					.setInternalFormat(DHInternalTextureFormat.RGBA8)
+					.setPixelType(DHPixelType.UNSIGNED_BYTE)
+					.setPixelFormat(DHPixelFormat.RGBA)
+					.build();
+			this.depthTexture = new DHDepthTexture(MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(), DHDepthBufferFormat.DEPTH32F);
+			
+			this.framebuffer.addDepthAttachment(depthTexture.getTextureId(), DHDepthBufferFormat.DEPTH32F);
+			this.framebuffer.addColorAttachment(0, colorTexture.getTexture());
+			
+			this.cachedWidth = MC_RENDER.getTargetFrameBufferViewportWidth();
+			this.cachedHeight = MC_RENDER.getTargetFrameBufferViewportHeight();
+			
+			if(framebuffer.getStatus() != GL32.GL_FRAMEBUFFER_COMPLETE)
+			{
+				// This generally means something wasn't bound, IE missing either the color or depth texture
+				tickLogger.warn("FrameBuffer ["+this.framebuffer.getId()+"] isn't complete.");
+			}
+			
 			
 			EVENT_LOGGER.info("Renderer setup complete");
 		}
@@ -600,12 +589,9 @@ public class LodRenderer
 				}
 				
 				// Delete framebuffer, color texture, and depth texture
-				if (this.framebufferId != -1)
-					GL32.glDeleteFramebuffers(this.framebufferId);
-				if (this.colorTextureId != -1)
-					GL32.glDeleteTextures(this.colorTextureId);
-				if (this.depthTextureId != -1)
-					GL32.glDeleteTextures(this.depthTextureId);
+				this.framebuffer.destroyInternal();
+				this.colorTexture.destroy();
+				this.depthTexture.destroy();
 				
 				EVENT_LOGGER.info("Renderer Cleanup Complete");
 			});
