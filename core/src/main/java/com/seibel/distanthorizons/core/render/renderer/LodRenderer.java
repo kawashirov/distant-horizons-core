@@ -573,6 +573,7 @@ public class LodRenderer
 		{
 			this.setupLock.lock();
 			
+			EVENT_LOGGER.info("Queuing Renderer Cleanup for main render thread");
 			GLProxy.getInstance().recordOpenGlCall(() ->
 			{
 				EVENT_LOGGER.info("Renderer Cleanup Started");
@@ -584,14 +585,15 @@ public class LodRenderer
 				}
 				
 				if (this.quadIBO != null)
-				{
 					this.quadIBO.destroy(false);
-				}
 				
 				// Delete framebuffer, color texture, and depth texture
-				this.framebuffer.destroyInternal();
-				this.colorTexture.destroy();
-				this.depthTexture.destroy();
+				if (this.framebuffer != null)
+					this.framebuffer.destroyInternal();
+				if (this.colorTexture != null)
+					this.colorTexture.destroy();
+				if (this.depthTexture != null)
+					this.depthTexture.destroy();
 				
 				EVENT_LOGGER.info("Renderer Cleanup Complete");
 			});
