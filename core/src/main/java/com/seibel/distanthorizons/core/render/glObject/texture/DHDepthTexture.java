@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
 public class DHDepthTexture
 {
 	private int id;
-	public DHDepthTexture(int width, int height, DHDepthBufferFormat format)
+	public DHDepthTexture(int width, int height, EDhDepthBufferFormat format)
 	{
 		this.id = GL43C.glGenTextures();
 		
@@ -28,7 +28,7 @@ public class DHDepthTexture
 		this.id = id;
 	}
 	
-	public void resize(int width, int height, DHDepthBufferFormat format)
+	public void resize(int width, int height, EDhDepthBufferFormat format)
 	{
 		GL43C.glBindTexture(GL43C.GL_TEXTURE_2D, getTextureId());
 		GL43C.glTexImage2D(GL11C.GL_TEXTURE_2D, 0, format.getGlInternalFormat(), width, height, 0,

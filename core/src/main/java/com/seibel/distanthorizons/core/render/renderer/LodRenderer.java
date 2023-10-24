@@ -152,8 +152,8 @@ public class LodRenderer
 	public boolean isSetupComplete = false;
 	
 	// frameBuffer and texture ID's for this renderer
-	private DHFramebuffer framebuffer;
-	private DHColorTexture colorTexture;
+	private DhFramebuffer framebuffer;
+	private DhColorTexture colorTexture;
 	private DHDepthTexture depthTexture;
 	
 	
@@ -198,7 +198,7 @@ public class LodRenderer
 	
 	public void resize(int width, int height) {
 		colorTexture.resize(width, height);
-		depthTexture.resize(width, height, DHDepthBufferFormat.DEPTH32F);
+		depthTexture.resize(width, height, EDhDepthBufferFormat.DEPTH32F);
 	}
 	
 	
@@ -486,15 +486,15 @@ public class LodRenderer
 			}
 			
 			// Generate framebuffer, color texture, and depth render buffer
-			this.framebuffer = new DHFramebuffer();
-			this.colorTexture = DHColorTexture.builder().setDimensions(MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight())
-					.setInternalFormat(DHInternalTextureFormat.RGBA8)
-					.setPixelType(DHPixelType.UNSIGNED_BYTE)
-					.setPixelFormat(DHPixelFormat.RGBA)
+			this.framebuffer = new DhFramebuffer();
+			this.colorTexture = DhColorTexture.builder().setDimensions(MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight())
+					.setInternalFormat(EDhInternalTextureFormat.RGBA8)
+					.setPixelType(EDhPixelType.UNSIGNED_BYTE)
+					.setPixelFormat(EDhPixelFormat.RGBA)
 					.build();
-			this.depthTexture = new DHDepthTexture(MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(), DHDepthBufferFormat.DEPTH32F);
+			this.depthTexture = new DHDepthTexture(MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight(), EDhDepthBufferFormat.DEPTH32F);
 			
-			this.framebuffer.addDepthAttachment(depthTexture.getTextureId(), DHDepthBufferFormat.DEPTH32F);
+			this.framebuffer.addDepthAttachment(depthTexture.getTextureId(), EDhDepthBufferFormat.DEPTH32F);
 			this.framebuffer.addColorAttachment(0, colorTexture.getTexture());
 			
 			this.cachedWidth = MC_RENDER.getTargetFrameBufferViewportWidth();
