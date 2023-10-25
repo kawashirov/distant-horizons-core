@@ -41,6 +41,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrap
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.ILightMapWrapper;
 import com.seibel.distanthorizons.api.enums.rendering.EFogColorMode;
 import com.seibel.distanthorizons.core.render.fog.LodFogConfig;
+import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.AbstractOptifineAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.distanthorizons.coreapi.util.math.Mat4f;
@@ -155,6 +156,11 @@ public class LodRenderer
 	private DhFramebuffer framebuffer;
 	private DhColorTexture colorTexture;
 	private DHDepthTexture depthTexture;
+	/** 
+	 * If true the {@link LodRenderer#framebuffer} is the same as MC's.
+	 * This should only be true in the case of Optifine so LODs won't be overwritten when shaders are enabled.
+	 */
+	private boolean usingMcFrameBuffer = false;
 	
 	
 	
@@ -393,6 +399,14 @@ public class LodRenderer
 				FogShader.INSTANCE.render(partialTicks);
 			}
 			
+			
+			if (this.usingMcFrameBuffer)
+			{
+				// If MC's framebuffer is being used the depth needs to be cleared to prevent rendering on top of MC.
+				// This should only happen when Optifine shaders are being used.
+				GL32.glClear(GL32.GL_DEPTH_BUFFER_BIT);
+			}
+			
 			drawLagSpikeCatcher.end("LodDraw");
 			
 			
@@ -485,8 +499,23 @@ public class LodRenderer
 				this.quadIBO.reserve(AbstractRenderBuffer.MAX_QUADS_PER_BUFFER);
 			}
 			
-			// Generate framebuffer, color texture, and depth render buffer
-			this.framebuffer = new DhFramebuffer();
+			
+			// create or get the frame buffer
+			if (AbstractOptifineAccessor.optifinePresent())
+			{
+				// use MC/Optifine's default FrameBuffer so shaders won't remove the LODs
+				int currentFrameBufferId = GL32.glGetInteger(GL32.GL_FRAMEBUFFER_BINDING);
+				this.framebuffer = new DhFramebuffer(currentFrameBufferId);
+				this.usingMcFrameBuffer = true;
+			}
+			else 
+			{
+				// normal use case
+				this.framebuffer = new DhFramebuffer();
+				this.usingMcFrameBuffer = false;
+			}
+			
+			// color and depth texture
 			this.colorTexture = DhColorTexture.builder().setDimensions(MC_RENDER.getTargetFrameBufferViewportWidth(), MC_RENDER.getTargetFrameBufferViewportHeight())
 					.setInternalFormat(EDhInternalTextureFormat.RGBA8)
 					.setPixelType(EDhPixelType.UNSIGNED_BYTE)
@@ -588,7 +617,7 @@ public class LodRenderer
 					this.quadIBO.destroy(false);
 				
 				// Delete framebuffer, color texture, and depth texture
-				if (this.framebuffer != null)
+				if (this.framebuffer != null && !this.usingMcFrameBuffer)
 					this.framebuffer.destroyInternal();
 				if (this.colorTexture != null)
 					this.colorTexture.destroy();

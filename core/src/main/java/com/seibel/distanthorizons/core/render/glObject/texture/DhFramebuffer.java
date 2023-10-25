@@ -22,7 +22,7 @@ public class DhFramebuffer
 	
 	public DhFramebuffer() 
 	{
-		id = GL43C.glGenFramebuffers();
+		this.id = GL43C.glGenFramebuffers();
 
 		this.attachments = new Int2IntArrayMap();
 		this.maxDrawBuffers = GL43C.glGetInteger(GL30C.GL_MAX_DRAW_BUFFERS);
@@ -30,7 +30,7 @@ public class DhFramebuffer
 		this.hasDepthAttachment = false;
 	}
 
-	/** For internal use in Iris. Do not use in DH. */
+	/** For internal use by Iris, do not remove. */
 	public DhFramebuffer(int id) 
 	{
 		this.id = id;
