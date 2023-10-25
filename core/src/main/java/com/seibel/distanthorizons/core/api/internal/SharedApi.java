@@ -153,11 +153,6 @@ public class SharedApi
 			// shouldn't happen, but just in case
 			return;
 		}
-		else if (UPDATING_CHUNK_SET.contains(chunkWrapper.getChunkPos()))
-		{
-			// this chunk is already being updated
-			return;
-		}
 		
 		AbstractDhWorld dhWorld = SharedApi.getAbstractDhWorld();
 		if (dhWorld == null)
@@ -187,10 +182,6 @@ public class SharedApi
 			return;
 		}
 		
-		
-		
-		// prevent duplicate update requests
-		UPDATING_CHUNK_SET.add(chunkWrapper.getChunkPos());
 		
 		// update the necessary chunk(s)
 		if (!updateNeighborChunks)
@@ -237,9 +228,27 @@ public class SharedApi
 	}
 	private static void bakeChunkLightingAndSendToLevelAsync(IChunkWrapper chunkWrapper, @Nullable ArrayList<IChunkWrapper> neighbourChunkList, IDhLevel dhLevel)
 	{
+		if (UPDATING_CHUNK_SET.size() > lightPopulatorThreadPool.getPoolSize() * 100)
+		{
+			// limit how many tasks can be queued at a time
+			// attempt to limit memory leaking
+			return;
+		}
+		
+		// prevent duplicate update requests
+		if (UPDATING_CHUNK_SET.contains(chunkWrapper.getChunkPos()))
+		{
+			// this chunk is already being updated
+			return;
+		}
+		UPDATING_CHUNK_SET.add(chunkWrapper.getChunkPos());
+		
+		
 		// lighting the chunk needs to be done on a separate thread to prevent lagging any of the event threads
 		lightPopulatorThreadPool.execute(() ->
 		{
+			LOGGER.trace(chunkWrapper.getChunkPos() + " " + lightPopulatorThreadPool.getActiveCount() + " / " + lightPopulatorThreadPool.getQueue().size() + " - " + lightPopulatorThreadPool.getCompletedTaskCount());
+			
 			try
 			{
 				// Save or populate the chunk wrapper's lighting
