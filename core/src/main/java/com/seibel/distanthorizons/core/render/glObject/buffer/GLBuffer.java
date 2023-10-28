@@ -133,6 +133,7 @@ public class GLBuffer implements AutoCloseable
 			{
 				Reference<? extends GLBuffer> phantom = BUFFER_ID_TO_PHANTOM.get(id);
 				PHANTOM_TO_BUFFER_ID.remove(phantom);
+				BUFFER_ID_TO_PHANTOM.remove(id);
 			}
 			
 			// destroy the buffer if it exists
@@ -354,11 +355,7 @@ public class GLBuffer implements AutoCloseable
 					// destroy the buffer if it hasn't been cleared yet
 					if (PHANTOM_TO_BUFFER_ID.containsKey(phantomRef))
 					{
-						// remove the phantom reference
 						int id = PHANTOM_TO_BUFFER_ID.get(phantomRef);
-						PHANTOM_TO_BUFFER_ID.remove(phantomRef);
-						BUFFER_ID_TO_PHANTOM.remove(id);
-						
 						destroyBufferId(true, id);
 					}
 					
