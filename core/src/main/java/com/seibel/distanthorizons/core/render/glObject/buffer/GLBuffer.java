@@ -140,6 +140,12 @@ public class GLBuffer implements AutoCloseable
 			{
 				GL32.glDeleteBuffers(id);
 				bufferCount.decrementAndGet();
+				
+				//LOGGER.info("destroyed buffer ["+id+"], remaining: ["+BUFFER_ID_TO_PHANTOM.size()+"]");
+			}
+			else
+			{
+				LOGGER.warn("Attempted to destroy invalid buffer ["+id+"], remaining: ["+BUFFER_ID_TO_PHANTOM.size()+"]");
 			}
 		}
 	}
@@ -167,13 +173,8 @@ public class GLBuffer implements AutoCloseable
 			return;
 		}
 		
-		boolean useBuffStorage = uploadMethod.useBufferStorage;
-		if (useBuffStorage != this.bufferStorage)
-		{
-			this.destroy(false);
-			this.create(useBuffStorage);
-			this.bind();
-		}
+		// make sure the buffer is ready for uploading
+		this.createOrChangeBufferTypeForUpload(uploadMethod);
 		
 		switch (uploadMethod)
 		{
@@ -240,13 +241,9 @@ public class GLBuffer implements AutoCloseable
 		LodUtil.assertTrue(uploadMethod.useEarlyMapping, "Upload method must be one that use early mappings in order to call mapBuffer");
 		LodUtil.assertTrue(!this.isMapped, "Buffer is already mapped");
 		
-		boolean useBuffStorage = uploadMethod.useBufferStorage;
-		if (useBuffStorage != this.bufferStorage)
-		{
-			this.destroy(false);
-			this.create(useBuffStorage);
-		}
-		this.bind();
+		// make sure the buffer is ready for uploading
+		this.createOrChangeBufferTypeForUpload(uploadMethod);
+		
 		ByteBuffer vboBuffer;
 		
 		if (this.size < targetSize || this.size > targetSize * BUFFER_SHRINK_TRIGGER)
@@ -296,6 +293,40 @@ public class GLBuffer implements AutoCloseable
 	{
 		return (this.bufferStorage ? "" : "Static-") + this.getClass().getSimpleName() +
 				"[id:" + this.id + ",size:" + this.size + (this.isMapped ? ",MAPPED" : "") + "]";
+	}
+	
+	
+	
+	//================//
+	// helper methods //
+	//================//
+	
+	/** 
+	 * Makes sure the buffer exists and is of the correct format
+	 * before uploading.
+	 */
+	private void createOrChangeBufferTypeForUpload(EGpuUploadMethod uploadMethod)
+	{
+		// create/change the buffer type if necessary
+		if (uploadMethod.useBufferStorage != this.bufferStorage)
+		{
+			// recreate if the buffer storage type changed
+			this.bind();
+			this.destroy(false);
+			this.create(uploadMethod.useBufferStorage);
+			this.bind();
+		}
+		else
+		{
+			// Prevent uploading to the null buffer (ID 0).
+			// This can happen if the buffer was deleted previously.
+			if (this.id == 0)
+			{
+				this.create(this.bufferStorage);
+			}
+			
+			this.bind();
+		}
 	}
 	
 	
