@@ -50,7 +50,7 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 
 //    private final NetworkClient networkClient;
 	
-	public ExecutorService dhTickerThread = ThreadUtil.makeSingleThreadPool("DH Client World Ticker Thread");
+	public ExecutorService dhTickerThread = ThreadUtil.makeSingleThreadPool("Client World Ticker Thread");
 	public EventLoop eventLoop = new EventLoop(this.dhTickerThread, this::_clientTick);
 	
 	
