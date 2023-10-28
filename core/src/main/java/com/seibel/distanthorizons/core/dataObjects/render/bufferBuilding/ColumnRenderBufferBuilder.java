@@ -162,8 +162,12 @@ public class ColumnRenderBufferBuilder
 					}
 					else
 					{
-						LodUtil.assertTrue(columnRenderBuffer.buffersUploaded);
-						return columnRenderBuffer;
+						if (columnRenderBuffer != null)
+						{
+							LodUtil.assertTrue(columnRenderBuffer.buffersUploaded);
+						}
+						
+						return columnRenderBuffer; 
 					}
 				});
 	}
@@ -361,15 +365,6 @@ public class ColumnRenderBufferBuilder
 			}
 		}
 		return newVbos;
-	}
-	
-	public static GLVertexBuffer getOrMakeBuffer(GLVertexBuffer[] vbos, int iIndex, boolean useBuffStorage)
-	{
-		if (vbos[iIndex] == null)
-		{
-			vbos[iIndex] = new GLVertexBuffer(useBuffStorage);
-		}
-		return vbos[iIndex];
 	}
 	
 	

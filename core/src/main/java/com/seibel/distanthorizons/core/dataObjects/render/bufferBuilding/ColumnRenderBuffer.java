@@ -59,7 +59,6 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 	
 	private GLVertexBuffer[] vbos;
 	private GLVertexBuffer[] vbosTransparent;
-	private boolean closed = false;
 	
 	private final DhSectionPos debugPos;
 	
@@ -190,8 +189,8 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 	}
 	private static void uploadBuffersDirect(GLVertexBuffer[] vbos, Iterator<ByteBuffer> iter, EGpuUploadMethod method) throws InterruptedException
 	{
-		long remainingNS = 0;
-		long BPerNS = Config.Client.Advanced.GpuBuffers.gpuUploadPerMegabyteInMilliseconds.get();
+		long remainingMS = 0;
+		long MBPerMS = Config.Client.Advanced.GpuBuffers.gpuUploadPerMegabyteInMilliseconds.get();
 		int vboIndex = 0;
 		while (iter.hasNext())
 		{
@@ -199,9 +198,18 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 			{
 				throw new RuntimeException("Too many vertex buffers!!");
 			}
+			vboIndex++;
+			
+			
+			// get or create the VBO
+			if (vbos[vboIndex] == null)
+			{
+				vbos[vboIndex] = new GLVertexBuffer(method.useBufferStorage);
+			}
+			GLVertexBuffer vbo = vbos[vboIndex];
+			
 			
 			ByteBuffer bb = iter.next();
-			GLVertexBuffer vbo = ColumnRenderBufferBuilder.getOrMakeBuffer(vbos, vboIndex++, method.useBufferStorage);
 			int size = bb.limit() - bb.position();
 			
 			try
@@ -217,20 +225,20 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 			}
 			
 			
-			if (BPerNS > 0)
+			if (MBPerMS > 0)
 			{
 				// upload buffers over an extended period of time
 				// to hopefully prevent stuttering.
-				remainingNS += size * BPerNS;
-				if (remainingNS >= TimeUnit.NANOSECONDS.convert(1000 / 60, TimeUnit.MILLISECONDS))
+				remainingMS += size * MBPerMS;
+				if (remainingMS >= TimeUnit.NANOSECONDS.convert(1000 / 60, TimeUnit.MILLISECONDS))
 				{
-					if (remainingNS > MAX_BUFFER_UPLOAD_TIMEOUT_NANOSECONDS)
+					if (remainingMS > MAX_BUFFER_UPLOAD_TIMEOUT_NANOSECONDS)
 					{
-						remainingNS = MAX_BUFFER_UPLOAD_TIMEOUT_NANOSECONDS;
+						remainingMS = MAX_BUFFER_UPLOAD_TIMEOUT_NANOSECONDS;
 					}
 					
-					Thread.sleep(remainingNS / 1000000, (int) (remainingNS % 1000000));
-					remainingNS = 0;
+					Thread.sleep(remainingMS / 1000000, (int) (remainingMS % 1000000));
+					remainingMS = 0;
 				}
 			}
 		}
@@ -355,11 +363,6 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 	@Override
 	public void close()
 	{
-		if (this.closed)
-		{
-			return;
-		}
-		this.closed = true;
 		this.buffersUploaded = false;
 		
 		GLProxy.getInstance().recordOpenGlCall(() ->

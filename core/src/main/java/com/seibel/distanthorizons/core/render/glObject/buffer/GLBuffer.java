@@ -24,13 +24,19 @@ import com.seibel.distanthorizons.core.enums.EGLProxyContext;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.render.glObject.GLProxy;
 import com.seibel.distanthorizons.core.util.LodUtil;
+import com.seibel.distanthorizons.core.util.ThreadUtil;
 import com.seibel.distanthorizons.core.util.math.UnitBytes;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL44;
 
 import java.lang.invoke.MethodHandles;
+import java.lang.ref.PhantomReference;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class GLBuffer implements AutoCloseable
@@ -39,58 +45,68 @@ public class GLBuffer implements AutoCloseable
 	
 	public static final double BUFFER_EXPANSION_MULTIPLIER = 1.3;
 	public static final double BUFFER_SHRINK_TRIGGER = BUFFER_EXPANSION_MULTIPLIER * BUFFER_EXPANSION_MULTIPLIER;
-	public static AtomicInteger count = new AtomicInteger(0);
+	/** the number of active buffers, can be used for debugging */
+	public static AtomicInteger bufferCount = new AtomicInteger(0);
+	
+	private static final int PHANTOM_REF_CHECK_TIME_IN_MS = 5 * 1000;
+	private static final HashMap<Reference<? extends GLBuffer>, Integer> PHANTOM_TO_BUFFER_ID = new HashMap<>();
+	private static final HashMap<Integer, Reference<? extends GLBuffer>> BUFFER_ID_TO_PHANTOM = new HashMap<>();
+	private static final ReferenceQueue<GLBuffer> PHANTOM_REFERENCE_QUEUE = new ReferenceQueue<>();
+	/** TODO we should make a global cleanup thread that handles all phantom references */
+	private static final ThreadPoolExecutor CLEANUP_THREAD = ThreadUtil.makeSingleThreadPool("GLBuffer Cleanup");
+	
 	
 	protected int id;
-	public final int getId()
-	{
-		return id;
-	}
+	public final int getId() { return this.id; }
 	protected int size = 0;
-	public int getSize()
-	{
-		return size;
-	}
+	public int getSize() { return this.size; }
 	protected boolean bufferStorage;
-	public final boolean isBufferStorage()
-	{
-		return bufferStorage;
-	}
+	public final boolean isBufferStorage() { return this.bufferStorage; }
 	protected boolean isMapped = false;
 	
 	
+	
+	//==============//
+	// constructors //
+	//==============//
+	
+	static
+	{
+		CLEANUP_THREAD.execute(() -> runPhantomReferenceCleanupLoop());
+	}
+	
 	public GLBuffer(boolean isBufferStorage)
 	{
-		create(isBufferStorage);
+		this.create(isBufferStorage);
 	}
 	
+	
+	
+	//=========//
+	// methods //
+	//=========//
 	
 	// Should be override by subclasses
-	public int getBufferBindingTarget()
-	{
-		return GL32.GL_COPY_READ_BUFFER;
-	}
+	public int getBufferBindingTarget() { return GL32.GL_COPY_READ_BUFFER; }
 	
-	public void bind()
-	{
-		GL32.glBindBuffer(getBufferBindingTarget(), id);
-	}
-	public void unbind()
-	{
-		GL32.glBindBuffer(getBufferBindingTarget(), 0);
-	}
+	public void bind() { GL32.glBindBuffer(this.getBufferBindingTarget(), this.id); }
+	public void unbind() { GL32.glBindBuffer(this.getBufferBindingTarget(), 0); }
 	
 	protected void create(boolean asBufferStorage)
 	{
 		LodUtil.assertTrue(GLProxy.getInstance().getGlContext() != EGLProxyContext.NONE,
-				"Thread [{}] tried to create a GLBuffer outside a OpenGL context.", Thread.currentThread());
+				"Thread ["+Thread.currentThread()+"] tried to create a GLBuffer outside a OpenGL context.");
+		
 		this.id = GL32.glGenBuffers();
 		this.bufferStorage = asBufferStorage;
-		count.getAndIncrement();
+		bufferCount.getAndIncrement();
+		
+		PhantomReference<GLBuffer> phantom = new PhantomReference<>(this, PHANTOM_REFERENCE_QUEUE);
+		PHANTOM_TO_BUFFER_ID.put(phantom, this.id);
+		BUFFER_ID_TO_PHANTOM.put(this.id, phantom);
+		
 	}
 	
-	//DEBUG USE
-	//private StackTraceElement[] firstCloseCallStack = null;
 	protected void destroy(boolean async)
 	{
 		if (this.id == 0)
@@ -99,56 +115,69 @@ public class GLBuffer implements AutoCloseable
 			return;
 		}
 		
+		destroyBufferId(async, this.id);
 		
+		this.id = 0;
+		this.size = 0;
+	}
+	private static void destroyBufferId(boolean async, int id)
+	{
 		if (async && GLProxy.getInstance().getGlContext() != EGLProxyContext.PROXY_WORKER)
 		{
-			GLProxy.getInstance().recordOpenGlCall(() -> destroy((false)));
+			GLProxy.getInstance().recordOpenGlCall(() -> destroyBufferId(false, id));
 		}
 		else
 		{
-			GL32.glDeleteBuffers(id);
-			//firstCloseCallStack = Thread.currentThread().getStackTrace();
-			id = 0;
-			size = 0;
-			if (count.decrementAndGet() == 0)
-				LOGGER.info("All GLBuffer is freed.");
+			// remove the phantom reference
+			if (BUFFER_ID_TO_PHANTOM.containsKey(id))
+			{
+				Reference<? extends GLBuffer> phantom = BUFFER_ID_TO_PHANTOM.get(id);
+				PHANTOM_TO_BUFFER_ID.remove(phantom);
+			}
+			
+			// destroy the buffer if it exists
+			if (GL32.glIsBuffer(id))
+			{
+				GL32.glDeleteBuffers(id);
+				bufferCount.decrementAndGet();
+			}
 		}
 	}
 	
 	// Requires already binded
 	protected void uploadBufferStorage(ByteBuffer bb, int bufferStorageHint)
 	{
-		LodUtil.assertTrue(bufferStorage, "Buffer is not bufferStorage but its trying to use bufferStorage upload method!");
+		LodUtil.assertTrue(this.bufferStorage, "Buffer is not bufferStorage but its trying to use bufferStorage upload method!");
 		int bbSize = bb.limit() - bb.position();
-		destroy(false);
-		create(true);
-		bind();
-		GL44.glBufferStorage(getBufferBindingTarget(), bb, bufferStorageHint);
-		size = bbSize;
+		this.destroy(false);
+		this.create(true);
+		this.bind();
+		GL44.glBufferStorage(this.getBufferBindingTarget(), bb, bufferStorageHint);
+		this.size = bbSize;
 	}
 	
 	// Requires already binded
 	protected void uploadBufferData(ByteBuffer bb, int bufferDataHint)
 	{
-		LodUtil.assertTrue(!bufferStorage, "Buffer is bufferStorage but its trying to use bufferData upload method!");
+		LodUtil.assertTrue(!this.bufferStorage, "Buffer is bufferStorage but its trying to use bufferData upload method!");
 		int bbSize = bb.limit() - bb.position();
-		GL32.glBufferData(getBufferBindingTarget(), bb, bufferDataHint);
-		size = bbSize;
+		GL32.glBufferData(this.getBufferBindingTarget(), bb, bufferDataHint);
+		this.size = bbSize;
 	}
 	
 	// Requires already binded
 	protected void uploadSubData(ByteBuffer bb, int maxExpansionSize, int bufferDataHint)
 	{
-		LodUtil.assertTrue(!bufferStorage, "Buffer is bufferStorage but its trying to use subData upload method!");
+		LodUtil.assertTrue(!this.bufferStorage, "Buffer is bufferStorage but its trying to use subData upload method!");
 		int bbSize = bb.limit() - bb.position();
-		if (size < bbSize || size > bbSize * BUFFER_SHRINK_TRIGGER)
+		if (this.size < bbSize || this.size > bbSize * BUFFER_SHRINK_TRIGGER)
 		{
 			int newSize = (int) (bbSize * BUFFER_EXPANSION_MULTIPLIER);
 			if (newSize > maxExpansionSize) newSize = maxExpansionSize;
-			GL32.glBufferData(getBufferBindingTarget(), newSize, bufferDataHint);
-			size = newSize;
+			GL32.glBufferData(this.getBufferBindingTarget(), newSize, bufferDataHint);
+			this.size = newSize;
 		}
-		GL32.glBufferSubData(getBufferBindingTarget(), 0, bb);
+		GL32.glBufferSubData(this.getBufferBindingTarget(), 0, bb);
 	}
 	
 	/** Assumes the GL Context is already bound */
@@ -161,24 +190,24 @@ public class GLBuffer implements AutoCloseable
 		// If size is zero, just ignore it.
 		if (bbSize == 0) return;
 		boolean useBuffStorage = uploadMethod.useBufferStorage;
-		if (useBuffStorage != bufferStorage)
+		if (useBuffStorage != this.bufferStorage)
 		{
-			destroy(false);
-			create(useBuffStorage);
-			bind();
+			this.destroy(false);
+			this.create(useBuffStorage);
+			this.bind();
 		}
 		switch (uploadMethod)
 		{
 			case AUTO:
 				LodUtil.assertNotReach("GpuUploadMethod AUTO must be resolved before call to uploadBuffer()!");
 			case BUFFER_STORAGE:
-				uploadBufferStorage(bb, bufferHint);
+				this.uploadBufferStorage(bb, bufferHint);
 				break;
 			case DATA:
-				uploadBufferData(bb, bufferHint);
+				this.uploadBufferData(bb, bufferHint);
 				break;
 			case SUB_DATA:
-				uploadSubData(bb, maxExpansionSize, bufferHint);
+				this.uploadSubData(bb, maxExpansionSize, bufferHint);
 				break;
 			default:
 				LodUtil.assertNotReach("Unknown GpuUploadMethod!");
@@ -189,29 +218,29 @@ public class GLBuffer implements AutoCloseable
 	{
 		LodUtil.assertTrue(targetSize != 0, "MapBuffer targetSize is 0");
 		LodUtil.assertTrue(uploadMethod.useEarlyMapping, "Upload method must be one that use early mappings in order to call mapBuffer");
-		LodUtil.assertTrue(!isMapped, "Buffer is already mapped");
+		LodUtil.assertTrue(!this.isMapped, "Buffer is already mapped");
 		
 		boolean useBuffStorage = uploadMethod.useBufferStorage;
-		if (useBuffStorage != bufferStorage)
+		if (useBuffStorage != this.bufferStorage)
 		{
-			destroy(false);
-			create(useBuffStorage);
+			this.destroy(false);
+			this.create(useBuffStorage);
 		}
-		bind();
+		this.bind();
 		ByteBuffer vboBuffer;
 		
-		if (size < targetSize || size > targetSize * BUFFER_SHRINK_TRIGGER)
+		if (this.size < targetSize || this.size > targetSize * BUFFER_SHRINK_TRIGGER)
 		{
 			int newSize = (int) (targetSize * BUFFER_EXPANSION_MULTIPLIER);
 			if (newSize > maxExpensionSize) newSize = maxExpensionSize;
-			size = newSize;
-			if (bufferStorage)
+			this.size = newSize;
+			if (this.bufferStorage)
 			{
-				GL32.glDeleteBuffers(id);
-				id = GL32.glGenBuffers();
-				GL32.glBindBuffer(getBufferBindingTarget(), id);
-				GL32.glBindBuffer(getBufferBindingTarget(), id);
-				GL44.glBufferStorage(getBufferBindingTarget(), newSize, bufferHint);
+				GL32.glDeleteBuffers(this.id);
+				this.id = GL32.glGenBuffers();
+				GL32.glBindBuffer(this.getBufferBindingTarget(), this.id);
+				GL32.glBindBuffer(this.getBufferBindingTarget(), this.id);
+				GL44.glBufferStorage(this.getBufferBindingTarget(), newSize, bufferHint);
 			}
 			else
 			{
@@ -220,30 +249,70 @@ public class GLBuffer implements AutoCloseable
 		}
 		
 		vboBuffer = GL32.glMapBufferRange(GL32.GL_ARRAY_BUFFER, 0, targetSize, mapFlags);
-		isMapped = true;
+		this.isMapped = true;
 		return vboBuffer;
 	}
 	
 	// Requires already binded
 	public void unmapBuffer()
 	{
-		LodUtil.assertTrue(isMapped, "Buffer is not mapped");
-		bind();
-		GL32.glUnmapBuffer(getBufferBindingTarget());
-		isMapped = false;
+		LodUtil.assertTrue(this.isMapped, "Buffer is not mapped");
+		this.bind();
+		GL32.glUnmapBuffer(this.getBufferBindingTarget());
+		this.isMapped = false;
 	}
 	
 	@Override
-	public void close()
-	{
-		destroy(true);
-	}
+	public void close() { this.destroy(true); }
 	
 	@Override
 	public String toString()
 	{
-		return (bufferStorage ? "" : "Static-") + getClass().getSimpleName() +
-				"[id:" + id + ",size:" + size + (isMapped ? ",MAPPED" : "") + "]";
+		return (this.bufferStorage ? "" : "Static-") + getClass().getSimpleName() +
+				"[id:" + this.id + ",size:" + this.size + (this.isMapped ? ",MAPPED" : "") + "]";
+	}
+	
+	
+	
+	//================//
+	// static cleanup //
+	//================//
+	
+	private static void runPhantomReferenceCleanupLoop()
+	{
+		while (true)
+		{
+			try
+			{
+				try
+				{
+					Thread.sleep(PHANTOM_REF_CHECK_TIME_IN_MS);
+				}
+				catch (InterruptedException ignore) { }
+				
+				
+				Reference<? extends GLBuffer> phantomRef = PHANTOM_REFERENCE_QUEUE.poll();
+				while (phantomRef != null)
+				{
+					// destroy the buffer if it hasn't been cleared yet
+					if (PHANTOM_TO_BUFFER_ID.containsKey(phantomRef))
+					{
+						// remove the phantom reference
+						int id = PHANTOM_TO_BUFFER_ID.get(phantomRef);
+						PHANTOM_TO_BUFFER_ID.remove(phantomRef);
+						BUFFER_ID_TO_PHANTOM.remove(id);
+						
+						destroyBufferId(true, id);
+					}
+					
+					phantomRef = PHANTOM_REFERENCE_QUEUE.poll();
+				}
+			}
+			catch (Exception e)
+			{
+				LOGGER.error("Unexpected error in cleanup thread: " + e.getMessage(), e);
+			}
+		}
 	}
 	
 }
