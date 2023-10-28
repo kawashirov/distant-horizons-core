@@ -107,11 +107,21 @@ public class LodRenderer
 	
 	public void drawVbo(GLVertexBuffer vbo)
 	{
-		vbo.bind();
-		this.shaderProgram.bindVertexBuffer(vbo.getId());
-		GL32.glDrawElements(GL32.GL_TRIANGLES, (vbo.getVertexCount() / 4) * 6, // TODO what does the 4 and 6 here represent?
-				this.quadIBO.getType(), 0);
-		vbo.unbind();
+		//// can be uncommented to add additional debug validation to prevent crashes if invalid buffers are being created
+		//// shouldn't be used in production due to the performance hit
+		//if (GL32.glIsBuffer(vbo.getId()))
+		{
+			vbo.bind();
+			this.shaderProgram.bindVertexBuffer(vbo.getId());
+			GL32.glDrawElements(GL32.GL_TRIANGLES, (vbo.getVertexCount() / 4) * 6, // TODO what does the 4 and 6 here represent?
+					this.quadIBO.getType(), 0);
+			vbo.unbind();
+		}
+		//else
+		//{
+		//	// will spam the log if uncommented, but helpful for validation
+		//	//LOGGER.warn("Unable to draw VBO: "+vbo.getId());
+		//}
 	}
 	public Vec3f getLookVector() { return MC_RENDER.getLookAtVector(); }
 	
