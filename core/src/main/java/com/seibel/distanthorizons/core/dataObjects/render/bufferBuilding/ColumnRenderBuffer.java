@@ -198,7 +198,6 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 			{
 				throw new RuntimeException("Too many vertex buffers!!");
 			}
-			vboIndex++;
 			
 			
 			// get or create the VBO
@@ -219,7 +218,7 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 			}
 			catch (Exception e)
 			{
-				vbos[vboIndex - 1] = null;
+				vbos[vboIndex] = null;
 				vbo.close();
 				LOGGER.error("Failed to upload buffer: ", e);
 			}
@@ -241,6 +240,8 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 					remainingMS = 0;
 				}
 			}
+			
+			vboIndex++;
 		}
 		
 		if (vboIndex < vbos.length)
