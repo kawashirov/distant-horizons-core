@@ -92,6 +92,12 @@ public class GLBuffer implements AutoCloseable
 	public void bind() { GL32.glBindBuffer(this.getBufferBindingTarget(), this.id); }
 	public void unbind() { GL32.glBindBuffer(this.getBufferBindingTarget(), 0); }
 	
+	
+	
+	//====================//
+	// create and destroy //
+	//====================//
+	
 	protected void create(boolean asBufferStorage)
 	{
 		LodUtil.assertTrue(GLProxy.getInstance().getGlContext() != EGLProxyContext.NONE,
@@ -144,41 +150,11 @@ public class GLBuffer implements AutoCloseable
 		}
 	}
 	
-	// Requires already binded
-	protected void uploadBufferStorage(ByteBuffer bb, int bufferStorageHint)
-	{
-		LodUtil.assertTrue(this.bufferStorage, "Buffer is not bufferStorage but its trying to use bufferStorage upload method!");
-		int bbSize = bb.limit() - bb.position();
-		this.destroy(false);
-		this.create(true);
-		this.bind();
-		GL44.glBufferStorage(this.getBufferBindingTarget(), bb, bufferStorageHint);
-		this.size = bbSize;
-	}
 	
-	// Requires already binded
-	protected void uploadBufferData(ByteBuffer bb, int bufferDataHint)
-	{
-		LodUtil.assertTrue(!this.bufferStorage, "Buffer is bufferStorage but its trying to use bufferData upload method!");
-		int bbSize = bb.limit() - bb.position();
-		GL32.glBufferData(this.getBufferBindingTarget(), bb, bufferDataHint);
-		this.size = bbSize;
-	}
 	
-	// Requires already binded
-	protected void uploadSubData(ByteBuffer bb, int maxExpansionSize, int bufferDataHint)
-	{
-		LodUtil.assertTrue(!this.bufferStorage, "Buffer is bufferStorage but its trying to use subData upload method!");
-		int bbSize = bb.limit() - bb.position();
-		if (this.size < bbSize || this.size > bbSize * BUFFER_SHRINK_TRIGGER)
-		{
-			int newSize = (int) (bbSize * BUFFER_EXPANSION_MULTIPLIER);
-			if (newSize > maxExpansionSize) newSize = maxExpansionSize;
-			GL32.glBufferData(this.getBufferBindingTarget(), newSize, bufferDataHint);
-			this.size = newSize;
-		}
-		GL32.glBufferSubData(this.getBufferBindingTarget(), 0, bb);
-	}
+	//==================//
+	// buffer uploading //
+	//==================//
 	
 	/** Assumes the GL Context is already bound */
 	public void uploadBuffer(ByteBuffer bb, EGpuUploadMethod uploadMethod, int maxExpansionSize, int bufferHint)
@@ -187,8 +163,13 @@ public class GLBuffer implements AutoCloseable
 		int bbSize = bb.limit() - bb.position();
 		LodUtil.assertTrue(bbSize <= maxExpansionSize, "maxExpansionSize is {} but buffer size is {}!", maxExpansionSize, bbSize);
 		GLProxy.GL_LOGGER.debug("Uploading buffer with {}.", new UnitBytes(bbSize));
+		
 		// If size is zero, just ignore it.
-		if (bbSize == 0) return;
+		if (bbSize == 0)
+		{
+			return;
+		}
+		
 		boolean useBuffStorage = uploadMethod.useBufferStorage;
 		if (useBuffStorage != this.bufferStorage)
 		{
@@ -196,6 +177,7 @@ public class GLBuffer implements AutoCloseable
 			this.create(useBuffStorage);
 			this.bind();
 		}
+		
 		switch (uploadMethod)
 		{
 			case AUTO:
@@ -213,6 +195,45 @@ public class GLBuffer implements AutoCloseable
 				LodUtil.assertNotReach("Unknown GpuUploadMethod!");
 		}
 	}
+	/** Requires the buffer to be bound */
+	protected void uploadBufferStorage(ByteBuffer bb, int bufferStorageHint)
+	{
+		LodUtil.assertTrue(this.bufferStorage, "Buffer is not bufferStorage but its trying to use bufferStorage upload method!");
+		int bbSize = bb.limit() - bb.position();
+		this.destroy(false);
+		this.create(true);
+		this.bind();
+		GL44.glBufferStorage(this.getBufferBindingTarget(), bb, bufferStorageHint);
+		this.size = bbSize;
+	}
+	/** Requires the buffer to be bound */
+	protected void uploadBufferData(ByteBuffer bb, int bufferDataHint)
+	{
+		LodUtil.assertTrue(!this.bufferStorage, "Buffer is bufferStorage but its trying to use bufferData upload method!");
+		int bbSize = bb.limit() - bb.position();
+		GL32.glBufferData(this.getBufferBindingTarget(), bb, bufferDataHint);
+		this.size = bbSize;
+	}
+	/** Requires the buffer to be bound */
+	protected void uploadSubData(ByteBuffer bb, int maxExpansionSize, int bufferDataHint)
+	{
+		LodUtil.assertTrue(!this.bufferStorage, "Buffer is bufferStorage but its trying to use subData upload method!");
+		int bbSize = bb.limit() - bb.position();
+		if (this.size < bbSize || this.size > bbSize * BUFFER_SHRINK_TRIGGER)
+		{
+			int newSize = (int) (bbSize * BUFFER_EXPANSION_MULTIPLIER);
+			if (newSize > maxExpansionSize) newSize = maxExpansionSize;
+			GL32.glBufferData(this.getBufferBindingTarget(), newSize, bufferDataHint);
+			this.size = newSize;
+		}
+		GL32.glBufferSubData(this.getBufferBindingTarget(), 0, bb);
+	}
+	
+	
+	
+	//================//
+	// buffer mapping //
+	//================//
 	
 	public ByteBuffer mapBuffer(int targetSize, EGpuUploadMethod uploadMethod, int maxExpensionSize, int bufferHint, int mapFlags)
 	{
@@ -261,6 +282,12 @@ public class GLBuffer implements AutoCloseable
 		GL32.glUnmapBuffer(this.getBufferBindingTarget());
 		this.isMapped = false;
 	}
+	
+	
+	
+	//===========//
+	// overrides //
+	//===========//
 	
 	@Override
 	public void close() { this.destroy(true); }
