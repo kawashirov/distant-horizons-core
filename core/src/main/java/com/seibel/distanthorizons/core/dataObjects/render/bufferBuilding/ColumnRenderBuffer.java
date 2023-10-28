@@ -123,8 +123,24 @@ public class ColumnRenderBuffer extends AbstractRenderBuffer
 				}
 			});
 			
-			// freeze this DH thread while we wait for MC to upload the buffer
-			uploadFuture.join();
+			
+			try
+			{
+				// wait for the upload to finish
+				uploadFuture.get(1000, TimeUnit.MILLISECONDS);
+			}
+			catch (ExecutionException e)
+			{
+				LOGGER.warn("Error uploading builder ["+builder+"] synchronously. Error: "+e.getMessage(), e);
+			}
+			catch (TimeoutException e)
+			{
+				// timeouts can be ignored because it generally means the
+				// MC Render thread executor was closed 
+				//LOGGER.warn("Error uploading builder ["+builder+"] synchronously. Error: "+e.getMessage(), e);
+			}
+			
+			
 		}
 	}
 	private void uploadBuffersUsingUploadMethod(LodQuadBuilder builder, EGpuUploadMethod gpuUploadMethod) throws InterruptedException
