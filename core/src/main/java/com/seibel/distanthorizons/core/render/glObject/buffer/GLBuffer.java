@@ -70,15 +70,9 @@ public class GLBuffer implements AutoCloseable
 	// constructors //
 	//==============//
 	
-	static
-	{
-		CLEANUP_THREAD.execute(() -> runPhantomReferenceCleanupLoop());
-	}
+	static { CLEANUP_THREAD.execute(() -> runPhantomReferenceCleanupLoop()); }
 	
-	public GLBuffer(boolean isBufferStorage)
-	{
-		this.create(isBufferStorage);
-	}
+	public GLBuffer(boolean isBufferStorage) { this.create(isBufferStorage); }
 	
 	
 	
@@ -134,7 +128,7 @@ public class GLBuffer implements AutoCloseable
 		}
 		else
 		{
-			// remove the phantom reference
+			// remove the phantom references
 			if (BUFFER_ID_TO_PHANTOM.containsKey(id))
 			{
 				Reference<? extends GLBuffer> phantom = BUFFER_ID_TO_PHANTOM.get(id);
@@ -156,15 +150,18 @@ public class GLBuffer implements AutoCloseable
 	// buffer uploading //
 	//==================//
 	
-	/** Assumes the GL Context is already bound */
+	/** 
+	 * Assumes the GL Context is already bound. <br> 
+	 * Will create the VBO if one exist.
+	 */
 	public void uploadBuffer(ByteBuffer bb, EGpuUploadMethod uploadMethod, int maxExpansionSize, int bufferHint)
 	{
 		LodUtil.assertTrue(!uploadMethod.useEarlyMapping, "UploadMethod signal that this should use Mapping instead of uploadBuffer!");
 		int bbSize = bb.limit() - bb.position();
-		LodUtil.assertTrue(bbSize <= maxExpansionSize, "maxExpansionSize is {} but buffer size is {}!", maxExpansionSize, bbSize);
-		GLProxy.GL_LOGGER.debug("Uploading buffer with {}.", new UnitBytes(bbSize));
+		LodUtil.assertTrue(bbSize <= maxExpansionSize, "maxExpansionSize is ["+maxExpansionSize+"] but buffer size is ["+bbSize+"]!");
+		GLProxy.GL_LOGGER.debug("Uploading buffer with ["+new UnitBytes(bbSize)+"].");
 		
-		// If size is zero, just ignore it.
+		// Don't upload an empty buffer
 		if (bbSize == 0)
 		{
 			return;
@@ -199,6 +196,7 @@ public class GLBuffer implements AutoCloseable
 	protected void uploadBufferStorage(ByteBuffer bb, int bufferStorageHint)
 	{
 		LodUtil.assertTrue(this.bufferStorage, "Buffer is not bufferStorage but its trying to use bufferStorage upload method!");
+		
 		int bbSize = bb.limit() - bb.position();
 		this.destroy(false);
 		this.create(true);
@@ -210,6 +208,7 @@ public class GLBuffer implements AutoCloseable
 	protected void uploadBufferData(ByteBuffer bb, int bufferDataHint)
 	{
 		LodUtil.assertTrue(!this.bufferStorage, "Buffer is bufferStorage but its trying to use bufferData upload method!");
+		
 		int bbSize = bb.limit() - bb.position();
 		GL32.glBufferData(this.getBufferBindingTarget(), bb, bufferDataHint);
 		this.size = bbSize;
@@ -274,7 +273,7 @@ public class GLBuffer implements AutoCloseable
 		return vboBuffer;
 	}
 	
-	// Requires already binded
+	/** Requires the buffer to be bound */
 	public void unmapBuffer()
 	{
 		LodUtil.assertTrue(this.isMapped, "Buffer is not mapped");
@@ -295,7 +294,7 @@ public class GLBuffer implements AutoCloseable
 	@Override
 	public String toString()
 	{
-		return (this.bufferStorage ? "" : "Static-") + getClass().getSimpleName() +
+		return (this.bufferStorage ? "" : "Static-") + this.getClass().getSimpleName() +
 				"[id:" + this.id + ",size:" + this.size + (this.isMapped ? ",MAPPED" : "") + "]";
 	}
 	
