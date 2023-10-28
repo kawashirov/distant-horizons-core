@@ -287,8 +287,8 @@ public final class GLMessage
 		{
 			// TODO fix implementation for MC 1.20.2 and newer
 			//  please see the incomplete GLMessageTest for an example as to how the message formats differ
-			//if (true)
-			//	return null;
+			if (true)
+				return null;
 			
 			str = str.trim();
 			if (str.isEmpty())
