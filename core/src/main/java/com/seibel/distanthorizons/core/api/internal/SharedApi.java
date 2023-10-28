@@ -43,6 +43,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -61,6 +63,8 @@ public class SharedApi
 	// TODO make an interface or object for handling thread pools like this, this same code is in ~8 places
 	private static ThreadPoolExecutor lightPopulatorThreadPool;
 	private static ConfigChangeListener<Integer> threadConfigListener;
+	
+	private static final Timer CHUNK_UPDATE_TIMER = new Timer();
 	
 	
 	
@@ -236,13 +240,6 @@ public class SharedApi
 	}
 	private static void bakeChunkLightingAndSendToLevelAsync(IChunkWrapper chunkWrapper, @Nullable ArrayList<IChunkWrapper> neighbourChunkList, IDhLevel dhLevel)
 	{
-		if (UPDATING_CHUNK_SET.size() > lightPopulatorThreadPool.getPoolSize() * 100)
-		{
-			// limit how many tasks can be queued at a time
-			// attempt to limit memory leaking
-			return;
-		}
-		
 		// prevent duplicate update requests
 		if (UPDATING_CHUNK_SET.contains(chunkWrapper.getChunkPos()))
 		{
@@ -299,7 +296,22 @@ public class SharedApi
 			}
 			finally
 			{
-				UPDATING_CHUNK_SET.remove(chunkWrapper.getChunkPos());	
+				// the LOD chunk has finished being updated
+				int updateTimeoutInSec = Config.Client.Advanced.LodBuilding.minTimeBetweenChunkUpdatesInSeconds.get();
+				if (updateTimeoutInSec != 0)
+				{
+					// prevent updating this chunk again until the timeout finishes
+					CHUNK_UPDATE_TIMER.schedule(new TimerTask() 
+					{
+						@Override
+						public void run() { UPDATING_CHUNK_SET.remove(chunkWrapper.getChunkPos()); }
+					}, updateTimeoutInSec * 1000L);
+				}
+				else
+				{
+					// instantly allow this chunk to be updated again
+					UPDATING_CHUNK_SET.remove(chunkWrapper.getChunkPos());
+				}
 			}
 		});
 	}

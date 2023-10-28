@@ -117,6 +117,7 @@ public class Config
 			public static ConfigCategory graphics = new ConfigCategory.Builder().set(Graphics.class).build();
 			public static ConfigCategory worldGenerator = new ConfigCategory.Builder().set(WorldGenerator.class).build();
 			public static ConfigCategory multiplayer = new ConfigCategory.Builder().set(Multiplayer.class).build();
+			public static ConfigCategory lodBuilding = new ConfigCategory.Builder().set(LodBuilding.class).build();
 			public static ConfigCategory multiThreading = new ConfigCategory.Builder().set(MultiThreading.class).build();
 			public static ConfigCategory buffers = new ConfigCategory.Builder().set(GpuBuffers.class).build();
 			public static ConfigCategory autoUpdater = new ConfigCategory.Builder().set(AutoUpdater.class).build();
@@ -746,6 +747,21 @@ public class Config
 								+ "Uses " + EGenerationPriority.BALANCED + " when on a single player world \n"
 								+ " and " + EGenerationPriority.NEAR_FIRST + " when connected to a server.")
 						.setPerformance(EConfigEntryPerformance.NONE)
+						.build();
+				
+			}
+			
+			public static class LodBuilding
+			{
+				public static ConfigEntry<Integer> minTimeBetweenChunkUpdatesInSeconds = new ConfigEntry.Builder<Integer>()
+						.setMinDefaultMax(0, 1, 60)
+						.comment(""
+								+ "Determines how long must pass between LOD chunk updates before another. \n"
+								+ "update can occur\n"
+								+ "\n"
+								+ "Increasing this value will reduce CPU load but may may cause \n"
+								+ "LODs to become outdated more frequently or for longer. \n"
+								+ "")
 						.build();
 				
 			}

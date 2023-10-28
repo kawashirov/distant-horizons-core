@@ -326,8 +326,17 @@
     "Generation Priority",
   "distanthorizons.config.client.advanced.worldGenerator.generationPriority.@tooltip":
     "The priority for chunks being generated around the player.",
+
+
+  "distanthorizons.config.client.advanced.lodBuilding":
+    "Lod Building",
+
+  "distanthorizons.config.client.advanced.lodBuilding.minTimeBetweenChunkUpdatesInSeconds":
+    "Minimum Time Between Chunk Updates In Seconds",
+  "distanthorizons.config.client.advanced.lodBuilding.minTimeBetweenChunkUpdatesInSeconds.@tooltip":
+    "Determines how long must pass between LOD chunk updates before another. \nupdate can occur\n\nIncreasing this value will reduce CPU load but may may cause \nLODs to become outdated more frequently or for longer.",
   
-  
+    
   "distanthorizons.config.client.advanced.multiplayer":
     "Multiplayer",
     
