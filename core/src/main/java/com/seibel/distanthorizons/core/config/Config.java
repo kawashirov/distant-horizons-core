@@ -865,24 +865,6 @@ public class Config
 						.comment(THREAD_RUN_TIME_RATIO_NOTE)
 						.build();
 				
-				public static ConfigEntry<Integer> numberOfBufferBuilderThreads = new ConfigEntry.Builder<Integer>()
-						.setMinDefaultMax(1,
-								ThreadPresetConfigEventHandler.getBufferBuilderDefaultThreadCount(),
-								Runtime.getRuntime().availableProcessors())
-						.comment(""
-								+ "How many threads are used when building geometry data for the GPU? \n"
-								+ "\n"
-								+ "If you experience high CPU usage when NOT generating distant \n"
-								+ "LODs, lower this number. A higher number will make \n"
-								+ "LODs' transition faster when moving around the world. \n"
-								+ "\n"
-								+ THREAD_NOTE)
-						.build();
-				public static final ConfigEntry<Double> runTimeRatioForBufferBuilderThreads = new ConfigEntry.Builder<Double>()
-						.setMinDefaultMax(0.01, ThreadPresetConfigEventHandler.getBufferBuilderDefaultRunTimeRatio(), 1.0)
-						.comment(THREAD_RUN_TIME_RATIO_NOTE)
-						.build();
-				
 				public static final ConfigEntry<Integer> numberOfFileHandlerThreads = new ConfigEntry.Builder<Integer>()
 						.setMinDefaultMax(1,
 								ThreadPresetConfigEventHandler.getFileHandlerDefaultThreadCount(),
@@ -901,60 +883,30 @@ public class Config
 						.comment(THREAD_RUN_TIME_RATIO_NOTE)
 						.build();
 				
-				public static final ConfigEntry<Integer> numberOfDataTransformerThreads = new ConfigEntry.Builder<Integer>()
+				public static final ConfigEntry<Integer> numberOfLodBuilderThreads = new ConfigEntry.Builder<Integer>()
 						.setMinDefaultMax(1,
-								ThreadPresetConfigEventHandler.getDataTransformerDefaultThreadCount(),
+								ThreadPresetConfigEventHandler.getLodBuilderDefaultThreadCount(),
 								Runtime.getRuntime().availableProcessors())
 						.comment(""
-								+ "How many threads should be used when converting full ID data to render data? \n"
+								+ "How many threads should be used when building LODs? \n"
 								+ "\n"
-								+ "These threads run both when terrain is generated and when\n"
-								+ "certain graphics settings are changed. \n"
-								+ "\n"
-								+ "Generally this number should be equal to the number of world\n"
-								+ "generator threads, although these threads shouldn't run as\n"
-								+ "often (or as long) as the world generator threads.\n"
+								+ "These threads run when terrain is generated, when\n"
+								+ "certain graphics settings are changed, and when moving around the world. \n"
 								+ "\n"
 								+ THREAD_NOTE)
 						.build();
-				public static final ConfigEntry<Double> runTimeRatioForDataTransformerThreads = new ConfigEntry.Builder<Double>()
-						.setMinDefaultMax(0.01, ThreadPresetConfigEventHandler.getDataTransformerDefaultRunTimeRatio(), 1.0)
+				public static final ConfigEntry<Double> runTimeRatioForLodBuilderThreads = new ConfigEntry.Builder<Double>()
+						.setMinDefaultMax(0.01, ThreadPresetConfigEventHandler.getLodBuilderDefaultRunTimeRatio(), 1.0)
 						.comment(THREAD_RUN_TIME_RATIO_NOTE)
 						.build();
-				
-				public static final ConfigEntry<Integer> numberOfChunkLodConverterThreads = new ConfigEntry.Builder<Integer>()
-						.setMinDefaultMax(1,
-								ThreadPresetConfigEventHandler.getChunkLodConverterDefaultThreadCount(),
-								Runtime.getRuntime().availableProcessors())
+				public static final ConfigEntry<Boolean> enableLodBuilderThreadLimiting = new ConfigEntry.Builder<Boolean>()
+						.set(true)
 						.comment(""
-								+ "How many threads should be used to convert Minecraft chunks into LOD data? \n"
+								+ "Should only be disabled if deadlock occurs and LODs refuse to update. \n"
+								+ "This will cause CPU usage to drastically increase for the Lod Builder threads. \n"
 								+ "\n"
-								+ "These threads run both when terrain is generated and when\n"
-								+ "chunks are loaded, unloaded, and modified. \n"
-								+ "\n"
-								+ THREAD_NOTE)
-						.build();
-				public static final ConfigEntry<Double> runTimeRatioForChunkLodConverterThreads = new ConfigEntry.Builder<Double>()
-						.setMinDefaultMax(0.01, ThreadPresetConfigEventHandler.getChunkLodConverterDefaultRunTimeRatio(), 1.0)
-						.comment(THREAD_RUN_TIME_RATIO_NOTE)
-						.build();
-				
-				public static final ConfigEntry<Integer> numberOfChunkLightBakingThreads = new ConfigEntry.Builder<Integer>()
-						.setMinDefaultMax(1,
-								ThreadPresetConfigEventHandler.getLightBakingDefaultThreadCount(),
-								Runtime.getRuntime().availableProcessors())
-						.comment(""
-								+ "How many threads should be used to either pull existing  or generating new lighting for chunks \n"
-								+ "that were recently loading/unloaded? \n"
-								+ "\n"
-								+ "These threads run when traveling around the world\n"
-								+ "and when moving between dimensions. \n"
-								+ "\n"
-								+ THREAD_NOTE)
-						.build();
-				public static final ConfigEntry<Double> runTimeRatioForChunkLightBakingThreads = new ConfigEntry.Builder<Double>()
-						.setMinDefaultMax(0.01, ThreadPresetConfigEventHandler.getLightBakingDefaultRunTimeRatio(), 1.0)
-						.comment(THREAD_RUN_TIME_RATIO_NOTE)
+								+ "Note that if deadlock did occur restarting MC may be necessary to stop the locked threads. \n"
+								+ "")
 						.build();
 				
 			}

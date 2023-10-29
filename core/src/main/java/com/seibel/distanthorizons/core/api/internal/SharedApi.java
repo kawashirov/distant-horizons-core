@@ -21,19 +21,13 @@ package com.seibel.distanthorizons.core.api.internal;
 
 import com.seibel.distanthorizons.core.Initializer;
 import com.seibel.distanthorizons.core.config.Config;
-import com.seibel.distanthorizons.core.config.listeners.ConfigChangeListener;
-import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.ColumnRenderBufferBuilder;
-import com.seibel.distanthorizons.core.dataObjects.transformers.ChunkToLodBuilder;
-import com.seibel.distanthorizons.core.dataObjects.transformers.FullDataToRenderDataTransformer;
-import com.seibel.distanthorizons.core.file.fullDatafile.FullDataFileHandler;
 import com.seibel.distanthorizons.core.generation.DhLightingEngine;
-import com.seibel.distanthorizons.core.generation.WorldGenerationQueue;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
 import com.seibel.distanthorizons.core.render.renderer.DebugRenderer;
-import com.seibel.distanthorizons.core.util.ThreadUtil;
 import com.seibel.distanthorizons.core.util.objects.Pair;
+import com.seibel.distanthorizons.core.util.threading.ThreadPools;
 import com.seibel.distanthorizons.core.world.*;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
@@ -59,10 +53,6 @@ public class SharedApi
 	
 	private static AbstractDhWorld currentWorld;
 	private static int lastWorldGenTickDelta = 0;
-	
-	// TODO make an interface or object for handling thread pools like this, this same code is in ~8 places
-	private static ThreadPoolExecutor lightPopulatorThreadPool;
-	private static ConfigChangeListener<Integer> threadConfigListener;
 	
 	private static final Timer CHUNK_UPDATE_TIMER = new Timer();
 	
@@ -92,27 +82,14 @@ public class SharedApi
 		// access the MC level at inappropriate times, which can cause exceptions
 		if (currentWorld != null)
 		{
-			// static thread pool setup
-			FullDataToRenderDataTransformer.setupExecutorService();
-			FullDataFileHandler.setupExecutorService();
-			ColumnRenderBufferBuilder.setupExecutorService();
-			WorldGenerationQueue.setupWorldGenThreadPool();
-			ChunkToLodBuilder.setupExecutorService();
-			SharedApi.setupExecutorService();
+			ThreadPools.setupThreadPools();
 		}
 		else
 		{
-			// static thread pool shutdown
-			FullDataToRenderDataTransformer.shutdownExecutorService();
-			FullDataFileHandler.shutdownExecutorService();
-			ColumnRenderBufferBuilder.shutdownExecutorService();
-			WorldGenerationQueue.shutdownWorldGenThreadPool();
-			ChunkToLodBuilder.shutdownExecutorService();
-			SharedApi.shutdownExecutorService();
-			
+			ThreadPools.shutdownThreadPools();
 			DebugRenderer.clearRenderables();
 			
-			// recommend that the garbage collector cleans up any objects from the old world
+			// recommend that the garbage collector cleans up any objects from the old world and thread pools
 			System.gc();
 		}
 	}
@@ -250,9 +227,10 @@ public class SharedApi
 		
 		
 		// lighting the chunk needs to be done on a separate thread to prevent lagging any of the event threads
-		lightPopulatorThreadPool.execute(() ->
+		ThreadPoolExecutor executor = ThreadPools.getLightPopulatorExecutor();
+		executor.execute(() ->
 		{
-			LOGGER.trace(chunkWrapper.getChunkPos() + " " + lightPopulatorThreadPool.getActiveCount() + " / " + lightPopulatorThreadPool.getQueue().size() + " - " + lightPopulatorThreadPool.getCompletedTaskCount());
+			LOGGER.trace(chunkWrapper.getChunkPos() + " " + executor.getActiveCount() + " / " + executor.getQueue().size() + " - " + executor.getCompletedTaskCount());
 			
 			try
 			{
@@ -314,54 +292,6 @@ public class SharedApi
 				}
 			}
 		});
-	}
-	
-	
-	
-	//==========================//
-	// executor handler methods //
-	//==========================//
-	
-	/**
-	 * Creates a new executor. <br>
-	 * Does nothing if an executor already exists.
-	 */
-	public static void setupExecutorService()
-	{
-		// static setup
-		if (threadConfigListener == null)
-		{
-			threadConfigListener = new ConfigChangeListener<>(Config.Client.Advanced.MultiThreading.numberOfChunkLightBakingThreads, (threadCount) -> { setThreadPoolSize(threadCount); });
-		}
-		
-		
-		if (lightPopulatorThreadPool == null || lightPopulatorThreadPool.isTerminated())
-		{
-			LOGGER.info("Starting " + ChunkToLodBuilder.class.getSimpleName());
-			setThreadPoolSize(Config.Client.Advanced.MultiThreading.numberOfChunkLightBakingThreads.get());
-		}
-	}
-	public static void setThreadPoolSize(int threadPoolSize)
-	{
-		if (lightPopulatorThreadPool != null && !lightPopulatorThreadPool.isTerminated())
-		{
-			lightPopulatorThreadPool.shutdownNow();
-		}
-		
-		lightPopulatorThreadPool = ThreadUtil.makeRateLimitedThreadPool(threadPoolSize, SharedApi.class.getSimpleName()+" - Light Populator", Config.Client.Advanced.MultiThreading.runTimeRatioForChunkLightBakingThreads);
-	}
-	
-	/**
-	 * Stops any executing tasks and destroys the executor. <br>
-	 * Does nothing if the executor isn't running.
-	 */
-	public static void shutdownExecutorService()
-	{
-		if (lightPopulatorThreadPool != null)
-		{
-			LOGGER.info("Stopping " + ChunkToLodBuilder.class.getSimpleName());
-			lightPopulatorThreadPool.shutdownNow();
-		}
 	}
 	
 	
