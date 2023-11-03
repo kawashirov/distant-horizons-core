@@ -141,9 +141,12 @@ public class ThreadPools
 		ThreadPools.bufferBuilderThreadPool.shutdownExecutorService();
 		
 		workerThreadSemaphore = null;
-		workerThreadSemaphoreConfigListener.close();
-		workerThreadSemaphoreConfigListener = null;
 		
+		if (workerThreadSemaphoreConfigListener != null)
+		{
+			workerThreadSemaphoreConfigListener.close();
+			workerThreadSemaphoreConfigListener = null;
+		}
 	}
 	
 }
