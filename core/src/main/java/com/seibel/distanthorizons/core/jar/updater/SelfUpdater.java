@@ -80,15 +80,22 @@ public class SelfUpdater
 		}
 		
 		boolean returnValue = false;
-		switch (Config.Client.Advanced.AutoUpdater.updateBranch.get())
+		try
 		{
-			case STABLE:
-				returnValue = onStableStart();
-				break;
-			case NIGHTLY:
-				returnValue = onNightlyStart();
-				break;
-		};
+			switch (Config.Client.Advanced.AutoUpdater.updateBranch.get())
+			{
+				case STABLE:
+					returnValue = onStableStart();
+					break;
+				case NIGHTLY:
+					returnValue = onNightlyStart();
+					break;
+			};
+		}
+		catch (Exception e) // Shouldn't be needed, but just in case
+		{
+			LOGGER.warn(e);
+		}
 		return returnValue;
 	}
 	
