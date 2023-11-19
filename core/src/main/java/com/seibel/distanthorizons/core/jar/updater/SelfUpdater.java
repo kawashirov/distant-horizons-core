@@ -381,7 +381,7 @@ public class SelfUpdater
 		catch (Exception e)
 		{
 			LOGGER.warn("Failed to delete old jar using bootstrap method, doing backup 'Files.deleteOnExit()' method", e);
-			finalJarPath.toFile().deleteOnExit();
+			JarUtils.jarFile.deleteOnExit();
 			LOGGER.warn("If the old DH file didnt delete, delete it manually at [" + JarUtils.jarFile + "]");
 		}
 	}
