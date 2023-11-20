@@ -141,7 +141,7 @@ public class SelfUpdater
 		
 		if (!pipeline.get("status").equals("success"))
 		{
-			LOGGER.warn("Pipeline for branch ["+ ModJarInfo.Git_Branch +"], commit ["+ pipeline.get("id") +"], has either failed to build, or still building.");
+			LOGGER.warn("Pipeline for branch ["+ ModJarInfo.Git_Branch +"], pipeline ID ["+ pipeline.get("id") +"], has either failed to build, or is still building.");
 			return false;
 		}
 		

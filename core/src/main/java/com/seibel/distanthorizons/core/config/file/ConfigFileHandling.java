@@ -25,7 +25,6 @@ import com.seibel.distanthorizons.core.config.ConfigBase;
 import com.seibel.distanthorizons.core.config.types.AbstractConfigType;
 import com.seibel.distanthorizons.core.config.types.ConfigEntry;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -112,7 +111,7 @@ public class ConfigFileHandling
 			// Attempt to get the version number
 			currentCfgVersion = (Integer) tmpNightConfig.get("_version");
 			tmpNightConfig.close();
-		} catch (Exception e) {e.printStackTrace();}
+		} catch (Exception ignored) { }
 		
 		if (currentCfgVersion == configBase.configVersion)
 		{}
