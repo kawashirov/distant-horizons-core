@@ -39,6 +39,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Used to populate the buffers in a {@link ColumnRenderSource} object.
@@ -66,6 +67,17 @@ public class ColumnRenderBufferBuilder
 			IDhClientLevel clientLevel, Reference<ColumnRenderBuffer> renderBufferRef,
 			ColumnRenderSource renderSource, ColumnRenderSource[] adjData)
 	{
+		ThreadPoolExecutor bufferBuilderExecutor = ThreadPools.getBufferBuilderExecutor();
+		ThreadPoolExecutor bufferUploaderExecutor = ThreadPools.getBufferUploaderExecutor();
+		if ((bufferBuilderExecutor == null || bufferBuilderExecutor.isTerminated()) ||
+			(bufferUploaderExecutor == null || bufferUploaderExecutor.isTerminated()))
+		{
+			// one or more of the thread pools has been shut down
+			CompletableFuture<ColumnRenderBuffer> future = new CompletableFuture<>();
+			future.cancel(true);
+			return future;
+		}
+		
 		//LOGGER.info("RenderRegion startBuild @ "+renderSource.sectionPos);
 		return CompletableFuture.supplyAsync(() ->
 				{
@@ -101,7 +113,7 @@ public class ColumnRenderBufferBuilder
 						LOGGER.error("\"LodNodeBufferBuilder\" was unable to build quads: ", e3);
 						throw e3;
 					}
-				}, ThreadPools.getBufferBuilderExecutor())
+				}, bufferBuilderExecutor)
 				.thenApplyAsync((quadBuilder) ->
 				{
 					try
@@ -136,7 +148,7 @@ public class ColumnRenderBufferBuilder
 						LOGGER.error("\"LodNodeBufferBuilder\" was unable to upload buffer: ", e3);
 						throw e3;
 					}
-				}, ThreadPools.getBufferUploaderExecutor())
+				}, bufferUploaderExecutor)
 				.handle((columnRenderBuffer, ex) ->
 				{
 					//LOGGER.info("RenderRegion endBuild @ {}", renderSource.sectionPos);

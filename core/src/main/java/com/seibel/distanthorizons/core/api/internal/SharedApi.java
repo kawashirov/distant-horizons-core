@@ -232,6 +232,11 @@ public class SharedApi
 		
 		// lighting the chunk needs to be done on a separate thread to prevent lagging any of the event threads
 		ThreadPoolExecutor executor = ThreadPools.getLightPopulatorExecutor();
+		if (executor == null)
+		{
+			return;
+		}
+		
 		executor.execute(() ->
 		{
 			LOGGER.trace(chunkWrapper.getChunkPos() + " " + executor.getActiveCount() + " / " + executor.getQueue().size() + " - " + executor.getCompletedTaskCount());
