@@ -160,7 +160,12 @@ public class DhClientServerWorld extends AbstractDhWorld implements IDhClientWor
 		this.saveAndFlush();
 		this.f3Message.close();
 		
-		for (DhClientServerLevel level : this.dhLevels)
+		
+		// clear dhLevels to prevent concurrent modification errors
+		HashSet<DhClientServerLevel> levelsToClose = new HashSet<>(this.dhLevels);
+		this.dhLevels.clear();
+		// close each level
+		for (DhClientServerLevel level : levelsToClose)
 		{
 			LOGGER.info("Unloading level " + level.getServerLevelWrapper().getDimensionType().getDimensionName());
 			
