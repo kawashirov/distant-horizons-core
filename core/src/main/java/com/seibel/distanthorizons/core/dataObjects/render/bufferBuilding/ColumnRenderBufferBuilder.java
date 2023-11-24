@@ -180,10 +180,11 @@ public class ColumnRenderBufferBuilder
 		// Variable initialization
 		EDebugRendering debugMode = Config.Client.Advanced.Debugging.debugRendering.get();
 		
+		// TODO make a config for this
 		// can be uncommented to limit which section positions are build and thus, rendered
 		// useful when debugging a specific section
-//		if (renderSource.sectionPos.sectionDetailLevel == 6 
-//			&& renderSource.sectionPos.sectionZ == 0 && renderSource.sectionPos.sectionX == 0)
+//		if (renderSource.sectionPos.getDetailLevel() == 6 
+//			&& renderSource.sectionPos.getZ() == 0 && renderSource.sectionPos.getX() == 0)
 //		{
 //			int test = 0;
 //		}
@@ -197,10 +198,11 @@ public class ColumnRenderBufferBuilder
 		{
 			for (int z = 0; z < ColumnRenderSource.SECTION_SIZE; z++)
 			{
+				// TODO make a config for this
 				// can be uncommented to limit the buffer building to a specific
 				// relative position in this section.
 				// useful for debugging a single column's rendering
-//				if (x != 1 || z != 1)
+//				if (x != 0 || (z != 0 && z != 1))
 //				{
 //					continue;
 //				}
@@ -316,6 +318,7 @@ public class ColumnRenderBufferBuilder
 				// We only stop when we find a block that is void or non-existing block
 				for (int i = 0; i < columnRenderData.size(); i++)
 				{
+					// TODO make a config for this
 					// can be uncommented to limit which vertical LOD is generated
 //					if (i != 0)
 //					{
