@@ -32,6 +32,7 @@ import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.IServerPlayerWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
+import org.jetbrains.annotations.NotNull;
 //import io.netty.channel.ChannelHandlerContext;
 
 import java.io.File;
@@ -138,7 +139,7 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 	}
 	
 	@Override
-	public DhServerLevel getOrLoadLevel(ILevelWrapper wrapper)
+	public DhServerLevel getOrLoadLevel(@NotNull ILevelWrapper wrapper)
 	{
 		if (!(wrapper instanceof IServerLevelWrapper))
 		{
@@ -154,7 +155,7 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 	}
 	
 	@Override
-	public DhServerLevel getLevel(ILevelWrapper wrapper)
+	public DhServerLevel getLevel(@NotNull ILevelWrapper wrapper)
 	{
 		if (!(wrapper instanceof IServerLevelWrapper))
 		{
@@ -168,7 +169,7 @@ public class DhServerWorld extends AbstractDhWorld implements IDhServerWorld
 	public Iterable<? extends IDhLevel> getAllLoadedLevels() { return this.levels.values(); }
 	
 	@Override
-	public void unloadLevel(ILevelWrapper wrapper)
+	public void unloadLevel(@NotNull ILevelWrapper wrapper)
 	{
 		if (!(wrapper instanceof IServerLevelWrapper))
 		{

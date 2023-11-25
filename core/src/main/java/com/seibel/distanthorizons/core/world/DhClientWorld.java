@@ -35,6 +35,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftCli
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapper;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.concurrent.CompletableFuture;
@@ -111,7 +112,7 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 	//=========//
 	
 	@Override
-	public DhClientLevel getOrLoadLevel(ILevelWrapper wrapper)
+	public DhClientLevel getOrLoadLevel(@NotNull ILevelWrapper wrapper)
 	{
 		if (!(wrapper instanceof IClientLevelWrapper))
 		{
@@ -132,7 +133,7 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 	}
 	
 	@Override
-	public DhClientLevel getLevel(ILevelWrapper wrapper)
+	public DhClientLevel getLevel(@NotNull ILevelWrapper wrapper)
 	{
 		if (!(wrapper instanceof IClientLevelWrapper))
 		{
@@ -146,7 +147,7 @@ public class DhClientWorld extends AbstractDhWorld implements IDhClientWorld
 	public Iterable<? extends IDhLevel> getAllLoadedLevels() { return this.levels.values(); }
 	
 	@Override
-	public void unloadLevel(ILevelWrapper wrapper)
+	public void unloadLevel(@NotNull ILevelWrapper wrapper)
 	{
 		if (!(wrapper instanceof IClientLevelWrapper))
 		{
