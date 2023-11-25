@@ -24,6 +24,11 @@ import com.seibel.distanthorizons.api.interfaces.block.IDhApiBlockStateWrapper;
 /** A Minecraft version independent way of handling Blocks. */
 public interface IBlockStateWrapper extends IDhApiBlockStateWrapper
 {
+	int FULLY_TRANSPARENT = 0; 
+	int FULLY_OPAQUE = 16; 
+	
+	
+	
 	String getSerialString();
 	
 	/**
