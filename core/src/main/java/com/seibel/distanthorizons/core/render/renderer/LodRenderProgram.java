@@ -30,6 +30,7 @@ import com.seibel.distanthorizons.core.render.glObject.vertexAttribute.VertexAtt
 import com.seibel.distanthorizons.core.render.glObject.vertexAttribute.VertexPointer;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.render.fog.LodFogConfig;
+import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.coreapi.util.math.Mat4f;
 import com.seibel.distanthorizons.coreapi.util.math.Vec3f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IVersionConstants;
@@ -40,6 +41,7 @@ public class LodRenderProgram extends ShaderProgram
 	public static final String VERTEX_CURVE_SHADER_PATH = "shaders/curve.vert";
 	public static final String FRAGMENT_SHADER_PATH = "shaders/flat_shaded.frag";
 	private static final IVersionConstants VERSION_CONSTANTS = SingletonInjector.INSTANCE.get(IVersionConstants.class);
+	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	
 	public final AbstractVertexAttribute vao;
 	
@@ -54,7 +56,8 @@ public class LodRenderProgram extends ShaderProgram
 	
 	public final int lightMapUniform;
 	
-	// Fog Uniforms
+	// Fog/Clip Uniforms
+	public final int clipDistanceUniform;
 	
 	// Noise Uniforms
 	public final int noiseEnabledUniform;
@@ -84,6 +87,8 @@ public class LodRenderProgram extends ShaderProgram
 		
 		lightMapUniform = getUniformLocation("lightMap");
 		
+		// Fog/Clip Uniforms
+		clipDistanceUniform = getUniformLocation("clipDistance");
 		
 		// Noise Uniforms
 		noiseEnabledUniform = getUniformLocation("noiseEnabled");
@@ -117,6 +122,10 @@ public class LodRenderProgram extends ShaderProgram
 		
 		if (earthRadiusUniform != -1) setUniform(earthRadiusUniform,
 				/*6371KM*/ 6371000.0f / fogConfig.earthCurveRatio);
+		
+		// Fog/Clip Uniforms
+		float vanillaBlockRenderedDistance = ((float)MC_RENDER.getRenderDistance() - 0.5f) * LodUtil.CHUNK_WIDTH;
+		setUniform(clipDistanceUniform, vanillaBlockRenderedDistance);
 		
 		// Noise Uniforms
 		setUniform(noiseEnabledUniform, fogConfig.noiseEnable);

@@ -254,7 +254,7 @@ public class LodRenderer
 				// and often do change the projection entirely, as well as the output usage.
 				
 				//EVENT_LOGGER.debug("Skipping shadow pass render.");
-				//return;
+				return;
 			}
 			
 			// Note: Since lightmapTexture is changing every frame, it's faster to recreate it than to reuse the old one.

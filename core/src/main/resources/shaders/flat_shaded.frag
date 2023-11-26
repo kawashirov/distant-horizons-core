@@ -8,6 +8,9 @@ in vec4 vPos;
 out vec4 fragColor;
 
 
+// Fog/Clip Uniforms
+uniform float clipDistance = 0.0;
+
 // Noise Uniforms
 uniform bool noiseEnabled;
 uniform int noiseSteps;
@@ -28,6 +31,33 @@ vec3 quantize(vec3 val, int stepSize) {
     return floor(val * stepSize) / stepSize;
 }
 
+void applyNoise(inout vec4 fragColor, const in float viewDist) {
+    vec3 vertexNormal = normalize(cross(dFdy(vPos.xyz), dFdx(vPos.xyz)));
+    // This bit of code is required to fix the vertex position problem cus of floats in the verted world position varuable
+    vec3 fixedVPos = vPos.xyz + vertexNormal * 0.001;
+
+    float noiseAmplification = noiseIntensity * 0.01;
+    float lum = (fragColor.r + fragColor.g + fragColor.b) / 3.0;
+    noiseAmplification = (1.0 - pow(lum * 2.0 - 1.0, 2.0)) * noiseAmplification; // Lessen the effect on depending on how dark the object is, equasion for this is -(2x-1)^{2}+1
+    noiseAmplification *= fragColor.a; // The effect would lessen on transparent objects
+
+    // Random value for each position
+    float randomValue = rand(quantize(fixedVPos, noiseSteps))
+    * 2.0 * noiseAmplification - noiseAmplification;
+
+    // Modifies the color
+    // A value of 0 on the randomValue will result in the original color, while a value of 1 will result in a fully bright color
+    vec3 newCol = fragColor.rgb + (1.0 - fragColor.rgb) * randomValue;
+    newCol = clamp(newCol, 0.0, 1.0);
+
+    if (noiseDropoff != 0) {
+        float distF = min(viewDist / noiseDropoff, 1.0);
+        newCol = mix(newCol, fragColor.rgb, distF); // The further away it gets, the less noise gets applied
+    }
+
+    fragColor.rgb = newCol;
+}
+
 
 /**
  * Fragment Shader
@@ -40,31 +70,8 @@ void main()
 {
     fragColor = vertexColor;
     
-    // TODO: Move into its own function instead of in an if statement
-    if (noiseEnabled) {
-        vec3 vertexNormal = normalize(cross(dFdy(vPos.xyz), dFdx(vPos.xyz)));
-        // This bit of code is required to fix the vertex position problem cus of floats in the verted world position varuable
-        vec3 fixedVPos = vPos.xyz + vertexNormal * 0.001;
-
-        float noiseAmplification = noiseIntensity * 0.01;
-        float lum = (fragColor.r + fragColor.g + fragColor.b) / 3.0;
-        noiseAmplification = (1.0 - pow(lum * 2.0 - 1.0, 2.0)) * noiseAmplification; // Lessen the effect on depending on how dark the object is, equasion for this is -(2x-1)^{2}+1
-        noiseAmplification *= fragColor.a; // The effect would lessen on transparent objects
-
-        // Random value for each position
-        float randomValue = rand(quantize(fixedVPos, noiseSteps))
-            * 2.0 * noiseAmplification - noiseAmplification;
-        
-        // Modifies the color
-        // A value of 0 on the randomValue will result in the original color, while a value of 1 will result in a fully bright color
-        vec3 newCol = fragColor.rgb + (1.0 - fragColor.rgb) * randomValue;
-        newCol = clamp(newCol, 0.0, 1.0);
-        
-        if (noiseDropoff != 0) {
-            float distF = min(length(vertexWorldPos) / noiseDropoff, 1.0);
-            newCol = mix(newCol, fragColor.rgb, distF); // The further away it gets, the less noise gets applied
-        }
-
-        fragColor.rgb = newCol;
-    }
+    float viewDist = length(vertexWorldPos);
+    if (viewDist < clipDistance && clipDistance > 0.0) discard;
+    
+    if (noiseEnabled) applyNoise(fragColor, viewDist);
 }
