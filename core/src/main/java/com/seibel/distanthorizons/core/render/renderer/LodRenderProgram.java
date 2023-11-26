@@ -31,7 +31,6 @@ import com.seibel.distanthorizons.core.render.glObject.vertexAttribute.VertexPoi
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.render.fog.LodFogConfig;
 import com.seibel.distanthorizons.core.util.RenderUtil;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.coreapi.util.math.Mat4f;
 import com.seibel.distanthorizons.coreapi.util.math.Vec3f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IVersionConstants;
@@ -42,7 +41,6 @@ public class LodRenderProgram extends ShaderProgram
 	public static final String VERTEX_CURVE_SHADER_PATH = "shaders/curve.vert";
 	public static final String FRAGMENT_SHADER_PATH = "shaders/flat_shaded.frag";
 	private static final IVersionConstants VERSION_CONSTANTS = SingletonInjector.INSTANCE.get(IVersionConstants.class);
-	//private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	
 	public final AbstractVertexAttribute vao;
 	
@@ -175,7 +173,7 @@ public class LodRenderProgram extends ShaderProgram
 	public void fillUniformData(Mat4f combinedMatrix, int lightmapBindPoint, int worldYOffset, float partialTicks)
 	{
 		super.bind();
-		//vanillaDrawDistance += 32; // Give it a 2 chunk boundary for near fog.
+
 		// uniforms
 		setUniform(combinedMatUniform, combinedMatrix);
 		setUniform(mircoOffsetUniform, 0.01f); // 0.01 block offset
@@ -189,7 +187,6 @@ public class LodRenderProgram extends ShaderProgram
 		setUniform(whiteWorldUniform, Config.Client.Advanced.Debugging.enableWhiteWorld.get());
 		
 		// Fog/Clip Uniforms
-		//float vanillaBlockRenderedDistance = ((float)MC_RENDER.getRenderDistance() - 0.5f) * LodUtil.CHUNK_WIDTH;
 		float dhNearClipDistance = RenderUtil.getNearClipPlaneDistanceInBlocks(partialTicks);
 		setUniform(clipDistanceUniform, dhNearClipDistance);
 	}

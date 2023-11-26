@@ -146,14 +146,13 @@ public class RenderUtil
 	public static Mat4f createLodProjectionMatrix(Mat4f mcProjMat, float partialTicks)
 	{
 		int farPlaneDistanceInBlocks = RenderUtil.getFarClipPlaneDistanceInBlocks();
+		float farClipDist = (float) ((farPlaneDistanceInBlocks + LodUtil.REGION_WIDTH) * Math.sqrt(2));
 		
 		// Create a copy of the current matrix, so it won't be modified.
 		Mat4f lodProj = mcProjMat.copy();
 		
 		// Set new far and near clip plane values.
-		lodProj.setClipPlanes(
-				16f,
-				(float) ((farPlaneDistanceInBlocks + LodUtil.REGION_WIDTH) * Math.sqrt(2)));
+		lodProj.setClipPlanes(16f, farClipDist);
 		
 		return lodProj;
 	}
