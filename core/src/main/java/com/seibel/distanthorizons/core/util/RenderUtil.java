@@ -152,7 +152,7 @@ public class RenderUtil
 		
 		// Set new far and near clip plane values.
 		lodProj.setClipPlanes(
-				getNearClipPlaneDistanceInBlocks(partialTicks),
+				16f,
 				(float) ((farPlaneDistanceInBlocks + LodUtil.REGION_WIDTH) * Math.sqrt(2)));
 		
 		return lodProj;

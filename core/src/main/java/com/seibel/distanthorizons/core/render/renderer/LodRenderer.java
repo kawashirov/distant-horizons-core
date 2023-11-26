@@ -365,7 +365,7 @@ public class LodRenderer
 			}
 			
 			/*---------Get required data--------*/
-			int vanillaBlockRenderedDistance = MC_RENDER.getRenderDistance() * LodUtil.CHUNK_WIDTH;
+			//int vanillaBlockRenderedDistance = MC_RENDER.getRenderDistance() * LodUtil.CHUNK_WIDTH;
 			//Mat4f modelViewProjectionMatrix = RenderUtil.createCombinedModelViewProjectionMatrix(baseProjectionMatrix, baseModelViewMatrix, partialTicks);
 			
 			Mat4f projectionMatrix = RenderUtil.createLodProjectionMatrix(baseProjectionMatrix, partialTicks);
@@ -375,7 +375,7 @@ public class LodRenderer
 			
 			/*---------Fill uniform data--------*/
 			this.shaderProgram.fillUniformData(modelViewProjectionMatrix, /*Light map = GL_TEXTURE0*/ 0,
-					MC.getWrappedClientLevel().getMinHeight(), vanillaBlockRenderedDistance);
+					MC.getWrappedClientLevel().getMinHeight(), partialTicks);
 			
 			lightmap.bind();
 			if (ENABLE_IBO)
