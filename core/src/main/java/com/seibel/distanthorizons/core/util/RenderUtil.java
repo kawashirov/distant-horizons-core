@@ -145,15 +145,17 @@ public class RenderUtil
 	 */
 	public static Mat4f createLodProjectionMatrix(Mat4f mcProjMat, float partialTicks)
 	{
+		// in James' testing a near clip plane distance of 2 blocks is enough to allow the fragment
+		// culling to take effect instead of seeing the near clip plane.
+		float nearClipDist = 2f; //MC_RENDER.getRenderDistance() * LodUtil.CHUNK_WIDTH / 4.0f; //getNearClipPlaneDistanceInBlocks(partialTicks);
+		
 		int farPlaneDistanceInBlocks = RenderUtil.getFarClipPlaneDistanceInBlocks();
 		float farClipDist = (float) ((farPlaneDistanceInBlocks + LodUtil.REGION_WIDTH) * Math.sqrt(2));
 		
 		// Create a copy of the current matrix, so it won't be modified.
 		Mat4f lodProj = mcProjMat.copy();
-		
 		// Set new far and near clip plane values.
-		lodProj.setClipPlanes(16f, farClipDist);
-		
+		lodProj.setClipPlanes(nearClipDist, farClipDist);
 		return lodProj;
 	}
 	
@@ -224,7 +226,7 @@ public class RenderUtil
 			}
 		}
 		
-		// modify the based on the player's FOV
+		// modify based on the player's FOV
 		double fov = MC_RENDER.getFov(partialTicks);
 		double aspectRatio = (double) MC_RENDER.getScreenWidth() / MC_RENDER.getScreenHeight();
 		
