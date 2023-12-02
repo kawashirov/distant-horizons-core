@@ -52,6 +52,8 @@ public class SharedApi
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	private static final Set<DhChunkPos> UPDATING_CHUNK_SET = ConcurrentHashMap.newKeySet();
+	private static final int MAX_UPDATING_CHUNK_COUNT_PER_THREAD = 100;
+	
 	
 	
 	private static AbstractDhWorld currentWorld;
@@ -221,6 +223,13 @@ public class SharedApi
 	}
 	private static void bakeChunkLightingAndSendToLevelAsync(IChunkWrapper chunkWrapper, @Nullable ArrayList<IChunkWrapper> neighbourChunkList, IDhLevel dhLevel)
 	{
+		if (UPDATING_CHUNK_SET.size() >= MAX_UPDATING_CHUNK_COUNT_PER_THREAD * Config.Client.Advanced.MultiThreading.numberOfLodBuilderThreads.get())
+		{
+			// The maximum number of chunks are already queued, don't add more.
+			// This is done to prevent overloading the system if the user flys extremely fast and queues too many chunks
+			return;
+		}
+		
 		// prevent duplicate update requests
 		if (UPDATING_CHUNK_SET.contains(chunkWrapper.getChunkPos()))
 		{
