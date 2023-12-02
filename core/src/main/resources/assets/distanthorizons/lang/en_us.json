@@ -335,6 +335,10 @@
     "Minimum Time Between Chunk Updates In Seconds",
   "distanthorizons.config.client.advanced.lodBuilding.minTimeBetweenChunkUpdatesInSeconds.@tooltip":
     "Determines how long must pass between LOD chunk updates before another. \nupdate can occur\n\nIncreasing this value will reduce CPU load but may may cause \nLODs to become outdated more frequently or for longer.",
+  "distanthorizons.config.client.advanced.lodBuilding.onlyUseDhLightingEngine":
+    "Only Use DH Lighting Engine",
+  "distanthorizons.config.client.advanced.lodBuilding.onlyUseDhLightingEngine.@tooltip":
+    "If false LODs will be lit by Minecraft's lighting engine when possible \nand fall back to the DH lighting engine only when necessary. \n\nIf true LODs will only be lit using Distant Horizons' lighting engine. \n\nGenerally it is best to leave this disabled and should only be enabled \nif there are lighting issues or for debugging.",
   
     
   "distanthorizons.config.client.advanced.multiplayer":

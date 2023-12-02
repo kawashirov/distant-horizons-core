@@ -254,7 +254,8 @@ public class SharedApi
 			{
 				// Save or populate the chunk wrapper's lighting
 				// this is done so we don't have to worry about MC unloading the lighting data for this chunk
-				if (chunkWrapper.isLightCorrect())
+				boolean onlyUseDhLighting = Config.Client.Advanced.LodBuilding.onlyUseDhLightingEngine.get();
+				if (!onlyUseDhLighting && chunkWrapper.isLightCorrect())
 				{
 					try
 					{

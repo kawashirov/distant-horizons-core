@@ -764,6 +764,19 @@ public class Config
 								+ "")
 						.build();
 				
+				public static ConfigEntry<Boolean> onlyUseDhLightingEngine = new ConfigEntry.Builder<Boolean>()
+						.set(false)
+						.comment(""
+								+ "If false LODs will be lit by Minecraft's lighting engine when possible \n"
+								+ "and fall back to the DH lighting engine only when necessary. \n"
+								+ "\n"
+								+ "If true LODs will only be lit using Distant Horizons' lighting engine. \n"
+								+ "\n"
+								+ "Generally it is best to leave this disabled and should only be enabled \n"
+								+ "if there are lighting issues or for debugging. \n"
+								+ "")
+						.build();
+				
 			}
 			
 			public static class Multiplayer
