@@ -96,10 +96,13 @@ public class LodRenderer
 		Vec3d cam = MC_RENDER.getCameraExactPosition();
 		Vec3f modelPos = new Vec3f((float) (pos.x - cam.x), (float) (pos.y - cam.y), (float) (pos.z - cam.z));
 		
+		// This check called too many times during rendering frame, it just slows everything down and doesn't aclually handle any issues.
+		/*
 		if (!GL32.glIsProgram(this.shaderProgram.id))
 		{
 			throw new IllegalStateException("No GL program exists with the ID: [" + this.shaderProgram.id + "]. This either means a shader program was freed while it was still in use or was never created.");
 		}
+		*/
 		
 		this.shaderProgram.bind();
 		this.shaderProgram.setModelPos(modelPos);
