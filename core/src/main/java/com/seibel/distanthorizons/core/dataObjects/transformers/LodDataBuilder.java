@@ -62,6 +62,11 @@ public class LodDataBuilder
 				// FIXME: The +1 offset to reproduce the old behavior. Remove this when we get per-face lighting
 				byte light = (byte) ((chunkWrapper.getBlockLight(x, lastY + 1, z) << 4) + chunkWrapper.getSkyLight(x, lastY + 1, z));
 				
+				// Fix for Mine in Abyss.
+				// It seems, getLightBlockingHeightMapValue returns invalid values on MiA, so just scan full-height. 
+				// Can't use y = lastY, as it causes assertion error later in encoder, so topmost block will not be saved properly.
+				int y = lastY - 1;
+				/*
 				
 				// determine the starting Y Pos
 				int y = chunkWrapper.getLightBlockingHeightMapValue(x,z);
@@ -89,6 +94,7 @@ public class LodDataBuilder
 					}
 				}
 				
+				*/
 				
 				for (; y >= minBuildHeight; y--)
 				{
