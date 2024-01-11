@@ -67,6 +67,10 @@ public class SelfUpdater
 	 */
 	public static boolean onStart()
 	{
+		// Turn off auto-updates completly. 
+		// As fork we don't want be overwriten by main branch.
+		if (true) return false;
+		
 		LOGGER.info("Checking for DH update");
 		
 		try
