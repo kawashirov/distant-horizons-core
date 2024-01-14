@@ -38,6 +38,18 @@ public class LodDataBuilder
 	
 	private static boolean getTopErrorLogged = false;
 	
+	private static byte kawaChunkLightStorageNPEWorkaround(IChunkWrapper chunkWrapper, int x, int y, int z) {
+		// Workaround for NullPointerException in ChunkLightStorage.get(...).
+		// If ChunkLightStorage is crashed, assume average level of 5 for sky and 0 for block light.
+		byte blockLight = 0, skyLight = 5;
+		try {
+			blockLight = (byte) chunkWrapper.getBlockLight(x, y, z);
+		} catch (RuntimeException ignored) {}
+		try {
+			skyLight = (byte) chunkWrapper.getSkyLight(x, y, z);
+		} catch (RuntimeException ignored) {}
+		return (byte)((blockLight << 4) + skyLight);
+	}
 	
 	public static ChunkSizedFullDataAccessor createChunkData(IChunkWrapper chunkWrapper)
 	{
@@ -59,8 +71,12 @@ public class LodDataBuilder
 				IBiomeWrapper biome = chunkWrapper.getBiome(x, lastY, z);
 				IBlockStateWrapper blockState = AIR;
 				int mappedId = chunkData.getMapping().addIfNotPresentAndGetId(biome, blockState);
+				
+				/*
 				// FIXME: The +1 offset to reproduce the old behavior. Remove this when we get per-face lighting
 				byte light = (byte) ((chunkWrapper.getBlockLight(x, lastY + 1, z) << 4) + chunkWrapper.getSkyLight(x, lastY + 1, z));
+				*/
+				byte light = kawaChunkLightStorageNPEWorkaround(chunkWrapper, x, lastY + 1, z);
 				
 				// Fix for Mine in Abyss.
 				// It seems, getLightBlockingHeightMapValue returns invalid values on MiA, so just scan full-height. 
@@ -100,7 +116,11 @@ public class LodDataBuilder
 				{
 					IBiomeWrapper newBiome = chunkWrapper.getBiome(x, y, z);
 					IBlockStateWrapper newBlockState = chunkWrapper.getBlockState(x, y, z);
+					
+					/*
 					byte newLight = (byte) ((chunkWrapper.getBlockLight(x, y + 1, z) << 4) + chunkWrapper.getSkyLight(x, y + 1, z));
+					*/
+					byte newLight = kawaChunkLightStorageNPEWorkaround(chunkWrapper, x, y + 1, z);
 					
 					if (!newBiome.equals(biome) || !newBlockState.equals(blockState))
 					{
